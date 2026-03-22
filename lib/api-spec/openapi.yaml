@@ -1,15 +1,22 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Temple Project Intelligence API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: temples
+    description: Temple project operations
+  - name: milestones
+    description: Milestone operations
+  - name: updates
+    description: Project updates
+  - name: contributors
+    description: Contributors/donors
 paths:
   /healthz:
     get:
@@ -24,6 +31,253 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /temples:
+    get:
+      operationId: listTemples
+      tags: [temples]
+      summary: List all temples
+      responses:
+        "200":
+          description: List of temple projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Temple"
+    post:
+      operationId: createTemple
+      tags: [temples]
+      summary: Create a new temple project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTempleInput"
+      responses:
+        "201":
+          description: Temple created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Temple"
+
+  /temples/{id}:
+    get:
+      operationId: getTemple
+      tags: [temples]
+      summary: Get a temple by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Temple details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TempleDetail"
+        "404":
+          description: Not found
+    put:
+      operationId: updateTemple
+      tags: [temples]
+      summary: Update a temple project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTempleInput"
+      responses:
+        "200":
+          description: Updated temple
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Temple"
+
+  /temples/{id}/milestones:
+    get:
+      operationId: listMilestones
+      tags: [milestones]
+      summary: List milestones for a temple
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Milestones
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Milestone"
+    post:
+      operationId: createMilestone
+      tags: [milestones]
+      summary: Create a milestone for a temple
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMilestoneInput"
+      responses:
+        "201":
+          description: Milestone created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Milestone"
+
+  /milestones/{id}:
+    put:
+      operationId: updateMilestone
+      tags: [milestones]
+      summary: Update a milestone
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMilestoneInput"
+      responses:
+        "200":
+          description: Updated milestone
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Milestone"
+
+  /temples/{id}/updates:
+    get:
+      operationId: listUpdates
+      tags: [updates]
+      summary: List updates for a temple
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProjectUpdate"
+    post:
+      operationId: createUpdate
+      tags: [updates]
+      summary: Post an update for a temple
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUpdateInput"
+      responses:
+        "201":
+          description: Update posted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectUpdate"
+
+  /temples/{id}/contributors:
+    get:
+      operationId: listContributors
+      tags: [contributors]
+      summary: List contributors for a temple
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Contributors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Contributor"
+    post:
+      operationId: addContributor
+      tags: [contributors]
+      summary: Add a contributor to a temple
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContributorInput"
+      responses:
+        "201":
+          description: Contributor added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contributor"
+
+  /stats:
+    get:
+      operationId: getDashboardStats
+      tags: [temples]
+      summary: Get dashboard statistics
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +288,352 @@ components:
       required:
         - status
 
+    Temple:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        location:
+          type: string
+        deity:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [planning, construction, finishing, consecrated, operational]
+        phase:
+          type: string
+        constructionProgress:
+          type: number
+        fundraisingProgress:
+          type: number
+        fundraisingGoal:
+          type: number
+        fundraisingRaised:
+          type: number
+        startDate:
+          type: string
+        expectedCompletion:
+          type: string
+        projectLead:
+          type: string
+        coverImage:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - name
+        - location
+        - deity
+        - description
+        - status
+        - phase
+        - constructionProgress
+        - fundraisingProgress
+        - fundraisingGoal
+        - fundraisingRaised
+        - startDate
+        - expectedCompletion
+        - projectLead
+        - createdAt
+        - updatedAt
+
+    TempleDetail:
+      allOf:
+        - $ref: "#/components/schemas/Temple"
+        - type: object
+          properties:
+            milestones:
+              type: array
+              items:
+                $ref: "#/components/schemas/Milestone"
+            updates:
+              type: array
+              items:
+                $ref: "#/components/schemas/ProjectUpdate"
+            contributors:
+              type: array
+              items:
+                $ref: "#/components/schemas/Contributor"
+          required:
+            - milestones
+            - updates
+            - contributors
+
+    CreateTempleInput:
+      type: object
+      properties:
+        name:
+          type: string
+        location:
+          type: string
+        deity:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [planning, construction, finishing, consecrated, operational]
+        phase:
+          type: string
+        constructionProgress:
+          type: number
+        fundraisingGoal:
+          type: number
+        fundraisingRaised:
+          type: number
+        startDate:
+          type: string
+        expectedCompletion:
+          type: string
+        projectLead:
+          type: string
+        coverImage:
+          type: string
+          nullable: true
+      required:
+        - name
+        - location
+        - deity
+        - description
+        - status
+        - phase
+        - constructionProgress
+        - fundraisingGoal
+        - fundraisingRaised
+        - startDate
+        - expectedCompletion
+        - projectLead
+
+    UpdateTempleInput:
+      type: object
+      properties:
+        name:
+          type: string
+        location:
+          type: string
+        deity:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [planning, construction, finishing, consecrated, operational]
+        phase:
+          type: string
+        constructionProgress:
+          type: number
+        fundraisingGoal:
+          type: number
+        fundraisingRaised:
+          type: number
+        startDate:
+          type: string
+        expectedCompletion:
+          type: string
+        projectLead:
+          type: string
+        coverImage:
+          type: string
+          nullable: true
+
+    Milestone:
+      type: object
+      properties:
+        id:
+          type: integer
+        templeId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, completed]
+        targetDate:
+          type: string
+        completedDate:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required:
+        - id
+        - templeId
+        - title
+        - description
+        - status
+        - targetDate
+        - createdAt
+
+    CreateMilestoneInput:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, completed]
+        targetDate:
+          type: string
+        completedDate:
+          type: string
+          nullable: true
+      required:
+        - title
+        - description
+        - status
+        - targetDate
+
+    UpdateMilestoneInput:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, completed]
+        targetDate:
+          type: string
+        completedDate:
+          type: string
+          nullable: true
+
+    ProjectUpdate:
+      type: object
+      properties:
+        id:
+          type: integer
+        templeId:
+          type: integer
+        title:
+          type: string
+        content:
+          type: string
+        author:
+          type: string
+        category:
+          type: string
+          enum: [construction, fundraising, spiritual, logistics, general]
+        createdAt:
+          type: string
+      required:
+        - id
+        - templeId
+        - title
+        - content
+        - author
+        - category
+        - createdAt
+
+    CreateUpdateInput:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        author:
+          type: string
+        category:
+          type: string
+          enum: [construction, fundraising, spiritual, logistics, general]
+      required:
+        - title
+        - content
+        - author
+        - category
+
+    Contributor:
+      type: object
+      properties:
+        id:
+          type: integer
+        templeId:
+          type: integer
+        name:
+          type: string
+        role:
+          type: string
+        contribution:
+          type: string
+        amount:
+          type: number
+          nullable: true
+        avatar:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required:
+        - id
+        - templeId
+        - name
+        - role
+        - contribution
+        - createdAt
+
+    CreateContributorInput:
+      type: object
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+        contribution:
+          type: string
+        amount:
+          type: number
+          nullable: true
+        avatar:
+          type: string
+          nullable: true
+      required:
+        - name
+        - role
+        - contribution
+
+    DashboardStats:
+      type: object
+      properties:
+        totalTemples:
+          type: integer
+        activeProjects:
+          type: integer
+        totalFundraisingGoal:
+          type: number
+        totalFundraisingRaised:
+          type: number
+        completedMilestones:
+          type: integer
+        upcomingMilestones:
+          type: integer
+        recentUpdates:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProjectUpdate"
+        templesByStatus:
+          type: object
+          additionalProperties:
+            type: integer
+      required:
+        - totalTemples
+        - activeProjects
+        - totalFundraisingGoal
+        - totalFundraisingRaised
+        - completedMilestones
+        - upcomingMilestones
+        - recentUpdates
+        - templesByStatus

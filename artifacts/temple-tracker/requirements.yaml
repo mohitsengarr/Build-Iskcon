@@ -1,0 +1,22 @@
+packages:
+  "framer-motion": "For beautiful layout animations, tab switching, and page transitions"
+  "recharts": "For the dashboard statistics charts"
+  "date-fns": "For formatting timeline and update dates elegantly"
+  "react-hook-form": "For form state management"
+  "@hookform/resolvers": "For Zod form validation"
+  "clsx": "For conditional class merging"
+  "tailwind-merge": "For merging tailwind classes safely"
+
+images:
+  - path: "artifacts/temple-tracker/public/images/dashboard-hero.png"
+    description: "Subtle elegant architectural elements of a hindu temple in warm parchment and soft gold tones, abstract, very light background for text overlay, wide landscape"
+    aspect_ratio: "16:9"
+  - path: "artifacts/temple-tracker/public/images/temple-placeholder.png"
+    description: "Beautiful serene temple architecture detail, warm sunlight, saffron accents, soft focus, highly aesthetic and spiritual"
+    aspect_ratio: "16:9"
+
+notes:
+  - Using generated Orval hooks from @workspace/api-client-react
+  - Forms use Zod on the client side to match the backend schema requirements
+  - Saffron and Gold color palette implemented via CSS variables
+  - Implementing 'no hard borders' rule by using tonal layering (bg-card with shadow-sm instead of border)
