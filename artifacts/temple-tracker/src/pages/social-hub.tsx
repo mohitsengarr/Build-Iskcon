@@ -414,9 +414,9 @@ export default function SocialHub() {
               {/* Profile card */}
               <div className="bg-surface-container-low rounded-xl p-5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <AvatarBadge name="ISKCON Intelligence" size="md" />
+                  <AvatarBadge name="Hare Krishna" size="md" />
                   <div>
-                    <p className="font-bold text-on-surface text-sm">ISKCON_Intel</p>
+                    <p className="font-bold text-on-surface text-sm">Hare_Krishna</p>
                     <p className="text-xs text-on-surface-variant">Global Projects Office</p>
                   </div>
                 </div>
@@ -494,7 +494,7 @@ export default function SocialHub() {
                   About · Help · Press · API · Privacy · Terms · Locations
                 </p>
                 <p className="text-[10px] text-on-surface-variant/40">
-                  © 2026 ISKCON Intelligence
+                  © 2026 Hare Krishna
                 </p>
               </div>
 
