@@ -1,85 +1,204 @@
 import { Layout } from "@/components/layout/Layout";
 import { useListTemples } from "@workspace/api-client-react";
-import { TempleCard } from "@/components/shared/TempleCard";
 import { useState } from "react";
-import { Search, Filter } from "lucide-react";
 import { Link } from "wouter";
+import { MapPin, Grid, List, Search, Filter } from "lucide-react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 export default function TempleList() {
   const { data: temples, isLoading } = useListTemples();
-  const [filter, setFilter] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [filterRegion, setFilterRegion] = useState("all");
+  const [filterStage, setFilterStage] = useState("all");
 
-  const filteredTemples = temples?.filter(t => filter === "all" || t.status === filter) || [];
+  const filteredTemples = temples?.filter(t => {
+    if (filterStage !== "all" && t.status !== filterStage) return false;
+    return true;
+  }) || [];
 
   return (
     <Layout>
-      <div className="space-y-8 pb-12">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-          <div>
-            <h1 className="text-4xl font-serif font-bold text-foreground mb-2">Sacred Projects</h1>
-            <p className="text-muted-foreground text-lg">Browse and monitor all temple construction initiatives.</p>
+      <div className="px-4 md:px-8 max-w-screen-2xl mx-auto pb-20">
+        
+        {/* Header & View Toggle */}
+        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+          <div className="max-w-2xl">
+            <h1 className="text-4xl md:text-5xl font-black text-on-surface tracking-tight mb-4 font-serif">The Global Mandala</h1>
+            <p className="text-on-surface-variant font-sans text-lg leading-relaxed">
+              Intelligence repository for temple construction, fundraising analytics, and spiritual infrastructure milestones across all continents.
+            </p>
           </div>
-          <Link href="/temples/new">
-             <button className="bg-saffron-gradient text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-primary/25 hover:shadow-xl transition-all">
-              Add New Temple
+          <div className="flex items-center bg-surface-container-low p-1.5 rounded-xl border border-outline-variant/10">
+            <button 
+              onClick={() => setViewMode("grid")}
+              className={cn(
+                "flex items-center gap-2 px-6 py-2 rounded-lg transition-all font-semibold",
+                viewMode === "grid" ? "bg-surface-container-lowest shadow-sm text-primary" : "text-on-surface-variant hover:text-primary"
+              )}
+            >
+              <Grid className="w-4 h-4" />
+              <span className="text-xs uppercase tracking-widest">Grid</span>
             </button>
-          </Link>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-4 bg-card p-4 rounded-2xl shadow-sm">
-          <div className="relative flex-1">
-            <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input 
-              type="text" 
-              placeholder="Search by name, location, or deity..." 
-              className="w-full bg-background border-none rounded-xl py-3 pl-12 pr-4 focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
-            <FilterButton active={filter === "all"} onClick={() => setFilter("all")}>All</FilterButton>
-            <FilterButton active={filter === "planning"} onClick={() => setFilter("planning")}>Planning</FilterButton>
-            <FilterButton active={filter === "construction"} onClick={() => setFilter("construction")}>Construction</FilterButton>
-            <FilterButton active={filter === "finishing"} onClick={() => setFilter("finishing")}>Finishing</FilterButton>
+            <button 
+              onClick={() => setViewMode("list")}
+              className={cn(
+                "flex items-center gap-2 px-6 py-2 rounded-lg transition-all font-semibold",
+                viewMode === "list" ? "bg-surface-container-lowest shadow-sm text-primary" : "text-on-surface-variant hover:text-primary"
+              )}
+            >
+              <List className="w-4 h-4" />
+              <span className="text-xs uppercase tracking-widest">List</span>
+            </button>
           </div>
         </div>
 
+        {/* Filter Bar */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-12 items-end bg-surface-container-low p-6 rounded-2xl border border-outline-variant/15">
+          <div className="flex flex-col gap-2">
+            <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant px-1">Search City</label>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant text-lg w-5 h-5" />
+              <input 
+                type="text"
+                placeholder="e.g. Mayapur"
+                className="w-full bg-surface-container-lowest border-none ring-1 ring-outline-variant/30 rounded-lg py-2.5 pl-10 text-sm focus:ring-2 focus:ring-primary transition-all"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant px-1">Region</label>
+            <select 
+              className="w-full bg-surface-container-lowest border-none ring-1 ring-outline-variant/30 rounded-lg py-2.5 text-sm focus:ring-2 focus:ring-primary appearance-none transition-all"
+              value={filterRegion}
+              onChange={(e) => setFilterRegion(e.target.value)}
+            >
+              <option value="all">All Continents</option>
+              <option value="asia">Asia Pacific</option>
+              <option value="americas">Americas</option>
+              <option value="europe">Europe</option>
+              <option value="africa">Africa</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant px-1">Construction Stage</label>
+            <select 
+              className="w-full bg-surface-container-lowest border-none ring-1 ring-outline-variant/30 rounded-lg py-2.5 text-sm focus:ring-2 focus:ring-primary appearance-none transition-all"
+              value={filterStage}
+              onChange={(e) => setFilterStage(e.target.value)}
+            >
+              <option value="all">All Stages</option>
+              <option value="planning">Planning</option>
+              <option value="construction">Construction</option>
+              <option value="finishing">Finishing</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant px-1">Funding Status</label>
+            <select className="w-full bg-surface-container-lowest border-none ring-1 ring-outline-variant/30 rounded-lg py-2.5 text-sm focus:ring-2 focus:ring-primary appearance-none transition-all">
+              <option>Any Status</option>
+              <option>Fully Funded</option>
+              <option>In Progress</option>
+              <option>Critical</option>
+            </select>
+          </div>
+          <button className="bg-primary text-on-primary h-[42px] px-8 rounded-lg font-bold text-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
+            <Filter className="w-4 h-4" />
+            Apply Filters
+          </button>
+        </div>
+
+        {/* Project Grid */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="h-[400px] bg-card rounded-2xl animate-pulse" />
+              <div key={i} className="h-96 bg-surface-container-low rounded-xl animate-pulse" />
             ))}
           </div>
         ) : filteredTemples.length === 0 ? (
-          <div className="bg-card rounded-3xl p-12 text-center shadow-sm">
-            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Filter className="w-10 h-10 text-primary" />
-            </div>
-            <h3 className="text-2xl font-serif font-bold text-foreground mb-2">No projects found</h3>
-            <p className="text-muted-foreground">Try adjusting your filters or search terms.</p>
-          </div>
+           <div className="bg-surface-container-low rounded-xl p-12 text-center border border-outline-variant/10">
+             <h3 className="text-2xl font-serif font-bold text-on-surface mb-2">No projects found</h3>
+             <p className="text-on-surface-variant">Try adjusting your filters or search terms.</p>
+           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredTemples.map((temple, idx) => (
-              <TempleCard key={temple.id} temple={temple} index={idx} />
-            ))}
+            {filteredTemples.map((temple, idx) => {
+              const coverImg = temple.coverImage || `${import.meta.env.BASE_URL}images/temple-placeholder.png`;
+              const progressPercentage = Math.min(100, Math.max(0, temple.constructionProgress));
+              
+              return (
+                <motion.div
+                  key={temple.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: idx * 0.05 }}
+                  className="group flex flex-col bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.04)] ring-1 ring-outline-variant/10 hover:-translate-y-1 transition-transform duration-300"
+                >
+                  <div className="relative h-64 overflow-hidden">
+                    <img 
+                      src={coverImg} 
+                      alt={temple.name} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div className="absolute top-4 left-4 bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm">
+                      {temple.phase}
+                    </div>
+                  </div>
+                  
+                  <div className="p-8 flex-1 flex flex-col">
+                    <div className="mb-6">
+                      <h3 className="text-2xl font-bold font-serif text-on-surface mb-1 line-clamp-1">{temple.name}</h3>
+                      <p className="text-sm text-on-surface-variant font-medium flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {temple.location}
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-4 mb-8 mt-auto">
+                      <div>
+                        <div className="flex justify-between text-xs font-bold uppercase tracking-tighter mb-2">
+                          <span className="text-on-surface-variant">Realization</span>
+                          <span className="text-primary">{progressPercentage}%</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-primary to-primary-container rounded-full" 
+                            style={{ width: `${progressPercentage}%` }}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between items-end border-t border-outline-variant/10 pt-4">
+                        <div>
+                          <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-semibold">Est. Investment</p>
+                          <p className="text-lg font-bold text-on-surface">
+                            ₹{(temple.fundraisingGoal / 10000000).toFixed(1)}Cr
+                          </p>
+                        </div>
+                        <span className={cn(
+                          "text-[10px] uppercase font-bold px-2 py-1 rounded",
+                          temple.fundraisingRaised >= temple.fundraisingGoal 
+                            ? "bg-primary text-on-primary" 
+                            : "text-secondary bg-secondary-container/20"
+                        )}>
+                          {temple.fundraisingRaised >= temple.fundraisingGoal ? "Fully Funded" : "In Progress"}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <Link href={`/temples/${temple.id}`}>
+                      <button className="w-full py-3.5 border border-primary text-primary font-bold text-xs uppercase tracking-widest rounded-lg hover:bg-primary hover:text-on-primary transition-all duration-300">
+                        View Details
+                      </button>
+                    </Link>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         )}
+
       </div>
     </Layout>
-  );
-}
-
-function FilterButton({ active, children, onClick }: { active: boolean, children: React.ReactNode, onClick: () => void }) {
-  return (
-    <button 
-      onClick={onClick}
-      className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-medium transition-all ${
-        active 
-          ? "bg-primary text-primary-foreground shadow-md shadow-primary/20" 
-          : "bg-background text-foreground hover:bg-black/5"
-      }`}
-    >
-      {children}
-    </button>
   );
 }

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Regional Insights - ISKCON Intelligence</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Noto Serif & Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Noto+Serif:ital,wght@0,400;0,700;0,900;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#8f4e00",
+            "primary-container": "#ff9933",
+            "background": "#fbf9f8",
+            "surface-tint": "#8f4e00",
+            "inverse-primary": "#ffb77a",
+            "error-container": "#ffdad6",
+            "surface-container": "#f0eded",
+            "secondary": "#735c00",
+            "on-tertiary-container": "#3a4557",
+            "on-secondary-fixed-variant": "#574500",
+            "on-secondary": "#ffffff",
+            "on-surface-variant": "#554336",
+            "on-error-container": "#93000a",
+            "surface": "#fbf9f8",
+            "on-secondary-container": "#745c00",
+            "outline-variant": "#dbc2b0",
+            "surface-variant": "#e4e2e1",
+            "on-background": "#1b1c1c",
+            "tertiary-fixed-dim": "#bcc7dd",
+            "surface-container-lowest": "#ffffff",
+            "outline": "#887364",
+            "on-tertiary-fixed": "#111c2c",
+            "surface-container-low": "#f6f3f2",
+            "surface-dim": "#dcd9d9",
+            "tertiary-container": "#a7b2c8",
+            "secondary-fixed-dim": "#e9c349",
+            "on-primary-fixed": "#2e1500",
+            "on-primary-container": "#693800",
+            "surface-container-high": "#eae7e7",
+            "inverse-on-surface": "#f3f0f0",
+            "tertiary-fixed": "#d8e3fa",
+            "on-primary": "#ffffff",
+            "on-primary-fixed-variant": "#6d3a00",
+            "surface-container-highest": "#e4e2e1",
+            "on-tertiary-fixed-variant": "#3c475a",
+            "secondary-container": "#fed65b",
+            "on-surface": "#1b1c1c",
+            "secondary-fixed": "#ffe088",
+            "tertiary": "#545f72",
+            "error": "#ba1a1a",
+            "inverse-surface": "#303030",
+            "on-tertiary": "#ffffff",
+            "on-secondary-fixed": "#241a00",
+            "surface-bright": "#fbf9f8",
+            "primary-fixed-dim": "#ffb77a",
+            "on-error": "#ffffff",
+            "primary-fixed": "#ffdcc2"
+          },
+          fontFamily: {
+            "headline": ["Noto Serif"],
+            "body": ["Inter"],
+            "label": ["Inter"]
+          },
+          borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+    .glass-nav {
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    body {
+      background-color: #fbf9f8;
+      color: #1b1c1c;
+      font-family: 'Inter', sans-serif;
+    }
+    h1, h2, h3, .serif-anchor {
+      font-family: 'Noto Serif', serif;
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- TopNavBar (Shared Component) -->
+<header class="fixed top-0 z-50 w-full bg-[#fbf9f8] dark:bg-stone-900/80 backdrop-blur-md shadow-[0_4px_24px_rgba(27,28,28,0.06)]">
+<div class="flex justify-between items-center w-full px-8 py-4 max-w-screen-2xl mx-auto">
+<div class="font-['Noto_Serif'] text-2xl font-black text-[#8f4e00] dark:text-[#ff9933] uppercase tracking-wider">
+        ISKCON Intelligence
+      </div>
+<nav class="hidden md:flex items-center space-x-8">
+<a class="text-[#554336] dark:text-stone-400 font-medium hover:text-[#8f4e00] transition-colors duration-300" href="#">Global Dashboard</a>
+<a class="text-[#554336] dark:text-stone-400 font-medium hover:text-[#8f4e00] transition-colors duration-300" href="#">Project Directory</a>
+<a class="text-[#8f4e00] dark:text-[#ff9933] font-bold border-b-2 border-[#8f4e00] pb-1" href="#">Regional Insights</a>
+</nav>
+<div class="flex items-center space-x-6">
+<button class="material-symbols-outlined text-[#8f4e00] hover:bg-[#8f4e00]/5 p-2 rounded-full transition-colors duration-300" data-icon="search">search</button>
+<button class="material-symbols-outlined text-[#8f4e00] hover:bg-[#8f4e00]/5 p-2 rounded-full transition-colors duration-300" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined text-[#8f4e00] hover:bg-[#8f4e00]/5 p-2 rounded-full transition-colors duration-300" data-icon="account_circle">account_circle</button>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-16 px-6 md:px-12 max-w-screen-2xl mx-auto">
+<!-- Hero Header -->
+<section class="mb-16">
+<div class="max-w-3xl">
+<h1 class="text-4xl md:text-5xl font-bold text-on-surface mb-4 leading-tight">Global Regional <span class="text-primary italic">Intelligence</span></h1>
+<p class="text-on-surface-variant text-lg leading-relaxed max-w-2xl">
+          Comparative analysis across continental zones. This data reflects active temple construction, land acquisitions, and institutional capital allocation for the current fiscal year.
+        </p>
+</div>
+</section>
+<!-- Comparison Bento Grid (Bar Charts) -->
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
+<!-- Projects per Region -->
+<div class="bg-surface-container-low p-8 rounded-xl shadow-sm border border-outline-variant/10">
+<div class="flex justify-between items-end mb-10">
+<div>
+<h3 class="text-xl font-bold text-on-surface mb-1">Projects per Region</h3>
+<p class="text-xs uppercase tracking-widest text-on-surface-variant font-semibold">Active &amp; Planned Sites</p>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="equalizer">equalizer</span>
+</div>
+<div class="space-y-6">
+<!-- Asia -->
+<div class="space-y-2">
+<div class="flex justify-between text-sm font-medium">
+<span>Asia Pacific</span>
+<span class="text-primary">42 Units</span>
+</div>
+<div class="w-full h-8 bg-surface-container rounded-lg overflow-hidden flex">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container" style="width: 85%"></div>
+</div>
+</div>
+<!-- North America -->
+<div class="space-y-2">
+<div class="flex justify-between text-sm font-medium">
+<span>North America</span>
+<span class="text-primary">28 Units</span>
+</div>
+<div class="w-full h-8 bg-surface-container rounded-lg overflow-hidden flex">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container" style="width: 55%"></div>
+</div>
+</div>
+<!-- Europe -->
+<div class="space-y-2">
+<div class="flex justify-between text-sm font-medium">
+<span>Europe</span>
+<span class="text-primary">19 Units</span>
+</div>
+<div class="w-full h-8 bg-surface-container rounded-lg overflow-hidden flex">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container" style="width: 40%"></div>
+</div>
+</div>
+<!-- Latin America -->
+<div class="space-y-2">
+<div class="flex justify-between text-sm font-medium">
+<span>Latin America</span>
+<span class="text-primary">12 Units</span>
+</div>
+<div class="w-full h-8 bg-surface-container rounded-lg overflow-hidden flex">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container" style="width: 25%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Investment by Region -->
+<div class="bg-surface-container-low p-8 rounded-xl shadow-sm border border-outline-variant/10">
+<div class="flex justify-between items-end mb-10">
+<div>
+<h3 class="text-xl font-bold text-on-surface mb-1">Investment by Region</h3>
+<p class="text-xs uppercase tracking-widest text-on-surface-variant font-semibold">Allocated Capital ($M)</p>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="account_balance">account_balance</span>
+</div>
+<div class="flex items-end justify-between h-64 px-4 gap-4">
+<div class="flex flex-col items-center w-full gap-2">
+<span class="text-[10px] font-bold text-on-surface-variant">142M</span>
+<div class="w-full bg-tertiary-container/30 rounded-t-lg relative group transition-all duration-300 hover:bg-tertiary-container/50" style="height: 100%">
+<div class="absolute bottom-0 w-full bg-tertiary rounded-t-lg" style="height: 85%"></div>
+</div>
+<span class="text-[10px] uppercase font-bold text-on-surface-variant">ASIA</span>
+</div>
+<div class="flex flex-col items-center w-full gap-2">
+<span class="text-[10px] font-bold text-on-surface-variant">98M</span>
+<div class="w-full bg-tertiary-container/30 rounded-t-lg relative group transition-all duration-300 hover:bg-tertiary-container/50" style="height: 100%">
+<div class="absolute bottom-0 w-full bg-tertiary rounded-t-lg" style="height: 60%"></div>
+</div>
+<span class="text-[10px] uppercase font-bold text-on-surface-variant">NA</span>
+</div>
+<div class="flex flex-col items-center w-full gap-2">
+<span class="text-[10px] font-bold text-on-surface-variant">64M</span>
+<div class="w-full bg-tertiary-container/30 rounded-t-lg relative group transition-all duration-300 hover:bg-tertiary-container/50" style="height: 100%">
+<div class="absolute bottom-0 w-full bg-tertiary rounded-t-lg" style="height: 45%"></div>
+</div>
+<span class="text-[10px] uppercase font-bold text-on-surface-variant">EUR</span>
+</div>
+<div class="flex flex-col items-center w-full gap-2">
+<span class="text-[10px] font-bold text-on-surface-variant">22M</span>
+<div class="w-full bg-tertiary-container/30 rounded-t-lg relative group transition-all duration-300 hover:bg-tertiary-container/50" style="height: 100%">
+<div class="absolute bottom-0 w-full bg-tertiary rounded-t-lg" style="height: 15%"></div>
+</div>
+<span class="text-[10px] uppercase font-bold text-on-surface-variant">AFR</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Top Developing Cities Table -->
+<section class="mb-16">
+<div class="flex items-center justify-between mb-8">
+<h2 class="text-3xl font-bold">Top Developing Cities</h2>
+<button class="text-sm font-semibold text-primary flex items-center gap-1 hover:underline">
+          View Full Index <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<div class="overflow-hidden rounded-xl bg-surface-container-low border border-outline-variant/10">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high/50">
+<th class="px-6 py-4 text-xs uppercase tracking-widest font-bold text-on-surface-variant">City Center</th>
+<th class="px-6 py-4 text-xs uppercase tracking-widest font-bold text-on-surface-variant">Region</th>
+<th class="px-6 py-4 text-xs uppercase tracking-widest font-bold text-on-surface-variant text-center">Active Projects</th>
+<th class="px-6 py-4 text-xs uppercase tracking-widest font-bold text-on-surface-variant text-right">Total Valuation</th>
+<th class="px-6 py-4 text-xs uppercase tracking-widest font-bold text-on-surface-variant">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<tr class="hover:bg-surface-container transition-colors duration-200">
+<td class="px-6 py-5 font-bold text-on-surface">Mayapur</td>
+<td class="px-6 py-5 text-sm">West Bengal, India</td>
+<td class="px-6 py-5 text-center font-mono">14</td>
+<td class="px-6 py-5 text-right font-semibold">$385.4M</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded-full uppercase">Hyper-Growth</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors duration-200">
+<td class="px-6 py-5 font-bold text-on-surface">Vrindavan</td>
+<td class="px-6 py-5 text-sm">Uttar Pradesh, India</td>
+<td class="px-6 py-5 text-center font-mono">08</td>
+<td class="px-6 py-5 text-right font-semibold">$112.9M</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded-full uppercase">Structural</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors duration-200">
+<td class="px-6 py-5 font-bold text-on-surface">London</td>
+<td class="px-6 py-5 text-sm">UK, Europe</td>
+<td class="px-6 py-5 text-center font-mono">04</td>
+<td class="px-6 py-5 text-right font-semibold">$45.2M</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-secondary/10 text-secondary text-[10px] font-bold rounded-full uppercase">Steady State</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors duration-200">
+<td class="px-6 py-5 font-bold text-on-surface">Los Angeles</td>
+<td class="px-6 py-5 text-sm">California, USA</td>
+<td class="px-6 py-5 text-center font-mono">03</td>
+<td class="px-6 py-5 text-right font-semibold">$38.1M</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-secondary/10 text-secondary text-[10px] font-bold rounded-full uppercase">Renovation</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Upcoming Projects Asymmetric Grid -->
+<section>
+<div class="mb-10">
+<h2 class="text-3xl font-bold mb-2">Upcoming Visions</h2>
+<p class="text-on-surface-variant font-medium">Projects currently in Land Acquisition &amp; Concept Design stages.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Project 1 (Large) -->
+<div class="md:col-span-2 group">
+<div class="relative overflow-hidden rounded-xl bg-surface-container-high h-96 flex flex-col justify-end p-10 border border-outline-variant/10 shadow-lg">
+<div class="absolute inset-0 bg-gradient-to-t from-on-surface/80 via-on-surface/20 to-transparent z-10"></div>
+<img alt="Vedic Temple Architecture" class="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100" data-alt="Ancient style temple concept with dome and pillars" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzIIdpAJeK1yRsl2xFUwWwoBUPp7EowbF-DxOM8RzfVv6bla1Kziwam15OJdCRHQH7j3i1GicZa1adIv7Tpk1Dhh78NeJVgkunljw0XLm_S3airTbX-mKcxEMj1oxHFwdhyZ7pkJqenPbqhTiX691ZG7A2HlN_IAbFohJxD3VclX254AgzAvapHHNYiTO4rUsx_gBN-k2ggrGp1oafS3AmGY677gYU5bnglgLw8lOkJdW2uhjdTZvd8-ZkSzXciM3mnU6ijco0Y0Wk"/>
+<div class="relative z-20">
+<span class="inline-block px-3 py-1 bg-primary-container text-on-primary-container text-[10px] font-bold rounded-sm uppercase tracking-widest mb-4">Land Acquired</span>
+<h3 class="text-3xl font-bold text-white mb-2 font-headline">The Noida Spiritual Oasis</h3>
+<p class="text-white/80 text-sm max-w-lg mb-6 leading-relaxed">
+                A 25-acre mixed-use development featuring a Vedic planetarium, sustainable farming complex, and a state-of-the-art youth intelligence center. Currently finalizing structural engineering permits.
+              </p>
+<div class="flex items-center gap-8">
+<div>
+<p class="text-[10px] uppercase font-bold text-white/50 tracking-tighter">Acquisition Cost</p>
+<p class="text-white font-bold">$12.5M</p>
+</div>
+<div>
+<p class="text-[10px] uppercase font-bold text-white/50 tracking-tighter">Est. Completion</p>
+<p class="text-white font-bold">Q4 2027</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Project 2 (Small) -->
+<div class="bg-surface-container-low p-8 rounded-xl border border-outline-variant/10 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-6">
+<span class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-black">SYD</span>
+<span class="text-[10px] font-bold text-primary uppercase">Proposal Phase</span>
+</div>
+<h3 class="text-xl font-bold mb-3 font-headline">Sydney Harbour Outreach Center</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed mb-6">
+              Proposed landmark overlooking the harbor, focusing on high-visibility cultural diplomacy and meditation archives.
+            </p>
+</div>
+<div class="pt-6 border-t border-outline-variant/20">
+<div class="flex items-center justify-between text-xs font-bold uppercase text-on-surface-variant mb-2">
+<span>Fundraising Status</span>
+<span>18%</span>
+</div>
+<div class="w-full h-1 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[18%]"></div>
+</div>
+</div>
+</div>
+<!-- Project 3 (Small) -->
+<div class="bg-surface-container-low p-8 rounded-xl border border-outline-variant/10 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-6">
+<span class="w-12 h-12 rounded-full bg-tertiary-container flex items-center justify-center text-on-tertiary-container font-black">RIO</span>
+<span class="text-[10px] font-bold text-primary uppercase">Land Identification</span>
+</div>
+<h3 class="text-xl font-bold mb-3 font-headline">Amazon Eco-Temple Project</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed mb-6">
+              Integrating Vedic agriculture with Amazonian reforestation efforts. A holistic vision for spiritual-environmental synergy.
+            </p>
+</div>
+<div class="pt-6 border-t border-outline-variant/20">
+<div class="flex items-center justify-between text-xs font-bold uppercase text-on-surface-variant mb-2">
+<span>Vision Alignment</span>
+<span>100%</span>
+</div>
+<div class="w-full h-1 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary w-full"></div>
+</div>
+</div>
+</div>
+<!-- Project 4 (Mid-size/Floating) -->
+<div class="md:col-span-2 bg-gradient-to-br from-[#8f4e00] to-[#554336] p-1 rounded-xl">
+<div class="bg-surface p-8 rounded-lg h-full flex flex-col md:flex-row gap-8 items-center">
+<div class="flex-1">
+<p class="text-xs font-black uppercase tracking-widest text-primary mb-2">Strategic Initiative</p>
+<h3 class="text-2xl font-bold mb-4 font-headline">European Heritage Restoration</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed">
+                  A continent-wide effort to acquire and restore historical manor houses for spiritual use, preserving European architectural legacy while establishing modern centers for Dharma education.
+                </p>
+</div>
+<div class="flex-none grid grid-cols-2 gap-4">
+<div class="bg-surface-container-low p-4 rounded text-center">
+<p class="text-2xl font-black text-primary">06</p>
+<p class="text-[10px] uppercase font-bold text-on-surface-variant">Active Leads</p>
+</div>
+<div class="bg-surface-container-low p-4 rounded text-center">
+<p class="text-2xl font-black text-primary">$18M</p>
+<p class="text-[10px] uppercase font-bold text-on-surface-variant">CapEx Budget</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer (Shared Component) -->
+<footer class="bg-[#fbf9f8] dark:bg-stone-950 w-full border-t border-[#554336]/10 tonal-shift-bg-surface-container-low">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-8 px-12 py-16 w-full max-w-screen-2xl mx-auto">
+<div class="col-span-1 md:col-span-1">
+<div class="font-['Noto_Serif'] italic text-lg text-[#554336] mb-4">ISKCON Global Projects</div>
+<p class="text-[#554336] dark:text-stone-500 font-['Inter'] text-xs uppercase tracking-widest font-semibold leading-relaxed">
+          The central intelligence node for global temple infrastructure and spiritual asset management.
+        </p>
+</div>
+<div class="flex flex-col space-y-3">
+<span class="text-[#735c00] dark:text-[#ff9933] font-['Inter'] text-xs uppercase tracking-widest font-semibold mb-2">Institutions</span>
+<a class="text-[#554336] dark:text-stone-500 font-['Inter'] text-xs uppercase tracking-widest font-semibold hover:text-[#8f4e00] transition-opacity duration-200" href="#">ISKCON.org</a>
+<a class="text-[#554336] dark:text-stone-500 font-['Inter'] text-xs uppercase tracking-widest font-semibold hover:text-[#8f4e00] transition-opacity duration-200" href="#">BBT</a>
+<a class="text-[#554336] dark:text-stone-500 font-['Inter'] text-xs uppercase tracking-widest font-semibold hover:text-[#8f4e00] transition-opacity duration-200" href="#">ISKCON Resolve</a>
+</div>
+<div class="flex flex-col space-y-3">
+<span class="text-[#735c00] dark:text-[#ff9933] font-['Inter'] text-xs uppercase tracking-widest font-semibold mb-2">Support</span>
+<a class="text-[#554336] dark:text-stone-500 font-['Inter'] text-xs uppercase tracking-widest font-semibold hover:text-[#8f4e00] transition-opacity duration-200" href="#">Global Contact</a>
+<a class="text-[#554336] dark:text-stone-500 font-['Inter'] text-xs uppercase tracking-widest font-semibold hover:text-[#8f4e00] transition-opacity duration-200" href="#">Donation Intelligence</a>
+<a class="text-[#554336] dark:text-stone-500 font-['Inter'] text-xs uppercase tracking-widest font-semibold hover:text-[#8f4e00] transition-opacity duration-200" href="#">Legal Archives</a>
+</div>
+<div class="flex flex-col justify-end">
+<p class="text-[#554336] dark:text-stone-500 font-['Inter'] text-xs uppercase tracking-widest font-semibold opacity-80">
+          © 2024 ISKCON Global Projects Office. All Rights Reserved.
+        </p>
+</div>
+</div>
+</footer>
+</body></html>
