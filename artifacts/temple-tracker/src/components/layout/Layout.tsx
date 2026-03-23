@@ -1,8 +1,10 @@
 import { ReactNode, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { Search, Bell, User, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SyncIndicator } from "@/components/SyncIndicator";
+import { slideDown } from "@/lib/animations";
 
 const NAV_ITEMS = [
   { href: "/", label: "Global Dashboard", match: (loc: string) => loc === "/" },
@@ -71,27 +73,42 @@ export function Layout({ children }: { children: ReactNode }) {
         </div>
 
         {/* Mobile Navigation Drawer */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-outline-variant/10 bg-surface/95 backdrop-blur-md">
-            <div className="flex flex-col px-6 py-4 gap-1">
-              {NAV_ITEMS.map((item) => (
-                <Link key={item.href} href={item.href}>
-                  <span
-                    className={cn(
-                      "block py-3 px-4 rounded-lg font-medium text-sm cursor-pointer transition-colors",
-                      item.match(location)
-                        ? "text-primary bg-primary/10 font-bold"
-                        : "text-on-surface-variant hover:text-primary hover:bg-primary/5"
-                    )}
-                    onClick={() => setMobileMenuOpen(false)}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              className="md:hidden border-t border-outline-variant/10 bg-surface/95 backdrop-blur-md"
+              variants={slideDown}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              <div className="flex flex-col px-6 py-4 gap-1">
+                {NAV_ITEMS.map((item, i) => (
+                  <motion.div
+                    key={item.href}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.05, duration: 0.2 }}
                   >
-                    {item.label}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
+                    <Link href={item.href}>
+                      <span
+                        className={cn(
+                          "block py-3 px-4 rounded-lg font-medium text-sm cursor-pointer transition-colors",
+                          item.match(location)
+                            ? "text-primary bg-primary/10 font-bold"
+                            : "text-on-surface-variant hover:text-primary hover:bg-primary/5"
+                        )}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {item.label}
+                      </span>
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
       {/* Main Content */}

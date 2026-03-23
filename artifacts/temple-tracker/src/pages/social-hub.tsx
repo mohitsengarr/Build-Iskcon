@@ -1,6 +1,8 @@
+import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
 import { useState, useEffect } from "react";
+import { fadeInUp, fadeIn, staggerContainerFast, viewportOnce } from "@/lib/animations";
 import { Link } from "wouter";
 import { Heart, MessageCircle, Repeat2, Share, MoreHorizontal, TrendingUp, RefreshCw, Zap, Clock } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -120,7 +122,7 @@ function AvatarBadge({ name, size = "sm" }: { name: string; size?: "sm" | "md" }
   );
 }
 
-function PostCard({ post, isLast = false }: { post: FeedPost; isLast?: boolean }) {
+function PostCard({ post, isLast = false, index = 0 }: { post: FeedPost; isLast?: boolean; index?: number }) {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likes);
 
@@ -137,7 +139,12 @@ function PostCard({ post, isLast = false }: { post: FeedPost; isLast?: boolean }
   const timeAgo = formatDistanceToNow(new Date(post.createdAt), { addSuffix: true });
 
   return (
-    <article className="flex gap-3 px-5 py-4">
+    <motion.article
+      className="flex gap-3 px-5 py-4"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
+    >
       {/* Left: avatar + thread line */}
       <div className="flex flex-col items-center flex-shrink-0">
         <Link href={`/temples/${post.templeId}`}>
@@ -214,7 +221,7 @@ function PostCard({ post, isLast = false }: { post: FeedPost; isLast?: boolean }
           </button>
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 }
 
@@ -377,7 +384,7 @@ export default function SocialHub() {
             ) : (
               <div className="bg-surface-container-lowest rounded-xl shadow-[0_2px_16px_rgba(27,28,28,0.06)] divide-y divide-on-surface/5">
                 {posts.map((post, idx) => (
-                  <PostCard key={post.id} post={post} isLast={idx === posts.length - 1} />
+                  <PostCard key={post.id} post={post} isLast={idx === posts.length - 1} index={idx} />
                 ))}
               </div>
             )}

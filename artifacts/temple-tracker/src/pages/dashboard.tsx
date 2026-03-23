@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
 import { useGetDashboardStats } from "@workspace/api-client-react";
+import { fadeInUp, fadeIn, staggerContainer, scaleIn, viewportOnce } from "@/lib/animations";
 import {
   Building2, IndianRupee, ChartBar, CheckCircle2, ArrowRight,
   TrendingUp, TrendingDown, Minus, Globe, Target, Shield,
@@ -327,16 +329,21 @@ export default function Dashboard() {
           </div>
           <div className="absolute inset-0 bg-gradient-to-r from-surface via-surface/75 to-surface/20 z-10" />
 
-          <div className="relative z-20 px-6 sm:px-12 max-w-2xl">
-            <span className="text-xs font-semibold uppercase tracking-widest text-primary/80 mb-2 block">The Mahaprabhu Prophecy</span>
-            <h1 className="font-serif text-3xl sm:text-5xl font-bold text-on-surface mb-4 leading-tight">
+          <motion.div
+            className="relative z-20 px-6 sm:px-12 max-w-2xl"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.span variants={fadeInUp} className="text-xs font-semibold uppercase tracking-widest text-primary/80 mb-2 block">The Mahaprabhu Prophecy</motion.span>
+            <motion.h1 variants={fadeInUp} className="font-serif text-3xl sm:text-5xl font-bold text-on-surface mb-4 leading-tight">
               pṛthivīte āche yata nagarādi grāma <br />
               <span className="text-primary">sarvatra pracāra haibe mora nāma</span>
-            </h1>
-            <p className="text-on-surface-variant font-sans text-base sm:text-lg mb-8 leading-relaxed">
+            </motion.h1>
+            <motion.p variants={fadeInUp} className="text-on-surface-variant font-sans text-base sm:text-lg mb-8 leading-relaxed">
               As Chaitanya Mahaprabhu declared, {"\u201C"}In every town and village throughout the world, the chanting of My name will be heard.{"\u201D"} Tracking ISKCON{"\u2019"}s sacred mission to fulfil this prophecy — project by project, continent by continent.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
+            </motion.p>
+            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4">
               <Link href="/temples">
                 <button className="bg-primary text-on-primary px-8 py-3 rounded-xl font-bold text-sm tracking-wide shadow-lg hover:shadow-primary/20 transition-all active:scale-95 cursor-pointer w-full sm:w-auto">
                   Explore All Projects
@@ -347,13 +354,19 @@ export default function Dashboard() {
                   Regional Insights
                 </button>
               </Link>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </section>
 
         {/* Key Metric Cards */}
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-surface-container p-6 rounded-xl transition-all hover:bg-surface-container-high group">
+        <motion.section
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+        >
+          <motion.div variants={fadeInUp} className="bg-surface-container p-6 rounded-xl transition-all hover:bg-surface-container-high group">
             <div className="flex items-center justify-between mb-4">
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                 <Building2 className="w-5 h-5" />
@@ -362,9 +375,9 @@ export default function Dashboard() {
             </div>
             <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-wide mb-1">Total Active Projects</h3>
             <div className="text-3xl font-black text-on-surface font-serif">{stats.activeProjects || stats.totalTemples}</div>
-          </div>
+          </motion.div>
 
-          <div className="bg-surface-container p-6 rounded-xl transition-all hover:bg-surface-container-high">
+          <motion.div variants={fadeInUp} className="bg-surface-container p-6 rounded-xl transition-all hover:bg-surface-container-high">
             <div className="flex items-center justify-between mb-4">
               <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary">
                 <IndianRupee className="w-5 h-5" />
@@ -375,9 +388,9 @@ export default function Dashboard() {
             <div className="text-3xl font-black text-on-surface font-serif">
               ${(stats.totalFundraisingGoal / 1_000_000).toFixed(0)}M
             </div>
-          </div>
+          </motion.div>
 
-          <div className="bg-surface-container p-6 rounded-xl transition-all hover:bg-surface-container-high">
+          <motion.div variants={fadeInUp} className="bg-surface-container p-6 rounded-xl transition-all hover:bg-surface-container-high">
             <div className="flex items-center justify-between mb-4">
               <div className="w-10 h-10 rounded-lg bg-tertiary/10 flex items-center justify-center text-tertiary">
                 <ChartBar className="w-5 h-5" />
@@ -388,9 +401,10 @@ export default function Dashboard() {
             <div className="text-3xl font-black text-on-surface font-serif">
               {stats.averageProgress ? Math.round(stats.averageProgress) : 65}%
             </div>
-          </div>
+          </motion.div>
 
-          <div
+          <motion.div
+            variants={fadeInUp}
             className="bg-surface-container p-6 rounded-xl transition-all hover:bg-surface-container-high"
             style={{ outline: "2px solid color-mix(in srgb, #ff9933 20%, transparent)" }}
           >
@@ -406,17 +420,23 @@ export default function Dashboard() {
             <div className="text-3xl font-black text-on-surface font-serif">
               {stats.templesByStatus?.finishing || 0}
             </div>
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
         {/* McKinsey Intelligence Briefs */}
         <IntelligenceBriefs />
 
         {/* Bottom Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <motion.div
+          className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+        >
 
           {/* Regional Distribution Chart */}
-          <div className="lg:col-span-2 bg-surface-container-low rounded-xl p-8">
+          <motion.div variants={scaleIn} className="lg:col-span-2 bg-surface-container-low rounded-xl p-8">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-10 gap-4">
               <div>
                 <h2 className="font-serif text-2xl font-bold text-on-surface">Regional Distribution</h2>
@@ -452,10 +472,10 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </div>
+          </motion.div>
 
           {/* Spotlight Card */}
-          <div className="bg-on-surface-variant text-surface-container-lowest rounded-xl p-8 relative overflow-hidden flex flex-col justify-between">
+          <motion.div variants={scaleIn} className="bg-on-surface-variant text-surface-container-lowest rounded-xl p-8 relative overflow-hidden flex flex-col justify-between">
             <div className="absolute -top-10 -right-10 w-48 h-48 bg-primary/20 rounded-full blur-3xl" />
             <div>
               <span className="inline-block px-3 py-1 rounded-full bg-primary text-on-primary text-[10px] font-bold uppercase tracking-widest mb-6">
@@ -491,9 +511,9 @@ export default function Dashboard() {
                 <ArrowRight className="w-4 h-4" />
               </button>
             </Link>
-          </div>
+          </motion.div>
 
-        </div>
+        </motion.div>
       </div>
     </Layout>
   );

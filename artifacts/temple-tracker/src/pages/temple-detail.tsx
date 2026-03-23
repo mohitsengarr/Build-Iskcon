@@ -1,5 +1,7 @@
+import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
+import { fadeInUp, staggerContainer, scaleIn, viewportOnce } from "@/lib/animations";
 import {
   useGetTemple,
   useCreateMilestone,
@@ -77,16 +79,26 @@ export default function TempleDetail() {
       <div className="px-4 md:px-8 max-w-screen-2xl mx-auto pb-20 space-y-12">
 
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-on-surface-variant text-sm font-medium">
+        <motion.nav
+          className="flex items-center gap-2 text-on-surface-variant text-sm font-medium"
+          initial={{ opacity: 0, x: -12 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+        >
           <span>Global</span>
           <ChevronRight className="w-4 h-4" />
           <span>{temple.location.split(',').slice(-1)[0]?.trim() || 'India'}</span>
           <ChevronRight className="w-4 h-4" />
           <span className="text-primary font-bold">{temple.location}</span>
-        </nav>
+        </motion.nav>
 
         {/* Hero Section — tonal bg, no border */}
-        <section className="bg-surface-container-low p-10 rounded-xl relative overflow-hidden flex flex-col lg:flex-row justify-between lg:items-end gap-8">
+        <motion.section
+          className="bg-surface-container-low p-10 rounded-xl relative overflow-hidden flex flex-col lg:flex-row justify-between lg:items-end gap-8"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+        >
           <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary-container/8 to-transparent pointer-events-none" />
 
           <div className="relative z-10 max-w-3xl">
@@ -106,10 +118,16 @@ export default function TempleDetail() {
               Support Project
             </button>
           </div>
-        </section>
+        </motion.section>
 
         {/* Bento Grid — tonal hierarchy, no section borders */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-12 gap-8"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+        >
 
           {/* Progress Dashboard — Level 2: surface-container */}
           <div className="md:col-span-4 bg-surface-container p-8 rounded-xl flex flex-col items-center justify-center text-center">
@@ -219,10 +237,16 @@ export default function TempleDetail() {
               )}
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Tabs Section */}
-        <div className="mt-8">
+        <motion.div
+          className="mt-8"
+          initial="hidden"
+          whileInView="visible"
+          variants={scaleIn}
+          viewport={viewportOnce}
+        >
           <Tabs defaultValue="updates" className="w-full">
             <TabsList className="bg-surface-container-low p-1 rounded-xl w-full max-w-md h-12">
               <TabsTrigger value="updates" className="flex-1 rounded-lg data-[state=active]:bg-surface-container-lowest data-[state=active]:text-primary font-bold">
@@ -294,7 +318,7 @@ export default function TempleDetail() {
               </TabsContent>
             </div>
           </Tabs>
-        </div>
+        </motion.div>
 
       </div>
     </Layout>

@@ -1,6 +1,8 @@
+import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
 import { BarChart, Bar, ResponsiveContainer, XAxis, Tooltip, YAxis } from "recharts";
+import { fadeInUp, staggerContainer, viewportOnce } from "@/lib/animations";
 import { Link } from "wouter";
 import { ArrowRight, Building2, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -46,20 +48,32 @@ export default function RegionalInsights() {
       <div className="px-6 md:px-12 max-w-screen-2xl mx-auto space-y-16 pb-20">
         
         {/* Header */}
-        <section className="max-w-3xl">
-          <h1 className="text-4xl md:text-5xl font-bold font-serif text-on-surface mb-4 leading-tight">
+        <motion.section
+          className="max-w-3xl"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+        >
+          <motion.h1 variants={fadeInUp} className="text-4xl md:text-5xl font-bold font-serif text-on-surface mb-4 leading-tight">
             Global Regional <span className="text-primary italic">Intelligence</span>
-          </h1>
-          <p className="text-on-surface-variant font-sans text-lg leading-relaxed max-w-2xl">
+          </motion.h1>
+          <motion.p variants={fadeInUp} className="text-on-surface-variant font-sans text-lg leading-relaxed max-w-2xl">
             Comparative analysis across continental zones. This data reflects active temple construction, land acquisitions, and institutional capital allocation for the current fiscal year.
-          </p>
-        </section>
+          </motion.p>
+        </motion.section>
 
         {/* Comparison Bento Grid */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <motion.section
+          className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+        >
           
           {/* Projects per Region */}
-          <div className="bg-surface-container-low p-8 rounded-xl shadow-sm border border-outline-variant/10">
+          <motion.div variants={fadeInUp} className="bg-surface-container-low p-8 rounded-xl shadow-sm border border-outline-variant/10">
             <div className="flex justify-between items-end mb-10">
               <div>
                 <h3 className="text-xl font-bold font-serif text-on-surface mb-1">Projects per Region</h3>
@@ -84,10 +98,10 @@ export default function RegionalInsights() {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           {/* Investment by Region */}
-          <div className="bg-surface-container-low p-8 rounded-xl shadow-sm border border-outline-variant/10 flex flex-col">
+          <motion.div variants={fadeInUp} className="bg-surface-container-low p-8 rounded-xl shadow-sm border border-outline-variant/10 flex flex-col">
             <div className="flex justify-between items-end mb-10">
               <div>
                 <h3 className="text-xl font-bold font-serif text-on-surface mb-1">Investment by Region</h3>
@@ -110,11 +124,16 @@ export default function RegionalInsights() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
         {/* Top Developing Cities Table */}
-        <section>
+        <motion.section
+          initial="hidden"
+          whileInView="visible"
+          variants={fadeInUp}
+          viewport={viewportOnce}
+        >
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl font-bold font-serif">Top Developing Cities</h2>
             <button className="text-sm font-semibold text-primary flex items-center gap-1 hover:underline">
@@ -150,10 +169,15 @@ export default function RegionalInsights() {
               </tbody>
             </table>
           </div>
-        </section>
+        </motion.section>
 
         {/* Priority Projects */}
-        <section>
+        <motion.section
+          initial="hidden"
+          whileInView="visible"
+          variants={staggerContainer}
+          viewport={viewportOnce}
+        >
           <div className="mb-10">
             <h2 className="text-3xl font-bold font-serif mb-2">Upcoming Visions</h2>
             <p className="text-on-surface-variant font-medium">Projects currently in Land Acquisition & Concept Design stages.</p>
@@ -210,7 +234,7 @@ export default function RegionalInsights() {
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
       </div>
     </Layout>
