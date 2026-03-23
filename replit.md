@@ -22,7 +22,7 @@ The main application is "ISKCON Intelligence" — a sacred project intelligence 
 
 ### Pages
 - `/` — Global Dashboard (hero, metric cards, McKinsey Intelligence Briefs, regional distribution chart, spotlight)
-- `/temples` — Project Directory "The Global Mandala" (filter bar, grid/list toggle, project cards)
+- `/temples` — Project Directory "The Global Mandala" (filter bar, grid/list/map toggle, project cards, interactive world map)
 - `/temples/:id` — Temple Detail (breadcrumb, bento grid with SVG progress ring, financial intelligence, milestone timeline, tabs)
 - `/temples/new` — Add Temple form
 - `/regional` — Regional Insights (comparative charts, top cities table)
