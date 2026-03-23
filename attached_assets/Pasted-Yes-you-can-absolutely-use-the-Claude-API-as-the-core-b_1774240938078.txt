@@ -1,0 +1,48 @@
+Yes, you can absolutely use the Claude API as the core “brain” of a deep research system, but you need to combine it with your own retrieval/web-search layer or a platform like Perplexity’s APIs to get true autonomous research. [perplexity](https://www.perplexity.ai/help-center/en/articles/10354919-what-advanced-ai-models-are-included-in-my-subscription)
+
+## What Claude API Can Do
+
+Claude’s Messages API is well-suited for:  
+- Multi-step reasoning over long contexts (papers, reports, transcripts). [perplexity](https://www.perplexity.ai/help-center/en/articles/10354919-what-advanced-ai-models-are-included-in-my-subscription)
+- Synthesizing findings into structured outputs (briefs, comparisons, tables, action items). [perplexity](https://www.perplexity.ai/help-center/en/articles/10354919-what-advanced-ai-models-are-included-in-my-subscription)
+- Planning research steps when you feed it intermediate results (e.g., “here are 10 URLs and their summaries, what should we read next?”). [perplexity](https://www.perplexity.ai/help-center/en/articles/10354919-what-advanced-ai-models-are-included-in-my-subscription)
+
+On its own, though, Claude API does not crawl the web or “do Deep Research mode” like Perplexity’s UI. You must provide the content (via your own scrapers/search, RAG, or another API). [perplexity](https://www.perplexity.ai/help-center/en/articles/10352895-how-does-perplexity-work)
+
+## How to Turn It Into “Deep Research”
+
+To emulate Deep Research with Claude API in your own stack, you typically:  
+1. **Use a search/crawl layer**  
+   - Call a web search API or Perplexity’s upcoming Search / Agent APIs to pull candidate sources. [perplexity](https://www.perplexity.ai/hub/blog/everything-is-computer)
+   - Optionally index and re-rank with embeddings before sending to Claude. [perplexity](https://www.perplexity.ai/hub/blog/everything-is-computer)
+
+2. **Iterate with a loop/agent**  
+   - Let Claude propose a research plan: questions, subtopics, and needed sources. [perplexity](https://www.perplexity.ai/hub/blog/introducing-perplexity-deep-research)
+   - For each step, your orchestrator fetches pages / PDFs, then calls Claude to extract and summarize. [perplexity](https://www.perplexity.ai/hub/blog/introducing-perplexity-deep-research)
+   - Continue until coverage and diminishing returns are reached (e.g., “stop when marginal new info is low”). [perplexity](https://www.perplexity.ai/hub/blog/introducing-perplexity-deep-research)
+
+3. **Have Claude synthesize the final report**  
+   - Feed Claude structured notes (bullets per source, citations, quotes) and ask it to produce:  
+     - Executives summary  
+     - Sectioned deep-dive  
+     - Tables comparing options or studies  
+   - This mirrors how Perplexity Deep Research writes a report after reading many sources. [perplexity](https://www.perplexity.ai/help-center/en/articles/10352895-how-does-perplexity-work)
+
+## When Perplexity Might Be Easier
+
+For many use cases (competitive analysis, market mapping, product research), Perplexity’s own Deep Research / Pro Search already does the heavy lifting:  
+- It automatically runs dozens of searches, reads hundreds of sources, and writes a report in 2–4 minutes. [perplexity](https://www.perplexity.ai/help-center/en/articles/10352895-how-does-perplexity-work)
+- It uses top reasoning models (including Claude 4.6 Sonnet/Opus) under the hood, with citations. [perplexity](https://www.perplexity.ai/help-center/en/articles/13600190-what-s-new-in-advanced-deep-research)
+
+If you just need “deep research as a service” rather than building your own agent stack, using Deep Research directly or via Perplexity’s Agent/Search APIs (as they mature) is usually faster. [perplexity](https://www.perplexity.ai/help-center/en/articles/10352903-what-is-pro-search)
+
+## Practical suggestion for you (agency context)
+
+Given your automation and API background, a strong setup for Sengar Agency would be:  
+- Use **Perplexity Deep Research** for interactive, ad-hoc projects where a consultant would otherwise spend hours on desk research. [perplexity](https://www.perplexity.ai/hub/blog/introducing-perplexity-deep-research)
+- Build a **custom research agent** that:  
+  - Uses a search API or Perplexity Search API for retrieval. [perplexity](https://www.perplexity.ai/hub/blog/everything-is-computer)
+  - Uses **Claude API** purely for reasoning, planning, and synthesis (JSON plans, briefs, comparison tables). [perplexity](https://www.perplexity.ai/hub/blog/everything-is-computer)
+- Wrap this in your client dashboard so clients can trigger “Research Packs” (e.g., market scan, tool comparison, competitor dossier) on demand. [perplexity](https://www.perplexity.ai/hub/blog/everything-is-computer)
+
+If you share what kind of “deep research” you want (e.g., SaaS competitor analysis, real estate, policy, technical literature), a concrete Claude+search architecture with prompt skeletons can be outlined next.

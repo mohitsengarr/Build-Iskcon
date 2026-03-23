@@ -17,35 +17,36 @@ const anthropic = new Anthropic({
 
 const TEMPLE_IMAGES: Record<string, string[]> = {
   construction: [
-    "https://images.unsplash.com/photo-1561361058-c24e017dbfbc?w=800&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&h=600&fit=crop",
     "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&h=600&fit=crop",
     "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800&h=600&fit=crop",
     "https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=800&h=600&fit=crop",
   ],
   spiritual: [
     "https://images.unsplash.com/photo-1568454537842-d933259bb258?w=800&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1623834484408-8b9cadf7bff9?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1548013146-72479768bada?w=800&h=600&fit=crop",
     "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800&h=600&fit=crop",
     "https://images.unsplash.com/photo-1587474260584-136574528ed5?w=800&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1596402184320-417e7178b2cd?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=800&h=600&fit=crop",
   ],
   fundraising: [
-    "https://images.unsplash.com/photo-1617104551722-3b2d51bdb1e8?w=800&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1600093463592-8e36ae95ef56?w=800&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1513828583688-c52646db42da?w=800&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1519744346361-7a029b427a59?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1548013146-72479768bada?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1536099629323-44ada70de5a4?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=800&h=600&fit=crop",
   ],
   logistics: [
     "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&h=600&fit=crop",
     "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&h=600&fit=crop",
     "https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=800&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=800&h=600&fit=crop",
   ],
   general: [
     "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=800&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1596073419667-9d77d59f1a7f?w=800&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1549880338-65ddcdfd017b?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1568454537842-d933259bb258?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1548013146-72479768bada?w=800&h=600&fit=crop",
     "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?w=800&h=600&fit=crop",
   ],
 };
