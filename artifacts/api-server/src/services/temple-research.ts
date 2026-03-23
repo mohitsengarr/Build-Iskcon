@@ -144,6 +144,53 @@ async function perplexitySearch(query: string): Promise<PerplexityResult | null>
   }
 }
 
+// ── Wikipedia image lookup ────────────────────────────────────────────────────
+
+/**
+ * Fetches a real thumbnail image URL from Wikipedia's free open REST API.
+ * Tries the temple name first, then falls back to the city name.
+ * No API key required; CORS-open endpoint.
+ */
+async function fetchWikipediaImage(templeName: string, location: string): Promise<string | null> {
+  const parts = location.split(",").map(p => p.trim());
+  const city = parts[0] ?? location;
+  // For compound city names like "Puri Heritage Zone" → also try first word "Puri"
+  const cityFirstWord = city.split(/\s+/)[0] ?? city;
+  const state = parts[1] ?? "";
+
+  const candidates = [
+    templeName,
+    `ISKCON ${cityFirstWord}`,
+    city,
+    cityFirstWord,
+    cityFirstWord && state ? `${cityFirstWord}, ${state}` : "",
+  ].filter(Boolean);
+
+  for (const query of candidates) {
+    try {
+      const title = encodeURIComponent(query.replace(/\s+/g, "_"));
+      const res = await fetch(
+        `https://en.wikipedia.org/api/rest_v1/page/summary/${title}`,
+        { headers: { "User-Agent": "ISKCONIntelligence/1.0 (contact@iskcon-intelligence.org)" } }
+      );
+      if (!res.ok) continue;
+      const data = (await res.json()) as { thumbnail?: { source?: string } };
+      const src = data?.thumbnail?.source;
+      if (src) {
+        // Upgrade to a reasonable size (Wikipedia thumbnails can be small)
+        const upgraded = src.replace(/\/\d+px-/, "/800px-");
+        logger.info({ query, src: upgraded }, "Wikipedia image found");
+        return upgraded;
+      }
+    } catch {
+      // try next candidate
+    }
+  }
+
+  logger.info({ templeName, location }, "No Wikipedia image found for temple");
+  return null;
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface TempleUpdateResult {
@@ -326,6 +373,8 @@ Include 3-5 milestones per temple. Make data realistic and geographically divers
 
 async function insertDiscoveredTemple(temple: NewTempleResult): Promise<number | null> {
   try {
+    const wikiImage = await fetchWikipediaImage(temple.name, temple.location);
+
     const [inserted] = await db
       .insert(templesTable)
       .values({
@@ -341,6 +390,7 @@ async function insertDiscoveredTemple(temple: NewTempleResult): Promise<number |
         startDate: temple.startDate,
         expectedCompletion: temple.expectedCompletion,
         projectLead: temple.projectLead,
+        ...(wikiImage ? { coverImage: wikiImage } : {}),
       })
       .returning({ id: templesTable.id });
 
@@ -425,6 +475,11 @@ export async function runTempleSync(): Promise<{
         const goal          = parseFloat(temple.fundraisingGoal as string);
         const newRaised     = Math.min(currentRaised + research.fundraisingRaisedDelta, goal);
 
+        // Fetch a real Wikipedia image if this temple has none yet
+        const coverImage = temple.coverImage
+          ? undefined
+          : (await fetchWikipediaImage(temple.name, temple.location)) ?? undefined;
+
         await db
           .update(templesTable)
           .set({
@@ -432,6 +487,7 @@ export async function runTempleSync(): Promise<{
             phase:                research.phase,
             fundraisingRaised:    newRaised.toFixed(2),
             updatedAt:            new Date(),
+            ...(coverImage ? { coverImage } : {}),
           })
           .where(eq(templesTable.id, temple.id));
 

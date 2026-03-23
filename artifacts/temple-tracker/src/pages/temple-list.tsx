@@ -1,10 +1,149 @@
 import { Layout } from "@/components/layout/Layout";
 import { useListTemples } from "@workspace/api-client-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { MapPin, Grid, List, Search, Filter } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+
+/** Fetches a real photo from Wikipedia's free open REST API. Returns null if not found. */
+function useWikiImage(templeName: string, location: string, skip: boolean): string | null {
+  const [src, setSrc] = useState<string | null>(null);
+  const tried = useRef(false);
+
+  useEffect(() => {
+    if (skip || tried.current) return;
+    tried.current = true;
+
+    const parts = location.split(",").map(p => p.trim());
+    const city = parts[0] ?? location;
+    const cityFirstWord = city.split(/\s+/)[0] ?? city;
+    const state = parts[1] ?? "";
+    const candidates = [
+      templeName,
+      `ISKCON ${cityFirstWord}`,
+      city,
+      cityFirstWord,
+      cityFirstWord && state ? `${cityFirstWord}, ${state}` : "",
+    ].filter(Boolean);
+
+    async function tryNext(list: string[]): Promise<void> {
+      for (const query of list) {
+        try {
+          const title = encodeURIComponent(query.replace(/\s+/g, "_"));
+          const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${title}`);
+          if (!res.ok) continue;
+          const data = await res.json() as { thumbnail?: { source?: string } };
+          const imgSrc = data?.thumbnail?.source;
+          if (imgSrc) {
+            setSrc(imgSrc.replace(/\/\d+px-/, "/800px-"));
+            return;
+          }
+        } catch { /* try next */ }
+      }
+    }
+
+    tryNext(candidates);
+  }, [templeName, location, skip]);
+
+  return src;
+}
+
+interface TempleCardProps {
+  temple: {
+    id: number;
+    name: string;
+    location: string;
+    phase: string;
+    status: string;
+    constructionProgress: number;
+    fundraisingGoal: number;
+    fundraisingRaised: number;
+    coverImage?: string | null;
+  };
+  idx: number;
+}
+
+function TempleCard({ temple, idx }: TempleCardProps) {
+  const wikiSrc = useWikiImage(temple.name, temple.location, !!temple.coverImage);
+  const coverImg = temple.coverImage || wikiSrc;
+  const progressPercentage = Math.round(Math.min(100, Math.max(0, temple.constructionProgress)));
+
+  return (
+    <motion.div
+      key={temple.id}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: idx * 0.05 }}
+      className="group flex flex-col bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_24px_rgba(27,28,28,0.06)] hover:-translate-y-1 transition-transform duration-300"
+    >
+      <div className="relative h-64 overflow-hidden bg-surface-container">
+        {coverImg ? (
+          <img
+            src={coverImg}
+            alt={temple.name}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-surface-container-high">
+            <span className="text-5xl opacity-20">🛕</span>
+          </div>
+        )}
+        <div className="absolute top-4 left-4 bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+          {temple.phase}
+        </div>
+      </div>
+
+      <div className="p-8 flex-1 flex flex-col">
+        <div className="mb-6">
+          <h3 className="text-2xl font-bold font-serif text-on-surface mb-1 line-clamp-1">{temple.name}</h3>
+          <p className="text-sm text-on-surface-variant font-medium flex items-center gap-1">
+            <MapPin className="w-3 h-3" />
+            {temple.location}
+          </p>
+        </div>
+
+        <div className="space-y-4 mb-8 mt-auto">
+          <div>
+            <div className="flex justify-between text-xs font-bold uppercase tracking-tighter mb-2">
+              <span className="text-on-surface-variant">Realization</span>
+              <span className="text-primary">{progressPercentage}%</span>
+            </div>
+            <div className="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-between items-end pt-4" style={{ borderTop: '1px solid rgba(219,194,176,0.15)' }}>
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-semibold">Est. Investment</p>
+              <p className="text-lg font-bold text-on-surface">
+                ${(temple.fundraisingGoal / 1_000_000).toFixed(1)}M
+              </p>
+            </div>
+            <span className={cn(
+              "text-[10px] uppercase font-bold px-3 py-1 rounded-full",
+              temple.fundraisingRaised >= temple.fundraisingGoal
+                ? "bg-primary text-on-primary"
+                : "text-secondary bg-secondary-container/30"
+            )}>
+              {temple.fundraisingRaised >= temple.fundraisingGoal ? "Fully Funded" : "In Progress"}
+            </span>
+          </div>
+        </div>
+
+        <Link href={`/temples/${temple.id}`}>
+          <button className="w-full py-3.5 text-primary font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-primary hover:text-on-primary transition-all duration-300 bg-primary/5">
+            View Details
+          </button>
+        </Link>
+      </div>
+    </motion.div>
+  );
+}
 
 export default function TempleList() {
   const { data: temples, isLoading } = useListTemples();
@@ -128,79 +267,9 @@ export default function TempleList() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredTemples.map((temple, idx) => {
-              const coverImg = temple.coverImage || `${import.meta.env.BASE_URL}images/temple-placeholder.png`;
-              const progressPercentage = Math.round(Math.min(100, Math.max(0, temple.constructionProgress)));
-
-              return (
-                <motion.div
-                  key={temple.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: idx * 0.05 }}
-                  className="group flex flex-col bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_24px_rgba(27,28,28,0.06)] hover:-translate-y-1 transition-transform duration-300"
-                >
-                  <div className="relative h-64 overflow-hidden">
-                    <img
-                      src={coverImg}
-                      alt={temple.name}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                    <div className="absolute top-4 left-4 bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
-                      {temple.phase}
-                    </div>
-                  </div>
-
-                  <div className="p-8 flex-1 flex flex-col">
-                    <div className="mb-6">
-                      <h3 className="text-2xl font-bold font-serif text-on-surface mb-1 line-clamp-1">{temple.name}</h3>
-                      <p className="text-sm text-on-surface-variant font-medium flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
-                        {temple.location}
-                      </p>
-                    </div>
-
-                    <div className="space-y-4 mb-8 mt-auto">
-                      <div>
-                        <div className="flex justify-between text-xs font-bold uppercase tracking-tighter mb-2">
-                          <span className="text-on-surface-variant">Realization</span>
-                          <span className="text-primary">{progressPercentage}%</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
-                            style={{ width: `${progressPercentage}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between items-end pt-4" style={{ borderTop: '1px solid rgba(219,194,176,0.15)' }}>
-                        <div>
-                          <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-semibold">Est. Investment</p>
-                          <p className="text-lg font-bold text-on-surface">
-                            ${(temple.fundraisingGoal / 1_000_000).toFixed(1)}M
-                          </p>
-                        </div>
-                        <span className={cn(
-                          "text-[10px] uppercase font-bold px-3 py-1 rounded-full",
-                          temple.fundraisingRaised >= temple.fundraisingGoal
-                            ? "bg-primary text-on-primary"
-                            : "text-secondary bg-secondary-container/30"
-                        )}>
-                          {temple.fundraisingRaised >= temple.fundraisingGoal ? "Fully Funded" : "In Progress"}
-                        </span>
-                      </div>
-                    </div>
-
-                    <Link href={`/temples/${temple.id}`}>
-                      <button className="w-full py-3.5 text-primary font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-primary hover:text-on-primary transition-all duration-300 bg-primary/5">
-                        View Details
-                      </button>
-                    </Link>
-                  </div>
-                </motion.div>
-              );
-            })}
+            {filteredTemples.map((temple, idx) => (
+              <TempleCard key={temple.id} temple={temple} idx={idx} />
+            ))}
           </div>
         )}
 
