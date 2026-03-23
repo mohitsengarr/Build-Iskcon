@@ -8,6 +8,7 @@ import {
 } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import { logger } from "../lib/logger";
+import { generateComponentInsights } from "./component-insights";
 
 // ── AI clients ──────────────────────────────────────────────────────────────
 
@@ -485,6 +486,12 @@ export async function runTempleSync(): Promise<{
         updatesCreated++;
       }
     }
+
+    // Generate McKinsey-style intelligence briefs for all dashboard components
+    // (reads component-instructions.json, calls Claude, upserts to DB)
+    const freshTemples = await db.select().from(templesTable);
+    const insightsGenerated = await generateComponentInsights(freshTemples);
+    logger.info({ insightsGenerated }, "Component intelligence briefs updated");
   } catch (err) {
     logger.error({ err }, "Sync job encountered a critical error");
     await db

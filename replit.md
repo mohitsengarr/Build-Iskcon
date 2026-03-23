@@ -21,11 +21,19 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 The main application is "ISKCON Intelligence" — a sacred project intelligence platform for tracking temple construction globally.
 
 ### Pages
-- `/` — Global Dashboard (hero, metric cards, regional distribution chart, spotlight)
+- `/` — Global Dashboard (hero, metric cards, McKinsey Intelligence Briefs, regional distribution chart, spotlight)
 - `/temples` — Project Directory "The Global Mandala" (filter bar, grid/list toggle, project cards)
 - `/temples/:id` — Temple Detail (breadcrumb, bento grid with SVG progress ring, financial intelligence, milestone timeline, tabs)
 - `/temples/new` — Add Temple form
 - `/regional` — Regional Insights (comparative charts, top cities table)
+- `/social` — Social Hub (Instagram-style posts from AI-generated sync updates)
+
+### McKinsey Intelligence Briefs (Dashboard)
+- 5 AI-generated analytical cards refreshed every hour by the cron job
+- Defined in `artifacts/api-server/component-instructions.json` — **edit this file to change what components appear**
+- Claude reads current temple data and generates McKinsey-style headlines, summaries, 3 metrics, and a strategic recommendation per component
+- Stored in `component_insights` DB table; served at `GET /api/insights/components`
+- Components: Construction Pulse, Capital Formation Velocity, Geographic Intelligence, Milestone Radar, Portfolio Health Scorecard
 
 ### Claude AI Data Sync
 - Replit-managed Anthropic integration (no user key required, billed to Replit credits)
