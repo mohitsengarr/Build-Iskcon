@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
+import { WorldMap } from "@/components/WorldMap";
 import { useGetDashboardStats } from "@workspace/api-client-react";
 import { fadeInUp, fadeIn, staggerContainer, scaleIn, viewportOnce } from "@/lib/animations";
 import {
   Building2, IndianRupee, ChartBar, CheckCircle2, ArrowRight,
   TrendingUp, TrendingDown, Minus, Globe, Target, Shield,
-  Loader2, RefreshCcw, Play, ExternalLink, Film,
+  Loader2, RefreshCcw, Play, ExternalLink, Film, MapPin,
 } from "lucide-react";
 import { Link } from "wouter";
 import { BarChart, Bar, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from "recharts";
@@ -208,6 +209,153 @@ function ConstructionFootage() {
           ))}
         </motion.div>
       )}
+    </motion.section>
+  );
+}
+
+// ── Temples hook (for the global map) ────────────────────────────────────────
+
+interface TempleForMap {
+  id: number;
+  name: string;
+  location: string;
+  status: string;
+  constructionProgress: number;
+  fundraisingGoal: number;
+  fundraisingRaised: number;
+  latitude: number | null;
+  longitude: number | null;
+}
+
+function useTemples() {
+  const [temples, setTemples] = useState<TempleForMap[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    fetch(`${BASE}/api/temples`)
+      .then((r) => r.json())
+      .then((data) => { setTemples(Array.isArray(data) ? data : []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+  return { temples, loading };
+}
+
+// ── Global Site Map Section ───────────────────────────────────────────────────
+
+const STATUS_CFG: Record<string, { color: string; bg: string }> = {
+  planning:     { color: "#a78bfa", bg: "rgba(167,139,250,0.08)" },
+  construction: { color: "#f59e0b", bg: "rgba(245,158,11,0.08)" },
+  finishing:    { color: "#8f4e00", bg: "rgba(143,78,0,0.08)" },
+  consecrated:  { color: "#22c55e", bg: "rgba(34,197,94,0.3)" },
+};
+
+function GlobalMapSection() {
+  const { temples, loading } = useTemples();
+
+  const stats = [
+    { label: "Total Sites",        value: temples.length },
+    { label: "Under Construction", value: temples.filter((t) => t.status === "construction").length },
+    { label: "Planning Phase",     value: temples.filter((t) => t.status === "planning").length },
+    { label: "Consecrated",        value: temples.filter((t) => t.status === "consecrated").length },
+  ];
+
+  return (
+    <motion.section
+      variants={staggerContainer}
+      initial="hidden"
+      whileInView="visible"
+      viewport={viewportOnce}
+      className="space-y-6"
+    >
+      {/* Section header */}
+      <motion.div variants={fadeInUp} className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Globe className="w-4 h-4 text-primary" />
+            </div>
+            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">
+              Active Sites Worldwide
+            </span>
+          </div>
+          <h2 className="font-serif text-2xl font-bold text-on-surface">Global Mandala</h2>
+          <p className="text-sm text-on-surface-variant mt-1">
+            {temples.length} sacred projects across {new Set(temples.map((t) => t.location.split(",").pop()?.trim())).size} regions
+          </p>
+        </div>
+        <Link href="/temples?view=map" className="hidden md:flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-widest hover:opacity-70 transition-opacity">
+          Full Directory <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
+      </motion.div>
+
+      {/* Map */}
+      <motion.div variants={fadeIn}>
+        {loading ? (
+          <div className="w-full h-[440px] bg-[#0d1117] rounded-2xl animate-pulse flex items-center justify-center">
+            <Globe className="w-12 h-12 text-white/20" style={{ animation: "spin 3s linear infinite" }} />
+          </div>
+        ) : (
+          <WorldMap temples={temples} />
+        )}
+      </motion.div>
+
+      {/* Stats strip */}
+      <motion.div variants={staggerContainer} className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {stats.map((stat) => (
+          <motion.div key={stat.label} variants={fadeInUp} className="bg-surface-container-low rounded-xl p-5 text-center">
+            <p className="text-3xl font-black text-on-surface font-serif">{stat.value}</p>
+            <p className="text-[11px] uppercase tracking-widest text-on-surface-variant font-bold mt-1">{stat.label}</p>
+          </motion.div>
+        ))}
+      </motion.div>
+
+      {/* Legend + Temple mini-cards */}
+      <motion.div variants={fadeInUp} className="space-y-4">
+        {/* Legend row */}
+        <div className="flex flex-wrap gap-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+          {Object.entries(STATUS_CFG).map(([key, c]) => (
+            <div key={key} className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ background: c.color }} />
+              {key.charAt(0).toUpperCase() + key.slice(1)}
+            </div>
+          ))}
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-16 bg-surface-container-low rounded-xl animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {temples.map((temple) => {
+              const c = STATUS_CFG[temple.status] ?? STATUS_CFG.planning!;
+              return (
+                <Link key={temple.id} href={`/temples/${temple.id}`}>
+                  <div
+                    className="flex items-center gap-4 p-4 rounded-xl cursor-pointer hover:scale-[1.01] transition-transform"
+                    style={{ background: c.bg }}
+                  >
+                    <div className="w-3 h-3 rounded-full shrink-0" style={{ background: c.color }} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-on-surface truncate font-serif">{temple.name}</p>
+                      <p className="text-xs text-on-surface-variant truncate flex items-center gap-1 mt-0.5">
+                        <MapPin className="w-2.5 h-2.5 shrink-0" />
+                        {temple.location}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-xs font-bold" style={{ color: c.color }}>
+                        {Math.round(temple.constructionProgress)}%
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </motion.div>
     </motion.section>
   );
 }
@@ -567,6 +715,9 @@ export default function Dashboard() {
             </div>
           </motion.div>
         </motion.section>
+
+        {/* Global Mandala Map */}
+        <GlobalMapSection />
 
         {/* McKinsey Intelligence Briefs */}
         <IntelligenceBriefs />
