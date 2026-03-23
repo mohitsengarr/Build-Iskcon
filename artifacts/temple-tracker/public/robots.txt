@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Primary pages
+Allow: /temples
+Allow: /regional
+Allow: /social
+
+# Block admin/creation forms from indexing
+Disallow: /temples/new
+
+Sitemap: /sitemap.xml

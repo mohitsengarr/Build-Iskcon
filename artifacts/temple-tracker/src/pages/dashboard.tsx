@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/layout/Layout";
+import { SEOHead } from "@/components/SEOHead";
 import { useGetDashboardStats } from "@workspace/api-client-react";
 import {
   Building2, IndianRupee, ChartBar, CheckCircle2, ArrowRight,
@@ -292,6 +293,27 @@ export default function Dashboard() {
 
   return (
     <Layout>
+      <SEOHead
+        title="Global Dashboard"
+        description="Live intelligence on ISKCON's global temple construction portfolio — fundraising totals, construction milestones, regional distribution, and AI-driven analytics."
+        canonicalPath="/"
+        structuredData={[
+          {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "Build Iskcon",
+            description: "Tracking ISKCON's global temple construction mission",
+            url: typeof window !== "undefined" ? window.location.origin : "",
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "Build Iskcon",
+            description: "Global ISKCON temple construction intelligence platform",
+            url: typeof window !== "undefined" ? window.location.origin : "",
+          },
+        ]}
+      />
       <div className="px-4 md:px-8 max-w-screen-2xl mx-auto space-y-16">
 
         {/* Hero Section */}

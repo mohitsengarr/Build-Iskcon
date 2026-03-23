@@ -1,4 +1,5 @@
 import { Layout } from "@/components/layout/Layout";
+import { SEOHead } from "@/components/SEOHead";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Heart, MessageCircle, Repeat2, Share, MoreHorizontal, TrendingUp, RefreshCw, Zap, Clock } from "lucide-react";
@@ -296,6 +297,18 @@ export default function SocialHub() {
 
   return (
     <Layout>
+      <SEOHead
+        title="Social Hub — Community Updates"
+        description="Follow real-time construction updates, fundraising announcements, and devotee community posts from ISKCON temple projects around the world."
+        canonicalPath="/social"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          name: "Build Iskcon Social Hub",
+          description: "Community social feed for ISKCON temple construction updates and devotee announcements",
+          url: typeof window !== "undefined" ? `${window.location.origin}/social` : "",
+        }}
+      />
       <div className="px-4 md:px-8 max-w-screen-xl mx-auto pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
