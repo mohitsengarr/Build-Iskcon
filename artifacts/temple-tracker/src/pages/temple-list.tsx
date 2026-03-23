@@ -1,4 +1,5 @@
 import { Layout } from "@/components/layout/Layout";
+import { SEOHead } from "@/components/SEOHead";
 import { useListTemples } from "@workspace/api-client-react";
 import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
@@ -158,6 +159,18 @@ export default function TempleList() {
 
   return (
     <Layout>
+      <SEOHead
+        title="Project Directory — Global Temple Mandala"
+        description="Browse all active ISKCON temple construction projects worldwide. Filter by status, region, and fundraising progress. Discover temples under construction across India and internationally."
+        canonicalPath="/temples"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "ISKCON Global Temple Project Directory",
+          description: "A complete directory of ISKCON temple construction projects worldwide",
+          url: typeof window !== "undefined" ? `${window.location.origin}/temples` : "",
+        }}
+      />
       <div className="px-4 md:px-8 max-w-screen-2xl mx-auto pb-20">
 
         {/* Header & View Toggle */}

@@ -1,4 +1,5 @@
 import { Layout } from "@/components/layout/Layout";
+import { SEOHead } from "@/components/SEOHead";
 import {
   useGetTemple,
   useCreateMilestone,
@@ -55,6 +56,24 @@ export default function TempleDetail() {
 
   return (
     <Layout>
+      <SEOHead
+        title={`${temple.name} — Construction Project`}
+        description={`Track construction progress, fundraising milestones, and latest updates for ${temple.name} in ${temple.location}. ${Math.round(temple.constructionProgress)}% complete — $${(temple.fundraisingRaised / 1_000_000).toFixed(1)}M raised of $${(temple.fundraisingGoal / 1_000_000).toFixed(1)}M goal.`}
+        canonicalPath={`/temples/${temple.id}`}
+        ogType="article"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "TouristAttraction",
+          name: temple.name,
+          description: `ISKCON temple construction project in ${temple.location}`,
+          address: {
+            "@type": "PostalAddress",
+            addressLocality: temple.location.split(",")[0]?.trim(),
+            addressCountry: temple.location.includes("India") ? "IN" : undefined,
+          },
+          url: typeof window !== "undefined" ? `${window.location.origin}/temples/${temple.id}` : "",
+        }}
+      />
       <div className="px-4 md:px-8 max-w-screen-2xl mx-auto pb-20 space-y-12">
 
         {/* Breadcrumb */}

@@ -1,4 +1,5 @@
 import { Layout } from "@/components/layout/Layout";
+import { SEOHead } from "@/components/SEOHead";
 import { BarChart, Bar, ResponsiveContainer, XAxis, Tooltip, YAxis } from "recharts";
 import { Link } from "wouter";
 import { ArrowRight, Building2, MapPin } from "lucide-react";
@@ -30,6 +31,18 @@ export default function RegionalInsights() {
 
   return (
     <Layout>
+      <SEOHead
+        title="Regional Insights — Global Temple Intelligence"
+        description="Analyse ISKCON temple construction activity by region. Compare India vs international project velocity, continent-level funding gaps, and strategic expansion priorities."
+        canonicalPath="/regional"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          name: "Regional Insights — Build Iskcon",
+          description: "Regional breakdown of ISKCON temple construction progress and fundraising intelligence",
+          url: typeof window !== "undefined" ? `${window.location.origin}/regional` : "",
+        }}
+      />
       <div className="px-6 md:px-12 max-w-screen-2xl mx-auto space-y-16 pb-20">
         
         {/* Header */}
