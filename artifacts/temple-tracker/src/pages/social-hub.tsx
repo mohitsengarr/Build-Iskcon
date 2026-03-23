@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, TrendingUp, RefreshCw } from "lucide-react";
+import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, TrendingUp, RefreshCw, Zap, Clock } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +26,20 @@ interface Temple {
   name: string;
   location: string;
   status: string;
+}
+
+interface SyncStatus {
+  lastSync: {
+    jobId: number;
+    status: string;
+    templesUpdated: number;
+    templesAdded: number;
+    socialPostsCreated: number;
+    startedAt: string;
+    completedAt: string | null;
+  } | null;
+  nextSyncHint: string;
+  cronSchedule: string;
 }
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -242,9 +256,52 @@ function PostCard({ post }: { post: FeedPost }) {
   );
 }
 
+function SyncBanner({ sync }: { sync: SyncStatus | null }) {
+  if (!sync?.lastSync) return null;
+  const { lastSync } = sync;
+  const isRunning = lastSync.status === "running";
+  const timeAgo = lastSync.completedAt
+    ? formatDistanceToNow(new Date(lastSync.completedAt), { addSuffix: true })
+    : formatDistanceToNow(new Date(lastSync.startedAt), { addSuffix: true });
+
+  return (
+    <div className={cn(
+      "flex items-center justify-between gap-3 rounded-xl px-5 py-3 text-sm",
+      isRunning
+        ? "bg-primary/10 text-primary"
+        : lastSync.status === "failed"
+          ? "bg-error/10 text-error"
+          : "bg-surface-container-low text-on-surface-variant"
+    )}>
+      <div className="flex items-center gap-2.5">
+        {isRunning ? (
+          <RefreshCw className="w-4 h-4 animate-spin text-primary" />
+        ) : (
+          <Zap className="w-4 h-4 text-primary" />
+        )}
+        <span className="font-semibold text-on-surface">
+          {isRunning ? "AI sync in progress…" : "AI sync complete"}
+        </span>
+        {!isRunning && (
+          <span className="text-on-surface-variant">
+            {lastSync.socialPostsCreated} new posts · {lastSync.templesUpdated} temples updated
+            {lastSync.templesAdded > 0 && ` · ${lastSync.templesAdded} new projects discovered`}
+          </span>
+        )}
+      </div>
+      <div className="flex items-center gap-1.5 text-on-surface-variant text-xs whitespace-nowrap">
+        <Clock className="w-3.5 h-3.5" />
+        <span>{isRunning ? "Running now" : timeAgo}</span>
+        <span className="opacity-50 ml-1">· {sync.nextSyncHint}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function SocialHub() {
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [temples, setTemples] = useState<Temple[]>([]);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadFeed = () => {
@@ -259,7 +316,20 @@ export default function SocialHub() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { loadFeed(); }, []);
+  const loadSyncStatus = () => {
+    fetch(`${API}/social/sync-status`)
+      .then(r => r.json())
+      .then(data => setSyncStatus(data))
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    loadFeed();
+    loadSyncStatus();
+    // Refresh sync status every 30s to catch live cron updates
+    const interval = setInterval(loadSyncStatus, 30_000);
+    return () => clearInterval(interval);
+  }, []);
 
   const suggestedTemples = temples.slice(0, 3);
 
@@ -270,6 +340,9 @@ export default function SocialHub() {
 
           {/* ── CENTER FEED ── */}
           <div className="lg:col-span-8 space-y-6">
+
+            {/* AI Sync Status Banner */}
+            <SyncBanner sync={syncStatus} />
 
             {/* Stories Bar */}
             <div className="bg-surface-container-low rounded-xl p-5 overflow-hidden">
