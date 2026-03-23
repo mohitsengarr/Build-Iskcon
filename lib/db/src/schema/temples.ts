@@ -81,6 +81,19 @@ export const contributorsTable = pgTable("contributors", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const templeVideosTable = pgTable("temple_videos", {
+  id: serial("id").primaryKey(),
+  videoId: text("video_id").notNull().unique(),
+  title: text("title").notNull(),
+  channelName: text("channel_name").notNull().default("ISKCON"),
+  description: text("description"),
+  thumbnailUrl: text("thumbnail_url").notNull(),
+  templeId: integer("temple_id").references(() => templesTable.id, { onDelete: "set null" }),
+  publishedAt: text("published_at"),
+  sourceUrl: text("source_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertTempleSchema = createInsertSchema(templesTable).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertMilestoneSchema = createInsertSchema(milestonesTable).omit({ id: true, createdAt: true });
 export const insertUpdateSchema = createInsertSchema(projectUpdatesTable).omit({ id: true, createdAt: true });

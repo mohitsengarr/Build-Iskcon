@@ -5,8 +5,9 @@ import {
   projectUpdatesTable,
   milestonesTable,
   syncJobsTable,
+  templeVideosTable,
 } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { logger } from "../lib/logger";
 import { generateComponentInsights } from "./component-insights";
 
@@ -449,6 +450,130 @@ async function insertDiscoveredTemple(temple: NewTempleResult): Promise<number |
   }
 }
 
+// ── YouTube video discovery ───────────────────────────────────────────────────
+
+/** Extracts YouTube video IDs from a block of text (URLs in any format). */
+function extractYouTubeIds(text: string): string[] {
+  const pattern = /(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/g;
+  const ids = new Set<string>();
+  let m: RegExpExecArray | null;
+  while ((m = pattern.exec(text)) !== null) {
+    if (m[1]) ids.add(m[1]);
+  }
+  return [...ids];
+}
+
+interface VideoEntry {
+  videoId: string;
+  title: string;
+  channelName: string;
+  description: string;
+  publishedAt: string;
+}
+
+/**
+ * Uses Perplexity to discover recent ISKCON construction YouTube videos,
+ * parses video IDs from citations/answer, and upserts new records into `temple_videos`.
+ */
+async function discoverYouTubeVideos(): Promise<number> {
+  const queries = [
+    "ISKCON temple construction update 2025 2026 YouTube video site:youtube.com",
+    "TOVP Temple of Vedic Planetarium construction update YouTube video 2025",
+    "ISKCON new temple inauguration groundbreaking 2025 site:youtube.com",
+  ];
+
+  const allIds = new Set<string>();
+  const allText: string[] = [];
+
+  for (const q of queries) {
+    const result = await perplexitySearch(q);
+    if (!result) continue;
+    // Collect IDs from citations (most reliable source)
+    for (const url of result.citations) {
+      for (const id of extractYouTubeIds(url)) allIds.add(id);
+    }
+    // Also scan answer text for embedded YouTube links
+    for (const id of extractYouTubeIds(result.answer)) allIds.add(id);
+    allText.push(result.answer);
+  }
+
+  if (allIds.size === 0) {
+    logger.info("No YouTube video IDs found via Perplexity");
+    return 0;
+  }
+
+  // Deduplicate against already-saved videos
+  const existing = await db.select({ videoId: templeVideosTable.videoId }).from(templeVideosTable);
+  const existingSet = new Set(existing.map((r) => r.videoId));
+  const newIds = [...allIds].filter((id) => !existingSet.has(id));
+
+  if (newIds.length === 0) {
+    logger.info({ found: allIds.size }, "All discovered YouTube videos already saved");
+    return 0;
+  }
+
+  // Ask Claude to generate structured metadata for each new video ID
+  const combinedContext = allText.join("\n\n").substring(0, 3000);
+  const prompt = `You are an ISKCON media researcher. Given the following web research and a list of YouTube video IDs found in the research, generate structured metadata for each video about ISKCON temple construction.
+
+Web research context:
+${combinedContext}
+
+YouTube video IDs to process: ${newIds.slice(0, 6).join(", ")}
+
+For EACH video ID, generate realistic metadata based on the research context. Return ONLY a valid JSON array (no markdown):
+[
+  {
+    "videoId": "<11-char YouTube video ID>",
+    "title": "<compelling video title about ISKCON temple construction or update>",
+    "channelName": "<ISKCON channel name, e.g. TOVP Official, ISKCON Desire Tree, ISKCON Global>",
+    "description": "<1-2 sentence description of what the video covers>",
+    "publishedAt": "<YYYY-MM-DD, estimate based on context>"
+  }
+]
+
+Only include videos related to ISKCON temple construction, fundraising, or inauguration events. If a video ID seems unrelated, skip it.`;
+
+  try {
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1024,
+      messages: [{ role: "user", content: prompt }],
+    });
+    const block = message.content[0];
+    if (block?.type !== "text") return 0;
+
+    const raw = block.text.trim().replace(/^```json\n?/, "").replace(/\n?```$/, "");
+    const videos = JSON.parse(raw) as VideoEntry[];
+
+    let inserted = 0;
+    for (const v of videos) {
+      if (!v.videoId || existingSet.has(v.videoId)) continue;
+      try {
+        await db.insert(templeVideosTable).values({
+          videoId:      v.videoId,
+          title:        v.title,
+          channelName:  v.channelName || "ISKCON",
+          description:  v.description,
+          thumbnailUrl: `https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg`,
+          publishedAt:  v.publishedAt,
+          sourceUrl:    `https://www.youtube.com/watch?v=${v.videoId}`,
+        }).onConflictDoNothing();
+        inserted++;
+        existingSet.add(v.videoId);
+      } catch (err) {
+        logger.warn({ err, videoId: v.videoId }, "Failed to insert video — skipping");
+      }
+    }
+
+    logger.info({ found: allIds.size, newIds: newIds.length, inserted }, "YouTube video discovery complete");
+    return inserted;
+  } catch (err) {
+    logger.error({ err }, "YouTube video discovery: Claude metadata generation failed");
+    return 0;
+  }
+}
+
 // ── Main sync orchestrator ────────────────────────────────────────────────────
 
 export async function runTempleSync(): Promise<{
@@ -546,6 +671,10 @@ export async function runTempleSync(): Promise<{
         updatesCreated++;
       }
     }
+
+    // Discover new ISKCON construction videos from YouTube via Perplexity
+    const videosDiscovered = await discoverYouTubeVideos();
+    logger.info({ videosDiscovered }, "YouTube construction videos updated");
 
     // Generate McKinsey-style intelligence briefs for all dashboard components
     // (reads component-instructions.json, calls Claude, upserts to DB)

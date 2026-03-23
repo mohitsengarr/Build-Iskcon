@@ -4,6 +4,7 @@ import templesRouter from "./temples";
 import syncRouter from "./sync";
 import socialRouter from "./social";
 import insightsRouter from "./insights";
+import videosRouter from "./videos";
 
 const router: IRouter = Router();
 
@@ -12,5 +13,6 @@ router.use(templesRouter);
 router.use(syncRouter);
 router.use(socialRouter);
 router.use(insightsRouter);
+router.use(videosRouter);
 
 export default router;
