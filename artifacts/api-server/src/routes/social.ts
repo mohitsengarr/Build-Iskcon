@@ -17,6 +17,7 @@ router.get("/social/feed", async (req, res) => {
         author: projectUpdatesTable.author,
         category: projectUpdatesTable.category,
         imageUrl: projectUpdatesTable.imageUrl,
+        sourceUrl: projectUpdatesTable.sourceUrl,
         likes: projectUpdatesTable.likes,
         hashtags: projectUpdatesTable.hashtags,
         createdAt: projectUpdatesTable.createdAt,
