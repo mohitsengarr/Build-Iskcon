@@ -108,7 +108,7 @@ export function SyncIndicator() {
         <div className="absolute top-full right-0 mt-2 w-56 bg-surface shadow-lg rounded-xl border border-outline-variant/20 p-3 z-50 text-xs">
           <p className="font-bold text-on-surface mb-1">Claude AI Data Sync</p>
           <p className="text-on-surface-variant leading-relaxed">
-            Uses Claude to research and update temple construction progress, fundraising data, and project updates every 6 hours.
+            Uses Claude to research and update temple construction progress, fundraising data, and project updates every hour.
           </p>
           {latestJob && (
             <div className="mt-2 pt-2 border-t border-outline-variant/20 text-on-surface-variant/70 space-y-0.5">
