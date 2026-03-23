@@ -9,11 +9,16 @@ import {
 import { eq } from "drizzle-orm";
 import { logger } from "../lib/logger";
 
+// ── AI clients ──────────────────────────────────────────────────────────────
+
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-// ---------- Curated temple image pool ----------
+const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY;
+const PERPLEXITY_BASE = "https://api.perplexity.ai";
+
+// ── Image pool ───────────────────────────────────────────────────────────────
 
 const TEMPLE_IMAGES: Record<string, string[]> = {
   construction: [
@@ -52,7 +57,7 @@ const TEMPLE_IMAGES: Record<string, string[]> = {
 };
 
 function pickImage(category: string): string {
-  const pool = TEMPLE_IMAGES[category] ?? TEMPLE_IMAGES.general;
+  const pool = TEMPLE_IMAGES[category] ?? TEMPLE_IMAGES.general!;
   return pool[Math.floor(Math.random() * pool.length)]!;
 }
 
@@ -64,16 +69,81 @@ function generateHashtags(category: string, templeName: string): string {
   const slug = templeName.replace(/\s+/g, "").substring(0, 16);
   const base: Record<string, string[]> = {
     construction: ["#ISKCONConstruction", "#VedicArchitecture", "#TempleBuilding", `#${slug}`],
-    spiritual: ["#HareKrishna", "#VedicCulture", "#SpiritualJourney", `#${slug}`],
-    fundraising: ["#ISKCONFundraising", "#DharmaProject", "#VedicCentre", `#${slug}`],
-    logistics: ["#ProjectUpdate", "#ISKCONLogistics", "#TempleProject", `#${slug}`],
-    general: ["#ISKCON", "#VedicTemple", "#GlobalISKCON", `#${slug}`],
+    spiritual:    ["#HareKrishna", "#VedicCulture", "#SpiritualJourney", `#${slug}`],
+    fundraising:  ["#ISKCONFundraising", "#DharmaProject", "#VedicCentre", `#${slug}`],
+    logistics:    ["#ProjectUpdate", "#ISKCONLogistics", "#TempleProject", `#${slug}`],
+    general:      ["#ISKCON", "#VedicTemple", "#GlobalISKCON", `#${slug}`],
   };
-  const tags = base[category] ?? base.general!;
-  return tags.join(" ");
+  return (base[category] ?? base.general!).join(" ");
 }
 
-// ---------- Types ----------
+// ── Perplexity deep search ────────────────────────────────────────────────────
+
+interface PerplexityResult {
+  answer: string;
+  citations: string[];
+}
+
+/**
+ * Uses Perplexity's sonar model to search the live web for ISKCON-related content.
+ * Returns the answer text + source URLs. Falls back gracefully if unavailable.
+ */
+async function perplexitySearch(query: string): Promise<PerplexityResult | null> {
+  if (!PERPLEXITY_API_KEY) {
+    logger.warn("PERPLEXITY_API_KEY not set — skipping web search");
+    return null;
+  }
+
+  try {
+    const response = await fetch(`${PERPLEXITY_BASE}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${PERPLEXITY_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "sonar",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are an ISKCON project research assistant. Search the web and return detailed, factual information about ISKCON temple construction, fundraising, and spiritual events. Include specific numbers, dates, and milestones where available. Be concise and factual.",
+          },
+          { role: "user", content: query },
+        ],
+        max_tokens: 1024,
+        temperature: 0.2,
+        return_citations: true,
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      logger.error({ status: response.status, errText, query }, "Perplexity API error");
+      return null;
+    }
+
+    const data = (await response.json()) as {
+      choices: Array<{ message: { content: string } }>;
+      citations?: string[];
+    };
+
+    const answer = data.choices[0]?.message?.content ?? "";
+    const citations = data.citations ?? [];
+
+    logger.info(
+      { query: query.substring(0, 80), citationCount: citations.length },
+      "Perplexity search completed"
+    );
+
+    return { answer, citations };
+  } catch (err) {
+    logger.error({ err, query }, "Perplexity search failed");
+    return null;
+  }
+}
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 interface TempleUpdateResult {
   constructionProgress: number;
@@ -84,6 +154,7 @@ interface TempleUpdateResult {
     content: string;
     category: "construction" | "fundraising" | "spiritual" | "logistics" | "general";
   };
+  sourcedFromWeb: boolean;
 }
 
 interface NewTempleResult {
@@ -112,16 +183,26 @@ interface NewTempleResult {
   };
 }
 
-// ---------- Update existing temples ----------
+// ── Update existing temples ───────────────────────────────────────────────────
 
 async function researchTemple(
   temple: typeof templesTable.$inferSelect
 ): Promise<TempleUpdateResult | null> {
   const currentProgress = parseFloat(temple.constructionProgress as string);
-  const currentRaised = parseFloat(temple.fundraisingRaised as string);
-  const goal = parseFloat(temple.fundraisingGoal as string);
+  const currentRaised   = parseFloat(temple.fundraisingRaised as string);
+  const goal            = parseFloat(temple.fundraisingGoal as string);
 
-  const prompt = `You are an ISKCON project intelligence analyst. Generate a realistic data update for the following active temple project. Do NOT fabricate historical facts — provide plausible incremental updates as if time has passed since the last data sync.
+  // Step 1: Perplexity searches the live web for real news about this temple
+  const webQuery = `ISKCON "${temple.name}" ${temple.location} temple construction update fundraising 2025 2026 latest news`;
+  const webData  = await perplexitySearch(webQuery);
+
+  const webContext = webData
+    ? `\n\n=== LIVE WEB RESEARCH (Perplexity, sourced from the internet) ===\n${webData.answer}\n\nSources: ${webData.citations.slice(0, 5).join(", ") || "N/A"}\n=== END WEB RESEARCH ===`
+    : "";
+
+  // Step 2: Claude synthesizes web data + known temple data into structured JSON
+  const prompt = `You are an ISKCON project intelligence analyst. Generate a data update for the following active temple project.
+${webContext ? "Real-world web research has been provided below — prioritise this over generic estimates where it contains specific facts, numbers, or milestones." : "No live web data is available — generate a plausible incremental update."}
 
 Temple: ${temple.name}
 Location: ${temple.location}
@@ -131,104 +212,116 @@ Construction Progress: ${currentProgress}%
 Status: ${temple.status}
 Fundraising Goal: $${(goal / 1_000_000).toFixed(1)}M
 Fundraising Raised: $${(currentRaised / 1_000_000).toFixed(1)}M
+${webContext}
 
-Return ONLY a valid JSON object (no markdown, no explanation) matching this exact schema:
+Return ONLY a valid JSON object (no markdown, no explanation) matching this schema:
 {
   "constructionProgress": <number between ${Math.min(currentProgress, 99)} and ${Math.min(currentProgress + 3, 100)}>,
-  "phase": "<current phase name — can be same or slightly updated>",
-  "fundraisingRaisedDelta": <new USD amount raised since last update, between 50000 and 800000>,
+  "phase": "<current phase name — updated if web research indicates a change>",
+  "fundraisingRaisedDelta": <USD raised since last update, between 50000 and 800000>,
   "update": {
-    "title": "<concise, specific update title for this temple>",
-    "content": "<2-3 sentence detailed update reflecting spiritual and construction progress>",
+    "title": "<specific, news-quality headline for this temple>",
+    "content": "<2-3 sentence update grounded in any web research found, reflecting real spiritual and construction progress>",
     "category": "<one of: construction, fundraising, spiritual, logistics, general>"
-  }
+  },
+  "sourcedFromWeb": ${webData ? "true" : "false"}
 }`;
 
   try {
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 8192,
+      max_tokens: 1024,
       messages: [{ role: "user", content: prompt }],
     });
 
     const block = message.content[0];
-    if (block.type !== "text") return null;
+    if (block?.type !== "text") return null;
 
     const raw = block.text.trim().replace(/^```json\n?/, "").replace(/\n?```$/, "");
-    return JSON.parse(raw) as TempleUpdateResult;
+    const result = JSON.parse(raw) as TempleUpdateResult;
+    result.sourcedFromWeb = !!webData;
+    return result;
   } catch (err) {
-    logger.error({ err, templeId: temple.id, templeName: temple.name }, "Claude research failed for temple");
+    logger.error({ err, templeId: temple.id, templeName: temple.name }, "Claude synthesis failed");
     return null;
   }
 }
 
-// ---------- Discover new temples ----------
+// ── Discover new temples ──────────────────────────────────────────────────────
 
-async function discoverNewTemples(
-  existingNames: string[]
-): Promise<NewTempleResult[]> {
+async function discoverNewTemples(existingNames: string[]): Promise<NewTempleResult[]> {
   const exclusionList = existingNames.map((n) => `- ${n}`).join("\n");
 
-  const prompt = `You are an ISKCON global project intelligence researcher. Your job is to identify real or highly plausible ISKCON temple construction projects happening worldwide that should be tracked.
+  // Step 1: Perplexity searches for genuinely new ISKCON projects worldwide
+  const webQuery =
+    "new ISKCON temple construction projects 2024 2025 2026 worldwide inauguration groundbreaking fundraising campaign";
+  const webData = await perplexitySearch(webQuery);
+
+  const webContext = webData
+    ? `\n\n=== LIVE WEB RESEARCH ON NEW ISKCON PROJECTS ===\n${webData.answer}\n\nSources: ${webData.citations.slice(0, 5).join(", ") || "N/A"}\n=== END WEB RESEARCH ===`
+    : "";
+
+  const prompt = `You are an ISKCON global project intelligence researcher identifying new temple projects to track.
 
 The following projects are ALREADY tracked — do NOT include them:
 ${exclusionList}
+${webContext}
 
-Discover exactly 2 NEW ISKCON temple or Vedic cultural centre projects from different global regions (e.g. Europe, Americas, Africa, Southeast Asia, Middle East, Australia). These should be distinct from Indian-subcontinent projects already tracked. Base them on known ISKCON expansion patterns, real cities with ISKCON presence, and plausible project scales.
+${webData ? "Use the live web research above to identify REAL or highly plausible new projects. Prioritise projects actually mentioned in the web research. Fill in missing structured details realistically." : "Generate 2 plausible new ISKCON projects from under-represented global regions."}
 
-Return ONLY a valid JSON array (no markdown, no explanation) with exactly 2 objects, each matching this schema:
+Discover exactly 2 NEW ISKCON temple or Vedic cultural centre projects from different global regions (e.g. Europe, Americas, Africa, Southeast Asia, Middle East, Oceania). Return ONLY a valid JSON array (no markdown) with exactly 2 objects:
 [
   {
-    "name": "<official Sanskrit/English project name>",
+    "name": "<official project name>",
     "location": "<City, Country>",
-    "deity": "<primary deity — e.g. Radha Krishna, Gaura Nitai, etc.>",
-    "description": "<2-3 sentence description of the project vision and significance>",
-    "status": "<one of: planning, construction, finishing, consecrated, operational>",
-    "phase": "<current construction phase name>",
+    "deity": "<primary deity>",
+    "description": "<2-3 sentence description>",
+    "status": "<planning|construction|finishing|consecrated|operational>",
+    "phase": "<current construction phase>",
     "constructionProgress": <integer 0-85>,
-    "fundraisingGoal": <total USD goal as integer, e.g. 12000000>,
-    "fundraisingRaised": <USD raised so far as integer>,
+    "fundraisingGoal": <total USD as integer>,
+    "fundraisingRaised": <USD raised as integer>,
     "startDate": "<YYYY-MM-DD>",
     "expectedCompletion": "<YYYY-MM-DD>",
-    "projectLead": "<name of project lead or initiating devotee>",
+    "projectLead": "<devotee or project lead name>",
     "milestones": [
-      {
-        "title": "<milestone name>",
-        "description": "<one sentence>",
-        "status": "<pending|in_progress|completed>",
-        "targetDate": "<YYYY-MM-DD>"
-      }
+      { "title": "<milestone>", "description": "<one sentence>", "status": "<pending|in_progress|completed>", "targetDate": "<YYYY-MM-DD>" }
     ],
     "initialUpdate": {
-      "title": "<first project update headline>",
-      "content": "<2-3 sentence update announcing the project or a key achievement>",
+      "title": "<announcement headline>",
+      "content": "<2-3 sentence update grounded in any real news found>",
       "category": "<construction|fundraising|spiritual|logistics|general>"
     }
   }
 ]
 
-Include 3-5 milestones per temple. Make the data realistic, geographically diverse, and consistent with ISKCON's known global expansion in 2024-2026.`;
+Include 3-5 milestones per temple. Make data realistic and geographically diverse.`;
 
   try {
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 8192,
+      max_tokens: 4096,
       messages: [{ role: "user", content: prompt }],
     });
 
     const block = message.content[0];
-    if (block.type !== "text") return [];
+    if (block?.type !== "text") return [];
 
-    const raw = block.text.trim().replace(/^```json\n?/, "").replace(/\n?```$/, "");
+    const raw    = block.text.trim().replace(/^```json\n?/, "").replace(/\n?```$/, "");
     const parsed = JSON.parse(raw) as NewTempleResult[];
+
+    logger.info(
+      { count: parsed.length, webSourced: !!webData },
+      "New temple discovery complete"
+    );
     return Array.isArray(parsed) ? parsed : [];
   } catch (err) {
-    logger.error({ err }, "Claude discovery of new temples failed");
+    logger.error({ err }, "Temple discovery failed");
     return [];
   }
 }
 
-// ---------- Insert a newly discovered temple ----------
+// ── Insert a newly discovered temple ─────────────────────────────────────────
 
 async function insertDiscoveredTemple(temple: NewTempleResult): Promise<number | null> {
   try {
@@ -266,27 +359,30 @@ async function insertDiscoveredTemple(temple: NewTempleResult): Promise<number |
     }
 
     const category = temple.initialUpdate.category;
-    const image = pickImage(category);
-    const likes = generateLikes();
+    const image    = pickImage(category);
+    const likes    = generateLikes();
     const hashtags = generateHashtags(category, temple.name);
 
-    const [socialPost] = await db.insert(projectUpdatesTable).values({
-      templeId,
-      title: temple.initialUpdate.title,
-      content: temple.initialUpdate.content,
-      author: temple.projectLead || "Hare Krishna",
-      category,
-      imageUrl: image,
-      likes,
-      hashtags,
-    }).returning({ id: projectUpdatesTable.id });
+    const [socialPost] = await db
+      .insert(projectUpdatesTable)
+      .values({
+        templeId,
+        title:    temple.initialUpdate.title,
+        content:  temple.initialUpdate.content,
+        author:   temple.projectLead || "Hare Krishna",
+        category,
+        imageUrl: image,
+        likes,
+        hashtags,
+      })
+      .returning({ id: projectUpdatesTable.id });
 
     logger.info(
       {
         templeId,
-        name: temple.name,
-        location: temple.location,
-        socialPostId: socialPost?.id,
+        name:           temple.name,
+        location:       temple.location,
+        socialPostId:   socialPost?.id,
         socialCategory: category,
         milestonesAdded: temple.milestones?.length ?? 0,
       },
@@ -299,7 +395,7 @@ async function insertDiscoveredTemple(temple: NewTempleResult): Promise<number |
   }
 }
 
-// ---------- Main sync orchestrator ----------
+// ── Main sync orchestrator ────────────────────────────────────────────────────
 
 export async function runTempleSync(): Promise<{
   jobId: number;
@@ -313,11 +409,10 @@ export async function runTempleSync(): Promise<{
     .returning();
 
   let templesUpdated = 0;
-  let templesAdded = 0;
+  let templesAdded   = 0;
   let updatesCreated = 0;
 
   try {
-    // 1. Update existing temples
     const temples = await db.select().from(templesTable);
 
     for (const temple of temples) {
@@ -326,46 +421,51 @@ export async function runTempleSync(): Promise<{
         if (!research) continue;
 
         const currentRaised = parseFloat(temple.fundraisingRaised as string);
-        const goal = parseFloat(temple.fundraisingGoal as string);
-        const newRaised = Math.min(currentRaised + research.fundraisingRaisedDelta, goal);
+        const goal          = parseFloat(temple.fundraisingGoal as string);
+        const newRaised     = Math.min(currentRaised + research.fundraisingRaisedDelta, goal);
 
         await db
           .update(templesTable)
           .set({
             constructionProgress: research.constructionProgress.toFixed(2),
-            phase: research.phase,
-            fundraisingRaised: newRaised.toFixed(2),
-            updatedAt: new Date(),
+            phase:                research.phase,
+            fundraisingRaised:    newRaised.toFixed(2),
+            updatedAt:            new Date(),
           })
           .where(eq(templesTable.id, temple.id));
 
         const category = research.update.category;
-        const image = pickImage(category);
-        const likes = generateLikes();
+        const image    = pickImage(category);
+        const likes    = generateLikes();
         const hashtags = generateHashtags(category, temple.name);
 
-        const [inserted] = await db.insert(projectUpdatesTable).values({
-          templeId: temple.id,
-          title: research.update.title,
-          content: research.update.content,
-          author: temple.projectLead || "Hare Krishna",
-          category,
-          imageUrl: image,
-          likes,
-          hashtags,
-        }).returning({ id: projectUpdatesTable.id });
+        const [inserted] = await db
+          .insert(projectUpdatesTable)
+          .values({
+            templeId: temple.id,
+            title:    research.update.title,
+            content:  research.update.content,
+            author:   temple.projectLead || "Hare Krishna",
+            category,
+            imageUrl: image,
+            likes,
+            hashtags,
+          })
+          .returning({ id: projectUpdatesTable.id });
 
         templesUpdated++;
         updatesCreated++;
+
         logger.info(
           {
-            templeId: temple.id,
-            templeName: temple.name,
-            socialPostId: inserted?.id,
+            templeId:       temple.id,
+            templeName:     temple.name,
+            socialPostId:   inserted?.id,
             socialCategory: category,
-            socialLikes: likes,
-            newProgress: research.constructionProgress,
-            newPhase: research.phase,
+            socialLikes:    likes,
+            newProgress:    research.constructionProgress,
+            newPhase:       research.phase,
+            webSourced:     research.sourcedFromWeb,
           },
           "Temple synced → social hub post created"
         );
@@ -374,9 +474,9 @@ export async function runTempleSync(): Promise<{
       }
     }
 
-    // 2. Discover and add new temple projects
+    // Discover 2 new global ISKCON projects each cycle
     const existingNames = temples.map((t) => t.name);
-    const newTemples = await discoverNewTemples(existingNames);
+    const newTemples    = await discoverNewTemples(existingNames);
 
     for (const newTemple of newTemples) {
       const id = await insertDiscoveredTemple(newTemple);
@@ -390,23 +490,23 @@ export async function runTempleSync(): Promise<{
     await db
       .update(syncJobsTable)
       .set({
-        status: "failed",
-        error: String(err),
+        status:         "failed",
+        error:          String(err),
         templesUpdated,
         templesAdded,
         updatesCreated,
-        completedAt: new Date(),
+        completedAt:    new Date(),
       })
-      .where(eq(syncJobsTable.id, job.id));
-    return { jobId: job.id, templesUpdated, templesAdded, updatesCreated };
+      .where(eq(syncJobsTable.id, job!.id));
+    return { jobId: job!.id, templesUpdated, templesAdded, updatesCreated };
   }
 
   await db
     .update(syncJobsTable)
     .set({ status: "completed", templesUpdated, templesAdded, updatesCreated, completedAt: new Date() })
-    .where(eq(syncJobsTable.id, job.id));
+    .where(eq(syncJobsTable.id, job!.id));
 
-  return { jobId: job.id, templesUpdated, templesAdded, updatesCreated };
+  return { jobId: job!.id, templesUpdated, templesAdded, updatesCreated };
 }
 
 export async function getLatestSyncJob() {
