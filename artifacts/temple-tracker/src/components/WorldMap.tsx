@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
 import { MapPin, X } from "lucide-react";
 
-const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+const GEO_URL = `${import.meta.env.BASE_URL}countries-110m.json`;
 
 const STATUS_CONFIG: Record<string, { color: string; ring: string; label: string }> = {
   planning:     { color: "#a78bfa", ring: "rgba(167,139,250,0.3)", label: "Planning" },
