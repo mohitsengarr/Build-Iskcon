@@ -27,6 +27,17 @@ The main application is "ISKCON Intelligence" — a sacred project intelligence 
 - `/temples/new` — Add Temple form
 - `/regional` — Regional Insights (comparative charts, top cities table)
 
+### Claude AI Data Sync
+- Replit-managed Anthropic integration (no user key required, billed to Replit credits)
+- `POST /api/sync` — trigger manual sync, returns 202 immediately
+- `GET /api/sync/status` — returns current sync status + recent job history
+- Cron job runs automatically every 6 hours (node-cron in `artifacts/api-server/src/index.ts`)
+- Claude researches each temple and generates: updated progress %, phase name, fundraising delta, new project update post
+- `sync_jobs` table tracks all sync runs (status, temples updated, updates created, timestamps)
+- `SyncIndicator` component in nav shows "Sync Data" button + "last synced X ago" badge
+- Service: `artifacts/api-server/src/services/temple-research.ts`
+- Route: `artifacts/api-server/src/routes/sync.ts`
+
 ### Design System
 - Branding: "ISKCON Intelligence", Noto Serif headlines, Inter body
 - Colors: saffron primary #8f4e00, gold secondary #735c00, parchment surface #fbf9f8
