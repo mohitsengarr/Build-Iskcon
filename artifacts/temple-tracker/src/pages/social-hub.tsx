@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, TrendingUp, RefreshCw, Zap, Clock } from "lucide-react";
+import { Heart, MessageCircle, Repeat2, Share, MoreHorizontal, TrendingUp, RefreshCw, Zap, Clock } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -118,11 +118,9 @@ function AvatarBadge({ name, size = "sm" }: { name: string; size?: "sm" | "md" }
   );
 }
 
-function PostCard({ post }: { post: FeedPost }) {
+function PostCard({ post, isLast = false }: { post: FeedPost; isLast?: boolean }) {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likes);
-  const [bookmarked, setBookmarked] = useState(false);
-  const [imgError, setImgError] = useState(false);
 
   const handleLike = async () => {
     if (liked) return;
@@ -133,124 +131,86 @@ function PostCard({ post }: { post: FeedPost }) {
     } catch {}
   };
 
-  const city = post.templeLocation.split(",")[0]?.trim().toUpperCase() ?? "";
   const handle = toHandle(post.author);
+  const timeAgo = formatDistanceToNow(new Date(post.createdAt), { addSuffix: true });
 
   return (
-    <article className="bg-surface-container-lowest rounded-xl shadow-[0_4px_24px_rgba(27,28,28,0.06)] overflow-hidden hover:-translate-y-0.5 transition-transform duration-200">
-      {/* Header */}
-      <div className="px-5 py-4 flex items-center justify-between">
+    <article className="flex gap-3 px-5 py-4">
+      {/* Left: avatar + thread line */}
+      <div className="flex flex-col items-center flex-shrink-0">
         <Link href={`/temples/${post.templeId}`}>
-          <div className="flex items-center gap-3 cursor-pointer group">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-secondary-container p-[2px] flex-shrink-0">
-              <div className="w-full h-full rounded-full bg-surface-container-high flex items-center justify-center">
-                <span className="text-primary font-bold text-xs font-serif">
-                  {getInitials(post.templeName)}
-                </span>
-              </div>
-            </div>
-            <div>
-              <p className="text-sm font-bold text-on-surface group-hover:text-primary transition-colors leading-none mb-0.5">
-                {handle}
-              </p>
-              <p className="text-[10px] text-on-surface-variant uppercase tracking-widest font-semibold">
-                {city}
-              </p>
+          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-secondary-container p-[2px] flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity">
+            <div className="w-full h-full rounded-full bg-surface-container-high flex items-center justify-center">
+              <span className="text-primary font-bold text-xs font-serif">
+                {getInitials(post.templeName)}
+              </span>
             </div>
           </div>
         </Link>
-        <button className="text-on-surface-variant hover:text-on-surface transition-colors p-1 rounded-full hover:bg-surface-container">
-          <MoreHorizontal className="w-5 h-5" />
-        </button>
+        {!isLast && (
+          <div className="w-px flex-1 mt-2 bg-on-surface/10 min-h-[24px]" />
+        )}
       </div>
 
-      {/* Image */}
-      {post.imageUrl && !imgError ? (
-        <div className="aspect-video w-full bg-surface-container relative overflow-hidden">
-          <img
-            src={post.imageUrl}
-            alt={post.title}
-            className="w-full h-full object-cover"
-            loading="lazy"
-            onError={() => setImgError(true)}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
-          <div className="absolute top-3 left-3">
+      {/* Right: content */}
+      <div className="flex-1 min-w-0 pb-4">
+        {/* Header row */}
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2 min-w-0">
+            <Link href={`/temples/${post.templeId}`}>
+              <span className="text-sm font-bold text-on-surface hover:text-primary transition-colors cursor-pointer truncate">
+                {handle}
+              </span>
+            </Link>
             <span className={cn(
-              "text-[10px] font-bold uppercase px-2.5 py-1 rounded-full backdrop-blur-sm",
+              "text-[10px] font-bold uppercase px-2 py-0.5 rounded-full flex-shrink-0",
               CATEGORY_COLORS[post.category] ?? CATEGORY_COLORS.general
             )}>
               {post.category}
             </span>
           </div>
-        </div>
-      ) : (
-        <div className="aspect-video w-full bg-surface-container flex items-center justify-center relative">
-          <span className="text-4xl opacity-30">🛕</span>
-          <div className="absolute top-3 left-3">
-            <span className={cn(
-              "text-[10px] font-bold uppercase px-2.5 py-1 rounded-full",
-              CATEGORY_COLORS[post.category] ?? CATEGORY_COLORS.general
-            )}>
-              {post.category}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Body */}
-      <div className="px-5 py-4 space-y-3">
-        {/* Action row */}
-        <div className="flex items-center justify-between">
-          <div className="flex gap-5">
-            <button
-              onClick={handleLike}
-              className={cn("transition-all hover:scale-110 active:scale-90 duration-150",
-                liked ? "text-error" : "text-on-surface-variant hover:text-error"
-              )}
-            >
-              <Heart className={cn("w-6 h-6", liked && "fill-current")} />
-            </button>
-            <button className="text-on-surface-variant hover:text-primary transition-colors hover:scale-110 duration-150">
-              <MessageCircle className="w-6 h-6" />
-            </button>
-            <button className="text-on-surface-variant hover:text-primary transition-colors hover:scale-110 duration-150">
-              <Send className="w-6 h-6" />
+          <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+            <span className="text-xs text-on-surface-variant">{timeAgo}</span>
+            <button className="text-on-surface-variant hover:text-on-surface transition-colors p-0.5 rounded-full hover:bg-surface-container">
+              <MoreHorizontal className="w-4 h-4" />
             </button>
           </div>
-          <button
-            onClick={() => setBookmarked(b => !b)}
-            className={cn("transition-all hover:scale-110 duration-150",
-              bookmarked ? "text-primary" : "text-on-surface-variant"
-            )}
-          >
-            <Bookmark className={cn("w-6 h-6", bookmarked && "fill-current")} />
-          </button>
         </div>
 
-        {/* Likes */}
-        <p className="text-sm font-bold text-on-surface">
-          {likeCount.toLocaleString()} likes
+        {/* Text content */}
+        <p className="text-sm text-on-surface leading-relaxed mb-2">
+          {post.content}
         </p>
-
-        {/* Caption */}
-        <div className="text-sm text-on-surface leading-relaxed">
-          <span className="font-bold">{handle} </span>
-          {post.content.length > 180 ? post.content.slice(0, 180) + "…" : post.content}
-        </div>
 
         {/* Hashtags */}
         {post.hashtags && (
-          <p className="text-sm text-primary font-medium">{post.hashtags}</p>
+          <p className="text-sm text-primary font-medium mb-3">{post.hashtags}</p>
         )}
 
-        <button className="text-xs text-on-surface-variant font-medium hover:text-primary transition-colors uppercase tracking-tight">
-          View all comments
-        </button>
-
-        <p className="text-[10px] text-outline uppercase tracking-tighter">
-          {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true }).toUpperCase()}
-        </p>
+        {/* Action row */}
+        <div className="flex items-center gap-4 mt-1">
+          <button
+            onClick={handleLike}
+            className={cn(
+              "flex items-center gap-1.5 text-xs transition-all duration-150 hover:scale-105 active:scale-95",
+              liked ? "text-error" : "text-on-surface-variant hover:text-error"
+            )}
+          >
+            <Heart className={cn("w-4 h-4", liked && "fill-current")} />
+            <span>{likeCount.toLocaleString()}</span>
+          </button>
+          <button className="flex items-center gap-1.5 text-xs text-on-surface-variant hover:text-primary transition-colors hover:scale-105 duration-150">
+            <MessageCircle className="w-4 h-4" />
+            <span>Reply</span>
+          </button>
+          <button className="flex items-center gap-1.5 text-xs text-on-surface-variant hover:text-primary transition-colors hover:scale-105 duration-150">
+            <Repeat2 className="w-4 h-4" />
+            <span>Repost</span>
+          </button>
+          <button className="flex items-center gap-1.5 text-xs text-on-surface-variant hover:text-primary transition-colors hover:scale-105 duration-150">
+            <Share className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </article>
   );
@@ -364,25 +324,23 @@ export default function SocialHub() {
 
             {/* Feed Posts */}
             {loading ? (
-              <div className="space-y-6">
-                {[1,2].map(i => (
-                  <div key={i} className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_24px_rgba(27,28,28,0.06)]">
-                    <div className="px-5 py-4 flex gap-3 items-center">
+              <div className="bg-surface-container-lowest rounded-xl shadow-[0_2px_16px_rgba(27,28,28,0.06)] divide-y divide-on-surface/5">
+                {[1,2,3,4].map(i => (
+                  <div key={i} className="flex gap-3 px-5 py-4">
+                    <div className="flex flex-col items-center flex-shrink-0">
                       <div className="w-10 h-10 rounded-full bg-surface-container-high animate-pulse" />
-                      <div className="flex-1 space-y-2">
-                        <div className="w-32 h-3 bg-surface-container-high rounded animate-pulse" />
-                        <div className="w-20 h-2 bg-surface-container-high rounded animate-pulse" />
-                      </div>
+                      {i < 4 && <div className="w-px flex-1 mt-2 bg-on-surface/10 min-h-[24px]" />}
                     </div>
-                    <div className="aspect-video bg-surface-container-high animate-pulse" />
-                    <div className="p-5 space-y-3">
-                      <div className="flex gap-4">
-                        {[1,2,3].map(j => <div key={j} className="w-6 h-6 bg-surface-container-high rounded-full animate-pulse" />)}
+                    <div className="flex-1 space-y-2 pb-4">
+                      <div className="flex justify-between">
+                        <div className="w-28 h-3 bg-surface-container-high rounded animate-pulse" />
+                        <div className="w-16 h-2.5 bg-surface-container-high rounded animate-pulse" />
                       </div>
-                      <div className="w-28 h-3 bg-surface-container-high rounded animate-pulse" />
-                      <div className="space-y-1.5">
-                        <div className="w-full h-3 bg-surface-container-high rounded animate-pulse" />
-                        <div className="w-3/4 h-3 bg-surface-container-high rounded animate-pulse" />
+                      <div className="w-full h-3 bg-surface-container-high rounded animate-pulse" />
+                      <div className="w-5/6 h-3 bg-surface-container-high rounded animate-pulse" />
+                      <div className="w-3/4 h-3 bg-surface-container-high rounded animate-pulse" />
+                      <div className="flex gap-4 pt-1">
+                        {[1,2,3].map(j => <div key={j} className="w-10 h-2.5 bg-surface-container-high rounded animate-pulse" />)}
                       </div>
                     </div>
                   </div>
@@ -390,10 +348,10 @@ export default function SocialHub() {
               </div>
             ) : posts.length === 0 ? (
               <div className="bg-surface-container-low rounded-xl p-16 text-center">
-                <div className="text-6xl mb-6">🕌</div>
+                <div className="text-6xl mb-6">🛕</div>
                 <h3 className="font-serif text-2xl font-bold text-on-surface mb-3">No posts yet</h3>
                 <p className="text-on-surface-variant text-sm mb-8 max-w-xs mx-auto leading-relaxed">
-                  The social feed is populated by the AI sync. Trigger a manual sync to generate posts with photos.
+                  The social feed is populated by the AI sync. Trigger a manual sync to generate posts.
                 </p>
                 <button
                   onClick={loadFeed}
@@ -403,7 +361,11 @@ export default function SocialHub() {
                 </button>
               </div>
             ) : (
-              posts.map(post => <PostCard key={post.id} post={post} />)
+              <div className="bg-surface-container-lowest rounded-xl shadow-[0_2px_16px_rgba(27,28,28,0.06)] divide-y divide-on-surface/5">
+                {posts.map((post, idx) => (
+                  <PostCard key={post.id} post={post} isLast={idx === posts.length - 1} />
+                ))}
+              </div>
             )}
           </div>
 
