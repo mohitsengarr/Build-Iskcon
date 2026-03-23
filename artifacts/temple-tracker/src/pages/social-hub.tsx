@@ -75,9 +75,10 @@ function getInitials(name: string): string {
   return (words[0]![0]! + words[1]![0]!).toUpperCase();
 }
 
-// Format author as a handle
+// Format author as a short handle — max 3 words to stay readable on mobile
 function toHandle(author: string): string {
-  return author.replace(/\s+/g, "_").replace(/[^A-Za-z0-9_]/g, "");
+  const words = author.trim().split(/\s+/).slice(0, 3);
+  return words.join("_").replace(/[^A-Za-z0-9_]/g, "");
 }
 
 const RING_GRADIENTS = [
@@ -226,33 +227,33 @@ function SyncBanner({ sync }: { sync: SyncStatus | null }) {
 
   return (
     <div className={cn(
-      "flex items-center justify-between gap-3 rounded-xl px-5 py-3 text-sm",
+      "flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm",
       isRunning
         ? "bg-primary/10 text-primary"
         : lastSync.status === "failed"
           ? "bg-error/10 text-error"
           : "bg-surface-container-low text-on-surface-variant"
     )}>
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2 min-w-0">
         {isRunning ? (
-          <RefreshCw className="w-4 h-4 animate-spin text-primary" />
+          <RefreshCw className="w-4 h-4 animate-spin text-primary flex-shrink-0" />
         ) : (
-          <Zap className="w-4 h-4 text-primary" />
+          <Zap className="w-4 h-4 text-primary flex-shrink-0" />
         )}
-        <span className="font-semibold text-on-surface">
+        <span className="font-semibold text-on-surface whitespace-nowrap">
           {isRunning ? "AI sync in progress…" : "AI sync complete"}
         </span>
         {!isRunning && (
-          <span className="text-on-surface-variant">
-            {lastSync.socialPostsCreated} new posts · {lastSync.templesUpdated} temples updated
-            {lastSync.templesAdded > 0 && ` · ${lastSync.templesAdded} new projects discovered`}
+          <span className="hidden sm:inline text-on-surface-variant truncate">
+            · {lastSync.socialPostsCreated} posts · {lastSync.templesUpdated} temples updated
+            {lastSync.templesAdded > 0 && ` · ${lastSync.templesAdded} discovered`}
           </span>
         )}
       </div>
-      <div className="flex items-center gap-1.5 text-on-surface-variant text-xs whitespace-nowrap">
-        <Clock className="w-3.5 h-3.5" />
-        <span>{isRunning ? "Running now" : timeAgo}</span>
-        <span className="opacity-50 ml-1">· {sync.nextSyncHint}</span>
+      <div className="flex items-center gap-1 text-on-surface-variant text-xs whitespace-nowrap flex-shrink-0">
+        <Clock className="w-3 h-3" />
+        <span>{isRunning ? "Now" : timeAgo}</span>
+        <span className="hidden md:inline opacity-50 ml-1">· {sync.nextSyncHint}</span>
       </div>
     </div>
   );
