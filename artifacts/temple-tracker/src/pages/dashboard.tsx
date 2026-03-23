@@ -7,7 +7,7 @@ import {
   Loader2, RefreshCcw,
 } from "lucide-react";
 import { Link } from "wouter";
-import { BarChart, Bar, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis } from "recharts";
+import { BarChart, Bar, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from "recharts";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -176,7 +176,7 @@ function IntelligenceBriefs() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="font-serif text-3xl font-bold text-on-surface">Intelligence Briefs</h2>
-            <p className="text-sm text-on-surface-variant mt-1">McKinsey-style analysis — generated every hour by AI research</p>
+            <p className="text-sm text-on-surface-variant mt-1">McKinsey-style analysis — AI-generated every hour from live Perplexity + Claude research</p>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -206,7 +206,7 @@ function IntelligenceBriefs() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="font-serif text-3xl font-bold text-on-surface">Intelligence Briefs</h2>
-            <p className="text-sm text-on-surface-variant mt-1">McKinsey-style analysis — generated every hour by AI research</p>
+            <p className="text-sm text-on-surface-variant mt-1">McKinsey-style analysis — AI-generated every hour from live Perplexity + Claude research</p>
           </div>
         </div>
         <div className="bg-surface-container rounded-2xl p-12 text-center">
@@ -234,6 +234,7 @@ function IntelligenceBriefs() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-serif text-3xl font-bold text-on-surface">Intelligence Briefs</h2>
+            <p className="text-sm text-on-surface-variant mt-1">McKinsey-style analysis — AI-generated every hour from live Perplexity + Claude research</p>
         </div>
         <button
           onClick={load}
@@ -294,7 +295,7 @@ export default function Dashboard() {
       <div className="px-4 md:px-8 max-w-screen-2xl mx-auto space-y-16">
 
         {/* Hero Section */}
-        <section className="relative rounded-xl overflow-hidden bg-surface-container-low h-[450px] flex items-center">
+        <section className="relative rounded-xl overflow-hidden bg-surface-container-low min-h-[480px] sm:h-[450px] flex items-center py-8 sm:py-0">
           <div className="absolute inset-0 z-0 opacity-40">
             <img
               src={`${import.meta.env.BASE_URL}images/dashboard-hero.png`}
@@ -304,23 +305,24 @@ export default function Dashboard() {
           </div>
           <div className="absolute inset-0 bg-gradient-to-r from-surface via-surface/60 to-transparent z-10" />
 
-          <div className="relative z-20 px-12 max-w-2xl">
-            <h1 className="font-serif text-5xl font-bold text-on-surface mb-4 leading-tight">
+          <div className="relative z-20 px-6 sm:px-12 max-w-2xl">
+            <span className="text-xs font-semibold uppercase tracking-widest text-primary/80 mb-2 block">The Mahaprabhu Prophecy</span>
+            <h1 className="font-serif text-3xl sm:text-5xl font-bold text-on-surface mb-4 leading-tight">
               pṛthivīte āche yata nagarādi grāma <br />
               <span className="text-primary">sarvatra pracāra haibe mora nāma</span>
             </h1>
-            <p className="text-on-surface-variant font-sans text-lg mb-8 leading-relaxed">
-              As Chaitanya Mahaprabhu declared, "In every town and village throughout the world, the chanting of My name will be heard." Tracking ISKCON's sacred mission to fulfil this prophecy — project by project, continent by continent.
+            <p className="text-on-surface-variant font-sans text-base sm:text-lg mb-8 leading-relaxed">
+              As Chaitanya Mahaprabhu declared, {"\u201C"}In every town and village throughout the world, the chanting of My name will be heard.{"\u201D"} Tracking ISKCON{"\u2019"}s sacred mission to fulfil this prophecy — project by project, continent by continent.
             </p>
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/temples">
-                <button className="bg-primary text-on-primary px-8 py-3 rounded-xl font-bold text-sm tracking-wide shadow-lg hover:shadow-primary/20 transition-all active:scale-95 cursor-pointer">
+                <button className="bg-primary text-on-primary px-8 py-3 rounded-xl font-bold text-sm tracking-wide shadow-lg hover:shadow-primary/20 transition-all active:scale-95 cursor-pointer w-full sm:w-auto">
                   Explore All Projects
                 </button>
               </Link>
               <Link href="/regional">
-                <button className="bg-secondary-container text-on-secondary-container px-8 py-3 rounded-xl font-bold text-sm tracking-wide transition-all active:scale-95 hover:bg-secondary-container/80 cursor-pointer">
-                  Regional Briefs
+                <button className="bg-secondary-container text-on-secondary-container px-8 py-3 rounded-xl font-bold text-sm tracking-wide transition-all active:scale-95 hover:bg-secondary-container/80 cursor-pointer w-full sm:w-auto">
+                  Regional Insights
                 </button>
               </Link>
             </div>
@@ -336,7 +338,7 @@ export default function Dashboard() {
               </div>
               <span className="text-xs font-semibold text-primary uppercase tracking-widest">+4 this quarter</span>
             </div>
-            <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-tighter mb-1">Total Active Projects</h3>
+            <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-wide mb-1">Total Active Projects</h3>
             <div className="text-3xl font-black text-on-surface font-serif">{stats.activeProjects || stats.totalTemples}</div>
           </div>
 
@@ -347,7 +349,7 @@ export default function Dashboard() {
               </div>
               <span className="text-xs font-semibold text-secondary uppercase tracking-widest">Global Portfolio</span>
             </div>
-            <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-tighter mb-1">Total Global Investment</h3>
+            <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-wide mb-1">Total Global Investment</h3>
             <div className="text-3xl font-black text-on-surface font-serif">
               ${(stats.totalFundraisingGoal / 1_000_000).toFixed(0)}M
             </div>
@@ -358,11 +360,9 @@ export default function Dashboard() {
               <div className="w-10 h-10 rounded-lg bg-tertiary/10 flex items-center justify-center text-tertiary">
                 <ChartBar className="w-5 h-5" />
               </div>
-              <div className="w-24 h-2 bg-surface-container-highest rounded-full overflow-hidden">
-                <div className="w-[65%] h-full bg-gradient-to-r from-primary to-secondary rounded-full"></div>
-              </div>
+              <span className="text-xs font-semibold text-tertiary uppercase tracking-widest">Global Average</span>
             </div>
-            <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-tighter mb-1">Average Completion</h3>
+            <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-wide mb-1">Average Completion</h3>
             <div className="text-3xl font-black text-on-surface font-serif">
               {stats.averageProgress ? Math.round(stats.averageProgress) : 65}%
             </div>
@@ -380,7 +380,7 @@ export default function Dashboard() {
                 Final Phase
               </span>
             </div>
-            <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-tighter mb-1">Near Completion</h3>
+            <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-wide mb-1">Near Completion</h3>
             <div className="text-3xl font-black text-on-surface font-serif">
               {stats.templesByStatus?.finishing || 0}
             </div>
@@ -395,7 +395,7 @@ export default function Dashboard() {
 
           {/* Regional Distribution Chart */}
           <div className="lg:col-span-2 bg-surface-container-low rounded-xl p-8">
-            <div className="flex justify-between items-center mb-10">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-10 gap-4">
               <div>
                 <h2 className="font-serif text-2xl font-bold text-on-surface">Regional Distribution</h2>
                 <p className="text-sm text-on-surface-variant">Domestic vs. International project velocity</p>
@@ -408,6 +408,12 @@ export default function Dashboard() {
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={barData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }} barGap={2}>
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "#554336", fontSize: 12, fontWeight: 600 }}
+                    width={40}
+                  />
                   <XAxis
                     dataKey="name"
                     axisLine={false}
@@ -443,11 +449,11 @@ export default function Dashboard() {
 
             <div className="space-y-5">
               <div className="flex justify-between items-end pb-4" style={{ borderBottom: "1px solid rgba(251,249,248,0.10)" }}>
-                <span className="text-xs font-medium uppercase tracking-widest opacity-60">Status</span>
+                <span className="text-xs font-medium uppercase tracking-widest opacity-80">Status</span>
                 <span className="text-lg font-bold text-primary-container">Finishing Phase</span>
               </div>
               <div className="flex justify-between items-end pb-4" style={{ borderBottom: "1px solid rgba(251,249,248,0.10)" }}>
-                <span className="text-xs font-medium uppercase tracking-widest opacity-60">Recent Update</span>
+                <span className="text-xs font-medium uppercase tracking-widest opacity-80">Recent Update</span>
                 <span className="text-sm font-bold italic">
                   {recentProject ? new Date(recentProject.createdAt).toLocaleDateString() : "2024"}
                 </span>
