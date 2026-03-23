@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "export NODE_ENV=development && pnpm run build && pnpm run start",
-    "build": "node ./build.mjs",
+    "dev": "export NODE_ENV=development && pnpm run build:server && pnpm run start",
+    "build": "BASE_PATH=/ NODE_ENV=production pnpm --filter @workspace/temple-tracker run build && node ./build.mjs",
+    "build:server": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
