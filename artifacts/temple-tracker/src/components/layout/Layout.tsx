@@ -33,7 +33,7 @@ export function Layout({ children }: { children: ReactNode }) {
             {/* Brand Logo */}
             <Link href="/">
               <div className="font-serif text-lg sm:text-2xl font-black text-primary uppercase tracking-wider cursor-pointer">
-                ISKCON Intelligence
+                Build Iskcon
               </div>
             </Link>
 
@@ -103,7 +103,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <footer className="bg-surface w-full border-t border-on-surface-variant/10 mt-auto">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 px-6 sm:px-12 py-10 sm:py-16 w-full max-w-screen-2xl mx-auto">
           <div className="col-span-1 md:col-span-1">
-            <div className="font-serif italic text-lg text-on-surface-variant mb-4">ISKCON Global Projects</div>
+            <div className="font-serif italic text-lg text-on-surface-variant mb-4">Build Iskcon</div>
             <p className="text-on-surface-variant/80 font-sans text-xs uppercase tracking-widest font-semibold leading-relaxed">
               Dedicated to the architectural legacy of the Vedic tradition.
             </p>
@@ -120,7 +120,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
           <div className="flex flex-col justify-end">
             <p className="text-on-surface-variant/80 font-sans text-[10px] uppercase tracking-[0.2em] font-semibold">
-              © 2026 ISKCON Global Projects Office.<br/>All Rights Reserved.
+              © 2026 Build Iskcon.<br/>All Rights Reserved.
             </p>
           </div>
         </div>
