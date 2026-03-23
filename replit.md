@@ -21,7 +21,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 The main application is "ISKCON Intelligence" — a sacred project intelligence platform for tracking temple construction globally.
 
 ### Pages
-- `/` — Global Dashboard (hero, metric cards, McKinsey Intelligence Briefs, regional distribution chart, spotlight)
+- `/` — Global Dashboard (hero, metric cards, McKinsey Intelligence Briefs, Latest Construction Footage video grid, regional distribution chart, spotlight)
 - `/temples` — Project Directory "The Global Mandala" (filter bar, grid/list/map toggle, project cards, interactive world map)
 - `/temples/:id` — Temple Detail (breadcrumb, bento grid with SVG progress ring, financial intelligence, milestone timeline, tabs)
 - `/temples/new` — Add Temple form

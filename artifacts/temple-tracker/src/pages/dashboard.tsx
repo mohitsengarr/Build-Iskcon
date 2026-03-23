@@ -7,7 +7,7 @@ import { fadeInUp, fadeIn, staggerContainer, scaleIn, viewportOnce } from "@/lib
 import {
   Building2, IndianRupee, ChartBar, CheckCircle2, ArrowRight,
   TrendingUp, TrendingDown, Minus, Globe, Target, Shield,
-  Loader2, RefreshCcw,
+  Loader2, RefreshCcw, Play, ExternalLink, Film,
 } from "lucide-react";
 import { Link } from "wouter";
 import { BarChart, Bar, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from "recharts";
@@ -64,6 +64,151 @@ function ConfidenceBadge({ confidence }: { confidence: "High" | "Medium" | "Low"
     <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${map[confidence]}`}>
       {confidence} Confidence
     </span>
+  );
+}
+
+// ── Temple Videos ─────────────────────────────────────────────────────────────
+
+interface TempleVideo {
+  id: number;
+  videoId: string;
+  title: string;
+  channelName: string;
+  description: string | null;
+  thumbnailUrl: string;
+  sourceUrl: string | null;
+  publishedAt: string | null;
+  createdAt: string;
+}
+
+function useTempleVideos() {
+  const [videos, setVideos] = useState<TempleVideo[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const API = `${BASE}/api`;
+    fetch(`${API}/videos?limit=6`)
+      .then((r) => r.json())
+      .then((data) => { setVideos(Array.isArray(data) ? data : []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+  return { videos, loading };
+}
+
+function VideoCard({ video }: { video: TempleVideo }) {
+  const [hovered, setHovered] = useState(false);
+  const isYouTubeWatch = video.sourceUrl?.includes("youtube.com/watch") || video.sourceUrl?.includes("youtu.be");
+  const href = video.sourceUrl ?? `https://www.youtube.com/watch?v=${video.videoId}`;
+
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className="block group">
+      <div
+        className="relative rounded-xl overflow-hidden bg-[#0d1117] aspect-video cursor-pointer shadow-lg"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        <img
+          src={video.thumbnailUrl}
+          alt={video.title}
+          className={`w-full h-full object-cover transition-transform duration-500 ${hovered ? "scale-105" : "scale-100"}`}
+          onError={(e) => {
+            (e.target as HTMLImageElement).src =
+              "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=800&h=450&fit=crop";
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        <div
+          className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${hovered ? "opacity-100" : "opacity-0"}`}
+        >
+          <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30">
+            <Play className="w-6 h-6 text-white fill-white ml-0.5" />
+          </div>
+        </div>
+        <div className="absolute top-3 right-3 flex gap-2">
+          {isYouTubeWatch && (
+            <span className="bg-red-600 text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full">
+              YouTube
+            </span>
+          )}
+        </div>
+        <div className="absolute bottom-0 left-0 right-0 p-4">
+          <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest mb-1">
+            {video.channelName}
+          </p>
+          <p className="text-sm font-bold text-white leading-snug line-clamp-2 font-serif">
+            {video.title}
+          </p>
+        </div>
+      </div>
+      {video.description && (
+        <p className="text-xs text-on-surface-variant mt-2 line-clamp-2 leading-relaxed px-1">
+          {video.description}
+        </p>
+      )}
+    </a>
+  );
+}
+
+function ConstructionFootage() {
+  const { videos, loading } = useTempleVideos();
+
+  return (
+    <motion.section
+      variants={staggerContainer}
+      initial="hidden"
+      whileInView="visible"
+      viewport={viewportOnce}
+    >
+      <motion.div variants={fadeIn} className="flex items-center justify-between mb-8">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-8 h-8 rounded-lg bg-red-600/10 flex items-center justify-center">
+              <Film className="w-4 h-4 text-red-600" />
+            </div>
+            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">
+              Construction Footage
+            </span>
+          </div>
+          <h2 className="font-serif text-2xl font-bold text-on-surface">Latest from the Field</h2>
+          <p className="text-sm text-on-surface-variant mt-1">
+            Ground-level construction updates — refreshed automatically by AI each hour
+          </p>
+        </div>
+        <a
+          href="https://www.youtube.com/@ISKCONDesireTree"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hidden md:flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-widest hover:opacity-70 transition-opacity"
+        >
+          All Videos <ExternalLink className="w-3.5 h-3.5" />
+        </a>
+      </motion.div>
+
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="aspect-video bg-surface-container-low rounded-xl animate-pulse" />
+          ))}
+        </div>
+      ) : videos.length === 0 ? (
+        <div className="bg-surface-container-low rounded-xl p-12 text-center">
+          <Film className="w-10 h-10 text-on-surface-variant mx-auto mb-4 opacity-40" />
+          <p className="text-on-surface-variant text-sm">
+            Construction videos will appear here after the next AI sync.
+          </p>
+        </div>
+      ) : (
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          variants={staggerContainer}
+        >
+          {videos.map((video) => (
+            <motion.div key={video.id} variants={scaleIn}>
+              <VideoCard video={video} />
+            </motion.div>
+          ))}
+        </motion.div>
+      )}
+    </motion.section>
   );
 }
 
@@ -425,6 +570,9 @@ export default function Dashboard() {
 
         {/* McKinsey Intelligence Briefs */}
         <IntelligenceBriefs />
+
+        {/* Latest Construction Footage */}
+        <ConstructionFootage />
 
         {/* Bottom Section */}
         <motion.div
