@@ -45,11 +45,11 @@ export default function Dashboard() {
 
           <div className="relative z-20 px-12 max-w-2xl">
             <h1 className="font-serif text-5xl font-bold text-on-surface mb-4 leading-tight">
-              Universal Vision, <br/>
-              <span className="text-primary">Sacred Execution</span>
+              pṛthivīte āche yata nagarādi grāma <br/>
+              <span className="text-primary">sarvatra pracāra haibe mora nāma</span>
             </h1>
             <p className="text-on-surface-variant font-sans text-lg mb-8 leading-relaxed">
-              Monitoring the expansion of ISKCON's global footprint. Real-time data synthesis across 6 continents and hundreds of developing spiritual sanctuaries.
+              As Chaitanya Mahaprabhu declared, "In every town and village throughout the world, the chanting of My name will be heard." Tracking ISKCON's sacred mission to fulfil this prophecy — project by project, continent by continent.
             </p>
             <div className="flex gap-4">
               <Link href="/temples">
