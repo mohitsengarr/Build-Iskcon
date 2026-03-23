@@ -203,6 +203,7 @@ interface TempleUpdateResult {
     category: "construction" | "fundraising" | "spiritual" | "logistics" | "general";
   };
   sourcedFromWeb: boolean;
+  sourceUrl: string | null;
 }
 
 interface NewTempleResult {
@@ -288,6 +289,7 @@ Return ONLY a valid JSON object (no markdown, no explanation) matching this sche
     const raw = block.text.trim().replace(/^```json\n?/, "").replace(/\n?```$/, "");
     const result = JSON.parse(raw) as TempleUpdateResult;
     result.sourcedFromWeb = !!webData;
+    result.sourceUrl = webData?.citations?.[0] ?? null;
     return result;
   } catch (err) {
     logger.error({ err, templeId: temple.id, templeName: temple.name }, "Claude synthesis failed");
@@ -423,6 +425,7 @@ async function insertDiscoveredTemple(temple: NewTempleResult): Promise<number |
         author:   temple.projectLead || "Hare Krishna",
         category,
         imageUrl: image,
+        sourceUrl: null,
         likes,
         hashtags,
       })
@@ -505,6 +508,7 @@ export async function runTempleSync(): Promise<{
             author:   temple.projectLead || "Hare Krishna",
             category,
             imageUrl: image,
+            sourceUrl: research.sourceUrl ?? null,
             likes,
             hashtags,
           })

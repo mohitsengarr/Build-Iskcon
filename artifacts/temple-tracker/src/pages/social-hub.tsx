@@ -4,7 +4,7 @@ import { SEOHead } from "@/components/SEOHead";
 import { useState, useEffect } from "react";
 import { fadeInUp, fadeIn, staggerContainerFast, viewportOnce } from "@/lib/animations";
 import { Link } from "wouter";
-import { Heart, MessageCircle, Repeat2, Share, MoreHorizontal, TrendingUp, RefreshCw, Zap, Clock } from "lucide-react";
+import { Heart, MessageCircle, Repeat2, Share, MoreHorizontal, TrendingUp, RefreshCw, Zap, Clock, ExternalLink } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +15,7 @@ interface FeedPost {
   author: string;
   category: string;
   imageUrl: string | null;
+  sourceUrl: string | null;
   likes: number;
   hashtags: string | null;
   createdAt: string;
@@ -194,6 +195,29 @@ function PostCard({ post, isLast = false, index = 0 }: { post: FeedPost; isLast?
         {/* Hashtags */}
         {post.hashtags && (
           <p className="text-sm text-primary font-medium mb-3">{post.hashtags}</p>
+        )}
+
+        {/* Source article link */}
+        {post.sourceUrl && (
+          <a
+            href={post.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between gap-3 mb-3 px-4 py-3 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors group"
+          >
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">
+                Source Article
+              </p>
+              <p className="text-xs font-semibold text-on-surface group-hover:text-primary transition-colors truncate">
+                {(() => {
+                  try { return new URL(post.sourceUrl!).hostname.replace(/^www\./, ""); }
+                  catch { return post.sourceUrl; }
+                })()}
+              </p>
+            </div>
+            <ExternalLink className="w-3.5 h-3.5 text-on-surface-variant group-hover:text-primary transition-colors flex-shrink-0" />
+          </a>
         )}
 
         {/* Action row */}
