@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { templesTable, projectUpdatesTable } from "@workspace/db/schema";
+import { templesTable, projectUpdatesTable, syncJobsTable } from "@workspace/db/schema";
 import { eq, desc, isNotNull } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -63,6 +63,35 @@ router.post("/social/posts/:id/like", async (req, res) => {
     res.json({ likes: updated?.likes });
   } catch (err) {
     res.status(500).json({ error: "Failed to like post" });
+  }
+});
+
+// Latest sync job status — shown in the Social Hub banner
+router.get("/social/sync-status", async (_req, res) => {
+  try {
+    const [latest] = await db
+      .select()
+      .from(syncJobsTable)
+      .orderBy(desc(syncJobsTable.startedAt))
+      .limit(1);
+
+    res.json({
+      lastSync: latest
+        ? {
+            jobId: latest.id,
+            status: latest.status,
+            templesUpdated: latest.templesUpdated,
+            templesAdded: latest.templesAdded,
+            socialPostsCreated: latest.updatesCreated,
+            startedAt: latest.startedAt,
+            completedAt: latest.completedAt,
+          }
+        : null,
+      nextSyncHint: "Every hour at :00",
+      cronSchedule: "0 * * * *",
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch sync status" });
   }
 });
 

@@ -266,18 +266,32 @@ async function insertDiscoveredTemple(temple: NewTempleResult): Promise<number |
     }
 
     const category = temple.initialUpdate.category;
-    await db.insert(projectUpdatesTable).values({
+    const image = pickImage(category);
+    const likes = generateLikes();
+    const hashtags = generateHashtags(category, temple.name);
+
+    const [socialPost] = await db.insert(projectUpdatesTable).values({
       templeId,
       title: temple.initialUpdate.title,
       content: temple.initialUpdate.content,
       author: temple.projectLead || "ISKCON Intelligence",
       category,
-      imageUrl: pickImage(category),
-      likes: generateLikes(),
-      hashtags: generateHashtags(category, temple.name),
-    });
+      imageUrl: image,
+      likes,
+      hashtags,
+    }).returning({ id: projectUpdatesTable.id });
 
-    logger.info({ templeId, name: temple.name, location: temple.location }, "New temple discovered and added");
+    logger.info(
+      {
+        templeId,
+        name: temple.name,
+        location: temple.location,
+        socialPostId: socialPost?.id,
+        socialCategory: category,
+        milestonesAdded: temple.milestones?.length ?? 0,
+      },
+      "New temple discovered → social hub post created"
+    );
     return templeId;
   } catch (err) {
     logger.error({ err, templeName: temple.name }, "Failed to insert discovered temple");
@@ -326,20 +340,35 @@ export async function runTempleSync(): Promise<{
           .where(eq(templesTable.id, temple.id));
 
         const category = research.update.category;
-        await db.insert(projectUpdatesTable).values({
+        const image = pickImage(category);
+        const likes = generateLikes();
+        const hashtags = generateHashtags(category, temple.name);
+
+        const [inserted] = await db.insert(projectUpdatesTable).values({
           templeId: temple.id,
           title: research.update.title,
           content: research.update.content,
           author: temple.projectLead || "ISKCON Intelligence",
           category,
-          imageUrl: pickImage(category),
-          likes: generateLikes(),
-          hashtags: generateHashtags(category, temple.name),
-        });
+          imageUrl: image,
+          likes,
+          hashtags,
+        }).returning({ id: projectUpdatesTable.id });
 
         templesUpdated++;
         updatesCreated++;
-        logger.info({ templeId: temple.id, templeName: temple.name }, "Temple synced via Claude");
+        logger.info(
+          {
+            templeId: temple.id,
+            templeName: temple.name,
+            socialPostId: inserted?.id,
+            socialCategory: category,
+            socialLikes: likes,
+            newProgress: research.constructionProgress,
+            newPhase: research.phase,
+          },
+          "Temple synced → social hub post created"
+        );
       } catch (err) {
         logger.error({ err, templeId: temple.id }, "Failed to sync temple");
       }
