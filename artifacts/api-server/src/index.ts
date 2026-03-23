@@ -25,8 +25,8 @@ app.listen(port, (err) => {
 
   logger.info({ port }, "Server listening");
 
-  cron.schedule("0 */6 * * *", async () => {
-    logger.info("Scheduled sync starting (every 6 hours)");
+  cron.schedule("0 * * * *", async () => {
+    logger.info("Scheduled sync starting (every hour)");
     try {
       const result = await runTempleSync();
       logger.info(result, "Scheduled sync completed");
