@@ -9,6 +9,7 @@ import {
   Building2, IndianRupee, ChartBar, CheckCircle2, ArrowRight,
   TrendingUp, TrendingDown, Minus, Globe, Target, Shield,
   Loader2, RefreshCcw, Play, ExternalLink, Film, MapPin,
+  ChevronDown, ChevronUp,
 } from "lucide-react";
 import { Link } from "wouter";
 import { BarChart, Bar, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from "recharts";
@@ -363,82 +364,97 @@ function GlobalMapSection() {
 // ── McKinsey Insight Card ─────────────────────────────────────────────────────
 
 function InsightCard({ insight, featured = false }: { insight: ComponentInsight; featured?: boolean }) {
+  const [expanded, setExpanded] = useState(false);
+
   return (
     <div
-      className={`rounded-2xl p-7 flex flex-col gap-5 h-full transition-all hover:shadow-lg ${
+      className={`rounded-2xl p-6 flex flex-col gap-4 transition-all hover:shadow-md ${
         featured ? "bg-on-surface text-white" : "bg-surface-container"
       }`}
     >
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
+      {/* Header row: icon + title + badge */}
+      <div className="flex items-start gap-3">
         <div
-          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+          className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
             featured ? "bg-white/15 text-white" : "bg-primary/10 text-primary"
           }`}
         >
-          {ICON_MAP[insight.icon] ?? <ChartBar className="w-5 h-5" />}
+          {ICON_MAP[insight.icon] ?? <ChartBar className="w-4 h-4" />}
         </div>
-        <ConfidenceBadge confidence={insight.confidence} />
-      </div>
-
-      {/* Title */}
-      <div>
-        <h3 className={`font-serif text-lg font-bold leading-snug ${featured ? "text-white" : "text-on-surface"}`}>
-          {insight.title}
-        </h3>
-        <p className={`text-xs mt-0.5 ${featured ? "text-white/60" : "text-on-surface-variant"}`}>
-          {insight.subtitle}
-        </p>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2 mb-0.5">
+            <h3 className={`font-serif text-sm font-bold leading-snug truncate ${featured ? "text-white" : "text-on-surface"}`}>
+              {insight.title}
+            </h3>
+            <ConfidenceBadge confidence={insight.confidence} />
+          </div>
+          <p className={`text-[10px] uppercase tracking-widest font-semibold ${featured ? "text-white/50" : "text-on-surface-variant"}`}>
+            {insight.subtitle}
+          </p>
+        </div>
       </div>
 
       {/* Headline KPI */}
-      <div className={`text-3xl font-black font-serif leading-none ${featured ? "text-primary-container" : "text-primary"}`}>
+      <div className={`text-2xl font-black font-serif leading-tight ${featured ? "text-primary-container" : "text-primary"}`}>
         {insight.headline}
       </div>
 
-      {/* Summary */}
-      <p className={`text-sm leading-relaxed flex-1 ${featured ? "text-white/80" : "text-on-surface-variant"}`}>
+      {/* Summary — clamped by default, full when expanded */}
+      <p className={`text-sm leading-relaxed ${expanded ? "" : "line-clamp-3"} ${featured ? "text-white/75" : "text-on-surface-variant"}`}>
         {insight.summary}
       </p>
 
-      {/* Metrics row */}
-      <div className="grid grid-cols-3 gap-2">
-        {insight.metrics.map((m, i) => (
-          <div
-            key={i}
-            className={`rounded-xl p-3 flex flex-col gap-1 ${
-              featured ? "bg-white/10" : "bg-surface-container-high"
-            }`}
-          >
-            <div className="flex items-center gap-1">
-              <TrendBadge trend={m.trend} />
-            </div>
-            <div className={`text-base font-black font-serif leading-none ${featured ? "text-white" : "text-on-surface"}`}>
-              {m.value}
-            </div>
-            <div className={`text-[10px] font-medium uppercase tracking-wide leading-tight ${featured ? "text-white/50" : "text-on-surface-variant"}`}>
-              {m.label}
-            </div>
+      {/* Expanded detail: metrics + recommendation */}
+      {expanded && (
+        <>
+          {/* Metrics row */}
+          <div className="grid grid-cols-3 gap-2">
+            {insight.metrics.map((m, i) => (
+              <div
+                key={i}
+                className={`rounded-xl p-3 flex flex-col gap-1 ${
+                  featured ? "bg-white/10" : "bg-surface-container-high"
+                }`}
+              >
+                <TrendBadge trend={m.trend} />
+                <div className={`text-sm font-black font-serif leading-none mt-1 ${featured ? "text-white" : "text-on-surface"}`}>
+                  {m.value}
+                </div>
+                <div className={`text-[10px] font-medium uppercase tracking-wide leading-tight ${featured ? "text-white/50" : "text-on-surface-variant"}`}>
+                  {m.label}
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      {/* Recommendation */}
-      <div
-        className={`rounded-xl p-4 text-sm leading-relaxed ${
-          featured ? "bg-white/10 text-white/90" : "bg-primary/5 text-on-surface"
+          {/* Recommendation */}
+          <div className={`rounded-xl p-4 text-sm leading-relaxed ${featured ? "bg-white/10 text-white/85" : "bg-primary/5 text-on-surface"}`}>
+            <span className={`text-[10px] font-bold uppercase tracking-widest block mb-1 ${featured ? "text-primary-container" : "text-primary"}`}>
+              Recommendation
+            </span>
+            {insight.recommendation}
+          </div>
+
+          {/* Timestamp */}
+          <p className={`text-[10px] ${featured ? "text-white/30" : "text-on-surface-variant/50"}`}>
+            Generated {new Date(insight.generatedAt).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+          </p>
+        </>
+      )}
+
+      {/* Read more / Read less toggle */}
+      <button
+        onClick={() => setExpanded((e) => !e)}
+        className={`flex items-center gap-1 text-xs font-bold uppercase tracking-widest mt-auto pt-1 transition-opacity hover:opacity-70 ${
+          featured ? "text-primary-container" : "text-primary"
         }`}
       >
-        <span className={`text-[10px] font-bold uppercase tracking-widest block mb-1 ${featured ? "text-primary-container" : "text-primary"}`}>
-          Recommendation
-        </span>
-        {insight.recommendation}
-      </div>
-
-      {/* Footer */}
-      <div className={`text-[10px] ${featured ? "text-white/30" : "text-on-surface-variant/50"}`}>
-        Generated {new Date(insight.generatedAt).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-      </div>
+        {expanded ? (
+          <>Read less <ChevronUp className="w-3.5 h-3.5" /></>
+        ) : (
+          <>Read more <ChevronDown className="w-3.5 h-3.5" /></>
+        )}
+      </button>
     </div>
   );
 }
