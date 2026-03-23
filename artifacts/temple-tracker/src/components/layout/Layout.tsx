@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { Search, Bell, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SyncIndicator } from "@/components/SyncIndicator";
 
 export function Layout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
@@ -56,7 +57,8 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
 
           {/* Trailing Icons */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <SyncIndicator />
             <button className="p-2 text-on-surface-variant hover:text-primary hover:bg-primary/5 rounded-full transition-all active:scale-95 duration-200">
               <Search className="w-5 h-5" />
             </button>
