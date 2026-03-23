@@ -1,0 +1,47 @@
+{
+  "version": "1.2",
+  "description": "Instruction file for ISKCON Intelligence dynamic dashboard components. Each entry defines a McKinsey-style analytical brief that the hourly cron job generates using Claude. Edit prompts here to change what intelligence appears on the website.",
+  "updatedAt": "2026-03-23",
+  "components": [
+    {
+      "key": "construction-pulse",
+      "title": "Global Construction Pulse",
+      "subtitle": "Momentum Index across all active sites",
+      "icon": "building",
+      "accentColor": "primary",
+      "prompt": "You are a McKinsey senior analyst. Analyze the construction progress data across all ISKCON temple projects. Compute a composite Construction Momentum Index (0–100), identify which projects are accelerating vs. stalling, flag any that appear to be at risk of delays, and surface the single most significant construction trend. Be precise, use numbers from the data, and write like a top-tier strategy consultant briefing the ISKCON GBC board."
+    },
+    {
+      "key": "fundraising-velocity",
+      "title": "Capital Formation Velocity",
+      "subtitle": "Fundraising trajectory & goal proximity",
+      "icon": "trending-up",
+      "accentColor": "secondary",
+      "prompt": "You are a McKinsey senior analyst. Analyze the fundraising data for all tracked ISKCON temple projects. Identify which projects have the highest fundraising velocity ($ raised vs. goal %), which are closest to completion, and compute a portfolio-wide capital efficiency ratio. Surface a key insight about where donor attention should be directed. Write like a strategy consultant briefing institutional philanthropists."
+    },
+    {
+      "key": "geographic-intelligence",
+      "title": "Geographic Expansion Intelligence",
+      "subtitle": "Regional spread & strategic white-space analysis",
+      "icon": "globe",
+      "accentColor": "tertiary",
+      "prompt": "You are a McKinsey senior analyst. Analyze the geographic distribution of ISKCON temple projects across continents and regions. Identify which regions are over-represented, which are underserved (white-space opportunity), compute a diversity index, and surface the most strategically significant international expansion. Write like a global strategy consultant advising on network expansion."
+    },
+    {
+      "key": "milestone-radar",
+      "title": "Critical Milestone Radar",
+      "subtitle": "Upcoming consecrations & phase completions",
+      "icon": "target",
+      "accentColor": "primary",
+      "prompt": "You are a McKinsey senior analyst. Based on the expected completion dates and current progress of all ISKCON temple projects, identify which temples are expected to reach consecration or major milestone completion within the next 12 months. Estimate probability of on-time completion for each and flag high-impact milestones. Write like a project portfolio analyst briefing a senior steering committee."
+    },
+    {
+      "key": "portfolio-health",
+      "title": "Portfolio Health Scorecard",
+      "subtitle": "Executive risk & opportunity matrix",
+      "icon": "shield",
+      "accentColor": "secondary",
+      "prompt": "You are a McKinsey senior analyst. Assess the overall health of ISKCON's global temple construction portfolio. Rate portfolio health across four dimensions: construction velocity, financial health, geographic diversity, and milestone adherence. Produce an overall health score and the single most important strategic recommendation for the GBC board this quarter. Write like a senior partner delivering a board-level briefing."
+    }
+  ]
+}
