@@ -9,6 +9,7 @@ interface SyncStatus {
     id: number;
     status: "running" | "completed" | "failed";
     templesUpdated: number;
+    templesAdded: number;
     updatesCreated: number;
     startedAt: string;
     completedAt: string | null;
@@ -113,7 +114,12 @@ export function SyncIndicator() {
             <div className="mt-2 pt-2 border-t border-outline-variant/20 text-on-surface-variant/70 space-y-0.5">
               <p>Last run: {lastSyncedAt ? formatDistanceToNow(lastSyncedAt, { addSuffix: true }) : "in progress"}</p>
               {latestJob.status === "completed" && (
-                <p>{latestJob.templesUpdated} temples updated · {latestJob.updatesCreated} new posts</p>
+                <>
+                  <p>{latestJob.templesUpdated} temples updated · {latestJob.updatesCreated} new posts</p>
+                  {latestJob.templesAdded > 0 && (
+                    <p className="text-primary font-semibold">+{latestJob.templesAdded} new projects discovered</p>
+                  )}
+                </>
               )}
             </div>
           )}
