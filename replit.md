@@ -16,6 +16,24 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
 
+## Temple Tracker App
+
+The main application is "ISKCON Intelligence" — a sacred project intelligence platform for tracking temple construction globally.
+
+### Pages
+- `/` — Global Dashboard (hero, metric cards, regional distribution chart, spotlight)
+- `/temples` — Project Directory "The Global Mandala" (filter bar, grid/list toggle, project cards)
+- `/temples/:id` — Temple Detail (breadcrumb, bento grid with SVG progress ring, financial intelligence, milestone timeline, tabs)
+- `/temples/new` — Add Temple form
+- `/regional` — Regional Insights (comparative charts, top cities table)
+
+### Design System
+- Branding: "ISKCON Intelligence", Noto Serif headlines, Inter body
+- Colors: saffron primary #8f4e00, gold secondary #735c00, parchment surface #fbf9f8
+- Top navigation bar (glassmorphic, no sidebar)
+- No hard borders — tonal background shifts only
+- Saffron-to-gold gradient progress bars
+
 ## Structure
 
 ```text

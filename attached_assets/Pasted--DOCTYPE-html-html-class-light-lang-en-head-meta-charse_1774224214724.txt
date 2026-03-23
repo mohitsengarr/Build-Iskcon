@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Project Detail - ISKCON Intelligence</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Noto+Serif:ital,wght@0,400;0,700;0,900;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#8f4e00",
+              "primary-container": "#ff9933",
+              "background": "#fbf9f8",
+              "surface-tint": "#8f4e00",
+              "inverse-primary": "#ffb77a",
+              "error-container": "#ffdad6",
+              "surface-container": "#f0eded",
+              "secondary": "#735c00",
+              "on-tertiary-container": "#3a4557",
+              "on-secondary-fixed-variant": "#574500",
+              "on-secondary": "#ffffff",
+              "on-surface-variant": "#554336",
+              "on-error-container": "#93000a",
+              "surface": "#fbf9f8",
+              "on-secondary-container": "#745c00",
+              "outline-variant": "#dbc2b0",
+              "surface-variant": "#e4e2e1",
+              "on-background": "#1b1c1c",
+              "tertiary-fixed-dim": "#bcc7dd",
+              "surface-container-lowest": "#ffffff",
+              "outline": "#887364",
+              "on-tertiary-fixed": "#111c2c",
+              "surface-container-low": "#f6f3f2",
+              "surface-dim": "#dcd9d9",
+              "tertiary-container": "#a7b2c8",
+              "secondary-fixed-dim": "#e9c349",
+              "on-primary-fixed": "#2e1500",
+              "on-primary-container": "#693800",
+              "surface-container-high": "#eae7e7",
+              "inverse-on-surface": "#f3f0f0",
+              "tertiary-fixed": "#d8e3fa",
+              "on-primary": "#ffffff",
+              "on-primary-fixed-variant": "#6d3a00",
+              "surface-container-highest": "#e4e2e1",
+              "on-tertiary-fixed-variant": "#3c475a",
+              "secondary-container": "#fed65b",
+              "on-surface": "#1b1c1c",
+              "secondary-fixed": "#ffe088",
+              "tertiary": "#545f72",
+              "error": "#ba1a1a",
+              "inverse-surface": "#303030",
+              "on-tertiary": "#ffffff",
+              "on-secondary-fixed": "#241a00",
+              "surface-bright": "#fbf9f8",
+              "primary-fixed-dim": "#ffb77a",
+              "on-error": "#ffffff",
+              "primary-fixed": "#ffdcc2"
+            },
+            fontFamily: {
+              "headline": ["Noto Serif"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-effect {
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+      }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar -->
+<header class="fixed top-0 z-50 w-full bg-[#fbf9f8] dark:bg-stone-900/80 backdrop-blur-md shadow-[0_4px_24px_rgba(27,28,28,0.06)]">
+<div class="flex justify-between items-center w-full px-8 py-4 max-w-screen-2xl mx-auto">
+<div class="flex items-center gap-8">
+<span class="font-['Noto_Serif'] text-2xl font-black text-[#8f4e00] dark:text-[#ff9933] uppercase tracking-wider">ISKCON Intelligence</span>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-[#554336] dark:text-stone-400 font-medium hover:text-[#8f4e00] transition-colors duration-300" href="#">Global Dashboard</a>
+<a class="text-[#8f4e00] dark:text-[#ff9933] font-bold border-b-2 border-[#8f4e00] pb-1" href="#">Project Directory</a>
+<a class="text-[#554336] dark:text-stone-400 font-medium hover:text-[#8f4e00] transition-colors duration-300" href="#">Regional Insights</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-[#8f4e00]/5 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-[#8f4e00]">search</span>
+</button>
+<button class="p-2 rounded-full hover:bg-[#8f4e00]/5 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-[#8f4e00]">notifications</span>
+</button>
+<button class="p-2 rounded-full hover:bg-[#8f4e00]/5 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-[#8f4e00]">account_circle</span>
+</button>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-16 px-8 max-w-screen-2xl mx-auto">
+<!-- Breadcrumb -->
+<nav class="flex items-center gap-2 mb-8 text-on-surface-variant font-medium text-sm tracking-tight">
+<span>Global</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span>India</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span>West Bengal</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="text-primary font-bold">Mayapur</span>
+</nav>
+<!-- Hero Section -->
+<section class="mb-12">
+<div class="flex flex-col lg:flex-row lg:items-end justify-between gap-8 bg-surface-container-low p-10 rounded-xl relative overflow-hidden">
+<div class="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary-container/10 to-transparent pointer-events-none"></div>
+<div class="relative z-10">
+<h1 class="font-headline font-bold text-5xl text-on-surface mb-4 leading-tight">Temple of the Vedic Planetarium</h1>
+<div class="flex flex-wrap items-center gap-4">
+<span class="px-4 py-1.5 rounded-full bg-primary-container text-on-primary-container font-semibold text-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">architecture</span>
+                            Structural Completion
+                        </span>
+<a class="text-primary hover:underline flex items-center gap-1 font-medium italic" href="#">
+                            Official Website <span class="material-symbols-outlined text-sm">open_in_new</span>
+</a>
+</div>
+</div>
+<div class="relative z-10">
+<button class="bg-primary text-on-primary px-8 py-3.5 rounded-xl font-bold text-lg hover:shadow-lg transition-all active:scale-95">Support Project</button>
+</div>
+</div>
+</section>
+<!-- Bento Grid Content -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+<!-- Progress Dashboard -->
+<div class="md:col-span-4 flex flex-col gap-6">
+<div class="bg-surface-container p-8 rounded-xl h-full flex flex-col items-center justify-center text-center">
+<h3 class="font-label uppercase tracking-widest text-xs font-bold text-on-surface-variant mb-8">Progress Dashboard</h3>
+<div class="relative w-48 h-48 mb-8">
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-surface-container-highest" cx="96" cy="96" fill="transparent" r="88" stroke="currentColor" stroke-width="12"></circle>
+<circle class="text-primary" cx="96" cy="96" fill="transparent" r="88" stroke="currentColor" stroke-dasharray="553" stroke-dashoffset="100" stroke-width="12"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="font-headline text-5xl font-black text-on-surface">82%</span>
+<span class="text-xs uppercase tracking-tighter font-bold text-on-surface-variant">Completed</span>
+</div>
+</div>
+<p class="text-on-surface-variant font-medium">Current Phase</p>
+<p class="font-headline text-xl text-on-surface font-bold">Dome tiling in progress</p>
+</div>
+</div>
+<!-- Financial Intelligence -->
+<div class="md:col-span-8">
+<div class="bg-surface-container-low p-8 rounded-xl h-full border border-outline-variant/15">
+<div class="flex justify-between items-start mb-10">
+<div>
+<h3 class="font-label uppercase tracking-widest text-xs font-bold text-on-surface-variant mb-1">Financial Intelligence</h3>
+<p class="text-2xl font-headline font-bold text-on-surface">Resource Allocation &amp; Gap Analysis</p>
+</div>
+<span class="material-symbols-outlined text-primary text-3xl">analytics</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-10">
+<div class="space-y-1">
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-tighter">Total Estimated</p>
+<p class="text-3xl font-bold text-on-surface">$100M</p>
+</div>
+<div class="space-y-1">
+<p class="text-xs font-bold text-primary uppercase tracking-tighter">Amount Raised</p>
+<p class="text-3xl font-bold text-primary">$75M</p>
+</div>
+<div class="space-y-1">
+<p class="text-xs font-bold text-error uppercase tracking-tighter">Pending Gap</p>
+<p class="text-3xl font-bold text-error">$25M</p>
+</div>
+</div>
+<!-- Visual Gap Chart -->
+<div class="space-y-3">
+<div class="flex justify-between text-xs font-bold text-on-surface-variant uppercase">
+<span>Funding Status</span>
+<span>25% Remaining</span>
+</div>
+<div class="h-4 w-full bg-surface-container-highest rounded-full overflow-hidden flex">
+<div class="h-full bg-primary" style="width: 75%;"></div>
+<div class="h-full bg-error/20" style="width: 25%;"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Milestone Timeline -->
+<div class="md:col-span-12">
+<div class="bg-surface-container-low p-10 rounded-xl relative overflow-hidden">
+<h3 class="font-label uppercase tracking-widest text-xs font-bold text-on-surface-variant mb-12">Milestone Timeline: The Thread of Devotion</h3>
+<div class="relative flex flex-col md:flex-row justify-between items-start gap-12">
+<!-- Connecting Line -->
+<div class="hidden md:block absolute top-6 left-0 w-full h-0.5 bg-outline-variant/30 z-0"></div>
+<!-- Milestone 1 -->
+<div class="relative z-10 md:w-1/3 flex flex-col gap-4">
+<div class="w-12 h-12 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container shadow-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div>
+<span class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Jan 2010</span>
+<h4 class="font-headline font-bold text-xl text-on-surface">Foundation Laid</h4>
+<p class="text-on-surface-variant text-sm mt-2 leading-relaxed">The cornerstone was placed following ancient Vedic architectural rituals, establishing the spiritual anchor of the structure.</p>
+</div>
+</div>
+<!-- Milestone 2 -->
+<div class="relative z-10 md:w-1/3 flex flex-col gap-4">
+<div class="w-12 h-12 rounded-full bg-primary border-4 border-surface-container-low flex items-center justify-center text-on-primary shadow-lg scale-110">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">engineering</span>
+</div>
+<div>
+<span class="text-xs font-bold text-primary uppercase tracking-widest">Active Phase</span>
+<h4 class="font-headline font-bold text-xl text-on-surface">Dome Construction</h4>
+<p class="text-on-surface-variant text-sm mt-2 leading-relaxed">Currently installing the intricate tiling and planetary ornaments on the main celestial dome.</p>
+</div>
+</div>
+<!-- Milestone 3 -->
+<div class="relative z-10 md:w-1/3 flex flex-col gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">event</span>
+</div>
+<div>
+<span class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Target 2026</span>
+<h4 class="font-headline font-bold text-xl text-on-surface">Deity Installation</h4>
+<p class="text-on-surface-variant text-sm mt-2 leading-relaxed">The grand opening and ceremonial installation of the presiding Deities in their new home.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Architecture Gallery -->
+<div class="md:col-span-8">
+<div class="bg-surface-container p-8 rounded-xl h-full">
+<div class="flex justify-between items-center mb-8">
+<h3 class="font-label uppercase tracking-widest text-xs font-bold text-on-surface-variant">Architecture Gallery</h3>
+<button class="text-primary text-sm font-bold flex items-center gap-1">View All <span class="material-symbols-outlined text-sm">arrow_forward</span></button>
+</div>
+<div class="grid grid-cols-3 gap-4">
+<div class="aspect-square bg-surface-variant rounded-lg overflow-hidden group">
+<img alt="Architectural Render 1" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Grand architectural render of a temple dome at sunset" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBM0BzV3v0svNw7YjGC0Ay1W7Vl9W6MqvkKeg-Pmjj3SMnF70LEevkgJuiI9t6ffGKe1iFpemzGlTuk9tv7IWYeCF_Wwf_JxY_00F6dTjHyUvYy8HDmbjftzvhTUpKl7hRwxKzm58BebLuhAmU5TVDGJ8FO1t1p7300kw8_vSVGpYhjwqFRKjC4Llfli1sOyCE67EPBD8ts7NDgLutvRIxZuq2KNCDYOxvXC4q-VdOF7lWozx8fIT9iiSe9eaTFo2UQ2EZBBcmI_Vm_"/>
+</div>
+<div class="aspect-square bg-surface-variant rounded-lg overflow-hidden group">
+<img alt="Site Progress 1" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Construction site view of a large circular foundation" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1tzBu4sRUALVUUbsDSMmZl5qPnH8MUhQC0qIHivaBMzGGVTSnepPuXGW5VbsEu-XVmoBzIiuEZTXwDW9e9Djm_gsx5OSCzpEyUZKNwcQXUbhXH7YzdVvJpjn-zLuU34bbZ1HEr8ElSVyT4i4XGglamfmaylHIlVr0iQrc68GzINNZXc6H1A6hOTWkR24U1Hxl6ydA-UyuvpKKkRscsUtwMbdzrAIKwNIHuSdoZaAAW6n_pawvSzs0_I1kg-3Dj27xB7xeim_d1wN9"/>
+</div>
+<div class="aspect-square bg-surface-variant rounded-lg overflow-hidden group">
+<img alt="Site Progress 2" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Intricate marble carvings on a temple pillar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCD0uDKeyVSYdn_hwjyove1Wbai5fgqm8iJSaaZXeMYWbzjoS27eFTxIIsCpCOZQqmRUkUud_2Ac1CJG-ZHbl6IrB4cgYyXQuAT8PnD-ZvuEUxMtZkgPtsICDTjx7dRdwXxmfysM0ek2et1s5tDF70l8kOa1zZx1xBGDvmXt0SRMVkLXa5BepMrgJss075xfQ2PDwo_Okn0Wm_zkcKrU5f7qnybLj2QASyZNbfx4Hdl0M1AJwFukq7b31xDTsInYb9GuOUaUFBFwLaY"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Contact & Logistics -->
+<div class="md:col-span-4">
+<div class="bg-primary p-8 rounded-xl text-on-primary h-full">
+<h3 class="font-label uppercase tracking-widest text-xs font-bold opacity-70 mb-8">Project Governance</h3>
+<div class="flex items-center gap-4 mb-8">
+<div class="w-16 h-16 rounded-full border-2 border-secondary p-1">
+<img alt="Project Head" class="w-full h-full rounded-full object-cover" data-alt="Professional portrait of a middle-aged project manager" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0h2izax-T3fdlxa96p_KA7zXITAhWAfOmPNBnYhM8bvecy2_h-TG8b3TKfqR0kRFCxBadzuVdcvtKdhPpfr-0mqR3jo_aF7ZKEurJpU_O8jXKUzIYM3khaB1pgw0X9i1mdJDNTVTDzc9QEQPPzY35y5185zLiT1MEsqPnjvzZ5WnrSr3cQQcu6lpk0fc0pZXeBaXyy11zUjCyHYivSF8nMVLQxE-epoCsle_ECRQ5V9zm9vK62UxJknZ0C1_tXu5T16xCdzUgLCvS"/>
+</div>
+<div>
+<p class="font-headline font-bold text-lg">H.G. Braja Vilasa Prabhu</p>
+<p class="text-sm opacity-80">Director of Fundraising</p>
+</div>
+</div>
+<div class="space-y-6">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-secondary-container">mail</span>
+<div>
+<p class="text-xs font-bold uppercase tracking-tighter opacity-70">General Inquiries</p>
+<p class="font-medium">contact@tovp.org</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-secondary-container">location_on</span>
+<div>
+<p class="text-xs font-bold uppercase tracking-tighter opacity-70">Project Site</p>
+<p class="font-medium">Mayapur, West Bengal, India</p>
+</div>
+</div>
+</div>
+<button class="w-full mt-10 bg-secondary-container text-on-secondary-container py-3 rounded-lg font-bold hover:bg-white transition-colors">Book a Site Visit</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-[#fbf9f8] dark:bg-stone-950 w-full border-t border-[#554336]/10 mt-12">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-8 px-12 py-16 w-full max-w-screen-2xl mx-auto">
+<div class="col-span-1 md:col-span-1">
+<span class="font-['Noto_Serif'] italic text-lg text-[#554336]">ISKCON Global Projects</span>
+<p class="mt-4 text-[#554336] dark:text-stone-500 font-['Inter'] text-xs uppercase tracking-widest font-semibold leading-relaxed">
+                    Dedicated to the architectural legacy of the Vedic tradition.
+                </p>
+</div>
+<div class="flex flex-col gap-3">
+<span class="font-['Inter'] text-xs uppercase tracking-widest font-bold text-[#735c00]">Resources</span>
+<a class="text-[#554336] dark:text-stone-500 hover:text-[#8f4e00] text-xs font-semibold uppercase tracking-widest transition-opacity" href="#">ISKCON.org</a>
+<a class="text-[#554336] dark:text-stone-500 hover:text-[#8f4e00] text-xs font-semibold uppercase tracking-widest transition-opacity" href="#">BBT</a>
+</div>
+<div class="flex flex-col gap-3">
+<span class="font-['Inter'] text-xs uppercase tracking-widest font-bold text-[#735c00]">Support</span>
+<a class="text-[#554336] dark:text-stone-500 hover:text-[#8f4e00] text-xs font-semibold uppercase tracking-widest transition-opacity" href="#">ISKCON Resolve</a>
+<a class="text-[#554336] dark:text-stone-500 hover:text-[#8f4e00] text-xs font-semibold uppercase tracking-widest transition-opacity" href="#">Global Contact</a>
+</div>
+<div class="flex flex-col gap-4">
+<p class="text-[#554336] dark:text-stone-500 font-['Inter'] text-[10px] uppercase tracking-[0.2em] font-semibold">
+                    © 2024 ISKCON Global Projects Office. All Rights Reserved.
+                </p>
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-[#735c00] opacity-80 hover:opacity-100 cursor-pointer">public</span>
+<span class="material-symbols-outlined text-[#735c00] opacity-80 hover:opacity-100 cursor-pointer">temple_hindu</span>
+</div>
+</div>
+</div>
+</footer>
+</body></html>

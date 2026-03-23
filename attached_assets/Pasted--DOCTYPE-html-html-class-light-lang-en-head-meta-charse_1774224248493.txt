@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Project Directory | ISKCON Intelligence</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Noto+Serif:ital,wght@0,400;0,700;0,900;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#8f4e00",
+                        "primary-container": "#ff9933",
+                        "background": "#fbf9f8",
+                        "surface-tint": "#8f4e00",
+                        "inverse-primary": "#ffb77a",
+                        "error-container": "#ffdad6",
+                        "surface-container": "#f0eded",
+                        "secondary": "#735c00",
+                        "on-tertiary-container": "#3a4557",
+                        "on-secondary-fixed-variant": "#574500",
+                        "on-secondary": "#ffffff",
+                        "on-surface-variant": "#554336",
+                        "on-error-container": "#93000a",
+                        "surface": "#fbf9f8",
+                        "on-secondary-container": "#745c00",
+                        "outline-variant": "#dbc2b0",
+                        "surface-variant": "#e4e2e1",
+                        "on-background": "#1b1c1c",
+                        "tertiary-fixed-dim": "#bcc7dd",
+                        "surface-container-lowest": "#ffffff",
+                        "outline": "#887364",
+                        "on-tertiary-fixed": "#111c2c",
+                        "surface-container-low": "#f6f3f2",
+                        "surface-dim": "#dcd9d9",
+                        "tertiary-container": "#a7b2c8",
+                        "secondary-fixed-dim": "#e9c349",
+                        "on-primary-fixed": "#2e1500",
+                        "on-primary-container": "#693800",
+                        "surface-container-high": "#eae7e7",
+                        "inverse-on-surface": "#f3f0f0",
+                        "tertiary-fixed": "#d8e3fa",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#6d3a00",
+                        "surface-container-highest": "#e4e2e1",
+                        "on-tertiary-fixed-variant": "#3c475a",
+                        "secondary-container": "#fed65b",
+                        "on-surface": "#1b1c1c",
+                        "secondary-fixed": "#ffe088",
+                        "tertiary": "#545f72",
+                        "error": "#ba1a1a",
+                        "inverse-surface": "#303030",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed": "#241a00",
+                        "surface-bright": "#fbf9f8",
+                        "primary-fixed-dim": "#ffb77a",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#ffdcc2"
+                    },
+                    fontFamily: {
+                        "headline": ["Noto Serif"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Noto Serif', serif; }
+        .glass-nav {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .bento-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .bento-card:hover {
+            transform: translateY(-4px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface selection:bg-primary-container/30">
+<!-- TopNavBar -->
+<nav class="docked full-width top-0 z-50 fixed w-full bg-[#fbf9f8] dark:bg-stone-900/80 backdrop-blur-md shadow-[0_4px_24px_rgba(27,28,28,0.06)]">
+<div class="flex justify-between items-center w-full px-8 py-4 max-w-screen-2xl mx-auto">
+<div class="flex items-center gap-12">
+<span class="font-['Noto_Serif'] text-2xl font-black text-[#8f4e00] dark:text-[#ff9933] uppercase tracking-wider">ISKCON Intelligence</span>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-[#554336] dark:text-stone-400 font-medium hover:text-[#8f4e00] hover:bg-[#8f4e00]/5 px-3 py-1 rounded transition-colors duration-300" href="#">Global Dashboard</a>
+<a class="text-[#8f4e00] dark:text-[#ff9933] font-bold border-b-2 border-[#8f4e00] pb-1" href="#">Project Directory</a>
+<a class="text-[#554336] dark:text-stone-400 font-medium hover:text-[#8f4e00] hover:bg-[#8f4e00]/5 px-3 py-1 rounded transition-colors duration-300" href="#">Regional Insights</a>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="material-symbols-outlined text-[#8f4e00] hover:bg-[#8f4e00]/5 p-2 rounded-full transition-colors" data-icon="search">search</button>
+<button class="material-symbols-outlined text-[#8f4e00] hover:bg-[#8f4e00]/5 p-2 rounded-full transition-colors" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined text-[#8f4e00] hover:bg-[#8f4e00]/5 p-2 rounded-full transition-colors" data-icon="account_circle">account_circle</button>
+</div>
+</div>
+</nav>
+<main class="pt-28 pb-20 px-8 max-w-screen-2xl mx-auto min-h-screen">
+<!-- Header & View Toggle -->
+<div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+<div class="max-w-2xl">
+<h1 class="text-4xl md:text-5xl font-black text-on-surface tracking-tight mb-4">The Global Mandala</h1>
+<p class="text-on-surface-variant font-body text-lg leading-relaxed">Intelligence repository for temple construction, fundraising analytics, and spiritual infrastructure milestones across all continents.</p>
+</div>
+<div class="flex items-center bg-surface-container-low p-1.5 rounded-xl border border-outline-variant/10">
+<button class="flex items-center gap-2 px-6 py-2 rounded-lg bg-surface-container-lowest shadow-sm text-primary font-semibold transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="grid_view">grid_view</span>
+<span class="text-xs uppercase tracking-widest">Grid</span>
+</button>
+<button class="flex items-center gap-2 px-6 py-2 rounded-lg text-on-surface-variant hover:text-primary transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="view_list">view_list</span>
+<span class="text-xs uppercase tracking-widest">List</span>
+</button>
+</div>
+</div>
+<!-- Filter Bar -->
+<div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-12 items-end bg-surface-container-low p-6 rounded-2xl border border-outline-variant/15">
+<div class="flex flex-col gap-2">
+<label class="text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant px-1">Search City</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg" data-icon="location_on">location_on</span>
+<input class="w-full bg-surface-container-lowest border-none ring-1 ring-outline-variant/30 rounded-lg py-2.5 pl-10 text-sm focus:ring-2 focus:ring-primary transition-all" placeholder="e.g. Mayapur" type="text"/>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant px-1">Region</label>
+<select class="w-full bg-surface-container-lowest border-none ring-1 ring-outline-variant/30 rounded-lg py-2.5 text-sm focus:ring-2 focus:ring-primary appearance-none transition-all">
+<option>All Continents</option>
+<option>Asia Pacific</option>
+<option>Americas</option>
+<option>Europe</option>
+<option>Africa</option>
+</select>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant px-1">Construction Stage</label>
+<select class="w-full bg-surface-container-lowest border-none ring-1 ring-outline-variant/30 rounded-lg py-2.5 text-sm focus:ring-2 focus:ring-primary appearance-none transition-all">
+<option>All Stages</option>
+<option>Planning</option>
+<option>Foundation</option>
+<option>Structural</option>
+<option>Finishing</option>
+</select>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant px-1">Funding Status</label>
+<select class="w-full bg-surface-container-lowest border-none ring-1 ring-outline-variant/30 rounded-lg py-2.5 text-sm focus:ring-2 focus:ring-primary appearance-none transition-all">
+<option>Any Status</option>
+<option>Fully Funded</option>
+<option>In Progress</option>
+<option>Critical</option>
+</select>
+</div>
+<button class="bg-primary text-on-primary h-[42px] px-8 rounded-lg font-bold text-sm hover:bg-on-primary-fixed-variant transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="filter_alt">filter_alt</span>
+                Apply Filters
+            </button>
+</div>
+<!-- Project Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Card 1 -->
+<div class="bento-card group flex flex-col bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.04)] ring-1 ring-outline-variant/10">
+<div class="relative h-64 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Grand Vedic temple architectural visualization with white marble and golden domes" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBv1_OSLMKKqeurXDlc50cTj4ny7nskSbCV81FTWgvMJeFLgj7JMds2L__d33QdbCcHDtIlLlivD38pXUxXZx5kfzb0TRHIy0TXkJX8tmPTg0bObgEit0VcDX4f0eEPheDoVh4U-75eIa4x7RtozEpIuxeSw0sLTiXYTa6rl1Jc-Am-zTW4kV-EQZ_I6kzlysv8cwftt10CQzZlzkwlez0uPN1E1R4SPBaupDsB2_A217m35krJx90wuZp51kJJm3tRPoHZ8eZoilON"/>
+<div class="absolute top-4 left-4 bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Structural Phase</div>
+</div>
+<div class="p-8 flex-1 flex flex-col">
+<div class="mb-6">
+<h3 class="text-2xl font-bold text-on-surface mb-1">ISKCON New Jersey</h3>
+<p class="text-sm text-on-surface-variant font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="location_on">location_on</span>
+                            Parsippany, USA
+                        </p>
+</div>
+<div class="space-y-4 mb-8">
+<div>
+<div class="flex justify-between text-xs font-bold uppercase tracking-tighter mb-2">
+<span class="text-on-surface-variant">Realization</span>
+<span class="text-primary">68%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container rounded-full" style="width: 68%"></div>
+</div>
+</div>
+<div class="flex justify-between items-end border-t border-outline-variant/10 pt-4">
+<div>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-semibold">Est. Investment</p>
+<p class="text-lg font-bold text-on-surface">$12.4M</p>
+</div>
+<span class="text-[10px] uppercase font-bold text-secondary bg-secondary-container/20 px-2 py-1 rounded">In Progress</span>
+</div>
+</div>
+<button class="mt-auto w-full py-3.5 border border-primary text-primary font-bold text-xs uppercase tracking-widest rounded-lg hover:bg-primary hover:text-on-primary transition-all duration-300">View Details</button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bento-card group flex flex-col bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.04)] ring-1 ring-outline-variant/10">
+<div class="relative h-64 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Ornate Indian temple silhouette at sunset with intricate sandstone carvings" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQiMb2c--b2lHcFWwr0AEBmCnw6X33OuYwmQBC8ymdcNngHe0qPQ5-BtDslrodJu0F7oULur4Q-8Wf4aDemsnEWYA8pWKoq5RKz-u4zStGDR6EbHHp-VtiKNbXY_KG8WlxgAaglwXSmKVJgDAcIHzAnkdA7E6XI3Q7sa5ltY66iNCS0cYVgQtKIkv3XYYviZR3t8kacWtktlUaThN3mm725qNPAoZO0pbhjy0Nz38m7_k7TgDjlEzczB7zTr2fmQI6Ow-jwn9zfBF4"/>
+<div class="absolute top-4 left-4 bg-tertiary-container text-on-tertiary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Finishing Stage</div>
+</div>
+<div class="p-8 flex-1 flex flex-col">
+<div class="mb-6">
+<h3 class="text-2xl font-bold text-on-surface mb-1">ISKCON Kolkata II</h3>
+<p class="text-sm text-on-surface-variant font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="location_on">location_on</span>
+                            Kolkata, India
+                        </p>
+</div>
+<div class="space-y-4 mb-8">
+<div>
+<div class="flex justify-between text-xs font-bold uppercase tracking-tighter mb-2">
+<span class="text-on-surface-variant">Realization</span>
+<span class="text-primary">92%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container rounded-full" style="width: 92%"></div>
+</div>
+</div>
+<div class="flex justify-between items-end border-t border-outline-variant/10 pt-4">
+<div>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-semibold">Est. Investment</p>
+<p class="text-lg font-bold text-on-surface">$8.1M</p>
+</div>
+<span class="text-[10px] uppercase font-bold text-on-primary bg-primary px-2 py-1 rounded">Fully Funded</span>
+</div>
+</div>
+<button class="mt-auto w-full py-3.5 border border-primary text-primary font-bold text-xs uppercase tracking-widest rounded-lg hover:bg-primary hover:text-on-primary transition-all duration-300">View Details</button>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bento-card group flex flex-col bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.04)] ring-1 ring-outline-variant/10">
+<div class="relative h-64 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Aerial view of a large temple complex construction site with foundations and rebar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCX_x5vG6V34GOQTDz-eL8HNWref6lpCjz4qcPKZr6gmWlN1ZiiX_0nncSf_8ifNp3mEKGfU_nt8jwirtfsiwNAVp9z6QQqUfLVAFmKNJfvIw4j0LOXlCmTj69wvL-y8-C9qfjnfJ0-I-yhq1wgG0HdXy_3BDN9WB42XmHSCzeBtbiyBftrKMoN3E0ahPgYbrGrpBIuwEl-s0ccBfnNfcXquceI6dvxAwmqw70A6gsvcNIriEaXo_Y0ZqvpaLZW584SLZVxfEqHBIrP"/>
+<div class="absolute top-4 left-4 bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Foundation</div>
+</div>
+<div class="p-8 flex-1 flex flex-col">
+<div class="mb-6">
+<h3 class="text-2xl font-bold text-on-surface mb-1">ISKCON Moscow</h3>
+<p class="text-sm text-on-surface-variant font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="location_on">location_on</span>
+                            Moscow, Russia
+                        </p>
+</div>
+<div class="space-y-4 mb-8">
+<div>
+<div class="flex justify-between text-xs font-bold uppercase tracking-tighter mb-2">
+<span class="text-on-surface-variant">Realization</span>
+<span class="text-primary">15%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container rounded-full" style="width: 15%"></div>
+</div>
+</div>
+<div class="flex justify-between items-end border-t border-outline-variant/10 pt-4">
+<div>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-semibold">Est. Investment</p>
+<p class="text-lg font-bold text-on-surface">$22.0M</p>
+</div>
+<span class="text-[10px] uppercase font-bold text-error bg-error-container/40 px-2 py-1 rounded">Critical</span>
+</div>
+</div>
+<button class="mt-auto w-full py-3.5 border border-primary text-primary font-bold text-xs uppercase tracking-widest rounded-lg hover:bg-primary hover:text-on-primary transition-all duration-300">View Details</button>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bento-card group flex flex-col bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.04)] ring-1 ring-outline-variant/10">
+<div class="relative h-64 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Modern geometric interpretation of a temple dome with golden accents and glass" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAqu_4gDsJSZAtGjh61uMc-GKm5K0y0q3MAGiBm-clLSjOQVsAKms3yGZCxxYXpCRiy7Tt5lH9LwPYvtNwd-K_hImuCyS02LDFlamyr75_6XvSt9QyG3oBZ9xmcve-UyUodKwfa19GkWcoIkmruM7O-zgowRRbq22jkaTD8Rz4v3-YWYWvUE2oQvc5EPEHhUpe6cgjYRzkHFMeHAAuTv77xQdlvT6Q9UugGBMKRPLg52da_W6hzVoroQo2ReKHo4XIovAGmNOo5jh0G"/>
+<div class="absolute top-4 left-4 bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Structural</div>
+</div>
+<div class="p-8 flex-1 flex flex-col">
+<div class="mb-6">
+<h3 class="text-2xl font-bold text-on-surface mb-1">ISKCON Cape Town</h3>
+<p class="text-sm text-on-surface-variant font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="location_on">location_on</span>
+                            Cape Town, South Africa
+                        </p>
+</div>
+<div class="space-y-4 mb-8">
+<div>
+<div class="flex justify-between text-xs font-bold uppercase tracking-tighter mb-2">
+<span class="text-on-surface-variant">Realization</span>
+<span class="text-primary">45%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container rounded-full" style="width: 45%"></div>
+</div>
+</div>
+<div class="flex justify-between items-end border-t border-outline-variant/10 pt-4">
+<div>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-semibold">Est. Investment</p>
+<p class="text-lg font-bold text-on-surface">$5.5M</p>
+</div>
+<span class="text-[10px] uppercase font-bold text-secondary bg-secondary-container/20 px-2 py-1 rounded">In Progress</span>
+</div>
+</div>
+<button class="mt-auto w-full py-3.5 border border-primary text-primary font-bold text-xs uppercase tracking-widest rounded-lg hover:bg-primary hover:text-on-primary transition-all duration-300">View Details</button>
+</div>
+</div>
+<!-- Card 5 -->
+<div class="bento-card group flex flex-col bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.04)] ring-1 ring-outline-variant/10">
+<div class="relative h-64 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Traditional Dravidian architecture with colorful carvings and towers" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMmzjIcHR0cjXro8ogP2swtrNLwnwcIlwDcp3c7ScuGHwQ8c_9jfRY8Bk79ke9BIpwnx5N2FP7qCMktX3tqVxJt6COVh8dcu_I0lqjAO1D0sHu4C8brvV0_ZD_xGXU-qfzE_MebMrifZBMpRJOki7KZ6lFdzBRUxzpRl6Pr4JJAJFNXHd-yOm1FS3Am7kExfZkhXhnHteNKypUrWM-7i0cISyGK51MYZ_6vLvEGKuQkUQbhpKexvP5nZyPRdsmin9NYv7nbKIEjU1D"/>
+<div class="absolute top-4 left-4 bg-surface-container text-on-surface px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Planning Phase</div>
+</div>
+<div class="p-8 flex-1 flex flex-col">
+<div class="mb-6">
+<h3 class="text-2xl font-bold text-on-surface mb-1">ISKCON Tokyo</h3>
+<p class="text-sm text-on-surface-variant font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="location_on">location_on</span>
+                            Tokyo, Japan
+                        </p>
+</div>
+<div class="space-y-4 mb-8">
+<div>
+<div class="flex justify-between text-xs font-bold uppercase tracking-tighter mb-2">
+<span class="text-on-surface-variant">Realization</span>
+<span class="text-primary">5%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container rounded-full" style="width: 5%"></div>
+</div>
+</div>
+<div class="flex justify-between items-end border-t border-outline-variant/10 pt-4">
+<div>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-semibold">Est. Investment</p>
+<p class="text-lg font-bold text-on-surface">$18.2M</p>
+</div>
+<span class="text-[10px] uppercase font-bold text-secondary bg-secondary-container/20 px-2 py-1 rounded">In Progress</span>
+</div>
+</div>
+<button class="mt-auto w-full py-3.5 border border-primary text-primary font-bold text-xs uppercase tracking-widest rounded-lg hover:bg-primary hover:text-on-primary transition-all duration-300">View Details</button>
+</div>
+</div>
+<!-- Card 6 -->
+<div class="bento-card group flex flex-col bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.04)] ring-1 ring-outline-variant/10">
+<div class="relative h-64 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Futuristic temple concept with sustainable bamboo and glass materials" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDIGsXS4MkEZj9eU_6dQzNg69Lr4TKNTI_7gvCFLOmyrXCIoxopYLLnrYkXqPqFoWIQaEAOw132lRLfkyLEju5S4AAu0WVcFJzsjHOMKQNKZNiaTmsnDn6dd8ILhCXIl9PFvGYi6tt_pM5TXpc-PAD_8MHWtlbwqK9diD1RZka54dlDp0PeJMz2pLHmhjsBeLYNzSpNVFo_VlGXU7tTJnpmg9sK4aREX8p_a752uX2bbUgiQgvTGm89BD4p2QRpugv3sQlIhf40ZLN9"/>
+<div class="absolute top-4 left-4 bg-tertiary-container text-on-tertiary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Finishing Stage</div>
+</div>
+<div class="p-8 flex-1 flex flex-col">
+<div class="mb-6">
+<h3 class="text-2xl font-bold text-on-surface mb-1">ISKCON Brisbane</h3>
+<p class="text-sm text-on-surface-variant font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="location_on">location_on</span>
+                            Brisbane, Australia
+                        </p>
+</div>
+<div class="space-y-4 mb-8">
+<div>
+<div class="flex justify-between text-xs font-bold uppercase tracking-tighter mb-2">
+<span class="text-on-surface-variant">Realization</span>
+<span class="text-primary">85%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container rounded-full" style="width: 85%"></div>
+</div>
+</div>
+<div class="flex justify-between items-end border-t border-outline-variant/10 pt-4">
+<div>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-semibold">Est. Investment</p>
+<p class="text-lg font-bold text-on-surface">$7.2M</p>
+</div>
+<span class="text-[10px] uppercase font-bold text-on-primary bg-primary px-2 py-1 rounded">Fully Funded</span>
+</div>
+</div>
+<button class="mt-auto w-full py-3.5 border border-primary text-primary font-bold text-xs uppercase tracking-widest rounded-lg hover:bg-primary hover:text-on-primary transition-all duration-300">View Details</button>
+</div>
+</div>
+</div>
+<!-- Pagination (Implicit for "Directory" Feel) -->
+<div class="mt-20 flex justify-center items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-full border border-outline-variant/30 text-outline hover:text-primary hover:border-primary transition-all">
+<span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
+</button>
+<div class="flex items-center gap-2">
+<span class="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-on-primary font-bold text-sm">1</span>
+<span class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant font-bold text-sm hover:bg-surface-container-low cursor-pointer">2</span>
+<span class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant font-bold text-sm hover:bg-surface-container-low cursor-pointer">3</span>
+<span class="text-on-surface-variant px-2">...</span>
+<span class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant font-bold text-sm hover:bg-surface-container-low cursor-pointer">12</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full border border-outline-variant/30 text-outline hover:text-primary hover:border-primary transition-all">
+<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full border-t border-[#554336]/10 bg-[#fbf9f8] dark:bg-stone-950">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-8 px-12 py-16 w-full max-w-screen-2xl mx-auto">
+<div class="col-span-1 md:col-span-1">
+<span class="font-['Noto_Serif'] italic text-lg text-[#554336] mb-4 block">ISKCON Global Projects</span>
+<p class="font-['Inter'] text-xs uppercase tracking-widest font-semibold text-[#554336] dark:text-stone-500 mb-6">Empowering spiritual infrastructure with data intelligence.</p>
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-[#735c00] cursor-pointer hover:opacity-100 opacity-80" data-icon="public">public</span>
+<span class="material-symbols-outlined text-[#735c00] cursor-pointer hover:opacity-100 opacity-80" data-icon="hub">hub</span>
+<span class="material-symbols-outlined text-[#735c00] cursor-pointer hover:opacity-100 opacity-80" data-icon="shield">shield</span>
+</div>
+</div>
+<div class="col-span-1">
+<h4 class="font-['Inter'] text-xs uppercase tracking-widest font-bold text-[#8f4e00] mb-6">Organization</h4>
+<ul class="space-y-4">
+<li><a class="font-['Inter'] text-xs uppercase tracking-widest font-semibold text-[#554336] dark:text-stone-500 hover:text-[#8f4e00] transition-opacity duration-200" href="#">ISKCON.org</a></li>
+<li><a class="font-['Inter'] text-xs uppercase tracking-widest font-semibold text-[#554336] dark:text-stone-500 hover:text-[#8f4e00] transition-opacity duration-200" href="#">BBT</a></li>
+<li><a class="font-['Inter'] text-xs uppercase tracking-widest font-semibold text-[#554336] dark:text-stone-500 hover:text-[#8f4e00] transition-opacity duration-200" href="#">ISKCON Resolve</a></li>
+</ul>
+</div>
+<div class="col-span-1">
+<h4 class="font-['Inter'] text-xs uppercase tracking-widest font-bold text-[#8f4e00] mb-6">Support</h4>
+<ul class="space-y-4">
+<li><a class="font-['Inter'] text-xs uppercase tracking-widest font-semibold text-[#554336] dark:text-stone-500 hover:text-[#8f4e00] transition-opacity duration-200" href="#">Global Contact</a></li>
+<li><a class="font-['Inter'] text-xs uppercase tracking-widest font-semibold text-[#554336] dark:text-stone-500 hover:text-[#8f4e00] transition-opacity duration-200" href="#">Fundraising Guide</a></li>
+<li><a class="font-['Inter'] text-xs uppercase tracking-widest font-semibold text-[#554336] dark:text-stone-500 hover:text-[#8f4e00] transition-opacity duration-200" href="#">Report Archive</a></li>
+</ul>
+</div>
+<div class="col-span-1">
+<h4 class="font-['Inter'] text-xs uppercase tracking-widest font-bold text-[#8f4e00] mb-6">Newsletter</h4>
+<p class="font-['Inter'] text-xs uppercase tracking-widest font-semibold text-[#554336] mb-4">Subscribe to monthly construction updates.</p>
+<div class="flex gap-2">
+<input class="bg-surface-container text-[10px] p-2 rounded flex-1 border-none focus:ring-1 focus:ring-primary uppercase tracking-widest" placeholder="YOUR@EMAIL.COM" type="email"/>
+<button class="bg-primary text-on-primary px-4 rounded hover:bg-on-primary-fixed-variant transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="send">send</span>
+</button>
+</div>
+</div>
+</div>
+<div class="max-w-screen-2xl mx-auto px-12 py-8 border-t border-[#554336]/10 flex flex-col md:flex-row justify-between items-center gap-4">
+<span class="font-['Inter'] text-xs uppercase tracking-widest font-semibold text-[#554336] dark:text-stone-500">© 2024 ISKCON Global Projects Office. All Rights Reserved.</span>
+<div class="flex gap-8">
+<a class="font-['Inter'] text-xs uppercase tracking-widest font-semibold text-[#554336] dark:text-stone-500 hover:text-[#8f4e00]" href="#">Privacy Policy</a>
+<a class="font-['Inter'] text-xs uppercase tracking-widest font-semibold text-[#554336] dark:text-stone-500 hover:text-[#8f4e00]" href="#">Legal Terms</a>
+</div>
+</div>
+</footer>
+</body></html>
