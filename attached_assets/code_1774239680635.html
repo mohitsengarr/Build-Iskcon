@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ISKCON Intelligence | Global Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700;900&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#8f4e00",
+              "primary-container": "#ff9933",
+              "background": "#fbf9f8",
+              "surface-tint": "#8f4e00",
+              "inverse-primary": "#ffb77a",
+              "error-container": "#ffdad6",
+              "surface-container": "#f0eded",
+              "secondary": "#735c00",
+              "on-tertiary-container": "#3a4557",
+              "on-secondary-fixed-variant": "#574500",
+              "on-secondary": "#ffffff",
+              "on-surface-variant": "#554336",
+              "on-error-container": "#93000a",
+              "surface": "#fbf9f8",
+              "on-secondary-container": "#745c00",
+              "outline-variant": "#dbc2b0",
+              "surface-variant": "#e4e2e1",
+              "on-background": "#1b1c1c",
+              "tertiary-fixed-dim": "#bcc7dd",
+              "surface-container-lowest": "#ffffff",
+              "outline": "#887364",
+              "on-tertiary-fixed": "#111c2c",
+              "surface-container-low": "#f6f3f2",
+              "surface-dim": "#dcd9d9",
+              "tertiary-container": "#a7b2c8",
+              "secondary-fixed-dim": "#e9c349",
+              "on-primary-fixed": "#2e1500",
+              "on-primary-container": "#693800",
+              "surface-container-high": "#eae7e7",
+              "inverse-on-surface": "#f3f0f0",
+              "tertiary-fixed": "#d8e3fa",
+              "on-primary": "#ffffff",
+              "on-primary-fixed-variant": "#6d3a00",
+              "surface-container-highest": "#e4e2e1",
+              "on-tertiary-fixed-variant": "#3c475a",
+              "secondary-container": "#fed65b",
+              "on-surface": "#1b1c1c",
+              "secondary-fixed": "#ffe088",
+              "tertiary": "#545f72",
+              "error": "#ba1a1a",
+              "inverse-surface": "#303030",
+              "on-tertiary": "#ffffff",
+              "on-secondary-fixed": "#241a00",
+              "surface-bright": "#fbf9f8",
+              "primary-fixed-dim": "#ffb77a",
+              "on-error": "#ffffff",
+              "primary-fixed": "#ffdcc2"
+            },
+            fontFamily: {
+              "headline": ["Noto Serif"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fbf9f8;
+            color: #1b1c1c;
+        }
+        .serif-headline { font-family: 'Noto Serif', serif; }
+        .glass-nav {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-surface selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar -->
+<nav class="fixed top-0 z-50 w-full bg-[#fbf9f8] dark:bg-stone-900/80 backdrop-blur-md shadow-[0_4px_24px_rgba(27,28,28,0.06)]">
+<div class="flex justify-between items-center w-full px-8 py-4 max-w-screen-2xl mx-auto">
+<!-- Brand Logo -->
+<div class="font-['Noto_Serif'] text-2xl font-black text-[#8f4e00] dark:text-[#ff9933] uppercase tracking-wider">
+                ISKCON Intelligence
+            </div>
+<!-- Navigation Links -->
+<div class="hidden md:flex items-center space-x-8">
+<a class="text-[#8f4e00] dark:text-[#ff9933] font-bold border-b-2 border-[#8f4e00] pb-1 font-['Inter'] text-sm tracking-tight transition-colors duration-300" href="#">Global Dashboard</a>
+<a class="text-[#554336] dark:text-stone-400 font-medium hover:text-[#8f4e00] font-['Inter'] text-sm tracking-tight hover:bg-[#8f4e00]/5 dark:hover:bg-[#ff9933]/10 transition-colors duration-300 px-2 py-1 rounded" href="#">Project Directory</a>
+<a class="text-[#554336] dark:text-stone-400 font-medium hover:text-[#8f4e00] font-['Inter'] text-sm tracking-tight hover:bg-[#8f4e00]/5 dark:hover:bg-[#ff9933]/10 transition-colors duration-300 px-2 py-1 rounded" href="#">Regional Insights</a>
+</div>
+<!-- Trailing Icons -->
+<div class="flex items-center space-x-4">
+<button class="p-2 text-[#554336] hover:bg-[#8f4e00]/5 rounded-full transition-all active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+<button class="p-2 text-[#554336] hover:bg-[#8f4e00]/5 rounded-full transition-all active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-[#554336] hover:bg-[#8f4e00]/5 rounded-full transition-all active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</div>
+</nav>
+<main class="pt-24 pb-16 px-4 md:px-8 max-w-screen-2xl mx-auto">
+<!-- Hero Section: World Map -->
+<section class="relative mb-12 rounded-xl overflow-hidden bg-surface-container-low h-[450px] flex items-center shadow-sm">
+<div class="absolute inset-0 z-0 opacity-40">
+<img alt="Global Network Map" class="w-full h-full object-cover grayscale brightness-110 contrast-75" data-alt="A clean light colored world map with glowing project clusters" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7VTLrxBAjVBUFRxUYbFpwNpl9JCyIT1rrt9j_PBLE3P_XGvW0fdDCHhtv3oC0CdMxGMUcJEsBj0bhI8q-D4CgukzGc9WzvX0gZx3so8eDllIuUFJTBgtVy1ohML9yfBfR7ZSlSjv2Ukn4xtViEm6XlvA6jPV9AQQ8of73jsQQNA7MtpR_2jU7T_Avj18TYGhh6uv9uBU3VsTvIT7Hs2Sp4vmtT_NgTwhui943ewFmsZVAhlWZHqqB4JslKBXL7VIcxU1LIHStTlIg"/>
+</div>
+<div class="absolute inset-0 bg-gradient-to-r from-surface via-surface/60 to-transparent z-10"></div>
+<div class="relative z-20 px-12 max-w-2xl">
+<h1 class="serif-headline text-5xl font-bold text-on-surface mb-4 leading-tight">Universal Vision, <br/><span class="text-primary">Sacred Execution</span></h1>
+<p class="text-on-surface-variant font-body text-lg mb-8 leading-relaxed">Monitoring the expansion of ISKCON's global footprint. Real-time data synthesis across 6 continents and hundreds of developing spiritual sanctuaries.</p>
+<div class="flex gap-4">
+<button class="bg-primary text-on-primary px-8 py-3 rounded-xl font-bold text-sm tracking-wide shadow-lg hover:shadow-primary/20 transition-all active:scale-95">Explore All Projects</button>
+<button class="bg-secondary-container text-on-secondary-container px-8 py-3 rounded-xl font-bold text-sm tracking-wide transition-all active:scale-95">Regional Briefs</button>
+</div>
+</div>
+</section>
+<!-- Key Metric Cards -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+<!-- Metric 1 -->
+<div class="bg-surface-container p-6 rounded-xl transition-all hover:bg-surface-container-high group">
+<div class="flex items-center justify-between mb-4">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="account_tree">account_tree</span>
+</div>
+<span class="text-xs font-semibold text-primary uppercase tracking-widest">+4 this quarter</span>
+</div>
+<h3 class="text-on-surface-variant text-sm font-medium uppercase tracking-tighter mb-1">Total Active Projects</h3>
+<div class="text-3xl font-black text-on-surface serif-headline">42</div>
+</div>
+<!-- Metric 2 -->
+<div class="bg-surface-container p-6 rounded-xl transition-all hover:bg-surface-container-high">
+<div class="flex items-center justify-between mb-4">
+<div class="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+</div>
+<span class="text-xs font-semibold text-secondary uppercase tracking-widest">Global Portfolio</span>
+</div>
+<h3 class="text-on-surface-variant text-sm font-medium uppercase tracking-tighter mb-1">Total Global Investment</h3>
+<div class="text-3xl font-black text-on-surface serif-headline">$1.2B</div>
+</div>
+<!-- Metric 3 -->
+<div class="bg-surface-container p-6 rounded-xl transition-all hover:bg-surface-container-high">
+<div class="flex items-center justify-between mb-4">
+<div class="w-10 h-10 rounded-lg bg-tertiary/10 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+</div>
+<div class="w-24 h-2 bg-surface-variant rounded-full overflow-hidden">
+<div class="w-[65%] h-full bg-primary"></div>
+</div>
+</div>
+<h3 class="text-on-surface-variant text-sm font-medium uppercase tracking-tighter mb-1">Average Completion</h3>
+<div class="text-3xl font-black text-on-surface serif-headline">65%</div>
+</div>
+<!-- Metric 4 -->
+<div class="bg-surface-container p-6 rounded-xl transition-all hover:bg-surface-container-high border-2 border-primary-container/20">
+<div class="flex items-center justify-between mb-4">
+<div class="w-10 h-10 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="done_all">done_all</span>
+</div>
+<span class="animate-pulse flex items-center gap-1 text-[10px] font-bold text-primary uppercase bg-primary-container/20 px-2 py-0.5 rounded-full">Final Phase</span>
+</div>
+<h3 class="text-on-surface-variant text-sm font-medium uppercase tracking-tighter mb-1">Near Completion</h3>
+<div class="text-3xl font-black text-on-surface serif-headline">8</div>
+</div>
+</section>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Projects by Region Chart (Simulated) -->
+<div class="lg:col-span-2 bg-surface-container-low rounded-xl p-8">
+<div class="flex justify-between items-center mb-10">
+<div>
+<h2 class="serif-headline text-2xl font-bold text-on-surface">Regional Distribution</h2>
+<p class="text-sm text-on-surface-variant">Domestic vs. International project velocity</p>
+</div>
+<div class="flex items-center gap-4 text-xs font-bold uppercase tracking-widest">
+<div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-primary"></span> India</div>
+<div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-tertiary"></span> International</div>
+</div>
+</div>
+<div class="flex items-end justify-between h-64 gap-6 px-4">
+<!-- Q1 -->
+<div class="flex-1 flex flex-col items-center gap-3 h-full justify-end">
+<div class="w-full flex justify-center gap-1">
+<div class="w-8 bg-primary rounded-t-lg" style="height: 120px"></div>
+<div class="w-8 bg-tertiary rounded-t-lg" style="height: 80px"></div>
+</div>
+<span class="text-xs font-semibold text-on-surface-variant">Q1 2024</span>
+</div>
+<!-- Q2 -->
+<div class="flex-1 flex flex-col items-center gap-3 h-full justify-end">
+<div class="w-full flex justify-center gap-1">
+<div class="w-8 bg-primary rounded-t-lg" style="height: 150px"></div>
+<div class="w-8 bg-tertiary rounded-t-lg" style="height: 90px"></div>
+</div>
+<span class="text-xs font-semibold text-on-surface-variant">Q2 2024</span>
+</div>
+<!-- Q3 -->
+<div class="flex-1 flex flex-col items-center gap-3 h-full justify-end">
+<div class="w-full flex justify-center gap-1">
+<div class="w-8 bg-primary rounded-t-lg" style="height: 190px"></div>
+<div class="w-8 bg-tertiary rounded-t-lg" style="height: 130px"></div>
+</div>
+<span class="text-xs font-semibold text-on-surface-variant">Q3 2024</span>
+</div>
+<!-- Q4 (Projected) -->
+<div class="flex-1 flex flex-col items-center gap-3 h-full justify-end">
+<div class="w-full flex justify-center gap-1 opacity-50">
+<div class="w-8 bg-primary rounded-t-lg" style="height: 220px"></div>
+<div class="w-8 bg-tertiary rounded-t-lg" style="height: 160px"></div>
+</div>
+<span class="text-xs font-semibold text-on-surface-variant italic">Q4 (EST)</span>
+</div>
+</div>
+</div>
+<!-- Spotlight Section -->
+<div class="bg-on-surface-variant text-surface-container-lowest rounded-xl p-8 relative overflow-hidden flex flex-col justify-between">
+<!-- Background Decoration -->
+<div class="absolute -top-10 -right-10 w-48 h-48 bg-primary/20 rounded-full blur-3xl"></div>
+<div>
+<span class="inline-block px-3 py-1 rounded-full bg-primary text-on-primary text-[10px] font-bold uppercase tracking-widest mb-6">Flagship Project</span>
+<h2 class="serif-headline text-3xl font-bold mb-4 leading-tight">Temple of the Vedic Planetarium</h2>
+<p class="text-sm opacity-80 mb-8 leading-relaxed">The flagship structural wonder in Mayapur, West Bengal. Merging cosmology and modern engineering on a massive scale.</p>
+</div>
+<div class="space-y-6">
+<div class="flex justify-between items-end border-b border-surface/10 pb-4">
+<span class="text-xs font-medium uppercase tracking-widest opacity-60">Status</span>
+<span class="text-lg font-bold text-primary-container">Finishing Phase</span>
+</div>
+<div class="flex justify-between items-end border-b border-surface/10 pb-4">
+<span class="text-xs font-medium uppercase tracking-widest opacity-60">Est. Completion</span>
+<span class="text-lg font-bold italic">2025</span>
+</div>
+<div class="flex justify-between items-end border-b border-surface/10 pb-4">
+<span class="text-xs font-medium uppercase tracking-widest opacity-60">Current Height</span>
+<span class="text-lg font-bold">113 Meters</span>
+</div>
+</div>
+<button class="mt-8 flex items-center justify-center gap-2 w-full py-4 border border-surface/20 rounded-xl hover:bg-surface/10 transition-colors">
+<span class="text-sm font-bold tracking-wide">View Detailed Stats</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-[#fbf9f8] dark:bg-stone-950 w-full border-t border-[#554336]/10">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-8 px-12 py-16 w-full max-w-screen-2xl mx-auto">
+<!-- Brand Column -->
+<div class="col-span-1 md:col-span-1">
+<div class="font-['Noto_Serif'] italic text-lg text-[#554336] mb-4">ISKCON Global Projects Office</div>
+<p class="font-['Inter'] text-xs uppercase tracking-widest font-semibold text-stone-500 leading-loose">
+                    © 2024 ISKCON Global Projects Office. All Rights Reserved.
+                </p>
+</div>
+<!-- Links Columns -->
+<div>
+<h4 class="font-['Inter'] text-xs uppercase tracking-widest font-bold text-[#735c00] mb-6">Quick Links</h4>
+<ul class="space-y-4">
+<li><a class="font-['Inter'] text-xs uppercase tracking-widest font-semibold text-[#554336] dark:text-stone-500 hover:text-[#8f4e00] transition-opacity duration-200" href="#">ISKCON.org</a></li>
+<li><a class="font-['Inter'] text-xs uppercase tracking-widest font-semibold text-[#554336] dark:text-stone-500 hover:text-[#8f4e00] transition-opacity duration-200" href="#">BBT</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-['Inter'] text-xs uppercase tracking-widest font-bold text-[#735c00] mb-6">Governance</h4>
+<ul class="space-y-4">
+<li><a class="font-['Inter'] text-xs uppercase tracking-widest font-semibold text-[#554336] dark:text-stone-500 hover:text-[#8f4e00] transition-opacity duration-200" href="#">ISKCON Resolve</a></li>
+<li><a class="font-['Inter'] text-xs uppercase tracking-widest font-semibold text-[#554336] dark:text-stone-500 hover:text-[#8f4e00] transition-opacity duration-200" href="#">Legal Disclosures</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-['Inter'] text-xs uppercase tracking-widest font-bold text-[#735c00] mb-6">Support</h4>
+<ul class="space-y-4">
+<li><a class="font-['Inter'] text-xs uppercase tracking-widest font-semibold text-[#554336] dark:text-stone-500 hover:text-[#8f4e00] transition-opacity duration-200" href="#">Global Contact</a></li>
+<li><a class="font-['Inter'] text-xs uppercase tracking-widest font-semibold text-[#554336] dark:text-stone-500 hover:text-[#8f4e00] transition-opacity duration-200" href="#">Help Desk</a></li>
+</ul>
+</div>
+</div>
+</footer>
+</body></html>

@@ -61,6 +61,9 @@ export const projectUpdatesTable = pgTable("project_updates", {
   content: text("content").notNull(),
   author: text("author").notNull(),
   category: updateCategoryEnum("category").notNull().default("general"),
+  imageUrl: text("image_url"),
+  likes: integer("likes").notNull().default(0),
+  hashtags: text("hashtags"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

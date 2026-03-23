@@ -8,6 +8,7 @@ import TempleList from "@/pages/temple-list";
 import TempleCreate from "@/pages/temple-create";
 import TempleDetail from "@/pages/temple-detail";
 import RegionalInsights from "@/pages/regional-insights";
+import SocialHub from "@/pages/social-hub";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/temples/new" component={TempleCreate} />
       <Route path="/temples/:id" component={TempleDetail} />
       <Route path="/regional" component={RegionalInsights} />
+      <Route path="/social" component={SocialHub} />
       <Route component={NotFound} />
     </Switch>
   );
