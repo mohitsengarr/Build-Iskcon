@@ -296,14 +296,14 @@ export default function Dashboard() {
 
         {/* Hero Section */}
         <section className="relative rounded-xl overflow-hidden bg-surface-container-low min-h-[480px] sm:h-[450px] flex items-center py-8 sm:py-0">
-          <div className="absolute inset-0 z-0 opacity-40">
+          <div className="absolute inset-0 z-0">
             <img
-              src={`${import.meta.env.BASE_URL}images/dashboard-hero.png`}
-              alt="Global Network Map"
-              className="w-full h-full object-cover grayscale brightness-110 contrast-75"
+              src={`${import.meta.env.BASE_URL}images/dashboard-hero.webp`}
+              alt="Temple of the Vedic Planetarium under construction"
+              className="w-full h-full object-cover object-center"
             />
           </div>
-          <div className="absolute inset-0 bg-gradient-to-r from-surface via-surface/60 to-transparent z-10" />
+          <div className="absolute inset-0 bg-gradient-to-r from-surface via-surface/75 to-surface/20 z-10" />
 
           <div className="relative z-20 px-6 sm:px-12 max-w-2xl">
             <span className="text-xs font-semibold uppercase tracking-widest text-primary/80 mb-2 block">The Mahaprabhu Prophecy</span>
