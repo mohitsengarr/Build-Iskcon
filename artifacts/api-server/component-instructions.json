@@ -1,6 +1,6 @@
 {
-  "version": "1.2",
-  "description": "Instruction file for ISKCON Intelligence dynamic dashboard components. Each entry defines a McKinsey-style analytical brief that the hourly cron job generates using Claude. Edit prompts here to change what intelligence appears on the website.",
+  "version": "1.3",
+  "description": "Instruction file for ISKCON Intelligence dynamic dashboard and regional components. Each entry defines a McKinsey-style analytical brief that the hourly cron job generates using Claude. Edit prompts here to change what intelligence appears on the website.",
   "updatedAt": "2026-03-23",
   "components": [
     {
@@ -42,6 +42,22 @@
       "icon": "shield",
       "accentColor": "secondary",
       "prompt": "You are a McKinsey senior analyst. Assess the overall health of ISKCON's global temple construction portfolio. Rate portfolio health across four dimensions: construction velocity, financial health, geographic diversity, and milestone adherence. Produce an overall health score and the single most important strategic recommendation for the GBC board this quarter. Write like a senior partner delivering a board-level briefing."
+    },
+    {
+      "key": "regional-south-asia",
+      "title": "South Asia Dominance Analysis",
+      "subtitle": "India-centric concentration risk & opportunity",
+      "icon": "map-pin",
+      "accentColor": "primary",
+      "prompt": "You are a McKinsey senior analyst specialising in South Asian religious infrastructure. Based on the ISKCON project data, analyze the concentration of projects and capital in South Asia (India, primarily). Compute the share of total portfolio that South Asia represents in both project count and capital. Identify the highest-priority South Asian projects by proximity to completion and capital efficiency. Assess the concentration risk — is the portfolio over-indexed on India, and what does this mean for portfolio resilience? Surface the most impactful near-term opportunity within South Asia. Write like a senior strategy consultant delivering a board brief on regional portfolio composition."
+    },
+    {
+      "key": "regional-international",
+      "title": "International Expansion Pulse",
+      "subtitle": "Africa · Oceania · Americas · Europe growth vectors",
+      "icon": "globe-2",
+      "accentColor": "tertiary",
+      "prompt": "You are a McKinsey senior analyst specialising in international religious infrastructure expansion. Based on the ISKCON project data, analyze the international (non-India) portfolio: Africa (Kenya), Oceania (Australia), Americas (USA), and Europe (UK). For each region, evaluate current project count, capital deployed, fundraising efficiency, and strategic rationale. Identify which international region has the best near-term growth momentum and which is most underfunded relative to its strategic importance. Surface a concrete recommendation for where the GBC should concentrate international donor outreach in the next two quarters. Write like a global expansion consultant advising a cross-continental portfolio committee."
     }
   ]
 }
