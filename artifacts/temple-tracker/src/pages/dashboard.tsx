@@ -11,9 +11,7 @@ export default function Dashboard() {
     return (
       <Layout>
         <div className="flex items-center justify-center h-[60vh]">
-          <div className="flex flex-col items-center">
-            <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-          </div>
+          <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
         </div>
       </Layout>
     );
@@ -21,7 +19,6 @@ export default function Dashboard() {
 
   if (!stats) return null;
 
-  // Mock bar chart data for "Regional Distribution" based on reference design
   const barData = [
     { name: 'Q1 2024', india: 120, international: 80 },
     { name: 'Q2 2024', india: 150, international: 90 },
@@ -34,25 +31,25 @@ export default function Dashboard() {
   return (
     <Layout>
       <div className="px-4 md:px-8 max-w-screen-2xl mx-auto space-y-16">
-        
+
         {/* Hero Section */}
-        <section className="relative rounded-xl overflow-hidden bg-surface-container-low h-[450px] flex items-center shadow-sm">
+        <section className="relative rounded-xl overflow-hidden bg-surface-container-low h-[450px] flex items-center">
           <div className="absolute inset-0 z-0 opacity-40">
-            <img 
+            <img
               src={`${import.meta.env.BASE_URL}images/dashboard-hero.png`}
-              alt="Global Network Map" 
+              alt="Global Network Map"
               className="w-full h-full object-cover grayscale brightness-110 contrast-75"
             />
           </div>
           <div className="absolute inset-0 bg-gradient-to-r from-surface via-surface/60 to-transparent z-10" />
-          
+
           <div className="relative z-20 px-12 max-w-2xl">
             <h1 className="font-serif text-5xl font-bold text-on-surface mb-4 leading-tight">
               Universal Vision, <br/>
               <span className="text-primary">Sacred Execution</span>
             </h1>
             <p className="text-on-surface-variant font-sans text-lg mb-8 leading-relaxed">
-              Monitoring the expansion of ISKCON's global footprint. Real-time data synthesis across 6 continents.
+              Monitoring the expansion of ISKCON's global footprint. Real-time data synthesis across 6 continents and hundreds of developing spiritual sanctuaries.
             </p>
             <div className="flex gap-4">
               <Link href="/temples">
@@ -91,7 +88,7 @@ export default function Dashboard() {
             </div>
             <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-tighter mb-1">Total Global Investment</h3>
             <div className="text-3xl font-black text-on-surface font-serif">
-              ₹{(stats.totalFundraisingRaised / 10000000).toFixed(1)}Cr
+              ${(stats.totalFundraisingGoal / 1_000_000).toFixed(0)}M
             </div>
           </div>
 
@@ -100,15 +97,17 @@ export default function Dashboard() {
               <div className="w-10 h-10 rounded-lg bg-tertiary/10 flex items-center justify-center text-tertiary">
                 <ChartBar className="w-5 h-5" />
               </div>
-              <div className="w-24 h-2 bg-surface-variant rounded-full overflow-hidden">
-                <div className="w-[65%] h-full bg-primary"></div>
+              <div className="w-24 h-2 bg-surface-container-highest rounded-full overflow-hidden">
+                <div className="w-[65%] h-full bg-gradient-to-r from-primary to-secondary rounded-full"></div>
               </div>
             </div>
             <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-tighter mb-1">Average Completion</h3>
-            <div className="text-3xl font-black text-on-surface font-serif">65%</div>
+            <div className="text-3xl font-black text-on-surface font-serif">
+              {stats.averageProgress ? Math.round(stats.averageProgress) : 65}%
+            </div>
           </div>
 
-          <div className="bg-surface-container p-6 rounded-xl transition-all hover:bg-surface-container-high border-2 border-primary-container/20">
+          <div className="bg-surface-container p-6 rounded-xl transition-all hover:bg-surface-container-high" style={{ outline: '2px solid color-mix(in srgb, #ff9933 20%, transparent)' }}>
             <div className="flex items-center justify-between mb-4">
               <div className="w-10 h-10 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary">
                 <CheckCircle2 className="w-5 h-5" />
@@ -119,14 +118,14 @@ export default function Dashboard() {
             </div>
             <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-tighter mb-1">Near Completion</h3>
             <div className="text-3xl font-black text-on-surface font-serif">
-              {stats.templesByStatus.finishing || 0}
+              {stats.templesByStatus?.finishing || 0}
             </div>
           </div>
         </section>
 
         {/* Bottom Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
+
           {/* Regional Distribution Chart */}
           <div className="lg:col-span-2 bg-surface-container-low rounded-xl p-8">
             <div className="flex justify-between items-center mb-10">
@@ -142,14 +141,14 @@ export default function Dashboard() {
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={barData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }} barGap={2}>
-                  <XAxis 
-                    dataKey="name" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fill: '#554336', fontSize: 12, fontWeight: 600 }} 
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#554336', fontSize: 12, fontWeight: 600 }}
                     dy={10}
                   />
-                  <RechartsTooltip cursor={{fill: 'rgba(0,0,0,0.05)'}} contentStyle={{ borderRadius: '8px', border: 'none' }} />
+                  <RechartsTooltip cursor={{ fill: 'rgba(27,28,28,0.04)' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 6px 24px rgba(27,28,28,0.06)' }} />
                   <Bar dataKey="india" fill="var(--color-primary)" radius={[8, 8, 0, 0]} barSize={32} />
                   <Bar dataKey="international" fill="var(--color-tertiary)" radius={[8, 8, 0, 0]} barSize={32} />
                 </BarChart>
@@ -171,20 +170,20 @@ export default function Dashboard() {
                 {recentProject?.content || "The flagship structural wonder in Mayapur, West Bengal. Merging cosmology and modern engineering on a massive scale."}
               </p>
             </div>
-            
-            <div className="space-y-6">
-              <div className="flex justify-between items-end border-b border-surface/10 pb-4">
+
+            <div className="space-y-5">
+              <div className="flex justify-between items-end pb-4" style={{ borderBottom: '1px solid rgba(251,249,248,0.10)' }}>
                 <span className="text-xs font-medium uppercase tracking-widest opacity-60">Status</span>
                 <span className="text-lg font-bold text-primary-container">Finishing Phase</span>
               </div>
-              <div className="flex justify-between items-end border-b border-surface/10 pb-4">
+              <div className="flex justify-between items-end pb-4" style={{ borderBottom: '1px solid rgba(251,249,248,0.10)' }}>
                 <span className="text-xs font-medium uppercase tracking-widest opacity-60">Recent Update</span>
                 <span className="text-sm font-bold italic">{recentProject ? new Date(recentProject.createdAt).toLocaleDateString() : "2024"}</span>
               </div>
             </div>
 
             <Link href={recentProject ? `/temples/${recentProject.templeId}` : `/temples/1`}>
-              <button className="mt-8 flex items-center justify-center gap-2 w-full py-4 border border-surface/20 rounded-xl hover:bg-surface/10 transition-colors cursor-pointer">
+              <button className="mt-8 flex items-center justify-center gap-2 w-full py-4 rounded-xl hover:bg-surface/10 transition-colors cursor-pointer" style={{ border: '1px solid rgba(251,249,248,0.20)' }}>
                 <span className="text-sm font-bold tracking-wide">View Project</span>
                 <ArrowRight className="w-4 h-4" />
               </button>

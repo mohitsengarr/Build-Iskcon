@@ -13,6 +13,65 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+// ---------- Curated temple image pool ----------
+
+const TEMPLE_IMAGES: Record<string, string[]> = {
+  construction: [
+    "https://images.unsplash.com/photo-1561361058-c24e017dbfbc?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=800&h=600&fit=crop",
+  ],
+  spiritual: [
+    "https://images.unsplash.com/photo-1568454537842-d933259bb258?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1623834484408-8b9cadf7bff9?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1587474260584-136574528ed5?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1596402184320-417e7178b2cd?w=800&h=600&fit=crop",
+  ],
+  fundraising: [
+    "https://images.unsplash.com/photo-1617104551722-3b2d51bdb1e8?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1600093463592-8e36ae95ef56?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1513828583688-c52646db42da?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1519744346361-7a029b427a59?w=800&h=600&fit=crop",
+  ],
+  logistics: [
+    "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800&h=600&fit=crop",
+  ],
+  general: [
+    "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1596073419667-9d77d59f1a7f?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1549880338-65ddcdfd017b?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?w=800&h=600&fit=crop",
+  ],
+};
+
+function pickImage(category: string): string {
+  const pool = TEMPLE_IMAGES[category] ?? TEMPLE_IMAGES.general;
+  return pool[Math.floor(Math.random() * pool.length)]!;
+}
+
+function generateLikes(): number {
+  return Math.floor(Math.random() * 1800) + 200;
+}
+
+function generateHashtags(category: string, templeName: string): string {
+  const slug = templeName.replace(/\s+/g, "").substring(0, 16);
+  const base: Record<string, string[]> = {
+    construction: ["#ISKCONConstruction", "#VedicArchitecture", "#TempleBuilding", `#${slug}`],
+    spiritual: ["#HareKrishna", "#VedicCulture", "#SpiritualJourney", `#${slug}`],
+    fundraising: ["#ISKCONFundraising", "#DharmaProject", "#VedicCentre", `#${slug}`],
+    logistics: ["#ProjectUpdate", "#ISKCONLogistics", "#TempleProject", `#${slug}`],
+    general: ["#ISKCON", "#VedicTemple", "#GlobalISKCON", `#${slug}`],
+  };
+  const tags = base[category] ?? base.general!;
+  return tags.join(" ");
+}
+
 // ---------- Types ----------
 
 interface TempleUpdateResult {
@@ -205,12 +264,16 @@ async function insertDiscoveredTemple(temple: NewTempleResult): Promise<number |
       );
     }
 
+    const category = temple.initialUpdate.category;
     await db.insert(projectUpdatesTable).values({
       templeId,
       title: temple.initialUpdate.title,
       content: temple.initialUpdate.content,
-      author: "ISKCON Intelligence",
-      category: temple.initialUpdate.category,
+      author: temple.projectLead || "ISKCON Intelligence",
+      category,
+      imageUrl: pickImage(category),
+      likes: generateLikes(),
+      hashtags: generateHashtags(category, temple.name),
     });
 
     logger.info({ templeId, name: temple.name, location: temple.location }, "New temple discovered and added");
@@ -261,12 +324,16 @@ export async function runTempleSync(): Promise<{
           })
           .where(eq(templesTable.id, temple.id));
 
+        const category = research.update.category;
         await db.insert(projectUpdatesTable).values({
           templeId: temple.id,
           title: research.update.title,
           content: research.update.content,
-          author: "ISKCON Intelligence",
-          category: research.update.category,
+          author: temple.projectLead || "ISKCON Intelligence",
+          category,
+          imageUrl: pickImage(category),
+          likes: generateLikes(),
+          hashtags: generateHashtags(category, temple.name),
         });
 
         templesUpdated++;

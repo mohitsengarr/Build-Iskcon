@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Vedic Builder | Social Hub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fbf9f8;
+        }
+        h1, h2, h3, .font-serif {
+            font-family: 'Noto Serif', serif;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "surface-container-high": "#eae7e7",
+                "outline": "#887364",
+                "error-container": "#ffdad6",
+                "surface-bright": "#fbf9f8",
+                "on-error-container": "#93000a",
+                "on-secondary-fixed-variant": "#574500",
+                "on-primary": "#ffffff",
+                "on-tertiary-container": "#3a4557",
+                "on-error": "#ffffff",
+                "primary-fixed-dim": "#ffb77a",
+                "inverse-surface": "#303030",
+                "secondary": "#735c00",
+                "on-tertiary-fixed": "#111c2c",
+                "surface-container-low": "#f6f3f2",
+                "on-tertiary": "#ffffff",
+                "outline-variant": "#dbc2b0",
+                "on-secondary-container": "#745c00",
+                "inverse-primary": "#ffb77a",
+                "on-primary-fixed-variant": "#6d3a00",
+                "secondary-fixed": "#ffe088",
+                "tertiary": "#545f72",
+                "surface-container-lowest": "#ffffff",
+                "secondary-fixed-dim": "#e9c349",
+                "primary-fixed": "#ffdcc2",
+                "primary": "#8f4e00",
+                "on-primary-fixed": "#2e1500",
+                "surface-variant": "#e4e2e1",
+                "surface-tint": "#8f4e00",
+                "surface": "#fbf9f8",
+                "on-secondary-fixed": "#241a00",
+                "on-secondary": "#ffffff",
+                "tertiary-fixed-dim": "#bcc7dd",
+                "primary-container": "#ff9933",
+                "inverse-on-surface": "#f3f0f0",
+                "error": "#ba1a1a",
+                "surface-dim": "#dcd9d9",
+                "on-background": "#1b1c1c",
+                "background": "#fbf9f8",
+                "surface-container-highest": "#e4e2e1",
+                "on-surface-variant": "#554336",
+                "on-tertiary-fixed-variant": "#3c475a",
+                "surface-container": "#f0eded",
+                "tertiary-container": "#a7b2c8",
+                "on-primary-container": "#693800",
+                "tertiary-fixed": "#d8e3fa",
+                "secondary-container": "#fed65b",
+                "on-surface": "#1b1c1c"
+              },
+              fontFamily: {
+                "headline": ["Noto Serif"],
+                "body": ["Inter"],
+                "label": ["Inter"]
+              },
+              borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+          },
+        }
+    </script>
+</head>
+<body class="text-on-surface">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-[#fbf9f8]/80 dark:bg-[#1b1c1c]/80 backdrop-blur-md shadow-sm dark:shadow-none">
+<div class="flex justify-between items-center px-6 py-3 max-w-screen-2xl mx-auto">
+<div class="text-2xl font-serif font-bold text-[#8f4e00] dark:text-[#ff9933]">Vedic Builder</div>
+<div class="hidden md:flex space-x-8 items-center">
+<a class="text-[#554336] dark:text-[#d3c4bb] hover:text-[#735c00] transition-colors duration-200 font-medium text-sm tracking-wide Inter" href="#">Projects</a>
+<a class="text-[#554336] dark:text-[#d3c4bb] hover:text-[#735c00] transition-colors duration-200 font-medium text-sm tracking-wide Inter" href="#">Analytics</a>
+<a class="text-[#8f4e00] dark:text-[#ff9933] border-b-2 border-[#8f4e00] pb-1 font-medium text-sm tracking-wide Inter" href="#">Social Hub</a>
+<a class="text-[#554336] dark:text-[#d3c4bb] hover:text-[#735c00] transition-colors duration-200 font-medium text-sm tracking-wide Inter" href="#">Donations</a>
+</div>
+<div class="flex items-center space-x-4">
+<button class="material-symbols-outlined text-[#554336] dark:text-[#d3c4bb] hover:text-[#8f4e00]">notifications</button>
+<button class="material-symbols-outlined text-[#554336] dark:text-[#d3c4bb] hover:text-[#8f4e00]">account_circle</button>
+</div>
+</div>
+<div class="bg-[#f2efed] dark:bg-[#2b2928] h-[1px] w-full"></div>
+</nav>
+<main class="pt-20 pb-24 md:pb-10 max-w-screen-xl mx-auto px-4 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Center Column (Feed) -->
+<div class="lg:col-span-8 space-y-8">
+<!-- Stories Section -->
+<div class="bg-surface-container-low rounded-xl p-4 overflow-hidden">
+<div class="flex space-x-6 overflow-x-auto hide-scrollbar pb-2">
+<!-- Story Item 1 -->
+<div class="flex flex-col items-center space-y-2 flex-shrink-0 cursor-pointer">
+<div class="w-16 h-16 rounded-full p-[2px] bg-gradient-to-tr from-primary to-secondary-container">
+<div class="w-full h-full rounded-full border-2 border-surface overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Mayapur Project Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0yB5kimLR2sOG4fSSs0wrduwmydEhBnKhJw_HS7uRkreq37q3gln9-6aVB3VWISFe19cjvm3LOZp2Ka4h9U4cZRU8Bt7RFO_H-tRP3ydZg2_RnMpXCbn_EZ2S0scS7k6hgXvTAggIejdwule3GuSPDys26RebRZYtkrfKCVRBs9ZofVfm4brioHjULZxIlPnyWeSo2ImEpCkuqG_kKmrwzvjgxOaSEYiJIGg25JpVnt1vFpxTSynFEDyRFFE5Q2IqHMkqe8ZTMdmx"/>
+</div>
+</div>
+<span class="text-xs font-semibold text-on-surface-variant truncate w-16 text-center">Mayapur</span>
+</div>
+<!-- Story Item 2 -->
+<div class="flex flex-col items-center space-y-2 flex-shrink-0 cursor-pointer">
+<div class="w-16 h-16 rounded-full p-[2px] bg-gradient-to-tr from-primary to-secondary-container">
+<div class="w-full h-full rounded-full border-2 border-surface overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="London Project Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCw7AY3lAMuDi3dfmEg1mPUbBsq4chxBLYwwz7f3Wt-ZXLa3Fs_SjN5NoIgrhqd7AOUwSU2WZQH4XocbyhuUCuK7el2JVIiQyQ7GGKmg008kwVhCFjudGiT8WbH4x5Yqaijgor2P3Yv1kod1YWxehHkz1v3y_4aG3HJb1mv6E0MCIDr7i1oqk7wSJUe6OGE4pyRbiw2n9hx-C_kfpNuszryM5pcrrX0Pcdyuk2mA38HX7UQDIFFCZRdBx42BMUa9JKUEz-vf_hoKA0L"/>
+</div>
+</div>
+<span class="text-xs font-semibold text-on-surface-variant truncate w-16 text-center">London</span>
+</div>
+<!-- Story Item 3 -->
+<div class="flex flex-col items-center space-y-2 flex-shrink-0 cursor-pointer">
+<div class="w-16 h-16 rounded-full p-[2px] bg-gradient-to-tr from-primary to-secondary-container">
+<div class="w-full h-full rounded-full border-2 border-surface overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="New Jersey Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCuoolhzD54abzrWwxpl0UPgNaRBw6UwYPffmqAsLvRLmCGwp_ini0mAJXP1Oe2aQODRSSNLh8LlGGAEkRDUsUuJYNw1zi-wrg_X406xTRosDpnt6Fl8f-09Sw4AqFr1bq66tGU9BiGGNh5qxnCANbDKmEst8149Ef0MuZDFVhXZtaBD2Wu1sgZXrv80DWbqRCPDfFI0fzDLvz2Jbrk0vykreJZ8GtReUeRWeATfZJQqO-Wy19weHofBdqrNmR1hhXw4servuLsU6__"/>
+</div>
+</div>
+<span class="text-xs font-semibold text-on-surface-variant truncate w-16 text-center">New Jersey</span>
+</div>
+<!-- Story Item 4 -->
+<div class="flex flex-col items-center space-y-2 flex-shrink-0 cursor-pointer">
+<div class="w-16 h-16 rounded-full p-[2px] bg-gradient-to-tr from-primary to-secondary-container">
+<div class="w-full h-full rounded-full border-2 border-surface overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Bangalore Project Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCmklFpyiPgE-LJxfy9mQlmxTRhEJzzX8r3FNsP3v68zldRawZ_QSwCfhWuvJg3KuXxan27OTcRkG9ZI4zcCm1rj41NzwfX_jqhwohlk4NuqfrCUnieXMs2HKjeCO6rJ2qkbyFp09DCbqyQJTCRWBXDfxyIAymqimuEmA6hPGikBq39bsdjYkGz9ArPq3YuPqIvylT46D-k77_OT0iwkmBjnSy7m9CGg7dxOtUtnQKBTkQMZyKaxBPu4xrJbNvW2OS8Ngz6_V5LT3d0"/>
+</div>
+</div>
+<span class="text-xs font-semibold text-on-surface-variant truncate w-16 text-center">Bangalore</span>
+</div>
+<!-- Story Item 5 -->
+<div class="flex flex-col items-center space-y-2 flex-shrink-0 cursor-pointer">
+<div class="w-16 h-16 rounded-full p-[2px] bg-gradient-to-tr from-primary to-secondary-container">
+<div class="w-full h-full rounded-full border-2 border-surface overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Moscow Project Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCmVZv0xCH_JbJjS2GbaDaDd2zRvvCFobZ_0lgfGwtXpvdXpo_4mn7ZYk7beEI_vt_VEcI6roiNOOHIMkl0fellmMRR-s6beXFqcn9FFnhmXrwCv7s6gCyHGiTwdVOL02_eSfzXUhNlrljjlU6mLUQ3fHiU_cWntZg_5P79JrGnokafyZJ9hXEZU0q4ZMTqRp-XSEZ5s1pttMTm6AR3Sxg3JHchljGAhrnWLJ5RqYAxJhsYnHLugzXO1Lr22STvcwSlqu9eTwX-6CDK"/>
+</div>
+</div>
+<span class="text-xs font-semibold text-on-surface-variant truncate w-16 text-center">Moscow</span>
+</div>
+</div>
+</div>
+<!-- Feed Post 1 -->
+<article class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<div class="p-4 flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<div class="w-10 h-10 rounded-full border-2 border-primary-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Mayapur TOVP Profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCp91_aeRhb0mPilxh6DERKSVeylo69jvtl-bq7eunWNNN-bILD40eUhL990QnKCNc2X9vvf988dIewzMifickXX7IP0x9v029ACnrTZMuer0AaroDw8yn6q37WyFL3PVMYzZnXaMVV6Forw-qt35gEeoB48A1-JDO2J_DVTi1QWBsTF1nIB3mq4w414_tG7JSe9S7j2lcp2TwS2RfvTVwZFRdyOLExSK90nZDgJ9IM3eWOT1JvlNTHObzNnMyc0ivpXFjoH-uCS2BF"/>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Mayapur_TOVP</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest">W. Bengal, India</p>
+</div>
+</div>
+<button class="material-symbols-outlined text-outline">more_horiz</button>
+</div>
+<div class="aspect-video w-full relative bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Vedic Planetarium Construction Site" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_vQdDahvIVTAwDNoU7eFw4zml0CedkabpcFLYbEbGi2iQBHxfV_aRgyw1OGMwLTh6tcB-1OquO5_H3L0bANnD6fvSdJpDfT2LgrIoBkdTIK1JHFUhfSrNN951ivSQtsNByivd0NJ9n0RTaL_HzZODMm30RwWUXnNNc94I_ix0IgRnZYDo-WG2HJwQ4lOi33tvBAFYm_AlM911SwSawZzFWhy4C1-dRdY65DN_iJmOoNsiuvSSs09u_sgMwat6iSyaqo6Fx37RWMoA"/>
+</div>
+<div class="p-4 space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex space-x-4">
+<button class="material-symbols-outlined text-2xl text-primary hover:scale-110 transition-transform" data-weight="fill">favorite</button>
+<button class="material-symbols-outlined text-2xl text-on-surface-variant hover:scale-110 transition-transform">chat_bubble</button>
+<button class="material-symbols-outlined text-2xl text-on-surface-variant hover:scale-110 transition-transform">send</button>
+</div>
+<button class="material-symbols-outlined text-2xl text-on-surface-variant">bookmark</button>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">1,248 likes</p>
+<p class="text-sm text-on-surface mt-1">
+<span class="font-bold">Mayapur_TOVP</span> The central dome's intricate marble work is nearing completion. A historic milestone for the project. 🛕
+                        </p>
+<p class="text-sm text-primary font-medium mt-1">#ISKCON #VedicPlanetarium #ConstructionUpdate #Mayapur</p>
+</div>
+<button class="text-xs text-on-surface-variant font-medium uppercase tracking-tight">View all 42 comments</button>
+<p class="text-[10px] text-outline uppercase tracking-tighter">2 HOURS AGO</p>
+</div>
+</article>
+<!-- Feed Post 2 -->
+<article class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<div class="p-4 flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<div class="w-10 h-10 rounded-full border-2 border-primary-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="London Bhaktivedanta Manor Profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAr2uoExd4JxlOOWqye21jBm3Phe1xhLzB8oo7whECZMkhaxYnhS-YagHGolhAKODfwjDArUvNuDAQRB3Kh_QTvmN2bixIUg2oUhmK5KdnhfZR_Q69m_JZFwj7Ko8-iZ0SeTcMB3uo_hTDMMf82miTK9x_ctUQl7gkVipZqoWAKsmvhskAy3neWvstiVdYoVyWmXJyexkd4c4lR84LNs8_9zJl8NntHgOqbJV3cBEXCe8MV7kNs5QRS1HimWbmpXquyCWTxUga4VdDn"/>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">London_Manor_Build</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest">Watford, UK</p>
+</div>
+</div>
+<button class="material-symbols-outlined text-outline">more_horiz</button>
+</div>
+<div class="aspect-square w-full relative bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Temple architecture detail work" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1p-7hu0O3EOXG5Q5dySwIRWxFFd7GrznPKdM57JApz836GL0_bBUEBrN6DNR8aAWf6G6UzBlJTisJ9ucKTvQPf1ErGxbsj-vrwWHSUckzWPgrTb2mWLs6OfhnDr-5CQp44dZ9zfQRSESMlJk4eXD5TNmLSQCwiJ2NBjR30GQSU20c_dxC46g0DpQwoPXBM2N2yUtXJBg4hFTe-qLHzmmRWGzRwKO_TVicO3YroIJKflObfrsuNV5dph1raPbQJweIhv8xF_6wfatR"/>
+</div>
+<div class="p-4 space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex space-x-4">
+<button class="material-symbols-outlined text-2xl text-on-surface-variant hover:scale-110 transition-transform">favorite</button>
+<button class="material-symbols-outlined text-2xl text-on-surface-variant hover:scale-110 transition-transform">chat_bubble</button>
+<button class="material-symbols-outlined text-2xl text-on-surface-variant hover:scale-110 transition-transform">send</button>
+</div>
+<button class="material-symbols-outlined text-2xl text-on-surface-variant">bookmark</button>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">856 likes</p>
+<p class="text-sm text-on-surface mt-1">
+<span class="font-bold">London_Manor_Build</span> New sustainable garden walkways being installed today. Bridging nature and devotion. 🌱
+                        </p>
+<p class="text-sm text-primary font-medium mt-1">#EcoTemple #LondonBhakti #Sustenance #DharmaArchitecture</p>
+</div>
+<button class="text-xs text-on-surface-variant font-medium uppercase tracking-tight">View all 15 comments</button>
+<p class="text-[10px] text-outline uppercase tracking-tighter">5 HOURS AGO</p>
+</div>
+</article>
+</div>
+<!-- Right Sidebar (Suggested/Trending) -->
+<aside class="hidden lg:block lg:col-span-4 space-y-8 sticky top-24 h-fit">
+<!-- Profile Quick View -->
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center space-x-4">
+<div class="w-14 h-14 rounded-full border-2 border-secondary overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Project Lead Profile Photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMGNHN1eeViaL9Qb2J8NxDa4bf99RvJyCc_1uym17gzSHCYKpWDqV9sL7lpVbdtDnwrgwWHr6LkWP6uGxGZBtJy4I-NRGJ12qVLa1f7fUMRPy0do6AsFO-aJ-2Hb3Lrlb7xuydQdTseUFTcTLc3kgLZEKAR_MgPUfKLN2Nis4Cy5ncjRIjU-1x2IzJ-6Utm2LX7WeRAW2x1XtXMTX3seUraVdvF0HJtP2h9fWbCQkWEr4cl1f7G87DhKtjOGPAoW4cO5iAwnNcGDXg"/>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Arjuna_Architect</p>
+<p class="text-xs text-on-surface-variant">Project Lead, Kashi</p>
+</div>
+</div>
+<button class="text-xs font-bold text-primary uppercase tracking-tighter">Switch</button>
+</div>
+<!-- Suggested Projects -->
+<section class="bg-surface-container-low rounded-xl p-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-sm font-bold text-on-surface-variant uppercase tracking-widest">Suggested For You</h3>
+<button class="text-xs font-bold text-on-surface">See All</button>
+</div>
+<div class="space-y-4">
+<!-- Suggestion 1 -->
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded-full overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Project Kashi Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCetIB8AFZVUEg6RNVstDx6i7YzOMfCxC2yCW1YqRDsroN9pqGiOs7gugt_U16OgEf9LI8tKJkkD76dpree6lTeGfLBnY2wAZEqH_XChHISjJ6kKPCTDlauv6wnuPJRJT0mYQhWRTLiUX_VIgm-wFbhF0VWUygofOdoVVVtjzvuIY7OGNjbXQE8gj0RWf1a-ClYh-LEdu1u7BCicB0BHlY_vpILeBTE81EgJyjoy9ElBGYtu1v2sy7sgqcZrV-7_71q2dfCMDCDYYzY"/>
+</div>
+<div>
+<p class="text-xs font-bold text-on-surface">project_kashi</p>
+<p class="text-[10px] text-on-surface-variant">Suggested for you</p>
+</div>
+</div>
+<button class="text-xs font-bold text-primary uppercase">Follow</button>
+</div>
+<!-- Suggestion 2 -->
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded-full overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Vedic Foundation Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLTmmX9uxq103xHi9NL0YVOB4rl8loA1w7wQvbNlpDevt-XZXN3SKC8dZ7TmPWEWl_rTqgEPxIY7htwB2hisU2J6YgN2_PYNPl2fq0sKXf6kVjaNGZrp60GOMxjqPqU0OHzg6TUhn7scnPszk_l0H8HEaxUxGcNkbEx66LP2Egmsbv8xdTxHhbb6vZkapDzot9AQ1TFq-DLYD1LAym2pl0QOmSiC8SL2DuNeIUFRxzmHad-3dQ1XM9V7Xv1Bzg_ca38RCNvuluJ2o2"/>
+</div>
+<div>
+<p class="text-xs font-bold text-on-surface">vedic_foundations</p>
+<p class="text-[10px] text-on-surface-variant">Followed by London_Manor</p>
+</div>
+</div>
+<button class="text-xs font-bold text-primary uppercase">Follow</button>
+</div>
+<!-- Suggestion 3 -->
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded-full overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Sydney ISKCON Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxVvjyD806_psJQFRfxetWstDqaV20Qqo27m8CZoIW3igE1qec4gUDVmhmhEEqHfqy-_Fmpa-De1Ers3De4Uf0gF1uKw0N1fp4wvMv9TU2mFGS95urkdd-GIKn0UlzacOGBcasSCBLXKyDWxKnB0ktOwR2jCZCOt8oMqEQK4vO397Jh0mQutpCq2iUN-wyMHyAZQM3hYVrZErwebB6SPoA0MFBLUHEPRIiq0MV5HJ6UmxQY38iIi9dG2V7haZ5P9MzXFDWtnFaCHPw"/>
+</div>
+<div>
+<p class="text-xs font-bold text-on-surface">iskcon_sydney</p>
+<p class="text-[10px] text-on-surface-variant">New on Vedic Builder</p>
+</div>
+</div>
+<button class="text-xs font-bold text-primary uppercase">Follow</button>
+</div>
+</div>
+</section>
+<!-- Trending Updates -->
+<section class="bg-surface-container-low rounded-xl p-6">
+<h3 class="text-sm font-bold text-on-surface-variant uppercase tracking-widest mb-4">Trending Updates</h3>
+<div class="space-y-5">
+<div>
+<p class="text-[10px] text-outline uppercase font-bold">Logistics • Trending</p>
+<p class="text-sm font-bold text-on-surface mt-1">Mayapur Chakra Installation</p>
+<p class="text-xs text-on-surface-variant">12.4k posts</p>
+</div>
+<div>
+<p class="text-[10px] text-outline uppercase font-bold">Fundraising • Trending</p>
+<p class="text-sm font-bold text-on-surface mt-1">Gita Bhavan Restoration</p>
+<p class="text-xs text-on-surface-variant">8.1k posts</p>
+</div>
+<div>
+<p class="text-[10px] text-outline uppercase font-bold">Events • Trending</p>
+<p class="text-sm font-bold text-on-surface mt-1">Global Vedic Expo 2024</p>
+<p class="text-xs text-on-surface-variant">5.2k posts</p>
+</div>
+</div>
+</section>
+<!-- Footer Links -->
+<footer class="px-2">
+<div class="flex flex-wrap gap-x-2 gap-y-1 text-[10px] font-medium text-outline uppercase tracking-tighter">
+<a class="hover:underline" href="#">About</a>
+<span>•</span>
+<a class="hover:underline" href="#">Help</a>
+<span>•</span>
+<a class="hover:underline" href="#">Press</a>
+<span>•</span>
+<a class="hover:underline" href="#">API</a>
+<span>•</span>
+<a class="hover:underline" href="#">Privacy</a>
+<span>•</span>
+<a class="hover:underline" href="#">Terms</a>
+<span>•</span>
+<a class="hover:underline" href="#">Locations</a>
+</div>
+<p class="text-[10px] font-bold text-outline mt-4 uppercase tracking-widest">© 2024 VEDIC BUILDER INTELLIGENCE</p>
+</footer>
+</aside>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-2 bg-[#fbf9f8]/90 dark:bg-[#1b1c1c]/90 backdrop-blur-xl z-50 rounded-t-2xl border-t border-[#f2efed]/30 dark:border-[#2b2928]/30 shadow-[0_-4px_12px_rgba(27,28,28,0.06)]">
+<div class="flex flex-col items-center justify-center text-[#554336] dark:text-[#d3c4bb] opacity-60">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="text-[10px] font-bold Inter uppercase tracking-tighter">Feed</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-[#ff9933]/10 text-[#8f4e00] dark:text-[#ff9933] rounded-xl px-4 py-1">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">explore</span>
+<span class="text-[10px] font-bold Inter uppercase tracking-tighter">Explore</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#554336] dark:text-[#d3c4bb] opacity-60">
+<span class="material-symbols-outlined">notifications</span>
+<span class="text-[10px] font-bold Inter uppercase tracking-tighter">Updates</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#554336] dark:text-[#d3c4bb] opacity-60">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-bold Inter uppercase tracking-tighter">Profile</span>
+</div>
+</nav>
+</body></html>
