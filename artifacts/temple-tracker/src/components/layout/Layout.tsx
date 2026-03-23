@@ -53,6 +53,16 @@ export function Layout({ children }: { children: ReactNode }) {
                   Regional Insights
                 </span>
               </Link>
+              <Link href="/social">
+                <span className={cn(
+                  "font-medium text-sm tracking-tight cursor-pointer transition-colors duration-300 px-2 py-1 rounded",
+                  location === "/social" 
+                    ? "text-primary font-bold border-b-2 border-primary pb-1 rounded-none px-0" 
+                    : "text-on-surface-variant hover:text-primary hover:bg-primary/5"
+                )}>
+                  Social Hub
+                </span>
+              </Link>
             </div>
           </div>
 
