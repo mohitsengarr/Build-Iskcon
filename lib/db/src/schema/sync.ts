@@ -12,6 +12,7 @@ export const syncJobsTable = pgTable("sync_jobs", {
   id: serial("id").primaryKey(),
   status: syncStatusEnum("status").notNull().default("running"),
   templesUpdated: integer("temples_updated").notNull().default(0),
+  templesAdded: integer("temples_added").notNull().default(0),
   updatesCreated: integer("updates_created").notNull().default(0),
   error: text("error"),
   startedAt: timestamp("started_at").defaultNow().notNull(),
