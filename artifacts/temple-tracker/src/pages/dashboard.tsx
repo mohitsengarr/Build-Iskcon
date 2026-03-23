@@ -98,8 +98,11 @@ function useTempleVideos() {
 
 function VideoCard({ video }: { video: TempleVideo }) {
   const [hovered, setHovered] = useState(false);
-  const isYouTubeWatch = video.sourceUrl?.includes("youtube.com/watch") || video.sourceUrl?.includes("youtu.be");
-  const href = video.sourceUrl ?? `https://www.youtube.com/watch?v=${video.videoId}`;
+  const watchUrl = `https://www.youtube.com/watch?v=${video.videoId}`;
+  const href = video.sourceUrl?.match(/youtube\.com\/watch|youtu\.be/)
+    ? video.sourceUrl
+    : watchUrl;
+  const isYouTubeWatch = href.includes("youtube.com/watch") || href.includes("youtu.be");
 
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" className="block group">
