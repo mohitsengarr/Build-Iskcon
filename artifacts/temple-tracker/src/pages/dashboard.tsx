@@ -234,9 +234,6 @@ function IntelligenceBriefs() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-serif text-3xl font-bold text-on-surface">Intelligence Briefs</h2>
-          <p className="text-sm text-on-surface-variant mt-1">
-            McKinsey-style analysis — AI-generated every hour from live Perplexity + Claude research
-          </p>
         </div>
         <button
           onClick={load}
