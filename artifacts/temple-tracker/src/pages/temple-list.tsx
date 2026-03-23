@@ -1,54 +1,11 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
 import { useListTemples } from "@workspace/api-client-react";
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
-import { MapPin, Grid, List, Search, Filter } from "lucide-react";
+import { MapPin, Grid, List, Filter } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-
-/** Fetches a real photo from Wikipedia's free open REST API. Returns null if not found. */
-function useWikiImage(templeName: string, location: string, skip: boolean): string | null {
-  const [src, setSrc] = useState<string | null>(null);
-  const tried = useRef(false);
-
-  useEffect(() => {
-    if (skip || tried.current) return;
-    tried.current = true;
-
-    const parts = location.split(",").map(p => p.trim());
-    const city = parts[0] ?? location;
-    const cityFirstWord = city.split(/\s+/)[0] ?? city;
-    const state = parts[1] ?? "";
-    const candidates = [
-      templeName,
-      `ISKCON ${cityFirstWord}`,
-      city,
-      cityFirstWord,
-      cityFirstWord && state ? `${cityFirstWord}, ${state}` : "",
-    ].filter(Boolean);
-
-    async function tryNext(list: string[]): Promise<void> {
-      for (const query of list) {
-        try {
-          const title = encodeURIComponent(query.replace(/\s+/g, "_"));
-          const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${title}`);
-          if (!res.ok) continue;
-          const data = await res.json() as { thumbnail?: { source?: string } };
-          const imgSrc = data?.thumbnail?.source;
-          if (imgSrc) {
-            setSrc(imgSrc.replace(/\/\d+px-/, "/800px-"));
-            return;
-          }
-        } catch { /* try next */ }
-      }
-    }
-
-    tryNext(candidates);
-  }, [templeName, location, skip]);
-
-  return src;
-}
 
 interface TempleCardProps {
   temple: {
@@ -60,14 +17,11 @@ interface TempleCardProps {
     constructionProgress: number;
     fundraisingGoal: number;
     fundraisingRaised: number;
-    coverImage?: string | null;
   };
   idx: number;
 }
 
 function TempleCard({ temple, idx }: TempleCardProps) {
-  const wikiSrc = useWikiImage(temple.name, temple.location, !!temple.coverImage);
-  const coverImg = temple.coverImage || wikiSrc;
   const progressPercentage = Math.round(Math.min(100, Math.max(0, temple.constructionProgress)));
 
   return (
@@ -78,25 +32,11 @@ function TempleCard({ temple, idx }: TempleCardProps) {
       transition={{ duration: 0.3, delay: idx * 0.05 }}
       className="group flex flex-col bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_24px_rgba(27,28,28,0.06)] hover:-translate-y-1 transition-transform duration-300"
     >
-      <div className="relative h-64 overflow-hidden bg-surface-container">
-        {coverImg ? (
-          <img
-            src={coverImg}
-            alt={temple.name}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-surface-container-high">
-            <span className="text-5xl opacity-20">🛕</span>
-          </div>
-        )}
-        <div className="absolute top-4 left-4 bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
-          {temple.phase}
-        </div>
-      </div>
-
       <div className="p-8 flex-1 flex flex-col">
         <div className="mb-6">
+          <span className="inline-block mb-3 bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+            {temple.phase}
+          </span>
           <h3 className="text-2xl font-bold font-serif text-on-surface mb-1 line-clamp-1">{temple.name}</h3>
           <p className="text-sm text-on-surface-variant font-medium flex items-center gap-1">
             <MapPin className="w-3 h-3" />
