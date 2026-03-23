@@ -662,6 +662,100 @@ export default function Dashboard() {
           </motion.div>
 
         </motion.div>
+
+        {/* ── Srila Prabhupada Tribute ───────────────────────────────────── */}
+        <motion.section
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+          className="relative overflow-hidden rounded-2xl bg-on-surface text-[#fbf9f8]"
+        >
+          {/* Decorative glow */}
+          <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-secondary/20 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-0">
+
+            {/* Photo panel */}
+            <motion.div
+              variants={fadeIn}
+              className="relative h-72 lg:h-auto overflow-hidden lg:rounded-l-2xl"
+            >
+              <img
+                src="/prabhupada.jpg"
+                alt="His Divine Grace A.C. Bhaktivedanta Swami Prabhupada"
+                className="w-full h-full object-cover object-top"
+              />
+              {/* subtle gradient overlay on the right edge to blend */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-on-surface/60 hidden lg:block" />
+              <div className="absolute inset-0 bg-gradient-to-t from-on-surface/70 to-transparent lg:hidden" />
+            </motion.div>
+
+            {/* Content panel */}
+            <motion.div variants={staggerContainer} className="p-8 md:p-12 lg:p-14 flex flex-col justify-center gap-6">
+
+              {/* Label */}
+              <motion.div variants={fadeInUp}>
+                <span className="inline-block px-3 py-1 rounded-full border border-primary/50 text-primary text-[10px] font-bold uppercase tracking-widest">
+                  Founder-Ācārya · ISKCON
+                </span>
+              </motion.div>
+
+              {/* Name */}
+              <motion.div variants={fadeInUp}>
+                <h2 className="font-serif text-3xl md:text-4xl font-bold leading-tight text-[#fbf9f8] mb-1">
+                  His Divine Grace
+                </h2>
+                <h2 className="font-serif text-3xl md:text-4xl font-bold leading-tight text-primary italic">
+                  A. C. Bhaktivedanta Swami Prabhupāda
+                </h2>
+                <p className="text-sm text-white/50 font-medium mt-2 tracking-wide">
+                  1 September 1896 — 14 November 1977
+                </p>
+              </motion.div>
+
+              {/* Bio */}
+              <motion.p variants={fadeInUp} className="text-white/75 text-base leading-relaxed max-w-2xl">
+                Born Abhay Charanaravinda De in Calcutta, Prabhupāda was a Gaudīya Vaishnava teacher and the most prominent proponent of the devotional tradition of Chaitanya Mahaprabhu. At the age of 69 he sailed alone to New York and founded the <strong className="text-white font-semibold">International Society for Krishna Consciousness (ISKCON)</strong> in 1966.
+              </motion.p>
+
+              <motion.p variants={fadeInUp} className="text-white/75 text-base leading-relaxed max-w-2xl">
+                In eleven years he circled the globe fourteen times, established over 100 temples worldwide, and produced a prolific body of Vedic literature — including the landmark <em className="text-white/90">Bhagavad-gītā As It Is</em>, the <em className="text-white/90">Śrīmad-Bhāgavatam</em>, and the <em className="text-white/90">Caitanya-caritāmṛta</em>. His vision of a temple in every town and village remains the guiding mandate for every project tracked on this platform.
+              </motion.p>
+
+              {/* Quote */}
+              <motion.blockquote
+                variants={fadeInUp}
+                className="border-l-2 border-primary pl-6 mt-2"
+              >
+                <p className="font-serif text-lg italic text-white/90 leading-relaxed">
+                  "Our temples are not for making money. They are meant for the purpose of spreading Kṛṣṇa consciousness."
+                </p>
+                <cite className="text-xs text-white/50 font-semibold uppercase tracking-widest mt-3 block not-italic">
+                  — Srila Prabhupāda
+                </cite>
+              </motion.blockquote>
+
+              {/* Stat chips */}
+              <motion.div variants={fadeInUp} className="flex flex-wrap gap-3 pt-2">
+                {[
+                  { label: "Temples Founded", value: "108+" },
+                  { label: "Translations", value: "80 languages" },
+                  { label: "Books Distributed", value: "500M+" },
+                  { label: "Disciples Initiated", value: "5,000+" },
+                ].map((stat) => (
+                  <div key={stat.label} className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-center">
+                    <p className="text-primary font-bold text-base leading-none mb-1">{stat.value}</p>
+                    <p className="text-white/50 text-[10px] uppercase font-semibold tracking-widest">{stat.label}</p>
+                  </div>
+                ))}
+              </motion.div>
+
+            </motion.div>
+          </div>
+        </motion.section>
+
       </div>
     </Layout>
   );
