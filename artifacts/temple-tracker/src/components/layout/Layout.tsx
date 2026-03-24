@@ -7,11 +7,7 @@ import { SyncIndicator } from "@/components/SyncIndicator";
 import { slideDown } from "@/lib/animations";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Global Dashboard", match: (loc: string) => loc === "/" },
-  { href: "/temples", label: "Project Directory", match: (loc: string) => loc.startsWith("/temples") },
-  { href: "/regional", label: "Regional Insights", match: (loc: string) => loc === "/regional" },
-  { href: "/social", label: "Social Hub", match: (loc: string) => loc === "/social" },
-  { href: "/blogs", label: "Insights", match: (loc: string) => loc.startsWith("/blogs") },
+  { href: "/", label: "Home", match: (loc: string) => loc === "/" },
   { href: "/vision2051", label: "Vision 2051", match: (loc: string) => loc === "/vision2051" },
 ];
 

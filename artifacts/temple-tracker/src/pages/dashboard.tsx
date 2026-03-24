@@ -8,9 +8,13 @@ import { fadeInUp, fadeIn, staggerContainer, scaleIn, viewportOnce } from "@/lib
 import {
   Building2, IndianRupee, ChartBar, CheckCircle2, ArrowRight,
   Globe, RefreshCcw, Play, ExternalLink, Film, MapPin, Heart,
+  Clock, BookOpen, ChevronRight, MessageCircle, Heart as HeartIcon,
+  TrendingUp, RefreshCw, Zap,
 } from "lucide-react";
 import { Link } from "wouter";
 import { BarChart, Bar, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from "recharts";
+import { BLOGS } from "@/pages/blogs";
+import { formatDistanceToNow } from "date-fns";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -644,6 +648,320 @@ function HowToGive() {
   );
 }
 
+// ── Blogs / Insights Preview ─────────────────────────────────────────────────
+
+function BlogsPreview() {
+  const categoryColors: Record<string, string> = {
+    Architecture: "bg-primary/10 text-primary",
+    Giving: "bg-secondary/10 text-secondary",
+    Seva: "bg-amber-100 text-amber-800",
+    Community: "bg-blue-50 text-blue-700",
+    Philosophy: "bg-violet-50 text-violet-700",
+    Vision: "bg-green-50 text-green-700",
+  };
+
+  return (
+    <motion.section
+      variants={staggerContainer}
+      initial="hidden"
+      whileInView="visible"
+      viewport={viewportOnce}
+      className="space-y-8"
+    >
+      <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row justify-between sm:items-end gap-4">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <BookOpen className="w-4 h-4 text-primary" />
+            </div>
+            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">
+              Knowledge & Insights
+            </span>
+          </div>
+          <h2 className="font-serif text-2xl font-bold text-on-surface">Latest Articles</h2>
+          <p className="text-sm text-on-surface-variant mt-1">
+            Explore temple architecture, devotion, community seva, and the vision for 2051.
+          </p>
+        </div>
+      </motion.div>
+
+      <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {BLOGS.map((blog) => (
+          <motion.div key={blog.slug} variants={fadeInUp}>
+            <Link href={`/blogs/${blog.slug}`}>
+              <div className="group bg-surface-container-low rounded-xl p-6 hover:-translate-y-1 transition-all duration-300 cursor-pointer border border-outline-variant/10 h-full flex flex-col">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${categoryColors[blog.category] ?? "bg-surface-container text-on-surface-variant"}`}>
+                    {blog.category}
+                  </span>
+                  <span className="text-[10px] text-on-surface-variant flex items-center gap-1">
+                    <Clock className="w-3 h-3" /> {blog.readTime} min
+                  </span>
+                </div>
+                <h3 className="font-serif text-lg font-bold text-on-surface group-hover:text-primary transition-colors leading-snug mb-2 line-clamp-2">
+                  {blog.title}
+                </h3>
+                <p className="text-xs text-on-surface-variant leading-relaxed line-clamp-3 flex-1">
+                  {blog.subtitle}
+                </p>
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-outline-variant/10">
+                  <div className="text-[10px] text-on-surface-variant">
+                    <span className="font-bold text-on-surface">{blog.author.split(" ")[0]}</span> · {blog.date}
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </div>
+            </Link>
+          </motion.div>
+        ))}
+      </motion.div>
+    </motion.section>
+  );
+}
+
+// ── Social Feed Preview ──────────────────────────────────────────────────────
+
+interface FeedPostCompact {
+  id: number;
+  title: string;
+  content: string;
+  author: string;
+  category: string;
+  likes: number;
+  hashtags: string | null;
+  createdAt: string;
+  templeId: number;
+  templeName: string;
+  templeLocation: string;
+}
+
+function SocialFeedPreview() {
+  const [posts, setPosts] = useState<FeedPostCompact[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${BASE}/api/social/feed?limit=6`)
+      .then((r) => r.json())
+      .then((data) => { setPosts(data.posts?.slice(0, 6) ?? []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  function getInitials(name: string): string {
+    const words = name.split(" ").filter((w: string) => w.length > 0);
+    if (words.length === 1) return words[0]!.substring(0, 2).toUpperCase();
+    return (words[0]![0]! + words[1]![0]!).toUpperCase();
+  }
+
+  const CATEGORY_COLORS: Record<string, string> = {
+    construction: "bg-primary/80 text-on-primary",
+    spiritual: "bg-secondary/80 text-on-secondary",
+    fundraising: "bg-secondary-container/90 text-on-secondary-container",
+    logistics: "bg-tertiary/80 text-on-tertiary",
+    general: "bg-surface-container/90 text-on-surface-variant",
+  };
+
+  return (
+    <motion.section
+      variants={staggerContainer}
+      initial="hidden"
+      whileInView="visible"
+      viewport={viewportOnce}
+      className="space-y-8"
+    >
+      <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row justify-between sm:items-end gap-4">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <MessageCircle className="w-4 h-4 text-primary" />
+            </div>
+            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">
+              Community Updates
+            </span>
+          </div>
+          <h2 className="font-serif text-2xl font-bold text-on-surface">Social Feed</h2>
+          <p className="text-sm text-on-surface-variant mt-1">
+            Latest updates from temple projects around the world.
+          </p>
+        </div>
+      </motion.div>
+
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="h-36 bg-surface-container-low rounded-xl animate-pulse" />
+          ))}
+        </div>
+      ) : posts.length === 0 ? (
+        <div className="bg-surface-container-low rounded-xl p-12 text-center">
+          <MessageCircle className="w-10 h-10 text-on-surface-variant mx-auto mb-4 opacity-40" />
+          <p className="text-on-surface-variant text-sm">Social feed will appear after the next AI sync.</p>
+        </div>
+      ) : (
+        <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {posts.map((post) => (
+            <motion.div
+              key={post.id}
+              variants={fadeInUp}
+              className="bg-surface-container-lowest rounded-xl p-5 border border-outline-variant/10 hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-primary to-secondary-container flex items-center justify-center flex-shrink-0">
+                  <span className="text-on-primary font-bold text-xs font-serif">{getInitials(post.templeName)}</span>
+                </div>
+                <div className="min-w-0">
+                  <Link href={`/temples/${post.templeId}`}>
+                    <p className="text-sm font-bold text-on-surface hover:text-primary transition-colors cursor-pointer truncate">
+                      {post.templeName.split(" ").slice(0, 3).join(" ")}
+                    </p>
+                  </Link>
+                  <p className="text-[10px] text-on-surface-variant">
+                    {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+                  </p>
+                </div>
+                <span className={`ml-auto text-[9px] font-bold uppercase px-2 py-0.5 rounded-full flex-shrink-0 ${CATEGORY_COLORS[post.category] ?? CATEGORY_COLORS.general}`}>
+                  {post.category}
+                </span>
+              </div>
+              <p className="text-sm text-on-surface leading-relaxed line-clamp-3 mb-2">{post.content}</p>
+              {post.hashtags && <p className="text-xs text-primary font-medium truncate">{post.hashtags}</p>}
+              <div className="flex items-center gap-3 mt-3 pt-3 border-t border-outline-variant/10 text-xs text-on-surface-variant">
+                <span className="flex items-center gap-1"><Heart className="w-3 h-3" /> {post.likes}</span>
+                <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3" /> Reply</span>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+      )}
+    </motion.section>
+  );
+}
+
+// ── Regional Quick Stats ─────────────────────────────────────────────────────
+
+function RegionalQuickStats() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${BASE}/api/insights/regional`)
+      .then((r) => r.json())
+      .then((d) => { setData(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const regionColor = (region: string): string => {
+    const map: Record<string, string> = {
+      "South Asia": "bg-primary", Africa: "bg-amber-600", Americas: "bg-blue-600",
+      Oceania: "bg-teal-600", Europe: "bg-secondary", "East Asia": "bg-violet-600",
+    };
+    return map[region] ?? "bg-on-surface-variant";
+  };
+
+  return (
+    <motion.section
+      variants={staggerContainer}
+      initial="hidden"
+      whileInView="visible"
+      viewport={viewportOnce}
+      className="space-y-8"
+    >
+      <motion.div variants={fadeInUp}>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <TrendingUp className="w-4 h-4 text-primary" />
+          </div>
+          <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">
+            Regional Intelligence
+          </span>
+        </div>
+        <h2 className="font-serif text-2xl font-bold text-on-surface">Global Regional Analysis</h2>
+        <p className="text-sm text-on-surface-variant mt-1">
+          Comparative analysis across continental zones — live from project data.
+        </p>
+      </motion.div>
+
+      {/* KPI strip */}
+      <motion.div variants={staggerContainer} className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {loading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-24 bg-surface-container-low animate-pulse rounded-xl" />
+          ))
+        ) : data ? (
+          [
+            { label: "Total Projects", value: data.summary.totalProjects, sub: `${data.summary.constructionCount} under construction` },
+            { label: "Total Capital", value: data.summary.totalInvestment, sub: `${data.summary.fundingPct}% funded` },
+            { label: "Regions Active", value: data.summary.regionsActive, sub: `across continents` },
+            { label: "In Planning", value: data.summary.planningCount, sub: "upcoming visions" },
+          ].map((kpi) => (
+            <motion.div key={kpi.label} variants={fadeInUp} className="bg-surface-container-low p-6 rounded-xl border border-outline-variant/10">
+              <p className="text-xs uppercase font-bold tracking-widest text-on-surface-variant mb-2">{kpi.label}</p>
+              <p className="text-3xl font-bold font-serif text-on-surface">{String(kpi.value)}</p>
+              <p className="text-xs text-on-surface-variant mt-1">{kpi.sub}</p>
+            </motion.div>
+          ))
+        ) : null}
+      </motion.div>
+
+      {/* Projects per Region bars */}
+      {data && (
+        <motion.div variants={fadeInUp} className="bg-surface-container-low p-8 rounded-xl border border-outline-variant/10">
+          <h3 className="text-xl font-bold font-serif text-on-surface mb-6">Projects per Region</h3>
+          <div className="space-y-5">
+            {data.projectsByRegion?.map((item: any) => {
+              const maxCount = Math.max(...data.projectsByRegion.map((r: any) => r.count));
+              return (
+                <div key={item.region} className="space-y-2">
+                  <div className="flex justify-between text-sm font-medium">
+                    <span className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${regionColor(item.region)}`} />
+                      {item.region}
+                    </span>
+                    <span className="text-primary font-bold">{item.count} {item.count === 1 ? "project" : "projects"}</span>
+                  </div>
+                  <div className="w-full h-6 bg-surface-container rounded-lg overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-primary to-primary-container transition-all duration-700"
+                      style={{ width: `${(item.count / maxCount) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
+
+      {/* AI Narratives */}
+      {data && data.narratives?.length > 0 && (
+        <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {data.narratives.slice(0, 2).map((n: any) => (
+            <motion.div
+              key={n.componentKey}
+              variants={fadeInUp}
+              className="bg-surface-container-low p-8 rounded-xl border border-outline-variant/10"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <Globe className="w-5 h-5 text-primary" />
+                <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full ${
+                  n.confidence === "High" ? "bg-green-50 text-green-700" : "bg-primary/10 text-primary"
+                }`}>
+                  {n.confidence} confidence
+                </span>
+              </div>
+              <h3 className="text-lg font-bold font-serif text-primary leading-snug mb-3">{n.headline}</h3>
+              <p className="text-sm text-on-surface-variant leading-relaxed mb-4">{n.summary}</p>
+              <div className="pt-4 border-t border-outline-variant/20">
+                <p className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant mb-1">Recommendation</p>
+                <p className="text-sm font-medium text-on-surface">{n.recommendation}</p>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+      )}
+    </motion.section>
+  );
+}
+
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
@@ -828,6 +1146,15 @@ export default function Dashboard() {
 
         {/* Projects needing support + QR donation cards */}
         <ActiveProjectsDonation />
+
+        {/* Regional Intelligence */}
+        <RegionalQuickStats />
+
+        {/* Social Feed */}
+        <SocialFeedPreview />
+
+        {/* Blog / Insights */}
+        <BlogsPreview />
 
         {/* Seva Tiers */}
         <SevaOpportunities />
