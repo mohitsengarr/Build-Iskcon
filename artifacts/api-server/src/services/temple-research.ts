@@ -220,6 +220,7 @@ interface NewTempleResult {
   startDate: string;
   expectedCompletion: string;
   projectLead: string;
+  donateUrl: string | null;
   milestones: Array<{
     title: string;
     description: string;
@@ -335,6 +336,7 @@ Discover exactly 2 NEW ISKCON temple or Vedic cultural centre projects from diff
     "startDate": "<YYYY-MM-DD>",
     "expectedCompletion": "<YYYY-MM-DD>",
     "projectLead": "<devotee or project lead name>",
+    "donateUrl": "<direct donation URL from the project's official website, or null if not found>",
     "milestones": [
       { "title": "<milestone>", "description": "<one sentence>", "status": "<pending|in_progress|completed>", "targetDate": "<YYYY-MM-DD>" }
     ],
@@ -393,6 +395,7 @@ async function insertDiscoveredTemple(temple: NewTempleResult): Promise<number |
         startDate: temple.startDate,
         expectedCompletion: temple.expectedCompletion,
         projectLead: temple.projectLead,
+        ...(temple.donateUrl ? { donateUrl: temple.donateUrl } : {}),
         ...(wikiImage ? { coverImage: wikiImage } : {}),
       })
       .returning({ id: templesTable.id });

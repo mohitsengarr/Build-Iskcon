@@ -12,7 +12,7 @@ import {
   CreateUpdateInputCategory
 } from "@workspace/api-client-react";
 import { useRoute } from "wouter";
-import { ChevronRight, Calendar, CheckCircle2, Clock, Plus, MapPin } from "lucide-react";
+import { ChevronRight, Calendar, CheckCircle2, Clock, Plus, MapPin, Heart, ExternalLink } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
@@ -113,10 +113,13 @@ export default function TempleDetail() {
             </div>
           </div>
 
-          <div className="relative z-10">
-            <button className="bg-primary text-on-primary px-8 py-3.5 rounded-xl font-bold text-lg hover:shadow-[0_6px_24px_rgba(27,28,28,0.06)] transition-all active:scale-95 cursor-pointer">
-              Support Project
-            </button>
+          <div className="relative z-10 flex flex-col sm:flex-row gap-3">
+            <a href={(temple as any).donateUrl || "https://www.iskcon.org/donate"} target="_blank" rel="noopener noreferrer">
+              <button className="bg-primary text-on-primary px-8 py-3.5 rounded-xl font-bold text-lg hover:shadow-[0_6px_24px_rgba(27,28,28,0.12)] hover:bg-primary/90 transition-all active:scale-95 cursor-pointer flex items-center gap-2">
+                <Heart className="w-5 h-5" />
+                Support Project
+              </button>
+            </a>
           </div>
         </motion.section>
 
@@ -196,6 +199,91 @@ export default function TempleDetail() {
               </div>
             </div>
           </div>
+
+          {/* Donation & QR Panel — full width */}
+          {(() => {
+            const donateUrl = (temple as any).donateUrl || "https://www.iskcon.org/donate";
+            const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&bgcolor=fff8f0&color=8f4e00&data=${encodeURIComponent(donateUrl)}`;
+            const gapM = Math.max(0, (temple.fundraisingGoal - temple.fundraisingRaised) / 1_000_000).toFixed(1);
+            const SEVA = [
+              { title: "Brick Donor", amount: "₹1,000", emoji: "🪨" },
+              { title: "Pillar Supporter", amount: "₹11,000", emoji: "🏛️" },
+              { title: "Altar Patron", amount: "₹51,000", emoji: "🙏" },
+              { title: "Mandala Guardian", amount: "₹1,00,000", emoji: "🌸" },
+              { title: "Temple Benefactor", amount: "₹5,00,000", emoji: "🕌" },
+            ];
+            return (
+              <div className="md:col-span-12 bg-primary/5 rounded-xl overflow-hidden">
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-0">
+                  {/* Left: project lead + seva tiers */}
+                  <div className="p-8 md:p-10">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Heart className="w-4 h-4 text-primary" />
+                      </div>
+                      <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Support this Project</span>
+                    </div>
+
+                    {/* Project Lead */}
+                    <div className="mb-8">
+                      <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-1">Project Lead</p>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-serif font-bold text-lg">
+                          {temple.projectLead.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-bold text-on-surface text-sm">{temple.projectLead}</p>
+                          <p className="text-xs text-on-surface-variant">Project Director · {temple.location}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Funding gap */}
+                    <p className="text-sm text-on-surface-variant mb-6 leading-relaxed">
+                      This project still needs <span className="font-bold text-primary">${gapM}M</span> to reach its goal.
+                      Your seva — however large or small — brings the temple one step closer.
+                    </p>
+
+                    {/* Seva tiers */}
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      {SEVA.map((seva) => (
+                        <a key={seva.title} href={donateUrl} target="_blank" rel="noopener noreferrer">
+                          <div className="bg-surface-container-lowest rounded-xl p-3 text-center hover:bg-primary hover:text-on-primary transition-colors group cursor-pointer border border-outline-variant/10">
+                            <div className="text-xl mb-1">{seva.emoji}</div>
+                            <p className="text-[10px] font-bold text-on-surface group-hover:text-on-primary leading-snug">{seva.title}</p>
+                            <p className="text-primary group-hover:text-on-primary font-black text-xs mt-0.5">{seva.amount}</p>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+
+                    <a href={donateUrl} target="_blank" rel="noopener noreferrer" className="mt-6 inline-block">
+                      <button className="bg-primary text-on-primary px-8 py-3.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors flex items-center gap-2">
+                        <Heart className="w-4 h-4" />
+                        Donate to {temple.name.split(" ").slice(0, 3).join(" ")}
+                        <ExternalLink className="w-3.5 h-3.5 opacity-60" />
+                      </button>
+                    </a>
+                  </div>
+
+                  {/* Right: QR code */}
+                  <div className="bg-primary/8 flex flex-col items-center justify-center gap-4 px-10 py-8 lg:min-w-[220px]">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant text-center">Scan to Donate</p>
+                    <div className="bg-white rounded-2xl p-3 shadow-lg">
+                      <img
+                        src={qrSrc}
+                        alt={`QR code to donate to ${temple.name}`}
+                        className="w-40 h-40 rounded-lg"
+                      />
+                    </div>
+                    <p className="text-xs text-on-surface-variant text-center max-w-[160px] leading-relaxed">
+                      Point your phone camera to open the secure donation page directly.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Milestone Timeline — full width */}
           <div className="md:col-span-12 bg-surface-container-low p-10 rounded-xl">
