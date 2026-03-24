@@ -5,12 +5,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
-import TempleList from "@/pages/temple-list";
 import TempleCreate from "@/pages/temple-create";
 import TempleDetail from "@/pages/temple-detail";
-import RegionalInsights from "@/pages/regional-insights";
-import SocialHub from "@/pages/social-hub";
-import BlogsListing, { BlogDetail } from "@/pages/blogs";
+import { BlogDetail } from "@/pages/blogs";
 import Vision2051 from "@/pages/vision2051";
 
 const queryClient = new QueryClient();
@@ -19,12 +16,8 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Dashboard} />
-      <Route path="/temples" component={TempleList} />
       <Route path="/temples/new" component={TempleCreate} />
       <Route path="/temples/:id" component={TempleDetail} />
-      <Route path="/regional" component={RegionalInsights} />
-      <Route path="/social" component={SocialHub} />
-      <Route path="/blogs" component={BlogsListing} />
       <Route path="/blogs/:slug" component={BlogDetail} />
       <Route path="/vision2051" component={Vision2051} />
       <Route component={NotFound} />

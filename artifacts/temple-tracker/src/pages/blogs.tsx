@@ -23,7 +23,7 @@ interface Blog {
   relatedSlugs: string[];
 }
 
-const BLOGS: Blog[] = [
+export const BLOGS: Blog[] = [
   {
     slug: "iskcon-temple-construction-merging-devotion-with-design",
     title: "ISKCON Temple Construction: Merging Devotion with Design",
