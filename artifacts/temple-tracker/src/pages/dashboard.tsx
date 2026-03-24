@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
+import { BLOGS } from "@/pages/blogs";
 import { useGetDashboardStats } from "@workspace/api-client-react";
 import { fadeInUp, fadeIn, staggerContainer, scaleIn, viewportOnce } from "@/lib/animations";
 import {
   Building2, IndianRupee, ChartBar, CheckCircle2, ArrowRight,
   Globe, RefreshCcw, Play, ExternalLink, Film, MapPin, Heart,
+  Clock, BookOpen, ChevronRight, MessageCircle, TrendingUp,
 } from "lucide-react";
 import { Link } from "wouter";
 import { BarChart, Bar, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from "recharts";
@@ -632,6 +634,249 @@ function HowToGive() {
   );
 }
 
+// ── Regional Quick Stats ─────────────────────────────────────────────────────
+
+interface RegionalData {
+  summary: {
+    totalProjects: number;
+    totalInvestment: string;
+    totalRaised: string;
+    fundingPct: number;
+    regionsActive: number;
+    constructionCount: number;
+    planningCount: number;
+    completedCount: number;
+  };
+  projectsByRegion: Array<{ region: string; count: number; investment: number; raised: number; fundingPct: number }>;
+  narratives: Array<{ componentKey: string; headline: string; summary: string; recommendation: string; confidence: string; generatedAt: string }>;
+}
+
+function RegionalQuickStats() {
+  const [data, setData] = useState<RegionalData | null>(null);
+
+  useEffect(() => {
+    fetch(`${BASE}/api/insights/regional`)
+      .then((r) => r.json())
+      .then(setData)
+      .catch(() => {});
+  }, []);
+
+  if (!data) return null;
+
+  const kpis = [
+    { label: "Regions Active", value: data.summary.regionsActive, icon: Globe },
+    { label: "Under Construction", value: data.summary.constructionCount, icon: Building2 },
+    { label: "Planning Phase", value: data.summary.planningCount, icon: ChartBar },
+    { label: "Funding Progress", value: `${data.summary.fundingPct}%`, icon: TrendingUp },
+  ];
+
+  return (
+    <motion.section
+      variants={staggerContainer}
+      initial="hidden"
+      whileInView="visible"
+      viewport={viewportOnce}
+      className="space-y-6"
+    >
+      <motion.div variants={fadeInUp}>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <TrendingUp className="w-4 h-4 text-primary" />
+          </div>
+          <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Regional Intelligence</span>
+        </div>
+        <h2 className="font-serif text-2xl font-bold text-on-surface">Portfolio Overview</h2>
+        <p className="text-sm text-on-surface-variant mt-1">
+          {data.summary.totalInvestment} total investment across {data.summary.regionsActive} active regions
+        </p>
+      </motion.div>
+
+      <motion.div variants={staggerContainer} className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {kpis.map((kpi) => (
+          <motion.div key={kpi.label} variants={fadeInUp} className="bg-surface-container-low rounded-xl p-5 text-center">
+            <kpi.icon className="w-5 h-5 text-primary mx-auto mb-2" />
+            <p className="text-2xl font-black text-on-surface font-serif">{kpi.value}</p>
+            <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mt-1">{kpi.label}</p>
+          </motion.div>
+        ))}
+      </motion.div>
+
+      <motion.div variants={fadeInUp} className="bg-surface-container-low rounded-2xl p-6">
+        <h3 className="font-serif text-lg font-bold text-on-surface mb-4">Projects per Region</h3>
+        <div className="h-56">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data.projectsByRegion} layout="vertical" margin={{ left: 10, right: 20 }}>
+              <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: "#554336", fontSize: 11, fontWeight: 600 }} />
+              <YAxis type="category" dataKey="region" axisLine={false} tickLine={false} width={90} tick={{ fill: "#554336", fontSize: 11, fontWeight: 600 }} />
+              <RechartsTooltip cursor={{ fill: "rgba(27,28,28,0.04)" }} contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 6px 24px rgba(27,28,28,0.06)" }} />
+              <Bar dataKey="count" fill="var(--color-primary)" radius={[0, 8, 8, 0]} barSize={20} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </motion.div>
+
+      {data.narratives.length > 0 && (
+        <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {data.narratives.slice(0, 2).map((n) => (
+            <motion.div key={n.componentKey} variants={fadeInUp} className="bg-surface-container-low rounded-2xl p-6">
+              <span className="inline-block text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-primary/10 text-primary mb-3">
+                {n.confidence} confidence
+              </span>
+              <h4 className="font-serif text-base font-bold text-on-surface leading-snug mb-2">{n.headline}</h4>
+              <p className="text-xs text-on-surface-variant leading-relaxed line-clamp-4">{n.summary}</p>
+            </motion.div>
+          ))}
+        </motion.div>
+      )}
+    </motion.section>
+  );
+}
+
+// ── Social Feed Preview ──────────────────────────────────────────────────────
+
+interface SocialPost {
+  id: number;
+  title: string;
+  content: string;
+  author: string;
+  category: string;
+  likes: number;
+  createdAt: string;
+  templeName: string;
+  templeLocation: string;
+}
+
+function SocialFeedPreview() {
+  const [posts, setPosts] = useState<SocialPost[]>([]);
+
+  useEffect(() => {
+    fetch(`${BASE}/api/social/feed?limit=6`)
+      .then((r) => r.json())
+      .then((d) => setPosts(d.posts ?? []))
+      .catch(() => {});
+  }, []);
+
+  if (posts.length === 0) return null;
+
+  const CATEGORY_BADGE: Record<string, string> = {
+    construction: "bg-amber-100 text-amber-800",
+    fundraising: "bg-emerald-100 text-emerald-800",
+    milestone: "bg-blue-100 text-blue-800",
+    community: "bg-violet-100 text-violet-800",
+    news: "bg-rose-100 text-rose-800",
+  };
+
+  return (
+    <motion.section
+      variants={staggerContainer}
+      initial="hidden"
+      whileInView="visible"
+      viewport={viewportOnce}
+      className="space-y-6"
+    >
+      <motion.div variants={fadeInUp}>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <MessageCircle className="w-4 h-4 text-primary" />
+          </div>
+          <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Live Updates</span>
+        </div>
+        <h2 className="font-serif text-2xl font-bold text-on-surface">Social Feed</h2>
+        <p className="text-sm text-on-surface-variant mt-1">Latest AI-curated news from across the global temple network</p>
+      </motion.div>
+
+      <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {posts.map((post) => (
+          <motion.div key={post.id} variants={fadeInUp} className="bg-surface-container-low rounded-2xl p-5 flex flex-col gap-3 shadow-[0_4px_24px_rgba(27,28,28,0.06)]">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs font-serif shrink-0">
+                {post.templeName?.charAt(0) || "I"}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-on-surface truncate">{post.templeName}</p>
+                <p className="text-[10px] text-on-surface-variant truncate">{post.templeLocation}</p>
+              </div>
+              <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full shrink-0 ${CATEGORY_BADGE[post.category] || "bg-surface-container text-on-surface-variant"}`}>
+                {post.category}
+              </span>
+            </div>
+            <h3 className="font-serif text-sm font-bold text-on-surface leading-snug line-clamp-2">{post.title}</h3>
+            <p className="text-xs text-on-surface-variant leading-relaxed line-clamp-3 flex-1">{post.content}</p>
+            <div className="flex items-center justify-between text-[10px] text-on-surface-variant pt-1">
+              <span className="flex items-center gap-1"><Heart className="w-3 h-3" /> {post.likes ?? 0}</span>
+              <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+            </div>
+          </motion.div>
+        ))}
+      </motion.div>
+    </motion.section>
+  );
+}
+
+// ── Blogs Preview ────────────────────────────────────────────────────────────
+
+const BLOG_CATEGORY_COLORS: Record<string, string> = {
+  Architecture: "bg-amber-100 text-amber-800",
+  Finance: "bg-emerald-100 text-emerald-800",
+  Seva: "bg-rose-100 text-rose-800",
+  Community: "bg-blue-100 text-blue-800",
+  Education: "bg-violet-100 text-violet-800",
+  Strategy: "bg-primary/10 text-primary",
+};
+
+function BlogsPreview() {
+  return (
+    <motion.section
+      variants={staggerContainer}
+      initial="hidden"
+      whileInView="visible"
+      viewport={viewportOnce}
+      className="space-y-6"
+    >
+      <motion.div variants={fadeInUp}>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <BookOpen className="w-4 h-4 text-primary" />
+          </div>
+          <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Knowledge Base</span>
+        </div>
+        <h2 className="font-serif text-2xl font-bold text-on-surface">Insights & Articles</h2>
+        <p className="text-sm text-on-surface-variant mt-1">In-depth coverage of temple architecture, devotional service, and ISKCON's strategic vision</p>
+      </motion.div>
+
+      <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {BLOGS.map((blog) => (
+          <motion.div key={blog.slug} variants={fadeInUp}>
+            <Link href={`/blogs/${blog.slug}`}>
+              <div className="bg-surface-container-low rounded-2xl overflow-hidden flex flex-col h-full hover:-translate-y-1 transition-transform duration-300 cursor-pointer shadow-[0_4px_24px_rgba(27,28,28,0.06)]">
+                <div className="p-6 flex flex-col flex-1">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${BLOG_CATEGORY_COLORS[blog.category] || "bg-surface-container text-on-surface-variant"}`}>
+                      {blog.category}
+                    </span>
+                    <span className="text-[10px] text-on-surface-variant font-medium flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> {blog.readTime}
+                    </span>
+                  </div>
+                  <h3 className="font-serif text-lg font-bold text-on-surface leading-snug mb-2 line-clamp-2">{blog.title}</h3>
+                  <p className="text-xs text-on-surface-variant leading-relaxed line-clamp-3 flex-1">{blog.subtitle}</p>
+                  <div className="mt-5 pt-4 flex items-center justify-between" style={{ borderTop: "1px solid color-mix(in srgb, var(--md-sys-color-outline-variant) 20%, transparent)" }}>
+                    <div>
+                      <p className="text-xs font-bold text-on-surface">{blog.author}</p>
+                      <p className="text-[10px] text-on-surface-variant">{blog.date}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-primary" />
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </motion.div>
+        ))}
+      </motion.div>
+    </motion.section>
+  );
+}
+
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
@@ -816,6 +1061,15 @@ export default function Dashboard() {
 
         {/* Projects needing support + QR donation cards */}
         <ActiveProjectsDonation />
+
+        {/* Regional Intelligence */}
+        <RegionalQuickStats />
+
+        {/* Social Feed */}
+        <SocialFeedPreview />
+
+        {/* Blog / Insights */}
+        <BlogsPreview />
 
         {/* Seva Tiers */}
         <SevaOpportunities />
