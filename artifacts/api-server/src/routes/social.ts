@@ -88,8 +88,8 @@ router.get("/social/sync-status", async (_req, res) => {
             completedAt: latest.completedAt,
           }
         : null,
-      nextSyncHint: "Every hour at :00",
-      cronSchedule: "0 * * * *",
+      nextSyncHint: "Daily at 02:00 UTC",
+      cronSchedule: "0 2 * * *",
     });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch sync status" });
