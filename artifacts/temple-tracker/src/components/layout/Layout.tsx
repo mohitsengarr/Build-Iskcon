@@ -11,6 +11,8 @@ const NAV_ITEMS = [
   { href: "/temples", label: "Project Directory", match: (loc: string) => loc.startsWith("/temples") },
   { href: "/regional", label: "Regional Insights", match: (loc: string) => loc === "/regional" },
   { href: "/social", label: "Social Hub", match: (loc: string) => loc === "/social" },
+  { href: "/blogs", label: "Insights", match: (loc: string) => loc.startsWith("/blogs") },
+  { href: "/vision2051", label: "Vision 2051", match: (loc: string) => loc === "/vision2051" },
 ];
 
 export function Layout({ children }: { children: ReactNode }) {
