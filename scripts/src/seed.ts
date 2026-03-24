@@ -27,6 +27,8 @@ async function seed() {
         expectedCompletion: "2026-12-31",
         projectLead: "Swami Bhaktivedanta Dasa",
         coverImage: null,
+        latitude: "27.579400",
+        longitude: "77.696100",
       },
       {
         name: "Shri Venkateswara Temple",
@@ -43,6 +45,8 @@ async function seed() {
         expectedCompletion: "2025-06-30",
         projectLead: "Sri Srinivasa Rao",
         coverImage: null,
+        latitude: "13.628800",
+        longitude: "79.419200",
       },
       {
         name: "Jagannath Dham",
@@ -59,6 +63,8 @@ async function seed() {
         expectedCompletion: "2028-04-15",
         projectLead: "Pandit Gajapati Mohapatra",
         coverImage: null,
+        latitude: "19.804800",
+        longitude: "85.818300",
       },
       {
         name: "Somnath Mahadev Mandir",
@@ -75,6 +81,8 @@ async function seed() {
         expectedCompletion: "2024-02-10",
         projectLead: "Mahamandaleshwar Swami Shankarananda",
         coverImage: null,
+        latitude: "20.888000",
+        longitude: "70.401400",
       },
       {
         name: "Devi Durga Shakti Peeth",
@@ -91,6 +99,8 @@ async function seed() {
         expectedCompletion: "2027-10-02",
         projectLead: "Mataji Saraswati Devi",
         coverImage: null,
+        latitude: "32.993000",
+        longitude: "74.952000",
       },
     ])
     .returning();
