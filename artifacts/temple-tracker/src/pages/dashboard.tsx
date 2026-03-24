@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
-import { WorldMap } from "@/components/WorldMap";
 import { useGetDashboardStats } from "@workspace/api-client-react";
 import { fadeInUp, fadeIn, staggerContainer, scaleIn, viewportOnce } from "@/lib/animations";
 import {
@@ -239,17 +238,6 @@ function GlobalMapSection() {
         <Link href="/temples?view=map" className="hidden md:flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-widest hover:opacity-70 transition-opacity">
           Full Directory <ArrowRight className="w-3.5 h-3.5" />
         </Link>
-      </motion.div>
-
-      {/* Map */}
-      <motion.div variants={fadeIn}>
-        {loading ? (
-          <div className="w-full h-[440px] bg-[#0d1117] rounded-2xl animate-pulse flex items-center justify-center">
-            <Globe className="w-12 h-12 text-white/20" style={{ animation: "spin 3s linear infinite" }} />
-          </div>
-        ) : (
-          <WorldMap temples={temples} />
-        )}
       </motion.div>
 
       {/* Stats strip */}
