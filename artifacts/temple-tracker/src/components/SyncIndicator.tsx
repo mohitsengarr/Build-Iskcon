@@ -47,6 +47,7 @@ export function SyncIndicator() {
       const interval = setInterval(fetchStatus, 3000);
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [status?.inProgress, fetchStatus]);
 
   const triggerSync = async () => {

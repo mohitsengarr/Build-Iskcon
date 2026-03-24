@@ -323,6 +323,9 @@ components:
         coverImage:
           type: string
           nullable: true
+        donateUrl:
+          type: string
+          nullable: true
         createdAt:
           type: string
         updatedAt:
@@ -398,6 +401,9 @@ components:
         coverImage:
           type: string
           nullable: true
+        donateUrl:
+          type: string
+          nullable: true
       required:
         - name
         - location
@@ -441,6 +447,9 @@ components:
         projectLead:
           type: string
         coverImage:
+          type: string
+          nullable: true
+        donateUrl:
           type: string
           nullable: true
 

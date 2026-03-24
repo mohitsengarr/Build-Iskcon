@@ -300,6 +300,7 @@ function toTempleResponse(t: typeof templesTable.$inferSelect) {
     expectedCompletion: t.expectedCompletion,
     projectLead: t.projectLead,
     coverImage: t.coverImage ?? null,
+    donateUrl: t.donateUrl ?? null,
     latitude: t.latitude ? parseFloat(t.latitude) : null,
     longitude: t.longitude ? parseFloat(t.longitude) : null,
     createdAt: t.createdAt.toISOString(),
