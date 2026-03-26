@@ -6,8 +6,9 @@ import {
   Marker,
   ZoomableGroup,
 } from "react-simple-maps";
+import type { GeographyObject, GeographiesChildrenArg, MoveEndArg } from "react-simple-maps";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "wouter";
+import { useLocation } from "wouter";
 import { MapPin, X } from "lucide-react";
 
 const GEO_URL = `${import.meta.env.BASE_URL}countries-110m.json`;
@@ -45,6 +46,7 @@ export function WorldMap({ temples }: Props) {
   const [tooltip, setTooltip] = useState<Tooltip | null>(null);
   const [zoom, setZoom] = useState(1);
   const [center, setCenter] = useState<[number, number]>([20, 10]);
+  const [, navigate] = useLocation();
 
   const mapped = temples.filter((t) => t.latitude != null && t.longitude != null);
 
@@ -104,14 +106,14 @@ export function WorldMap({ temples }: Props) {
         <ZoomableGroup
           zoom={zoom}
           center={center}
-          onMoveEnd={({ coordinates, zoom: z }) => {
-            setCenter(coordinates as [number, number]);
+          onMoveEnd={({ coordinates, zoom: z }: MoveEndArg) => {
+            setCenter(coordinates);
             setZoom(z);
           }}
         >
           <Geographies geography={GEO_URL}>
-            {({ geographies }) =>
-              geographies.map((geo) => (
+            {({ geographies }: GeographiesChildrenArg) =>
+              geographies.map((geo: GeographyObject) => (
                 <Geography
                   key={geo.rsmKey}
                   geography={geo}
@@ -149,6 +151,7 @@ export function WorldMap({ temples }: Props) {
                   onMouseEnter={(e) => handleMouseMove(e as unknown as React.MouseEvent<SVGCircleElement>, temple)}
                   onMouseMove={(e) => handleMouseMove(e as unknown as React.MouseEvent<SVGCircleElement>, temple)}
                   onMouseLeave={() => setTooltip(null)}
+                  onClick={() => { setTooltip(null); navigate(`/temples/${temple.id}`); }}
                 />
               </Marker>
             );
@@ -202,7 +205,7 @@ export function WorldMap({ temples }: Props) {
                 </div>
               </div>
               <p className="mt-2 text-[10px] text-amber-400/70 font-medium">
-                Click to view details →
+                Click pin to view details →
               </p>
             </div>
           </motion.div>

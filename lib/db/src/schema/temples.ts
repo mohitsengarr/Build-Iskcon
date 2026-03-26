@@ -39,6 +39,7 @@ export const templesTable = pgTable("temples", {
   expectedCompletion: text("expected_completion").notNull(),
   projectLead: text("project_lead").notNull(),
   coverImage: text("cover_image"),
+  donateUrl: text("donate_url"),
   latitude: numeric("latitude", { precision: 9, scale: 6 }),
   longitude: numeric("longitude", { precision: 9, scale: 6 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),

@@ -1,7 +1,7 @@
 import { ReactNode, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
-import { Search, Bell, User, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SyncIndicator } from "@/components/SyncIndicator";
 import { slideDown } from "@/lib/animations";
@@ -28,6 +28,8 @@ export function Layout({ children }: { children: ReactNode }) {
             <button
               className="md:hidden p-2 text-on-surface-variant hover:text-primary rounded-lg transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -56,7 +58,7 @@ export function Layout({ children }: { children: ReactNode }) {
             </div>
           </div>
 
-          {/* Trailing Icons */}
+          {/* Trailing Controls */}
           <div className="flex items-center gap-1 sm:gap-3">
             <a
               href="https://www.iskcon.org/donate"
@@ -67,16 +69,6 @@ export function Layout({ children }: { children: ReactNode }) {
               Donate
             </a>
             <SyncIndicator />
-            <button className="hidden sm:block p-2 text-on-surface-variant hover:text-primary hover:bg-primary/5 rounded-full transition-all active:scale-95 duration-200">
-              <Search className="w-5 h-5" />
-            </button>
-            <button className="p-2 text-on-surface-variant hover:text-primary hover:bg-primary/5 rounded-full transition-all active:scale-95 duration-200 relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-error"></span>
-            </button>
-            <button className="hidden sm:block p-2 text-on-surface-variant hover:text-primary hover:bg-primary/5 rounded-full transition-all active:scale-95 duration-200">
-              <User className="w-5 h-5" />
-            </button>
           </div>
         </div>
 
@@ -153,7 +145,7 @@ export function Layout({ children }: { children: ReactNode }) {
           <div className="flex flex-col gap-3">
             <span className="font-sans text-xs uppercase tracking-widest font-bold text-secondary mb-2">Institutions</span>
             <a href="https://www.iskcon.org" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">ISKCON.org</a>
-            <a href="https://www.bbt.info" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">BBT</a>
+            <a href="https://www.bbt.org" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">BBT</a>
           </div>
           <div className="flex flex-col gap-3">
             <span className="font-sans text-xs uppercase tracking-widest font-bold text-secondary mb-2">Support</span>

@@ -7,67 +7,15 @@ import { useGetDashboardStats } from "@workspace/api-client-react";
 import { fadeInUp, fadeIn, staggerContainer, scaleIn, viewportOnce } from "@/lib/animations";
 import {
   Building2, IndianRupee, ChartBar, CheckCircle2, ArrowRight,
-  TrendingUp, TrendingDown, Minus, Globe, Target, Shield,
-  Loader2, RefreshCcw, Play, ExternalLink, Film, MapPin,
-  ChevronDown, ChevronUp,
+  Globe, RefreshCcw, Play, ExternalLink, Film, MapPin, Heart,
 } from "lucide-react";
 import { Link } from "wouter";
 import { BarChart, Bar, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from "recharts";
-
-// ── Types ────────────────────────────────────────────────────────────────────
-
-interface InsightMetric {
-  label: string;
-  value: string;
-  trend: "up" | "down" | "stable";
-}
-
-interface ComponentInsight {
-  id:             number;
-  componentKey:   string;
-  title:          string;
-  subtitle:       string;
-  headline:       string;
-  summary:        string;
-  metrics:        InsightMetric[];
-  recommendation: string;
-  confidence:     "High" | "Medium" | "Low";
-  trend:          "up" | "down" | "stable";
-  icon:           string;
-  accentColor:    string;
-  generatedAt:    string;
-}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-const ICON_MAP: Record<string, React.ReactNode> = {
-  "building":     <Building2 className="w-5 h-5" />,
-  "trending-up":  <TrendingUp className="w-5 h-5" />,
-  "globe":        <Globe className="w-5 h-5" />,
-  "target":       <Target className="w-5 h-5" />,
-  "shield":       <Shield className="w-5 h-5" />,
-};
-
-function TrendBadge({ trend }: { trend: "up" | "down" | "stable" }) {
-  if (trend === "up")     return <TrendingUp  className="w-3.5 h-3.5 text-green-600"  />;
-  if (trend === "down")   return <TrendingDown className="w-3.5 h-3.5 text-red-500"   />;
-  return                         <Minus        className="w-3.5 h-3.5 text-amber-500"  />;
-}
-
-function ConfidenceBadge({ confidence }: { confidence: "High" | "Medium" | "Low" }) {
-  const map = {
-    High:   "bg-green-100 text-green-800",
-    Medium: "bg-amber-100 text-amber-800",
-    Low:    "bg-red-100 text-red-700",
-  };
-  return (
-    <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${map[confidence]}`}>
-      {confidence} Confidence
-    </span>
-  );
-}
 
 // ── Temple Videos ─────────────────────────────────────────────────────────────
 
@@ -229,6 +177,8 @@ interface TempleForMap {
   fundraisingRaised: number;
   latitude: number | null;
   longitude: number | null;
+  donateUrl: string | null;
+  projectLead: string;
 }
 
 function useTemples() {
@@ -364,218 +314,333 @@ function GlobalMapSection() {
   );
 }
 
-// ── McKinsey Insight Card ─────────────────────────────────────────────────────
+// ── TOVP Countdown Banner ─────────────────────────────────────────────────────
 
-function InsightCard({ insight, featured = false }: { insight: ComponentInsight; featured?: boolean }) {
-  const [expanded, setExpanded] = useState(false);
+function CountdownBanner() {
+  const target = new Date("2027-11-02T00:00:00");
+  const now = new Date();
+  const totalMs = Math.max(0, target.getTime() - now.getTime());
+  const totalDays = Math.floor(totalMs / (1000 * 60 * 60 * 24));
+  const months = Math.floor(totalDays / 30);
+  const remDays = totalDays % 30;
 
   return (
-    <div
-      className={`rounded-2xl p-6 flex flex-col gap-4 transition-all hover:shadow-md ${
-        featured ? "bg-on-surface text-white" : "bg-surface-container"
-      }`}
-    >
-      {/* Header row: icon + title + badge */}
-      <div className="flex items-start gap-3">
-        <div
-          className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
-            featured ? "bg-white/15 text-white" : "bg-primary/10 text-primary"
-          }`}
-        >
-          {ICON_MAP[insight.icon] ?? <ChartBar className="w-4 h-4" />}
+    <motion.section variants={fadeInUp} initial="hidden" animate="visible">
+      <div className="relative overflow-hidden bg-primary text-on-primary rounded-2xl px-6 sm:px-10 py-7 flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="absolute -top-16 -right-16 w-64 h-64 bg-on-primary/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10">
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-on-primary/70 mb-1.5">Grand Opening · November 2, 2027</p>
+          <h2 className="font-serif text-2xl sm:text-3xl font-bold leading-tight">Temple of the Vedic Planetarium</h2>
+          <p className="text-sm text-on-primary/80 mt-1">Mayapur, West Bengal — the crown jewel of ISKCON's global mission</p>
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2 mb-0.5">
-            <h3 className={`font-serif text-sm font-bold leading-snug truncate ${featured ? "text-white" : "text-on-surface"}`}>
-              {insight.title}
-            </h3>
-            <ConfidenceBadge confidence={insight.confidence} />
-          </div>
-          <p className={`text-[10px] uppercase tracking-widest font-semibold ${featured ? "text-white/50" : "text-on-surface-variant"}`}>
-            {insight.subtitle}
-          </p>
-        </div>
-      </div>
-
-      {/* Headline KPI */}
-      <div className={`text-2xl font-black font-serif leading-tight ${featured ? "text-primary-container" : "text-primary"}`}>
-        {insight.headline}
-      </div>
-
-      {/* Summary — clamped by default, full when expanded */}
-      <p className={`text-sm leading-relaxed ${expanded ? "" : "line-clamp-3"} ${featured ? "text-white/75" : "text-on-surface-variant"}`}>
-        {insight.summary}
-      </p>
-
-      {/* Expanded detail: metrics + recommendation */}
-      {expanded && (
-        <>
-          {/* Metrics row */}
-          <div className="grid grid-cols-3 gap-2">
-            {insight.metrics.map((m, i) => (
-              <div
-                key={i}
-                className={`rounded-xl p-3 flex flex-col gap-1 ${
-                  featured ? "bg-white/10" : "bg-surface-container-high"
-                }`}
-              >
-                <TrendBadge trend={m.trend} />
-                <div className={`text-sm font-black font-serif leading-none mt-1 ${featured ? "text-white" : "text-on-surface"}`}>
-                  {m.value}
-                </div>
-                <div className={`text-[10px] font-medium uppercase tracking-wide leading-tight ${featured ? "text-white/50" : "text-on-surface-variant"}`}>
-                  {m.label}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Recommendation */}
-          <div className={`rounded-xl p-4 text-sm leading-relaxed ${featured ? "bg-white/10 text-white/85" : "bg-primary/5 text-on-surface"}`}>
-            <span className={`text-[10px] font-bold uppercase tracking-widest block mb-1 ${featured ? "text-primary-container" : "text-primary"}`}>
-              Recommendation
-            </span>
-            {insight.recommendation}
-          </div>
-
-          {/* Timestamp */}
-          <p className={`text-[10px] ${featured ? "text-white/30" : "text-on-surface-variant/50"}`}>
-            Generated {new Date(insight.generatedAt).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-          </p>
-        </>
-      )}
-
-      {/* Read more / Read less toggle */}
-      <button
-        onClick={() => setExpanded((e) => !e)}
-        className={`flex items-center gap-1 text-xs font-bold uppercase tracking-widest mt-auto pt-1 transition-opacity hover:opacity-70 ${
-          featured ? "text-primary-container" : "text-primary"
-        }`}
-      >
-        {expanded ? (
-          <>Read less <ChevronUp className="w-3.5 h-3.5" /></>
-        ) : (
-          <>Read more <ChevronDown className="w-3.5 h-3.5" /></>
-        )}
-      </button>
-    </div>
-  );
-}
-
-// ── Intelligence Briefs Section ───────────────────────────────────────────────
-
-function IntelligenceBriefs() {
-  const [insights, setInsights] = useState<ComponentInsight[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState(false);
-
-  const load = async () => {
-    setLoading(true);
-    setError(false);
-    try {
-      const res  = await fetch(`${BASE}/api/insights/components`);
-      const json = await res.json() as { insights: ComponentInsight[] };
-      setInsights(json.insights ?? []);
-    } catch {
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { load(); }, []);
-
-  if (loading) {
-    return (
-      <section className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-serif text-3xl font-bold text-on-surface">Intelligence Briefs</h2>
-            <p className="text-sm text-on-surface-variant mt-1">McKinsey-style analysis — AI-generated every hour from live Perplexity + Claude research</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="bg-surface-container rounded-2xl p-7 h-80 animate-pulse flex flex-col gap-4">
-              <div className="flex justify-between">
-                <div className="w-10 h-10 rounded-xl bg-surface-container-high" />
-                <div className="w-24 h-5 rounded-full bg-surface-container-high" />
-              </div>
-              <div className="w-3/4 h-5 rounded bg-surface-container-high" />
-              <div className="w-1/2 h-10 rounded bg-surface-container-high" />
-              <div className="flex-1 space-y-2">
-                <div className="h-3 rounded bg-surface-container-high" />
-                <div className="h-3 rounded bg-surface-container-high w-5/6" />
-                <div className="h-3 rounded bg-surface-container-high w-4/6" />
-              </div>
+        <div className="relative z-10 flex gap-5 text-center shrink-0">
+          {[{ val: months, label: "Months" }, { val: remDays, label: "Days" }, { val: totalDays, label: "Total Days" }].map(({ val, label }) => (
+            <div key={label} className="flex flex-col items-center">
+              <span className="font-serif text-4xl font-black tabular-nums">{val}</span>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-on-primary/70 mt-1">{label}</span>
             </div>
           ))}
         </div>
-      </section>
-    );
-  }
-
-  if (error || insights.length === 0) {
-    return (
-      <section className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-serif text-3xl font-bold text-on-surface">Intelligence Briefs</h2>
-            <p className="text-sm text-on-surface-variant mt-1">McKinsey-style analysis — AI-generated every hour from live Perplexity + Claude research</p>
-          </div>
-        </div>
-        <div className="bg-surface-container rounded-2xl p-12 text-center">
-          <RefreshCcw className="w-10 h-10 mx-auto text-on-surface-variant mb-4" />
-          <p className="text-on-surface-variant text-sm">
-            {error
-              ? "Intelligence briefs temporarily unavailable."
-              : "Generating your first intelligence briefs — trigger a sync or wait for the next hourly cron."}
-          </p>
-          <button
-            onClick={load}
-            className="mt-4 text-primary text-sm font-semibold hover:underline"
-          >
-            Retry
+        <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer" className="relative z-10 shrink-0">
+          <button className="bg-on-primary text-primary px-7 py-3 rounded-xl font-bold text-sm tracking-wide hover:bg-on-primary/90 transition-colors whitespace-nowrap flex items-center gap-2">
+            <Heart className="w-4 h-4" />
+            Donate to TOVP
           </button>
-        </div>
-      </section>
-    );
-  }
+        </a>
+      </div>
+    </motion.section>
+  );
+}
 
-  const [featured, ...rest] = insights;
+// ── Active Projects Donation Cards ────────────────────────────────────────────
+
+function ActiveProjectsDonation() {
+  const { temples, loading } = useTemples();
+
+  const urgentTemples = [...temples]
+    .filter((t) => t.status !== "consecrated" && t.fundraisingGoal > 0)
+    .sort((a, b) => {
+      const pctA = a.fundraisingRaised / a.fundraisingGoal;
+      const pctB = b.fundraisingRaised / b.fundraisingGoal;
+      return pctA - pctB;
+    })
+    .slice(0, 3);
 
   return (
-    <section className="space-y-6">
-      <div className="flex items-center justify-between">
+    <motion.section
+      variants={staggerContainer}
+      initial="hidden"
+      whileInView="visible"
+      viewport={viewportOnce}
+      className="space-y-8"
+    >
+      <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row justify-between sm:items-end gap-4">
         <div>
-          <h2 className="font-serif text-3xl font-bold text-on-surface">Intelligence Briefs</h2>
-            <p className="text-sm text-on-surface-variant mt-1">McKinsey-style analysis — AI-generated every hour from live Perplexity + Claude research</p>
-        </div>
-        <button
-          onClick={load}
-          className="flex items-center gap-2 text-xs font-semibold text-primary uppercase tracking-widest hover:opacity-70 transition-opacity"
-        >
-          <RefreshCcw className="w-3.5 h-3.5" />
-          Refresh
-        </button>
-      </div>
-
-      {/* Featured card (full width on top, or left column on large screens) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {featured && (
-          <div className="lg:col-span-1">
-            <InsightCard insight={featured} featured />
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Heart className="w-4 h-4 text-primary" />
+            </div>
+            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Where Your Seva Is Needed Most</span>
           </div>
-        )}
+          <h2 className="font-serif text-2xl font-bold text-on-surface">Projects Calling for Support</h2>
+          <p className="text-sm text-on-surface-variant mt-1">Each donation directly funds construction — scan the QR code or click Donate to give securely.</p>
+        </div>
+        <Link href="/temples" className="hidden sm:flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-widest hover:opacity-70 transition-opacity shrink-0">
+          All Projects <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
+      </motion.div>
 
-        {/* Remaining cards in a 2-column sub-grid */}
-        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {rest.map((insight) => (
-            <InsightCard key={insight.componentKey} insight={insight} />
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-80 bg-surface-container-low rounded-2xl animate-pulse" />
           ))}
         </div>
-      </div>
-    </section>
+      ) : (
+        <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {urgentTemples.map((temple, idx) => {
+            const donateUrl = temple.donateUrl || "https://www.iskcon.org/donate";
+            const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&bgcolor=fff8f0&color=8f4e00&data=${encodeURIComponent(donateUrl)}`;
+            const pct = temple.fundraisingGoal > 0
+              ? Math.round((temple.fundraisingRaised / temple.fundraisingGoal) * 100)
+              : 0;
+            const gap = Math.max(0, (temple.fundraisingGoal - temple.fundraisingRaised) / 1_000_000).toFixed(1);
+            const urgencyLabels = ["Most Urgent", "Needs Seva", "Support Needed"];
+
+            return (
+              <motion.div
+                key={temple.id}
+                variants={fadeInUp}
+                className="bg-surface-container-low rounded-2xl overflow-hidden flex flex-col shadow-[0_4px_24px_rgba(27,28,28,0.06)] hover:-translate-y-1 transition-transform duration-300"
+              >
+                {/* Header strip */}
+                <div className="bg-primary/8 px-6 pt-5 pb-4">
+                  <span className="inline-block text-[10px] font-bold uppercase tracking-widest text-primary bg-primary/10 px-2.5 py-1 rounded-full mb-3">
+                    {urgencyLabels[idx]}
+                  </span>
+                  <h3 className="font-serif text-lg font-bold text-on-surface leading-snug line-clamp-2">{temple.name}</h3>
+                  <p className="text-xs text-on-surface-variant flex items-center gap-1 mt-1">
+                    <MapPin className="w-3 h-3 shrink-0" />
+                    {temple.location}
+                  </p>
+                </div>
+
+                {/* Body */}
+                <div className="px-6 py-5 flex-1 space-y-4">
+                  {/* Funding bar */}
+                  <div>
+                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest mb-1.5">
+                      <span className="text-on-surface-variant">Funded</span>
+                      <span className="text-primary">{pct}%</span>
+                    </div>
+                    <div className="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-primary to-secondary rounded-full transition-all" style={{ width: `${pct}%` }} />
+                    </div>
+                    <p className="text-xs text-on-surface-variant mt-1.5 font-medium">
+                      ${gap}M still needed · led by <span className="font-bold text-on-surface">{temple.projectLead}</span>
+                    </p>
+                  </div>
+
+                  {/* QR code */}
+                  <div className="flex items-center gap-4 bg-surface-container rounded-xl p-4">
+                    <img
+                      src={qrSrc}
+                      alt={`Donate QR for ${temple.name}`}
+                      className="w-16 h-16 rounded-lg border border-outline-variant/20"
+                    />
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Scan to Donate</p>
+                      <p className="text-xs text-on-surface-variant leading-relaxed">Point your camera to give directly to this temple project.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CTA */}
+                <div className="px-6 pb-6">
+                  <a href={donateUrl} target="_blank" rel="noopener noreferrer" className="block">
+                    <button className="w-full py-3 bg-primary text-on-primary font-bold text-sm rounded-xl hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
+                      <Heart className="w-4 h-4" />
+                      Donate to {temple.name.split(" ").slice(0, 3).join(" ")}
+                    </button>
+                  </a>
+                  <Link href={`/temples/${temple.id}`}>
+                    <button className="w-full mt-2 py-2.5 text-primary text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-primary/5 transition-colors">
+                      View Full Project
+                    </button>
+                  </Link>
+                </div>
+              </motion.div>
+            );
+          })}
+        </motion.div>
+      )}
+    </motion.section>
+  );
+}
+
+// ── Seva Opportunities ────────────────────────────────────────────────────────
+
+const SEVA_TIERS = [
+  {
+    emoji: "🪨",
+    title: "Brick Donor",
+    amount: "₹1,000",
+    amountUSD: "$12",
+    desc: "Your name is inscribed on a sacred brick, permanently enshrined in the temple walls.",
+    color: "bg-amber-50 border-amber-200",
+  },
+  {
+    emoji: "🏛️",
+    title: "Pillar Supporter",
+    amount: "₹11,000",
+    amountUSD: "$130",
+    desc: "Contribute to the structural pillars that uphold the divine sanctuary.",
+    color: "bg-orange-50 border-orange-200",
+  },
+  {
+    emoji: "🙏",
+    title: "Altar Patron",
+    amount: "₹51,000",
+    amountUSD: "$610",
+    desc: "Fund the sacred altar adornments and the deities' paraphernalia.",
+    color: "bg-yellow-50 border-yellow-200",
+  },
+  {
+    emoji: "🌸",
+    title: "Mandala Guardian",
+    amount: "₹1,00,000",
+    amountUSD: "$1,200",
+    desc: "Your patronage sustains the entire sacred mandala of the construction.",
+    color: "bg-rose-50 border-rose-200",
+  },
+  {
+    emoji: "🕌",
+    title: "Temple Benefactor",
+    amount: "₹5,00,000",
+    amountUSD: "$6,000",
+    desc: "The highest honour — your name permanently enshrined as a founding benefactor.",
+    color: "bg-primary/5 border-primary/30",
+  },
+];
+
+function SevaOpportunities() {
+  return (
+    <motion.section
+      variants={staggerContainer}
+      initial="hidden"
+      whileInView="visible"
+      viewport={viewportOnce}
+      className="space-y-8"
+    >
+      <motion.div variants={fadeInUp}>
+        <div className="flex items-center gap-3 mb-2">
+          <span className="text-xl">🙏</span>
+          <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Participate in the Mission</span>
+        </div>
+        <h2 className="font-serif text-2xl font-bold text-on-surface">Seva Opportunities</h2>
+        <p className="text-sm text-on-surface-variant mt-1 max-w-2xl">
+          ISKCON follows the Vedic tradition of <em>seva</em> — sacred service. Every donation, however small, builds a temple and earns the blessing of the Lord.
+        </p>
+      </motion.div>
+
+      <motion.div variants={staggerContainer} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {SEVA_TIERS.map((tier) => (
+          <motion.div
+            key={tier.title}
+            variants={scaleIn}
+            className={`rounded-2xl p-5 border flex flex-col gap-3 hover:-translate-y-1 transition-transform duration-300 ${tier.color}`}
+          >
+            <div className="text-3xl">{tier.emoji}</div>
+            <div>
+              <p className="font-serif font-bold text-on-surface text-base leading-snug">{tier.title}</p>
+              <p className="text-primary font-black text-lg mt-1">{tier.amount}</p>
+              <p className="text-[10px] text-on-surface-variant font-semibold">{tier.amountUSD} approx.</p>
+            </div>
+            <p className="text-xs text-on-surface-variant leading-relaxed flex-1">{tier.desc}</p>
+            <a href="https://www.iskcon.org/donate" target="_blank" rel="noopener noreferrer">
+              <button className="w-full mt-auto py-2 bg-primary/10 text-primary rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-primary hover:text-on-primary transition-colors">
+                Choose Seva
+              </button>
+            </a>
+          </motion.div>
+        ))}
+      </motion.div>
+    </motion.section>
+  );
+}
+
+// ── How to Give ───────────────────────────────────────────────────────────────
+
+function HowToGive() {
+  const steps = [
+    {
+      number: "01",
+      title: "Choose Your Seva",
+      desc: "Browse the seva tiers or select a specific temple project that resonates with your heart.",
+      icon: "🔍",
+    },
+    {
+      number: "02",
+      title: "Scan or Click",
+      desc: "Use the QR code for instant mobile giving, or click the Donate button for online payment.",
+      icon: "📱",
+    },
+    {
+      number: "03",
+      title: "Receive Your Blessing",
+      desc: "Your name is recorded in the temple register and a certificate of seva is sent from the project lead.",
+      icon: "🌸",
+    },
+  ];
+
+  return (
+    <motion.section
+      variants={staggerContainer}
+      initial="hidden"
+      whileInView="visible"
+      viewport={viewportOnce}
+      className="relative overflow-hidden rounded-2xl bg-surface-container-low px-6 sm:px-12 py-12"
+    >
+      <div className="absolute -bottom-16 -right-16 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+
+      <motion.div variants={fadeInUp} className="mb-10 max-w-xl">
+        <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em] mb-2">Simple & Secure</p>
+        <h2 className="font-serif text-2xl font-bold text-on-surface">How to Give</h2>
+        <p className="text-sm text-on-surface-variant mt-2">
+          Every donation — large or small — is a brick in the temple of the Lord. Here is how to participate in this sacred mission.
+        </p>
+      </motion.div>
+
+      <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {steps.map((step) => (
+          <motion.div key={step.number} variants={fadeInUp} className="flex flex-col gap-4">
+            <div className="flex items-center gap-4">
+              <span className="text-3xl">{step.icon}</span>
+              <span className="font-serif text-4xl font-black text-primary/20">{step.number}</span>
+            </div>
+            <div>
+              <h3 className="font-serif text-lg font-bold text-on-surface mb-2">{step.title}</h3>
+              <p className="text-sm text-on-surface-variant leading-relaxed">{step.desc}</p>
+            </div>
+          </motion.div>
+        ))}
+      </motion.div>
+
+      <motion.div variants={fadeInUp} className="mt-10 flex flex-col sm:flex-row gap-4">
+        <a href="https://www.iskcon.org/donate" target="_blank" rel="noopener noreferrer">
+          <button className="bg-primary text-on-primary px-8 py-3.5 rounded-xl font-bold text-sm tracking-wide hover:bg-primary/90 transition-colors flex items-center gap-2">
+            <Heart className="w-4 h-4" />
+            Donate Now
+          </button>
+        </a>
+        <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer">
+          <button className="border border-primary text-primary px-8 py-3.5 rounded-xl font-bold text-sm tracking-wide hover:bg-primary/5 transition-colors flex items-center gap-2">
+            <ExternalLink className="w-4 h-4" />
+            TOVP Donations
+          </button>
+        </a>
+      </motion.div>
+    </motion.section>
   );
 }
 
@@ -594,13 +659,32 @@ export default function Dashboard() {
     );
   }
 
-  if (!stats) return null;
+  if (!stats) {
+    return (
+      <Layout>
+        <div className="flex flex-col items-center justify-center h-[60vh] gap-4 px-4 text-center">
+          <RefreshCcw className="w-12 h-12 text-on-surface-variant opacity-40" />
+          <h2 className="font-serif text-2xl font-bold text-on-surface">Dashboard Unavailable</h2>
+          <p className="text-on-surface-variant text-sm max-w-sm">
+            Could not load dashboard data. The API may be temporarily unreachable.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-2 bg-primary text-on-primary px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </Layout>
+    );
+  }
 
+  const templesByStatus = stats.templesByStatus ?? {};
   const barData = [
-    { name: "Q1 2024", india: 120, international: 80  },
-    { name: "Q2 2024", india: 150, international: 90  },
-    { name: "Q3 2024", india: 190, international: 130 },
-    { name: "Q4 (EST)", india: 220, international: 160 },
+    { name: "Planning",     count: templesByStatus["planning"]     ?? 0 },
+    { name: "Construction", count: templesByStatus["construction"] ?? 0 },
+    { name: "Finishing",    count: templesByStatus["finishing"]    ?? 0 },
+    { name: "Consecrated",  count: templesByStatus["consecrated"]  ?? 0 },
   ];
 
   const recentProject = stats.recentUpdates?.[0];
@@ -683,6 +767,9 @@ export default function Dashboard() {
           </motion.div>
         </section>
 
+        {/* TOVP Countdown Banner */}
+        <CountdownBanner />
+
         {/* Key Metric Cards */}
         <motion.section
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
@@ -696,7 +783,7 @@ export default function Dashboard() {
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                 <Building2 className="w-5 h-5" />
               </div>
-              <span className="text-xs font-semibold text-primary uppercase tracking-widest">+4 this quarter</span>
+              <span className="text-xs font-semibold text-primary uppercase tracking-widest">Global Projects</span>
             </div>
             <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-wide mb-1">Total Active Projects</h3>
             <div className="text-3xl font-black text-on-surface font-serif">{stats.activeProjects || stats.totalTemples}</div>
@@ -786,44 +873,14 @@ export default function Dashboard() {
         {/* Global Mandala Map */}
         <GlobalMapSection />
 
-        {/* How to Give — 3-step donor guide */}
-        <motion.section
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={viewportOnce}
-          className="space-y-6"
-        >
-          <motion.div variants={fadeInUp}>
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary block mb-1">Simple & Transparent</span>
-            <h2 className="font-serif text-2xl font-bold text-on-surface">How to Give</h2>
-            <p className="text-sm text-on-surface-variant mt-1">Your donation reaches the temple in three steps.</p>
-          </motion.div>
-          <motion.div variants={staggerContainer} className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            {[
-              { step: "1", title: "Browse Projects", body: "Use the Project Directory to explore every active construction site — filter by region, status, or funding gap." },
-              { step: "2", title: "Choose Your Seva", body: "Each project page shows live funding progress, the project lead, and an expected completion date so you can give with full context." },
-              { step: "3", title: "Donate Directly", body: "Click Donate on any project card. Your contribution is tracked against that temple's goal and updated here in real time." },
-            ].map(({ step, title, body }) => (
-              <motion.div key={step} variants={fadeInUp} className="bg-surface-container rounded-xl p-6 flex gap-4">
-                <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-sm shrink-0">
-                  {step}
-                </div>
-                <div>
-                  <h3 className="font-serif font-bold text-on-surface mb-1">{title}</h3>
-                  <p className="text-sm text-on-surface-variant leading-relaxed">{body}</p>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-          <motion.div variants={fadeInUp} className="flex justify-center pt-2">
-            <Link href="/temples">
-              <button className="bg-primary text-on-primary px-8 py-3 rounded-xl font-bold text-sm tracking-wide shadow hover:shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 cursor-pointer">
-                Start Browsing Projects
-              </button>
-            </Link>
-          </motion.div>
-        </motion.section>
+        {/* Projects needing support + QR donation cards */}
+        <ActiveProjectsDonation />
+
+        {/* Seva Tiers */}
+        <SevaOpportunities />
+
+        {/* How to Give */}
+        <HowToGive />
 
         {/* Divider: donor funnel above / leadership analytics below */}
         <div className="flex items-center gap-4">
@@ -857,8 +914,7 @@ export default function Dashboard() {
                 <p className="text-sm text-on-surface-variant">Domestic vs. international project velocity</p>
               </div>
               <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-widest">
-                <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-primary"></span> India</div>
-                <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-tertiary"></span> International</div>
+                <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-primary"></span> Projects</div>
               </div>
             </div>
             <div className="h-64">
@@ -881,8 +937,7 @@ export default function Dashboard() {
                     cursor={{ fill: "rgba(27,28,28,0.04)" }}
                     contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 6px 24px rgba(27,28,28,0.06)" }}
                   />
-                  <Bar dataKey="india"         fill="var(--color-primary)"  radius={[8, 8, 0, 0]} barSize={32} />
-                  <Bar dataKey="international" fill="var(--color-tertiary)" radius={[8, 8, 0, 0]} barSize={32} />
+                  <Bar dataKey="count" fill="var(--color-primary)" radius={[8, 8, 0, 0]} barSize={48} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
