@@ -7,10 +7,10 @@ import { SyncIndicator } from "@/components/SyncIndicator";
 import { slideDown } from "@/lib/animations";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Global Dashboard", match: (loc: string) => loc === "/" },
-  { href: "/temples", label: "Project Directory", match: (loc: string) => loc.startsWith("/temples") },
-  { href: "/regional", label: "Regional Insights", match: (loc: string) => loc === "/regional" },
-  { href: "/social", label: "Social Hub", match: (loc: string) => loc === "/social" },
+  { href: "/", label: "Dashboard", match: (loc: string) => loc === "/" },
+  { href: "/temples", label: "Projects", match: (loc: string) => loc.startsWith("/temples") },
+  { href: "/#how-to-give", label: "How to Give", match: () => false },
+  { href: "/regional", label: "For Leaders", match: (loc: string) => loc === "/regional" },
 ];
 
 export function Layout({ children }: { children: ReactNode }) {
@@ -58,6 +58,14 @@ export function Layout({ children }: { children: ReactNode }) {
 
           {/* Trailing Icons */}
           <div className="flex items-center gap-1 sm:gap-3">
+            <a
+              href="https://www.iskcon.org/donate"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:inline-flex items-center bg-primary text-on-primary px-4 py-2 rounded-lg font-bold text-xs tracking-wide hover:bg-primary/90 transition-all active:scale-95"
+            >
+              Donate
+            </a>
             <SyncIndicator />
             <button className="hidden sm:block p-2 text-on-surface-variant hover:text-primary hover:bg-primary/5 rounded-full transition-all active:scale-95 duration-200">
               <Search className="w-5 h-5" />
@@ -112,9 +120,26 @@ export function Layout({ children }: { children: ReactNode }) {
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 w-full z-10 pt-24 pb-16">
+      <main className="flex-1 w-full z-10 pt-24 pb-28 sm:pb-16">
         {children}
       </main>
+
+      {/* Mobile sticky donate bar */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-md border-t border-outline-variant/10 px-4 py-3 flex gap-3">
+        <a
+          href="https://www.iskcon.org/donate"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-1 bg-primary text-on-primary py-3 rounded-xl font-bold text-sm tracking-wide text-center hover:bg-primary/90 transition-all active:scale-95"
+        >
+          Donate Now
+        </a>
+        <Link href="/temples">
+          <span className="flex-1 border-2 border-primary/40 text-primary py-3 px-5 rounded-xl font-bold text-sm tracking-wide text-center hover:bg-primary/5 transition-all active:scale-95 block">
+            Projects
+          </span>
+        </Link>
+      </div>
 
       {/* Footer */}
       <footer className="bg-surface w-full border-t border-on-surface-variant/10 mt-auto">
@@ -127,13 +152,13 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
           <div className="flex flex-col gap-3">
             <span className="font-sans text-xs uppercase tracking-widest font-bold text-secondary mb-2">Institutions</span>
-            <a href="#" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">ISKCON.org</a>
-            <a href="#" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">BBT</a>
+            <a href="https://www.iskcon.org" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">ISKCON.org</a>
+            <a href="https://www.bbt.info" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">BBT</a>
           </div>
           <div className="flex flex-col gap-3">
             <span className="font-sans text-xs uppercase tracking-widest font-bold text-secondary mb-2">Support</span>
-            <a href="#" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">Global Contact</a>
-            <a href="#" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">Help Desk</a>
+            <a href="https://www.iskcon.org/contact" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">Global Contact</a>
+            <a href="https://www.iskcon.org/contact" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">Help Desk</a>
           </div>
           <div className="flex flex-col justify-end">
             <p className="text-on-surface-variant/80 font-sans text-[10px] uppercase tracking-[0.2em] font-semibold">

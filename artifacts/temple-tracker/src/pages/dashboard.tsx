@@ -281,7 +281,7 @@ function GlobalMapSection() {
               Active Sites Worldwide
             </span>
           </div>
-          <h2 className="font-serif text-2xl font-bold text-on-surface">Global Mandala</h2>
+          <h2 className="font-serif text-2xl font-bold text-on-surface">Global Progress at a Glance</h2>
           <p className="text-sm text-on-surface-variant mt-1">
             {temples.length} sacred projects across {new Set(temples.map((t) => t.location.split(",").pop()?.trim())).size} regions
           </p>
@@ -631,7 +631,7 @@ export default function Dashboard() {
       <div className="px-4 md:px-8 max-w-screen-2xl mx-auto space-y-16">
 
         {/* Hero Section */}
-        <section className="relative rounded-xl overflow-hidden bg-surface-container-low min-h-[480px] sm:h-[450px] flex items-center py-8 sm:py-0">
+        <section className="relative rounded-xl overflow-hidden bg-surface-container-low min-h-[420px] sm:h-[420px] flex items-center py-8 sm:py-0">
           <div className="absolute inset-0 z-0">
             <img
               src={`${import.meta.env.BASE_URL}images/dashboard-hero.webp`}
@@ -639,31 +639,44 @@ export default function Dashboard() {
               className="w-full h-full object-cover object-center"
             />
           </div>
-          <div className="absolute inset-0 bg-gradient-to-r from-surface via-surface/75 to-surface/20 z-10" />
+          <div className="absolute inset-0 bg-gradient-to-r from-surface via-surface/80 to-surface/10 z-10" />
 
           <motion.div
-            className="relative z-20 px-6 sm:px-12 max-w-2xl"
+            className="relative z-20 px-6 sm:px-12 max-w-xl"
             variants={staggerContainer}
             initial="hidden"
             animate="visible"
           >
-            <motion.span variants={fadeInUp} className="text-xs font-semibold uppercase tracking-widest text-primary/80 mb-2 block">The Mahaprabhu Prophecy</motion.span>
-            <motion.h1 variants={fadeInUp} className="font-serif text-3xl sm:text-5xl font-bold text-on-surface mb-4 leading-tight">
-              pṛthivīte āche yata nagarādi grāma <br />
-              <span className="text-primary">sarvatra pracāra haibe mora nāma</span>
-            </motion.h1>
-            <motion.p variants={fadeInUp} className="text-on-surface-variant font-sans text-base sm:text-lg mb-8 leading-relaxed">
-              As Chaitanya Mahaprabhu declared, {"\u201C"}In every town and village throughout the world, the chanting of My name will be heard.{"\u201D"} Tracking ISKCON{"\u2019"}s sacred mission to fulfil this prophecy — project by project, continent by continent.
+            {/* Value proposition */}
+            <motion.p variants={fadeInUp} className="text-on-surface-variant font-sans text-sm mb-3 leading-relaxed">
+              Live global dashboard of ISKCON temple construction — see real-time progress, choose a project, and give in seconds.
             </motion.p>
-            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4">
+
+            {/* Shloka — compact, semantic */}
+            <motion.figure variants={fadeInUp} className="mb-5">
+              <blockquote className="font-serif text-xl sm:text-3xl font-bold text-on-surface leading-snug">
+                <span className="text-primary italic">pṛthivīte āche yata nagarādi grāma</span>
+                <br />
+                sarvatra pracāra haibe mora nāma
+              </blockquote>
+              <figcaption className="text-[11px] font-semibold uppercase tracking-widest text-on-surface-variant/70 mt-2">
+                — Chaitanya Mahaprabhu · The Mahaprabhu Prophecy
+              </figcaption>
+            </motion.figure>
+
+            {/* CTAs: Donate Now primary, Explore Projects secondary */}
+            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3">
+              <a
+                href="https://www.iskcon.org/donate"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-primary text-on-primary px-8 py-3 rounded-xl font-bold text-sm tracking-wide shadow-lg hover:shadow-primary/30 hover:bg-primary/90 transition-all active:scale-95 text-center w-full sm:w-auto"
+              >
+                Donate Now
+              </a>
               <Link href="/temples">
-                <button className="bg-primary text-on-primary px-8 py-3 rounded-xl font-bold text-sm tracking-wide shadow-lg hover:shadow-primary/20 transition-all active:scale-95 cursor-pointer w-full sm:w-auto">
-                  Explore All Projects
-                </button>
-              </Link>
-              <Link href="/regional">
-                <button className="bg-secondary-container text-on-secondary-container px-8 py-3 rounded-xl font-bold text-sm tracking-wide transition-all active:scale-95 hover:bg-secondary-container/80 cursor-pointer w-full sm:w-auto">
-                  Regional Insights
+                <button className="border-2 border-primary/40 text-primary px-8 py-3 rounded-xl font-bold text-sm tracking-wide hover:bg-primary/5 transition-all active:scale-95 cursor-pointer w-full sm:w-auto">
+                  Explore Projects
                 </button>
               </Link>
             </motion.div>
@@ -696,7 +709,7 @@ export default function Dashboard() {
               </div>
               <span className="text-xs font-semibold text-secondary uppercase tracking-widest">Global Portfolio</span>
             </div>
-            <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-wide mb-1">Total Global Investment</h3>
+            <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-wide mb-1">Total Portfolio Goal</h3>
             <div className="text-3xl font-black text-on-surface font-serif">
               ${(stats.totalFundraisingGoal / 1_000_000).toFixed(0)}M
             </div>
@@ -735,8 +748,91 @@ export default function Dashboard() {
           </motion.div>
         </motion.section>
 
+        {/* Seva Opportunities — surfaced early for donors */}
+        <motion.section
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+          id="how-to-give"
+          className="bg-primary/5 border border-primary/15 rounded-2xl px-6 sm:px-10 py-8 flex flex-col md:flex-row items-center justify-between gap-6"
+        >
+          <motion.div variants={fadeInUp} className="flex-1 min-w-0">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary block mb-1">Where Your Seva Is Needed Most</span>
+            <h2 className="font-serif text-xl sm:text-2xl font-bold text-on-surface mb-2">
+              Choose a Project — Give Directly
+            </h2>
+            <p className="text-sm text-on-surface-variant leading-relaxed max-w-xl">
+              Every rupee and dollar goes to a specific temple. Browse active projects, pick the one that calls to you, and contribute directly to its construction goal.
+            </p>
+          </motion.div>
+          <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 shrink-0">
+            <Link href="/temples">
+              <button className="bg-primary text-on-primary px-7 py-3 rounded-xl font-bold text-sm tracking-wide shadow hover:shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 cursor-pointer w-full sm:w-auto">
+                Browse Projects
+              </button>
+            </Link>
+            <a
+              href="https://www.iskcon.org/donate"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="border-2 border-primary/40 text-primary px-7 py-3 rounded-xl font-bold text-sm tracking-wide hover:bg-primary/5 transition-all active:scale-95 text-center w-full sm:w-auto"
+            >
+              Donate Now
+            </a>
+          </motion.div>
+        </motion.section>
+
         {/* Global Mandala Map */}
         <GlobalMapSection />
+
+        {/* How to Give — 3-step donor guide */}
+        <motion.section
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+          className="space-y-6"
+        >
+          <motion.div variants={fadeInUp}>
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary block mb-1">Simple & Transparent</span>
+            <h2 className="font-serif text-2xl font-bold text-on-surface">How to Give</h2>
+            <p className="text-sm text-on-surface-variant mt-1">Your donation reaches the temple in three steps.</p>
+          </motion.div>
+          <motion.div variants={staggerContainer} className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            {[
+              { step: "1", title: "Browse Projects", body: "Use the Project Directory to explore every active construction site — filter by region, status, or funding gap." },
+              { step: "2", title: "Choose Your Seva", body: "Each project page shows live funding progress, the project lead, and an expected completion date so you can give with full context." },
+              { step: "3", title: "Donate Directly", body: "Click Donate on any project card. Your contribution is tracked against that temple's goal and updated here in real time." },
+            ].map(({ step, title, body }) => (
+              <motion.div key={step} variants={fadeInUp} className="bg-surface-container rounded-xl p-6 flex gap-4">
+                <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-sm shrink-0">
+                  {step}
+                </div>
+                <div>
+                  <h3 className="font-serif font-bold text-on-surface mb-1">{title}</h3>
+                  <p className="text-sm text-on-surface-variant leading-relaxed">{body}</p>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+          <motion.div variants={fadeInUp} className="flex justify-center pt-2">
+            <Link href="/temples">
+              <button className="bg-primary text-on-primary px-8 py-3 rounded-xl font-bold text-sm tracking-wide shadow hover:shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 cursor-pointer">
+                Start Browsing Projects
+              </button>
+            </Link>
+          </motion.div>
+        </motion.section>
+
+        {/* Divider: donor funnel above / leadership analytics below */}
+        <div className="flex items-center gap-4">
+          <div className="flex-1 h-px bg-outline-variant/30" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant px-3 py-1.5 rounded-full bg-surface-container-low whitespace-nowrap">
+            For GBC &amp; Leadership
+          </span>
+          <div className="flex-1 h-px bg-outline-variant/30" />
+        </div>
 
         {/* McKinsey Intelligence Briefs */}
         <IntelligenceBriefs />
@@ -757,8 +853,8 @@ export default function Dashboard() {
           <motion.div variants={scaleIn} className="lg:col-span-2 bg-surface-container-low rounded-xl p-8">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-10 gap-4">
               <div>
-                <h2 className="font-serif text-2xl font-bold text-on-surface">Regional Distribution</h2>
-                <p className="text-sm text-on-surface-variant">Domestic vs. International project velocity</p>
+                <h2 className="font-serif text-2xl font-bold text-on-surface">Funding Status by Region</h2>
+                <p className="text-sm text-on-surface-variant">Domestic vs. international project velocity</p>
               </div>
               <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-widest">
                 <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-primary"></span> India</div>
