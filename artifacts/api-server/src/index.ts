@@ -17,9 +17,11 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
+const IS_PRODUCTION = process.env["NODE_ENV"] === "production";
+
 async function triggerSync(): Promise<void> {
   const fireTime = new Date().toISOString();
-  logger.info({ fireTime }, "Scheduled daily sync starting — updating temples + social hub posts");
+  logger.info({ fireTime }, "Scheduled hourly sync starting — updating temples + social hub posts");
   try {
     const result = await runTempleSync();
     logger.info(
@@ -39,6 +41,10 @@ app.listen(port, (err) => {
 
   logger.info({ port }, "Server listening");
 
-  cron.schedule("0 2 * * *", triggerSync);
-  logger.info("Cron job scheduled: temple data sync — fires daily at 02:00 UTC (0 2 * * *)");
+  if (IS_PRODUCTION) {
+    cron.schedule("0 * * * *", triggerSync);
+    logger.info("Cron job scheduled: temple data sync — fires every hour (0 * * * *)");
+  } else {
+    logger.info("Cron disabled in development — only runs in production");
+  }
 });

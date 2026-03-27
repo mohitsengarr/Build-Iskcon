@@ -7,7 +7,10 @@ import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import TempleCreate from "@/pages/temple-create";
 import TempleDetail from "@/pages/temple-detail";
-import { BlogDetail } from "@/pages/blogs";
+import { BlogsListing, BlogDetail } from "@/pages/blogs";
+import TempleList from "@/pages/temple-list";
+import SocialHub from "@/pages/social-hub";
+import RegionalInsights from "@/pages/regional-insights";
 import Vision2051 from "@/pages/vision2051";
 
 const queryClient = new QueryClient();
@@ -16,9 +19,13 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Dashboard} />
+      <Route path="/temples" component={TempleList} />
       <Route path="/temples/new" component={TempleCreate} />
       <Route path="/temples/:id" component={TempleDetail} />
+      <Route path="/blogs" component={BlogsListing} />
       <Route path="/blogs/:slug" component={BlogDetail} />
+      <Route path="/social" component={SocialHub} />
+      <Route path="/regional" component={RegionalInsights} />
       <Route path="/vision2051" component={Vision2051} />
       <Route component={NotFound} />
     </Switch>

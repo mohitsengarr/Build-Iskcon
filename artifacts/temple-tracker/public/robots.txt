@@ -9,4 +9,4 @@ Allow: /social
 # Block admin/creation forms from indexing
 Disallow: /temples/new
 
-Sitemap: /sitemap.xml
+Sitemap: https://buildiskcon.com/sitemap.xml

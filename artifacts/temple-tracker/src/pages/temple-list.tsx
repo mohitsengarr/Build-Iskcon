@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
 import { useListTemples } from "@workspace/api-client-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { MapPin, Grid, List, Filter, Globe } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -91,9 +91,29 @@ function TempleCard({ temple, idx }: TempleCardProps) {
 
 export default function TempleList() {
   const { data: temples, isLoading } = useListTemples();
-  const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
+
+  // Initialise view from ?view= URL query parameter (e.g. /temples?view=map)
+  const initialView = (() => {
+    if (typeof window === "undefined") return "grid";
+    const v = new URLSearchParams(window.location.search).get("view");
+    if (v === "map" || v === "list") return v;
+    return "grid";
+  })();
+
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "map">(initialView);
   const [filterRegion, setFilterRegion] = useState("all");
   const [filterStage, setFilterStage] = useState("all");
+
+  // Keep URL in sync when view changes
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (viewMode === "grid") {
+      url.searchParams.delete("view");
+    } else {
+      url.searchParams.set("view", viewMode);
+    }
+    window.history.replaceState(null, "", url.toString());
+  }, [viewMode]);
 
   const filteredTemples = temples?.filter(t => {
     if (filterStage !== "all" && t.status !== filterStage) return false;
