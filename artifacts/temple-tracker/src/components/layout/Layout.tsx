@@ -1,15 +1,14 @@
 import { ReactNode, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
-import { Menu, X } from "lucide-react";
+import { Search, Bell, User, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SyncIndicator } from "@/components/SyncIndicator";
-import { slideDown } from "@/lib/animations";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Home", match: (loc: string) => loc === "/" },
-  { href: "/#how-to-give", label: "How to Give", match: () => false },
-  { href: "/vision2051", label: "Vision 2051", match: (loc: string) => loc === "/vision2051" },
+  { href: "/", label: "Global Dashboard", match: (loc: string) => loc === "/" },
+  { href: "/temples", label: "Project Directory", match: (loc: string) => loc.startsWith("/temples") },
+  { href: "/regional", label: "Regional Insights", match: (loc: string) => loc === "/regional" },
+  { href: "/social", label: "Social Hub", match: (loc: string) => loc === "/social" },
 ];
 
 export function Layout({ children }: { children: ReactNode }) {
@@ -27,8 +26,6 @@ export function Layout({ children }: { children: ReactNode }) {
             <button
               className="md:hidden p-2 text-on-surface-variant hover:text-primary rounded-lg transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-              aria-expanded={mobileMenuOpen}
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -36,7 +33,7 @@ export function Layout({ children }: { children: ReactNode }) {
             {/* Brand Logo */}
             <Link href="/">
               <div className="font-serif text-lg sm:text-2xl font-black text-primary uppercase tracking-wider cursor-pointer">
-                Build Iskcon
+                ISKCON Intelligence
               </div>
             </Link>
 
@@ -57,103 +54,73 @@ export function Layout({ children }: { children: ReactNode }) {
             </div>
           </div>
 
-          {/* Trailing Controls */}
+          {/* Trailing Icons */}
           <div className="flex items-center gap-1 sm:gap-3">
-            <a
-              href="https://www.iskcon.org/donate"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center bg-primary text-on-primary px-4 py-2 rounded-lg font-bold text-xs tracking-wide hover:bg-primary/90 transition-all active:scale-95"
-            >
-              Donate
-            </a>
             <SyncIndicator />
+            <button className="hidden sm:block p-2 text-on-surface-variant hover:text-primary hover:bg-primary/5 rounded-full transition-all active:scale-95 duration-200">
+              <Search className="w-5 h-5" />
+            </button>
+            <button className="p-2 text-on-surface-variant hover:text-primary hover:bg-primary/5 rounded-full transition-all active:scale-95 duration-200 relative">
+              <Bell className="w-5 h-5" />
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-error"></span>
+            </button>
+            <button className="hidden sm:block p-2 text-on-surface-variant hover:text-primary hover:bg-primary/5 rounded-full transition-all active:scale-95 duration-200">
+              <User className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
         {/* Mobile Navigation Drawer */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <motion.div
-              className="md:hidden border-t border-outline-variant/10 bg-surface/95 backdrop-blur-md"
-              variants={slideDown}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-            >
-              <div className="flex flex-col px-6 py-4 gap-1">
-                {NAV_ITEMS.map((item, i) => (
-                  <motion.div
-                    key={item.href}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05, duration: 0.2 }}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-outline-variant/10 bg-surface/95 backdrop-blur-md">
+            <div className="flex flex-col px-6 py-4 gap-1">
+              {NAV_ITEMS.map((item) => (
+                <Link key={item.href} href={item.href}>
+                  <span
+                    className={cn(
+                      "block py-3 px-4 rounded-lg font-medium text-sm cursor-pointer transition-colors",
+                      item.match(location)
+                        ? "text-primary bg-primary/10 font-bold"
+                        : "text-on-surface-variant hover:text-primary hover:bg-primary/5"
+                    )}
+                    onClick={() => setMobileMenuOpen(false)}
                   >
-                    <Link href={item.href}>
-                      <span
-                        className={cn(
-                          "block py-3 px-4 rounded-lg font-medium text-sm cursor-pointer transition-colors",
-                          item.match(location)
-                            ? "text-primary bg-primary/10 font-bold"
-                            : "text-on-surface-variant hover:text-primary hover:bg-primary/5"
-                        )}
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        {item.label}
-                      </span>
-                    </Link>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                    {item.label}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 w-full z-10 pt-24 pb-28 sm:pb-16">
+      <main className="flex-1 w-full z-10 pt-24 pb-16">
         {children}
       </main>
-
-      {/* Mobile sticky donate bar */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-md border-t border-outline-variant/10 px-4 py-3 flex gap-3">
-        <a
-          href="https://www.iskcon.org/donate"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex-1 bg-primary text-on-primary py-3 rounded-xl font-bold text-sm tracking-wide text-center hover:bg-primary/90 transition-all active:scale-95"
-        >
-          Donate Now
-        </a>
-        <Link href="/temples">
-          <span className="flex-1 border-2 border-primary/40 text-primary py-3 px-5 rounded-xl font-bold text-sm tracking-wide text-center hover:bg-primary/5 transition-all active:scale-95 block">
-            Projects
-          </span>
-        </Link>
-      </div>
 
       {/* Footer */}
       <footer className="bg-surface w-full border-t border-on-surface-variant/10 mt-auto">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 px-6 sm:px-12 py-10 sm:py-16 w-full max-w-screen-2xl mx-auto">
           <div className="col-span-1 md:col-span-1">
-            <div className="font-serif italic text-lg text-on-surface-variant mb-4">Build Iskcon</div>
+            <div className="font-serif italic text-lg text-on-surface-variant mb-4">ISKCON Global Projects</div>
             <p className="text-on-surface-variant/80 font-sans text-xs uppercase tracking-widest font-semibold leading-relaxed">
               Dedicated to the architectural legacy of the Vedic tradition.
             </p>
           </div>
           <div className="flex flex-col gap-3">
             <span className="font-sans text-xs uppercase tracking-widest font-bold text-secondary mb-2">Institutions</span>
-            <a href="https://www.iskcon.org" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">ISKCON.org</a>
-            <a href="https://www.bbt.org" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">BBT</a>
+            <a href="#" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">ISKCON.org</a>
+            <a href="#" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">BBT</a>
           </div>
           <div className="flex flex-col gap-3">
             <span className="font-sans text-xs uppercase tracking-widest font-bold text-secondary mb-2">Support</span>
-            <a href="https://www.iskcon.org/contact" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">Global Contact</a>
-            <a href="https://www.iskcon.org/contact" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">Help Desk</a>
+            <a href="#" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">Global Contact</a>
+            <a href="#" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">Help Desk</a>
           </div>
           <div className="flex flex-col justify-end">
             <p className="text-on-surface-variant/80 font-sans text-[10px] uppercase tracking-[0.2em] font-semibold">
-              © 2026 Build Iskcon.<br/>All Rights Reserved.
+              © 2026 ISKCON Global Projects Office.<br/>All Rights Reserved.
             </p>
           </div>
         </div>
