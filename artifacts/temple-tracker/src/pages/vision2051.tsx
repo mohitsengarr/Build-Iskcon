@@ -1,436 +1,550 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
 import { fadeInUp, staggerContainer, viewportOnce } from "@/lib/animations";
-import { ChevronDown, ChevronUp, MapPin, Building2, Target, Heart, Filter } from "lucide-react";
 import { Link } from "wouter";
+import {
+  MapPin, Target, Building2, Globe, ChevronDown, ChevronUp,
+  Flame, CheckCircle2, Clock, Star, Heart
+} from "lucide-react";
 
-interface City {
+// ── Data ──────────────────────────────────────────────────────────────────────
+
+interface CityEntry {
   name: string;
   note: string;
-  priority: "high" | "medium" | "low";
-  existing: boolean;
+  priority: "high" | "medium" | "planned";
+  existing?: boolean;
 }
 
 interface StateEntry {
   state: string;
   type: "state" | "ut";
-  region: "North" | "South" | "East" | "West" | "Central" | "Northeast";
+  region: "North" | "South" | "East" | "West" | "Central" | "Northeast" | "Island";
   capital: string;
-  cities: City[];
+  cities: CityEntry[];
   phase: 1 | 2 | 3;
   totalTarget: number;
 }
 
 const STATES: StateEntry[] = [
-  { state: "Uttar Pradesh", type: "state", region: "North", capital: "Lucknow", phase: 1, totalTarget: 7, cities: [
-    { name: "Vrindavan", note: "Krishna Janmabhoomi region — flagship expansion", priority: "high", existing: true },
-    { name: "Lucknow", note: "State capital outreach centre", priority: "high", existing: true },
-    { name: "Varanasi", note: "Spiritual capital of India", priority: "high", existing: false },
-    { name: "Agra", note: "Tourist corridor temple", priority: "medium", existing: false },
-    { name: "Kanpur", note: "Industrial city community centre", priority: "medium", existing: false },
-    { name: "Prayagraj", note: "Triveni Sangam pilgrimage hub", priority: "high", existing: false },
-    { name: "Noida", note: "NCR satellite city", priority: "medium", existing: true },
-  ]},
-  { state: "Maharashtra", type: "state", region: "West", capital: "Mumbai", phase: 1, totalTarget: 7, cities: [
-    { name: "Mumbai (Juhu)", note: "Historic Hare Krishna Land", priority: "high", existing: true },
-    { name: "Pune", note: "NVCC campus expansion", priority: "high", existing: true },
-    { name: "Nagpur", note: "Central India gateway", priority: "high", existing: false },
-    { name: "Nashik", note: "Kumbh Mela city", priority: "medium", existing: false },
-    { name: "Aurangabad", note: "Ajanta-Ellora cultural corridor", priority: "medium", existing: false },
-    { name: "Thane", note: "Mumbai Metropolitan Region", priority: "medium", existing: false },
-    { name: "Kolhapur", note: "Mahalakshmi pilgrimage circuit", priority: "low", existing: false },
-  ]},
-  { state: "Karnataka", type: "state", region: "South", capital: "Bengaluru", phase: 1, totalTarget: 7, cities: [
-    { name: "Bengaluru", note: "Rajajinagar flagship temple", priority: "high", existing: true },
-    { name: "Mysuru", note: "Heritage city centre", priority: "high", existing: false },
-    { name: "Hubli-Dharwad", note: "North Karnataka hub", priority: "medium", existing: false },
-    { name: "Mangaluru", note: "Coastal Karnataka", priority: "medium", existing: false },
-    { name: "Belgaum", note: "Border city outreach", priority: "medium", existing: false },
-    { name: "Udupi", note: "Sri Krishna Matha pilgrimage area", priority: "high", existing: false },
-    { name: "Gulbarga", note: "Hyderabad-Karnataka region", priority: "low", existing: false },
-  ]},
-  { state: "Tamil Nadu", type: "state", region: "South", capital: "Chennai", phase: 1, totalTarget: 7, cities: [
-    { name: "Chennai", note: "Injambakkam temple complex", priority: "high", existing: true },
-    { name: "Madurai", note: "Temple city of South India", priority: "high", existing: false },
-    { name: "Coimbatore", note: "Western Tamil Nadu hub", priority: "medium", existing: false },
-    { name: "Tiruchirappalli", note: "Rock Fort temple corridor", priority: "medium", existing: false },
-    { name: "Salem", note: "Central Tamil Nadu outreach", priority: "medium", existing: false },
-    { name: "Tirunelveli", note: "Southern Tamil Nadu", priority: "low", existing: false },
-    { name: "Thanjavur", note: "Chola temple heritage zone", priority: "medium", existing: false },
-  ]},
-  { state: "West Bengal", type: "state", region: "East", capital: "Kolkata", phase: 1, totalTarget: 7, cities: [
-    { name: "Mayapur", note: "World headquarters — TOVP", priority: "high", existing: true },
-    { name: "Kolkata", note: "Albert Road & Dumdum centres", priority: "high", existing: true },
-    { name: "Siliguri", note: "North Bengal gateway", priority: "medium", existing: false },
-    { name: "Durgapur", note: "Industrial belt community", priority: "medium", existing: false },
-    { name: "Asansol", note: "Western Bengal mining region", priority: "low", existing: false },
-    { name: "Kharagpur", note: "IIT campus outreach", priority: "medium", existing: false },
-    { name: "Howrah", note: "Twin city of Kolkata", priority: "medium", existing: false },
-  ]},
-  { state: "Rajasthan", type: "state", region: "North", capital: "Jaipur", phase: 1, totalTarget: 7, cities: [
-    { name: "Jaipur", note: "Pink City cultural centre", priority: "high", existing: true },
-    { name: "Jodhpur", note: "Blue City heritage temple", priority: "high", existing: false },
-    { name: "Udaipur", note: "Lake city spiritual retreat", priority: "medium", existing: false },
-    { name: "Kota", note: "Student city outreach", priority: "medium", existing: false },
-    { name: "Ajmer", note: "Pushkar pilgrimage corridor", priority: "high", existing: false },
-    { name: "Bikaner", note: "Desert region outreach", priority: "low", existing: false },
-    { name: "Jaisalmer", note: "Golden City tourism hub", priority: "low", existing: false },
-  ]},
-  { state: "Gujarat", type: "state", region: "West", capital: "Gandhinagar", phase: 1, totalTarget: 7, cities: [
-    { name: "Ahmedabad", note: "Mega temple under construction", priority: "high", existing: true },
-    { name: "Vadodara", note: "Cultural capital of Gujarat", priority: "high", existing: true },
-    { name: "Surat", note: "Diamond city community centre", priority: "high", existing: false },
-    { name: "Rajkot", note: "Saurashtra region hub", priority: "medium", existing: false },
-    { name: "Gandhinagar", note: "State capital", priority: "medium", existing: false },
-    { name: "Dwarka", note: "Dwarkadhish pilgrimage site", priority: "high", existing: false },
-    { name: "Bhavnagar", note: "Gulf of Khambhat coastal", priority: "low", existing: false },
-  ]},
-  { state: "Madhya Pradesh", type: "state", region: "Central", capital: "Bhopal", phase: 1, totalTarget: 7, cities: [
-    { name: "Bhopal", note: "State capital centre", priority: "high", existing: false },
-    { name: "Indore", note: "Largest city in MP", priority: "high", existing: true },
-    { name: "Ujjain", note: "Mahakaleshwar Jyotirlinga city", priority: "high", existing: false },
-    { name: "Gwalior", note: "Northern MP gateway", priority: "medium", existing: false },
-    { name: "Jabalpur", note: "Central India node", priority: "medium", existing: false },
-    { name: "Rewa", note: "Vindhya region outreach", priority: "low", existing: false },
-    { name: "Sagar", note: "Bundelkhand centre", priority: "low", existing: false },
-  ]},
-  { state: "Kerala", type: "state", region: "South", capital: "Thiruvananthapuram", phase: 1, totalTarget: 7, cities: [
-    { name: "Thiruvananthapuram", note: "State capital temple", priority: "high", existing: true },
-    { name: "Kochi", note: "Commercial capital", priority: "high", existing: false },
-    { name: "Kozhikode", note: "Malabar region hub", priority: "medium", existing: false },
-    { name: "Thrissur", note: "Cultural capital of Kerala", priority: "high", existing: false },
-    { name: "Kollam", note: "Southern Kerala outreach", priority: "medium", existing: false },
-    { name: "Kannur", note: "North Kerala centre", priority: "low", existing: false },
-    { name: "Palakkad", note: "Gateway to Kerala", priority: "low", existing: false },
-  ]},
-  { state: "Telangana", type: "state", region: "South", capital: "Hyderabad", phase: 1, totalTarget: 7, cities: [
-    { name: "Hyderabad", note: "Abids Road temple complex", priority: "high", existing: true },
-    { name: "Warangal", note: "Kakatiya heritage city", priority: "medium", existing: false },
-    { name: "Nizamabad", note: "Northern Telangana hub", priority: "medium", existing: false },
-    { name: "Karimnagar", note: "Cultural outreach centre", priority: "low", existing: false },
-    { name: "Khammam", note: "Eastern Telangana", priority: "low", existing: false },
-    { name: "Secunderabad", note: "Twin city expansion", priority: "high", existing: false },
-    { name: "Nalgonda", note: "Southern corridor", priority: "low", existing: false },
-  ]},
-  { state: "Odisha", type: "state", region: "East", capital: "Bhubaneswar", phase: 1, totalTarget: 7, cities: [
-    { name: "Bhubaneswar", note: "Temple city of India", priority: "high", existing: true },
-    { name: "Puri", note: "Jagannath Dham — holiest site", priority: "high", existing: true },
-    { name: "Cuttack", note: "Silver City community centre", priority: "medium", existing: false },
-    { name: "Rourkela", note: "Steel city outreach", priority: "medium", existing: false },
-    { name: "Sambalpur", note: "Western Odisha hub", priority: "low", existing: false },
-    { name: "Berhampur", note: "Southern Odisha", priority: "low", existing: false },
-    { name: "Balasore", note: "Northern coastal Odisha", priority: "medium", existing: false },
-  ]},
-  { state: "Punjab", type: "state", region: "North", capital: "Chandigarh", phase: 1, totalTarget: 7, cities: [
-    { name: "Chandigarh", note: "Sector 36 temple expansion", priority: "high", existing: true },
-    { name: "Amritsar", note: "Holy city interfaith centre", priority: "high", existing: false },
-    { name: "Ludhiana", note: "Industrial city hub", priority: "medium", existing: false },
-    { name: "Jalandhar", note: "Doaba region centre", priority: "medium", existing: false },
-    { name: "Patiala", note: "Royal city heritage temple", priority: "medium", existing: false },
-    { name: "Bathinda", note: "Malwa region outreach", priority: "low", existing: false },
-    { name: "Mohali", note: "Chandigarh tricity", priority: "medium", existing: false },
-  ]},
-  { state: "Andhra Pradesh", type: "state", region: "South", capital: "Amaravati", phase: 1, totalTarget: 7, cities: [
-    { name: "Visakhapatnam", note: "Coastal Andhra flagship", priority: "high", existing: true },
-    { name: "Vijayawada", note: "Capital region centre", priority: "high", existing: false },
-    { name: "Tirupati", note: "Tirumala pilgrimage corridor", priority: "high", existing: false },
-    { name: "Guntur", note: "Krishna district hub", priority: "medium", existing: false },
-    { name: "Nellore", note: "Southern AP outreach", priority: "low", existing: false },
-    { name: "Kakinada", note: "Godavari delta", priority: "medium", existing: false },
-    { name: "Rajahmundry", note: "East Godavari cultural centre", priority: "medium", existing: false },
-  ]},
-  { state: "Haryana", type: "state", region: "North", capital: "Chandigarh", phase: 1, totalTarget: 7, cities: [
-    { name: "Gurugram", note: "Millennium City temple", priority: "high", existing: true },
-    { name: "Faridabad", note: "NCR industrial belt", priority: "high", existing: false },
-    { name: "Kurukshetra", note: "Bhagavad Gita battlefield", priority: "high", existing: false },
-    { name: "Panipat", note: "Historic city centre", priority: "medium", existing: false },
-    { name: "Ambala", note: "Northern Haryana hub", priority: "medium", existing: false },
-    { name: "Karnal", note: "Agricultural heartland", priority: "low", existing: false },
-    { name: "Hisar", note: "Western Haryana outreach", priority: "low", existing: false },
-  ]},
-  { state: "Himachal Pradesh", type: "state", region: "North", capital: "Shimla", phase: 2, totalTarget: 7, cities: [
-    { name: "Shimla", note: "Hill station spiritual retreat", priority: "high", existing: false },
-    { name: "Dharamshala", note: "Kangra Valley centre", priority: "high", existing: false },
-    { name: "Manali", note: "Tourist hub outreach", priority: "medium", existing: false },
-    { name: "Mandi", note: "Central HP hub", priority: "medium", existing: false },
-    { name: "Solan", note: "Chandigarh-Shimla corridor", priority: "medium", existing: false },
-    { name: "Kullu", note: "Valley of Gods", priority: "low", existing: false },
-    { name: "Hamirpur", note: "Southern HP outreach", priority: "low", existing: false },
-  ]},
-  { state: "Bihar", type: "state", region: "East", capital: "Patna", phase: 2, totalTarget: 7, cities: [
-    { name: "Patna", note: "State capital centre", priority: "high", existing: true },
-    { name: "Gaya", note: "Buddhist-Hindu pilgrimage site", priority: "high", existing: false },
-    { name: "Muzaffarpur", note: "North Bihar hub", priority: "medium", existing: false },
-    { name: "Bhagalpur", note: "Silk city outreach", priority: "medium", existing: false },
-    { name: "Darbhanga", note: "Mithila cultural centre", priority: "medium", existing: false },
-    { name: "Purnia", note: "Eastern Bihar", priority: "low", existing: false },
-    { name: "Nalanda", note: "Ancient university city", priority: "high", existing: false },
-  ]},
-  { state: "Jharkhand", type: "state", region: "East", capital: "Ranchi", phase: 2, totalTarget: 7, cities: [
-    { name: "Ranchi", note: "State capital temple", priority: "high", existing: false },
-    { name: "Jamshedpur", note: "Steel city community", priority: "high", existing: false },
-    { name: "Dhanbad", note: "Coal capital outreach", priority: "medium", existing: false },
-    { name: "Bokaro", note: "Industrial city centre", priority: "medium", existing: false },
-    { name: "Hazaribagh", note: "Central Jharkhand", priority: "low", existing: false },
-    { name: "Deoghar", note: "Baidyanath Dham pilgrimage", priority: "high", existing: false },
-    { name: "Giridih", note: "Parasnath Hill region", priority: "low", existing: false },
-  ]},
-  { state: "Assam", type: "state", region: "Northeast", capital: "Dispur", phase: 2, totalTarget: 7, cities: [
-    { name: "Guwahati", note: "Gateway to Northeast", priority: "high", existing: true },
-    { name: "Silchar", note: "Barak Valley hub", priority: "medium", existing: false },
-    { name: "Dibrugarh", note: "Upper Assam centre", priority: "medium", existing: false },
-    { name: "Jorhat", note: "Tea capital region", priority: "medium", existing: false },
-    { name: "Tezpur", note: "Cultural city outreach", priority: "low", existing: false },
-    { name: "Nagaon", note: "Central Assam", priority: "low", existing: false },
-    { name: "Tinsukia", note: "Eastern Assam border", priority: "low", existing: false },
-  ]},
-  { state: "Goa", type: "state", region: "West", capital: "Panaji", phase: 2, totalTarget: 7, cities: [
-    { name: "Panaji", note: "State capital centre", priority: "high", existing: false },
-    { name: "Margao", note: "South Goa hub", priority: "high", existing: false },
-    { name: "Vasco da Gama", note: "Port city outreach", priority: "medium", existing: false },
-    { name: "Mapusa", note: "North Goa market town", priority: "medium", existing: false },
-    { name: "Ponda", note: "Temple corridor of Goa", priority: "high", existing: false },
-    { name: "Bicholim", note: "Mining region centre", priority: "low", existing: false },
-    { name: "Canacona", note: "Southern coastal Goa", priority: "low", existing: false },
-  ]},
-  { state: "Chhattisgarh", type: "state", region: "Central", capital: "Raipur", phase: 2, totalTarget: 7, cities: [
-    { name: "Raipur", note: "State capital temple", priority: "high", existing: false },
-    { name: "Bilaspur", note: "Northern CG hub", priority: "high", existing: false },
-    { name: "Durg-Bhilai", note: "Steel city community", priority: "medium", existing: false },
-    { name: "Korba", note: "Power capital outreach", priority: "medium", existing: false },
-    { name: "Rajnandgaon", note: "Central CG centre", priority: "low", existing: false },
-    { name: "Jagdalpur", note: "Bastar tribal region", priority: "medium", existing: false },
-    { name: "Ambikapur", note: "Northern hills outreach", priority: "low", existing: false },
-  ]},
-  { state: "Uttarakhand", type: "state", region: "North", capital: "Dehradun", phase: 2, totalTarget: 7, cities: [
-    { name: "Dehradun", note: "State capital centre", priority: "high", existing: true },
-    { name: "Haridwar", note: "Holy city on the Ganges", priority: "high", existing: false },
-    { name: "Rishikesh", note: "Yoga capital of the world", priority: "high", existing: false },
-    { name: "Haldwani", note: "Kumaon gateway", priority: "medium", existing: false },
-    { name: "Roorkee", note: "IIT campus outreach", priority: "medium", existing: false },
-    { name: "Nainital", note: "Hill station retreat", priority: "low", existing: false },
-    { name: "Mussoorie", note: "Queen of the Hills", priority: "low", existing: false },
-  ]},
-  { state: "Tripura", type: "state", region: "Northeast", capital: "Agartala", phase: 2, totalTarget: 7, cities: [
-    { name: "Agartala", note: "State capital centre", priority: "high", existing: false },
-    { name: "Udaipur", note: "Tripura Sundari temple area", priority: "high", existing: false },
-    { name: "Dharmanagar", note: "North Tripura hub", priority: "medium", existing: false },
-    { name: "Kailashahar", note: "Unakoti heritage site", priority: "medium", existing: false },
-    { name: "Belonia", note: "South Tripura border", priority: "low", existing: false },
-    { name: "Ambassa", note: "Central Tripura", priority: "low", existing: false },
-    { name: "Sabroom", note: "Southern tip outreach", priority: "low", existing: false },
-  ]},
-  { state: "Meghalaya", type: "state", region: "Northeast", capital: "Shillong", phase: 2, totalTarget: 7, cities: [
-    { name: "Shillong", note: "Scotland of the East", priority: "high", existing: false },
-    { name: "Tura", note: "West Garo Hills hub", priority: "medium", existing: false },
-    { name: "Jowai", note: "West Jaintia Hills", priority: "medium", existing: false },
-    { name: "Nongstoin", note: "West Khasi Hills", priority: "low", existing: false },
-    { name: "Williamnagar", note: "East Garo Hills", priority: "low", existing: false },
-    { name: "Cherrapunji", note: "Wettest place on Earth", priority: "medium", existing: false },
-    { name: "Baghmara", note: "South Garo Hills", priority: "low", existing: false },
-  ]},
-  { state: "Manipur", type: "state", region: "Northeast", capital: "Imphal", phase: 3, totalTarget: 7, cities: [
-    { name: "Imphal", note: "State capital & Vaishnava heartland", priority: "high", existing: false },
-    { name: "Thoubal", note: "Eastern Manipur hub", priority: "medium", existing: false },
-    { name: "Bishnupur", note: "Vaishnava heritage town", priority: "high", existing: false },
-    { name: "Churachandpur", note: "Hill district centre", priority: "medium", existing: false },
-    { name: "Kakching", note: "Southern valley", priority: "low", existing: false },
-    { name: "Ukhrul", note: "Northern hills outreach", priority: "low", existing: false },
-    { name: "Senapati", note: "NH2 corridor", priority: "low", existing: false },
-  ]},
-  { state: "Nagaland", type: "state", region: "Northeast", capital: "Kohima", phase: 3, totalTarget: 7, cities: [
-    { name: "Kohima", note: "State capital temple", priority: "high", existing: false },
-    { name: "Dimapur", note: "Commercial capital", priority: "high", existing: false },
-    { name: "Mokokchung", note: "Ao Naga cultural hub", priority: "medium", existing: false },
-    { name: "Tuensang", note: "Eastern Nagaland", priority: "low", existing: false },
-    { name: "Wokha", note: "Central hills centre", priority: "low", existing: false },
-    { name: "Zunheboto", note: "Sumi Naga region", priority: "low", existing: false },
-    { name: "Mon", note: "Konyak territory outreach", priority: "low", existing: false },
-  ]},
-  { state: "Mizoram", type: "state", region: "Northeast", capital: "Aizawl", phase: 3, totalTarget: 7, cities: [
-    { name: "Aizawl", note: "State capital centre", priority: "high", existing: false },
-    { name: "Lunglei", note: "Southern Mizoram hub", priority: "medium", existing: false },
-    { name: "Champhai", note: "Myanmar border town", priority: "medium", existing: false },
-    { name: "Serchhip", note: "Central Mizoram", priority: "low", existing: false },
-    { name: "Kolasib", note: "Northern gateway", priority: "low", existing: false },
-    { name: "Lawngtlai", note: "Lai autonomous region", priority: "low", existing: false },
-    { name: "Saiha", note: "Southeastern tip", priority: "low", existing: false },
-  ]},
-  { state: "Arunachal Pradesh", type: "state", region: "Northeast", capital: "Itanagar", phase: 3, totalTarget: 7, cities: [
-    { name: "Itanagar", note: "State capital temple", priority: "high", existing: false },
-    { name: "Naharlagun", note: "Twin city of Itanagar", priority: "high", existing: false },
-    { name: "Pasighat", note: "Gateway to eastern AP", priority: "medium", existing: false },
-    { name: "Tawang", note: "Buddhist-Hindu hill station", priority: "medium", existing: false },
-    { name: "Ziro", note: "Apatani Valley cultural site", priority: "low", existing: false },
-    { name: "Tezu", note: "Lohit district hub", priority: "low", existing: false },
-    { name: "Along", note: "West Siang centre", priority: "low", existing: false },
-  ]},
-  { state: "Sikkim", type: "state", region: "Northeast", capital: "Gangtok", phase: 3, totalTarget: 7, cities: [
-    { name: "Gangtok", note: "State capital retreat", priority: "high", existing: false },
-    { name: "Namchi", note: "South Sikkim hub", priority: "medium", existing: false },
-    { name: "Gyalshing", note: "West Sikkim centre", priority: "medium", existing: false },
-    { name: "Mangan", note: "North Sikkim gateway", priority: "low", existing: false },
-    { name: "Ravangla", note: "Buddha Park spiritual area", priority: "medium", existing: false },
-    { name: "Jorethang", note: "Southern valley town", priority: "low", existing: false },
-    { name: "Singtam", note: "East Sikkim hub", priority: "low", existing: false },
-  ]},
-  { state: "Delhi", type: "ut", region: "North", capital: "New Delhi", phase: 1, totalTarget: 7, cities: [
-    { name: "East of Kailash", note: "Glory of India temple", priority: "high", existing: true },
-    { name: "Dwarka", note: "Sub-city centre", priority: "high", existing: false },
-    { name: "Rohini", note: "North Delhi outreach", priority: "medium", existing: false },
-    { name: "Noida Extension", note: "NCR expansion", priority: "medium", existing: false },
-    { name: "Mehrauli", note: "South Delhi heritage area", priority: "medium", existing: false },
-    { name: "Janakpuri", note: "West Delhi community", priority: "low", existing: false },
-    { name: "Shahdara", note: "Trans-Yamuna outreach", priority: "low", existing: false },
-  ]},
-  { state: "Jammu & Kashmir", type: "ut", region: "North", capital: "Srinagar", phase: 2, totalTarget: 7, cities: [
-    { name: "Jammu", note: "Winter capital temple", priority: "high", existing: true },
-    { name: "Srinagar", note: "Valley outreach centre", priority: "high", existing: false },
-    { name: "Udhampur", note: "Vaishno Devi corridor", priority: "high", existing: false },
-    { name: "Kathua", note: "Southern J&K hub", priority: "medium", existing: false },
-    { name: "Rajouri", note: "Pir Panjal region", priority: "low", existing: false },
-    { name: "Anantnag", note: "South Kashmir centre", priority: "medium", existing: false },
-    { name: "Baramulla", note: "North Kashmir outreach", priority: "low", existing: false },
-  ]},
-  { state: "Chandigarh", type: "ut", region: "North", capital: "Chandigarh", phase: 2, totalTarget: 7, cities: [
-    { name: "Sector 36", note: "Existing ISKCON centre", priority: "high", existing: true },
-    { name: "Sector 22", note: "City centre outreach", priority: "medium", existing: false },
-    { name: "Manimajra", note: "Eastern Chandigarh", priority: "medium", existing: false },
-    { name: "Industrial Area", note: "Worker community centre", priority: "low", existing: false },
-    { name: "Sector 43", note: "Institutional area", priority: "low", existing: false },
-    { name: "Panchkula Extension", note: "Tricity expansion", priority: "medium", existing: false },
-    { name: "Zirakpur", note: "Chandigarh-Ambala corridor", priority: "medium", existing: false },
-  ]},
-  { state: "Puducherry", type: "ut", region: "South", capital: "Puducherry", phase: 2, totalTarget: 5, cities: [
-    { name: "Puducherry", note: "French Quarter spiritual centre", priority: "high", existing: false },
-    { name: "Karaikal", note: "Coastal heritage town", priority: "medium", existing: false },
-    { name: "Yanam", note: "Andhra enclave outreach", priority: "low", existing: false },
-    { name: "Mahe", note: "Kerala enclave centre", priority: "low", existing: false },
-    { name: "Villianur", note: "Inner Puducherry", priority: "medium", existing: false },
-  ]},
-  { state: "Dadra & Nagar Haveli and Daman & Diu", type: "ut", region: "West", capital: "Daman", phase: 3, totalTarget: 7, cities: [
-    { name: "Daman", note: "Coastal UT temple", priority: "high", existing: false },
-    { name: "Diu", note: "Island heritage centre", priority: "medium", existing: false },
-    { name: "Silvassa", note: "UT capital", priority: "high", existing: false },
-    { name: "Nani Daman", note: "Historic port area", priority: "low", existing: false },
-    { name: "Moti Daman", note: "Fort area outreach", priority: "low", existing: false },
-    { name: "Khanvel", note: "Interior tribal region", priority: "low", existing: false },
-    { name: "Vapi Corridor", note: "Industrial belt nearby", priority: "medium", existing: false },
-  ]},
-  { state: "Ladakh", type: "ut", region: "North", capital: "Leh", phase: 3, totalTarget: 7, cities: [
-    { name: "Leh", note: "High-altitude spiritual retreat", priority: "high", existing: false },
-    { name: "Kargil", note: "Ladakh's second city", priority: "high", existing: false },
-    { name: "Diskit", note: "Nubra Valley centre", priority: "medium", existing: false },
-    { name: "Hemis", note: "Historic monastery corridor", priority: "medium", existing: false },
-    { name: "Zanskar", note: "Remote valley outreach", priority: "low", existing: false },
-    { name: "Turtuk", note: "Northernmost village", priority: "low", existing: false },
-    { name: "Nyoma", note: "Changthang plateau", priority: "low", existing: false },
-  ]},
-  { state: "Andaman & Nicobar Islands", type: "ut", region: "South", capital: "Port Blair", phase: 3, totalTarget: 7, cities: [
-    { name: "Port Blair", note: "Island capital temple", priority: "high", existing: false },
-    { name: "Diglipur", note: "North Andaman hub", priority: "medium", existing: false },
-    { name: "Rangat", note: "Middle Andaman centre", priority: "medium", existing: false },
-    { name: "Mayabunder", note: "Northern settlement", priority: "low", existing: false },
-    { name: "Car Nicobar", note: "Nicobar chain hub", priority: "medium", existing: false },
-    { name: "Havelock Island", note: "Tourism outreach", priority: "low", existing: false },
-    { name: "Little Andaman", note: "Southern island centre", priority: "low", existing: false },
-  ]},
-  { state: "Lakshadweep", type: "ut", region: "South", capital: "Kavaratti", phase: 3, totalTarget: 7, cities: [
-    { name: "Kavaratti", note: "UT capital temple", priority: "high", existing: false },
-    { name: "Agatti", note: "Airport island centre", priority: "medium", existing: false },
-    { name: "Minicoy", note: "Southernmost island", priority: "medium", existing: false },
-    { name: "Andrott", note: "Largest island outreach", priority: "medium", existing: false },
-    { name: "Amini", note: "Northern island hub", priority: "low", existing: false },
-    { name: "Kalpeni", note: "Tourism development area", priority: "low", existing: false },
-    { name: "Kadmat", note: "Coral island retreat", priority: "low", existing: false },
-  ]},
+  // ── North India ──
+  {
+    state: "Uttar Pradesh", type: "state", region: "North", capital: "Lucknow", phase: 1, totalTarget: 7,
+    cities: [
+      { name: "Mathura–Vrindavan", note: "Birthplace of Krishna; existing ISKCON presence — expand to larger complex", priority: "high", existing: true },
+      { name: "Prayagraj (Allahabad)", note: "Kumbh Mela site; major pilgrimage hub with huge footfall", priority: "high" },
+      { name: "Varanasi", note: "Oldest living city; significant Vaishnava heritage and spiritual tourism", priority: "high" },
+      { name: "Lucknow", note: "State capital; large educated professional community ideal for outreach", priority: "high" },
+      { name: "Agra", note: "High tourist inflow; opportunity for cultural & spiritual outreach", priority: "medium" },
+      { name: "Kanpur", note: "Industrial city; large working-class population underserved by spiritual centres", priority: "medium" },
+      { name: "Gorakhpur", note: "Gateway to Himalayan pilgrimage routes; rapidly growing city", priority: "planned" },
+    ],
+  },
+  {
+    state: "Punjab", type: "state", region: "North", capital: "Chandigarh", phase: 1, totalTarget: 7,
+    cities: [
+      { name: "Chandigarh", note: "Shared capital with Haryana; highly educated urban population", priority: "high" },
+      { name: "Amritsar", note: "Major pilgrimage city; Harmandir Sahib draws millions — interfaith opportunity", priority: "high" },
+      { name: "Ludhiana", note: "Largest city in Punjab; major commercial and industrial centre", priority: "high" },
+      { name: "Jalandhar", note: "Prominent educational hub with large diaspora connections", priority: "medium" },
+      { name: "Patiala", note: "Historical royal city with deep cultural roots", priority: "medium" },
+      { name: "Bathinda", note: "Emerging industrial and educational city in southwest Punjab", priority: "planned" },
+      { name: "Mohali", note: "IT hub adjacent to Chandigarh; young professional demographic", priority: "planned" },
+    ],
+  },
+  {
+    state: "Haryana", type: "state", region: "North", capital: "Chandigarh", phase: 1, totalTarget: 7,
+    cities: [
+      { name: "Gurugram", note: "India's corporate capital; massive professional population seeking spiritual anchor", priority: "high" },
+      { name: "Faridabad", note: "Largest city in Haryana; industrial belt with dense residential population", priority: "high" },
+      { name: "Kurukshetra", note: "Birthplace of the Bhagavad Gita; essential for ISKCON's mission", priority: "high", existing: true },
+      { name: "Panipat", note: "Historic city; growing industrial and residential base", priority: "medium" },
+      { name: "Rohtak", note: "Educational centre; Maharshi Dayanand University draws large student body", priority: "medium" },
+      { name: "Ambala", note: "Strategic cantonment city; trade and transport hub", priority: "medium" },
+      { name: "Hisar", note: "Agricultural and industrial city; serves vast rural hinterland", priority: "planned" },
+    ],
+  },
+  {
+    state: "Rajasthan", type: "state", region: "North", capital: "Jaipur", phase: 1, totalTarget: 7,
+    cities: [
+      { name: "Jaipur", note: "State capital and Pink City; major tourism destination and commercial hub", priority: "high" },
+      { name: "Jodhpur", note: "Blue City; educational and cultural hub of western Rajasthan", priority: "high" },
+      { name: "Udaipur", note: "Lake City; high tourist inflow; strong cultural heritage", priority: "high" },
+      { name: "Kota", note: "Education city; hundreds of thousands of students — ideal for Gita outreach", priority: "high" },
+      { name: "Ajmer", note: "Pilgrimage hub; Pushkar nearby has established Vaishnava connection", priority: "medium" },
+      { name: "Bikaner", note: "Historical city in Thar; gateway to desert communities", priority: "medium" },
+      { name: "Sikar", note: "Fast-growing city serving massive student and business population", priority: "planned" },
+    ],
+  },
+  {
+    state: "Himachal Pradesh", type: "state", region: "North", capital: "Shimla", phase: 2, totalTarget: 7,
+    cities: [
+      { name: "Shimla", note: "State capital; mountain tourism capital of north India", priority: "high" },
+      { name: "Dharamshala", note: "International spiritual hub; high inflow of seekers from around the world", priority: "high" },
+      { name: "Manali", note: "Gateway to Ladakh; popular youth and adventure tourism destination", priority: "medium" },
+      { name: "Mandi", note: "Commercial and cultural hub of the Kullu-Mandi valley", priority: "medium" },
+      { name: "Solan", note: "Industrial city near Chandigarh; growing residential population", priority: "medium" },
+      { name: "Baddi", note: "Largest industrial town in HP; significant workforce community", priority: "planned" },
+      { name: "Palampur", note: "University town; gateway to Kangra valley", priority: "planned" },
+    ],
+  },
+  {
+    state: "Uttarakhand", type: "state", region: "North", capital: "Dehradun", phase: 1, totalTarget: 7,
+    cities: [
+      { name: "Haridwar", note: "Holiest Ganga ghats; Hare Krishna chanting resonates deeply here", priority: "high", existing: true },
+      { name: "Rishikesh", note: "World yoga capital; global spiritual seekers converge year-round", priority: "high", existing: true },
+      { name: "Dehradun", note: "State capital; growing IT and education hub in the Doon Valley", priority: "high" },
+      { name: "Roorkee", note: "IIT Roorkee city; large student population ideal for Bhakti-Yoga outreach", priority: "medium" },
+      { name: "Haldwani", note: "Commercial gateway to Kumaon; largest city in the hills", priority: "medium" },
+      { name: "Nainital", note: "Tourism and education hub in Kumaon hills", priority: "medium" },
+      { name: "Kotdwar", note: "Gateway to Pauri Garhwal; serves vast hill district population", priority: "planned" },
+    ],
+  },
+  // ── Central India ──
+  {
+    state: "Madhya Pradesh", type: "state", region: "Central", capital: "Bhopal", phase: 1, totalTarget: 7,
+    cities: [
+      { name: "Indore", note: "Cleanest city in India; thriving business and education ecosystem", priority: "high" },
+      { name: "Bhopal", note: "State capital; large government and professional community", priority: "high" },
+      { name: "Ujjain", note: "Ancient sacred city; one of the twelve Jyotirlinga sites and Kumbh Mela venue", priority: "high" },
+      { name: "Jabalpur", note: "Educational and military hub of central MP", priority: "medium" },
+      { name: "Gwalior", note: "Historical fortress city; cultural capital of northern MP", priority: "medium" },
+      { name: "Rewa", note: "Educational and administrative centre for eastern MP", priority: "planned" },
+      { name: "Satna", note: "Cement industry hub; gateway to Khajuraho pilgrimage circuit", priority: "planned" },
+    ],
+  },
+  {
+    state: "Chhattisgarh", type: "state", region: "Central", capital: "Raipur", phase: 2, totalTarget: 7,
+    cities: [
+      { name: "Raipur", note: "State capital; fastest-growing city in central India", priority: "high" },
+      { name: "Bhilai", note: "Steel city; large workers' township with community building potential", priority: "high" },
+      { name: "Bilaspur", note: "Educational and judicial hub; Bilaspur High Court city", priority: "medium" },
+      { name: "Durg", note: "Twin city of Bhilai; dense residential and commercial area", priority: "medium" },
+      { name: "Korba", note: "Industrial power city; significant workforce requiring spiritual support", priority: "medium" },
+      { name: "Jagdalpur", note: "Tribal heartland and capital of Bastar; unique outreach opportunity", priority: "planned" },
+      { name: "Ambikapur", note: "Educational hub for tribal north Chhattisgarh", priority: "planned" },
+    ],
+  },
+  // ── West India ──
+  {
+    state: "Maharashtra", type: "state", region: "West", capital: "Mumbai", phase: 1, totalTarget: 7,
+    cities: [
+      { name: "Mumbai", note: "Financial capital; existing Juhu ISKCON temple — expand with additional centre", priority: "high", existing: true },
+      { name: "Pune", note: "Education and IT hub; strong existing devotee community", priority: "high", existing: true },
+      { name: "Nagpur", note: "Geographical centre of India; gateway to central and eastern India", priority: "high" },
+      { name: "Nashik", note: "Wine and grapes city; Kumbh Mela venue; strong religious culture", priority: "medium" },
+      { name: "Aurangabad (Chhatrapati Sambhajinagar)", note: "Ajanta–Ellora tourism hub; historical cultural significance", priority: "medium" },
+      { name: "Solapur", note: "Textile industry city; gateway to Pandharpur pilgrimage", priority: "planned" },
+      { name: "Kolhapur", note: "Historical princely city; strong Varkari devotional tradition nearby", priority: "planned" },
+    ],
+  },
+  {
+    state: "Gujarat", type: "state", region: "West", capital: "Gandhinagar", phase: 1, totalTarget: 7,
+    cities: [
+      { name: "Ahmedabad", note: "Largest city in Gujarat; existing ISKCON temple; strong devotee base", priority: "high", existing: true },
+      { name: "Surat", note: "Diamond and textile capital; massive business community", priority: "high" },
+      { name: "Vadodara", note: "Cultural capital of Gujarat; Baroda University hub", priority: "high" },
+      { name: "Rajkot", note: "Rapidly growing city; strong business and industrial base", priority: "medium" },
+      { name: "Bhavnagar", note: "Coastal city; significant port activity and educational institutions", priority: "medium" },
+      { name: "Jamnagar", note: "Brass city; Jio Refinery hub; growing industrial township", priority: "medium" },
+      { name: "Gandhinagar", note: "State capital and IT hub; proximity to Akshardham Gandhinagar", priority: "planned" },
+    ],
+  },
+  {
+    state: "Goa", type: "state", region: "West", capital: "Panaji", phase: 2, totalTarget: 7,
+    cities: [
+      { name: "Panaji", note: "State capital; international tourism gateway", priority: "high" },
+      { name: "Margao", note: "Largest commercial city in South Goa", priority: "high" },
+      { name: "Vasco da Gama", note: "Port and industrial city; Mormugao harbour hub", priority: "medium" },
+      { name: "Mapusa", note: "Northern Goa trade hub; weekly flea market draws thousands", priority: "medium" },
+      { name: "Ponda", note: "Temple town of Goa; rich Hindu temple culture", priority: "medium" },
+      { name: "Calangute", note: "Biggest beach resort; opportunity for spiritual outreach to tourists", priority: "planned" },
+      { name: "Pernem", note: "Northernmost Goa; quieter demographics ideal for retreat-style temple", priority: "planned" },
+    ],
+  },
+  // ── South India ──
+  {
+    state: "Karnataka", type: "state", region: "South", capital: "Bengaluru", phase: 1, totalTarget: 7,
+    cities: [
+      { name: "Bengaluru", note: "IT capital of India; large cosmopolitan and youth population", priority: "high", existing: true },
+      { name: "Mysuru", note: "City of Palaces; major cultural and pilgrimage centre", priority: "high" },
+      { name: "Mangaluru", note: "Coastal educational hub; gateway to Tulu Nadu", priority: "high" },
+      { name: "Hubballi-Dharwad", note: "Largest twin city in north Karnataka; educational and commercial hub", priority: "medium" },
+      { name: "Belagavi", note: "Border city between Maharashtra and Karnataka; trilingual community", priority: "medium" },
+      { name: "Udupi", note: "Birthplace of Madhvacharya; deep Vaishnava heritage — ideal spiritual anchor", priority: "high" },
+      { name: "Shivamogga", note: "Western Ghats gateway; emerging educational and commercial city", priority: "planned" },
+    ],
+  },
+  {
+    state: "Tamil Nadu", type: "state", region: "South", capital: "Chennai", phase: 1, totalTarget: 7,
+    cities: [
+      { name: "Chennai", note: "Metro capital; established ISKCON presence — additional centre needed", priority: "high", existing: true },
+      { name: "Coimbatore", note: "Manchester of India; large industrial and entrepreneurial population", priority: "high" },
+      { name: "Madurai", note: "Temple city; ancient Vaishnava and Shaiva heritage", priority: "high" },
+      { name: "Tiruchirappalli (Trichy)", note: "Spiritual and educational hub; Sri Ranganathaswamy near vicinity", priority: "medium" },
+      { name: "Salem", note: "Steel city of Tamil Nadu; growing commercial and educational centre", priority: "medium" },
+      { name: "Tirunelveli", note: "Southern most major city; gateway to Kanyakumari pilgrimage", priority: "planned" },
+      { name: "Vellore", note: "Medical and educational hub; CMC Vellore draws pan-India population", priority: "planned" },
+    ],
+  },
+  {
+    state: "Telangana", type: "state", region: "South", capital: "Hyderabad", phase: 1, totalTarget: 7,
+    cities: [
+      { name: "Hyderabad", note: "Cyberabad tech hub; existing ISKCON temple — expand with second centre", priority: "high", existing: true },
+      { name: "Warangal", note: "Ancient Kakatiya capital; growing educational and commercial city", priority: "high" },
+      { name: "Nizamabad", note: "Northern Telangana's trade hub; gateway to Marathwada", priority: "medium" },
+      { name: "Karimnagar", note: "Granite city; industrially significant with growing urban population", priority: "medium" },
+      { name: "Khammam", note: "Minerals and coal hub; large workforce community", priority: "medium" },
+      { name: "Ramagundam", note: "NTPC power city; significant township population", priority: "planned" },
+      { name: "Nalgonda", note: "Agricultural city; serves vast Krishna-Godavari delta region", priority: "planned" },
+    ],
+  },
+  {
+    state: "Andhra Pradesh", type: "state", region: "South", capital: "Amaravati", phase: 1, totalTarget: 7,
+    cities: [
+      { name: "Tirupati", note: "World's most visited pilgrimage site; ISKCON presence essential", priority: "high", existing: true },
+      { name: "Visakhapatnam", note: "Port city and IT hub; rapidly growing metro", priority: "high" },
+      { name: "Vijayawada", note: "Commercial capital of AP; gateway to Krishna-Godavari delta", priority: "high" },
+      { name: "Guntur", note: "Chilli and cotton trade city; large business community", priority: "medium" },
+      { name: "Nellore", note: "Aquaculture hub; gateway to coastal Andhra", priority: "medium" },
+      { name: "Kurnool", note: "Former state capital; strategic location on NH-44 corridor", priority: "planned" },
+      { name: "Rajamahendravaram (Rajahmundry)", note: "Cultural capital of AP; gateway to Godavari region", priority: "planned" },
+    ],
+  },
+  {
+    state: "Kerala", type: "state", region: "South", capital: "Thiruvananthapuram", phase: 1, totalTarget: 7,
+    cities: [
+      { name: "Thiruvananthapuram", note: "State capital and IT hub; Padmanabhaswamy temple district", priority: "high" },
+      { name: "Kochi", note: "Commercial capital; cosmopolitan port city with international exposure", priority: "high" },
+      { name: "Kozhikode (Calicut)", note: "Cultural capital of north Kerala; major educational centre", priority: "high" },
+      { name: "Thrissur", note: "Cultural capital of Kerala; home of Thrissur Pooram", priority: "medium" },
+      { name: "Kollam", note: "Cashew export hub; gateway to Ashtamudi backwaters", priority: "medium" },
+      { name: "Palakkad", note: "Gateway to Kerala through the Palakkad Gap; rapidly growing", priority: "planned" },
+      { name: "Kannur", note: "Malabar's cultural hub; strong community identity", priority: "planned" },
+    ],
+  },
+  // ── East India ──
+  {
+    state: "West Bengal", type: "state", region: "East", capital: "Kolkata", phase: 1, totalTarget: 7,
+    cities: [
+      { name: "Kolkata", note: "Cultural capital; Mayapur is the global ISKCON HQ — additional city centre needed", priority: "high", existing: true },
+      { name: "Mayapur (Nadia)", note: "ISKCON World Headquarters; TOVP 2027 Grand Opening site", priority: "high", existing: true },
+      { name: "Siliguri", note: "Gateway to Northeast India and Bhutan; major commercial city", priority: "high" },
+      { name: "Durgapur", note: "Steel city; planned industrial township with large workforce", priority: "medium" },
+      { name: "Asansol", note: "Coal capital of India; second largest city in WB", priority: "medium" },
+      { name: "Kharagpur", note: "IIT Kharagpur city; large student and academic community", priority: "planned" },
+      { name: "Haldia", note: "Port city and petrochem hub; major industrial township", priority: "planned" },
+    ],
+  },
+  {
+    state: "Odisha", type: "state", region: "East", capital: "Bhubaneswar", phase: 1, totalTarget: 7,
+    cities: [
+      { name: "Puri", note: "Jagannath Dham — one of the four sacred dhams; ISKCON has deep roots here", priority: "high", existing: true },
+      { name: "Bhubaneswar", note: "Temple city and IT hub; fastest growing state capital", priority: "high" },
+      { name: "Cuttack", note: "Silver city; major commercial and cultural hub of Odisha", priority: "high" },
+      { name: "Rourkela", note: "Steel city; NIT Rourkela — large academic and industrial community", priority: "medium" },
+      { name: "Berhampur", note: "Commercial capital of south Odisha; gateway to Ganjam district", priority: "medium" },
+      { name: "Sambalpur", note: "Cultural capital of western Odisha; Hirakud reservoir region", priority: "planned" },
+      { name: "Brahmapur", note: "Silk weaving heritage city; serves coastal south Odisha", priority: "planned" },
+    ],
+  },
+  {
+    state: "Bihar", type: "state", region: "East", capital: "Patna", phase: 2, totalTarget: 7,
+    cities: [
+      { name: "Patna", note: "State capital and one of the oldest cities; massive student population", priority: "high" },
+      { name: "Gaya", note: "Major pilgrimage site; Bodh Gaya nearby draws international seekers", priority: "high" },
+      { name: "Muzaffarpur", note: "Commercial hub of north Bihar; large agrarian community", priority: "medium" },
+      { name: "Bhagalpur", note: "Silk city on the Ganges; gateway to Jharkhand and WB", priority: "medium" },
+      { name: "Darbhanga", note: "Cultural capital of Mithila; Maithili language and arts heritage", priority: "medium" },
+      { name: "Purnia", note: "Emerging commercial hub; gateway to northeast India", priority: "planned" },
+      { name: "Begusarai", note: "Industrial city; petrochemical hub of Bihar", priority: "planned" },
+    ],
+  },
+  {
+    state: "Jharkhand", type: "state", region: "East", capital: "Ranchi", phase: 2, totalTarget: 7,
+    cities: [
+      { name: "Ranchi", note: "State capital and IT hub; growing tribal and cosmopolitan mix", priority: "high" },
+      { name: "Jamshedpur", note: "Tata Steel city; one of India's best-planned industrial townships", priority: "high" },
+      { name: "Dhanbad", note: "Coal capital of India; large mining community", priority: "medium" },
+      { name: "Bokaro", note: "Bokaro Steel City; planned township with diverse workforce", priority: "medium" },
+      { name: "Hazaribagh", note: "Historical city with educational institutions; scenic hill environment", priority: "medium" },
+      { name: "Deoghar", note: "Baidyanath Jyotirlinga pilgrimage city; massive religious footfall", priority: "planned" },
+      { name: "Giridih", note: "Mining city; serves Chota Nagpur plateau community", priority: "planned" },
+    ],
+  },
+  // ── Northeast India ──
+  {
+    state: "Assam", type: "state", region: "Northeast", capital: "Dispur", phase: 2, totalTarget: 7,
+    cities: [
+      { name: "Guwahati", note: "Gateway city to all of Northeast India; rapid urbanisation", priority: "high" },
+      { name: "Dibrugarh", note: "Tea capital of the world; economic hub of upper Assam", priority: "high" },
+      { name: "Silchar", note: "Commercial hub of the Barak Valley; gateway to Mizoram and Manipur", priority: "medium" },
+      { name: "Jorhat", note: "Historical tea garden city; agricultural and educational centre", priority: "medium" },
+      { name: "Nagaon", note: "Largest city on the south bank; central Assam trade hub", priority: "medium" },
+      { name: "Tinsukia", note: "Oil and tea trading hub; rapidly growing border city", priority: "planned" },
+      { name: "Tezpur", note: "Cultural city on the Brahmaputra; Tezpur University hub", priority: "planned" },
+    ],
+  },
+  {
+    state: "Manipur", type: "state", region: "Northeast", capital: "Imphal", phase: 3, totalTarget: 7,
+    cities: [
+      { name: "Imphal", note: "State capital; Manipuris have deep Vaishnava cultural roots", priority: "high" },
+      { name: "Bishnupur", note: "Ancient Vaishnava kingdom; named after Lord Vishnu — ideal site", priority: "high" },
+      { name: "Thoubal", note: "Commercial hub of the Imphal Valley; growing residential area", priority: "medium" },
+      { name: "Churachandpur", note: "Hub of southern Manipur hill districts; diverse community", priority: "medium" },
+      { name: "Senapati", note: "Northern hills gateway; serves Naga and Kuki communities", priority: "planned" },
+      { name: "Ukhrul", note: "Strategic border town; growing educational institutions", priority: "planned" },
+      { name: "Moreh", note: "India-Myanmar border trade town; international gateway opportunity", priority: "planned" },
+    ],
+  },
+  {
+    state: "Meghalaya", type: "state", region: "Northeast", capital: "Shillong", phase: 3, totalTarget: 7,
+    cities: [
+      { name: "Shillong", note: "Scotland of the East; major educational and cultural hub", priority: "high" },
+      { name: "Tura", note: "Commercial hub of the Garo Hills; gateway to Bangladesh border", priority: "medium" },
+      { name: "Jowai", note: "Administrative centre of the Jaintia Hills", priority: "medium" },
+      { name: "Nongstoin", note: "West Khasi Hills district headquarters", priority: "planned" },
+      { name: "Baghmara", note: "South Garo Hills commercial centre", priority: "planned" },
+      { name: "Williamnagar", note: "East Garo Hills headquarters; emerging administrative town", priority: "planned" },
+      { name: "Resubelpara", note: "North Garo Hills gateway; growing border community", priority: "planned" },
+    ],
+  },
+  {
+    state: "Nagaland", type: "state", region: "Northeast", capital: "Kohima", phase: 3, totalTarget: 7,
+    cities: [
+      { name: "Kohima", note: "State capital; WWII heritage and cultural significance", priority: "high" },
+      { name: "Dimapur", note: "Largest city and commercial gateway of Nagaland", priority: "high" },
+      { name: "Mokokchung", note: "Cultural heartland of the Ao Nagas; educational hub", priority: "medium" },
+      { name: "Tuensang", note: "Largest district HQ in Nagaland; eastern gateway", priority: "medium" },
+      { name: "Wokha", note: "Lotha Naga cultural centre; growing urban population", priority: "planned" },
+      { name: "Zunheboto", note: "Sumi Naga cultural centre; gateway to rural Nagaland", priority: "planned" },
+      { name: "Mon", note: "Konyak Naga territory; strategic Indo-Myanmar border area", priority: "planned" },
+    ],
+  },
+  {
+    state: "Arunachal Pradesh", type: "state", region: "Northeast", capital: "Itanagar", phase: 3, totalTarget: 7,
+    cities: [
+      { name: "Itanagar", note: "State capital; growing administrative and commercial centre", priority: "high" },
+      { name: "Naharlagun", note: "Twin city of Itanagar; major commercial township", priority: "high" },
+      { name: "Pasighat", note: "Oldest town in AP; gateway to Siang district", priority: "medium" },
+      { name: "Tawang", note: "Buddhist monastery town; international border area; spiritual significance", priority: "medium" },
+      { name: "Ziro", note: "UNESCO-listed Apatani cultural landscape; tourism potential", priority: "planned" },
+      { name: "Tezu", note: "Commercial hub of Lohit district; border trade centre", priority: "planned" },
+      { name: "Bomdila", note: "Gateway to Tawang; strategic mountain town", priority: "planned" },
+    ],
+  },
+  {
+    state: "Mizoram", type: "state", region: "Northeast", capital: "Aizawl", phase: 3, totalTarget: 7,
+    cities: [
+      { name: "Aizawl", note: "State capital perched on hills; the most literate state capital in India", priority: "high" },
+      { name: "Lunglei", note: "Second largest city; southern Mizoram commercial hub", priority: "medium" },
+      { name: "Champhai", note: "Myanmar border town; Rice Bowl of Mizoram", priority: "medium" },
+      { name: "Kolasib", note: "Northern Mizoram gateway; border with Assam", priority: "planned" },
+      { name: "Serchhip", note: "Industrial and educational town; district headquarters", priority: "planned" },
+      { name: "Saiha", note: "Southernmost district HQ; gateway to Chin State, Myanmar", priority: "planned" },
+      { name: "Lawngtlai", note: "Southernmost Mizoram; diverse tribal community outreach", priority: "planned" },
+    ],
+  },
+  {
+    state: "Tripura", type: "state", region: "Northeast", capital: "Agartala", phase: 3, totalTarget: 7,
+    cities: [
+      { name: "Agartala", note: "State capital; major commercial and cultural hub of Tripura", priority: "high" },
+      { name: "Udaipur", note: "Historical pilgrimage city; Tripura Sundari temple", priority: "high" },
+      { name: "Dharmanagar", note: "Northern Tripura's largest commercial city", priority: "medium" },
+      { name: "Kailasahar", note: "Educational and administrative hub of Unakoti district", priority: "medium" },
+      { name: "Belonia", note: "Southern Tripura gateway; Bangladesh border trade point", priority: "planned" },
+      { name: "Sabroom", note: "Southernmost tip of Tripura; Feni river gateway to Bangladesh", priority: "planned" },
+      { name: "Ambassa", note: "Gateway to Khowai district; growing commercial centre", priority: "planned" },
+    ],
+  },
+  {
+    state: "Sikkim", type: "state", region: "Northeast", capital: "Gangtok", phase: 3, totalTarget: 7,
+    cities: [
+      { name: "Gangtok", note: "State capital; major Buddhist culture hub and tourism centre", priority: "high" },
+      { name: "Namchi", note: "South Sikkim; hosts the famous Char Dham replica park", priority: "high" },
+      { name: "Jorethang", note: "Commercial hub of south Sikkim; gateway to West Bengal", priority: "medium" },
+      { name: "Geyzing", note: "West Sikkim headquarters; cultural heartland", priority: "medium" },
+      { name: "Mangan", note: "North Sikkim gateway; Teesta river valley", priority: "planned" },
+      { name: "Ravangla", note: "High altitude spiritual retreat town; growing tourism", priority: "planned" },
+      { name: "Rangpo", note: "Eastern gateway to Sikkim; major border crossing from WB", priority: "planned" },
+    ],
+  },
+  // ── Union Territories ──
+  {
+    state: "Delhi NCT", type: "ut", region: "North", capital: "New Delhi", phase: 1, totalTarget: 7,
+    cities: [
+      { name: "East Delhi (ISKCON Temple, Noida)", note: "Existing ISKCON Temple near East Delhi — flagship centre", priority: "high", existing: true },
+      { name: "Dwarka", note: "Fastest-growing sub-city; over 1 million residents", priority: "high" },
+      { name: "Rohini", note: "Largest residential zone in Delhi; underserved by spiritual centres", priority: "high" },
+      { name: "Janakpuri", note: "West Delhi hub; major residential and commercial district", priority: "medium" },
+      { name: "Saket–South Delhi", note: "High-income residential belt; educated professional community", priority: "medium" },
+      { name: "Shahdara", note: "Dense East Delhi township; large working-class community", priority: "planned" },
+      { name: "Najafgarh", note: "Outer Delhi rural-urban fringe; rapidly urbanising", priority: "planned" },
+    ],
+  },
+  {
+    state: "Jammu & Kashmir", type: "ut", region: "North", capital: "Srinagar (S) / Jammu (W)", phase: 2, totalTarget: 7,
+    cities: [
+      { name: "Jammu", note: "Winter capital; Hindu pilgrimage hub and gateway to Vaishno Devi", priority: "high" },
+      { name: "Srinagar", note: "Summer capital; Dal Lake and Shankaracharya Hill — spiritual heritage", priority: "high" },
+      { name: "Anantnag", note: "Kashmir Valley commercial hub; gateway to Pahalgam", priority: "medium" },
+      { name: "Kathua", note: "Jammu's industrial gateway; border with Himachal Pradesh", priority: "medium" },
+      { name: "Udhampur", note: "Army and civil hub on NH-44; gateway to Kashmir Valley", priority: "medium" },
+      { name: "Rajouri", note: "Pir Panjal gateway; diverse religious demographic", priority: "planned" },
+      { name: "Kulgam", note: "Southern Kashmir; emerging developmental centre", priority: "planned" },
+    ],
+  },
+  {
+    state: "Ladakh", type: "ut", region: "North", capital: "Leh", phase: 3, totalTarget: 7,
+    cities: [
+      { name: "Leh", note: "Administrative capital; international tourism and spiritual retreat destination", priority: "high" },
+      { name: "Kargil", note: "Second largest city; gateway to Zanskar Valley", priority: "medium" },
+      { name: "Diskit", note: "Nubra Valley hub; Hundur sand dunes and Bactrian camels", priority: "planned" },
+      { name: "Padum", note: "Zanskar Valley capital; remote but spiritually significant", priority: "planned" },
+      { name: "Nyoma", note: "Remote Changthang plateau; border community outreach", priority: "planned" },
+      { name: "Sankoo", note: "Suru Valley gateway; growing administrative centre", priority: "planned" },
+      { name: "Turtuk", note: "Northernmost Indian village accessible by road", priority: "planned" },
+    ],
+  },
+  {
+    state: "Puducherry", type: "ut", region: "South", capital: "Puducherry", phase: 2, totalTarget: 5,
+    cities: [
+      { name: "Puducherry", note: "Former French colony; international spiritual tourism; Auroville nearby", priority: "high" },
+      { name: "Karaikal", note: "Coastal enclave; significant Tamil Hindu population", priority: "medium" },
+      { name: "Mahe", note: "Kerala enclave; Malayalam-speaking coastal community", priority: "medium" },
+      { name: "Yanam", note: "Andhra enclave; Telugu-speaking community near Godavari delta", priority: "planned" },
+      { name: "Oulgaret", note: "Largest commune in Puducherry; growing residential suburb", priority: "planned" },
+    ],
+  },
+  {
+    state: "Andaman & Nicobar Islands", type: "ut", region: "Island", capital: "Port Blair", phase: 3, totalTarget: 7,
+    cities: [
+      { name: "Port Blair", note: "Capital and largest city; major naval and tourist base", priority: "high" },
+      { name: "Diglipur", note: "Northernmost town of Andaman; agriculture and eco-tourism", priority: "medium" },
+      { name: "Rangat", note: "Middle Andaman hub; growing residential and commercial centre", priority: "medium" },
+      { name: "Mayabunder", note: "Karen community area; diverse ethnic and cultural mix", priority: "planned" },
+      { name: "Neil Island (Shaheed Dweep)", note: "Tourism island; spiritually peaceful location", priority: "planned" },
+      { name: "Havelock Island (Swaraj Dweep)", note: "International scuba diving destination", priority: "planned" },
+      { name: "Car Nicobar", note: "Nicobar group; strategic community outreach opportunity", priority: "planned" },
+    ],
+  },
+  {
+    state: "Lakshadweep", type: "ut", region: "Island", capital: "Kavaratti", phase: 3, totalTarget: 7,
+    cities: [
+      { name: "Kavaratti", note: "Administrative capital; central Lakshadweep island", priority: "high" },
+      { name: "Agatti", note: "Only airport island; tourism gateway to the archipelago", priority: "medium" },
+      { name: "Minicoy", note: "Southernmost island; closest to Maldives; unique Mahl culture", priority: "medium" },
+      { name: "Amini", note: "Oldest inhabited island; deep-rooted community", priority: "planned" },
+      { name: "Andrott", note: "Most populous island; largest community in Lakshadweep", priority: "planned" },
+      { name: "Kalpeni", note: "Tourist island with coral atoll; environmental significance", priority: "planned" },
+      { name: "Kadmat", note: "Water sports and eco-tourism island", priority: "planned" },
+    ],
+  },
 ];
 
-const PHASE_INFO = [
-  { phase: 1, label: "Phase 1", years: "2026–2031", title: "Anchor States", desc: "Major states with existing ISKCON infrastructure — filling tier-2 and tier-3 city gaps.", color: "#c87000" },
-  { phase: 2, label: "Phase 2", years: "2031–2041", title: "Expansion Corridor", desc: "Growing communities in underserved states — community-scaled 5,000–15,000 sq ft centres.", color: "#8f4e00" },
-  { phase: 3, label: "Phase 3", years: "2041–2051", title: "Last Mile", desc: "Northeast hill states, high-altitude UTs, and island territories — modular & climate-adaptive designs.", color: "#554336" },
-];
+// ── Summary Stats ─────────────────────────────────────────────────────────────
 
-const REGIONS = ["All", "North", "South", "East", "West", "Central", "Northeast"] as const;
-const PHASES = ["All", "Phase 1", "Phase 2", "Phase 3"] as const;
+const TOTAL_TARGET = 211;
+const TOTAL_STATES = STATES.length;
+const EXISTING = STATES.flatMap((s) => s.cities).filter((c) => c.existing).length;
+const PHASE_COUNTS = [1, 2, 3].map((p) => ({
+  phase: p,
+  count: STATES.filter((s) => s.phase === p).reduce((acc, s) => acc + s.totalTarget, 0),
+  states: STATES.filter((s) => s.phase === p).length,
+}));
 
-const PRIORITY_DOT: Record<string, string> = {
-  high: "bg-primary",
-  medium: "bg-secondary",
-  low: "bg-on-surface-variant/30",
+const PRIORITY_COLOR = {
+  high: "text-amber-400",
+  medium: "text-blue-400",
+  planned: "text-on-surface-variant/50",
 };
+
+const PHASE_LABELS: Record<number, string> = {
+  1: "2026–2031",
+  2: "2031–2041",
+  3: "2041–2051",
+};
+const PHASE_COLORS: Record<number, string> = {
+  1: "bg-amber-900/30 text-amber-300 border-amber-700/30",
+  2: "bg-blue-900/30 text-blue-300 border-blue-700/30",
+  3: "bg-purple-900/30 text-purple-300 border-purple-700/30",
+};
+const REGION_LIST = ["All", "North", "South", "East", "West", "Central", "Northeast", "Island"];
+
+// ── Components ────────────────────────────────────────────────────────────────
 
 function StateCard({ entry }: { entry: StateEntry }) {
   const [open, setOpen] = useState(false);
-  const existing = entry.cities.filter((c) => c.existing).length;
-  const planned = entry.cities.length - existing;
-  const phaseInfo = PHASE_INFO.find((p) => p.phase === entry.phase)!;
 
   return (
-    <motion.div variants={fadeInUp} className="bg-surface-container-low rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(27,28,28,0.06)]">
+    <motion.div variants={fadeInUp} className="bg-surface-container rounded-2xl border border-on-surface-variant/10 overflow-hidden">
+      {/* Header */}
       <button
+        className="w-full text-left px-6 py-5 flex items-center justify-between gap-4 hover:bg-primary/5 transition-colors"
         onClick={() => setOpen(!open)}
-        className="w-full px-5 py-4 flex items-center gap-4 text-left hover:bg-surface-container-low/80 transition-colors"
       >
-        <div className="w-3 h-3 rounded-full shrink-0" style={{ background: phaseInfo.color }} />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="font-serif text-base font-bold text-on-surface truncate">{entry.state}</h3>
-            <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant shrink-0">
-              {entry.type === "ut" ? "UT" : "State"}
-            </span>
+        <div className="flex items-center gap-4 min-w-0">
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${entry.type === "ut" ? "bg-purple-900/30" : "bg-primary/10"}`}>
+            {entry.type === "ut" ? <Globe className="w-4 h-4 text-purple-400" /> : <MapPin className="w-4 h-4 text-primary" />}
           </div>
-          <div className="flex items-center gap-3 mt-1 text-[10px] text-on-surface-variant font-medium">
-            <span>{entry.region}</span>
-            <span className="text-on-surface-variant/30">|</span>
-            <span>{entry.cities.length} cities</span>
-            <span className="text-on-surface-variant/30">|</span>
-            <span style={{ color: phaseInfo.color }}>{phaseInfo.years}</span>
-            {existing > 0 && (
-              <>
-                <span className="text-on-surface-variant/30">|</span>
-                <span className="text-primary font-bold">{existing} existing</span>
-              </>
-            )}
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-serif font-bold text-on-surface text-base">{entry.state}</h3>
+              <span className="text-xs text-on-surface-variant/50 hidden sm:inline">({entry.capital})</span>
+            </div>
+            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${PHASE_COLORS[entry.phase]}`}>
+                Phase {entry.phase} · {PHASE_LABELS[entry.phase]}
+              </span>
+              <span className="text-xs text-on-surface-variant/60">{entry.region}</span>
+              {entry.cities.some(c => c.existing) && (
+                <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3" /> Existing
+                </span>
+              )}
+            </div>
           </div>
         </div>
-        <div className="shrink-0 text-on-surface-variant">
-          {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="text-right hidden sm:block">
+            <p className="text-xs text-on-surface-variant/60">Target</p>
+            <p className="font-black text-primary text-lg leading-none">{entry.totalTarget}</p>
+          </div>
+          {open ? <ChevronUp className="w-4 h-4 text-on-surface-variant/60" /> : <ChevronDown className="w-4 h-4 text-on-surface-variant/60" />}
         </div>
       </button>
 
+      {/* City list */}
       <AnimatePresence>
         {open && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: "easeInOut" }}
+            transition={{ duration: 0.25 }}
             className="overflow-hidden"
           >
-            <div className="px-5 pb-5 space-y-2">
-              <div className="h-px bg-outline-variant/15 mb-3" />
-              {entry.cities.map((city) => (
-                <div key={city.name} className="flex items-start gap-3 py-1.5">
-                  <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${PRIORITY_DOT[city.priority]}`} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-on-surface">{city.name}</span>
-                      {city.existing && (
-                        <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">Existing</span>
+            <div className="px-6 pb-5 pt-1 border-t border-on-surface-variant/10">
+              <div className="flex flex-col gap-3 mt-3">
+                {entry.cities.map((city, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
+                      <span className="text-xs font-black text-on-surface-variant/40 w-5">{i + 1}.</span>
+                      {city.existing ? (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      ) : (
+                        <Star className={`w-3.5 h-3.5 shrink-0 ${PRIORITY_COLOR[city.priority]}`} />
                       )}
                     </div>
-                    <p className="text-xs text-on-surface-variant mt-0.5">{city.note}</p>
+                    <div>
+                      <span className="text-sm font-bold text-on-surface">{city.name}</span>
+                      {city.existing && <span className="ml-2 text-xs text-emerald-400 font-semibold">Existing ISKCON</span>}
+                      <p className="text-xs text-on-surface-variant/60 mt-0.5 leading-relaxed">{city.note}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-              <div className="flex items-center gap-4 pt-3 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
-                <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-primary" /> High</div>
-                <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-secondary" /> Medium</div>
-                <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-on-surface-variant/30" /> Low</div>
+                ))}
               </div>
             </div>
           </motion.div>
@@ -440,193 +554,204 @@ function StateCard({ entry }: { entry: StateEntry }) {
   );
 }
 
+// ── Page ──────────────────────────────────────────────────────────────────────
+
 export default function Vision2051() {
-  const [regionFilter, setRegionFilter] = useState<string>("All");
-  const [phaseFilter, setPhaseFilter] = useState<string>("All");
+  const [activeRegion, setActiveRegion] = useState("All");
+  const [activePhase, setActivePhase] = useState<number | "All">("All");
 
-  const filtered = useMemo(() => {
-    return STATES.filter((s) => {
-      if (regionFilter !== "All" && s.region !== regionFilter) return false;
-      if (phaseFilter !== "All" && `Phase ${s.phase}` !== phaseFilter) return false;
-      return true;
-    });
-  }, [regionFilter, phaseFilter]);
-
-  const totalCities = STATES.reduce((sum, s) => sum + s.cities.length, 0);
-  const totalExisting = STATES.reduce((sum, s) => sum + s.cities.filter((c) => c.existing).length, 0);
-  const totalStates = STATES.filter((s) => s.type === "state").length;
-  const totalUTs = STATES.filter((s) => s.type === "ut").length;
+  const filtered = STATES.filter((s) => {
+    const regionMatch = activeRegion === "All" || s.region === activeRegion;
+    const phaseMatch = activePhase === "All" || s.phase === activePhase;
+    return regionMatch && phaseMatch;
+  });
 
   return (
     <Layout>
       <SEOHead
-        title="Vision 2051 — 211 Temples Across India"
-        description="ISKCON's 25-year strategic roadmap to establish temples in every state and union territory of India."
-        canonicalPath="/vision2051"
+        title="Vision 2051 — 211 Temples Across India | Build Iskcon"
+        description="A comprehensive plan to establish ISKCON temples in every major city across all 28 states and 8 Union Territories of India by 2051."
       />
-      <div className="px-4 md:px-8 max-w-screen-2xl mx-auto space-y-12">
-        <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-6">
-          <motion.div variants={fadeInUp} className="max-w-3xl">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Target className="w-4 h-4 text-primary" />
-              </div>
-              <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Strategic Roadmap</span>
-            </div>
-            <h1 className="font-serif text-3xl sm:text-4xl font-bold text-on-surface">Vision 2051</h1>
-            <p className="text-on-surface-variant text-base mt-2 leading-relaxed">
-              A 25-year plan to establish <strong className="text-on-surface">{totalCities} ISKCON temples</strong> across all {totalStates} states and {totalUTs} union territories of India — fulfilling Srila Prabhupada's vision of a temple in every town and village.
-            </p>
+
+      {/* ── Hero ── */}
+      <div className="relative overflow-hidden bg-gradient-to-b from-primary/8 via-surface to-surface pt-4 pb-16">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-secondary/5 rounded-full blur-3xl" />
+        </div>
+        <div className="max-w-screen-xl mx-auto px-4 sm:px-8 relative z-10">
+          <motion.div
+            className="text-center py-12"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full mb-6">
+              <Flame className="w-3.5 h-3.5" />
+              Srila Prabhupada's Dream
+            </motion.div>
+            <motion.h1 variants={fadeInUp} className="font-serif text-5xl sm:text-6xl md:text-7xl font-black text-on-surface mb-6 leading-none">
+              Vision <span className="text-primary">2051</span>
+            </motion.h1>
+            <motion.p variants={fadeInUp} className="text-xl sm:text-2xl text-on-surface-variant max-w-3xl mx-auto leading-relaxed mb-4">
+              <strong className="text-on-surface">211 ISKCON temples</strong> across every state and Union Territory of India — at least 7 major cities per state — by the centenary of ISKCON's founding.
+            </motion.p>
+            <motion.p variants={fadeInUp} className="text-sm text-on-surface-variant/60 italic">
+              "A temple in every town and village." — Srila Prabhupada
+            </motion.p>
           </motion.div>
 
-          <motion.div variants={fadeInUp} className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* ── Stats Row ── */}
+          <motion.div
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
             {[
-              { label: "Total Temples", value: totalCities, icon: Building2 },
-              { label: "States & UTs", value: `${totalStates} + ${totalUTs}`, icon: MapPin },
-              { label: "Existing Centres", value: totalExisting, icon: Target },
-              { label: "New Projects", value: totalCities - totalExisting, icon: Building2 },
-            ].map((stat) => (
-              <div key={stat.label} className="bg-surface-container-low rounded-xl p-5 text-center">
-                <stat.icon className="w-5 h-5 text-primary mx-auto mb-2" />
-                <p className="text-2xl font-black text-on-surface font-serif">{stat.value}</p>
-                <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mt-1">{stat.label}</p>
-              </div>
+              { label: "Target Temples", value: TOTAL_TARGET, icon: <Building2 className="w-5 h-5" />, color: "text-primary" },
+              { label: "States & UTs", value: TOTAL_STATES, icon: <Globe className="w-5 h-5" />, color: "text-amber-400" },
+              { label: "Existing ISKCON", value: EXISTING, icon: <CheckCircle2 className="w-5 h-5" />, color: "text-emerald-400" },
+              { label: "Years to 2051", value: 2051 - new Date().getFullYear(), icon: <Clock className="w-5 h-5" />, color: "text-blue-400" },
+            ].map((stat, i) => (
+              <motion.div key={i} variants={fadeInUp} className="bg-surface-container rounded-2xl border border-on-surface-variant/10 p-5 text-center">
+                <div className={`flex justify-center mb-2 ${stat.color}`}>{stat.icon}</div>
+                <p className={`font-black text-4xl ${stat.color}`}>{stat.value}</p>
+                <p className="text-xs text-on-surface-variant/60 uppercase tracking-widest mt-1 font-semibold">{stat.label}</p>
+              </motion.div>
             ))}
           </motion.div>
-        </motion.div>
+        </div>
+      </div>
 
+      {/* ── Phase Overview ── */}
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-8 py-12">
         <motion.div
           variants={staggerContainer}
           initial="hidden"
           whileInView="visible"
-          viewport={viewportOnce}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          {...viewportOnce}
+          className="mb-12"
         >
-          {PHASE_INFO.map((p) => {
-            const phaseStates = STATES.filter((s) => s.phase === p.phase);
-            const phaseCities = phaseStates.reduce((sum, s) => sum + s.cities.length, 0);
-            return (
-              <motion.div key={p.phase} variants={fadeInUp} className="rounded-2xl p-6 border border-outline-variant/15 bg-surface-container-low">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-4 h-4 rounded-full" style={{ background: p.color }} />
+          <motion.h2 variants={fadeInUp} className="font-serif text-3xl font-black text-on-surface mb-2">Phased Implementation</motion.h2>
+          <motion.p variants={fadeInUp} className="text-on-surface-variant mb-8">Three phases spanning 25 years, each building on the last.</motion.p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {PHASE_COUNTS.map(({ phase, count, states }) => (
+              <motion.div key={phase} variants={fadeInUp} className={`rounded-2xl border p-6 ${PHASE_COLORS[phase]}`}>
+                <div className="text-xs font-bold uppercase tracking-widest mb-1">Phase {phase}</div>
+                <div className="font-serif text-2xl font-black mb-1">{PHASE_LABELS[phase]}</div>
+                <div className="flex items-end gap-4 mt-3">
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{p.label}</span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest ml-2" style={{ color: p.color }}>{p.years}</span>
+                    <p className="text-3xl font-black">{count}</p>
+                    <p className="text-xs opacity-70 uppercase tracking-widest">temples</p>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-black">{states}</p>
+                    <p className="text-xs opacity-70 uppercase tracking-widest">regions</p>
                   </div>
                 </div>
-                <h3 className="font-serif text-xl font-bold text-on-surface mb-2">{p.title}</h3>
-                <p className="text-xs text-on-surface-variant leading-relaxed mb-4">{p.desc}</p>
-                <div className="flex items-center gap-4 text-xs font-bold">
-                  <span className="text-on-surface">{phaseStates.length} regions</span>
-                  <span className="text-on-surface-variant/30">|</span>
-                  <span style={{ color: p.color }}>{phaseCities} temples</span>
-                </div>
+                <p className="text-xs opacity-60 mt-3 leading-relaxed">
+                  {phase === 1 && "State capitals, tier-1 cities, and regions with existing devotee communities."}
+                  {phase === 2 && "Tier-2 cities, Northeast gateways, and island territories."}
+                  {phase === 3 && "Deep interior, hill states, remote territories, and final completion."}
+                </p>
               </motion.div>
-            );
-          })}
-        </motion.div>
-
-        <motion.div variants={fadeInUp} initial="hidden" whileInView="visible" viewport={viewportOnce} className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-            <div className="flex items-center gap-2 text-sm font-bold text-on-surface">
-              <Filter className="w-4 h-4 text-primary" />
-              Filter:
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {REGIONS.map((r) => (
-                <button
-                  key={r}
-                  onClick={() => setRegionFilter(r)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors ${
-                    regionFilter === r
-                      ? "bg-primary text-on-primary"
-                      : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
-                  }`}
-                >
-                  {r}
-                </button>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {PHASES.map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPhaseFilter(p)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors ${
-                    phaseFilter === p
-                      ? "bg-primary text-on-primary"
-                      : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
-
-          <p className="text-xs text-on-surface-variant">
-            Showing <strong className="text-on-surface">{filtered.length}</strong> of {STATES.length} regions
-            {" · "}
-            <strong className="text-on-surface">{filtered.reduce((s, e) => s + e.cities.length, 0)}</strong> temple sites
-          </p>
         </motion.div>
 
+        {/* ── Legend ── */}
         <motion.div
+          variants={fadeInUp}
+          initial="hidden"
+          whileInView="visible"
+          {...viewportOnce}
+          className="flex flex-wrap gap-4 items-center bg-surface-container rounded-2xl border border-on-surface-variant/10 px-6 py-4 mb-8"
+        >
+          <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant/60 mr-2">Priority:</span>
+          <span className="flex items-center gap-1.5 text-xs text-amber-400 font-semibold"><Star className="w-3.5 h-3.5" /> High Priority</span>
+          <span className="flex items-center gap-1.5 text-xs text-blue-400 font-semibold"><Star className="w-3.5 h-3.5" /> Medium Priority</span>
+          <span className="flex items-center gap-1.5 text-xs text-on-surface-variant/50 font-semibold"><Star className="w-3.5 h-3.5" /> Planned</span>
+          <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold"><CheckCircle2 className="w-3.5 h-3.5" /> Existing ISKCON</span>
+        </motion.div>
+
+        {/* ── Filters ── */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant/60">Region:</span>
+            {REGION_LIST.map((r) => (
+              <button
+                key={r}
+                onClick={() => setActiveRegion(r)}
+                className={`text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-full border transition-all ${
+                  activeRegion === r ? "bg-primary text-on-primary border-primary" : "border-on-surface-variant/20 text-on-surface-variant hover:border-primary/40"
+                }`}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2 mb-8">
+          <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant/60">Phase:</span>
+          {(["All", 1, 2, 3] as (number | "All")[]).map((p) => (
+            <button
+              key={p}
+              onClick={() => setActivePhase(p)}
+              className={`text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-full border transition-all ${
+                activePhase === p ? "bg-primary text-on-primary border-primary" : "border-on-surface-variant/20 text-on-surface-variant hover:border-primary/40"
+              }`}
+            >
+              {p === "All" ? "All Phases" : `Phase ${p} · ${PHASE_LABELS[p as number]}`}
+            </button>
+          ))}
+        </div>
+
+        {/* ── State Cards ── */}
+        <motion.div
+          className="flex flex-col gap-3"
           variants={staggerContainer}
           initial="hidden"
           whileInView="visible"
-          viewport={viewportOnce}
-          className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          {...viewportOnce}
         >
+          <p className="text-xs text-on-surface-variant/50 font-semibold uppercase tracking-widest mb-1">
+            Showing {filtered.length} regions · {filtered.reduce((a, s) => a + s.totalTarget, 0)} temples
+          </p>
           {filtered.map((entry) => (
             <StateCard key={entry.state} entry={entry} />
           ))}
         </motion.div>
 
-        {filtered.length === 0 && (
-          <div className="text-center py-16 text-on-surface-variant">
-            <p className="text-sm">No regions match the selected filters.</p>
-          </div>
-        )}
-
-        <motion.section
+        {/* ── CTA ── */}
+        <motion.div
+          className="mt-16 rounded-3xl bg-gradient-to-br from-primary/10 to-secondary/5 border border-primary/20 p-8 sm:p-12 text-center"
           variants={fadeInUp}
           initial="hidden"
           whileInView="visible"
-          viewport={viewportOnce}
+          {...viewportOnce}
         >
-          <div className="relative overflow-hidden bg-primary text-on-primary rounded-2xl px-6 sm:px-12 py-10 flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="absolute -top-16 -right-16 w-64 h-64 bg-on-primary/10 rounded-full blur-3xl pointer-events-none" />
-            <div className="relative z-10 max-w-xl">
-              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-on-primary/70 mb-1.5">Join the Mission</p>
-              <h2 className="font-serif text-2xl sm:text-3xl font-bold leading-tight">Help Build 211 Temples</h2>
-              <p className="text-sm text-on-primary/80 mt-2">
-                Every donation brings Srila Prabhupada's vision closer to reality. Support Vision 2051 and help establish Krishna consciousness in every corner of India.
-              </p>
-            </div>
-            <a href="https://www.iskcon.org/donate" target="_blank" rel="noopener noreferrer" className="relative z-10 shrink-0">
-              <button className="bg-on-primary text-primary px-7 py-3 rounded-xl font-bold text-sm tracking-wide hover:bg-on-primary/90 transition-colors whitespace-nowrap flex items-center gap-2">
-                <Heart className="w-4 h-4" />
-                Donate Now
-              </button>
-            </a>
-          </div>
-        </motion.section>
-
-        <motion.blockquote
-          variants={fadeInUp}
-          initial="hidden"
-          whileInView="visible"
-          viewport={viewportOnce}
-          className="border-l-2 border-primary pl-6 py-4 max-w-2xl mx-auto"
-        >
-          <p className="font-serif text-lg italic text-on-surface/90 leading-relaxed">
-            "By 2051 — the centenary of Srila Prabhupada's arrival in New York — every Indian state should echo with the Hare Krishna maha-mantra from a dedicated ISKCON temple."
+          <Heart className="w-10 h-10 text-primary mx-auto mb-4" />
+          <h2 className="font-serif text-3xl sm:text-4xl font-black text-on-surface mb-3">Help Build the Vision</h2>
+          <p className="text-on-surface-variant max-w-xl mx-auto mb-8 leading-relaxed">
+            Every rupee contributed to an ISKCON temple project brings this vision one step closer. Your seva today is a temple tomorrow.
           </p>
-          <cite className="text-xs text-on-surface-variant font-semibold uppercase tracking-widest mt-3 block not-italic">
-            — Vision 2051 Charter
-          </cite>
-        </motion.blockquote>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <a
+              href="https://www.iskcon.org/donate"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-primary text-on-primary font-bold px-8 py-3 rounded-xl hover:opacity-90 transition-opacity"
+            >
+              Donate Now
+            </a>
+            <Link href="/temples">
+              <span className="border border-primary/40 text-primary font-bold px-8 py-3 rounded-xl hover:bg-primary/10 transition-colors cursor-pointer">
+                View Active Projects
+              </span>
+            </Link>
+          </div>
+        </motion.div>
       </div>
     </Layout>
   );

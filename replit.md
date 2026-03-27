@@ -21,12 +21,15 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 The main application is "ISKCON Intelligence" — a sacred project intelligence platform for tracking temple construction globally.
 
 ### Pages
-- `/` — Global Dashboard (hero, metric cards, McKinsey Intelligence Briefs, Latest Construction Footage video grid, regional distribution chart, spotlight)
-- `/temples` — Project Directory "The Global Mandala" (filter bar, grid/list/map toggle, project cards, interactive world map)
+- `/` — Global Dashboard (hero, TOVP countdown, metric cards, seva opportunities, global map, donation cards, regional intelligence, social feed preview, blogs preview, seva tiers, how-to-give, construction footage, regional chart, spotlight, Prabhupada tribute)
+- `/temples` — Project Directory "The Global Mandala" (filter bar, grid/list/map toggle, project cards, interactive world map with WorldMap component)
 - `/temples/:id` — Temple Detail (breadcrumb, bento grid with SVG progress ring, financial intelligence, milestone timeline, tabs)
 - `/temples/new` — Add Temple form
-- `/regional` — Regional Insights (comparative charts, top cities table)
-- `/social` — Social Hub (Instagram-style posts from AI-generated sync updates)
+- `/blogs` — Insights & Articles listing with category filters (Architecture, Giving, Seva, Community, Learning, Vision)
+- `/blogs/:slug` — Blog detail view with related articles
+- `/social` — Social Hub (Instagram-style AI-generated posts from temple sync updates, trending topics, temple avatars)
+- `/regional` — Global Regional Intelligence (projects per region, investment by region, top cities charts)
+- `/vision2051` — Vision 2051: 211 temples across every Indian state & UT, expandable state-by-state breakdown with city priorities
 
 ### McKinsey Intelligence Briefs (Dashboard)
 - 5 AI-generated analytical cards refreshed every hour by the cron job
@@ -39,7 +42,7 @@ The main application is "ISKCON Intelligence" — a sacred project intelligence 
 - Replit-managed Anthropic integration (no user key required, billed to Replit credits)
 - `POST /api/sync` — trigger manual sync, returns 202 immediately
 - `GET /api/sync/status` — returns current sync status + recent job history
-- Cron job runs automatically every 6 hours (node-cron in `artifacts/api-server/src/index.ts`)
+- Cron job runs hourly (`0 * * * *`) in production only; disabled in dev (node-cron in `artifacts/api-server/src/index.ts`)
 - Claude researches each temple and generates: updated progress %, phase name, fundraising delta, new project update post
 - `sync_jobs` table tracks all sync runs (status, temples updated, updates created, timestamps)
 - `SyncIndicator` component in nav shows "Sync Data" button + "last synced X ago" badge
