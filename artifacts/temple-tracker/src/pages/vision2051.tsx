@@ -35,20 +35,20 @@ const STATES: StateEntry[] = [
     state: "Uttar Pradesh", type: "state", region: "North", capital: "Lucknow", phase: 1, totalTarget: 7,
     cities: [
       { name: "Mathura–Vrindavan", note: "Birthplace of Krishna; existing ISKCON presence — expand to larger complex", priority: "high", existing: true },
-      { name: "Prayagraj (Allahabad)", note: "Kumbh Mela site; major pilgrimage hub with huge footfall", priority: "high" },
-      { name: "Varanasi", note: "Oldest living city; significant Vaishnava heritage and spiritual tourism", priority: "high" },
-      { name: "Lucknow", note: "State capital; large educated professional community ideal for outreach", priority: "high" },
+      { name: "Prayagraj (Allahabad)", note: "Kumbh Mela site; major pilgrimage hub with huge footfall", priority: "high", existing: true },
+      { name: "Varanasi", note: "Oldest living city; significant Vaishnava heritage and spiritual tourism", priority: "high", existing: true },
+      { name: "Lucknow", note: "State capital; large educated professional community ideal for outreach", priority: "high", existing: true },
       { name: "Agra", note: "High tourist inflow; opportunity for cultural & spiritual outreach", priority: "medium" },
-      { name: "Kanpur", note: "Industrial city; large working-class population underserved by spiritual centres", priority: "medium" },
+      { name: "Kanpur", note: "Industrial city; large working-class population underserved by spiritual centres", priority: "medium", existing: true },
       { name: "Gorakhpur", note: "Gateway to Himalayan pilgrimage routes; rapidly growing city", priority: "planned" },
     ],
   },
   {
     state: "Punjab", type: "state", region: "North", capital: "Chandigarh", phase: 1, totalTarget: 7,
     cities: [
-      { name: "Chandigarh", note: "Shared capital with Haryana; highly educated urban population", priority: "high" },
-      { name: "Amritsar", note: "Major pilgrimage city; Harmandir Sahib draws millions — interfaith opportunity", priority: "high" },
-      { name: "Ludhiana", note: "Largest city in Punjab; major commercial and industrial centre", priority: "high" },
+      { name: "Chandigarh", note: "Shared capital with Haryana; highly educated urban population", priority: "high", existing: true },
+      { name: "Amritsar", note: "Major pilgrimage city; Harmandir Sahib draws millions — interfaith opportunity", priority: "high", existing: true },
+      { name: "Ludhiana", note: "Largest city in Punjab; major commercial and industrial centre", priority: "high", existing: true },
       { name: "Jalandhar", note: "Prominent educational hub with large diaspora connections", priority: "medium" },
       { name: "Patiala", note: "Historical royal city with deep cultural roots", priority: "medium" },
       { name: "Bathinda", note: "Emerging industrial and educational city in southwest Punjab", priority: "planned" },
@@ -58,8 +58,8 @@ const STATES: StateEntry[] = [
   {
     state: "Haryana", type: "state", region: "North", capital: "Chandigarh", phase: 1, totalTarget: 7,
     cities: [
-      { name: "Gurugram", note: "India's corporate capital; massive professional population seeking spiritual anchor", priority: "high" },
-      { name: "Faridabad", note: "Largest city in Haryana; industrial belt with dense residential population", priority: "high" },
+      { name: "Gurugram", note: "India's corporate capital; massive professional population seeking spiritual anchor", priority: "high", existing: true },
+      { name: "Faridabad", note: "Largest city in Haryana; industrial belt with dense residential population", priority: "high", existing: true },
       { name: "Kurukshetra", note: "Birthplace of the Bhagavad Gita; essential for ISKCON's mission", priority: "high", existing: true },
       { name: "Panipat", note: "Historic city; growing industrial and residential base", priority: "medium" },
       { name: "Rohtak", note: "Educational centre; Maharshi Dayanand University draws large student body", priority: "medium" },
@@ -70,9 +70,9 @@ const STATES: StateEntry[] = [
   {
     state: "Rajasthan", type: "state", region: "North", capital: "Jaipur", phase: 1, totalTarget: 7,
     cities: [
-      { name: "Jaipur", note: "State capital and Pink City; major tourism destination and commercial hub", priority: "high" },
-      { name: "Jodhpur", note: "Blue City; educational and cultural hub of western Rajasthan", priority: "high" },
-      { name: "Udaipur", note: "Lake City; high tourist inflow; strong cultural heritage", priority: "high" },
+      { name: "Jaipur", note: "State capital and Pink City; major tourism destination and commercial hub", priority: "high", existing: true },
+      { name: "Jodhpur", note: "Blue City; educational and cultural hub of western Rajasthan", priority: "high", existing: true },
+      { name: "Udaipur", note: "Lake City; high tourist inflow; strong cultural heritage", priority: "high", existing: true },
       { name: "Kota", note: "Education city; hundreds of thousands of students — ideal for Gita outreach", priority: "high" },
       { name: "Ajmer", note: "Pilgrimage hub; Pushkar nearby has established Vaishnava connection", priority: "medium" },
       { name: "Bikaner", note: "Historical city in Thar; gateway to desert communities", priority: "medium" },
@@ -96,7 +96,7 @@ const STATES: StateEntry[] = [
     cities: [
       { name: "Haridwar", note: "Holiest Ganga ghats; Hare Krishna chanting resonates deeply here", priority: "high", existing: true },
       { name: "Rishikesh", note: "World yoga capital; global spiritual seekers converge year-round", priority: "high", existing: true },
-      { name: "Dehradun", note: "State capital; growing IT and education hub in the Doon Valley", priority: "high" },
+      { name: "Dehradun", note: "State capital; growing IT and education hub in the Doon Valley", priority: "high", existing: true },
       { name: "Roorkee", note: "IIT Roorkee city; large student population ideal for Bhakti-Yoga outreach", priority: "medium" },
       { name: "Haldwani", note: "Commercial gateway to Kumaon; largest city in the hills", priority: "medium" },
       { name: "Nainital", note: "Tourism and education hub in Kumaon hills", priority: "medium" },
@@ -107,10 +107,10 @@ const STATES: StateEntry[] = [
   {
     state: "Madhya Pradesh", type: "state", region: "Central", capital: "Bhopal", phase: 1, totalTarget: 7,
     cities: [
-      { name: "Indore", note: "Cleanest city in India; thriving business and education ecosystem", priority: "high" },
-      { name: "Bhopal", note: "State capital; large government and professional community", priority: "high" },
-      { name: "Ujjain", note: "Ancient sacred city; one of the twelve Jyotirlinga sites and Kumbh Mela venue", priority: "high" },
-      { name: "Jabalpur", note: "Educational and military hub of central MP", priority: "medium" },
+      { name: "Indore", note: "Cleanest city in India; thriving business and education ecosystem", priority: "high", existing: true },
+      { name: "Bhopal", note: "State capital; large government and professional community", priority: "high", existing: true },
+      { name: "Ujjain", note: "Ancient sacred city; one of the twelve Jyotirlinga sites and Kumbh Mela venue", priority: "high", existing: true },
+      { name: "Jabalpur", note: "Educational and military hub of central MP", priority: "medium", existing: true },
       { name: "Gwalior", note: "Historical fortress city; cultural capital of northern MP", priority: "medium" },
       { name: "Rewa", note: "Educational and administrative centre for eastern MP", priority: "planned" },
       { name: "Satna", note: "Cement industry hub; gateway to Khajuraho pilgrimage circuit", priority: "planned" },
@@ -119,7 +119,7 @@ const STATES: StateEntry[] = [
   {
     state: "Chhattisgarh", type: "state", region: "Central", capital: "Raipur", phase: 2, totalTarget: 7,
     cities: [
-      { name: "Raipur", note: "State capital; fastest-growing city in central India", priority: "high" },
+      { name: "Raipur", note: "State capital; fastest-growing city in central India", priority: "high", existing: true },
       { name: "Bhilai", note: "Steel city; large workers' township with community building potential", priority: "high" },
       { name: "Bilaspur", note: "Educational and judicial hub; Bilaspur High Court city", priority: "medium" },
       { name: "Durg", note: "Twin city of Bhilai; dense residential and commercial area", priority: "medium" },
@@ -134,20 +134,20 @@ const STATES: StateEntry[] = [
     cities: [
       { name: "Mumbai", note: "Financial capital; existing Juhu ISKCON temple — expand with additional centre", priority: "high", existing: true },
       { name: "Pune", note: "Education and IT hub; strong existing devotee community", priority: "high", existing: true },
-      { name: "Nagpur", note: "Geographical centre of India; gateway to central and eastern India", priority: "high" },
-      { name: "Nashik", note: "Wine and grapes city; Kumbh Mela venue; strong religious culture", priority: "medium" },
-      { name: "Aurangabad (Chhatrapati Sambhajinagar)", note: "Ajanta–Ellora tourism hub; historical cultural significance", priority: "medium" },
-      { name: "Solapur", note: "Textile industry city; gateway to Pandharpur pilgrimage", priority: "planned" },
-      { name: "Kolhapur", note: "Historical princely city; strong Varkari devotional tradition nearby", priority: "planned" },
+      { name: "Nagpur", note: "Geographical centre of India; gateway to central and eastern India", priority: "high", existing: true },
+      { name: "Nashik", note: "Wine and grapes city; Kumbh Mela venue; strong religious culture", priority: "medium", existing: true },
+      { name: "Aurangabad (Chhatrapati Sambhajinagar)", note: "Ajanta–Ellora tourism hub; historical cultural significance", priority: "medium", existing: true },
+      { name: "Solapur", note: "Textile industry city; gateway to Pandharpur pilgrimage", priority: "planned", existing: true },
+      { name: "Kolhapur", note: "Historical princely city; strong Varkari devotional tradition nearby", priority: "planned", existing: true },
     ],
   },
   {
     state: "Gujarat", type: "state", region: "West", capital: "Gandhinagar", phase: 1, totalTarget: 7,
     cities: [
       { name: "Ahmedabad", note: "Largest city in Gujarat; existing ISKCON temple; strong devotee base", priority: "high", existing: true },
-      { name: "Surat", note: "Diamond and textile capital; massive business community", priority: "high" },
-      { name: "Vadodara", note: "Cultural capital of Gujarat; Baroda University hub", priority: "high" },
-      { name: "Rajkot", note: "Rapidly growing city; strong business and industrial base", priority: "medium" },
+      { name: "Surat", note: "Diamond and textile capital; massive business community", priority: "high", existing: true },
+      { name: "Vadodara", note: "Cultural capital of Gujarat; Baroda University hub", priority: "high", existing: true },
+      { name: "Rajkot", note: "Rapidly growing city; strong business and industrial base", priority: "medium", existing: true },
       { name: "Bhavnagar", note: "Coastal city; significant port activity and educational institutions", priority: "medium" },
       { name: "Jamnagar", note: "Brass city; Jio Refinery hub; growing industrial township", priority: "medium" },
       { name: "Gandhinagar", note: "State capital and IT hub; proximity to Akshardham Gandhinagar", priority: "planned" },
@@ -156,7 +156,7 @@ const STATES: StateEntry[] = [
   {
     state: "Goa", type: "state", region: "West", capital: "Panaji", phase: 2, totalTarget: 7,
     cities: [
-      { name: "Panaji", note: "State capital; international tourism gateway", priority: "high" },
+      { name: "Panaji", note: "State capital; international tourism gateway", priority: "high", existing: true },
       { name: "Margao", note: "Largest commercial city in South Goa", priority: "high" },
       { name: "Vasco da Gama", note: "Port and industrial city; Mormugao harbour hub", priority: "medium" },
       { name: "Mapusa", note: "Northern Goa trade hub; weekly flea market draws thousands", priority: "medium" },
@@ -171,10 +171,10 @@ const STATES: StateEntry[] = [
     cities: [
       { name: "Bengaluru", note: "IT capital of India; large cosmopolitan and youth population", priority: "high", existing: true },
       { name: "Mysuru", note: "City of Palaces; major cultural and pilgrimage centre", priority: "high" },
-      { name: "Mangaluru", note: "Coastal educational hub; gateway to Tulu Nadu", priority: "high" },
+      { name: "Mangaluru", note: "Coastal educational hub; gateway to Tulu Nadu", priority: "high", existing: true },
       { name: "Hubballi-Dharwad", note: "Largest twin city in north Karnataka; educational and commercial hub", priority: "medium" },
-      { name: "Belagavi", note: "Border city between Maharashtra and Karnataka; trilingual community", priority: "medium" },
-      { name: "Udupi", note: "Birthplace of Madhvacharya; deep Vaishnava heritage — ideal spiritual anchor", priority: "high" },
+      { name: "Belagavi", note: "Border city between Maharashtra and Karnataka; trilingual community", priority: "medium", existing: true },
+      { name: "Udupi", note: "Birthplace of Madhvacharya; deep Vaishnava heritage — ideal spiritual anchor", priority: "high", existing: true },
       { name: "Shivamogga", note: "Western Ghats gateway; emerging educational and commercial city", priority: "planned" },
     ],
   },
@@ -182,19 +182,19 @@ const STATES: StateEntry[] = [
     state: "Tamil Nadu", type: "state", region: "South", capital: "Chennai", phase: 1, totalTarget: 7,
     cities: [
       { name: "Chennai", note: "Metro capital; established ISKCON presence — additional centre needed", priority: "high", existing: true },
-      { name: "Coimbatore", note: "Manchester of India; large industrial and entrepreneurial population", priority: "high" },
-      { name: "Madurai", note: "Temple city; ancient Vaishnava and Shaiva heritage", priority: "high" },
+      { name: "Coimbatore", note: "Manchester of India; large industrial and entrepreneurial population", priority: "high", existing: true },
+      { name: "Madurai", note: "Temple city; ancient Vaishnava and Shaiva heritage", priority: "high", existing: true },
       { name: "Tiruchirappalli (Trichy)", note: "Spiritual and educational hub; Sri Ranganathaswamy near vicinity", priority: "medium" },
-      { name: "Salem", note: "Steel city of Tamil Nadu; growing commercial and educational centre", priority: "medium" },
-      { name: "Tirunelveli", note: "Southern most major city; gateway to Kanyakumari pilgrimage", priority: "planned" },
-      { name: "Vellore", note: "Medical and educational hub; CMC Vellore draws pan-India population", priority: "planned" },
+      { name: "Salem", note: "Steel city of Tamil Nadu; growing commercial and educational centre", priority: "medium", existing: true },
+      { name: "Tirunelveli", note: "Southern most major city; gateway to Kanyakumari pilgrimage", priority: "planned", existing: true },
+      { name: "Vellore", note: "Medical and educational hub; CMC Vellore draws pan-India population", priority: "planned", existing: true },
     ],
   },
   {
     state: "Telangana", type: "state", region: "South", capital: "Hyderabad", phase: 1, totalTarget: 7,
     cities: [
       { name: "Hyderabad", note: "Cyberabad tech hub; existing ISKCON temple — expand with second centre", priority: "high", existing: true },
-      { name: "Warangal", note: "Ancient Kakatiya capital; growing educational and commercial city", priority: "high" },
+      { name: "Warangal", note: "Ancient Kakatiya capital; growing educational and commercial city", priority: "high", existing: true },
       { name: "Nizamabad", note: "Northern Telangana's trade hub; gateway to Marathwada", priority: "medium" },
       { name: "Karimnagar", note: "Granite city; industrially significant with growing urban population", priority: "medium" },
       { name: "Khammam", note: "Minerals and coal hub; large workforce community", priority: "medium" },
@@ -206,24 +206,24 @@ const STATES: StateEntry[] = [
     state: "Andhra Pradesh", type: "state", region: "South", capital: "Amaravati", phase: 1, totalTarget: 7,
     cities: [
       { name: "Tirupati", note: "World's most visited pilgrimage site; ISKCON presence essential", priority: "high", existing: true },
-      { name: "Visakhapatnam", note: "Port city and IT hub; rapidly growing metro", priority: "high" },
-      { name: "Vijayawada", note: "Commercial capital of AP; gateway to Krishna-Godavari delta", priority: "high" },
-      { name: "Guntur", note: "Chilli and cotton trade city; large business community", priority: "medium" },
-      { name: "Nellore", note: "Aquaculture hub; gateway to coastal Andhra", priority: "medium" },
+      { name: "Visakhapatnam", note: "Port city and IT hub; rapidly growing metro", priority: "high", existing: true },
+      { name: "Vijayawada", note: "Commercial capital of AP; gateway to Krishna-Godavari delta", priority: "high", existing: true },
+      { name: "Guntur", note: "Chilli and cotton trade city; large business community", priority: "medium", existing: true },
+      { name: "Nellore", note: "Aquaculture hub; gateway to coastal Andhra", priority: "medium", existing: true },
       { name: "Kurnool", note: "Former state capital; strategic location on NH-44 corridor", priority: "planned" },
-      { name: "Rajamahendravaram (Rajahmundry)", note: "Cultural capital of AP; gateway to Godavari region", priority: "planned" },
+      { name: "Rajamahendravaram (Rajahmundry)", note: "Cultural capital of AP; gateway to Godavari region", priority: "planned", existing: true },
     ],
   },
   {
     state: "Kerala", type: "state", region: "South", capital: "Thiruvananthapuram", phase: 1, totalTarget: 7,
     cities: [
-      { name: "Thiruvananthapuram", note: "State capital and IT hub; Padmanabhaswamy temple district", priority: "high" },
+      { name: "Thiruvananthapuram", note: "State capital and IT hub; Padmanabhaswamy temple district", priority: "high", existing: true },
       { name: "Kochi", note: "Commercial capital; cosmopolitan port city with international exposure", priority: "high" },
       { name: "Kozhikode (Calicut)", note: "Cultural capital of north Kerala; major educational centre", priority: "high" },
       { name: "Thrissur", note: "Cultural capital of Kerala; home of Thrissur Pooram", priority: "medium" },
       { name: "Kollam", note: "Cashew export hub; gateway to Ashtamudi backwaters", priority: "medium" },
       { name: "Palakkad", note: "Gateway to Kerala through the Palakkad Gap; rapidly growing", priority: "planned" },
-      { name: "Kannur", note: "Malabar's cultural hub; strong community identity", priority: "planned" },
+      { name: "Kannur", note: "Malabar's cultural hub; strong community identity", priority: "planned", existing: true },
     ],
   },
   // ── East India ──
@@ -232,8 +232,8 @@ const STATES: StateEntry[] = [
     cities: [
       { name: "Kolkata", note: "Cultural capital; Mayapur is the global ISKCON HQ — additional city centre needed", priority: "high", existing: true },
       { name: "Mayapur (Nadia)", note: "ISKCON World Headquarters; TOVP 2027 Grand Opening site", priority: "high", existing: true },
-      { name: "Siliguri", note: "Gateway to Northeast India and Bhutan; major commercial city", priority: "high" },
-      { name: "Durgapur", note: "Steel city; planned industrial township with large workforce", priority: "medium" },
+      { name: "Siliguri", note: "Gateway to Northeast India and Bhutan; major commercial city", priority: "high", existing: true },
+      { name: "Durgapur", note: "Steel city; planned industrial township with large workforce", priority: "medium", existing: true },
       { name: "Asansol", note: "Coal capital of India; second largest city in WB", priority: "medium" },
       { name: "Kharagpur", note: "IIT Kharagpur city; large student and academic community", priority: "planned" },
       { name: "Haldia", note: "Port city and petrochem hub; major industrial township", priority: "planned" },
@@ -243,8 +243,8 @@ const STATES: StateEntry[] = [
     state: "Odisha", type: "state", region: "East", capital: "Bhubaneswar", phase: 1, totalTarget: 7,
     cities: [
       { name: "Puri", note: "Jagannath Dham — one of the four sacred dhams; ISKCON has deep roots here", priority: "high", existing: true },
-      { name: "Bhubaneswar", note: "Temple city and IT hub; fastest growing state capital", priority: "high" },
-      { name: "Cuttack", note: "Silver city; major commercial and cultural hub of Odisha", priority: "high" },
+      { name: "Bhubaneswar", note: "Temple city and IT hub; fastest growing state capital", priority: "high", existing: true },
+      { name: "Cuttack", note: "Silver city; major commercial and cultural hub of Odisha", priority: "high", existing: true },
       { name: "Rourkela", note: "Steel city; NIT Rourkela — large academic and industrial community", priority: "medium" },
       { name: "Berhampur", note: "Commercial capital of south Odisha; gateway to Ganjam district", priority: "medium" },
       { name: "Sambalpur", note: "Cultural capital of western Odisha; Hirakud reservoir region", priority: "planned" },
@@ -254,7 +254,7 @@ const STATES: StateEntry[] = [
   {
     state: "Bihar", type: "state", region: "East", capital: "Patna", phase: 2, totalTarget: 7,
     cities: [
-      { name: "Patna", note: "State capital and one of the oldest cities; massive student population", priority: "high" },
+      { name: "Patna", note: "State capital and one of the oldest cities; massive student population", priority: "high", existing: true },
       { name: "Gaya", note: "Major pilgrimage site; Bodh Gaya nearby draws international seekers", priority: "high" },
       { name: "Muzaffarpur", note: "Commercial hub of north Bihar; large agrarian community", priority: "medium" },
       { name: "Bhagalpur", note: "Silk city on the Ganges; gateway to Jharkhand and WB", priority: "medium" },
@@ -279,9 +279,9 @@ const STATES: StateEntry[] = [
   {
     state: "Assam", type: "state", region: "Northeast", capital: "Dispur", phase: 2, totalTarget: 7,
     cities: [
-      { name: "Guwahati", note: "Gateway city to all of Northeast India; rapid urbanisation", priority: "high" },
-      { name: "Dibrugarh", note: "Tea capital of the world; economic hub of upper Assam", priority: "high" },
-      { name: "Silchar", note: "Commercial hub of the Barak Valley; gateway to Mizoram and Manipur", priority: "medium" },
+      { name: "Guwahati", note: "Gateway city to all of Northeast India; rapid urbanisation", priority: "high", existing: true },
+      { name: "Dibrugarh", note: "Tea capital of the world; economic hub of upper Assam", priority: "high", existing: true },
+      { name: "Silchar", note: "Commercial hub of the Barak Valley; gateway to Mizoram and Manipur", priority: "medium", existing: true },
       { name: "Jorhat", note: "Historical tea garden city; agricultural and educational centre", priority: "medium" },
       { name: "Nagaon", note: "Largest city on the south bank; central Assam trade hub", priority: "medium" },
       { name: "Tinsukia", note: "Oil and tea trading hub; rapidly growing border city", priority: "planned" },
@@ -291,7 +291,7 @@ const STATES: StateEntry[] = [
   {
     state: "Manipur", type: "state", region: "Northeast", capital: "Imphal", phase: 3, totalTarget: 7,
     cities: [
-      { name: "Imphal", note: "State capital; Manipuris have deep Vaishnava cultural roots", priority: "high" },
+      { name: "Imphal", note: "State capital; Manipuris have deep Vaishnava cultural roots", priority: "high", existing: true },
       { name: "Bishnupur", note: "Ancient Vaishnava kingdom; named after Lord Vishnu — ideal site", priority: "high" },
       { name: "Thoubal", note: "Commercial hub of the Imphal Valley; growing residential area", priority: "medium" },
       { name: "Churachandpur", note: "Hub of southern Manipur hill districts; diverse community", priority: "medium" },
@@ -351,7 +351,7 @@ const STATES: StateEntry[] = [
   {
     state: "Tripura", type: "state", region: "Northeast", capital: "Agartala", phase: 3, totalTarget: 7,
     cities: [
-      { name: "Agartala", note: "State capital; major commercial and cultural hub of Tripura", priority: "high" },
+      { name: "Agartala", note: "State capital; major commercial and cultural hub of Tripura", priority: "high", existing: true },
       { name: "Udaipur", note: "Historical pilgrimage city; Tripura Sundari temple", priority: "high" },
       { name: "Dharmanagar", note: "Northern Tripura's largest commercial city", priority: "medium" },
       { name: "Kailasahar", note: "Educational and administrative hub of Unakoti district", priority: "medium" },
@@ -388,8 +388,8 @@ const STATES: StateEntry[] = [
   {
     state: "Jammu & Kashmir", type: "ut", region: "North", capital: "Srinagar (S) / Jammu (W)", phase: 2, totalTarget: 7,
     cities: [
-      { name: "Jammu", note: "Winter capital; Hindu pilgrimage hub and gateway to Vaishno Devi", priority: "high" },
-      { name: "Srinagar", note: "Summer capital; Dal Lake and Shankaracharya Hill — spiritual heritage", priority: "high" },
+      { name: "Jammu", note: "Winter capital; Hindu pilgrimage hub and gateway to Vaishno Devi", priority: "high", existing: true },
+      { name: "Srinagar", note: "Summer capital; Dal Lake and Shankaracharya Hill — spiritual heritage", priority: "high", existing: true },
       { name: "Anantnag", note: "Kashmir Valley commercial hub; gateway to Pahalgam", priority: "medium" },
       { name: "Kathua", note: "Jammu's industrial gateway; border with Himachal Pradesh", priority: "medium" },
       { name: "Udhampur", note: "Army and civil hub on NH-44; gateway to Kashmir Valley", priority: "medium" },
@@ -412,7 +412,7 @@ const STATES: StateEntry[] = [
   {
     state: "Puducherry", type: "ut", region: "South", capital: "Puducherry", phase: 2, totalTarget: 5,
     cities: [
-      { name: "Puducherry", note: "Former French colony; international spiritual tourism; Auroville nearby", priority: "high" },
+      { name: "Puducherry", note: "Former French colony; international spiritual tourism; Auroville nearby", priority: "high", existing: true },
       { name: "Karaikal", note: "Coastal enclave; significant Tamil Hindu population", priority: "medium" },
       { name: "Mahe", note: "Kerala enclave; Malayalam-speaking coastal community", priority: "medium" },
       { name: "Yanam", note: "Andhra enclave; Telugu-speaking community near Godavari delta", priority: "planned" },
@@ -422,7 +422,7 @@ const STATES: StateEntry[] = [
   {
     state: "Andaman & Nicobar Islands", type: "ut", region: "Island", capital: "Port Blair", phase: 3, totalTarget: 7,
     cities: [
-      { name: "Port Blair", note: "Capital and largest city; major naval and tourist base", priority: "high" },
+      { name: "Port Blair", note: "Capital and largest city; major naval and tourist base", priority: "high", existing: true },
       { name: "Diglipur", note: "Northernmost town of Andaman; agriculture and eco-tourism", priority: "medium" },
       { name: "Rangat", note: "Middle Andaman hub; growing residential and commercial centre", priority: "medium" },
       { name: "Mayabunder", note: "Karen community area; diverse ethnic and cultural mix", priority: "planned" },
@@ -503,7 +503,7 @@ function StateCard({ entry }: { entry: StateEntry }) {
               </span>
               <span className="text-xs text-on-surface-variant/60">{entry.region}</span>
               {existingCount > 0 && (
-                <span className="text-xs text-emerald-500 font-semibold flex items-center gap-1">
+                <span className="text-xs text-primary font-semibold flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3" /> {existingCount} existing
                 </span>
               )}
@@ -542,14 +542,14 @@ function StateCard({ entry }: { entry: StateEntry }) {
                     <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
                       <span className="text-xs font-black text-on-surface-variant/40 w-5">{i + 1}.</span>
                       {city.existing ? (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
                       ) : (
                         <Star className={`w-3.5 h-3.5 shrink-0 ${PRIORITY_COLOR[city.priority]}`} />
                       )}
                     </div>
                     <div>
                       <span className="text-sm font-bold text-on-surface">{city.name}</span>
-                      {city.existing && <span className="ml-2 text-xs text-emerald-400 font-semibold">Existing ISKCON</span>}
+                      {city.existing && <span className="ml-2 text-xs text-primary font-semibold">Existing ISKCON</span>}
                       <p className="text-xs text-on-surface-variant/60 mt-0.5 leading-relaxed">{city.note}</p>
                     </div>
                   </div>
