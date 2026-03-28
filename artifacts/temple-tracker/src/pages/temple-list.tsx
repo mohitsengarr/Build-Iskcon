@@ -115,10 +115,10 @@ export default function TempleList() {
     window.history.replaceState(null, "", url.toString());
   }, [viewMode]);
 
-  const filteredTemples = temples?.filter(t => {
+  const filteredTemples = (Array.isArray(temples) ? temples : []).filter(t => {
     if (filterStage !== "all" && t.status !== filterStage) return false;
     return true;
-  }) || [];
+  });
 
   return (
     <Layout>

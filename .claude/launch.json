@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "API Server (Express + Drizzle)",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@workspace/api-server", "run", "dev"],
+      "port": 5001,
+      "envFile": ".env"
+    },
+    {
+      "name": "Frontend (Vite + React)",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@workspace/temple-tracker", "run", "dev"],
+      "port": 3000,
+      "autoPort": true
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-03-27T12:00:00Z",
+  "flows": [
+    {
+      "id": "home-landing",
+      "name": "Landing Page Load",
+      "description": "Verify the landing page loads with hero, metrics, map, and all sections visible",
+      "status": "pending",
+      "lastTestedAt": null,
+      "fixAttempts": 0,
+      "notes": ""
+    },
+    {
+      "id": "home-cta-donate",
+      "name": "Hero Donate CTA",
+      "description": "Click 'Donate Now' in the hero — should open iskcon.org/donate in a new tab",
+      "status": "pending",
+      "lastTestedAt": null,
+      "fixAttempts": 0,
+      "notes": ""
+    },
+    {
+      "id": "home-cta-projects",
+      "name": "Hero Explore Projects CTA",
+      "description": "Click 'Explore Projects' in the hero — should navigate to /temples",
+      "status": "pending",
+      "lastTestedAt": null,
+      "fixAttempts": 0,
+      "notes": ""
+    },
+    {
+      "id": "nav-links",
+      "name": "Navigation Links",
+      "description": "All nav links (Home, How to Give, Vision 2051) are clickable and route correctly",
+      "status": "pending",
+      "lastTestedAt": null,
+      "fixAttempts": 0,
+      "notes": ""
+    },
+    {
+      "id": "nav-donate-button",
+      "name": "Nav Donate Button",
+      "description": "Desktop nav 'Donate' button links to iskcon.org/donate",
+      "status": "pending",
+      "lastTestedAt": null,
+      "fixAttempts": 0,
+      "notes": ""
+    },
+    {
+      "id": "api-health",
+      "name": "API Health Check",
+      "description": "GET /api/health returns 200",
+      "status": "pending",
+      "lastTestedAt": null,
+      "fixAttempts": 0,
+      "notes": ""
+    },
+    {
+      "id": "api-temples",
+      "name": "API Temples List",
+      "description": "GET /api/temples returns 200 with an array of temple objects",
+      "status": "pending",
+      "lastTestedAt": null,
+      "fixAttempts": 0,
+      "notes": ""
+    },
+    {
+      "id": "api-dashboard-stats",
+      "name": "API Dashboard Stats",
+      "description": "GET /api/dashboard/stats returns 200 with stats object",
+      "status": "pending",
+      "lastTestedAt": null,
+      "fixAttempts": 0,
+      "notes": ""
+    },
+    {
+      "id": "temples-list-page",
+      "name": "Temples List Page",
+      "description": "Navigate to /temples — page loads with temple cards",
+      "status": "pending",
+      "lastTestedAt": null,
+      "fixAttempts": 0,
+      "notes": ""
+    },
+    {
+      "id": "temple-detail-page",
+      "name": "Temple Detail Page",
+      "description": "Click a temple card — detail page loads with name, progress, and location",
+      "status": "pending",
+      "lastTestedAt": null,
+      "fixAttempts": 0,
+      "notes": ""
+    },
+    {
+      "id": "global-map-markers",
+      "name": "Global Map Markers",
+      "description": "The world map section shows markers for temples with coordinates",
+      "status": "pending",
+      "lastTestedAt": null,
+      "fixAttempts": 0,
+      "notes": ""
+    },
+    {
+      "id": "vision2051-page",
+      "name": "Vision 2051 Page",
+      "description": "Navigate to /vision2051 — page loads without errors",
+      "status": "pending",
+      "lastTestedAt": null,
+      "fixAttempts": 0,
+      "notes": ""
+    },
+    {
+      "id": "blogs-page",
+      "name": "Blogs Listing Page",
+      "description": "Navigate to /blogs — page loads with blog posts",
+      "status": "pending",
+      "lastTestedAt": null,
+      "fixAttempts": 0,
+      "notes": ""
+    },
+    {
+      "id": "footer-links",
+      "name": "Footer External Links",
+      "description": "Footer links to iskcon.org and bbt.org are correct and not '#'",
+      "status": "pending",
+      "lastTestedAt": null,
+      "fixAttempts": 0,
+      "notes": ""
+    },
+    {
+      "id": "mobile-sticky-bar",
+      "name": "Mobile Sticky Donate Bar",
+      "description": "On mobile viewport, a sticky bottom bar appears with Donate Now and Projects buttons",
+      "status": "pending",
+      "lastTestedAt": null,
+      "fixAttempts": 0,
+      "notes": ""
+    },
+    {
+      "id": "no-console-errors",
+      "name": "No Console Errors on Landing",
+      "description": "The landing page loads without JavaScript console errors",
+      "status": "pending",
+      "lastTestedAt": null,
+      "fixAttempts": 0,
+      "notes": ""
+    }
+  ]
+}
