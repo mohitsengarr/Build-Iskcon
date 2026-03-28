@@ -37,51 +37,54 @@
   --font-serif: 'Noto Serif', serif;
 
   --color-primary-container: #ff9933;
-  --color-on-primary-container: #693800;
-  --color-secondary-container: #fed65b;
-  --color-on-secondary-container: #745c00;
-  --color-surface: #fbf9f8;
-  --color-on-surface: #1b1c1c;
-  --color-surface-container: #f0eded;
-  --color-surface-container-low: #f6f3f2;
-  --color-surface-container-high: #eae7e7;
-  --color-surface-container-lowest: #ffffff;
-  --color-surface-container-highest: #e4e2e1;
-  --color-on-surface-variant: #554336;
-  --color-outline-variant: #dbc2b0;
-  --color-tertiary: #545f72;
+  --color-on-primary-container: #5C3000;
+  --color-secondary-container: #FCEBC2;
+  --color-on-secondary-container: #6B4D00;
+  --color-surface: #FFFBF5;
+  --color-on-surface: #2C1810;
+  --color-surface-container: #F5EDE4;
+  --color-surface-container-low: #FAF5EE;
+  --color-surface-container-high: #EFE6DC;
+  --color-surface-container-lowest: #FFFFFF;
+  --color-surface-container-highest: #E8DFD5;
+  --color-on-surface-variant: #6B5344;
+  --color-outline-variant: #D4BCA8;
+  --color-tertiary: #6B6040;
   --color-error: #ba1a1a;
   --color-error-container: #ffdad6;
+  --color-on-primary: #FFFFFF;
+  --color-on-secondary: #FFFFFF;
+  --color-on-tertiary: #FFFFFF;
 }
 
 :root {
-  --background: 30 33% 98%;
-  --foreground: 180 3% 11%;
-  --card: 0 0% 100%;
-  --card-foreground: 180 3% 11%;
-  --primary: 33 100% 28%;
+  --background: 34 60% 98%;
+  --foreground: 18 30% 13%;
+  --card: 34 50% 99%;
+  --card-foreground: 18 30% 13%;
+  --primary: 28 75% 38%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 46 100% 22%;
+  --secondary: 36 60% 32%;
   --secondary-foreground: 0 0% 100%;
-  --muted: 24 8% 93%;
-  --muted-foreground: 17 22% 27%;
-  --accent: 37 100% 60%;
-  --accent-foreground: 26 100% 20%;
-  --border: 27 33% 78%;
-  --input: 27 33% 78%;
-  --ring: 33 100% 28%;
-  --sidebar: 30 25% 95%;
-  --sidebar-foreground: 180 3% 11%;
+  --muted: 30 20% 93%;
+  --muted-foreground: 20 20% 35%;
+  --accent: 35 85% 55%;
+  --accent-foreground: 20 80% 18%;
+  --border: 28 25% 82%;
+  --input: 28 25% 82%;
+  --ring: 28 75% 38%;
+  --sidebar: 32 30% 95%;
+  --sidebar-foreground: 18 30% 13%;
   --popover: 0 0% 100%;
-  --popover-foreground: 180 3% 11%;
+  --popover-foreground: 18 30% 13%;
   --destructive: 0 73% 41%;
   --destructive-foreground: 0 0% 100%;
 
-  --chart-1: 33 100% 28%;
-  --chart-2: 46 100% 22%;
-  --chart-3: 220 15% 38%;
-  --chart-4: 37 100% 60%;
-  --chart-5: 27 33% 78%;
+  --chart-1: 28 75% 38%;
+  --chart-2: 36 60% 32%;
+  --chart-3: 30 30% 45%;
+  --chart-4: 35 85% 55%;
+  --chart-5: 28 25% 82%;
 
   --radius: 0.75rem;
 }

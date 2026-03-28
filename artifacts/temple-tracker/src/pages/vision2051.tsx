@@ -458,7 +458,7 @@ const PHASE_COUNTS = [1, 2, 3].map((p) => ({
 
 const PRIORITY_COLOR = {
   high: "text-amber-400",
-  medium: "text-blue-400",
+  medium: "text-orange-400",
   planned: "text-on-surface-variant/50",
 };
 
@@ -834,9 +834,9 @@ export default function Vision2051() {
         >
           <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant/60 mr-2">Priority:</span>
           <span className="flex items-center gap-1.5 text-xs text-amber-400 font-semibold"><Star className="w-3.5 h-3.5" /> High Priority</span>
-          <span className="flex items-center gap-1.5 text-xs text-blue-400 font-semibold"><Star className="w-3.5 h-3.5" /> Medium Priority</span>
+          <span className="flex items-center gap-1.5 text-xs text-orange-400 font-semibold"><Star className="w-3.5 h-3.5" /> Medium Priority</span>
           <span className="flex items-center gap-1.5 text-xs text-on-surface-variant/50 font-semibold"><Star className="w-3.5 h-3.5" /> Planned</span>
-          <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold"><CheckCircle2 className="w-3.5 h-3.5" /> Existing ISKCON</span>
+          <span className="flex items-center gap-1.5 text-xs text-lime-600 font-semibold"><CheckCircle2 className="w-3.5 h-3.5" /> Existing ISKCON</span>
         </motion.div>
 
         {/* ── Filters ── */}

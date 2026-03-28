@@ -159,10 +159,10 @@ export const BLOGS: BlogPost[] = [
 
 const CATEGORY_COLORS: Record<string, string> = {
   Architecture: "bg-amber-900/30 text-amber-300 border border-amber-700/40",
-  Giving: "bg-emerald-900/30 text-emerald-300 border border-emerald-700/40",
-  Seva: "bg-rose-900/30 text-rose-300 border border-rose-700/40",
-  Community: "bg-blue-900/30 text-blue-300 border border-blue-700/40",
-  Learning: "bg-purple-900/30 text-purple-300 border border-purple-700/40",
+  Giving: "bg-orange-900/30 text-orange-300 border border-orange-700/40",
+  Seva: "bg-yellow-900/30 text-yellow-300 border border-yellow-700/40",
+  Community: "bg-amber-800/30 text-amber-200 border border-amber-600/40",
+  Learning: "bg-orange-800/30 text-orange-200 border border-orange-600/40",
   Vision: "bg-primary/20 text-primary border border-primary/30",
 };
 

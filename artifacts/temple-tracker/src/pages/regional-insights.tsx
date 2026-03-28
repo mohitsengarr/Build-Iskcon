@@ -75,7 +75,7 @@ interface RegionalData {
 
 function statusStyle(status: string): string {
   if (status === "Active Construction") return "text-primary bg-primary/10";
-  if (status === "Near Completion")     return "text-green-700 bg-green-50";
+  if (status === "Near Completion")     return "text-lime-800 bg-lime-50";
   if (status === "Planning Phase")      return "text-secondary bg-secondary/10";
   return "text-on-surface-variant bg-surface-container";
 }
@@ -92,10 +92,10 @@ function regionColor(region: string): string {
   const map: Record<string, string> = {
     "South Asia": "bg-primary",
     "Africa": "bg-amber-600",
-    "Americas": "bg-blue-600",
-    "Oceania": "bg-teal-600",
+    "Americas": "bg-amber-600",
+    "Oceania": "bg-yellow-700",
     "Europe": "bg-secondary",
-    "East Asia": "bg-violet-600",
+    "East Asia": "bg-orange-700",
   };
   return map[region] ?? "bg-on-surface-variant";
 }
@@ -306,7 +306,7 @@ export default function RegionalInsights() {
                     <Globe className="w-5 h-5 text-primary" />
                     <span className={cn(
                       "text-[10px] font-bold uppercase px-2 py-1 rounded-full",
-                      n.confidence === "High" ? "bg-green-50 text-green-700" : "bg-primary/10 text-primary"
+                      n.confidence === "High" ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
                     )}>
                       {n.confidence} confidence
                     </span>

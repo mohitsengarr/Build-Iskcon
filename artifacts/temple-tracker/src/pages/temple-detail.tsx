@@ -150,8 +150,8 @@ export default function TempleDetail() {
                 />
                 <defs>
                   <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#8f4e00" />
-                    <stop offset="100%" stopColor="#735c00" />
+                    <stop offset="0%" stopColor="#A0612B" />
+                    <stop offset="100%" stopColor="#8B5E2F" />
                   </linearGradient>
                 </defs>
               </svg>
@@ -203,7 +203,7 @@ export default function TempleDetail() {
           {/* Donation & QR Panel — full width */}
           {(() => {
             const donateUrl = (temple as any).donateUrl || "https://www.iskcon.org/donate";
-            const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&bgcolor=fff8f0&color=8f4e00&data=${encodeURIComponent(donateUrl)}`;
+            const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&bgcolor=FFFBF5&color=A0612B&data=${encodeURIComponent(donateUrl)}`;
             const gapM = Math.max(0, (temple.fundraisingGoal - temple.fundraisingRaised) / 1_000_000).toFixed(1);
             const SEVA = [
               { title: "Brick Donor", amount: "₹1,000", emoji: "🪨" },

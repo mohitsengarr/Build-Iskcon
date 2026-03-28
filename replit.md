@@ -50,8 +50,10 @@ The main application is "ISKCON Intelligence" — a sacred project intelligence 
 - Route: `artifacts/api-server/src/routes/sync.ts`
 
 ### Design System
-- Branding: "ISKCON Intelligence", Noto Serif headlines, Inter body
-- Colors: saffron primary #8f4e00, gold secondary #735c00, parchment surface #fbf9f8
+- Branding: "Build Iskcon", Noto Serif headlines, Inter body
+- Colors: warm amber-sienna primary hsl(28,75%,38%), warm gold secondary hsl(36,60%,32%), warm cream surface #FFFBF5
+- All accent colors warm-only (amber, orange, yellow, lime) — no blue, purple, violet, teal, or cold tones
+- Status palette: planning=#C49A6C, construction=#D4872E, finishing=#9B6B2F, consecrated=#6B8F3C
 - Top navigation bar (glassmorphic, no sidebar)
 - No hard borders — tonal background shifts only
 - Saffron-to-gold gradient progress bars

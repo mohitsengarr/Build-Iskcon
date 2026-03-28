@@ -200,10 +200,10 @@ function useTemples() {
 // ── Global Site Map Section ───────────────────────────────────────────────────
 
 const STATUS_CFG: Record<string, { color: string; bg: string }> = {
-  planning:     { color: "#a78bfa", bg: "rgba(167,139,250,0.08)" },
-  construction: { color: "#f59e0b", bg: "rgba(245,158,11,0.08)" },
-  finishing:    { color: "#8f4e00", bg: "rgba(143,78,0,0.08)" },
-  consecrated:  { color: "#22c55e", bg: "rgba(34,197,94,0.3)" },
+  planning:     { color: "#C49A6C", bg: "rgba(196,154,108,0.10)" },
+  construction: { color: "#D4872E", bg: "rgba(212,135,46,0.10)" },
+  finishing:    { color: "#9B6B2F", bg: "rgba(155,107,47,0.10)" },
+  consecrated:  { color: "#6B8F3C", bg: "rgba(107,143,60,0.12)" },
 };
 
 function GlobalMapSection() {
@@ -330,8 +330,8 @@ function CountdownBanner() {
 
   return (
     <motion.section variants={fadeInUp} initial="hidden" animate="visible">
-      <div className="relative overflow-hidden bg-primary text-on-primary rounded-2xl px-6 sm:px-10 py-7 flex flex-col sm:flex-row items-center justify-between gap-6">
-        <div className="absolute -top-16 -right-16 w-64 h-64 bg-on-primary/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="relative overflow-hidden rounded-2xl px-6 sm:px-10 py-7 flex flex-col sm:flex-row items-center justify-between gap-6" style={{ background: "linear-gradient(135deg, #7A4520 0%, #A0612B 50%, #8B5E2F 100%)" }}>
+        <div className="absolute -top-16 -right-16 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10">
           <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-on-primary/70 mb-1.5">Grand Opening · November 2, 2027</p>
           <h2 className="font-serif text-2xl sm:text-3xl font-bold leading-tight">Temple of the Vedic Planetarium</h2>
@@ -404,7 +404,7 @@ function ActiveProjectsDonation() {
         <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {urgentTemples.map((temple, idx) => {
             const donateUrl = temple.donateUrl || "https://www.iskcon.org/donate";
-            const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&bgcolor=fff8f0&color=8f4e00&data=${encodeURIComponent(donateUrl)}`;
+            const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&bgcolor=FFFBF5&color=A0612B&data=${encodeURIComponent(donateUrl)}`;
             const pct = temple.fundraisingGoal > 0
               ? Math.round((temple.fundraisingRaised / temple.fundraisingGoal) * 100)
               : 0;
@@ -491,7 +491,7 @@ const SEVA_TIERS = [
     amount: "₹1,000",
     amountUSD: "$12",
     desc: "Your name is inscribed on a sacred brick, permanently enshrined in the temple walls.",
-    color: "bg-amber-50 border-amber-200",
+    color: "bg-amber-50/60 border-amber-200/60",
   },
   {
     emoji: "🏛️",
@@ -499,7 +499,7 @@ const SEVA_TIERS = [
     amount: "₹11,000",
     amountUSD: "$130",
     desc: "Contribute to the structural pillars that uphold the divine sanctuary.",
-    color: "bg-orange-50 border-orange-200",
+    color: "bg-orange-50/60 border-orange-200/60",
   },
   {
     emoji: "🙏",
@@ -507,7 +507,7 @@ const SEVA_TIERS = [
     amount: "₹51,000",
     amountUSD: "$610",
     desc: "Fund the sacred altar adornments and the deities' paraphernalia.",
-    color: "bg-yellow-50 border-yellow-200",
+    color: "bg-amber-50/80 border-amber-300/50",
   },
   {
     emoji: "🌸",
@@ -515,7 +515,7 @@ const SEVA_TIERS = [
     amount: "₹1,00,000",
     amountUSD: "$1,200",
     desc: "Your patronage sustains the entire sacred mandala of the construction.",
-    color: "bg-rose-50 border-rose-200",
+    color: "bg-orange-50/80 border-orange-300/50",
   },
   {
     emoji: "🕌",
@@ -523,7 +523,7 @@ const SEVA_TIERS = [
     amount: "₹5,00,000",
     amountUSD: "$6,000",
     desc: "The highest honour — your name permanently enshrined as a founding benefactor.",
-    color: "bg-primary/5 border-primary/30",
+    color: "bg-primary/8 border-primary/20",
   },
 ];
 
@@ -654,10 +654,10 @@ function BlogsPreview() {
   const categoryColors: Record<string, string> = {
     Architecture: "bg-primary/10 text-primary",
     Giving: "bg-secondary/10 text-secondary",
-    Seva: "bg-amber-100 text-amber-800",
-    Community: "bg-blue-50 text-blue-700",
-    Philosophy: "bg-violet-50 text-violet-700",
-    Vision: "bg-green-50 text-green-700",
+    Seva: "bg-amber-100/60 text-amber-800",
+    Community: "bg-orange-100/50 text-orange-800",
+    Philosophy: "bg-yellow-100/50 text-yellow-800",
+    Vision: "bg-primary/8 text-primary",
   };
 
   return (
@@ -851,8 +851,8 @@ function RegionalQuickStats() {
 
   const regionColor = (region: string): string => {
     const map: Record<string, string> = {
-      "South Asia": "bg-primary", Africa: "bg-amber-600", Americas: "bg-blue-600",
-      Oceania: "bg-teal-600", Europe: "bg-secondary", "East Asia": "bg-violet-600",
+      "South Asia": "bg-primary", Africa: "bg-amber-700", Americas: "bg-amber-600",
+      Oceania: "bg-yellow-700", Europe: "bg-secondary", "East Asia": "bg-orange-700",
     };
     return map[region] ?? "bg-on-surface-variant";
   };
@@ -943,7 +943,7 @@ function RegionalQuickStats() {
               <div className="flex items-center justify-between mb-4">
                 <Globe className="w-5 h-5 text-primary" />
                 <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full ${
-                  n.confidence === "High" ? "bg-green-50 text-green-700" : "bg-primary/10 text-primary"
+                  n.confidence === "High" ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
                 }`}>
                   {n.confidence} confidence
                 </span>
@@ -1247,14 +1247,14 @@ export default function Dashboard() {
                   <YAxis
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: "#554336", fontSize: 12, fontWeight: 600 }}
+                    tick={{ fill: "#6B5344", fontSize: 12, fontWeight: 600 }}
                     width={40}
                   />
                   <XAxis
                     dataKey="name"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: "#554336", fontSize: 12, fontWeight: 600 }}
+                    tick={{ fill: "#6B5344", fontSize: 12, fontWeight: 600 }}
                     dy={10}
                   />
                   <RechartsTooltip
