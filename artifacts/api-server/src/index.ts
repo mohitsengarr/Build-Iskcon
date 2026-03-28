@@ -1,4 +1,4 @@
-import app from "./app";
+import { createApp } from "./app";
 import { logger } from "./lib/logger";
 import cron from "node-cron";
 import { runTempleSync } from "./services/temple-research";
@@ -33,18 +33,27 @@ async function triggerSync(): Promise<void> {
   }
 }
 
-app.listen(port, (err) => {
-  if (err) {
-    logger.error({ err }, "Error listening on port");
-    process.exit(1);
-  }
+async function main() {
+  const app = await createApp();
 
-  logger.info({ port }, "Server listening");
+  app.listen(port, (err) => {
+    if (err) {
+      logger.error({ err }, "Error listening on port");
+      process.exit(1);
+    }
 
-  if (IS_PRODUCTION) {
-    cron.schedule("0 * * * *", triggerSync);
-    logger.info("Cron job scheduled: temple data sync — fires every hour (0 * * * *)");
-  } else {
-    logger.info("Cron disabled in development — only runs in production");
-  }
+    logger.info({ port }, "Server listening");
+
+    if (IS_PRODUCTION) {
+      cron.schedule("0 * * * *", triggerSync);
+      logger.info("Cron job scheduled: temple data sync — fires every hour (0 * * * *)");
+    } else {
+      logger.info("Cron disabled in development — only runs in production");
+    }
+  });
+}
+
+main().catch((err) => {
+  logger.error({ err }, "Failed to start server");
+  process.exit(1);
 });
