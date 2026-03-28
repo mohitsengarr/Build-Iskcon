@@ -1,0 +1,126 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-03-27T12:30:00Z",
+  "features": [
+    {
+      "id": "feat-001",
+      "title": "Per-project donate button with progress tracker",
+      "description": "Each temple card should have a 'Donate to this project' button with a live progress bar showing amount raised vs goal",
+      "source": "usabilityObservation",
+      "linkedIssues": [],
+      "impact": "conversion",
+      "effortEstimate": "M",
+      "priorityScore": 9,
+      "status": "idea",
+      "notes": "Currently no direct per-project donate flow exists. Users must leave site entirely."
+    },
+    {
+      "id": "feat-002",
+      "title": "Social proof near donation CTAs",
+      "description": "Add small stats like '10,000+ brick donors worldwide' or recent donor activity feed near Donate buttons",
+      "source": "businessOpportunity",
+      "linkedIssues": [],
+      "impact": "trust",
+      "effortEstimate": "S",
+      "priorityScore": 8,
+      "status": "idea",
+      "notes": "Trust signals near CTAs significantly improve conversion in donation contexts."
+    },
+    {
+      "id": "feat-003",
+      "title": "Email capture / newsletter signup",
+      "description": "Add a lightweight email capture form (name + email) for construction updates newsletter",
+      "source": "businessOpportunity",
+      "linkedIssues": [],
+      "impact": "retention",
+      "effortEstimate": "S",
+      "priorityScore": 8,
+      "status": "idea",
+      "notes": "No email capture exists currently. Missing opportunity to re-engage visitors."
+    },
+    {
+      "id": "feat-004",
+      "title": "Recurring donation option",
+      "description": "Add monthly/yearly recurring donation option instead of one-time only",
+      "source": "businessOpportunity",
+      "linkedIssues": [],
+      "impact": "conversion",
+      "effortEstimate": "L",
+      "priorityScore": 7,
+      "status": "idea",
+      "notes": "Recurring donors provide predictable revenue for construction timelines."
+    },
+    {
+      "id": "feat-005",
+      "title": "Search and filter on temples list",
+      "description": "Add search bar and filters (by region, status, completion %) on the /temples page",
+      "source": "usabilityObservation",
+      "linkedIssues": [],
+      "impact": "usability",
+      "effortEstimate": "M",
+      "priorityScore": 7,
+      "status": "idea",
+      "notes": "As project count grows, users need a way to quickly find specific temples."
+    },
+    {
+      "id": "feat-006",
+      "title": "Construction timeline/milestones visualization",
+      "description": "Add a visual timeline on temple detail pages showing milestones achieved and upcoming",
+      "source": "usabilityObservation",
+      "linkedIssues": [],
+      "impact": "trust",
+      "effortEstimate": "M",
+      "priorityScore": 6,
+      "status": "idea",
+      "notes": "Milestones API exists (/temples/:id/milestones) but no frontend visualization."
+    },
+    {
+      "id": "feat-007",
+      "title": "Mobile-optimized temple detail page",
+      "description": "Temple detail pages need responsive optimization — image galleries, progress bars, and CTAs should adapt to mobile",
+      "source": "usabilityObservation",
+      "linkedIssues": [],
+      "impact": "usability",
+      "effortEstimate": "M",
+      "priorityScore": 6,
+      "status": "idea",
+      "notes": "Mobile is likely 60%+ of traffic for donation-focused sites."
+    },
+    {
+      "id": "feat-008",
+      "title": "Share project on social media",
+      "description": "Add share buttons (WhatsApp, X, Facebook) to temple detail and landing pages",
+      "source": "businessOpportunity",
+      "linkedIssues": [],
+      "impact": "retention",
+      "effortEstimate": "S",
+      "priorityScore": 5,
+      "status": "idea",
+      "notes": "Viral sharing is key for religious/community donation campaigns."
+    },
+    {
+      "id": "feat-009",
+      "title": "Donation receipt / tax certificate",
+      "description": "After donation, generate a downloadable receipt with temple name, amount, date for tax purposes",
+      "source": "businessOpportunity",
+      "linkedIssues": [],
+      "impact": "trust",
+      "effortEstimate": "L",
+      "priorityScore": 5,
+      "status": "idea",
+      "notes": "Tax receipts are a strong motivator for larger donations."
+    },
+    {
+      "id": "feat-010",
+      "title": "Accessibility audit and WCAG compliance",
+      "description": "Run a full accessibility pass — alt texts, keyboard navigation, ARIA labels, color contrast checks",
+      "source": "usabilityObservation",
+      "linkedIssues": [],
+      "impact": "usability",
+      "effortEstimate": "M",
+      "priorityScore": 5,
+      "status": "idea",
+      "notes": "Several ARIA labels missing in nav. Shloka text may have low contrast."
+    }
+  ]
+}
