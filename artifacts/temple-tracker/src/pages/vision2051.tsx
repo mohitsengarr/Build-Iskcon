@@ -7,7 +7,7 @@ import { Link } from "wouter";
 import {
   MapPin, Target, Building2, Globe, ChevronDown, ChevronUp,
   Flame, CheckCircle2, Clock, Star, Heart, Rocket, TrendingUp,
-  Zap, Calendar, Sunrise
+  Zap, Calendar, Sunrise, LayoutGrid, List
 } from "lucide-react";
 
 // ── Data ──────────────────────────────────────────────────────────────────────
@@ -469,8 +469,8 @@ const PHASE_LABELS: Record<number, string> = {
 };
 const PHASE_COLORS: Record<number, string> = {
   1: "bg-amber-900/30 text-amber-300 border-amber-700/30",
-  2: "bg-blue-900/30 text-blue-300 border-blue-700/30",
-  3: "bg-purple-900/30 text-purple-300 border-purple-700/30",
+  2: "bg-amber-800/20 text-amber-200 border-amber-600/30",
+  3: "bg-amber-700/15 text-amber-100 border-amber-500/30",
 };
 const REGION_LIST = ["All", "North", "South", "East", "West", "Central", "Northeast", "Island"];
 
@@ -478,6 +478,8 @@ const REGION_LIST = ["All", "North", "South", "East", "West", "Central", "Northe
 
 function StateCard({ entry }: { entry: StateEntry }) {
   const [open, setOpen] = useState(false);
+  const existingCount = entry.cities.filter(c => c.existing).length;
+  const progressPct = entry.totalTarget > 0 ? (existingCount / entry.totalTarget) * 100 : 0;
 
   return (
     <motion.div variants={fadeInUp} className="bg-surface-container rounded-2xl border border-on-surface-variant/10 overflow-hidden">
@@ -487,24 +489,30 @@ function StateCard({ entry }: { entry: StateEntry }) {
         onClick={() => setOpen(!open)}
       >
         <div className="flex items-center gap-4 min-w-0">
-          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${entry.type === "ut" ? "bg-purple-900/30" : "bg-primary/10"}`}>
-            {entry.type === "ut" ? <Globe className="w-4 h-4 text-purple-400" /> : <MapPin className="w-4 h-4 text-primary" />}
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${entry.type === "ut" ? "bg-primary/8" : "bg-primary/10"}`}>
+            {entry.type === "ut" ? <Globe className="w-4 h-4 text-primary" /> : <MapPin className="w-4 h-4 text-primary" />}
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-serif font-bold text-on-surface text-base">{entry.state}</h3>
               <span className="text-xs text-on-surface-variant/50 hidden sm:inline">({entry.capital})</span>
             </div>
-            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
               <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${PHASE_COLORS[entry.phase]}`}>
                 Phase {entry.phase} · {PHASE_LABELS[entry.phase]}
               </span>
               <span className="text-xs text-on-surface-variant/60">{entry.region}</span>
-              {entry.cities.some(c => c.existing) && (
-                <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> Existing
+              {existingCount > 0 && (
+                <span className="text-xs text-emerald-500 font-semibold flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3" /> {existingCount} existing
                 </span>
               )}
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              <div className="w-24 h-1.5 bg-on-surface-variant/10 rounded-full overflow-hidden">
+                <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${progressPct}%` }} />
+              </div>
+              <span className="text-[10px] font-bold text-on-surface-variant/50">{existingCount} / {entry.totalTarget} built</span>
             </div>
           </div>
         </div>
@@ -591,13 +599,17 @@ export default function Vision2051() {
               <Flame className="w-3.5 h-3.5" />
               Srila Prabhupada's Dream
             </motion.div>
-            <motion.h1 variants={fadeInUp} className="font-serif text-5xl sm:text-6xl md:text-7xl font-black text-on-surface mb-6 leading-none">
-              Vision <span className="text-primary">2051</span>
+            <motion.h1 variants={fadeInUp} className="font-serif text-5xl sm:text-6xl md:text-7xl font-black text-primary mb-6 leading-none">
+              Vision 2051
             </motion.h1>
-            <motion.p variants={fadeInUp} className="text-xl sm:text-2xl text-on-surface-variant max-w-3xl mx-auto leading-relaxed mb-4">
-              <strong className="text-on-surface">211 ISKCON temples</strong> across every state and Union Territory of India — at least 7 major cities per state — by the centenary of ISKCON's founding.
+            <motion.div variants={fadeInUp} className="bg-primary/8 rounded-2xl px-6 py-4 max-w-2xl mx-auto mb-4">
+              <p className="text-2xl sm:text-3xl font-serif font-black text-primary text-center">211 ISKCON Temples</p>
+              <p className="text-sm text-on-surface-variant text-center mt-1">across every state and Union Territory of India</p>
+            </motion.div>
+            <motion.p variants={fadeInUp} className="text-lg sm:text-xl text-on-surface-variant max-w-3xl mx-auto leading-relaxed mb-4">
+              At least 7 major cities per state — by the centenary of ISKCON's founding.
             </motion.p>
-            <motion.p variants={fadeInUp} className="text-sm text-on-surface-variant/60 italic">
+            <motion.p variants={fadeInUp} className="text-sm text-on-surface-variant italic" style={{ color: "#5C4813" }}>
               "A temple in every town and village." — Srila Prabhupada
             </motion.p>
           </motion.div>
@@ -610,15 +622,15 @@ export default function Vision2051() {
             animate="visible"
           >
             {[
-              { label: "Target Temples", value: TOTAL_TARGET, icon: <Building2 className="w-5 h-5" />, color: "text-primary" },
-              { label: "States & UTs", value: TOTAL_STATES, icon: <Globe className="w-5 h-5" />, color: "text-amber-400" },
-              { label: "Existing ISKCON", value: EXISTING, icon: <CheckCircle2 className="w-5 h-5" />, color: "text-emerald-400" },
-              { label: "Years to 2051", value: 2051 - new Date().getFullYear(), icon: <Clock className="w-5 h-5" />, color: "text-blue-400" },
+              { label: "Target Temples", value: TOTAL_TARGET, icon: <Building2 className="w-5 h-5" /> },
+              { label: "States & UTs", value: TOTAL_STATES, icon: <Globe className="w-5 h-5" /> },
+              { label: "Existing ISKCON", value: EXISTING, icon: <CheckCircle2 className="w-5 h-5" /> },
+              { label: "Years to 2051", value: 2051 - new Date().getFullYear(), icon: <Clock className="w-5 h-5" /> },
             ].map((stat, i) => (
               <motion.div key={i} variants={fadeInUp} className="bg-surface-container rounded-2xl border border-on-surface-variant/10 p-5 text-center">
-                <div className={`flex justify-center mb-2 ${stat.color}`}>{stat.icon}</div>
-                <p className={`font-black text-4xl ${stat.color}`}>{stat.value}</p>
-                <p className="text-xs text-on-surface-variant/60 uppercase tracking-widest mt-1 font-semibold">{stat.label}</p>
+                <div className="flex justify-center mb-2 text-primary">{stat.icon}</div>
+                <p className="font-black text-4xl text-primary">{stat.value}</p>
+                <p className="text-[11px] text-on-surface-variant/70 uppercase tracking-[0.08em] mt-1.5 font-bold">{stat.label}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -646,99 +658,99 @@ export default function Vision2051() {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <motion.div variants={fadeInUp} className="relative bg-gradient-to-br from-amber-900/20 to-amber-800/5 rounded-2xl border border-amber-700/20 p-6 overflow-hidden">
-              <div className="absolute top-4 right-4 text-amber-400/10">
+            <motion.div variants={fadeInUp} className="relative bg-white rounded-2xl border-t-4 border-t-primary border border-on-surface-variant/10 p-7 overflow-hidden">
+              <div className="absolute top-4 right-4 text-primary/5">
                 <Sunrise className="w-20 h-20" />
               </div>
               <div className="relative z-10">
-                <span className="text-xs font-bold uppercase tracking-widest text-amber-400 mb-3 block">Short-Term · 2026</span>
-                <h3 className="font-serif text-xl font-black text-on-surface mb-4">Foundation Year</h3>
-                <div className="flex flex-col gap-3">
+                <span className="text-xs font-bold uppercase tracking-widest text-primary mb-3 block">Short-Term · 2026</span>
+                <h3 className="font-serif text-xl font-black text-on-surface mb-5">Foundation Year</h3>
+                <div className="flex flex-col gap-4">
                   <div className="flex items-start gap-3">
-                    <Building2 className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+                    <Building2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-sm font-bold text-on-surface">10 ISKCON Temples</p>
-                      <p className="text-xs text-on-surface-variant/60">Break ground on first wave of new temple projects</p>
+                      <p className="text-sm font-bold text-on-surface leading-relaxed">10 ISKCON Temples</p>
+                      <p className="text-xs text-on-surface-variant/60 leading-relaxed">Break ground on first wave of new temple projects</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <TrendingUp className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+                    <TrendingUp className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-sm font-bold text-on-surface">10 Rental Properties</p>
-                      <p className="text-xs text-on-surface-variant/60">Sustainable income stream for temple maintenance</p>
+                      <p className="text-sm font-bold text-on-surface leading-relaxed">10 Endowment Properties</p>
+                      <p className="text-xs text-on-surface-variant/60 leading-relaxed">Sustainable income stream for temple maintenance</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Zap className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+                    <Zap className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-sm font-bold text-on-surface">$10M Upwork Milestone</p>
-                      <p className="text-xs text-on-surface-variant/60">Fuel the mission through professional excellence</p>
+                      <p className="text-sm font-bold text-on-surface leading-relaxed">Funding Goal: $10M</p>
+                      <p className="text-xs text-on-surface-variant/60 leading-relaxed">Fuel the mission through professional excellence and seva</p>
                     </div>
                   </div>
                 </div>
               </div>
             </motion.div>
 
-            <motion.div variants={fadeInUp} className="relative bg-gradient-to-br from-blue-900/20 to-blue-800/5 rounded-2xl border border-blue-700/20 p-6 overflow-hidden">
-              <div className="absolute top-4 right-4 text-blue-400/10">
+            <motion.div variants={fadeInUp} className="relative bg-white rounded-2xl border-t-4 border-t-primary border border-on-surface-variant/10 p-7 overflow-hidden">
+              <div className="absolute top-4 right-4 text-primary/5">
                 <TrendingUp className="w-20 h-20" />
               </div>
               <div className="relative z-10">
-                <span className="text-xs font-bold uppercase tracking-widest text-blue-400 mb-3 block">Mid-Term · 2028</span>
-                <h3 className="font-serif text-xl font-black text-on-surface mb-4">Acceleration Phase</h3>
-                <div className="flex flex-col gap-3">
+                <span className="text-xs font-bold uppercase tracking-widest text-primary mb-3 block">Mid-Term · 2028</span>
+                <h3 className="font-serif text-xl font-black text-on-surface mb-5">Acceleration Phase</h3>
+                <div className="flex flex-col gap-4">
                   <div className="flex items-start gap-3">
-                    <Building2 className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
+                    <Building2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-sm font-bold text-on-surface">100 ISKCON Temples</p>
-                      <p className="text-xs text-on-surface-variant/60">Establish presence across major Indian cities</p>
+                      <p className="text-sm font-bold text-on-surface leading-relaxed">100 ISKCON Temples</p>
+                      <p className="text-xs text-on-surface-variant/60 leading-relaxed">Establish presence across major Indian cities</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <TrendingUp className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
+                    <TrendingUp className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-sm font-bold text-on-surface">100 Rental Properties</p>
-                      <p className="text-xs text-on-surface-variant/60">Self-sustaining portfolio funding temple operations</p>
+                      <p className="text-sm font-bold text-on-surface leading-relaxed">100 Endowment Properties</p>
+                      <p className="text-xs text-on-surface-variant/60 leading-relaxed">Self-sustaining portfolio funding temple operations</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Zap className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
+                    <Zap className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-sm font-bold text-on-surface">$100M Upwork Milestone</p>
-                      <p className="text-xs text-on-surface-variant/60">First to cross $100M — proving work-as-worship at scale</p>
+                      <p className="text-sm font-bold text-on-surface leading-relaxed">Funding Goal: $100M</p>
+                      <p className="text-xs text-on-surface-variant/60 leading-relaxed">Proving work-as-worship at scale for Krishna's mission</p>
                     </div>
                   </div>
                 </div>
               </div>
             </motion.div>
 
-            <motion.div variants={fadeInUp} className="relative bg-gradient-to-br from-purple-900/20 to-purple-800/5 rounded-2xl border border-purple-700/20 p-6 overflow-hidden">
-              <div className="absolute top-4 right-4 text-purple-400/10">
+            <motion.div variants={fadeInUp} className="relative bg-white rounded-2xl border-t-4 border-t-primary border border-on-surface-variant/10 p-7 overflow-hidden">
+              <div className="absolute top-4 right-4 text-primary/5">
                 <Rocket className="w-20 h-20" />
               </div>
               <div className="relative z-10">
-                <span className="text-xs font-bold uppercase tracking-widest text-purple-400 mb-3 block">Lifetime · Vision 2051 — BBF</span>
-                <h3 className="font-serif text-xl font-black text-on-surface mb-4">The Grand Vision</h3>
-                <div className="flex flex-col gap-3">
+                <span className="text-xs font-bold uppercase tracking-widest text-primary mb-3 block">Lifetime · Vision 2051</span>
+                <h3 className="font-serif text-xl font-black text-on-surface mb-5">The Grand Vision</h3>
+                <div className="flex flex-col gap-4">
                   <div className="flex items-start gap-3">
-                    <Building2 className="w-4 h-4 text-purple-400 mt-0.5 shrink-0" />
+                    <Building2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-sm font-bold text-on-surface">231 Temples / Year</p>
-                      <p className="text-xs text-on-surface-variant/60">A temple in every town and village — Mahaprabhu's prophecy fulfilled</p>
+                      <p className="text-sm font-bold text-on-surface leading-relaxed">231 Temples / Year</p>
+                      <p className="text-xs text-on-surface-variant/60 leading-relaxed">A temple in every town and village — Mahaprabhu's prophecy fulfilled</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <TrendingUp className="w-4 h-4 text-purple-400 mt-0.5 shrink-0" />
+                    <TrendingUp className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-sm font-bold text-on-surface">10,000 Rental Units / Year</p>
-                      <p className="text-xs text-on-surface-variant/60">Endowment-scale asset base sustaining temples forever</p>
+                      <p className="text-sm font-bold text-on-surface leading-relaxed">10,000 Endowment Units / Year</p>
+                      <p className="text-xs text-on-surface-variant/60 leading-relaxed">Endowment-scale asset base sustaining temples forever</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Zap className="w-4 h-4 text-purple-400 mt-0.5 shrink-0" />
+                    <Zap className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-sm font-bold text-on-surface">$1B Upwork Milestone</p>
-                      <p className="text-xs text-on-surface-variant/60">First to cross $1 billion — all results offered to Krishna</p>
+                      <p className="text-sm font-bold text-on-surface leading-relaxed">Funding Goal: $1B</p>
+                      <p className="text-xs text-on-surface-variant/60 leading-relaxed">All results of work offered as seva to Krishna's mission</p>
                     </div>
                   </div>
                 </div>
@@ -752,10 +764,10 @@ export default function Vision2051() {
               <span className="text-xs font-bold uppercase tracking-widest">Daily Operating Principle</span>
             </div>
             <p className="font-serif text-xl sm:text-2xl font-bold text-on-surface mb-2 leading-relaxed">
-              Work like <span className="text-primary">yagya</span> for Krishna — offering all results to Him.
+              Work like <span className="text-primary" title="Sacred offering or act of service">yagya</span> <span className="text-on-surface-variant text-base font-normal">(sacred offering)</span> for Krishna — offering all results to Him.
             </p>
             <p className="text-on-surface-variant max-w-xl mx-auto text-sm leading-relaxed">
-              Do two things extremely well every day: <strong className="text-on-surface">find great candidates</strong> and <strong className="text-on-surface">find great clients</strong>. Every professional success becomes fuel for the mission.
+              We attract <strong className="text-on-surface">mission-aligned partners</strong> and <strong className="text-on-surface">devoted supporters</strong> every day. Every professional success becomes fuel for temple construction worldwide.
             </p>
           </motion.div>
         </motion.div>
@@ -778,7 +790,7 @@ export default function Vision2051() {
       </div>
 
       {/* ── Phase Overview ── */}
-      <div className="max-w-screen-xl mx-auto px-4 sm:px-8 py-12">
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-8 py-20">
         <motion.div
           variants={staggerContainer}
           initial="hidden"
@@ -790,20 +802,19 @@ export default function Vision2051() {
           <motion.p variants={fadeInUp} className="text-on-surface-variant mb-8">Three phases spanning 25 years, each building on the last.</motion.p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {PHASE_COUNTS.map(({ phase, count, states }) => (
-              <motion.div key={phase} variants={fadeInUp} className={`rounded-2xl border p-6 ${PHASE_COLORS[phase]}`}>
-                <div className="text-xs font-bold uppercase tracking-widest mb-1">Phase {phase}</div>
-                <div className="font-serif text-2xl font-black mb-1">{PHASE_LABELS[phase]}</div>
+              <motion.div key={phase} variants={fadeInUp} className="rounded-2xl border border-on-surface-variant/10 bg-white p-6">
+                <div className="text-xs font-bold uppercase tracking-[0.08em] text-on-surface-variant/60 mb-1">Phase {phase} · {PHASE_LABELS[phase]}</div>
                 <div className="flex items-end gap-4 mt-3">
                   <div>
-                    <p className="text-3xl font-black">{count}</p>
-                    <p className="text-xs opacity-70 uppercase tracking-widest">temples</p>
+                    <p className="text-4xl font-black text-primary">{count}</p>
+                    <p className="text-[11px] text-on-surface-variant/70 uppercase tracking-[0.08em] font-bold">temples</p>
                   </div>
                   <div>
-                    <p className="text-3xl font-black">{states}</p>
-                    <p className="text-xs opacity-70 uppercase tracking-widest">regions</p>
+                    <p className="text-2xl font-black text-on-surface-variant/60">{states}</p>
+                    <p className="text-[11px] text-on-surface-variant/70 uppercase tracking-[0.08em] font-bold">states / UTs</p>
                   </div>
                 </div>
-                <p className="text-xs opacity-60 mt-3 leading-relaxed">
+                <p className="text-xs text-on-surface-variant/60 mt-3 leading-relaxed">
                   {phase === 1 && "State capitals, tier-1 cities, and regions with existing devotee communities."}
                   {phase === 2 && "Tier-2 cities, Northeast gateways, and island territories."}
                   {phase === 3 && "Deep interior, hill states, remote territories, and final completion."}
@@ -831,13 +842,13 @@ export default function Vision2051() {
         {/* ── Filters ── */}
         <div className="flex flex-wrap gap-2 mb-4">
           <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant/60">Region:</span>
+            <span className="text-xs font-bold uppercase tracking-[0.08em] text-on-surface-variant/60">Region:</span>
             {REGION_LIST.map((r) => (
               <button
                 key={r}
                 onClick={() => setActiveRegion(r)}
-                className={`text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-full border transition-all ${
-                  activeRegion === r ? "bg-primary text-on-primary border-primary" : "border-on-surface-variant/20 text-on-surface-variant hover:border-primary/40"
+                className={`text-xs font-bold uppercase tracking-[0.08em] px-3 py-1.5 rounded-full border transition-all ${
+                  activeRegion === r ? "bg-primary text-white border-primary shadow-sm" : "border-on-surface-variant/20 text-on-surface-variant hover:border-primary/40 hover:bg-primary/5"
                 }`}
               >
                 {r}
@@ -846,13 +857,13 @@ export default function Vision2051() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2 mb-8">
-          <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant/60">Phase:</span>
+          <span className="text-xs font-bold uppercase tracking-[0.08em] text-on-surface-variant/60">Phase:</span>
           {(["All", 1, 2, 3] as (number | "All")[]).map((p) => (
             <button
               key={p}
               onClick={() => setActivePhase(p)}
-              className={`text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-full border transition-all ${
-                activePhase === p ? "bg-primary text-on-primary border-primary" : "border-on-surface-variant/20 text-on-surface-variant hover:border-primary/40"
+              className={`text-xs font-bold uppercase tracking-[0.08em] px-3 py-1.5 rounded-full border transition-all ${
+                activePhase === p ? "bg-primary text-white border-primary shadow-sm" : "border-on-surface-variant/20 text-on-surface-variant hover:border-primary/40 hover:bg-primary/5"
               }`}
             >
               {p === "All" ? "All Phases" : `Phase ${p} · ${PHASE_LABELS[p as number]}`}
@@ -860,21 +871,36 @@ export default function Vision2051() {
           ))}
         </div>
 
-        {/* ── State Cards ── */}
-        <motion.div
-          className="flex flex-col gap-3"
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          {...viewportOnce}
-        >
-          <p className="text-xs text-on-surface-variant/50 font-semibold uppercase tracking-widest mb-1">
-            Showing {filtered.length} regions · {filtered.reduce((a, s) => a + s.totalTarget, 0)} temples
+        {/* ── State Cards grouped by region ── */}
+        <div className="flex flex-col gap-8">
+          <p className="text-xs text-on-surface-variant/50 font-semibold uppercase tracking-[0.08em]">
+            Showing {filtered.length} states & UTs · {filtered.reduce((a, s) => a + s.totalTarget, 0)} temples
           </p>
-          {filtered.map((entry) => (
-            <StateCard key={entry.state} entry={entry} />
-          ))}
-        </motion.div>
+          {REGION_LIST.filter(r => r !== "All").map((region) => {
+            const regionStates = filtered.filter(s => s.region === region);
+            if (regionStates.length === 0) return null;
+            return (
+              <motion.div
+                key={region}
+                variants={staggerContainer}
+                initial="hidden"
+                whileInView="visible"
+                {...viewportOnce}
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <h3 className="font-serif text-lg font-black text-on-surface">{region} India</h3>
+                  <div className="flex-1 h-px bg-on-surface-variant/10" />
+                  <span className="text-xs font-bold text-on-surface-variant/50">{regionStates.length} {regionStates.length === 1 ? "state" : "states"} · {regionStates.reduce((a, s) => a + s.totalTarget, 0)} temples</span>
+                </div>
+                <div className="flex flex-col gap-3">
+                  {regionStates.map((entry) => (
+                    <StateCard key={entry.state} entry={entry} />
+                  ))}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
 
         {/* ── CTA ── */}
         <motion.div

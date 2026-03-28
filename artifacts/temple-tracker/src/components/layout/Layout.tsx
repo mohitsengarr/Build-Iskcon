@@ -115,7 +115,7 @@ export function Layout({ children }: { children: ReactNode }) {
       </main>
 
       {/* Mobile sticky donate bar */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-md border-t border-outline-variant/10 px-4 py-3 flex gap-3">
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-md border-t border-outline-variant/10 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] px-4 py-3 flex gap-3">
         <a
           href="https://www.iskcon.org/donate"
           target="_blank"
@@ -133,26 +133,26 @@ export function Layout({ children }: { children: ReactNode }) {
 
       {/* Footer */}
       <footer className="bg-surface w-full border-t border-on-surface-variant/10 mt-auto">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 px-6 sm:px-12 py-10 sm:py-16 w-full max-w-screen-2xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 px-6 sm:px-12 py-10 sm:py-16 w-full max-w-screen-2xl mx-auto">
           <div className="col-span-1 md:col-span-1">
             <div className="font-serif italic text-lg text-on-surface-variant mb-4">Build Iskcon</div>
-            <p className="text-on-surface-variant/80 font-sans text-xs uppercase tracking-widest font-semibold leading-relaxed">
+            <p className="text-on-surface-variant/80 font-sans text-xs font-semibold leading-relaxed">
               Dedicated to the architectural legacy of the Vedic tradition.
             </p>
           </div>
-          <div className="flex flex-col gap-3">
-            <span className="font-sans text-xs uppercase tracking-widest font-bold text-secondary mb-2">Institutions</span>
-            <a href="https://www.iskcon.org" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">ISKCON.org</a>
-            <a href="https://www.bbt.org" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">BBT</a>
+          <div className="flex flex-col gap-4">
+            <span className="font-sans text-xs uppercase tracking-[0.08em] font-bold text-secondary mb-1">Institutions</span>
+            <a href="https://www.iskcon.org" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold transition-opacity">ISKCON.org</a>
+            <a href="https://www.bbt.org" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold transition-opacity">BBT</a>
           </div>
-          <div className="flex flex-col gap-3">
-            <span className="font-sans text-xs uppercase tracking-widest font-bold text-secondary mb-2">Support</span>
-            <a href="https://www.iskcon.org/contact" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">Global Contact</a>
-            <a href="https://www.iskcon.org/contact" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold uppercase tracking-widest transition-opacity">Help Desk</a>
+          <div className="flex flex-col gap-4">
+            <span className="font-sans text-xs uppercase tracking-[0.08em] font-bold text-secondary mb-1">Support</span>
+            <a href="https://www.iskcon.org/contact" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold transition-opacity">Global Contact</a>
+            <a href="https://www.iskcon.org/contact" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold transition-opacity">Help Desk</a>
           </div>
           <div className="flex flex-col justify-end">
-            <p className="text-on-surface-variant/80 font-sans text-[10px] uppercase tracking-[0.2em] font-semibold">
-              © 2026 Build Iskcon.<br/>All Rights Reserved.
+            <p className="text-on-surface-variant/80 font-sans text-[10px] tracking-wide font-semibold">
+              © 2026 Build Iskcon.<br/>All rights reserved.
             </p>
           </div>
         </div>

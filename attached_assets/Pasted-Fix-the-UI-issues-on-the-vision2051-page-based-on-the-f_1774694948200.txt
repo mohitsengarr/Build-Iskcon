@@ -1,0 +1,73 @@
+Fix the UI issues on the `/vision2051` page based on the following detailed corrections. Apply all changes carefully without breaking existing functionality.
+
+---
+
+### 1. Hero Section
+
+- Heading: Change "Vision" text color to match the brownish-orange color used for "2051", so both words share the same color for a unified heading.
+- Description paragraph: Remove any inline `<strong>` or bold wrapping around "211 ISKCON temples" mid-sentence. Either make the entire paragraph the same weight, or move the emphasis to a separate styled callout box below the paragraph.
+- Srila Prabhupada quote: Darken the quote text color to at least `#6B4F12` (or darker) to meet WCAG AA contrast requirements. Do not leave it as a light gold/brown against a light background.
+
+---
+
+### 2. Stats Cards (211 / 34 / 15 / 25)
+
+- Unify the number color across all four stat cards — use a single brand accent color (e.g., saffron `#B5520A` or your primary brand brown) instead of four different colors (brown, gold, green, blue).
+- Stat labels (e.g., "TARGET TEMPLES", "STATES & UTS"): Increase font-size by 2px and reduce `letter-spacing` slightly (e.g., from `0.15em` to `0.08em`) for better readability.
+
+---
+
+### 3. Strategic Roadmap — 3-Column Phase Cards
+
+- Card backgrounds: Unify the gradient backgrounds across all three phase cards (Foundation Year / Acceleration Phase / Grand Vision). Remove the purple/pink tint from the third card. Use the same warm saffron/beige gradient or switch all three to white with a colored top border as the phase differentiator.
+- Inside each card: Increase `padding` to at least `24px` and set `line-height: 1.6` on all list/body text inside the cards to reduce density.
+- Milestone labels: Add a small label prefix to items like "$10M", "$100M", "$1B" to clarify they are funding targets or freelance milestones — e.g., prefix with "Funding Goal:" — so public visitors aren't confused about whether these are temple costs or personal business goals.
+
+---
+
+### 4. Daily Operating Principle Section
+
+- Add a tooltip or parenthetical to "yagya" — e.g., change to: `yagya <span title="sacred offering or act of service">(sacred offering)</span>`
+- The phrase "find great candidates and find great clients" reads as a personal freelance principle. Either:
+  - Wrap this section in an admin-only visibility condition, OR
+  - Reframe the copy to speak to a donor/devotee audience (e.g., "We attract mission-aligned partners and supporters")
+
+---
+
+### 5. Phased Implementation Section
+
+- Phase numbers ("PHASE 1", "PHASE 2", "PHASE 3"): Reduce the large numeral font size and style them as subtle secondary labels. The temple count (e.g., 112 temples) should visually dominate as the hero number.
+- Filter buttons (ALL / NORTH / SOUTH / EAST / WEST / CENTRAL / NORTHEAST / ISLAND and phase filters): Add a clear active/selected state — e.g., filled background with white text, or an underline + color change — so users can tell which filter is currently active.
+
+---
+
+### 6. State/Region Cards (34 Cards)
+
+- Group the 34 state cards under visible section headers by region (North, South, East, West, Central, Northeast, Island), rather than relying on small colored region tags alone.
+- Add a compact/table toggle: Provide a "Table View" / "Card View" toggle button so users can switch between the card grid and a compact table listing all 34 states.
+- Add a progress indicator to each card showing current vs. target temples — e.g., "0 / 7 temples built" as a small progress bar or badge.
+- Optionally: Add an SVG India map visualization with clickable regions — this is the highest-impact improvement for geographic data.
+
+---
+
+### 7. General Typography & Spacing
+
+- Limit active font families to 2 max: one serif for headings, one sans-serif for body text. Audit the page and remove any third or fourth font references.
+- Standardize section vertical padding to `80px` top and bottom for all major sections (hero, stats, roadmap, implementation, footer).
+- Sticky bottom CTA bar ("Donate Now" / "Projects"): Add `backdrop-filter: blur(8px)` and a subtle `box-shadow` on the top edge so it visually separates from the page content without hard-cutting it off while scrolling.
+
+---
+
+### 8. Footer
+
+- Change the footer tagline "DEDICATED TO THE ARCHITECTURAL LEGACY OF THE VEDIC TRADITION" from all-caps to sentence case: "Dedicated to the architectural legacy of the Vedic tradition"
+- Footer links (ISKCON.ORG, BBT, GLOBAL CONTACT, HELP DESK): Add `gap: 24px` or a subtle vertical divider (`|`) between link groups for better visual separation.
+
+---
+
+### Priority (fix in this order if time is limited):
+1. Group 34 state cards by region + add progress indicators
+2. Darken quote text color for contrast
+3. Unify stat card number colors
+4. Add active filter button states
+5. Fix card line-height and padding in phase roadmap cards
