@@ -8,7 +8,6 @@ import { slideDown } from "@/lib/animations";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home", match: (loc: string) => loc === "/" },
-  { href: "/#how-to-give", label: "How to Give", match: () => false },
   { href: "/vision2051", label: "Vision 2051", match: (loc: string) => loc === "/vision2051" },
 ];
 
