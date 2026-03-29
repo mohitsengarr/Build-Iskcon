@@ -9,42 +9,57 @@ import { logger } from "./lib/logger";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 
-const app: Express = express();
+const IS_DEV = process.env.NODE_ENV !== "production";
 
-app.use(
-  pinoHttp({
-    logger,
-    serializers: {
-      req(req) {
-        return {
-          id: req.id,
-          method: req.method,
-          url: req.url?.split("?")[0],
-        };
+export async function createApp(): Promise<Express> {
+  const app: Express = express();
+
+  app.use(
+    pinoHttp({
+      logger,
+      serializers: {
+        req(req) {
+          return {
+            id: req.id,
+            method: req.method,
+            url: req.url?.split("?")[0],
+          };
+        },
+        res(res) {
+          return {
+            statusCode: res.statusCode,
+          };
+        },
       },
-      res(res) {
-        return {
-          statusCode: res.statusCode,
-        };
-      },
-    },
-  }),
-);
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+    }),
+  );
+  app.use(cors());
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
 
-app.use("/api", router);
+  app.use("/api", router);
 
-// In production, serve the pre-built temple-tracker frontend.
-// The API server is the single process — cron persists, frontend is bundled in.
-if (process.env.NODE_ENV === "production") {
-  const staticDir = path.join(__dirname, "..", "..", "temple-tracker", "dist", "public");
-  app.use(express.static(staticDir));
-  // SPA fallback — let React Router handle all non-API paths
-  app.use((_req, res) => {
-    res.sendFile(path.join(staticDir, "index.html"));
-  });
+  if (IS_DEV) {
+    // In development, use Vite's dev server as middleware for HMR + frontend
+    const { createServer: createViteServer } = await import("vite");
+    const viteRoot = path.resolve(__dirname, "..", "..", "temple-tracker");
+    const vite = await createViteServer({
+      root: viteRoot,
+      configFile: path.join(viteRoot, "vite.config.ts"),
+      server: { middlewareMode: true },
+      appType: "spa",
+    });
+    app.use(vite.middlewares);
+    logger.info("Vite dev middleware attached — single monolith server");
+  } else {
+    // In production, serve the pre-built temple-tracker frontend.
+    const staticDir = path.join(__dirname, "..", "..", "temple-tracker", "dist", "public");
+    app.use(express.static(staticDir));
+    // SPA fallback — let React Router handle all non-API paths
+    app.use((_req, res) => {
+      res.sendFile(path.join(staticDir, "index.html"));
+    });
+  }
+
+  return app;
 }
-
-export default app;

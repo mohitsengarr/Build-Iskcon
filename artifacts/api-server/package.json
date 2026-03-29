@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "export NODE_ENV=development && pnpm run build:server && pnpm run start",
+    "dev": "NODE_ENV=development tsx --env-file=../../.env src/index.ts",
     "build": "BASE_PATH=/ NODE_ENV=production pnpm --filter @workspace/temple-tracker run build && node ./build.mjs",
     "build:server": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
@@ -24,14 +24,19 @@
     "pino-http": "^10"
   },
   "devDependencies": {
+    "@replit/vite-plugin-runtime-error-modal": "^0.0.6",
+    "@tailwindcss/vite": "^4.2.2",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "catalog:",
     "@types/node-cron": "^3.0.11",
+    "@vitejs/plugin-react": "^4",
     "esbuild": "^0.27.3",
     "esbuild-plugin-pino": "^2.3.3",
     "pino-pretty": "^13",
-    "thread-stream": "3.1.0"
+    "thread-stream": "3.1.0",
+    "tsx": "^4.21.0",
+    "vite": "^7"
   }
 }

@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "buildCommand": "pnpm --filter @workspace/temple-tracker run build && mkdir -p public && cp -r artifacts/temple-tracker/dist/public/* public/",
+  "outputDirectory": "public",
+  "installCommand": "pnpm install --no-frozen-lockfile",
+  "framework": null,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
+}
