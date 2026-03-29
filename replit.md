@@ -29,7 +29,7 @@ The main application is "ISKCON Intelligence" — a sacred project intelligence 
 - `/blogs/:slug` — Blog detail view with related articles
 - `/social` — Social Hub (Instagram-style AI-generated posts from temple sync updates, trending topics, temple avatars)
 - `/regional` — Global Regional Intelligence (projects per region, investment by region, top cities charts)
-- `/vision2051` — Vision 2051: 211 temples across every Indian state & UT, expandable state-by-state breakdown with city priorities
+- `/vision2051` — Vision 2051: Clear headline "211 Temples Across India by 2051", stats row, phased implementation (3 phases), region/phase filters, expandable state-by-state directory with city priorities, bottom CTA
 
 ### McKinsey Intelligence Briefs (Dashboard)
 - 5 AI-generated analytical cards refreshed every hour by the cron job

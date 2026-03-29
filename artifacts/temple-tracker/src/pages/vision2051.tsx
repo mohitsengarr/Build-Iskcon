@@ -773,19 +773,17 @@ export default function Vision2051() {
             Every rupee contributed to an ISKCON temple project brings this vision one step closer. Your seva today is a temple tomorrow.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
+            <Link href="/temples" className="bg-primary text-on-primary font-bold px-8 py-3 rounded-xl hover:bg-primary/90 transition-all active:scale-95">
+              Choose a Project
+            </Link>
             <a
               href="https://www.iskcon.org/donate"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-primary text-on-primary font-bold px-8 py-3 rounded-xl hover:opacity-90 transition-opacity"
+              className="border-2 border-primary/40 text-primary font-bold px-8 py-3 rounded-xl hover:bg-primary/5 transition-all active:scale-95"
             >
               Donate Now
             </a>
-            <Link href="/temples">
-              <span className="border border-primary/40 text-primary font-bold px-8 py-3 rounded-xl hover:bg-primary/10 transition-colors cursor-pointer">
-                View Active Projects
-              </span>
-            </Link>
           </div>
         </motion.div>
       </div>
