@@ -293,8 +293,8 @@ function ActiveProjectsDonation() {
                     </p>
                   </div>
 
-                  {/* QR code */}
-                  <div className="flex items-center gap-4 bg-surface-container rounded-xl p-4">
+                  {/* QR code — mobile only */}
+                  <div className="flex items-center gap-4 bg-surface-container rounded-xl p-4 sm:hidden">
                     <img
                       src={qrSrc}
                       alt={`Donate QR for ${temple.name}`}
@@ -332,50 +332,31 @@ function ActiveProjectsDonation() {
 
 // ── Seva Opportunities ────────────────────────────────────────────────────────
 
+type CurrencyKey = "INR" | "USD" | "GBP" | "AUD" | "KES";
+
+const CURRENCY_SYMBOLS: Record<CurrencyKey, string> = { INR: "₹", USD: "$", GBP: "£", AUD: "A$", KES: "KSh" };
+const EXCHANGE_RATES: Record<CurrencyKey, number> = { INR: 1, USD: 0.012, GBP: 0.0095, AUD: 0.018, KES: 1.55 };
+
+function formatSevaAmount(baseINR: number, currency: CurrencyKey) {
+  const val = Math.round(baseINR * EXCHANGE_RATES[currency]);
+  const sym = CURRENCY_SYMBOLS[currency];
+  if (currency === "INR") {
+    return `${sym}${baseINR.toLocaleString("en-IN")}`;
+  }
+  return `${sym}${val.toLocaleString("en-US")}`;
+}
+
 const SEVA_TIERS = [
-  {
-    emoji: "🪨",
-    title: "Brick Donor",
-    amount: "₹1,000",
-    amountUSD: "$12",
-    desc: "Your name is inscribed on a sacred brick, permanently enshrined in the temple walls.",
-    color: "bg-amber-50/60 border-amber-200/60",
-  },
-  {
-    emoji: "🏛️",
-    title: "Pillar Supporter",
-    amount: "₹11,000",
-    amountUSD: "$130",
-    desc: "Contribute to the structural pillars that uphold the divine sanctuary.",
-    color: "bg-orange-50/60 border-orange-200/60",
-  },
-  {
-    emoji: "🙏",
-    title: "Altar Patron",
-    amount: "₹51,000",
-    amountUSD: "$610",
-    desc: "Fund the sacred altar adornments and the deities' paraphernalia.",
-    color: "bg-amber-50/80 border-amber-300/50",
-  },
-  {
-    emoji: "🌸",
-    title: "Mandala Guardian",
-    amount: "₹1,00,000",
-    amountUSD: "$1,200",
-    desc: "Your patronage sustains the entire sacred mandala of the construction.",
-    color: "bg-orange-50/80 border-orange-300/50",
-  },
-  {
-    emoji: "🕌",
-    title: "Temple Benefactor",
-    amount: "₹5,00,000",
-    amountUSD: "$6,000",
-    desc: "The highest honour — your name permanently enshrined as a founding benefactor.",
-    color: "bg-primary/8 border-primary/20",
-  },
+  { emoji: "🪨", title: "Brick Donor", baseINR: 1000, desc: "Your name is inscribed on a sacred brick, permanently enshrined in the temple walls.", color: "bg-amber-50/60 border-amber-200/60" },
+  { emoji: "🏛️", title: "Pillar Supporter", baseINR: 11000, desc: "Contribute to the structural pillars that uphold the divine sanctuary.", color: "bg-orange-50/60 border-orange-200/60" },
+  { emoji: "🙏", title: "Altar Patron", baseINR: 51000, desc: "Fund the sacred altar adornments and the deities' paraphernalia.", color: "bg-amber-50/80 border-amber-300/50" },
+  { emoji: "🌸", title: "Mandala Guardian", baseINR: 100000, desc: "Your patronage sustains the entire sacred mandala of the construction.", color: "bg-orange-50/80 border-orange-300/50" },
+  { emoji: "🕌", title: "Temple Benefactor", baseINR: 500000, desc: "The highest honour — your name permanently enshrined as a founding benefactor.", color: "bg-primary/8 border-primary/20" },
 ];
 
 function SevaOpportunities() {
+  const [currency, setCurrency] = useState<CurrencyKey>("INR");
+
   return (
     <motion.section
       variants={staggerContainer}
@@ -384,15 +365,28 @@ function SevaOpportunities() {
       viewport={viewportOnce}
       className="space-y-8"
     >
-      <motion.div variants={fadeInUp}>
-        <div className="flex items-center gap-3 mb-2">
-          <span className="text-xl">🙏</span>
-          <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Participate in the Mission</span>
+      <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-xl">🙏</span>
+            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">Participate in the Mission</span>
+          </div>
+          <h2 className="font-serif text-2xl font-bold text-on-surface">Seva Opportunities</h2>
+          <p className="text-sm text-on-surface-variant mt-1 max-w-2xl">
+            ISKCON follows the Vedic tradition of <em>seva</em> — sacred service. Every donation, however small, builds a temple and earns the blessing of the Lord.
+          </p>
         </div>
-        <h2 className="font-serif text-2xl font-bold text-on-surface">Seva Opportunities</h2>
-        <p className="text-sm text-on-surface-variant mt-1 max-w-2xl">
-          ISKCON follows the Vedic tradition of <em>seva</em> — sacred service. Every donation, however small, builds a temple and earns the blessing of the Lord.
-        </p>
+        <div className="flex items-center bg-surface-container-low rounded-xl p-1 shrink-0">
+          {(Object.keys(CURRENCY_SYMBOLS) as CurrencyKey[]).map((key) => (
+            <button
+              key={key}
+              onClick={() => setCurrency(key)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${currency === key ? "bg-primary text-on-primary shadow-sm" : "text-on-surface-variant hover:text-primary"}`}
+            >
+              {key}
+            </button>
+          ))}
+        </div>
       </motion.div>
 
       <motion.div variants={staggerContainer} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -405,8 +399,13 @@ function SevaOpportunities() {
             <div className="text-3xl">{tier.emoji}</div>
             <div>
               <p className="font-serif font-bold text-on-surface text-base leading-snug">{tier.title}</p>
-              <p className="text-primary font-black text-lg mt-1">{tier.amount}</p>
-              <p className="text-[10px] text-on-surface-variant font-semibold">{tier.amountUSD} approx.</p>
+              <p className="text-primary font-black text-lg mt-1">{formatSevaAmount(tier.baseINR, currency)}</p>
+              {currency !== "INR" && (
+                <p className="text-[10px] text-on-surface-variant font-semibold">{formatSevaAmount(tier.baseINR, "INR")} approx.</p>
+              )}
+              {currency === "INR" && (
+                <p className="text-[10px] text-on-surface-variant font-semibold">{formatSevaAmount(tier.baseINR, "USD")} approx.</p>
+              )}
             </div>
             <p className="text-xs text-on-surface-variant leading-relaxed flex-1">{tier.desc}</p>
             <a href="https://www.iskcon.org/donate" target="_blank" rel="noopener noreferrer">
@@ -598,14 +597,11 @@ export default function Dashboard() {
                   Choose a Project
                 </button>
               </Link>
-              <a
-                href="https://www.iskcon.org/donate"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="border-2 border-primary/40 text-primary px-8 py-3 rounded-xl font-bold text-sm tracking-wide hover:bg-primary/5 transition-all active:scale-95 text-center w-full sm:w-auto"
-              >
-                Donate Now
-              </a>
+              <Link href="/vision2051">
+                <button className="border-2 border-primary/40 text-primary px-8 py-3 rounded-xl font-bold text-sm tracking-wide hover:bg-primary/5 transition-all active:scale-95 text-center w-full sm:w-auto cursor-pointer">
+                  Vision 2051
+                </button>
+              </Link>
             </motion.div>
           </motion.div>
         </section>
@@ -686,9 +682,6 @@ export default function Dashboard() {
 
         {/* Seva Tiers */}
         <SevaOpportunities />
-
-        {/* How to Give */}
-        <HowToGive />
 
         {/* Social Proof / Trust Strip — T005 */}
         <motion.section

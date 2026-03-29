@@ -266,8 +266,8 @@ export default function TempleDetail() {
                     </a>
                   </div>
 
-                  {/* Right: QR code */}
-                  <div className="bg-primary/8 flex flex-col items-center justify-center gap-4 px-10 py-8 lg:min-w-[220px]">
+                  {/* Right: QR code — mobile only */}
+                  <div className="bg-primary/8 flex flex-col items-center justify-center gap-4 px-10 py-8 lg:min-w-[220px] lg:hidden">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant text-center">Scan to Donate</p>
                     <div className="bg-white rounded-2xl p-3 shadow-lg">
                       <img
@@ -289,7 +289,6 @@ export default function TempleDetail() {
           <div className="md:col-span-12 bg-surface-container-low p-10 rounded-xl">
             <div className="flex justify-between items-center mb-12">
               <h3 className="font-sans uppercase tracking-widest text-xs font-bold text-on-surface-variant">Milestone Timeline: The Thread of Devotion</h3>
-              <AddMilestoneDialog templeId={temple.id} />
             </div>
 
             <div className="relative flex flex-col md:flex-row justify-between items-start gap-12 pt-4">
@@ -350,14 +349,21 @@ export default function TempleDetail() {
               <TabsContent value="updates" className="mt-0">
                 <div className="flex justify-between items-center mb-8">
                   <h3 className="font-serif font-bold text-2xl">Recent Field Reports</h3>
-                  <AddUpdateDialog templeId={temple.id} />
                 </div>
 
                 {temple.updates.length === 0 ? (
                   <p className="text-on-surface-variant">No updates yet.</p>
                 ) : (
                   <div className="space-y-5">
-                    {temple.updates.map(u => (
+                    {temple.updates
+                      .filter((u, i, arr) => {
+                        const prev = arr.slice(0, i);
+                        return !prev.some(p =>
+                          p.title === u.title &&
+                          Math.abs(new Date(p.createdAt).getTime() - new Date(u.createdAt).getTime()) < 7 * 24 * 60 * 60 * 1000
+                        );
+                      })
+                      .map(u => (
                       /* Level 2: surface-container-lowest sits on surface-container-low */
                       <div key={u.id} className="bg-surface-container-lowest p-6 rounded-xl shadow-[0_4px_24px_rgba(27,28,28,0.04)]">
                         <div className="flex justify-between items-start mb-4">
@@ -385,7 +391,6 @@ export default function TempleDetail() {
               <TabsContent value="contributors" className="mt-0">
                 <div className="flex justify-between items-center mb-8">
                   <h3 className="font-serif font-bold text-2xl">Key Personnel</h3>
-                  <AddContributorDialog templeId={temple.id} />
                 </div>
 
                 {temple.contributors.length === 0 ? (

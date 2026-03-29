@@ -251,6 +251,21 @@ export default function TempleList() {
           )}
         </AnimatePresence>
 
+        {/* Results count */}
+        {!isLoading && temples && viewMode !== "map" && (
+          <div className="mb-6 flex items-center gap-2 text-sm text-on-surface-variant font-medium">
+            <span>Showing <span className="font-bold text-on-surface">{filteredTemples.length}</span> of <span className="font-bold text-on-surface">{temples.length}</span> projects</span>
+            {(filterStage !== "all" || filterRegion !== "all") && (
+              <button
+                onClick={() => { setFilterStage("all"); setFilterRegion("all"); }}
+                className="ml-2 text-xs text-primary font-bold hover:underline"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Map View */}
         <AnimatePresence mode="wait">
           {viewMode === "map" && (

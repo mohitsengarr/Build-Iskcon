@@ -21,7 +21,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 The main application is "ISKCON Intelligence" — a sacred project intelligence platform for tracking temple construction globally.
 
 ### Pages
-- `/` — Donor-first Landing Page (hero with English headline "Build Sacred Spaces Across the World", key metric cards, TOVP countdown, featured projects with QR donation, global map, seva tiers, how-to-give steps, social proof trust strip, Prabhupada tribute)
+- `/` — Donor-first Landing Page (hero with English headline "Build Sacred Spaces Across the World", key metric cards, TOVP countdown, featured projects with QR donation (QR hidden on desktop), global map, seva tiers with INR/USD/GBP/AUD/KES currency toggle, social proof trust strip, Prabhupada tribute)
 - `/temples` — Project Directory "The Global Mandala" (filter bar, grid/list/map toggle, project cards, interactive world map with WorldMap component)
 - `/temples/:id` — Temple Detail (breadcrumb, bento grid with SVG progress ring, financial intelligence, milestone timeline, tabs)
 - `/temples/new` — Add Temple form
@@ -54,7 +54,9 @@ The main application is "ISKCON Intelligence" — a sacred project intelligence 
 - Colors: warm amber-sienna primary hsl(28,75%,38%), warm gold secondary hsl(36,60%,32%), warm cream surface #FFFBF5
 - All accent colors warm-only (amber, orange, yellow, lime) — no blue, purple, violet, teal, or cold tones
 - Status palette: planning=#C49A6C, construction=#D4872E, finishing=#9B6B2F, consecrated=#6B8F3C
-- Top navigation bar (glassmorphic, no sidebar)
+- Top navigation bar (glassmorphic, no sidebar) with Home, Projects, Vision 2051 + Donate CTA
+- Footer: dark background with Explore/Give/Connect/Legal navigation columns
+- Admin controls (Add Milestone/Update/Contributor) hidden from public view
 - No hard borders — tonal background shifts only
 - Saffron-to-gold gradient progress bars
 

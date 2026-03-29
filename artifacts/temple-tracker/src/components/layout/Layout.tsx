@@ -7,6 +7,7 @@ import { slideDown } from "@/lib/animations";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home", match: (loc: string) => loc === "/" },
+  { href: "/temples", label: "Projects", match: (loc: string) => loc.startsWith("/temples") },
   { href: "/vision2051", label: "Vision 2051", match: (loc: string) => loc === "/vision2051" },
 ];
 
@@ -128,29 +129,41 @@ export function Layout({ children }: { children: ReactNode }) {
       </div>
 
       {/* Footer */}
-      <footer className="bg-surface w-full border-t border-on-surface-variant/10 mt-auto">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 px-6 sm:px-12 py-10 sm:py-16 w-full max-w-screen-2xl mx-auto">
-          <div className="col-span-1 md:col-span-1">
-            <div className="font-serif italic text-lg text-on-surface-variant mb-4">Build Iskcon</div>
-            <p className="text-on-surface-variant/80 font-sans text-xs font-semibold leading-relaxed">
-              Dedicated to the architectural legacy of the Vedic tradition.
+      <footer className="bg-on-surface text-[#fbf9f8] w-full mt-auto">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-10 px-6 sm:px-12 py-12 sm:py-16 w-full max-w-screen-2xl mx-auto">
+          <div className="col-span-2 md:col-span-1">
+            <div className="font-serif text-lg font-black text-primary uppercase tracking-wider mb-3">Build Iskcon</div>
+            <p className="text-white/60 font-sans text-xs font-medium leading-relaxed">
+              Tracking ISKCON's global temple construction mission — town by town, continent by continent.
             </p>
           </div>
-          <div className="flex flex-col gap-4">
-            <span className="font-sans text-xs uppercase tracking-[0.08em] font-bold text-secondary mb-1">Institutions</span>
-            <a href="https://www.iskcon.org" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold transition-opacity">ISKCON.org</a>
-            <a href="https://www.bbt.org" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold transition-opacity">BBT</a>
+          <div className="flex flex-col gap-3">
+            <span className="font-sans text-[10px] uppercase tracking-[0.15em] font-bold text-primary mb-1">Explore</span>
+            <Link href="/" className="text-white/70 hover:text-primary text-xs font-medium transition-colors">Home</Link>
+            <Link href="/temples" className="text-white/70 hover:text-primary text-xs font-medium transition-colors">Projects</Link>
+            <Link href="/vision2051" className="text-white/70 hover:text-primary text-xs font-medium transition-colors">Vision 2051</Link>
           </div>
-          <div className="flex flex-col gap-4">
-            <span className="font-sans text-xs uppercase tracking-[0.08em] font-bold text-secondary mb-1">Support</span>
-            <a href="https://www.iskcon.org/contact" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold transition-opacity">Global Contact</a>
-            <a href="https://www.iskcon.org/contact" target="_blank" rel="noopener noreferrer" className="text-on-surface-variant hover:text-primary text-xs font-semibold transition-opacity">Help Desk</a>
+          <div className="flex flex-col gap-3">
+            <span className="font-sans text-[10px] uppercase tracking-[0.15em] font-bold text-primary mb-1">Give</span>
+            <a href="https://www.iskcon.org/donate" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-primary text-xs font-medium transition-colors">Donate to ISKCON</a>
+            <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-primary text-xs font-medium transition-colors">Donate to TOVP</a>
           </div>
-          <div className="flex flex-col justify-end">
-            <p className="text-on-surface-variant/80 font-sans text-[10px] tracking-wide font-semibold">
-              © 2026 Build Iskcon.<br/>All rights reserved.
-            </p>
+          <div className="flex flex-col gap-3">
+            <span className="font-sans text-[10px] uppercase tracking-[0.15em] font-bold text-primary mb-1">Connect</span>
+            <a href="https://www.iskcon.org" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-primary text-xs font-medium transition-colors">ISKCON.org</a>
+            <a href="https://www.bbt.org" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-primary text-xs font-medium transition-colors">BBT</a>
+            <a href="https://www.iskcon.org/contact" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-primary text-xs font-medium transition-colors">Contact</a>
           </div>
+          <div className="flex flex-col gap-3">
+            <span className="font-sans text-[10px] uppercase tracking-[0.15em] font-bold text-primary mb-1">Legal</span>
+            <span className="text-white/40 text-xs font-medium">Privacy Policy</span>
+            <span className="text-white/40 text-xs font-medium">Terms of Use</span>
+          </div>
+        </div>
+        <div className="border-t border-white/10 px-6 sm:px-12 py-5 max-w-screen-2xl mx-auto">
+          <p className="text-white/40 font-sans text-[10px] tracking-wide font-medium">
+            © {new Date().getFullYear()} Build Iskcon. All rights reserved. Not an official ISKCON website — a community-driven transparency platform.
+          </p>
         </div>
       </footer>
     </div>
