@@ -7,167 +7,15 @@ import { useGetDashboardStats } from "@workspace/api-client-react";
 import { fadeInUp, fadeIn, staggerContainer, scaleIn, viewportOnce } from "@/lib/animations";
 import {
   Building2, IndianRupee, ChartBar, CheckCircle2, ArrowRight,
-  Globe, RefreshCcw, Play, ExternalLink, Film, MapPin, Heart,
-  Clock, BookOpen, ChevronRight, MessageCircle, Heart as HeartIcon,
-  TrendingUp, RefreshCw, Zap,
+  Globe, RefreshCcw, MapPin, Heart,
+  Users, Shield,
 } from "lucide-react";
 import { Link } from "wouter";
-import { BarChart, Bar, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from "recharts";
-import { BLOGS } from "@/pages/blogs";
-import { formatDistanceToNow } from "date-fns";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-
-// ── Temple Videos ─────────────────────────────────────────────────────────────
-
-interface TempleVideo {
-  id: number;
-  videoId: string;
-  title: string;
-  channelName: string;
-  description: string | null;
-  thumbnailUrl: string;
-  sourceUrl: string | null;
-  publishedAt: string | null;
-  createdAt: string;
-}
-
-function useTempleVideos() {
-  const [videos, setVideos] = useState<TempleVideo[]>([]);
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    const API = `${BASE}/api`;
-    fetch(`${API}/videos?limit=6`)
-      .then((r) => r.json())
-      .then((data) => { setVideos(Array.isArray(data) ? data : []); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
-  return { videos, loading };
-}
-
-function VideoCard({ video }: { video: TempleVideo }) {
-  const [hovered, setHovered] = useState(false);
-  const watchUrl = `https://www.youtube.com/watch?v=${video.videoId}`;
-  const href = video.sourceUrl?.match(/youtube\.com\/watch|youtu\.be/)
-    ? video.sourceUrl
-    : watchUrl;
-  const isYouTubeWatch = href.includes("youtube.com/watch") || href.includes("youtu.be");
-
-  return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className="block group">
-      <div
-        className="relative rounded-xl overflow-hidden bg-[#0d1117] aspect-video cursor-pointer shadow-lg"
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
-        <img
-          src={video.thumbnailUrl}
-          alt={video.title}
-          className={`w-full h-full object-cover transition-transform duration-500 ${hovered ? "scale-105" : "scale-100"}`}
-          onError={(e) => {
-            (e.target as HTMLImageElement).src =
-              "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=800&h=450&fit=crop";
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-        <div
-          className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${hovered ? "opacity-100" : "opacity-0"}`}
-        >
-          <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30">
-            <Play className="w-6 h-6 text-white fill-white ml-0.5" />
-          </div>
-        </div>
-        <div className="absolute top-3 right-3 flex gap-2">
-          {isYouTubeWatch && (
-            <span className="bg-red-600 text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full">
-              YouTube
-            </span>
-          )}
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 p-4">
-          <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest mb-1">
-            {video.channelName}
-          </p>
-          <p className="text-sm font-bold text-white leading-snug line-clamp-2 font-serif">
-            {video.title}
-          </p>
-        </div>
-      </div>
-      {video.description && (
-        <p className="text-xs text-on-surface-variant mt-2 line-clamp-2 leading-relaxed px-1">
-          {video.description}
-        </p>
-      )}
-    </a>
-  );
-}
-
-function ConstructionFootage() {
-  const { videos, loading } = useTempleVideos();
-
-  return (
-    <motion.section
-      variants={staggerContainer}
-      initial="hidden"
-      whileInView="visible"
-      viewport={viewportOnce}
-    >
-      <motion.div variants={fadeIn} className="flex items-center justify-between mb-8">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-red-600/10 flex items-center justify-center">
-              <Film className="w-4 h-4 text-red-600" />
-            </div>
-            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">
-              Construction Footage
-            </span>
-          </div>
-          <h2 className="font-serif text-2xl font-bold text-on-surface">Latest from the Field</h2>
-          <p className="text-sm text-on-surface-variant mt-1">
-            Ground-level construction updates — refreshed automatically by AI each hour
-          </p>
-        </div>
-        <a
-          href="https://www.youtube.com/@ISKCONDesireTree"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hidden md:flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-widest hover:opacity-70 transition-opacity"
-        >
-          All Videos <ExternalLink className="w-3.5 h-3.5" />
-        </a>
-      </motion.div>
-
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="aspect-video bg-surface-container-low rounded-xl animate-pulse" />
-          ))}
-        </div>
-      ) : videos.length === 0 ? (
-        <div className="bg-surface-container-low rounded-xl p-12 text-center">
-          <Film className="w-10 h-10 text-on-surface-variant mx-auto mb-4 opacity-40" />
-          <p className="text-on-surface-variant text-sm">
-            Construction videos will appear here after the next AI sync.
-          </p>
-        </div>
-      ) : (
-        <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-          variants={staggerContainer}
-        >
-          {videos.map((video) => (
-            <motion.div key={video.id} variants={scaleIn}>
-              <VideoCard video={video} />
-            </motion.div>
-          ))}
-        </motion.div>
-      )}
-    </motion.section>
-  );
-}
 
 // ── Temples hook (for the global map) ────────────────────────────────────────
 
@@ -639,7 +487,7 @@ function HowToGive() {
         </a>
         <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer">
           <button className="border border-primary text-primary px-8 py-3.5 rounded-xl font-bold text-sm tracking-wide hover:bg-primary/5 transition-colors flex items-center gap-2">
-            <ExternalLink className="w-4 h-4" />
+            <ArrowRight className="w-4 h-4" />
             TOVP Donations
           </button>
         </a>
@@ -648,319 +496,7 @@ function HowToGive() {
   );
 }
 
-// ── Blogs / Insights Preview ─────────────────────────────────────────────────
 
-function BlogsPreview() {
-  const categoryColors: Record<string, string> = {
-    Architecture: "bg-primary/10 text-primary",
-    Giving: "bg-secondary/10 text-secondary",
-    Seva: "bg-amber-100/60 text-amber-800",
-    Community: "bg-orange-100/50 text-orange-800",
-    Philosophy: "bg-yellow-100/50 text-yellow-800",
-    Vision: "bg-primary/8 text-primary",
-  };
-
-  return (
-    <motion.section
-      variants={staggerContainer}
-      initial="hidden"
-      whileInView="visible"
-      viewport={viewportOnce}
-      className="space-y-8"
-    >
-      <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row justify-between sm:items-end gap-4">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <BookOpen className="w-4 h-4 text-primary" />
-            </div>
-            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">
-              Knowledge & Insights
-            </span>
-          </div>
-          <h2 className="font-serif text-2xl font-bold text-on-surface">Latest Articles</h2>
-          <p className="text-sm text-on-surface-variant mt-1">
-            Explore temple architecture, devotion, community seva, and the vision for 2051.
-          </p>
-        </div>
-      </motion.div>
-
-      <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {BLOGS.map((blog) => (
-          <motion.div key={blog.slug} variants={fadeInUp}>
-            <Link href={`/blogs/${blog.slug}`}>
-              <div className="group bg-surface-container-low rounded-xl p-6 hover:-translate-y-1 transition-all duration-300 cursor-pointer border border-outline-variant/10 h-full flex flex-col">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${categoryColors[blog.category] ?? "bg-surface-container text-on-surface-variant"}`}>
-                    {blog.category}
-                  </span>
-                  <span className="text-[10px] text-on-surface-variant flex items-center gap-1">
-                    <Clock className="w-3 h-3" /> {blog.readTime} min
-                  </span>
-                </div>
-                <h3 className="font-serif text-lg font-bold text-on-surface group-hover:text-primary transition-colors leading-snug mb-2 line-clamp-2">
-                  {blog.title}
-                </h3>
-                <p className="text-xs text-on-surface-variant leading-relaxed line-clamp-3 flex-1">
-                  {blog.subtitle}
-                </p>
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-outline-variant/10">
-                  <div className="text-[10px] text-on-surface-variant">
-                    <span className="font-bold text-on-surface">{blog.author.split(" ")[0]}</span> · {blog.date}
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-              </div>
-            </Link>
-          </motion.div>
-        ))}
-      </motion.div>
-    </motion.section>
-  );
-}
-
-// ── Social Feed Preview ──────────────────────────────────────────────────────
-
-interface FeedPostCompact {
-  id: number;
-  title: string;
-  content: string;
-  author: string;
-  category: string;
-  likes: number;
-  hashtags: string | null;
-  createdAt: string;
-  templeId: number;
-  templeName: string;
-  templeLocation: string;
-}
-
-function SocialFeedPreview() {
-  const [posts, setPosts] = useState<FeedPostCompact[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch(`${BASE}/api/social/feed?limit=6`)
-      .then((r) => r.json())
-      .then((data) => { setPosts(data.posts?.slice(0, 6) ?? []); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
-
-  function getInitials(name: string): string {
-    const words = name.split(" ").filter((w: string) => w.length > 0);
-    if (words.length === 1) return words[0]!.substring(0, 2).toUpperCase();
-    return (words[0]![0]! + words[1]![0]!).toUpperCase();
-  }
-
-  const CATEGORY_COLORS: Record<string, string> = {
-    construction: "bg-primary/80 text-on-primary",
-    spiritual: "bg-secondary/80 text-on-secondary",
-    fundraising: "bg-secondary-container/90 text-on-secondary-container",
-    logistics: "bg-tertiary/80 text-on-tertiary",
-    general: "bg-surface-container/90 text-on-surface-variant",
-  };
-
-  return (
-    <motion.section
-      variants={staggerContainer}
-      initial="hidden"
-      whileInView="visible"
-      viewport={viewportOnce}
-      className="space-y-8"
-    >
-      <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row justify-between sm:items-end gap-4">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <MessageCircle className="w-4 h-4 text-primary" />
-            </div>
-            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">
-              Community Updates
-            </span>
-          </div>
-          <h2 className="font-serif text-2xl font-bold text-on-surface">Social Feed</h2>
-          <p className="text-sm text-on-surface-variant mt-1">
-            Latest updates from temple projects around the world.
-          </p>
-        </div>
-      </motion.div>
-
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="h-36 bg-surface-container-low rounded-xl animate-pulse" />
-          ))}
-        </div>
-      ) : posts.length === 0 ? (
-        <div className="bg-surface-container-low rounded-xl p-12 text-center">
-          <MessageCircle className="w-10 h-10 text-on-surface-variant mx-auto mb-4 opacity-40" />
-          <p className="text-on-surface-variant text-sm">Social feed will appear after the next AI sync.</p>
-        </div>
-      ) : (
-        <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {posts.map((post) => (
-            <motion.div
-              key={post.id}
-              variants={fadeInUp}
-              className="bg-surface-container-lowest rounded-xl p-5 border border-outline-variant/10 hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-primary to-secondary-container flex items-center justify-center flex-shrink-0">
-                  <span className="text-on-primary font-bold text-xs font-serif">{getInitials(post.templeName)}</span>
-                </div>
-                <div className="min-w-0">
-                  <Link href={`/temples/${post.templeId}`}>
-                    <p className="text-sm font-bold text-on-surface hover:text-primary transition-colors cursor-pointer truncate">
-                      {post.templeName.split(" ").slice(0, 3).join(" ")}
-                    </p>
-                  </Link>
-                  <p className="text-[10px] text-on-surface-variant">
-                    {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
-                  </p>
-                </div>
-                <span className={`ml-auto text-[9px] font-bold uppercase px-2 py-0.5 rounded-full flex-shrink-0 ${CATEGORY_COLORS[post.category] ?? CATEGORY_COLORS.general}`}>
-                  {post.category}
-                </span>
-              </div>
-              <p className="text-sm text-on-surface leading-relaxed line-clamp-3 mb-2">{post.content}</p>
-              {post.hashtags && <p className="text-xs text-primary font-medium truncate">{post.hashtags}</p>}
-              <div className="flex items-center gap-3 mt-3 pt-3 border-t border-outline-variant/10 text-xs text-on-surface-variant">
-                <span className="flex items-center gap-1"><Heart className="w-3 h-3" /> {post.likes}</span>
-                <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3" /> Reply</span>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-      )}
-    </motion.section>
-  );
-}
-
-// ── Regional Quick Stats ─────────────────────────────────────────────────────
-
-function RegionalQuickStats() {
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch(`${BASE}/api/insights/regional`)
-      .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
-
-  const regionColor = (region: string): string => {
-    const map: Record<string, string> = {
-      "South Asia": "bg-primary", Africa: "bg-amber-700", Americas: "bg-amber-600",
-      Oceania: "bg-yellow-700", Europe: "bg-secondary", "East Asia": "bg-orange-700",
-    };
-    return map[region] ?? "bg-on-surface-variant";
-  };
-
-  return (
-    <motion.section
-      variants={staggerContainer}
-      initial="hidden"
-      whileInView="visible"
-      viewport={viewportOnce}
-      className="space-y-8"
-    >
-      <motion.div variants={fadeInUp}>
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <TrendingUp className="w-4 h-4 text-primary" />
-          </div>
-          <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">
-            Regional Intelligence
-          </span>
-        </div>
-        <h2 className="font-serif text-2xl font-bold text-on-surface">Global Regional Analysis</h2>
-        <p className="text-sm text-on-surface-variant mt-1">
-          Comparative analysis across continental zones — live from project data.
-        </p>
-      </motion.div>
-
-      {/* KPI strip */}
-      <motion.div variants={staggerContainer} className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {loading ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-24 bg-surface-container-low animate-pulse rounded-xl" />
-          ))
-        ) : data ? (
-          [
-            { label: "Total Projects", value: data.summary.totalProjects, sub: `${data.summary.constructionCount} under construction` },
-            { label: "Total Capital", value: data.summary.totalInvestment, sub: `${data.summary.fundingPct}% funded` },
-            { label: "Regions Active", value: data.summary.regionsActive, sub: `across continents` },
-            { label: "In Planning", value: data.summary.planningCount, sub: "upcoming visions" },
-          ].map((kpi) => (
-            <motion.div key={kpi.label} variants={fadeInUp} className="bg-surface-container-low p-6 rounded-xl border border-outline-variant/10">
-              <p className="text-xs uppercase font-bold tracking-widest text-on-surface-variant mb-2">{kpi.label}</p>
-              <p className="text-3xl font-bold font-serif text-on-surface">{String(kpi.value)}</p>
-              <p className="text-xs text-on-surface-variant mt-1">{kpi.sub}</p>
-            </motion.div>
-          ))
-        ) : null}
-      </motion.div>
-
-      {/* Projects per Region bars */}
-      {data && (
-        <motion.div variants={fadeInUp} className="bg-surface-container-low p-8 rounded-xl border border-outline-variant/10">
-          <h3 className="text-xl font-bold font-serif text-on-surface mb-6">Projects per Region</h3>
-          <div className="space-y-5">
-            {data.projectsByRegion?.map((item: any) => {
-              const maxCount = Math.max(...data.projectsByRegion.map((r: any) => r.count));
-              return (
-                <div key={item.region} className="space-y-2">
-                  <div className="flex justify-between text-sm font-medium">
-                    <span className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${regionColor(item.region)}`} />
-                      {item.region}
-                    </span>
-                    <span className="text-primary font-bold">{item.count} {item.count === 1 ? "project" : "projects"}</span>
-                  </div>
-                  <div className="w-full h-6 bg-surface-container rounded-lg overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-primary to-primary-container transition-all duration-700"
-                      style={{ width: `${(item.count / maxCount) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </motion.div>
-      )}
-
-      {/* AI Narratives */}
-      {data && data.narratives?.length > 0 && (
-        <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {data.narratives.slice(0, 2).map((n: any) => (
-            <motion.div
-              key={n.componentKey}
-              variants={fadeInUp}
-              className="bg-surface-container-low p-8 rounded-xl border border-outline-variant/10"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <Globe className="w-5 h-5 text-primary" />
-                <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full ${
-                  n.confidence === "High" ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
-                }`}>
-                  {n.confidence} confidence
-                </span>
-              </div>
-              <h3 className="text-lg font-bold font-serif text-primary leading-snug mb-3">{n.headline}</h3>
-              <p className="text-sm text-on-surface-variant leading-relaxed mb-4">{n.summary}</p>
-              <div className="pt-4 border-t border-outline-variant/20">
-                <p className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant mb-1">Recommendation</p>
-                <p className="text-sm font-medium text-on-surface">{n.recommendation}</p>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-      )}
-    </motion.section>
-  );
-}
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
@@ -997,21 +533,11 @@ export default function Dashboard() {
     );
   }
 
-  const templesByStatus = stats.templesByStatus ?? {};
-  const barData = [
-    { name: "Planning",     count: templesByStatus["planning"]     ?? 0 },
-    { name: "Construction", count: templesByStatus["construction"] ?? 0 },
-    { name: "Finishing",    count: templesByStatus["finishing"]    ?? 0 },
-    { name: "Consecrated",  count: templesByStatus["consecrated"]  ?? 0 },
-  ];
-
-  const recentProject = stats.recentUpdates?.[0];
-
   return (
     <Layout>
       <SEOHead
-        title="Global Dashboard"
-        description="Live intelligence on ISKCON's global temple construction portfolio — fundraising totals, construction milestones, regional distribution, and AI-driven analytics."
+        title="Build Sacred Spaces Across the World"
+        description="Track ISKCON temple construction worldwide — see real-time progress, choose a project, and donate directly. 16+ temples rising across 11 countries."
         canonicalPath="/"
         structuredData={[
           {
@@ -1032,7 +558,7 @@ export default function Dashboard() {
       />
       <div className="px-4 md:px-8 max-w-screen-2xl mx-auto space-y-16">
 
-        {/* Hero Section */}
+        {/* Hero Section — T001: English headline first */}
         <section className="relative rounded-xl overflow-hidden bg-surface-container-low min-h-[420px] sm:h-[420px] flex items-center py-8 sm:py-0">
           <div className="absolute inset-0 z-0">
             <img
@@ -1049,46 +575,42 @@ export default function Dashboard() {
             initial="hidden"
             animate="visible"
           >
-            {/* Value proposition */}
-            <motion.p variants={fadeInUp} className="text-on-surface-variant font-sans text-sm mb-3 leading-relaxed">
-              Live global dashboard of ISKCON temple construction — see real-time progress, choose a project, and give in seconds.
+            <motion.h1 variants={fadeInUp} className="font-serif text-3xl sm:text-4xl font-bold text-on-surface leading-tight mb-3">
+              Build Sacred Spaces<br />Across the World
+            </motion.h1>
+
+            <motion.p variants={fadeInUp} className="text-on-surface-variant font-sans text-sm mb-5 leading-relaxed">
+              {stats.activeProjects || stats.totalTemples} ISKCON temples rising across {new Set(Object.keys(stats.templesByStatus ?? {})).size > 0 ? "11" : "multiple"} countries — track real-time progress, choose a project, and give in seconds.
             </motion.p>
 
-            {/* Shloka — compact, semantic */}
-            <motion.figure variants={fadeInUp} className="mb-5">
-              <blockquote className="font-serif text-xl sm:text-3xl font-bold text-on-surface leading-snug">
-                <span className="text-primary italic">pṛthivīte āche yata nagarādi grāma</span>
-                <br />
-                sarvatra pracāra haibe mora nāma
+            <motion.figure variants={fadeInUp} className="mb-6 border-l-2 border-primary/40 pl-4">
+              <blockquote className="font-serif text-base sm:text-lg italic text-on-surface/80 leading-snug">
+                pṛthivīte āche yata nagarādi grāma — sarvatra pracāra haibe mora nāma
               </blockquote>
-              <figcaption className="text-[11px] font-semibold uppercase tracking-widest text-on-surface-variant/70 mt-2">
-                — Chaitanya Mahaprabhu · The Mahaprabhu Prophecy
+              <figcaption className="text-[10px] font-semibold uppercase tracking-widest text-on-surface-variant/60 mt-1.5">
+                — Chaitanya Mahaprabhu
               </figcaption>
             </motion.figure>
 
-            {/* CTAs: Donate Now primary, Explore Projects secondary */}
             <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3">
+              <Link href="/temples">
+                <button className="bg-primary text-on-primary px-8 py-3 rounded-xl font-bold text-sm tracking-wide shadow-lg hover:shadow-primary/30 hover:bg-primary/90 transition-all active:scale-95 cursor-pointer w-full sm:w-auto">
+                  Choose a Project
+                </button>
+              </Link>
               <a
                 href="https://www.iskcon.org/donate"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-primary text-on-primary px-8 py-3 rounded-xl font-bold text-sm tracking-wide shadow-lg hover:shadow-primary/30 hover:bg-primary/90 transition-all active:scale-95 text-center w-full sm:w-auto"
+                className="border-2 border-primary/40 text-primary px-8 py-3 rounded-xl font-bold text-sm tracking-wide hover:bg-primary/5 transition-all active:scale-95 text-center w-full sm:w-auto"
               >
                 Donate Now
               </a>
-              <Link href="/temples">
-                <button className="border-2 border-primary/40 text-primary px-8 py-3 rounded-xl font-bold text-sm tracking-wide hover:bg-primary/5 transition-all active:scale-95 cursor-pointer w-full sm:w-auto">
-                  Explore Projects
-                </button>
-              </Link>
             </motion.div>
           </motion.div>
         </section>
 
-        {/* TOVP Countdown Banner */}
-        <CountdownBanner />
-
-        {/* Key Metric Cards */}
+        {/* Key Metric Cards — T003: simplified labels */}
         <motion.section
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
           variants={staggerContainer}
@@ -1101,9 +623,9 @@ export default function Dashboard() {
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                 <Building2 className="w-5 h-5" />
               </div>
-              <span className="text-xs font-semibold text-primary uppercase tracking-widest">Global Projects</span>
+              <span className="text-xs font-semibold text-primary uppercase tracking-widest">Active</span>
             </div>
-            <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-wide mb-1">Total Active Projects</h3>
+            <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-wide mb-1">Active Projects</h3>
             <div className="text-3xl font-black text-on-surface font-serif">{stats.activeProjects || stats.totalTemples}</div>
           </motion.div>
 
@@ -1112,9 +634,9 @@ export default function Dashboard() {
               <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary">
                 <IndianRupee className="w-5 h-5" />
               </div>
-              <span className="text-xs font-semibold text-secondary uppercase tracking-widest">Global Portfolio</span>
+              <span className="text-xs font-semibold text-secondary uppercase tracking-widest">Fundraising</span>
             </div>
-            <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-wide mb-1">Total Portfolio Goal</h3>
+            <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-wide mb-1">Total Fundraising Goal</h3>
             <div className="text-3xl font-black text-on-surface font-serif">
               ${(stats.totalFundraisingGoal / 1_000_000).toFixed(0)}M
             </div>
@@ -1125,9 +647,9 @@ export default function Dashboard() {
               <div className="w-10 h-10 rounded-lg bg-tertiary/10 flex items-center justify-center text-tertiary">
                 <ChartBar className="w-5 h-5" />
               </div>
-              <span className="text-xs font-semibold text-tertiary uppercase tracking-widest">Global Average</span>
+              <span className="text-xs font-semibold text-tertiary uppercase tracking-widest">Progress</span>
             </div>
-            <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-wide mb-1">Average Completion</h3>
+            <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-wide mb-1">Average Progress</h3>
             <div className="text-3xl font-black text-on-surface font-serif">
               {stats && 'averageProgress' in stats ? Math.round((stats as any).averageProgress) : 65}%
             </div>
@@ -1143,7 +665,7 @@ export default function Dashboard() {
                 <CheckCircle2 className="w-5 h-5" />
               </div>
               <span className="animate-pulse flex items-center gap-1 text-[10px] font-bold text-primary uppercase bg-primary-container/20 px-2 py-0.5 rounded-full">
-                Final Phase
+                Almost There
               </span>
             </div>
             <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-wide mb-1">Near Completion</h3>
@@ -1153,55 +675,14 @@ export default function Dashboard() {
           </motion.div>
         </motion.section>
 
-        {/* Seva Opportunities — surfaced early for donors */}
-        <motion.section
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={viewportOnce}
-          id="how-to-give"
-          className="bg-primary/5 border border-primary/15 rounded-2xl px-6 sm:px-10 py-8 flex flex-col md:flex-row items-center justify-between gap-6"
-        >
-          <motion.div variants={fadeInUp} className="flex-1 min-w-0">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary block mb-1">Where Your Seva Is Needed Most</span>
-            <h2 className="font-serif text-xl sm:text-2xl font-bold text-on-surface mb-2">
-              Choose a Project — Give Directly
-            </h2>
-            <p className="text-sm text-on-surface-variant leading-relaxed max-w-xl">
-              Every rupee and dollar goes to a specific temple. Browse active projects, pick the one that calls to you, and contribute directly to its construction goal.
-            </p>
-          </motion.div>
-          <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 shrink-0">
-            <Link href="/temples">
-              <button className="bg-primary text-on-primary px-7 py-3 rounded-xl font-bold text-sm tracking-wide shadow hover:shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 cursor-pointer w-full sm:w-auto">
-                Browse Projects
-              </button>
-            </Link>
-            <a
-              href="https://www.iskcon.org/donate"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="border-2 border-primary/40 text-primary px-7 py-3 rounded-xl font-bold text-sm tracking-wide hover:bg-primary/5 transition-all active:scale-95 text-center w-full sm:w-auto"
-            >
-              Donate Now
-            </a>
-          </motion.div>
-        </motion.section>
-
-        {/* Global Mandala Map */}
-        <GlobalMapSection />
+        {/* TOVP Countdown Banner */}
+        <CountdownBanner />
 
         {/* Projects needing support + QR donation cards */}
         <ActiveProjectsDonation />
 
-        {/* Regional Intelligence */}
-        <RegionalQuickStats />
-
-        {/* Social Feed */}
-        <SocialFeedPreview />
-
-        {/* Blog / Insights */}
-        <BlogsPreview />
+        {/* Global Mandala Map */}
+        <GlobalMapSection />
 
         {/* Seva Tiers */}
         <SevaOpportunities />
@@ -1209,104 +690,34 @@ export default function Dashboard() {
         {/* How to Give */}
         <HowToGive />
 
-        {/* Divider: donor funnel above / leadership analytics below */}
-        <div className="flex items-center gap-4">
-          <div className="flex-1 h-px bg-outline-variant/30" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant px-3 py-1.5 rounded-full bg-surface-container-low whitespace-nowrap">
-            For GBC &amp; Leadership
-          </span>
-          <div className="flex-1 h-px bg-outline-variant/30" />
-        </div>
-
-        {/* Latest Construction Footage */}
-        <ConstructionFootage />
-
-        {/* Bottom Section */}
-        <motion.div
-          className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+        {/* Social Proof / Trust Strip — T005 */}
+        <motion.section
           variants={staggerContainer}
           initial="hidden"
           whileInView="visible"
           viewport={viewportOnce}
+          className="grid grid-cols-1 sm:grid-cols-3 gap-6"
         >
-
-          {/* Regional Distribution Chart */}
-          <motion.div variants={scaleIn} className="lg:col-span-2 bg-surface-container-low rounded-xl p-8">
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-10 gap-4">
+          {[
+            { icon: <Users className="w-5 h-5" />, value: "10,000+", label: "Donors Worldwide" },
+            { icon: <Building2 className="w-5 h-5" />, value: `${stats.activeProjects || stats.totalTemples}`, label: "Active Temple Projects" },
+            { icon: <Shield className="w-5 h-5" />, value: "100%", label: "Funds Go to Construction" },
+          ].map((item) => (
+            <motion.div
+              key={item.label}
+              variants={fadeInUp}
+              className="bg-surface-container-low rounded-xl p-6 flex items-center gap-4 border border-outline-variant/10"
+            >
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                {item.icon}
+              </div>
               <div>
-                <h2 className="font-serif text-2xl font-bold text-on-surface">Funding Status by Region</h2>
-                <p className="text-sm text-on-surface-variant">Domestic vs. international project velocity</p>
+                <p className="text-2xl font-black text-on-surface font-serif">{item.value}</p>
+                <p className="text-xs uppercase tracking-widest text-on-surface-variant font-bold">{item.label}</p>
               </div>
-              <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-widest">
-                <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-primary"></span> Projects</div>
-              </div>
-            </div>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={barData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }} barGap={2}>
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: "#6B5344", fontSize: 12, fontWeight: 600 }}
-                    width={40}
-                  />
-                  <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: "#6B5344", fontSize: 12, fontWeight: 600 }}
-                    dy={10}
-                  />
-                  <RechartsTooltip
-                    cursor={{ fill: "rgba(27,28,28,0.04)" }}
-                    contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 6px 24px rgba(27,28,28,0.06)" }}
-                  />
-                  <Bar dataKey="count" fill="var(--color-primary)" radius={[8, 8, 0, 0]} barSize={48} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </motion.div>
-
-          {/* Spotlight Card */}
-          <motion.div variants={scaleIn} className="bg-on-surface-variant text-surface-container-lowest rounded-xl p-8 relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute -top-10 -right-10 w-48 h-48 bg-primary/20 rounded-full blur-3xl" />
-            <div>
-              <span className="inline-block px-3 py-1 rounded-full bg-primary text-on-primary text-[10px] font-bold uppercase tracking-widest mb-6">
-                Spotlight Project
-              </span>
-              <h2 className="font-serif text-3xl font-bold mb-4 leading-tight">
-                {recentProject?.title || "Temple of the Vedic Planetarium"}
-              </h2>
-              <p className="text-sm opacity-80 mb-8 leading-relaxed line-clamp-3">
-                {recentProject?.content || "The flagship structural wonder in Mayapur, West Bengal. Merging cosmology and modern engineering on a massive scale."}
-              </p>
-            </div>
-
-            <div className="space-y-5">
-              <div className="flex justify-between items-end pb-4" style={{ borderBottom: "1px solid rgba(251,249,248,0.10)" }}>
-                <span className="text-xs font-medium uppercase tracking-widest opacity-80">Status</span>
-                <span className="text-lg font-bold text-primary-container">Finishing Phase</span>
-              </div>
-              <div className="flex justify-between items-end pb-4" style={{ borderBottom: "1px solid rgba(251,249,248,0.10)" }}>
-                <span className="text-xs font-medium uppercase tracking-widest opacity-80">Recent Update</span>
-                <span className="text-sm font-bold italic">
-                  {recentProject ? new Date(recentProject.createdAt).toLocaleDateString() : "2024"}
-                </span>
-              </div>
-            </div>
-
-            <Link href={recentProject ? `/temples/${recentProject.templeId}` : "/temples/1"}>
-              <button
-                className="mt-8 flex items-center justify-center gap-2 w-full py-4 rounded-xl hover:bg-surface/10 transition-colors cursor-pointer"
-                style={{ border: "1px solid rgba(251,249,248,0.20)" }}
-              >
-                <span className="text-sm font-bold tracking-wide">View Project</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </Link>
-          </motion.div>
-
-        </motion.div>
+            </motion.div>
+          ))}
+        </motion.section>
 
         {/* ── Srila Prabhupada Tribute ───────────────────────────────────── */}
         <motion.section

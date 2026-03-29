@@ -21,7 +21,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 The main application is "ISKCON Intelligence" — a sacred project intelligence platform for tracking temple construction globally.
 
 ### Pages
-- `/` — Global Dashboard (hero, TOVP countdown, metric cards, seva opportunities, global map, donation cards, regional intelligence, social feed preview, blogs preview, seva tiers, how-to-give, construction footage, regional chart, spotlight, Prabhupada tribute)
+- `/` — Donor-first Landing Page (hero with English headline "Build Sacred Spaces Across the World", key metric cards, TOVP countdown, featured projects with QR donation, global map, seva tiers, how-to-give steps, social proof trust strip, Prabhupada tribute)
 - `/temples` — Project Directory "The Global Mandala" (filter bar, grid/list/map toggle, project cards, interactive world map with WorldMap component)
 - `/temples/:id` — Temple Detail (breadcrumb, bento grid with SVG progress ring, financial intelligence, milestone timeline, tabs)
 - `/temples/new` — Add Temple form
@@ -45,7 +45,7 @@ The main application is "ISKCON Intelligence" — a sacred project intelligence 
 - Cron job runs hourly (`0 * * * *`) in production only; disabled in dev (node-cron in `artifacts/api-server/src/index.ts`)
 - Claude researches each temple and generates: updated progress %, phase name, fundraising delta, new project update post
 - `sync_jobs` table tracks all sync runs (status, temples updated, updates created, timestamps)
-- `SyncIndicator` component in nav shows "Sync Data" button + "last synced X ago" badge
+- `SyncIndicator` component exists but is hidden from user-facing nav (dev-only tool)
 - Service: `artifacts/api-server/src/services/temple-research.ts`
 - Route: `artifacts/api-server/src/routes/sync.ts`
 

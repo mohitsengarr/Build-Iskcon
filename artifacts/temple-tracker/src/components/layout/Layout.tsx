@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SyncIndicator } from "@/components/SyncIndicator";
 import { slideDown } from "@/lib/animations";
 
 const NAV_ITEMS = [
@@ -66,7 +65,6 @@ export function Layout({ children }: { children: ReactNode }) {
             >
               Donate
             </a>
-            <SyncIndicator />
           </div>
         </div>
 
@@ -115,20 +113,18 @@ export function Layout({ children }: { children: ReactNode }) {
       </main>
 
       {/* Mobile sticky donate bar */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-md border-t border-outline-variant/10 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] px-4 py-3 flex gap-3">
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-md border-t border-outline-variant/10 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] px-4 py-3 grid grid-cols-2 gap-3">
+        <Link href="/temples" className="bg-primary text-on-primary py-3 rounded-xl font-bold text-sm tracking-wide text-center hover:bg-primary/90 transition-all active:scale-95 block">
+          Choose a Project
+        </Link>
         <a
           href="https://www.iskcon.org/donate"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-1 bg-primary text-on-primary py-3 rounded-xl font-bold text-sm tracking-wide text-center hover:bg-primary/90 transition-all active:scale-95"
+          className="border-2 border-primary/40 text-primary py-3 rounded-xl font-bold text-sm tracking-wide text-center hover:bg-primary/5 transition-all active:scale-95"
         >
-          Donate Now
+          Donate
         </a>
-        <Link href="/temples">
-          <span className="flex-1 border-2 border-primary/40 text-primary py-3 px-5 rounded-xl font-bold text-sm tracking-wide text-center hover:bg-primary/5 transition-all active:scale-95 block">
-            Projects
-          </span>
-        </Link>
       </div>
 
       {/* Footer */}
