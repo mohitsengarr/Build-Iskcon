@@ -1,0 +1,763 @@
+# BuildIskcon.com — Complete Fix Prompt (20 Issues)
+
+## Scope
+Fix all 20 UX/UI issues identified in the design critique audit. Execute in priority order: HIGH → MEDIUM → LOW.
+
+---
+
+## Fix 1: Add H1 Element to Homepage
+**Severity: HIGH | Effort: 5 min | Page: Homepage**
+
+The homepage has no H1 tag — heading hierarchy starts at H2. This is a critical SEO and accessibility failure.
+
+**Find** the hero section component on the homepage. The tagline "Live global dashboard of ISKCON temple construction" or similar text should be wrapped in an H1.
+
+```tsx
+// BEFORE — no H1 anywhere on the page
+<h2>Temple of the Vedic Planetarium</h2>
+
+// AFTER — add H1 as the primary page heading (can be styled subtly)
+<h1 className="text-lg md:text-xl font-medium text-muted-foreground tracking-wide">
+  Live global dashboard of ISKCON temple construction
+</h1>
+<h2>Temple of the Vedic Planetarium</h2>
+```
+
+**Verify:** Run `document.querySelectorAll('h1').length` in browser console — should return 1.
+
+---
+
+## Fix 2: Deduplicate Project Database — One Entry Per Temple
+**Severity: HIGH | Effort: 2–3 hours | Page: Global**
+
+The same physical temples appear 3–5 times with slightly different names and different completion percentages:
+- "ISKCON Parsippany New Jersey Temple" appears at 65%, 73%, 79%, 80%, 84%
+- "ISKCON Columbus" appears 5 times (11%, 33%, 35%, 37%, 33%)
+- "New Mahavan Temple" appears 5 times (15%, 16%, 19%, 33%, 46%, 53%, 58%, 60%, 61%)
+- "ISKCON Dwarka" appears 3 times
+
+**This is the #1 credibility issue.** On a donation-driven platform, duplicate financial data destroys trust.
+
+**Fix approach:**
+1. Audit the database/data source. Identify all entries that refer to the same physical temple.
+2. For each group of duplicates, keep the MOST RECENT entry with the highest-confidence data.
+3. Create a canonical slug for each temple (e.g., `iskcon-parsippany-nj`).
+4. If historical data is valuable, move it to a "version history" tab within the project detail page.
+
+```sql
+-- Example: Find potential duplicates by location proximity
+SELECT name, location, COUNT(*)
+FROM projects
+GROUP BY location
+HAVING COUNT(*) > 1;
+```
+
+```tsx
+// On the project detail page, add a history section:
+<Tabs defaultValue="current">
+  <TabsList>
+    <TabsTrigger value="current">Current Status</TabsTrigger>
+    <TabsTrigger value="history">Update History</TabsTrigger>
+  </TabsList>
+  <TabsContent value="history">
+    {project.previousUpdates.map(update => (
+      <HistoryEntry key={update.id} date={update.date} completion={update.completion} />
+    ))}
+  </TabsContent>
+</Tabs>
+```
+
+**Verify:** Count unique project cards on /temples — each physical temple should appear exactly once.
+
+---
+
+## Fix 3: Trim Homepage to 5–6 Sections
+**Severity: HIGH | Effort: 3–4 hours | Page: Homepage**
+
+The homepage currently has 15+ sections: Hero, TOVP countdown, Global stats, CTA block, Project gallery (58 cards), Map, Projects Calling for Support, Regional Intelligence, Social Feed, Articles, Seva Tiers, How to Give, YouTube Videos, Charts, Spotlight Project, Founder Bio.
+
+**Restructure to:**
+
+```
+Homepage (5-6 sections):
+├── Hero + Key Stats (TOVP countdown, 4 stat cards)
+├── Featured Projects (3-5 curated, not all 58)
+├── Interactive Map (simplified)
+├── Seva Tiers + Donate CTA
+├── Latest Updates (3 items, link to /updates)
+└── Founder Section (compact)
+
+New Subpages to create:
+├── /projects → Full 58-project directory (already exists at /temples)
+├── /intelligence → Regional analysis, charts, funding status
+├── /updates → Social feed, field updates, YouTube videos
+├── /blog → Articles (fix the 404s)
+├── /about → Mission, founder detailed bio, team
+└── /seva → Full seva tier details, how to give
+```
+
+```tsx
+// Homepage Featured Projects — show only 3-5 curated projects
+const FEATURED_PROJECT_IDS = [40, 55, 48]; // TOVP, Heritage Tower, Salem
+
+const featuredProjects = allProjects
+  .filter(p => FEATURED_PROJECT_IDS.includes(p.id))
+  .slice(0, 5);
+
+// Replace the 58-card gallery with:
+<section>
+  <h2>Featured Projects</h2>
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    {featuredProjects.map(p => <ProjectCard key={p.id} project={p} />)}
+  </div>
+  <Link href="/temples" className="text-primary mt-4 inline-block">
+    View all {allProjects.length} projects →
+  </Link>
+</section>
+```
+
+**Verify:** Homepage scroll height should decrease by ~60%. Count sections — should be 5–6.
+
+---
+
+## Fix 4: Expand Navigation to 6+ Links
+**Severity: HIGH | Effort: 1 hour | Page: Global**
+
+Current nav: Home, Vision 2051, Donate (3 links).
+80% of the site's content is only reachable by scrolling the homepage.
+
+**Update the navigation component:**
+
+```tsx
+const NAV_LINKS = [
+  { label: "Home", href: "/" },
+  { label: "Projects", href: "/temples" },
+  { label: "Vision 2051", href: "/vision2051" },
+  { label: "Intelligence", href: "/intelligence" },
+  { label: "Blog", href: "/blog" },
+  { label: "About", href: "/about" },
+];
+
+// Desktop nav
+<nav className="hidden md:flex items-center gap-6">
+  {NAV_LINKS.map(link => (
+    <Link key={link.href} href={link.href} className="text-sm font-medium hover:text-primary">
+      {link.label}
+    </Link>
+  ))}
+  <Link href="https://www.iskcon.org/donate" className="btn btn-primary">
+    Donate
+  </Link>
+</nav>
+
+// Mobile hamburger menu — same links in a slide-out drawer
+```
+
+Also add a comprehensive footer (see Fix #13).
+
+**Verify:** Nav should show 7 items (6 links + Donate CTA) on desktop.
+
+---
+
+## Fix 5: Fix or Remove Broken Article Links
+**Severity: HIGH | Effort: 30 min (remove) or 4+ hours (build blog) | Page: Homepage**
+
+The homepage shows 6 article cards, but /blog and /articles both return 404. Every click leads to a dead end.
+
+**Option A — Quick fix (remove until ready):**
+```tsx
+// Comment out or conditionally render the articles section
+{BLOG_ENABLED && (
+  <section id="articles">
+    <h2>Knowledge & Insights</h2>
+    {/* ... article cards ... */}
+  </section>
+)}
+```
+
+**Option B — Build the blog (recommended long-term):**
+Create a /blog route with static content for the 6 articles referenced:
+1. "ISKCON Temple Construction: Merging Devotion with Design"
+2. "Temple Donation Tax Exemption: What Every Devotee Should Know"
+3. "Seva Through Prasadam: Feeding the Body, Nourishing the Soul"
+4. "Becoming a Member at ISKCON: Joining a Global Family of Devotees"
+5. "The Experience of Learning Gita Live"
+6. "Vision 2051: 211 ISKCON Temples Across Every State in India"
+
+**Verify:** Click every article card on the homepage — none should lead to a 404.
+
+---
+
+## Fix 6: Hide Admin Controls from Public Users
+**Severity: HIGH | Effort: 1 hour | Page: Project Detail**
+
+The project detail page exposes these admin-only controls to all visitors:
+- "Add" button on the milestone timeline
+- "Post Update" button in field updates
+- "Sync Data" button
+
+```tsx
+// Add authentication check
+import { useAuth } from '@/hooks/useAuth'; // or your auth provider
+
+function ProjectDetail({ project }) {
+  const { user, isAdmin } = useAuth();
+
+  return (
+    <>
+      {/* Timeline */}
+      <MilestoneTimeline milestones={project.milestones}>
+        {isAdmin && (
+          <Button onClick={handleAddMilestone}>Add Milestone</Button>
+        )}
+      </MilestoneTimeline>
+
+      {/* Field Updates */}
+      <FieldUpdates updates={project.updates}>
+        {isAdmin && (
+          <Button onClick={handlePostUpdate}>Post Update</Button>
+        )}
+      </FieldUpdates>
+
+      {/* Hide Sync Data completely from public */}
+      {isAdmin && (
+        <Button variant="outline" onClick={handleSync}>Sync Data</Button>
+      )}
+    </>
+  );
+}
+```
+
+If no auth system exists yet, use an environment variable as a quick gate:
+```tsx
+const IS_ADMIN = process.env.NEXT_PUBLIC_ADMIN_MODE === 'true';
+```
+
+**Verify:** Open /temples/40 in an incognito window — "Add", "Post Update", and "Sync Data" buttons should not be visible.
+
+---
+
+## Fix 7: Hide QR Codes on Desktop — Show Direct Donate Links
+**Severity: MEDIUM | Effort: 30 min | Page: Homepage**
+
+QR codes with "Point your camera to give directly" are shown on desktop screens where users cannot scan their own display.
+
+```tsx
+// Responsive QR code / Donate button swap
+<div className="donation-action">
+  {/* Show QR on mobile/tablet only */}
+  <div className="block md:hidden">
+    <QRCode value={project.donateUrl} size={120} />
+    <p className="text-sm text-muted-foreground mt-2">
+      Point your camera to give directly
+    </p>
+  </div>
+
+  {/* Show direct button on desktop */}
+  <div className="hidden md:block">
+    <Button asChild size="lg">
+      <a href={project.donateUrl} target="_blank" rel="noopener">
+        Donate to {project.shortName}
+      </a>
+    </Button>
+  </div>
+</div>
+```
+
+**Verify:** On desktop (>768px), donation sections should show buttons, not QR codes.
+
+---
+
+## Fix 8: Replace Fake Social Feed with Real Content
+**Severity: MEDIUM | Effort: 2 hours | Page: Homepage**
+
+The "Community Updates / Social Feed" section displays AI-generated posts with fabricated engagement metrics (1900 likes, 1868 likes) and a "Reply" button that does nothing.
+
+**Option A — Real social embeds:**
+```tsx
+// Replace with Twitter/X embeds from real ISKCON accounts
+import { TwitterTweetEmbed } from 'react-twitter-embed';
+
+<section>
+  <h2>Latest from the Community</h2>
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <TwitterTweetEmbed tweetId="1234567890" />
+    <TwitterTweetEmbed tweetId="1234567891" />
+    <TwitterTweetEmbed tweetId="1234567892" />
+  </div>
+</section>
+```
+
+**Option B — Curated update feed (no fake engagement):**
+```tsx
+// Remove likes count and Reply button. Show as news items, not social posts.
+<div className="space-y-4">
+  {updates.map(update => (
+    <div key={update.id} className="border-l-2 border-primary pl-4">
+      <p className="text-sm text-muted-foreground">{update.date}</p>
+      <p className="font-medium">{update.projectName}</p>
+      <p className="text-sm">{update.summary}</p>
+      {/* NO likes count. NO Reply button. */}
+    </div>
+  ))}
+</div>
+```
+
+**Verify:** Social feed should show either real embeds or simple news items — no fake engagement numbers.
+
+---
+
+## Fix 9: Convert Regional Intelligence to Visual Format
+**Severity: MEDIUM | Effort: 1.5 hours | Page: Homepage**
+
+The Regional Intelligence section has 150+ word dense analytical paragraphs that are impossible to scan on a dashboard.
+
+```tsx
+// Replace prose with a visual comparison card layout
+const regions = [
+  { name: "South Asia", projects: 22, capital: "$1070M", funded: "74%", status: "strong" },
+  { name: "Americas", projects: 25, capital: "$43M", funded: "68%", status: "strong" },
+  { name: "Africa", projects: 6, capital: "$14M", funded: "66%", status: "growing" },
+  { name: "Oceania", projects: 5, capital: "$39M", funded: "30%", status: "critical" },
+];
+
+<section>
+  <h2>Regional Intelligence</h2>
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    {regions.map(r => (
+      <div key={r.name} className="p-4 rounded-lg border">
+        <h3 className="font-bold text-lg">{r.name}</h3>
+        <p className="text-3xl font-bold">{r.projects}</p>
+        <p className="text-sm text-muted-foreground">projects</p>
+        <div className="mt-2">
+          <span className="text-sm">{r.capital} portfolio</span>
+          <ProgressBar value={parseInt(r.funded)} />
+        </div>
+      </div>
+    ))}
+  </div>
+  <Link href="/intelligence" className="text-primary text-sm mt-4">
+    Read full analysis →
+  </Link>
+</section>
+```
+
+**Verify:** Regional section should show 4 visual cards, not dense text paragraphs.
+
+---
+
+## Fix 10: Standardise Project Counts (53 vs 58)
+**Severity: MEDIUM | Effort: 30 min | Page: Homepage**
+
+"Total Active Projects: 53" vs "58 sacred projects across 4 regions" appear on the same page.
+
+```tsx
+// Define constants from a single data source
+const totalProjects = projects.length; // 58
+const activeProjects = projects.filter(p => p.status !== 'consecrated').length; // 53 (exc. completed)
+const completedProjects = totalProjects - activeProjects; // 5
+
+// Stat card — be specific
+<StatCard label="Active Projects" value={activeProjects} />
+
+// Map section — use total with qualifier
+<p>Tracking {totalProjects} projects ({activeProjects} active) across 4 regions</p>
+```
+
+**Verify:** All project counts on the homepage should use consistent numbers with clear "active" vs "total" labels.
+
+---
+
+## Fix 11: Fix Duplicate Title Tag on Vision 2051
+**Severity: MEDIUM | Effort: 5 min | Page: Vision 2051**
+
+Browser tab shows: "Vision 2051 — 211 Temples Across India | Build Iskcon | Build Iskcon"
+
+**Find** the page's metadata configuration (Next.js head/metadata):
+
+```tsx
+// BEFORE — site name appended twice
+export const metadata = {
+  title: "Vision 2051 — 211 Temples Across India | Build Iskcon",
+  // + layout.tsx also appends "| Build Iskcon"
+};
+
+// AFTER — use template in layout, override in page
+// layout.tsx:
+export const metadata = {
+  title: {
+    default: "Build Iskcon",
+    template: "%s | Build Iskcon"
+  }
+};
+
+// vision2051/page.tsx:
+export const metadata = {
+  title: "Vision 2051 — 211 Temples Across India" // template adds "| Build Iskcon" once
+};
+```
+
+**Verify:** Browser tab should show exactly: "Vision 2051 — 211 Temples Across India | Build Iskcon"
+
+---
+
+## Fix 12: Add Results Count and Empty State to Filters
+**Severity: MEDIUM | Effort: 30 min | Page: Temples Directory**
+
+After filtering, there's no count showing "X of Y results" and no empty-state message.
+
+```tsx
+const filteredProjects = applyFilters(allProjects, filters);
+
+// Results count
+<p className="text-sm text-muted-foreground mb-4">
+  Showing {filteredProjects.length} of {allProjects.length} projects
+  {activeFilters.length > 0 && (
+    <button onClick={clearFilters} className="ml-2 text-primary underline">
+      Clear filters
+    </button>
+  )}
+</p>
+
+// Empty state
+{filteredProjects.length === 0 && (
+  <div className="text-center py-12">
+    <p className="text-lg font-medium">No projects match your filters</p>
+    <p className="text-muted-foreground mt-1">Try broadening your search or removing some filters.</p>
+    <button onClick={clearFilters} className="btn btn-outline mt-4">
+      Clear all filters
+    </button>
+  </div>
+)}
+```
+
+**Verify:** Apply a filter, see "Showing X of 58 projects". Apply impossible filter combo, see empty state message.
+
+---
+
+## Fix 13: Add Proper Footer Navigation
+**Severity: MEDIUM | Effort: 1 hour | Page: Global**
+
+No consistent footer with essential links exists across the site.
+
+```tsx
+<footer className="border-t bg-muted/30 mt-16">
+  <div className="container mx-auto px-4 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
+    <div>
+      <h4 className="font-bold mb-3">Explore</h4>
+      <nav className="space-y-2 text-sm">
+        <Link href="/temples">All Projects</Link>
+        <Link href="/vision2051">Vision 2051</Link>
+        <Link href="/intelligence">Regional Intelligence</Link>
+        <Link href="/blog">Articles</Link>
+      </nav>
+    </div>
+    <div>
+      <h4 className="font-bold mb-3">Give</h4>
+      <nav className="space-y-2 text-sm">
+        <Link href="/seva">Seva Tiers</Link>
+        <a href="https://www.iskcon.org/donate">Donate Now</a>
+        <a href="https://tovp.org/donate">TOVP Donations</a>
+      </nav>
+    </div>
+    <div>
+      <h4 className="font-bold mb-3">Connect</h4>
+      <nav className="space-y-2 text-sm">
+        <Link href="/about">About Build Iskcon</Link>
+        <Link href="/contact">Contact</Link>
+        <a href="mailto:help@buildiskcon.com">Help Desk</a>
+      </nav>
+    </div>
+    <div>
+      <h4 className="font-bold mb-3">Legal</h4>
+      <nav className="space-y-2 text-sm">
+        <Link href="/privacy">Privacy Policy</Link>
+        <Link href="/terms">Terms of Service</Link>
+      </nav>
+    </div>
+  </div>
+  <div className="border-t py-4 text-center text-xs text-muted-foreground">
+    © 2026 Build Iskcon. Built with devotion for the global ISKCON community.
+  </div>
+</footer>
+```
+
+**Verify:** Every page should show the same footer with working links.
+
+---
+
+## Fix 14: Reduce Homepage Donate CTAs to 2–3
+**Severity: MEDIUM | Effort: 30 min | Page: Homepage**
+
+"Donate Now" appears 6+ times on the homepage without differentiation.
+
+**Keep only:**
+1. **Nav CTA** — persistent "Donate" button in the header (already exists)
+2. **Featured Projects CTA** — project-specific "Support this project" buttons
+3. **Seva Tier section** — the tiered giving structure at the bottom
+
+**Remove** the standalone "Donate Now" buttons in: hero section, TOVP section, "Where Your Seva Is Needed" section (redundant with the seva tiers), and "How to Give" section.
+
+**Verify:** Count instances of "Donate Now" text on homepage — should be ≤ 3.
+
+---
+
+## Fix 15: Deduplicate and Curate Field Updates
+**Severity: MEDIUM | Effort: 1 hour | Page: Project Detail**
+
+The TOVP project page has 6+ nearly identical AI-generated updates from March 26–29, 2026.
+
+```tsx
+// Deduplicate by checking content similarity before displaying
+const deduplicatedUpdates = updates.reduce((acc, update) => {
+  const isDuplicate = acc.some(existing => {
+    const similarity = calculateSimilarity(existing.content, update.content);
+    return similarity > 0.7; // 70% similar = duplicate
+  });
+  if (!isDuplicate) acc.push(update);
+  return acc;
+}, []);
+
+// Limit display to 1 update per week per project
+const weeklyUpdates = deduplicatedUpdates.filter((update, index) => {
+  if (index === 0) return true;
+  const prevDate = new Date(deduplicatedUpdates[index - 1].date);
+  const currDate = new Date(update.date);
+  return (prevDate - currDate) > 7 * 24 * 60 * 60 * 1000; // 7 days
+});
+```
+
+**Verify:** Project detail page should show unique updates only, no repeated content.
+
+---
+
+## Fix 16: Enhance Interactive Map with Tooltips and Click Navigation
+**Severity: LOW | Effort: 2 hours | Page: Homepage**
+
+The map shows pins but lacks hover tooltips, click-to-navigate, or a legend.
+
+```tsx
+// Using Leaflet or Mapbox example:
+<MapContainer>
+  {projects.map(p => (
+    <Marker key={p.id} position={[p.lat, p.lng]}>
+      <Popup>
+        <div>
+          <strong>{p.name}</strong>
+          <p>{p.location} · {p.completion}% complete</p>
+          <Link href={`/temples/${p.id}`}>View Project →</Link>
+        </div>
+      </Popup>
+    </Marker>
+  ))}
+  <Legend items={[
+    { color: "#E67E22", label: "Planning" },
+    { color: "#2E75B6", label: "Construction" },
+    { color: "#006600", label: "Finishing" },
+    { color: "#FFD700", label: "Consecrated" },
+  ]} />
+</MapContainer>
+```
+
+**Verify:** Hover over a map pin → tooltip appears. Click → navigates to project detail.
+
+---
+
+## Fix 17: Add Video Filtering and Pagination
+**Severity: LOW | Effort: 1 hour | Page: Homepage**
+
+YouTube videos section shows 6 items with no filtering or "show more" option.
+
+```tsx
+const [videoFilter, setVideoFilter] = useState('all');
+const [showAll, setShowAll] = useState(false);
+
+const filteredVideos = videos.filter(v =>
+  videoFilter === 'all' || v.projectTag === videoFilter
+);
+const displayedVideos = showAll ? filteredVideos : filteredVideos.slice(0, 3);
+
+<section>
+  <h2>Construction Footage</h2>
+  <select value={videoFilter} onChange={e => setVideoFilter(e.target.value)}>
+    <option value="all">All Projects</option>
+    <option value="tovp">TOVP Mayapur</option>
+    <option value="salem">ISKCON Salem</option>
+    {/* ... */}
+  </select>
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    {displayedVideos.map(v => <VideoCard key={v.id} video={v} />)}
+  </div>
+  {!showAll && filteredVideos.length > 3 && (
+    <button onClick={() => setShowAll(true)}>View All Videos →</button>
+  )}
+</section>
+```
+
+**Verify:** Only 3 videos visible by default. Filter dropdown works. "View All" expands the list.
+
+---
+
+## Fix 18: Standardise Status Labels
+**Severity: LOW | Effort: 45 min | Page: Global**
+
+Inconsistent labels: "Needs Seva", "Support Needed", "Funded 12%", "Critical", "In Progress".
+
+```tsx
+// Define a single status system
+type FundingStatus = 'critical' | 'in_progress' | 'fully_funded';
+type PhaseStatus = 'planning' | 'construction' | 'finishing' | 'consecrated';
+
+function getFundingLabel(percentFunded: number): { label: string; variant: string } {
+  if (percentFunded >= 100) return { label: "Fully Funded", variant: "success" };
+  if (percentFunded < 25) return { label: "Critically Underfunded", variant: "destructive" };
+  return { label: `${percentFunded}% Funded`, variant: "warning" };
+}
+
+// Use consistently across all project cards:
+<Badge variant={getFundingLabel(project.funded).variant}>
+  {getFundingLabel(project.funded).label}
+</Badge>
+<Badge variant="outline">{project.phase}</Badge>
+```
+
+**Verify:** All project cards across homepage and /temples use the same status label format.
+
+---
+
+## Fix 19: Add Loading Skeletons
+**Severity: LOW | Effort: 1 hour | Page: Global**
+
+No loading feedback on a data-heavy dashboard with 58 projects, maps, charts, and YouTube embeds.
+
+```tsx
+// Skeleton component
+function ProjectCardSkeleton() {
+  return (
+    <div className="animate-pulse rounded-lg border p-4">
+      <div className="h-4 bg-muted rounded w-3/4 mb-2" />
+      <div className="h-3 bg-muted rounded w-1/2 mb-4" />
+      <div className="h-2 bg-muted rounded w-full mb-1" />
+      <div className="h-8 bg-muted rounded w-1/3 mt-4" />
+    </div>
+  );
+}
+
+// Use in data fetching:
+{isLoading ? (
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    {Array.from({ length: 6 }).map((_, i) => <ProjectCardSkeleton key={i} />)}
+  </div>
+) : (
+  <ProjectGrid projects={projects} />
+)}
+```
+
+**Verify:** Throttle network in DevTools to "Slow 3G" — skeleton placeholders should appear before real data loads.
+
+---
+
+## Fix 20: Add Currency Toggle for International Donors
+**Severity: LOW | Effort: 1.5 hours | Page: Homepage / Seva Section**
+
+Seva tiers show ₹ with approximate USD but no toggle for GBP, AUD, KES (the target donor regions).
+
+```tsx
+const EXCHANGE_RATES = {
+  INR: 1, USD: 0.012, GBP: 0.0095, AUD: 0.019, KES: 1.55
+};
+const CURRENCY_SYMBOLS = { INR: "₹", USD: "$", GBP: "£", AUD: "A$", KES: "KSh" };
+
+const [currency, setCurrency] = useState(() => {
+  // Auto-detect from locale
+  const locale = navigator.language;
+  if (locale.startsWith('en-US')) return 'USD';
+  if (locale.startsWith('en-GB')) return 'GBP';
+  if (locale.startsWith('en-AU')) return 'AUD';
+  return 'INR';
+});
+
+function formatAmount(inrAmount: number): string {
+  const converted = inrAmount * EXCHANGE_RATES[currency];
+  return `${CURRENCY_SYMBOLS[currency]}${converted.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+}
+
+// Currency selector at top of seva section:
+<div className="flex gap-2 mb-4">
+  {Object.keys(CURRENCY_SYMBOLS).map(cur => (
+    <button
+      key={cur}
+      onClick={() => setCurrency(cur)}
+      className={`px-3 py-1 rounded text-sm ${currency === cur ? 'bg-primary text-white' : 'bg-muted'}`}
+    >
+      {CURRENCY_SYMBOLS[cur]} {cur}
+    </button>
+  ))}
+</div>
+
+// Tier cards:
+<SevaCard title="Brick Donor" amount={formatAmount(1000)} />
+```
+
+**Verify:** Toggle currencies — amounts should update instantly in the user's selected currency.
+
+---
+
+## Quick Reference — All 20 Fixes
+
+| # | Fix | Priority | Effort |
+|---|-----|----------|--------|
+| 1 | Add H1 element to homepage | HIGH | 5 min |
+| 2 | Deduplicate project database | HIGH | 2–3 hrs |
+| 3 | Trim homepage to 5–6 sections | HIGH | 3–4 hrs |
+| 4 | Expand navigation to 6+ links | HIGH | 1 hr |
+| 5 | Fix/remove broken article links | HIGH | 30 min |
+| 6 | Hide admin controls from public | HIGH | 1 hr |
+| 7 | Hide QR codes on desktop | MEDIUM | 30 min |
+| 8 | Replace fake social feed | MEDIUM | 2 hrs |
+| 9 | Visual regional intelligence cards | MEDIUM | 1.5 hrs |
+| 10 | Standardise project counts | MEDIUM | 30 min |
+| 11 | Fix duplicate Vision 2051 title | MEDIUM | 5 min |
+| 12 | Add filter results count + empty state | MEDIUM | 30 min |
+| 13 | Add proper footer navigation | MEDIUM | 1 hr |
+| 14 | Reduce Donate CTAs to 2–3 | MEDIUM | 30 min |
+| 15 | Deduplicate field updates | MEDIUM | 1 hr |
+| 16 | Enhanced map with tooltips | LOW | 2 hrs |
+| 17 | Video filtering + pagination | LOW | 1 hr |
+| 18 | Standardise status labels | LOW | 45 min |
+| 19 | Add loading skeletons | LOW | 1 hr |
+| 20 | Currency toggle for donors | LOW | 1.5 hrs |
+
+**Total estimated effort: ~22 hours**
+
+---
+
+## Verification Checklist
+
+After all fixes:
+
+- [ ] Homepage has exactly 1 H1 element
+- [ ] Each physical temple appears once in the project directory
+- [ ] Homepage has ≤ 6 content sections
+- [ ] Nav has 6+ links (Home, Projects, Vision, Intelligence, Blog, About + Donate CTA)
+- [ ] All article cards link to real pages (not 404)
+- [ ] Admin buttons not visible in incognito/logged-out state
+- [ ] Desktop shows donate buttons, not QR codes
+- [ ] Social feed shows real content, no fake engagement numbers
+- [ ] Regional intel displayed as visual cards, not prose
+- [ ] Project counts are consistent with clear active/total labels
+- [ ] Vision 2051 title tag shows "Build Iskcon" only once
+- [ ] Filters show "Showing X of Y" and have empty state
+- [ ] Footer visible on all pages with legal + navigation links
+- [ ] Homepage has ≤ 3 Donate CTAs
+- [ ] Field updates are deduplicated (1 per week max)
+- [ ] Map pins show tooltips on hover and navigate on click
+- [ ] Videos show 3 by default with filter + "View All"
+- [ ] Status labels use single consistent taxonomy
+- [ ] Skeleton loaders appear on slow connections
+- [ ] Currency toggle works in seva section
+
+---
+
+*Generated from Design Critique Audit — March 30, 2026*
+*Score: 5.8/10 → Target: 8.0+/10 after fixes*
