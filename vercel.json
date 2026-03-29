@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "pnpm --filter @workspace/temple-tracker run build && ls -la artifacts/temple-tracker/dist/ && ls -la && pwd",
+  "buildCommand": "pnpm --filter @workspace/temple-tracker run build; pwd; ls -la; find . -name 'index.html' -not -path '*/node_modules/*' 2>/dev/null",
   "outputDirectory": "public",
   "installCommand": "pnpm install --no-frozen-lockfile",
   "framework": null,
