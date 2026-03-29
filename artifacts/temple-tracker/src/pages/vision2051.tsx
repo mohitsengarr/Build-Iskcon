@@ -473,6 +473,106 @@ const PHASE_COLORS: Record<number, string> = {
 };
 const REGION_LIST = ["All", "North", "South", "East", "West", "Central", "Northeast", "Island"];
 
+// ── Gauge Meter ──────────────────────────────────────────────────────────────
+
+interface GaugeProps {
+  title: string;
+  subtitle: string;
+  goal: number;
+  raised: number;
+  max: number;
+}
+
+function formatAmount(n: number): string {
+  if (n >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(1)}B`;
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`;
+  return `$${n.toLocaleString()}`;
+}
+
+function GaugeMeter({ title, subtitle, goal, raised, max }: GaugeProps) {
+  const pct = Math.min(raised / max, 1);
+  const startAngle = -210;
+  const endAngle = 30;
+  const sweep = endAngle - startAngle;
+  const needleAngle = startAngle + pct * sweep;
+  const r = 80;
+  const cx = 100;
+  const cy = 100;
+
+  const arcSegments = [
+    { frac: 0.33, color: "#B54D1A" },
+    { frac: 0.33, color: "#D4872E" },
+    { frac: 0.34, color: "#8B9A3C" },
+  ];
+
+  function polarToCartesian(angle: number) {
+    const rad = (angle * Math.PI) / 180;
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  }
+
+  function arcPath(start: number, end: number) {
+    const s = polarToCartesian(start);
+    const e = polarToCartesian(end);
+    const largeArc = end - start > 180 ? 1 : 0;
+    return `M ${s.x} ${s.y} A ${r} ${r} 0 ${largeArc} 1 ${e.x} ${e.y}`;
+  }
+
+  let segStart = startAngle;
+  const segments = arcSegments.map((seg) => {
+    const segEnd = segStart + seg.frac * sweep;
+    const path = arcPath(segStart, segEnd);
+    segStart = segEnd;
+    return { path, color: seg.color };
+  });
+
+  const ticks = 8;
+  const tickLines = Array.from({ length: ticks + 1 }, (_, i) => {
+    const angle = startAngle + (i / ticks) * sweep;
+    const inner = polarToCartesian(angle);
+    const outerR = r + 8;
+    const rad = (angle * Math.PI) / 180;
+    const outer = { x: cx + outerR * Math.cos(rad), y: cy + outerR * Math.sin(rad) };
+    const labelR = r + 18;
+    const labelPos = { x: cx + labelR * Math.cos(rad), y: cy + labelR * Math.sin(rad) };
+    const val = Math.round((i / ticks) * max);
+    return { inner, outer, labelPos, val };
+  });
+
+  const needleTip = polarToCartesian(needleAngle);
+  const needleRad = (needleAngle * Math.PI) / 180;
+  const bw = 4;
+  const baseL = { x: cx + bw * Math.cos(needleRad + Math.PI / 2), y: cy + bw * Math.sin(needleRad + Math.PI / 2) };
+  const baseR = { x: cx + bw * Math.cos(needleRad - Math.PI / 2), y: cy + bw * Math.sin(needleRad - Math.PI / 2) };
+
+  return (
+    <div className="flex flex-col items-center">
+      <h3 className="font-serif text-lg sm:text-xl font-black text-on-surface text-center">{title}</h3>
+      <p className="text-xs text-on-surface-variant text-center mb-2">{subtitle}: {formatAmount(goal)}</p>
+      <svg viewBox="0 0 200 130" className="w-full max-w-[220px]">
+        {segments.map((seg, i) => (
+          <path key={i} d={seg.path} fill="none" stroke={seg.color} strokeWidth="14" strokeLinecap="butt" opacity="0.85" />
+        ))}
+        {tickLines.map((t, i) => (
+          <g key={i}>
+            <line x1={t.inner.x} y1={t.inner.y} x2={t.outer.x} y2={t.outer.y} stroke="#6B5344" strokeWidth="1" opacity="0.3" />
+            <text x={t.labelPos.x} y={t.labelPos.y} textAnchor="middle" dominantBaseline="middle" fill="#6B5344" fontSize="6" fontWeight="600" opacity="0.5">
+              {formatAmount(t.val)}
+            </text>
+          </g>
+        ))}
+        <polygon points={`${needleTip.x},${needleTip.y} ${baseL.x},${baseL.y} ${baseR.x},${baseR.y}`} fill="#3D2B1F" />
+        <circle cx={cx} cy={cy} r="6" fill="#3D2B1F" />
+        <circle cx={cx} cy={cy} r="3" fill="#FFFBF5" />
+      </svg>
+      <p className="font-black text-2xl sm:text-3xl text-primary mt-1 font-serif">{formatAmount(raised)}</p>
+      <p className="text-[10px] text-on-surface-variant uppercase tracking-widest font-bold mt-0.5">
+        {Math.round((raised / goal) * 100)}% of goal
+      </p>
+    </div>
+  );
+}
+
 // ── Components ────────────────────────────────────────────────────────────────
 
 function StateCard({ entry }: { entry: StateEntry }) {
@@ -644,6 +744,50 @@ export default function Vision2051() {
             ))}
           </motion.div>
         </div>
+      </div>
+
+      {/* ── Fundraising Gauges ── */}
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-8 pt-16 pb-4">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          {...viewportOnce}
+        >
+          <motion.div variants={fadeInUp} className="text-center mb-10">
+            <h2 className="font-serif text-3xl font-black text-on-surface mb-2">Fundraising Progress</h2>
+            <p className="text-on-surface-variant max-w-2xl mx-auto">Tracking the financial fuel behind the 211-temple mission — from this year to the full vision.</p>
+          </motion.div>
+          <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <motion.div variants={fadeInUp} className="bg-surface-container rounded-2xl border border-on-surface-variant/10 p-6 sm:p-8">
+              <GaugeMeter
+                title="Year 2026"
+                subtitle="Yearly goal"
+                goal={10_000_000}
+                raised={1_818_398}
+                max={12_000_000}
+              />
+            </motion.div>
+            <motion.div variants={fadeInUp} className="bg-surface-container rounded-2xl border border-on-surface-variant/10 p-6 sm:p-8">
+              <GaugeMeter
+                title="Phase 1 · 2026–2031"
+                subtitle="5-year goal"
+                goal={35_000_000}
+                raised={25_393_577}
+                max={40_000_000}
+              />
+            </motion.div>
+            <motion.div variants={fadeInUp} className="bg-surface-container rounded-2xl border border-on-surface-variant/10 p-6 sm:p-8">
+              <GaugeMeter
+                title="Full Vision · 2051"
+                subtitle="Lifetime goal"
+                goal={1_000_000_000}
+                raised={72_000_000}
+                max={1_200_000_000}
+              />
+            </motion.div>
+          </motion.div>
+        </motion.div>
       </div>
 
       {/* ── Phase Overview ── */}
