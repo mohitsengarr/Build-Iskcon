@@ -5,9 +5,8 @@ import { SEOHead } from "@/components/SEOHead";
 import { fadeInUp, staggerContainer, viewportOnce } from "@/lib/animations";
 import { Link } from "wouter";
 import {
-  MapPin, Target, Building2, Globe, ChevronDown, ChevronUp,
-  Flame, CheckCircle2, Clock, Star, Heart, Rocket, TrendingUp,
-  Zap, Calendar, Sunrise, LayoutGrid, List
+  MapPin, Building2, Globe, ChevronDown, ChevronUp,
+  Flame, CheckCircle2, Clock, Star, Heart, Calendar,
 } from "lucide-react";
 
 // ── Data ──────────────────────────────────────────────────────────────────────
@@ -595,23 +594,33 @@ export default function Vision2051() {
             initial="hidden"
             animate="visible"
           >
-            <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full mb-6">
-              <Flame className="w-3.5 h-3.5" />
-              Srila Prabhupada's Dream
-            </motion.div>
-            <motion.h1 variants={fadeInUp} className="font-serif text-5xl sm:text-6xl md:text-7xl font-black text-primary mb-6 leading-none">
-              Vision 2051
+            <motion.h1 variants={fadeInUp} className="font-serif text-4xl sm:text-5xl md:text-6xl font-black text-on-surface mb-4 leading-tight">
+              211 Temples Across India<br /><span className="text-primary">by 2051</span>
             </motion.h1>
-            <motion.div variants={fadeInUp} className="bg-primary/8 rounded-2xl px-6 py-4 max-w-2xl mx-auto mb-4">
-              <p className="text-2xl sm:text-3xl font-serif font-black text-primary text-center">211 ISKCON Temples</p>
-              <p className="text-sm text-on-surface-variant text-center mt-1">across every state and Union Territory of India</p>
+            <motion.p variants={fadeInUp} className="text-lg sm:text-xl text-on-surface-variant max-w-3xl mx-auto leading-relaxed mb-5">
+              A plan to bring ISKCON to every major city in all {TOTAL_STATES} states and Union Territories — at least 7 cities per state, by ISKCON's centenary year.
+            </motion.p>
+            <motion.figure variants={fadeInUp} className="max-w-md mx-auto border-l-2 border-primary/40 pl-4 mb-6 text-left">
+              <blockquote className="font-serif text-base italic text-on-surface/80 leading-snug">
+                "A temple in every town and village."
+              </blockquote>
+              <figcaption className="text-[10px] font-semibold uppercase tracking-widest text-on-surface-variant/60 mt-1.5">
+                — Srila Prabhupada
+              </figcaption>
+            </motion.figure>
+            <motion.div variants={fadeInUp} className="flex flex-wrap gap-3 justify-center">
+              <Link href="/temples" className="bg-primary text-on-primary px-8 py-3 rounded-xl font-bold text-sm tracking-wide shadow-lg hover:bg-primary/90 transition-all active:scale-95">
+                Choose a Project
+              </Link>
+              <a
+                href="https://www.iskcon.org/donate"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border-2 border-primary/40 text-primary px-8 py-3 rounded-xl font-bold text-sm tracking-wide hover:bg-primary/5 transition-all active:scale-95"
+              >
+                Donate Now
+              </a>
             </motion.div>
-            <motion.p variants={fadeInUp} className="text-lg sm:text-xl text-on-surface-variant max-w-3xl mx-auto leading-relaxed mb-4">
-              At least 7 major cities per state — by the centenary of ISKCON's founding.
-            </motion.p>
-            <motion.p variants={fadeInUp} className="text-sm text-on-surface-variant italic" style={{ color: "#5C4813" }}>
-              "A temple in every town and village." — Srila Prabhupada
-            </motion.p>
           </motion.div>
 
           {/* ── Stats Row ── */}
@@ -635,158 +644,6 @@ export default function Vision2051() {
             ))}
           </motion.div>
         </div>
-      </div>
-
-      {/* ── Strategic Roadmap ── */}
-      <div className="max-w-screen-xl mx-auto px-4 sm:px-8 py-16">
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          {...viewportOnce}
-          className="mb-16"
-        >
-          <motion.div variants={fadeInUp} className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full mb-4">
-              <Rocket className="w-3.5 h-3.5" />
-              Strategic Roadmap
-            </div>
-            <h2 className="font-serif text-3xl sm:text-4xl font-black text-on-surface mb-3">The Mission Engine</h2>
-            <p className="text-on-surface-variant max-w-2xl mx-auto leading-relaxed">
-              A systematic framework where every career milestone and financial achievement directly accelerates temple construction — work as <em className="text-primary font-semibold">yagya</em> for Krishna.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <motion.div variants={fadeInUp} className="relative bg-white rounded-2xl border-t-4 border-t-primary border border-on-surface-variant/10 p-7 overflow-hidden">
-              <div className="absolute top-4 right-4 text-primary/5">
-                <Sunrise className="w-20 h-20" />
-              </div>
-              <div className="relative z-10">
-                <span className="text-xs font-bold uppercase tracking-widest text-primary mb-3 block">Short-Term · 2026</span>
-                <h3 className="font-serif text-xl font-black text-on-surface mb-5">Foundation Year</h3>
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-start gap-3">
-                    <Building2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-bold text-on-surface leading-relaxed">10 ISKCON Temples</p>
-                      <p className="text-xs text-on-surface-variant/60 leading-relaxed">Break ground on first wave of new temple projects</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <TrendingUp className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-bold text-on-surface leading-relaxed">10 Endowment Properties</p>
-                      <p className="text-xs text-on-surface-variant/60 leading-relaxed">Sustainable income stream for temple maintenance</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Zap className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-bold text-on-surface leading-relaxed">Funding Goal: $10M</p>
-                      <p className="text-xs text-on-surface-variant/60 leading-relaxed">Fuel the mission through professional excellence and seva</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div variants={fadeInUp} className="relative bg-white rounded-2xl border-t-4 border-t-primary border border-on-surface-variant/10 p-7 overflow-hidden">
-              <div className="absolute top-4 right-4 text-primary/5">
-                <TrendingUp className="w-20 h-20" />
-              </div>
-              <div className="relative z-10">
-                <span className="text-xs font-bold uppercase tracking-widest text-primary mb-3 block">Mid-Term · 2028</span>
-                <h3 className="font-serif text-xl font-black text-on-surface mb-5">Acceleration Phase</h3>
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-start gap-3">
-                    <Building2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-bold text-on-surface leading-relaxed">100 ISKCON Temples</p>
-                      <p className="text-xs text-on-surface-variant/60 leading-relaxed">Establish presence across major Indian cities</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <TrendingUp className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-bold text-on-surface leading-relaxed">100 Endowment Properties</p>
-                      <p className="text-xs text-on-surface-variant/60 leading-relaxed">Self-sustaining portfolio funding temple operations</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Zap className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-bold text-on-surface leading-relaxed">Funding Goal: $100M</p>
-                      <p className="text-xs text-on-surface-variant/60 leading-relaxed">Proving work-as-worship at scale for Krishna's mission</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div variants={fadeInUp} className="relative bg-white rounded-2xl border-t-4 border-t-primary border border-on-surface-variant/10 p-7 overflow-hidden">
-              <div className="absolute top-4 right-4 text-primary/5">
-                <Rocket className="w-20 h-20" />
-              </div>
-              <div className="relative z-10">
-                <span className="text-xs font-bold uppercase tracking-widest text-primary mb-3 block">Lifetime · Vision 2051</span>
-                <h3 className="font-serif text-xl font-black text-on-surface mb-5">The Grand Vision</h3>
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-start gap-3">
-                    <Building2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-bold text-on-surface leading-relaxed">231 Temples / Year</p>
-                      <p className="text-xs text-on-surface-variant/60 leading-relaxed">A temple in every town and village — Mahaprabhu's prophecy fulfilled</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <TrendingUp className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-bold text-on-surface leading-relaxed">10,000 Endowment Units / Year</p>
-                      <p className="text-xs text-on-surface-variant/60 leading-relaxed">Endowment-scale asset base sustaining temples forever</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Zap className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-bold text-on-surface leading-relaxed">Funding Goal: $1B</p>
-                      <p className="text-xs text-on-surface-variant/60 leading-relaxed">All results of work offered as seva to Krishna's mission</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-
-          <motion.div variants={fadeInUp} className="bg-gradient-to-r from-primary/8 to-secondary/5 rounded-2xl border border-primary/15 p-8 text-center">
-            <div className="inline-flex items-center gap-2 text-primary mb-3">
-              <Flame className="w-5 h-5" />
-              <span className="text-xs font-bold uppercase tracking-widest">Daily Operating Principle</span>
-            </div>
-            <p className="font-serif text-xl sm:text-2xl font-bold text-on-surface mb-2 leading-relaxed">
-              Work like <span className="text-primary" title="Sacred offering or act of service">yagya</span> <span className="text-on-surface-variant text-base font-normal">(sacred offering)</span> for Krishna — offering all results to Him.
-            </p>
-            <p className="text-on-surface-variant max-w-xl mx-auto text-sm leading-relaxed">
-              We attract <strong className="text-on-surface">mission-aligned partners</strong> and <strong className="text-on-surface">devoted supporters</strong> every day. Every professional success becomes fuel for temple construction worldwide.
-            </p>
-          </motion.div>
-        </motion.div>
-
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          {...viewportOnce}
-          className="mb-6 text-center"
-        >
-          <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full mb-4">
-            <Calendar className="w-3.5 h-3.5" />
-            ISKCON's Seven Purposes
-          </motion.div>
-          <motion.p variants={fadeInUp} className="text-on-surface-variant max-w-2xl mx-auto leading-relaxed mb-12">
-            Every goal anchored in Srila Prabhupada's founding vision — spreading spiritual knowledge, establishing holy places, and creating communities centred on Krishna consciousness.
-          </motion.p>
-        </motion.div>
       </div>
 
       {/* ── Phase Overview ── */}
