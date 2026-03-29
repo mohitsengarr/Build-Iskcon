@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "pnpm --filter @workspace/temple-tracker run build",
-  "outputDirectory": "artifacts/temple-tracker/dist/public",
+  "buildCommand": "pnpm --filter @workspace/temple-tracker run build && cp -r artifacts/temple-tracker/dist/public dist",
+  "outputDirectory": "dist",
   "installCommand": "pnpm install --no-frozen-lockfile",
   "framework": null,
   "functions": {
