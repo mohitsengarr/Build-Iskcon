@@ -1,10 +1,26 @@
-import { Router, type IRouter } from "express";
+// ── Static temple project data (no API needed) ─────────────────────────────
 
-const router: IRouter = Router();
+export interface Temple {
+  id: number;
+  name: string;
+  location: string;
+  deity: string;
+  description: string;
+  status: string;
+  phase: string;
+  constructionProgress: number;
+  fundraisingGoal: number;
+  fundraisingRaised: number;
+  startDate: string;
+  expectedCompletion: string;
+  projectLead: string;
+  coverImage: string | null;
+  donateUrl: string | null;
+  latitude: number | null;
+  longitude: number | null;
+}
 
-// ── Static temple data (no database needed) ──────────────────────────────────
-
-const TEMPLES = [
+export const TEMPLES: Temple[] = [
   {
     id: 1, name: "Temple of the Vedic Planetarium (TOVP)", location: "Mayapur, West Bengal, India",
     deity: "Sri Sri Radha Madhava", description: "Srila Prabhupada's most cherished project — one of the largest religious structures being built globally. The TOVP will house a Vedic planetarium demonstrating the cosmology described in the Srimad-Bhagavatam.",
@@ -151,73 +167,20 @@ const TEMPLES = [
   },
 ];
 
-const now = new Date().toISOString();
-
-function toResponse(t: typeof TEMPLES[number]) {
-  return {
-    ...t,
-    fundraisingProgress: t.fundraisingGoal > 0 ? (t.fundraisingRaised / t.fundraisingGoal) * 100 : 0,
-    createdAt: now,
-    updatedAt: now,
-  };
+// Pre-computed stats
+const activeStatuses = ["planning", "construction", "finishing"];
+const active = TEMPLES.filter((t) => activeStatuses.includes(t.status));
+const templesByStatus: Record<string, number> = {};
+for (const t of TEMPLES) {
+  templesByStatus[t.status] = (templesByStatus[t.status] || 0) + 1;
 }
 
-// ── Routes ───────────────────────────────────────────────────────────────────
-
-router.get("/stats", (_req, res) => {
-  const activeStatuses = ["planning", "construction", "finishing"];
-  const active = TEMPLES.filter((t) => activeStatuses.includes(t.status));
-
-  const templesByStatus: Record<string, number> = {};
-  for (const t of TEMPLES) {
-    templesByStatus[t.status] = (templesByStatus[t.status] || 0) + 1;
-  }
-
-  const totalGoal = TEMPLES.reduce((s, t) => s + t.fundraisingGoal, 0);
-  const totalRaised = TEMPLES.reduce((s, t) => s + t.fundraisingRaised, 0);
-  const avgProgress = Math.round(TEMPLES.reduce((s, t) => s + t.constructionProgress, 0) / TEMPLES.length);
-
-  res.json({
-    totalTemples: TEMPLES.length,
-    activeProjects: active.length,
-    totalFundraisingGoal: totalGoal,
-    totalFundraisingRaised: totalRaised,
-    averageProgress: avgProgress,
-    completedMilestones: 24,
-    upcomingMilestones: 18,
-    recentUpdates: [],
-    templesByStatus,
-  });
-});
-
-router.get("/temples", (_req, res) => {
-  res.json(TEMPLES.map(toResponse));
-});
-
-router.post("/temples", (req, res) => {
-  res.status(201).json({ ...req.body, id: TEMPLES.length + 1, createdAt: now, updatedAt: now });
-});
-
-router.get("/temples/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-  const temple = TEMPLES.find((t) => t.id === id);
-  if (!temple) { res.status(404).json({ error: "Temple not found" }); return; }
-  res.json({ ...toResponse(temple), milestones: [], updates: [], contributors: [] });
-});
-
-router.put("/temples/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-  const temple = TEMPLES.find((t) => t.id === id);
-  if (!temple) { res.status(404).json({ error: "Temple not found" }); return; }
-  res.json({ ...toResponse(temple), ...req.body, updatedAt: new Date().toISOString() });
-});
-
-router.get("/temples/:id/milestones", (_req, res) => { res.json([]); });
-router.post("/temples/:id/milestones", (req, res) => { res.status(201).json({ ...req.body, id: 1, createdAt: now }); });
-router.put("/milestones/:id", (req, res) => { res.json({ ...req.body, id: parseInt(req.params.id) }); });
-router.get("/temples/:id/updates", (_req, res) => { res.json([]); });
-router.post("/temples/:id/updates", (req, res) => { res.status(201).json({ ...req.body, id: 1, createdAt: now }); });
-router.get("/temples/:id/contributors", (_req, res) => { res.json([]); });
-router.post("/temples/:id/contributors", (req, res) => { res.status(201).json({ ...req.body, id: 1, createdAt: now }); });
-
-export default router;
+export const TEMPLE_STATS = {
+  totalTemples: TEMPLES.length,
+  activeProjects: active.length,
+  totalFundraisingGoal: TEMPLES.reduce((s, t) => s + t.fundraisingGoal, 0),
+  totalFundraisingRaised: TEMPLES.reduce((s, t) => s + t.fundraisingRaised, 0),
+  averageProgress: Math.round(TEMPLES.reduce((s, t) => s + t.constructionProgress, 0) / TEMPLES.length),
+  templesByStatus,
+  recentUpdates: [] as unknown[],
+};

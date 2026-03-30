@@ -1,12 +1,27 @@
+# Build Iskcon — Global Temple Construction Intelligence
+# https://buildiskcon.com
+
 User-agent: *
 Allow: /
+Disallow: /api/
 
-# Primary pages
-Allow: /temples
-Allow: /regional
-Allow: /social
+# AI Crawler Access — explicitly allowed for AEO
+User-agent: GPTBot
+Allow: /
 
-# Block admin/creation forms from indexing
-Disallow: /temples/new
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
 
 Sitemap: https://buildiskcon.com/sitemap.xml

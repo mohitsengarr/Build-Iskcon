@@ -50,7 +50,7 @@ export default defineConfig({
           // React core
           "vendor-react": ["react", "react-dom"],
           // Routing + query
-          "vendor-query": ["@tanstack/react-query", "wouter"],
+          "vendor-query": ["@tanstack/react-query"],
           // Animation
           "vendor-motion": ["framer-motion"],
           // Charts

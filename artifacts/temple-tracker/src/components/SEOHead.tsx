@@ -1,10 +1,11 @@
 import { Helmet } from "react-helmet-async";
 
 const SITE_NAME = "Build Iskcon";
+const SITE_TAGLINE = "Global Temple Construction Intelligence";
 const DEFAULT_DESCRIPTION =
-  "Track ISKCON's global temple construction projects, fundraising milestones, and sacred mission to fulfil Chaitanya Mahaprabhu's prophecy — town by town, continent by continent.";
-const BASE_URL = typeof window !== "undefined" ? window.location.origin : "";
-const OG_IMAGE = `${BASE_URL}/opengraph.jpg`;
+  "Build Iskcon tracks 16 active ISKCON temple construction projects across 11 countries with $338M in fundraising goals. Explore 84 centres in 10 regions, donate directly, and discover the Vision 2051 roadmap for 211 temples across India.";
+const CANONICAL_DOMAIN = "https://buildiskcon.com";
+const OG_IMAGE = `${CANONICAL_DOMAIN}/opengraph.jpg`;
 
 interface SEOHeadProps {
   title?: string;
@@ -21,12 +22,12 @@ export function SEOHead({
   description = DEFAULT_DESCRIPTION,
   ogImage = OG_IMAGE,
   ogType = "website",
-  canonicalPath,
+  canonicalPath = "/",
   noindex = false,
   structuredData,
 }: SEOHeadProps) {
-  const fullTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
-  const canonicalUrl = canonicalPath ? `${BASE_URL}${canonicalPath}` : undefined;
+  const fullTitle = title ? `${title} | ${SITE_NAME} — ${SITE_TAGLINE}` : `${SITE_NAME} — ${SITE_TAGLINE}`;
+  const canonicalUrl = `${CANONICAL_DOMAIN}${canonicalPath}`;
 
   const structuredDataArray = structuredData
     ? Array.isArray(structuredData)
@@ -37,10 +38,15 @@ export function SEOHead({
   return (
     <Helmet>
       {/* Primary */}
+      <html lang="en" />
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
       {noindex && <meta name="robots" content="noindex, nofollow" />}
-      {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+      <link rel="canonical" href={canonicalUrl} />
+
+      {/* Language */}
+      <link rel="alternate" hrefLang="en" href={canonicalUrl} />
+      <link rel="alternate" hrefLang="x-default" href={canonicalUrl} />
 
       {/* Open Graph */}
       <meta property="og:site_name" content={SITE_NAME} />
@@ -50,13 +56,20 @@ export function SEOHead({
       <meta property="og:image" content={ogImage} />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
-      {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+      <meta property="og:image:alt" content="Build Iskcon — Track ISKCON temple construction projects worldwide" />
+      <meta property="og:url" content={canonicalUrl} />
+      <meta property="og:locale" content="en_US" />
 
       {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImage} />
+
+      {/* Additional SEO */}
+      <meta name="theme-color" content="#A0612B" />
+      <meta name="author" content="Build Iskcon" />
+      <meta name="keywords" content="ISKCON temple construction, ISKCON donate, TOVP Mayapur, ISKCON temple projects, Hare Krishna temple, Vision 2051, ISKCON fundraising, build temple, Krishna consciousness, Srila Prabhupada" />
 
       {/* Structured Data */}
       {structuredDataArray.map((schema, i) => (
