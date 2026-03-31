@@ -11,6 +11,7 @@ const NAV_ITEMS: { href: string; label: string; isPage?: boolean }[] = [
   { href: "#directory", label: "Directory" },
   { href: "#vision", label: "Vision 2051" },
   { href: "/how-to-build-temple", label: "How to Build", isPage: true },
+  { href: "/krishna-janmabhoomi", label: "Janmabhoomi", isPage: true },
   { href: "#faq", label: "FAQ" },
 ];
 
@@ -145,6 +146,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <a href="#about" onClick={(e) => { e.preventDefault(); scrollTo("#about"); }} className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">About ISKCON</a>
             <a href="#vision" onClick={(e) => { e.preventDefault(); scrollTo("#vision"); }} className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Vision 2051</a>
             <a href="/how-to-build-temple" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">How to Build</a>
+            <a href="/krishna-janmabhoomi" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Krishna Janmabhoomi</a>
           </div>
           <div className="flex flex-col gap-3">
             <span className="font-sans text-[10px] uppercase tracking-[0.15em] font-bold text-primary mb-1">Give</span>
