@@ -20,10 +20,10 @@ import { TEMPLES, TEMPLE_STATS } from "@/data/temples";
 const CANONICAL_DOMAIN = "https://buildiskcon.com";
 
 const STATUS_CFG: Record<string, { color: string; bg: string; label: string }> = {
-  planning:     { color: "#C49A6C", bg: "rgba(196,154,108,0.10)", label: "Planning" },
-  construction: { color: "#D4872E", bg: "rgba(212,135,46,0.10)", label: "Construction" },
-  finishing:    { color: "#9B6B2F", bg: "rgba(155,107,47,0.10)", label: "Finishing" },
-  consecrated:  { color: "#6B8F3C", bg: "rgba(107,143,60,0.12)", label: "Consecrated" },
+  planning:     { color: "#1565C0", bg: "rgba(21,101,192,0.10)", label: "Planning" },
+  construction: { color: "#E65100", bg: "rgba(230,81,0,0.10)", label: "Construction" },
+  finishing:    { color: "#F9A825", bg: "rgba(249,168,37,0.10)", label: "Finishing" },
+  consecrated:  { color: "#2E7D32", bg: "rgba(46,125,50,0.12)", label: "Consecrated" },
 };
 
 const stats = TEMPLE_STATS;
@@ -135,7 +135,7 @@ function HeroSection() {
               </button>
             </a>
             <a href="#projects" onClick={(e) => { e.preventDefault(); document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" }); }}>
-              <button className="border-2 border-primary/40 text-primary px-8 py-3.5 rounded-xl font-bold text-sm tracking-wide hover:bg-primary/5 transition-all active:scale-95 text-center w-full sm:w-auto cursor-pointer flex items-center gap-2">
+              <button className="border-2 border-[#5C4033] text-[#5C4033] px-8 py-3.5 rounded-xl font-bold text-sm tracking-wide hover:bg-[#5C4033]/5 transition-all active:scale-95 text-center w-full sm:w-auto cursor-pointer flex items-center gap-2">
                 Explore All 16 Projects <ArrowRight className="w-4 h-4" />
               </button>
             </a>
@@ -144,7 +144,7 @@ function HeroSection() {
       </div>
 
       {/* TOVP Countdown — integrated directly below hero, no gap */}
-      <div className="relative overflow-hidden rounded-b-xl px-6 sm:px-10 py-6 flex flex-col sm:flex-row items-center justify-between gap-5" style={{ background: "linear-gradient(135deg, #7A4520 0%, #A0612B 50%, #8B5E2F 100%)" }}>
+      <div className="relative overflow-hidden rounded-b-xl px-6 sm:px-10 py-6 flex flex-col sm:flex-row items-center justify-between gap-5" style={{ background: "linear-gradient(135deg, #2C1810 0%, #4A2E12 50%, #3D2212 100%)" }}>
         <div className="relative z-10 flex-1">
           <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-on-primary/70 mb-1">Grand Opening · November 2, 2027</p>
           <h2 className="font-serif text-xl sm:text-2xl font-bold leading-tight">TOVP Mayapur — 78% Complete, ${TOVP_NEEDED}M Still Needed</h2>
@@ -175,9 +175,9 @@ function KeyMetrics() {
     <motion.section aria-label="Key Statistics" className="key-stats grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={viewportOnce}>
       {[
         { icon: <Building2 className="w-5 h-5" />, label: "Temples Under Construction", value: stats.activeProjects, tag: "Active", tagColor: "text-primary" },
-        { icon: <IndianRupee className="w-5 h-5" />, label: "Still Needed to Finish All", value: `$${(totalNeeded / 1_000_000).toFixed(0)}M`, tag: "Urgent", tagColor: "text-red-600" },
+        { icon: <IndianRupee className="w-5 h-5" />, label: "Still Needed to Finish All", value: `$${(totalNeeded / 1_000_000).toFixed(0)}M`, tag: "Urgent", tagColor: "text-[#C62828]" },
         { icon: <ChartBar className="w-5 h-5" />, label: "Average Progress", value: `${stats.averageProgress}%`, tag: "Growing", tagColor: "text-tertiary" },
-        { icon: <CheckCircle2 className="w-5 h-5" />, label: "Nearly Complete", value: stats.templesByStatus?.finishing || 0, tag: "Almost There", tagColor: "text-green-700" },
+        { icon: <CheckCircle2 className="w-5 h-5" />, label: "Nearly Complete", value: stats.templesByStatus?.finishing || 0, tag: "Almost There", tagColor: "text-[#2E7D32]" },
       ].map((item) => (
         <motion.div key={item.label} variants={fadeInUp} className="bg-surface-container p-5 sm:p-6 rounded-xl transition-all hover:bg-surface-container-high">
           <div className="flex items-center justify-between mb-3 sm:mb-4">
@@ -235,7 +235,7 @@ function FeaturedProject() {
 
   return (
     <motion.section aria-label="Featured Project" variants={fadeInUp} initial="hidden" whileInView="visible" viewport={viewportOnce}>
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#2D1810] via-[#4A2E12] to-[#3D2212] text-white p-6 sm:p-10">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#2C1810] via-[#3D2212] to-[#2C1810] text-white p-6 sm:p-10">
         <div className="absolute top-0 right-0 w-72 h-72 bg-primary/15 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 grid md:grid-cols-[1fr_auto] gap-8 items-center">
           <div className="space-y-4">
@@ -253,7 +253,7 @@ function FeaturedProject() {
                 <span className="text-primary">{pct}% — ${gap}M still needed</span>
               </div>
               <div className="h-3 w-full bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-primary to-amber-400 rounded-full" style={{ width: `${pct}%` }} />
+                <div className="h-full bg-gradient-to-r from-[#B8860B] to-[#D4A017] rounded-full" style={{ width: `${pct}%` }} />
               </div>
             </div>
             <div className="flex flex-wrap gap-3 pt-2">
@@ -326,11 +326,14 @@ function TempleProjectsSection() {
             </tr>
           </thead>
           <tbody>
-            {temples.map((t) => {
+            {temples.map((t, idx) => {
               const pct = t.fundraisingGoal > 0 ? Math.round((t.fundraisingRaised / t.fundraisingGoal) * 100) : 0;
               const gap = Math.max(0, (t.fundraisingGoal - t.fundraisingRaised) / 1_000_000).toFixed(1);
+              const pctColor = pct >= 90 ? "#2E7D32" : pct >= 70 ? "#F9A825" : pct >= 30 ? "#F57F17" : "#C62828";
+              const needColor = parseFloat(gap) > 10 ? "#C62828" : "inherit";
+              const rowBg = idx % 2 === 0 ? "bg-surface-container-low/30" : "";
               return (
-                <tr key={t.id} className="border-b border-outline-variant/10 hover:bg-surface-container-low/50 transition-colors">
+                <tr key={t.id} className={`border-b border-outline-variant/10 hover:bg-surface-container-low/50 transition-colors ${rowBg}`}>
                   <td className="py-3 pr-4 font-semibold text-on-surface text-xs sm:text-sm">{t.name}</td>
                   <td className="py-3 pr-4 text-on-surface-variant hidden sm:table-cell">{t.location}</td>
                   <td className="py-3 pr-4">
@@ -339,10 +342,10 @@ function TempleProjectsSection() {
                       <span className="capitalize">{t.status}</span>
                     </span>
                   </td>
-                  <td className="py-3 pr-4 text-right font-bold text-primary text-xs sm:text-sm">{pct}%</td>
-                  <td className="py-3 pr-4 text-right text-on-surface-variant hidden sm:table-cell">${gap}M</td>
+                  <td className="py-3 pr-4 text-right font-bold text-xs sm:text-sm" style={{ color: pctColor }}>{pct}%</td>
+                  <td className="py-3 pr-4 text-right hidden sm:table-cell font-medium" style={{ color: needColor }}>${gap}M</td>
                   <td className="py-3 text-center">
-                    <a href={t.donateUrl || "https://www.iskcon.org/donate"} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:text-primary/80 transition-colors">
+                    <a href={t.donateUrl || "https://www.iskcon.org/donate"} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-on-primary bg-primary hover:bg-primary/90 px-3 py-1.5 rounded-full transition-colors">
                       <Heart className="w-3 h-3" /> Give
                     </a>
                   </td>
@@ -385,10 +388,10 @@ function TempleProjectsSection() {
                   <div>
                     <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest mb-1.5">
                       <span className="text-on-surface-variant">Funded</span>
-                      <span className="text-primary">{pct}%</span>
+                      <span style={{ color: pct >= 90 ? "#2E7D32" : pct >= 70 ? "#F9A825" : pct >= 30 ? "#F57F17" : "#C62828" }}>{pct}%</span>
                     </div>
                     <div className="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-primary to-secondary rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: pct >= 90 ? "#2E7D32" : pct >= 70 ? "linear-gradient(90deg, #F9A825, #F57F17)" : pct >= 30 ? "linear-gradient(90deg, #F57F17, #E65100)" : "#C62828" }} />
                     </div>
                     <p className="text-xs text-on-surface-variant mt-1.5 font-medium">${gap}M still needed · led by <span className="font-bold text-on-surface">{temple.projectLead}</span></p>
                   </div>
@@ -460,7 +463,7 @@ function SevaSection() {
         {SEVA_TIERS.map((tier) => (
           <motion.div key={tier.title} variants={scaleIn} className={`rounded-2xl p-5 border flex flex-col gap-3 hover:-translate-y-1 transition-transform duration-300 ${tier.color} relative`}>
             {tier.popular && (
-              <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-primary text-on-primary text-[9px] font-bold uppercase tracking-widest rounded-b-lg">Most Popular</div>
+              <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 px-3 py-0.5 text-white text-[9px] font-bold uppercase tracking-widest rounded-b-lg" style={{ background: "#B8860B" }}>Most Popular</div>
             )}
             <div className="text-3xl">{tier.emoji}</div>
             <div>
@@ -511,7 +514,7 @@ function SevaSection() {
 function AboutSection() {
   return (
     <motion.section id="about" className="space-y-16 scroll-mt-24" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={viewportOnce}>
-      <motion.div variants={fadeInUp} className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#5C3D1A] via-[#7A5025] to-[#4A2E12] text-white p-8 sm:p-12 md:p-16">
+      <motion.div variants={fadeInUp} className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#2C1810] via-[#3D2212] to-[#2C1810] text-white p-8 sm:p-12 md:p-16">
         <motion.p variants={fadeInUp} className="text-amber-200/80 font-sans text-xs uppercase tracking-[0.2em] font-bold mb-4">International Society for Krishna Consciousness</motion.p>
         <motion.h2 variants={fadeInUp} className="font-serif text-3xl sm:text-4xl md:text-5xl font-black leading-tight mb-6 max-w-3xl">What Is ISKCON and How Did It Begin?</motion.h2>
         <motion.p variants={fadeInUp} className="text-white/80 text-base sm:text-lg leading-relaxed max-w-2xl">
@@ -541,9 +544,9 @@ function AboutSection() {
                 { label: "Circumnavigations", value: "14", sub: "Of the globe" },
               ].map((item) => (
                 <div key={item.label} className="text-center">
-                  <p className="text-3xl font-black font-serif text-[#5C3D1A]">{item.value}</p>
-                  <p className="text-xs font-bold uppercase tracking-wide text-[#7A5025] mt-1">{item.label}</p>
-                  <p className="text-[10px] text-[#7A5025]/60 mt-0.5">{item.sub}</p>
+                  <p className="text-3xl font-black font-serif text-[#2C1810]">{item.value}</p>
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#5C4033] mt-1">{item.label}</p>
+                  <p className="text-[10px] text-[#5C4033]/60 mt-0.5">{item.sub}</p>
                 </div>
               ))}
             </div>
@@ -665,7 +668,7 @@ function DirectorySection() {
 function VisionSection() {
   return (
     <motion.section id="vision" className="scroll-mt-24" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={viewportOnce}>
-      <motion.div variants={fadeInUp} className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] text-white p-8 sm:p-12 md:p-16">
+      <motion.div variants={fadeInUp} className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#2C1810] via-[#3D2212] to-[#1E120A] text-white p-8 sm:p-12 md:p-16">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
         <motion.p variants={fadeInUp} className="text-primary font-sans text-xs uppercase tracking-[0.2em] font-bold mb-4">Long-Range Blueprint</motion.p>
         <motion.h2 variants={fadeInUp} className="font-serif text-3xl sm:text-4xl md:text-5xl font-black leading-tight mb-4 max-w-3xl">What Is ISKCON's Vision 2051?</motion.h2>
@@ -758,13 +761,13 @@ function PrabhupadaTribute() {
 
       {/* CTA after Prabhupada — emotional connection to donating */}
       <motion.div variants={fadeInUp} className="text-center bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-8 border border-amber-200/30">
-        <h3 className="font-serif text-xl sm:text-2xl font-black text-[#5C3D1A] mb-3">Continue Srila Prabhupada's Mission</h3>
-        <p className="text-sm text-[#7A5025]/80 max-w-lg mx-auto mb-5">Every temple built carries his vision forward. From the TOVP in Mayapur to new centres across the globe — your donation makes it real.</p>
+        <h3 className="font-serif text-xl sm:text-2xl font-black text-[#2C1810] mb-3">Continue Srila Prabhupada's Mission</h3>
+        <p className="text-sm text-[#5C4033]/80 max-w-lg mx-auto mb-5">Every temple built carries his vision forward. From the TOVP in Mayapur to new centres across the globe — your donation makes it real.</p>
         <div className="flex flex-wrap justify-center gap-3">
           <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all active:scale-95">
             <Heart className="w-4 h-4" /> Donate to TOVP
           </a>
-          <a href="#projects" onClick={(e) => { e.preventDefault(); document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" }); }} className="inline-flex items-center gap-2 border-2 border-primary/30 text-primary px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary/5 transition-all active:scale-95">
+          <a href="#projects" onClick={(e) => { e.preventDefault(); document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" }); }} className="inline-flex items-center gap-2 border-2 border-[#5C4033] text-[#5C4033] px-6 py-3 rounded-xl font-bold text-sm hover:bg-[#5C4033]/5 transition-all active:scale-95">
             Choose Another Temple <ArrowRight className="w-4 h-4" />
           </a>
         </div>
@@ -859,7 +862,7 @@ function CTASection() {
         <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all active:scale-95">
           <Heart className="w-4 h-4" /> Donate to TOVP
         </a>
-        <a href="#projects" onClick={(e) => { e.preventDefault(); document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" }); }} className="inline-flex items-center gap-2 border-2 border-primary/30 text-primary px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary/5 transition-all active:scale-95">
+        <a href="#projects" onClick={(e) => { e.preventDefault(); document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" }); }} className="inline-flex items-center gap-2 border-2 border-[#5C4033] text-[#5C4033] px-6 py-3 rounded-xl font-bold text-sm hover:bg-[#5C4033]/5 transition-all active:scale-95">
           Explore All Projects <ArrowRight className="w-4 h-4" />
         </a>
         <a href="https://centres.iskcon.org" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 border-2 border-outline-variant/20 text-on-surface-variant px-6 py-3 rounded-xl font-bold text-sm hover:bg-surface-container transition-all active:scale-95">

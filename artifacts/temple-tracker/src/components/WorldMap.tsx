@@ -14,10 +14,10 @@ import { MapPin, X } from "lucide-react";
 const GEO_URL = `${import.meta.env.BASE_URL}countries-110m.json`;
 
 const STATUS_CONFIG: Record<string, { color: string; ring: string; label: string }> = {
-  planning:     { color: "#C49A6C", ring: "rgba(196,154,108,0.3)", label: "Planning" },
-  construction: { color: "#D4872E", ring: "rgba(212,135,46,0.3)",  label: "Construction" },
-  finishing:    { color: "#9B6B2F", ring: "rgba(155,107,47,0.3)",  label: "Finishing" },
-  consecrated:  { color: "#6B8F3C", ring: "rgba(107,143,60,0.3)",  label: "Consecrated" },
+  planning:     { color: "#1565C0", ring: "rgba(21,101,192,0.3)",  label: "Planning" },
+  construction: { color: "#E65100", ring: "rgba(230,81,0,0.3)",    label: "Construction" },
+  finishing:    { color: "#F9A825", ring: "rgba(249,168,37,0.3)",  label: "Finishing" },
+  consecrated:  { color: "#2E7D32", ring: "rgba(46,125,50,0.3)",   label: "Consecrated" },
 };
 
 interface Temple {

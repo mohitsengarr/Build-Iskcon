@@ -501,9 +501,9 @@ function GaugeMeter({ title, subtitle, goal, raised, max }: GaugeProps) {
   const cy = 100;
 
   const arcSegments = [
-    { frac: 0.33, color: "#B54D1A" },
-    { frac: 0.33, color: "#D4872E" },
-    { frac: 0.34, color: "#8B9A3C" },
+    { frac: 0.33, color: "#E65100" },
+    { frac: 0.33, color: "#F9A825" },
+    { frac: 0.34, color: "#2E7D32" },
   ];
 
   function polarToCartesian(angle: number) {
@@ -555,8 +555,8 @@ function GaugeMeter({ title, subtitle, goal, raised, max }: GaugeProps) {
         ))}
         {tickLines.map((t, i) => (
           <g key={i}>
-            <line x1={t.inner.x} y1={t.inner.y} x2={t.outer.x} y2={t.outer.y} stroke="#6B5344" strokeWidth="1" opacity="0.3" />
-            <text x={t.labelPos.x} y={t.labelPos.y} textAnchor="middle" dominantBaseline="middle" fill="#6B5344" fontSize="6" fontWeight="600" opacity="0.5">
+            <line x1={t.inner.x} y1={t.inner.y} x2={t.outer.x} y2={t.outer.y} stroke="#5C4033" strokeWidth="1" opacity="0.3" />
+            <text x={t.labelPos.x} y={t.labelPos.y} textAnchor="middle" dominantBaseline="middle" fill="#5C4033" fontSize="6" fontWeight="600" opacity="0.5">
               {formatAmount(t.val)}
             </text>
           </g>

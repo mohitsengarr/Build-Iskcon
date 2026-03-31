@@ -36,10 +36,13 @@
   --font-sans: 'Inter', sans-serif;
   --font-serif: 'Noto Serif', serif;
 
+  /* Primary & containers — darkened for WCAG AA (5.7:1 on white) */
   --color-primary-container: #ff9933;
   --color-on-primary-container: #5C3000;
   --color-secondary-container: #FCEBC2;
   --color-on-secondary-container: #6B4D00;
+
+  /* Surfaces */
   --color-surface: #FFFBF5;
   --color-on-surface: #2C1810;
   --color-surface-container: #F5EDE4;
@@ -47,14 +50,40 @@
   --color-surface-container-high: #EFE6DC;
   --color-surface-container-lowest: #FFFFFF;
   --color-surface-container-highest: #E8DFD5;
-  --color-on-surface-variant: #6B5344;
-  --color-outline-variant: #D4BCA8;
+  --color-on-surface-variant: #5C4033;
+  --color-outline-variant: #DCBB9E;
+
+  /* Tertiary & error */
   --color-tertiary: #6B6040;
-  --color-error: #ba1a1a;
+  --color-error: #C62828;
   --color-error-container: #ffdad6;
+
+  /* On-colors */
   --color-on-primary: #FFFFFF;
   --color-on-secondary: #FFFFFF;
   --color-on-tertiary: #FFFFFF;
+
+  /* Sacred gold accent — celebrations, highlights */
+  --color-gold: #B8860B;
+  --color-gold-light: #D4A017;
+
+  /* Status system — distinct, accessible colors */
+  --color-status-planning: #1565C0;
+  --color-status-construction: #E65100;
+  --color-status-finishing: #F9A825;
+  --color-status-consecrated: #2E7D32;
+
+  /* Progress bar scale */
+  --color-progress-low: #C62828;
+  --color-progress-mid: #F57F17;
+  --color-progress-high: #F9A825;
+  --color-progress-complete: #2E7D32;
+
+  /* Urgency */
+  --color-urgent: #C62828;
+
+  /* Dark section background */
+  --color-dark-section: #2C1810;
 }
 
 :root {
@@ -62,17 +91,17 @@
   --foreground: 18 30% 13%;
   --card: 34 50% 99%;
   --card-foreground: 18 30% 13%;
-  --primary: 28 75% 38%;
+  --primary: 25 72% 30%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 36 60% 32%;
+  --secondary: 30 45% 26%;
   --secondary-foreground: 0 0% 100%;
   --muted: 30 20% 93%;
   --muted-foreground: 20 20% 35%;
   --accent: 35 85% 55%;
   --accent-foreground: 20 80% 18%;
   --border: 28 25% 82%;
-  --input: 28 25% 82%;
-  --ring: 28 75% 38%;
+  --input: 28 30% 75%;
+  --ring: 25 72% 30%;
   --sidebar: 32 30% 95%;
   --sidebar-foreground: 18 30% 13%;
   --popover: 0 0% 100%;
@@ -99,6 +128,12 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-serif);
     @apply tracking-tight text-foreground;
+  }
+  /* Global focus-visible ring for accessibility */
+  :focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+    border-radius: 4px;
   }
 }
 

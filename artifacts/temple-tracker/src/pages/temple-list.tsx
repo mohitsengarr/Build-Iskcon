@@ -302,10 +302,10 @@ export default function TempleList() {
               <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredTemples.map((temple) => {
                   const cfg: Record<string, { color: string; bg: string }> = {
-                    planning:     { color: "#C49A6C", bg: "rgba(196,154,108,0.10)" },
-                    construction: { color: "#D4872E", bg: "rgba(212,135,46,0.10)" },
-                    finishing:    { color: "#9B6B2F", bg: "rgba(155,107,47,0.10)" },
-                    consecrated:  { color: "#6B8F3C", bg: "rgba(107,143,60,0.12)" },
+                    planning:     { color: "#1565C0", bg: "rgba(21,101,192,0.10)" },
+                    construction: { color: "#E65100", bg: "rgba(230,81,0,0.10)" },
+                    finishing:    { color: "#F9A825", bg: "rgba(249,168,37,0.10)" },
+                    consecrated:  { color: "#2E7D32", bg: "rgba(46,125,50,0.12)" },
                   };
                   const c = cfg[temple.status] ?? cfg.planning;
                   return (

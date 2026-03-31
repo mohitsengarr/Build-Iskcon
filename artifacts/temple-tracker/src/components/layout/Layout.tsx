@@ -124,7 +124,7 @@ export function Layout({ children }: { children: ReactNode }) {
           href="https://www.iskcon.org/donate"
           target="_blank"
           rel="noopener noreferrer"
-          className="border-2 border-primary/40 text-primary py-3 rounded-xl font-bold text-sm tracking-wide text-center hover:bg-primary/5 transition-all active:scale-95"
+          className="border-2 border-[#5C4033] text-[#5C4033] py-3 rounded-xl font-bold text-sm tracking-wide text-center hover:bg-[#5C4033]/5 transition-all active:scale-95"
         >
           Donate
         </a>
