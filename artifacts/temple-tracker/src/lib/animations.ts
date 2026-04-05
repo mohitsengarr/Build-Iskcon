@@ -71,6 +71,5 @@ export const scaleIn: Variants = {
   },
 };
 
-// Fix: increased margin to trigger earlier, ensuring sections become visible
-// before the user scrolls to them, eliminating whitespace gaps
-export const viewportOnce = { once: true, amount: 0.05 as const, margin: "100px" };
+// Trigger animations very early so fast-scrolling mobile users never see blank sections
+export const viewportOnce = { once: true, amount: 0 as const, margin: "300px" };

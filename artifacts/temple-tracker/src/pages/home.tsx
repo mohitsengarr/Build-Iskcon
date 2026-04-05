@@ -120,12 +120,12 @@ function HeroSection() {
             16 ISKCON temples are under construction in 11 countries right now. From the Temple of the Vedic Planetarium in Mayapur to new centres in Nairobi and Budapest — every donation brings Srila Prabhupada's vision closer to reality.
           </motion.p>
           <motion.figure variants={fadeInUp} className="mb-6 border-l-2 border-primary/40 pl-4">
-            <blockquote className="font-serif text-base italic text-on-surface/80 leading-snug">
+            <blockquote className="font-serif text-base sm:text-lg italic text-on-surface/80 leading-snug">
               pṛthivīte āche yata nagarādi grāma — sarvatra pracāra haibe mora nāma
             </blockquote>
-            <figcaption className="text-[10px] font-semibold uppercase tracking-widest text-on-surface-variant/60 mt-1">
+            <figcaption className="text-xs font-semibold uppercase tracking-widest text-on-surface-variant/60 mt-1">
               — Chaitanya Mahaprabhu
-              <span className="block text-[9px] mt-0.5 normal-case tracking-normal italic font-normal">"In every town and village, My name shall be heard."</span>
+              <span className="block text-xs mt-0.5 normal-case tracking-normal italic font-normal">"In every town and village, My name shall be heard."</span>
             </figcaption>
           </motion.figure>
           <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3">
@@ -146,7 +146,7 @@ function HeroSection() {
       {/* TOVP Countdown — integrated directly below hero, no gap */}
       <div className="relative overflow-hidden rounded-b-xl px-6 sm:px-10 py-6 flex flex-col sm:flex-row items-center justify-between gap-5" style={{ background: "linear-gradient(135deg, #2C1810 0%, #4A2E12 50%, #3D2212 100%)" }}>
         <div className="relative z-10 flex-1">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-on-primary/70 mb-1">Grand Opening · November 2, 2027</p>
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-on-primary/70 mb-1">Grand Opening · November 2, 2027</p>
           <h2 className="font-serif text-xl sm:text-2xl font-bold leading-tight">TOVP Mayapur — 78% Complete, ${TOVP_NEEDED}M Still Needed</h2>
           <p className="text-sm text-on-primary/80 mt-1">The crown jewel of ISKCON's global mission opens in {TOVP_DAYS_LEFT} days.</p>
         </div>
@@ -154,7 +154,7 @@ function HeroSection() {
           {[{ val: Math.floor(TOVP_DAYS_LEFT / 30), label: "Months" }, { val: TOVP_DAYS_LEFT % 30, label: "Days" }, { val: TOVP_DAYS_LEFT, label: "Total" }].map(({ val, label }) => (
             <div key={label} className="flex flex-col items-center">
               <span className="font-serif text-3xl sm:text-4xl font-black tabular-nums">{val}</span>
-              <span className="text-[10px] uppercase tracking-widest font-bold text-on-primary/70 mt-0.5">{label}</span>
+              <span className="text-xs uppercase tracking-widest font-bold text-on-primary/70 mt-0.5">{label}</span>
             </div>
           ))}
         </div>
@@ -182,9 +182,9 @@ function KeyMetrics() {
         <motion.div key={item.label} variants={fadeInUp} className="bg-surface-container p-5 sm:p-6 rounded-xl transition-all hover:bg-surface-container-high">
           <div className="flex items-center justify-between mb-3 sm:mb-4">
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">{item.icon}</div>
-            <span className={`text-[10px] sm:text-xs font-semibold uppercase tracking-widest ${item.tagColor}`}>{item.tag}</span>
+            <span className={`text-xs sm:text-xs font-semibold uppercase tracking-widest ${item.tagColor}`}>{item.tag}</span>
           </div>
-          <h3 className="text-on-surface-variant text-[10px] sm:text-sm font-medium uppercase tracking-wide mb-1">{item.label}</h3>
+          <h3 className="text-on-surface-variant text-xs sm:text-sm font-medium uppercase tracking-wide mb-1">{item.label}</h3>
           <div className="text-2xl sm:text-3xl font-black text-on-surface font-serif">{item.value}</div>
         </motion.div>
       ))}
@@ -240,8 +240,8 @@ function FeaturedProject() {
         <div className="relative z-10 grid md:grid-cols-[1fr_auto] gap-8 items-center">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <span className="px-3 py-1 bg-amber-500/20 border border-amber-400/30 rounded-full text-amber-300 text-[10px] font-bold uppercase tracking-widest">Most Urgent · Featured Project</span>
-              <span className="px-3 py-1 bg-white/10 rounded-full text-white/70 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
+              <span className="px-3 py-1 bg-amber-500/20 border border-amber-400/30 rounded-full text-amber-300 text-xs font-bold uppercase tracking-widest">Most Urgent · Featured Project</span>
+              <span className="px-3 py-1 bg-white/10 rounded-full text-white/70 text-xs font-bold uppercase tracking-widest flex items-center gap-1.5">
                 <Clock className="w-3 h-3" /> {TOVP_DAYS_LEFT} days to opening
               </span>
             </div>
@@ -370,12 +370,12 @@ function TempleProjectsSection() {
             return (
               <motion.article key={temple.id} variants={fadeInUp} className="bg-surface-container-low rounded-2xl overflow-hidden flex flex-col shadow-[0_4px_24px_rgba(27,28,28,0.06)] hover:-translate-y-1 transition-transform duration-300 relative">
                 {isNearComplete && (
-                  <div className="absolute top-3 right-3 z-10 px-2.5 py-1 bg-green-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-full">Nearly There</div>
+                  <div className="absolute top-3 right-3 z-10 px-2.5 py-1 bg-green-600 text-white text-xs font-bold uppercase tracking-widest rounded-full">Nearly There</div>
                 )}
                 <div className="bg-primary/8 px-6 pt-5 pb-4">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="w-2.5 h-2.5 rounded-full" style={{ background: c.color }} />
-                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: c.color }}>
+                    <span className="text-xs font-bold uppercase tracking-widest" style={{ color: c.color }}>
                       {temple.status} · {Math.round(temple.constructionProgress)}%
                     </span>
                   </div>
@@ -386,7 +386,7 @@ function TempleProjectsSection() {
                 </div>
                 <div className="px-6 py-5 flex-1 space-y-4">
                   <div>
-                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest mb-1.5">
+                    <div className="flex justify-between text-xs font-bold uppercase tracking-widest mb-1.5">
                       <span className="text-on-surface-variant">Funded</span>
                       <span style={{ color: pct >= 90 ? "#2E7D32" : pct >= 70 ? "#F9A825" : pct >= 30 ? "#F57F17" : "#C62828" }}>{pct}%</span>
                     </div>
@@ -411,7 +411,7 @@ function TempleProjectsSection() {
                       <Heart className="w-4 h-4" /> Donate Any Amount
                     </button>
                   </a>
-                  <p className="text-[10px] text-center text-on-surface-variant mt-2">You'll be redirected to {temple.projectLead}'s official page</p>
+                  <p className="text-xs text-center text-on-surface-variant mt-2">You'll be redirected to {temple.projectLead}'s official page</p>
                 </div>
               </motion.article>
             );
@@ -469,7 +469,7 @@ function SevaSection() {
             <div>
               <p className="font-serif font-bold text-on-surface text-base">{tier.title}</p>
               <p className="text-primary font-black text-lg mt-1">{formatSevaAmount(tier.baseINR, currency)}</p>
-              <p className="text-[10px] text-on-surface-variant font-semibold">{currency !== "INR" ? formatSevaAmount(tier.baseINR, "INR") : formatSevaAmount(tier.baseINR, "USD")} approx.</p>
+              <p className="text-xs text-on-surface-variant font-semibold">{currency !== "INR" ? formatSevaAmount(tier.baseINR, "INR") : formatSevaAmount(tier.baseINR, "USD")} approx.</p>
             </div>
             <p className="text-xs text-on-surface-variant leading-relaxed flex-1">{tier.desc}</p>
             <a href="https://www.iskcon.org/donate" target="_blank" rel="noopener noreferrer">
@@ -546,7 +546,7 @@ function AboutSection() {
                 <div key={item.label} className="text-center">
                   <p className="text-3xl font-black font-serif text-[#2C1810]">{item.value}</p>
                   <p className="text-xs font-bold uppercase tracking-wide text-[#5C4033] mt-1">{item.label}</p>
-                  <p className="text-[10px] text-[#5C4033]/60 mt-0.5">{item.sub}</p>
+                  <p className="text-xs text-[#5C4033]/60 mt-0.5">{item.sub}</p>
                 </div>
               ))}
             </div>
@@ -574,7 +574,7 @@ function AboutSection() {
             <motion.div key={item.label} variants={fadeInUp} className="bg-surface-container-low rounded-xl p-5 text-center border border-outline-variant/10 hover:border-primary/20 transition-colors">
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mx-auto mb-3">{item.icon}</div>
               <p className="text-2xl sm:text-3xl font-black text-on-surface font-serif">{item.value}</p>
-              <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mt-1">{item.label}</p>
+              <p className="text-xs uppercase tracking-widest text-on-surface-variant font-bold mt-1">{item.label}</p>
             </motion.div>
           ))}
         </div>
@@ -687,7 +687,7 @@ function VisionSection() {
           ].map((item) => (
             <div key={item.label} className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
               <p className="text-2xl sm:text-3xl font-black font-serif text-primary">{item.value}</p>
-              <p className="text-[10px] uppercase tracking-widest font-bold text-white/50 mt-1">{item.label}</p>
+              <p className="text-xs uppercase tracking-widest font-bold text-white/50 mt-1">{item.label}</p>
             </div>
           ))}
         </motion.div>
@@ -727,13 +727,13 @@ function PrabhupadaTribute() {
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-0">
           <motion.div variants={fadeIn} className="relative h-72 lg:h-auto overflow-hidden lg:rounded-l-2xl">
-            <img src="/prabhupada.jpg" alt="His Divine Grace A.C. Bhaktivedanta Swami Prabhupada, Founder-Acharya of ISKCON" className="w-full h-full object-cover object-top" />
+            <img src="/prabhupada.jpg" alt="His Divine Grace A.C. Bhaktivedanta Swami Prabhupada, Founder-Acharya of ISKCON" className="w-full h-full object-cover object-top" loading="lazy" />
             <div className="absolute inset-0 bg-gradient-to-r from-transparent to-on-surface/60 hidden lg:block" />
             <div className="absolute inset-0 bg-gradient-to-t from-on-surface/70 to-transparent lg:hidden" />
           </motion.div>
           <motion.div variants={staggerContainer} className="p-8 md:p-12 lg:p-14 flex flex-col justify-center gap-5">
             <motion.div variants={fadeInUp}>
-              <span className="inline-block px-3 py-1 rounded-full border border-primary/50 text-primary text-[10px] font-bold uppercase tracking-widest">Founder-Acarya · ISKCON</span>
+              <span className="inline-block px-3 py-1 rounded-full border border-primary/50 text-primary text-xs font-bold uppercase tracking-widest">Founder-Acarya · ISKCON</span>
             </motion.div>
             <motion.div variants={fadeInUp}>
               <h2 className="font-serif text-3xl md:text-4xl font-bold leading-tight text-[#fbf9f8] mb-1">His Divine Grace</h2>
@@ -751,7 +751,7 @@ function PrabhupadaTribute() {
               {[{ label: "Temples", value: "108+" }, { label: "Languages", value: "80+" }, { label: "Books", value: "500M+" }, { label: "Disciples", value: "5,000+" }].map((stat) => (
                 <div key={stat.label} className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-center">
                   <p className="text-primary font-bold text-base leading-none mb-1">{stat.value}</p>
-                  <p className="text-white/50 text-[10px] uppercase font-semibold tracking-widest">{stat.label}</p>
+                  <p className="text-white/50 text-xs uppercase font-semibold tracking-widest">{stat.label}</p>
                 </div>
               ))}
             </motion.div>
@@ -800,7 +800,7 @@ function EmailCapture() {
             <Mail className="w-4 h-4" /> Subscribe
           </button>
         </form>
-        <p className="text-[10px] text-on-surface-variant mt-3">Free. Unsubscribe anytime. We never share your email.</p>
+        <p className="text-xs text-on-surface-variant mt-3">Free. Unsubscribe anytime. We never share your email.</p>
       </div>
     </motion.section>
   );
