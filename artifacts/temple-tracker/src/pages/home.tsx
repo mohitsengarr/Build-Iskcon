@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
 import { WorldMap } from "@/components/WorldMap";
-import { fadeInUp, fadeIn, staggerContainer, scaleIn, viewportOnce } from "@/lib/animations";
+import { fadeInUp, fadeIn, fadeInCalm, fadeInStately, staggerContainer, staggerContainerFast, scaleIn, viewportOnce, staggerAdaptive } from "@/lib/animations";
 import {
   Building2, IndianRupee, ChartBar, CheckCircle2,
   Globe, MapPin, Heart, Users, ChevronDown, ExternalLink,
@@ -13,6 +13,7 @@ import {
 import {
   ISKCON_STATS, ISKCON_PROGRAMS, ISKCON_REGIONS, TOTAL_CATALOGUED,
 } from "@/data/iskcon-centers";
+import { useToast } from "@/hooks/use-toast";
 import { TEMPLES, TEMPLE_STATS } from "@/data/temples";
 
 // ── Constants ───────────────────────────────────────────────────────────────
@@ -41,7 +42,7 @@ const STRUCTURED_DATA_ORGANIZATION = {
 
 const STRUCTURED_DATA_WEBSITE = {
   "@context": "https://schema.org", "@type": "WebSite", "@id": `${CANONICAL_DOMAIN}/#website`,
-  name: "Build Iskcon", description: "Track 21 ISKCON temple construction projects across 7 countries.",
+  name: "Build Iskcon", description: "Track 23 ISKCON temple construction projects across 8 countries.",
   url: CANONICAL_DOMAIN, publisher: { "@id": `${CANONICAL_DOMAIN}/#organization` }, inLanguage: "en",
 };
 
@@ -73,7 +74,7 @@ const FAQ_ITEMS = [
   { q: "Where does my donation go?", a: "Build Iskcon does NOT collect, process, or handle any donations. When you click 'Donate' on any project, you are redirected to that temple's official ISKCON donation page. Your money goes directly to the temple — we are simply the map that helps you find where to give." },
   { q: "Is Build Iskcon an official ISKCON website?", a: "No. Build Iskcon is an independent, community-driven transparency platform. All data is sourced from official ISKCON project communications. All donation links direct to verified, official ISKCON temple websites." },
   { q: "How is this site funded?", a: "Build Iskcon is a volunteer-driven initiative with no commercial revenue. The site is maintained as a seva (service) project to help devotees discover and support ISKCON temple construction worldwide." },
-  { q: "How many ISKCON temples are currently under construction?", a: "As of 2026, Build Iskcon tracks 21 ISKCON temple construction projects across 7 countries, including the flagship Temple of the Vedic Planetarium (TOVP) in Mayapur." },
+  { q: "How many ISKCON temples are currently under construction?", a: "As of 2026, Build Iskcon tracks 23 ISKCON temple construction projects across 8 countries, including the flagship Temple of the Vedic Planetarium (TOVP) in Mayapur." },
   { q: "What is the Temple of the Vedic Planetarium (TOVP)?", a: "The TOVP is Srila Prabhupada's most cherished project — one of the largest religious structures being built globally. Located in Mayapur, West Bengal, it is 78% complete with a grand opening scheduled for November 2, 2027." },
   { q: "What is ISKCON's Vision 2051?", a: "Vision 2051 is a 25-year roadmap to establish 211 ISKCON temples across all 28 states and 8 Union Territories of India in 3 phases, starting 2025." },
   { q: "What are the seva (donation) tiers?", a: "Five tiers: Brick Donor (₹1,000), Pillar Supporter (₹11,000), Altar Patron (₹51,000), Mandala Guardian (₹1,00,000), and Temple Benefactor (₹5,00,000). All donations go directly to official ISKCON temple websites." },
@@ -117,7 +118,7 @@ function HeroSection() {
             Help Build Sacred Temples<br />Across the World
           </motion.h1>
           <motion.p variants={fadeInUp} className="text-on-surface-variant font-sans text-[15px] mb-5 leading-relaxed">
-            21 ISKCON temple projects across 7 countries — from the TOVP in Mayapur to new centres in Kurukshetra, Brisbane, and Ghaziabad. Every donation brings Srila Prabhupada's vision closer to reality.
+            23 ISKCON temple projects across 8 countries — from the TOVP in Mayapur to new centres in Taguig, Kurukshetra, Brisbane, and Ghaziabad. Every donation brings Srila Prabhupada's vision closer to reality.
           </motion.p>
           <motion.figure variants={fadeInUp} className="mb-6 border-l-2 border-primary/40 pl-4">
             <blockquote className="font-serif text-base sm:text-lg italic text-on-surface/80 leading-snug">
@@ -129,15 +130,11 @@ function HeroSection() {
             </figcaption>
           </motion.figure>
           <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3">
-            <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer">
-              <button className="bg-primary text-on-primary px-8 py-3.5 rounded-xl font-bold text-sm tracking-wide shadow-lg hover:shadow-primary/30 hover:bg-primary/90 transition-all active:scale-95 cursor-pointer w-full sm:w-auto flex items-center gap-2">
-                <Heart className="w-4 h-4" /> Donate to TOVP
-              </button>
+            <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer" className="bg-primary text-on-primary px-8 py-3.5 rounded-xl font-bold text-sm tracking-wide shadow-lg hover:shadow-primary/30 hover:bg-primary-hover transition-all active:scale-95 cursor-pointer w-full sm:w-auto flex items-center gap-2 justify-center">
+              <Heart className="w-4 h-4" /> Donate to TOVP
             </a>
-            <a href="#projects" onClick={(e) => { e.preventDefault(); document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" }); }}>
-              <button className="border-2 border-[#5C4033] text-[#5C4033] px-8 py-3.5 rounded-xl font-bold text-sm tracking-wide hover:bg-[#5C4033]/5 transition-all active:scale-95 text-center w-full sm:w-auto cursor-pointer flex items-center gap-2">
-                Explore All Projects <ArrowRight className="w-4 h-4" />
-              </button>
+            <a href="#projects" onClick={(e) => { e.preventDefault(); document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" }); }} className="border-2 border-[#5A3F30] text-[#5A3F30] px-8 py-3.5 rounded-xl font-bold text-sm tracking-wide hover:bg-[#5A3F30]/5 transition-all active:scale-95 text-center w-full sm:w-auto cursor-pointer flex items-center gap-2 justify-center">
+              Explore All Projects <ArrowRight className="w-4 h-4" />
             </a>
           </motion.div>
         </motion.div>
@@ -147,7 +144,7 @@ function HeroSection() {
       <div className="relative overflow-hidden rounded-b-xl px-6 sm:px-10 py-6 flex flex-col sm:flex-row items-center justify-between gap-5" style={{ background: "linear-gradient(135deg, #2C1810 0%, #4A2E12 50%, #3D2212 100%)" }}>
         <div className="relative z-10 flex-1">
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-on-primary/70 mb-1">Grand Opening · November 2, 2027</p>
-          <h2 className="font-serif text-xl sm:text-2xl font-bold leading-tight">TOVP Mayapur — 78% Complete, ${TOVP_NEEDED}M Still Needed</h2>
+          <h2 className="font-serif text-xl sm:text-2xl font-bold leading-tight text-white">TOVP Mayapur — 78% Complete, ${TOVP_NEEDED}M Still Needed</h2>
           <p className="text-sm text-on-primary/80 mt-1">The crown jewel of ISKCON's global mission opens in {TOVP_DAYS_LEFT} days.</p>
         </div>
         <div className="relative z-10 flex gap-5 text-center shrink-0">
@@ -158,10 +155,8 @@ function HeroSection() {
             </div>
           ))}
         </div>
-        <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer" className="relative z-10 shrink-0">
-          <button className="bg-on-primary text-primary px-6 py-3 rounded-xl font-bold text-sm tracking-wide hover:bg-on-primary/90 transition-colors whitespace-nowrap flex items-center gap-2">
-            <Heart className="w-4 h-4" /> Donate to TOVP
-          </button>
+        <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer" className="relative z-10 shrink-0 bg-on-primary text-primary px-6 py-3 rounded-xl font-bold text-sm tracking-wide hover:bg-on-primary/90 transition-colors whitespace-nowrap flex items-center gap-2">
+          <Heart className="w-4 h-4" /> Donate to TOVP
         </a>
       </div>
     </section>
@@ -172,14 +167,14 @@ function HeroSection() {
 
 function KeyMetrics() {
   return (
-    <motion.section aria-label="Key Statistics" className="key-stats grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={viewportOnce}>
+    <motion.section aria-label="Key Statistics" className="key-stats grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6" variants={staggerContainerFast} initial="hidden" whileInView="visible" viewport={viewportOnce}>
       {[
         { icon: <Building2 className="w-5 h-5" />, label: "Temples Under Construction", value: stats.activeProjects, tag: "Active", tagColor: "text-primary" },
         { icon: <IndianRupee className="w-5 h-5" />, label: "Still Needed to Finish All", value: `$${(totalNeeded / 1_000_000).toFixed(0)}M`, tag: "Urgent", tagColor: "text-[#C62828]" },
         { icon: <ChartBar className="w-5 h-5" />, label: "Average Progress", value: `${stats.averageProgress}%`, tag: "Growing", tagColor: "text-tertiary" },
         { icon: <CheckCircle2 className="w-5 h-5" />, label: "Nearly Complete", value: stats.templesByStatus?.finishing || 0, tag: "Almost There", tagColor: "text-[#2E7D32]" },
       ].map((item) => (
-        <motion.div key={item.label} variants={fadeInUp} className="bg-surface-container p-5 sm:p-6 rounded-xl transition-all hover:bg-surface-container-high">
+        <motion.div key={item.label} variants={scaleIn} className="bg-surface-container p-5 sm:p-6 rounded-xl transition-all hover:bg-surface-container-high">
           <div className="flex items-center justify-between mb-3 sm:mb-4">
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">{item.icon}</div>
             <span className={`text-xs sm:text-xs font-semibold uppercase tracking-widest ${item.tagColor}`}>{item.tag}</span>
@@ -245,7 +240,7 @@ function FeaturedProject() {
                 <Clock className="w-3 h-3" /> {TOVP_DAYS_LEFT} days to opening
               </span>
             </div>
-            <h2 className="font-serif text-2xl sm:text-3xl font-black leading-tight">{featured.name}</h2>
+            <h2 className="font-serif text-2xl sm:text-3xl font-black leading-tight text-white">{featured.name}</h2>
             <p className="text-white/70 text-sm leading-relaxed max-w-lg">{featured.description}</p>
             <div className="space-y-2">
               <div className="flex justify-between text-xs font-bold uppercase tracking-widest">
@@ -257,10 +252,8 @@ function FeaturedProject() {
               </div>
             </div>
             <div className="flex flex-wrap gap-3 pt-2">
-              <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer">
-                <button className="bg-primary text-on-primary px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all active:scale-95 flex items-center gap-2">
-                  <Heart className="w-4 h-4" /> Donate to TOVP
-                </button>
+              <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer" className="bg-primary text-on-primary px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary-hover transition-all active:scale-95 flex items-center gap-2">
+                <Heart className="w-4 h-4" /> Donate to TOVP
               </a>
               <a href="https://tovp.org" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-white/60 hover:text-white text-sm font-medium transition-colors px-4">
                 Learn more <ExternalLink className="w-3.5 h-3.5" />
@@ -269,9 +262,9 @@ function FeaturedProject() {
           </div>
           <div className="hidden md:flex flex-col items-center gap-2 text-center">
             <div className="text-6xl font-black font-serif text-primary">{pct}%</div>
-            <div className="text-xs uppercase tracking-widest font-bold text-white/50">Complete</div>
+            <div className="text-xs uppercase tracking-widest font-bold text-white/60">Complete</div>
             <div className="text-sm font-bold text-primary mt-2">${(featured.fundraisingRaised / 1_000_000).toFixed(0)}M raised</div>
-            <div className="text-xs text-white/40">of ${(featured.fundraisingGoal / 1_000_000).toFixed(0)}M goal</div>
+            <div className="text-xs text-white/60">of ${(featured.fundraisingGoal / 1_000_000).toFixed(0)}M goal</div>
           </div>
         </div>
       </div>
@@ -333,7 +326,7 @@ function TempleProjectsSection() {
               const needColor = parseFloat(gap) > 10 ? "#C62828" : "inherit";
               const rowBg = idx % 2 === 0 ? "bg-surface-container-low/30" : "";
               return (
-                <tr key={t.id} className={`border-b border-outline-variant/10 hover:bg-surface-container-low/50 transition-colors ${rowBg}`}>
+                <tr key={t.id} className={`border-b border-outline-variant/25 hover:bg-surface-container-low/50 transition-colors ${rowBg}`}>
                   <td className="py-3 pr-4 font-semibold text-on-surface text-xs sm:text-sm">{t.name}</td>
                   <td className="py-3 pr-4 text-on-surface-variant hidden sm:table-cell">{t.location}</td>
                   <td className="py-3 pr-4">
@@ -345,7 +338,7 @@ function TempleProjectsSection() {
                   <td className="py-3 pr-4 text-right font-bold text-xs sm:text-sm" style={{ color: pctColor }}>{pct}%</td>
                   <td className="py-3 pr-4 text-right hidden sm:table-cell font-medium" style={{ color: needColor }}>${gap}M</td>
                   <td className="py-3 text-center">
-                    <a href={t.donateUrl || "https://www.iskcon.org/donate"} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-on-primary bg-primary hover:bg-primary/90 px-3 py-1.5 rounded-full transition-colors">
+                    <a href={t.donateUrl || "https://www.iskcon.org/donate"} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-on-primary bg-primary hover:bg-primary-hover px-3 py-1.5 rounded-full transition-colors">
                       <Heart className="w-3 h-3" /> Give
                     </a>
                   </td>
@@ -399,17 +392,15 @@ function TempleProjectsSection() {
                   {/* Pre-set donation amounts */}
                   <div className="grid grid-cols-3 gap-2">
                     {["₹1,100", "₹5,500", "₹11,000"].map((amount) => (
-                      <a key={amount} href={donateUrl} target="_blank" rel="noopener noreferrer" className="block">
-                        <button className="w-full py-2 bg-primary/8 text-primary rounded-lg text-xs font-bold hover:bg-primary/15 transition-colors">{amount}</button>
+                      <a key={amount} href={donateUrl} target="_blank" rel="noopener noreferrer" className="block w-full py-2 bg-primary/8 text-primary rounded-lg text-xs font-bold hover:bg-primary/15 transition-colors text-center">
+                        {amount}
                       </a>
                     ))}
                   </div>
                 </div>
                 <div className="px-6 pb-6">
-                  <a href={donateUrl} target="_blank" rel="noopener noreferrer" className="block">
-                    <button className="w-full py-3 bg-primary text-on-primary font-bold text-sm rounded-xl hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
-                      <Heart className="w-4 h-4" /> Donate Any Amount
-                    </button>
+                  <a href={donateUrl} target="_blank" rel="noopener noreferrer" className="block w-full py-3 bg-primary text-on-primary font-bold text-sm rounded-xl hover:bg-primary-hover transition-colors flex items-center justify-center gap-2">
+                    <Heart className="w-4 h-4" /> Donate Any Amount
                   </a>
                   <p className="text-xs text-center text-on-surface-variant mt-2">You'll be redirected to {temple.projectLead}'s official page</p>
                 </div>
@@ -472,10 +463,8 @@ function SevaSection() {
               <p className="text-xs text-on-surface-variant font-semibold">{currency !== "INR" ? formatSevaAmount(tier.baseINR, "INR") : formatSevaAmount(tier.baseINR, "USD")} approx.</p>
             </div>
             <p className="text-xs text-on-surface-variant leading-relaxed flex-1">{tier.desc}</p>
-            <a href="https://www.iskcon.org/donate" target="_blank" rel="noopener noreferrer">
-              <button className="w-full py-2.5 bg-primary/10 text-primary rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-primary hover:text-on-primary transition-colors">
-                Give {formatSevaAmount(tier.baseINR, currency)}
-              </button>
+            <a href="https://www.iskcon.org/donate" target="_blank" rel="noopener noreferrer" className="block w-full py-2.5 bg-primary/10 text-primary rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-primary hover:text-on-primary transition-colors text-center">
+              Give {formatSevaAmount(tier.baseINR, currency)}
             </a>
           </motion.div>
         ))}
@@ -495,7 +484,7 @@ function SevaSection() {
           </thead>
           <tbody>
             {SEVA_TIERS.map((tier) => (
-              <tr key={tier.title} className="border-b border-outline-variant/10">
+              <tr key={tier.title} className="border-b border-outline-variant/25">
                 <td className="py-3 pr-4 font-semibold text-on-surface">{tier.emoji} {tier.title}</td>
                 <td className="py-3 pr-4 text-right font-bold text-primary">₹{tier.baseINR.toLocaleString("en-IN")}</td>
                 <td className="py-3 pr-4 text-right text-on-surface-variant">${Math.round(tier.baseINR * 0.012).toLocaleString("en-US")}</td>
@@ -514,10 +503,10 @@ function SevaSection() {
 function AboutSection() {
   return (
     <motion.section id="about" className="space-y-16 scroll-mt-24" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={viewportOnce}>
-      <motion.div variants={fadeInUp} className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#2C1810] via-[#3D2212] to-[#2C1810] text-white p-8 sm:p-12 md:p-16">
-        <motion.p variants={fadeInUp} className="text-amber-200/80 font-sans text-xs uppercase tracking-[0.2em] font-bold mb-4">International Society for Krishna Consciousness</motion.p>
-        <motion.h2 variants={fadeInUp} className="font-serif text-3xl sm:text-4xl md:text-5xl font-black leading-tight mb-6 max-w-3xl">What Is ISKCON and How Did It Begin?</motion.h2>
-        <motion.p variants={fadeInUp} className="text-white/80 text-base sm:text-lg leading-relaxed max-w-2xl">
+      <motion.div variants={fadeInCalm} className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#2C1810] via-[#3D2212] to-[#2C1810] text-white p-8 sm:p-12 md:p-16">
+        <motion.p variants={fadeInCalm} className="text-amber-200/80 font-sans text-xs uppercase tracking-[0.2em] font-bold mb-4">International Society for Krishna Consciousness</motion.p>
+        <motion.h2 variants={fadeInCalm} className="font-serif text-3xl sm:text-4xl md:text-5xl font-black leading-tight mb-6 max-w-3xl text-white">What Is ISKCON and How Did It Begin?</motion.h2>
+        <motion.p variants={fadeInCalm} className="text-white/80 text-base sm:text-lg leading-relaxed max-w-2xl">
           ISKCON was founded on July 13, 1966, by Srila Prabhupada in New York City.
           Today it has grown into a global movement with {ISKCON_STATS.totalCenters}+ centres
           across {ISKCON_STATS.countriesPresent}+ countries on {ISKCON_STATS.continents} continents.
@@ -545,8 +534,8 @@ function AboutSection() {
               ].map((item) => (
                 <div key={item.label} className="text-center">
                   <p className="text-3xl font-black font-serif text-[#2C1810]">{item.value}</p>
-                  <p className="text-xs font-bold uppercase tracking-wide text-[#5C4033] mt-1">{item.label}</p>
-                  <p className="text-xs text-[#5C4033]/60 mt-0.5">{item.sub}</p>
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#5A3F30] mt-1">{item.label}</p>
+                  <p className="text-xs text-[#5A3F30]/60 mt-0.5">{item.sub}</p>
                 </div>
               ))}
             </div>
@@ -571,7 +560,7 @@ function AboutSection() {
             { icon: <Youtube className="w-6 h-6" />, value: "29.7M+", label: "YouTube" },
             { icon: <MapPin className="w-6 h-6" />, value: `${ISKCON_STATS.continents}`, label: "Continents" },
           ].map((item) => (
-            <motion.div key={item.label} variants={fadeInUp} className="bg-surface-container-low rounded-xl p-5 text-center border border-outline-variant/10 hover:border-primary/20 transition-colors">
+            <motion.div key={item.label} variants={fadeInUp} className="bg-surface-container-low rounded-xl p-5 text-center border border-outline-variant/25 hover:border-primary/20 transition-colors">
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mx-auto mb-3">{item.icon}</div>
               <p className="text-2xl sm:text-3xl font-black text-on-surface font-serif">{item.value}</p>
               <p className="text-xs uppercase tracking-widest text-on-surface-variant font-bold mt-1">{item.label}</p>
@@ -589,7 +578,7 @@ function AboutSection() {
           {ISKCON_PROGRAMS.map((program, i) => {
             const icons = [<Utensils className="w-6 h-6" key="f" />, <GraduationCap className="w-6 h-6" key="a" />, <BookOpen className="w-6 h-6" key="b" />, <Users className="w-6 h-6" key="g" />];
             return (
-              <motion.div key={program.name} variants={fadeInUp} className="bg-surface-container-low rounded-xl p-6 border border-outline-variant/10">
+              <motion.div key={program.name} variants={fadeInUp} className="bg-surface-container-low rounded-xl p-6 border border-outline-variant/25">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">{icons[i]}</div>
                   <div>
@@ -611,11 +600,11 @@ function AboutSection() {
 function RegionAccordion({ region }: { region: typeof ISKCON_REGIONS[number] }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border border-outline-variant/10 rounded-xl overflow-hidden">
+    <div className="border border-outline-variant/25 rounded-xl overflow-hidden">
       <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between p-5 bg-surface-container-low hover:bg-surface-container transition-colors text-left">
         <div className="flex items-center gap-3">
           <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">{region.centers.length}</span>
-          <h4 className="font-serif text-base sm:text-lg font-bold text-on-surface">{region.name}</h4>
+          <h3 className="font-serif text-base sm:text-lg font-bold text-on-surface">{region.name}</h3>
         </div>
         <ChevronDown className={`w-5 h-5 text-on-surface-variant transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
       </button>
@@ -671,7 +660,7 @@ function VisionSection() {
       <motion.div variants={fadeInUp} className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#2C1810] via-[#3D2212] to-[#1E120A] text-white p-8 sm:p-12 md:p-16">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
         <motion.p variants={fadeInUp} className="text-primary font-sans text-xs uppercase tracking-[0.2em] font-bold mb-4">Long-Range Blueprint</motion.p>
-        <motion.h2 variants={fadeInUp} className="font-serif text-3xl sm:text-4xl md:text-5xl font-black leading-tight mb-4 max-w-3xl">What Is ISKCON's Vision 2051?</motion.h2>
+        <motion.h2 variants={fadeInUp} className="font-serif text-3xl sm:text-4xl md:text-5xl font-black leading-tight mb-4 max-w-3xl text-white">What Is ISKCON's Vision 2051?</motion.h2>
         <motion.p variants={fadeInUp} className="text-white/90 text-base sm:text-lg leading-relaxed max-w-2xl mb-2 font-semibold">
           Vision 2051 is a 25-year roadmap to build 211 ISKCON temples across all 36 Indian states and union territories by 2051.
         </motion.p>
@@ -687,7 +676,7 @@ function VisionSection() {
           ].map((item) => (
             <div key={item.label} className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
               <p className="text-2xl sm:text-3xl font-black font-serif text-primary">{item.value}</p>
-              <p className="text-xs uppercase tracking-widest font-bold text-white/50 mt-1">{item.label}</p>
+              <p className="text-xs uppercase tracking-widest font-bold text-white/60 mt-1">{item.label}</p>
             </div>
           ))}
         </motion.div>
@@ -708,7 +697,7 @@ function VisionSection() {
         </motion.div>
         <motion.div variants={fadeInUp}>
           <a href="#projects" onClick={(e) => { e.preventDefault(); document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" }); }}>
-            <button className="bg-primary text-on-primary px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all active:scale-95 flex items-center gap-2">
+            <button className="bg-primary text-on-primary px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary-hover transition-all active:scale-95 flex items-center gap-2">
               The first 80 temples are being built now — support one <ArrowRight className="w-4 h-4" />
             </button>
           </a>
@@ -726,7 +715,7 @@ function PrabhupadaTribute() {
       <div className="relative overflow-hidden rounded-2xl bg-on-surface text-[#fbf9f8]">
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-0">
-          <motion.div variants={fadeIn} className="relative h-72 lg:h-auto overflow-hidden lg:rounded-l-2xl">
+          <motion.div variants={fadeInStately} className="relative h-72 lg:h-auto overflow-hidden lg:rounded-l-2xl">
             <img src="/prabhupada.jpg" alt="His Divine Grace A.C. Bhaktivedanta Swami Prabhupada, Founder-Acharya of ISKCON" className="w-full h-full object-cover object-top" loading="lazy" />
             <div className="absolute inset-0 bg-gradient-to-r from-transparent to-on-surface/60 hidden lg:block" />
             <div className="absolute inset-0 bg-gradient-to-t from-on-surface/70 to-transparent lg:hidden" />
@@ -738,20 +727,20 @@ function PrabhupadaTribute() {
             <motion.div variants={fadeInUp}>
               <h2 className="font-serif text-3xl md:text-4xl font-bold leading-tight text-[#fbf9f8] mb-1">His Divine Grace</h2>
               <h3 className="font-serif text-3xl md:text-4xl font-bold leading-tight text-primary italic">A. C. Bhaktivedanta Swami Prabhupada</h3>
-              <p className="text-sm text-white/50 font-medium mt-2">1 September 1896 — 14 November 1977</p>
+              <p className="text-sm text-white/60 font-medium mt-2">1 September 1896 — 14 November 1977</p>
             </motion.div>
             <motion.p variants={fadeInUp} className="text-white/75 text-base leading-relaxed max-w-2xl">
               At age 69 he sailed alone to New York and founded ISKCON in 1966. In eleven years he circled the globe fourteen times, established over 100 temples, and produced a prolific body of Vedic literature translated into 80+ languages.
             </motion.p>
             <motion.blockquote variants={fadeInUp} className="border-l-2 border-primary pl-6">
               <p className="font-serif text-lg italic text-white/90 leading-relaxed">"Our temples are not for making money. They are meant for the purpose of spreading Krishna consciousness."</p>
-              <cite className="text-xs text-white/50 font-semibold uppercase tracking-widest mt-3 block not-italic">— Srila Prabhupada</cite>
+              <cite className="text-xs text-white/60 font-semibold uppercase tracking-widest mt-3 block not-italic">— Srila Prabhupada</cite>
             </motion.blockquote>
             <motion.div variants={fadeInUp} className="flex flex-wrap gap-3">
               {[{ label: "Temples", value: "108+" }, { label: "Languages", value: "80+" }, { label: "Books", value: "500M+" }, { label: "Disciples", value: "5,000+" }].map((stat) => (
                 <div key={stat.label} className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-center">
                   <p className="text-primary font-bold text-base leading-none mb-1">{stat.value}</p>
-                  <p className="text-white/50 text-xs uppercase font-semibold tracking-widest">{stat.label}</p>
+                  <p className="text-white/60 text-xs uppercase font-semibold tracking-widest">{stat.label}</p>
                 </div>
               ))}
             </motion.div>
@@ -762,12 +751,12 @@ function PrabhupadaTribute() {
       {/* CTA after Prabhupada — emotional connection to donating */}
       <motion.div variants={fadeInUp} className="text-center bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-8 border border-amber-200/30">
         <h3 className="font-serif text-xl sm:text-2xl font-black text-[#2C1810] mb-3">Continue Srila Prabhupada's Mission</h3>
-        <p className="text-sm text-[#5C4033]/80 max-w-lg mx-auto mb-5">Every temple built carries his vision forward. From the TOVP in Mayapur to new centres across the globe — your donation makes it real.</p>
+        <p className="text-sm text-[#5A3F30]/80 max-w-lg mx-auto mb-5">Every temple built carries his vision forward. From the TOVP in Mayapur to new centres across the globe — your donation makes it real.</p>
         <div className="flex flex-wrap justify-center gap-3">
-          <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all active:scale-95">
+          <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary-hover transition-all active:scale-95">
             <Heart className="w-4 h-4" /> Donate to TOVP
           </a>
-          <a href="#projects" onClick={(e) => { e.preventDefault(); document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" }); }} className="inline-flex items-center gap-2 border-2 border-[#5C4033] text-[#5C4033] px-6 py-3 rounded-xl font-bold text-sm hover:bg-[#5C4033]/5 transition-all active:scale-95">
+          <a href="#projects" onClick={(e) => { e.preventDefault(); document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" }); }} className="inline-flex items-center gap-2 border-2 border-[#5A3F30] text-[#5A3F30] px-6 py-3 rounded-xl font-bold text-sm hover:bg-[#5A3F30]/5 transition-all active:scale-95">
             Choose Another Temple <ArrowRight className="w-4 h-4" />
           </a>
         </div>
@@ -779,6 +768,7 @@ function PrabhupadaTribute() {
 // ── Section: Email Capture ───────────────────────────────────────────────────
 
 function EmailCapture() {
+  const { toast } = useToast();
   return (
     <motion.section aria-label="Newsletter signup" variants={fadeInUp} initial="hidden" whileInView="visible" viewport={viewportOnce}>
       <div className="bg-surface-container rounded-2xl p-8 sm:p-10 text-center">
@@ -789,14 +779,14 @@ function EmailCapture() {
         <p className="text-sm text-on-surface-variant max-w-lg mx-auto mb-6 leading-relaxed">
           See how temples are progressing, which projects are near completion, and where your donations are making the most impact. One email per month — no spam, ever.
         </p>
-        <form onSubmit={(e) => e.preventDefault()} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+        <form onSubmit={(e) => { e.preventDefault(); toast({ title: "Thank you!", description: "You'll receive monthly temple construction updates." }); (e.target as HTMLFormElement).reset(); }} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
           <input
             type="email"
             placeholder="your@email.com"
             className="flex-1 px-4 py-3 rounded-xl border border-outline-variant/20 bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40"
             required
           />
-          <button type="submit" className="bg-primary text-on-primary px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all active:scale-95 whitespace-nowrap flex items-center gap-2 justify-center">
+          <button type="submit" className="bg-primary text-on-primary px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary-hover transition-all active:scale-95 whitespace-nowrap flex items-center gap-2 justify-center">
             <Mail className="w-4 h-4" /> Subscribe
           </button>
         </form>
@@ -812,14 +802,14 @@ function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0); // Trust FAQ open by default
 
   return (
-    <motion.section id="faq" className="space-y-8 scroll-mt-24" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={viewportOnce}>
-      <motion.div variants={fadeInUp} className="text-center">
+    <section id="faq" className="space-y-8 scroll-mt-24">
+      <div className="text-center">
         <p className="text-primary font-sans text-xs uppercase tracking-[0.2em] font-bold mb-3">Frequently Asked Questions</p>
         <h2 className="font-serif text-2xl sm:text-3xl font-black text-on-surface mb-2">Common Questions About ISKCON Temple Construction</h2>
-      </motion.div>
+      </div>
       <div className="space-y-3 max-w-3xl mx-auto">
         {FAQ_ITEMS.map((item, i) => (
-          <motion.div key={i} variants={fadeInUp} className="border border-outline-variant/10 rounded-xl overflow-hidden">
+          <div key={i} className="border border-outline-variant/25 rounded-xl overflow-hidden">
             <button
               onClick={() => setOpenIndex(openIndex === i ? null : i)}
               className="w-full flex items-center justify-between p-5 bg-surface-container-low hover:bg-surface-container transition-colors text-left gap-4"
@@ -829,15 +819,15 @@ function FAQSection() {
             </button>
             <AnimatePresence>
               {openIndex === i && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3 }} className="overflow-hidden">
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1, transition: { duration: 0.3, ease: "easeOut" } }} exit={{ height: 0, opacity: 0, transition: { duration: 0.2, ease: "easeIn" } }} className="overflow-hidden">
                   <p className="px-5 pb-5 text-sm text-on-surface-variant leading-relaxed">{item.a}</p>
                 </motion.div>
               )}
             </AnimatePresence>
-          </motion.div>
+          </div>
         ))}
       </div>
-    </motion.section>
+    </section>
   );
 }
 
@@ -859,10 +849,10 @@ function CTASection() {
         </p>
       </motion.div>
       <motion.div variants={fadeInUp} className="flex flex-wrap justify-center gap-4">
-        <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all active:scale-95">
+        <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary-hover transition-all active:scale-95">
           <Heart className="w-4 h-4" /> Donate to TOVP
         </a>
-        <a href="#projects" onClick={(e) => { e.preventDefault(); document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" }); }} className="inline-flex items-center gap-2 border-2 border-[#5C4033] text-[#5C4033] px-6 py-3 rounded-xl font-bold text-sm hover:bg-[#5C4033]/5 transition-all active:scale-95">
+        <a href="#projects" onClick={(e) => { e.preventDefault(); document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" }); }} className="inline-flex items-center gap-2 border-2 border-[#5A3F30] text-[#5A3F30] px-6 py-3 rounded-xl font-bold text-sm hover:bg-[#5A3F30]/5 transition-all active:scale-95">
           Explore All Projects <ArrowRight className="w-4 h-4" />
         </a>
         <a href="https://centres.iskcon.org" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 border-2 border-outline-variant/20 text-on-surface-variant px-6 py-3 rounded-xl font-bold text-sm hover:bg-surface-container transition-all active:scale-95">
@@ -879,8 +869,8 @@ export default function Home() {
   return (
     <Layout>
       <SEOHead
-        title="Track 21 ISKCON Temple Construction Projects Worldwide"
-        description="Help build 21 ISKCON temples across 7 countries. The TOVP in Mayapur opens in 2027. Explore projects, donate directly to official ISKCON pages, and discover Vision 2051."
+        title="Track 23 ISKCON Temple Construction Projects Worldwide"
+        description="Help build 23 ISKCON temples across 8 countries. The TOVP in Mayapur opens in 2027. Explore projects, donate directly to official ISKCON pages, and discover Vision 2051."
         canonicalPath="/"
         structuredData={[
           STRUCTURED_DATA_ORGANIZATION,

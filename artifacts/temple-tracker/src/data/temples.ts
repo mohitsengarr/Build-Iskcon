@@ -32,7 +32,7 @@ export const TEMPLES: Temple[] = [
   },
   {
     id: 2, name: "ISKCON Delhi – Dwarka Temple", location: "Dwarka, New Delhi, India",
-    deity: "Sri Sri Radha Parthasarathi", description: "A 2,00,000 sq-ft grand temple complex in southwest Delhi featuring a spiritual cultural center, Vedic museum, and community hall. Tile donations 94% committed (2,12,440 / 2,25,000 as of Nov 2025).",
+    deity: "Sri Sri Radha Parthasarathi", description: "A 2,00,000 sq-ft grand temple complex in southwest Delhi featuring a spiritual cultural center, Vedic museum, and community hall. Tile donations 96.8% committed (2,17,903 / 2,25,000 as of Jan 2026).",
     status: "construction", phase: "Tiling & interior finishing", constructionProgress: 55,
     fundraisingGoal: 25_000_000, fundraisingRaised: 14_000_000, startDate: "2021-06-01",
     expectedCompletion: "2026-12-31", projectLead: "ISKCON Delhi",
@@ -209,6 +209,24 @@ export const TEMPLES: Temple[] = [
     expectedCompletion: "2028-12-31", projectLead: "ISKCON Ghaziabad",
     coverImage: null, donateUrl: "https://iskconghaziabad.com/new-temple-construction/",
     latitude: 28.632, longitude: 77.441,
+  },
+  {
+    id: 22, name: "ISKCON Taguig – Sri Sri Radha Madhava Mandir", location: "Taguig City, Metro Manila, Philippines",
+    deity: "Sri Sri Radha Madhava", description: "Newly consecrated permanent temple in Taguig City near Bonifacio Global City (BGC), replacing the rented Makati facility after a decade of planning. Bhumi puja on Jan 27, 2026; Deities installed Jan 29; grand opening festival Jan 30–Feb 1, 2026. Indian Ambassador and Taguig City Mayor Lani Cayetano attended the inauguration. Includes spaces for Vedic education, youth programs, and daily prasadam.",
+    status: "consecrated", phase: "Opened January 31, 2026", constructionProgress: 100,
+    fundraisingGoal: 800_000, fundraisingRaised: 800_000, startDate: "2020-01-01",
+    expectedCompletion: "2026-01-31", projectLead: "ISKCON Manila",
+    coverImage: null, donateUrl: "https://www.issrmm.com/",
+    latitude: 14.521, longitude: 121.051,
+  },
+  {
+    id: 23, name: "ISKCON Cyberabad – Vedic Cultural Center", location: "Nallagandla, Hyderabad, Telangana, India",
+    deity: "Sri Sri Radha Krishna & Sita Rama", description: "Planned as the largest ISKCON temple in Hyderabad on 6,000 sq yards of land allocated by the Telangana government adjacent to Sri Ranganatha Swamy Temple in Gopanpalli. Bhumi puja (groundbreaking) held March 8, 2026. Will include Sri Radha Krishna Astha Sakhi Temple, Sita Rama Temple, Gaushala, Annadanam Kshetra, Yagnashala, and Sankirtan Hall. Expected completion in multiple phases by 2028.",
+    status: "construction", phase: "Bhumi puja complete, early construction", constructionProgress: 3,
+    fundraisingGoal: 5_000_000, fundraisingRaised: 400_000, startDate: "2026-03-08",
+    expectedCompletion: "2028-12-31", projectLead: "ISKCON Cyberabad",
+    coverImage: null, donateUrl: "https://give.iskconcyberabad.com/",
+    latitude: 17.465, longitude: 78.315,
   },
 ];
 
