@@ -1,26 +1,5 @@
 [
   {
-    "trashId": "3-0-1775821831591",
-    "originalFile": "chapter-003.jpg",
-    "trashedFile": "3-0-1775821831591.jpg",
-    "manifestEntry": {
-      "chapterNumber": 3,
-      "chapterTitle": "Chapter तीन",
-      "imagePath": "chapter-003.jpg",
-      "prompt": "At the dawn of cosmic creation, Krishna expands himself as the Maha-Vishnu, the Purusha avatar, reclining on the causal ocean in infinite divine form. From his breath and pores, countless universes emerge like bubbles. Brahma and Vishnu witness this primordial moment as the sixteen material elements manifest and the grand cycle of creation begins.",
-      "personasUsed": [
-        "krishna_adult",
-        "vishnu",
-        "brahma"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T11:49:19.641Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T11:50:31.591Z",
-    "operation": "regenerate"
-  },
-  {
     "trashId": "4-0-1775821941474",
     "originalFile": "chapter-004.jpg",
     "trashedFile": "4-0-1775821941474.jpg",
@@ -1021,6 +1000,25 @@
       "sceneIndex": 0
     },
     "trashedAt": "2026-04-10T13:13:13.170Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "16-0-1775828244608",
+    "originalFile": "chapter-016.jpg",
+    "trashedFile": "16-0-1775828244608.jpg",
+    "manifestEntry": {
+      "chapterNumber": 16,
+      "chapterTitle": "Chapter सोलह",
+      "imagePath": "chapter-016.jpg",
+      "prompt": "In a grand royal court, King Parikshit sits on his throne surrounded by learned Brahmin sages and rishis who serve as his advisors. He listens reverently to their scriptural guidance on how to govern his kingdom righteously, embodying all the noble qualities the astrologers had predicted at his birth.",
+      "personasUsed": [
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T12:52:26.112Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T13:37:24.609Z",
     "operation": "regenerate"
   }
 ]
