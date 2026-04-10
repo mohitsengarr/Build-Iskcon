@@ -81,6 +81,22 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 7,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-007.jpg",
+      "prompt": "Vyasa sits in deep meditation beside the Sarasvati river at the Shamyaprasa ashram, surrounded by berry trees on the peaceful western bank. In the background, Arjuna stands solemnly before Ashwatthama, confronting him with calm authority for his wrongful deeds, while Draupadi and Parikshit are seen in the distance under divine protection.",
+      "descriptionHi": "इस अध्याय में नारद मुनि के प्रस्थान के बाद व्यासदेव सरस्वती नदी के पश्चिमी तट पर शम्याप्रास आश्रम में ध्यान में बैठते हैं। अश्वत्थामा द्वारा द्रौपदी के पाँच पुत्रों को सोते में मार डालने और अर्जुन द्वारा उसे दंडित करने की घटना का उल्लेख किया गया है, जो परीक्षित के जन्म की पृष्ठभूमि बनती है। व्यासदेव समाधि द्वारा परम सत्य की अनुभूति करके श्रीमद्भागवत के रचना की तैयारी करते हैं।",
+      "personasUsed": [
+        "vyasa",
+        "arjuna",
+        "parikshit",
+        "draupadi"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T15:44:55.121Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 8,
       "chapterTitle": "अध्याय आठ",
       "imagePath": "chapter-008.jpg",
@@ -261,5 +277,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T15:44:06.357Z"
+  "lastUpdated": "2026-04-10T15:44:55.121Z"
 }
