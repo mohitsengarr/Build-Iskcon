@@ -255,7 +255,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-10T13:54:51.876Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 19,
+      "chapterTitle": "Chapter उन्नीस",
+      "imagePath": "chapter-019.jpg",
+      "prompt": "Shukadeva Goswami, a radiant young sage with a serene and detached demeanor, emerges from the forest and approaches a riverside gathering of sages and seekers. His presence carries an aura of pure spiritual liberation, as the assembled devotees look upon him with reverence and wonder, recognizing him as a self-realized soul from birth.",
+      "descriptionHi": "इस अध्याय में शुकदेव गोस्वामी के प्रकट होने का वर्णन है। शुकदेव, जो महर्षि व्यास के पुत्र थे, एक महान आत्मज्ञानी संत थे जो जन्म से ही मुक्त थे। उनका प्रकट होना अत्यंत आध्यात्मिक महत्व रखता है क्योंकि वे ही राजा परीक्षित को श्रीमद्भागवत का दिव्य ज्ञान सुनाने वाले थे।",
+      "personasUsed": [
+        "shukadeva"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T14:49:09.488Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T13:54:51.876Z"
+  "lastUpdated": "2026-04-10T14:49:09.488Z"
 }
