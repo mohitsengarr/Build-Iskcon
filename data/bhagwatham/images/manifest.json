@@ -132,7 +132,11 @@
       "imagePath": "chapter-008.jpg",
       "prompt": "An elderly Indian queen mother in a white and gold sari kneeling with folded hands praying to blue-skinned Lord Krishna who stands on a golden chariot, her five warrior sons the Pandavas standing behind her respectfully, on the bank of the sacred Ganges river at golden sunset, wide cinematic landscape",
       "descriptionHi": "महारानी कुन्ती द्वारा प्रार्थना तथा परीक्षित की रक्षा",
-      "generatedAt": "2026-04-10T09:06:13.772Z",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T09:20:06.028Z",
       "sceneIndex": 0
     },
     {
@@ -141,17 +145,8 @@
       "imagePath": "chapter-008-2.jpg",
       "prompt": "Royal Indian women in white saris performing sacred water rituals on the ancient stone ghats of the Ganges river at sunset, priests chanting nearby, golden light reflecting on the holy water, wide landscape",
       "descriptionHi": "ं : आज तक हिन्दू-समाज में यह प्रथा चल रही है कि जब किसी परिवार में कोई व्यक्ति का निधन होता है, तो लोग गंगा नदी में य…",
-      "generatedAt": "2026-04-10T09:06:25.981Z",
+      "generatedAt": "2026-04-10T09:20:15.519Z",
       "sceneIndex": 1
-    },
-    {
-      "chapterNumber": 9,
-      "chapterTitle": "अध्याय नौ",
-      "imagePath": "chapter-009.jpg",
-      "prompt": "Bhishma lying serenely on a bed of arrows on the vast Kurukshetra battlefield, Lord Krishna and the five Pandava princes standing around him with reverence, golden sunset sky, wide dramatic landscape",
-      "descriptionHi": "भगवान्‌ कृष्ण की उपस्थिति में भीष्मदेव का देह-त्याग",
-      "generatedAt": "2026-04-10T09:06:38.442Z",
-      "sceneIndex": 0
     },
     {
       "chapterNumber": 9,
@@ -159,7 +154,11 @@
       "imagePath": "chapter-009-2.jpg",
       "prompt": "Bhishma speaking his final words of wisdom from his bed of arrows, sages and warriors gathered around listening, rays of golden light breaking through dramatic clouds above, wide landscape",
       "descriptionHi": "इस नवम अध्याय में, जैसाकि भगवान्‌ श्रीकृष्ण की इच्छा थी, भीष्पदेव राजा युधिष्ठिर को वृत्ति-विषयक कर्तव्यों के सम्बन्ध…",
-      "generatedAt": "2026-04-10T09:06:53.876Z",
+      "personasUsed": [
+        "bhishma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T09:20:29.373Z",
       "sceneIndex": 1
     },
     {
@@ -168,7 +167,11 @@
       "imagePath": "chapter-010.jpg",
       "prompt": "Lord Krishna departing on a golden chariot from Hastinapura, the Pandava family watching from the palace steps with tearful eyes, dramatic golden sunset sky, ancient city architecture, wide cinematic landscape",
       "descriptionHi": "द्वारका के लिए भगवान्‌ कृष्ण का प्रस्थान",
-      "generatedAt": "2026-04-10T09:06:58.646Z",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T09:20:33.322Z",
       "sceneIndex": 0
     },
     {
@@ -177,7 +180,11 @@
       "imagePath": "chapter-010-2.jpg",
       "prompt": "Lord Krishna's grand chariot with four white horses traveling along a river road toward the distant golden city of Dwarka, rolling green plains, dramatic sky with golden clouds, wide panoramic landscape",
       "descriptionHi": "महाराज युधिष्ठिर समस्त धर्मात्माओं में श्रेष्ठ थे। अतएव वे साम्राज्य का भोग करने के लिए अपने चचेरे भाइयों से लड़ने के…",
-      "generatedAt": "2026-04-10T09:07:04.618Z",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T09:20:39.335Z",
       "sceneIndex": 1
     },
     {
@@ -186,7 +193,11 @@
       "imagePath": "chapter-011.jpg",
       "prompt": "Lord Krishna entering the magnificent golden city of Dwarka on a grand chariot, citizens throwing flowers from ornate balconies, golden domes and spires, ocean in the background, festive wide landscape",
       "descriptionHi": "भगवान्‌ श्रीकृष्ण का द्वारका में प्रवेश",
-      "generatedAt": "2026-04-10T09:07:08.878Z",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T09:20:43.390Z",
       "sceneIndex": 0
     },
     {
@@ -195,25 +206,11 @@
       "imagePath": "chapter-011-2.jpg",
       "prompt": "Lord Krishna blowing the divine conch Panchajanya with radiant golden light, citizens of Dwarka gathered joyfully on the streets, magnificent golden city architecture, ocean waves, wide landscape",
       "descriptionHi": "कुरुक्षेत्र युद्ध के कारण भगवान्‌ अपनी समृद्ध राजनगरी द्वारका से दीर्घकाल तक बाहर रहे, जिससे नगर-निवासी उनके वियोग के…",
-      "generatedAt": "2026-04-10T09:07:12.872Z",
-      "sceneIndex": 1
-    },
-    {
-      "chapterNumber": 12,
-      "chapterTitle": "Chapter बारह",
-      "imagePath": "chapter-012.jpg",
-      "prompt": "A divine newborn baby glowing with golden light in a grand palace chamber, royal family gathered around with joy, priests performing blessing rituals with sacred fire, wide cinematic composition",
-      "descriptionHi": "सम्राट परीक्षित का जन्म",
-      "generatedAt": "2026-04-10T09:11:00.270Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 12,
-      "chapterTitle": "Chapter बारह",
-      "imagePath": "chapter-012-2.jpg",
-      "prompt": "Young sage Shukadeva narrating to King Parikshit on the banks of the wide Ganges river, four sages listening nearby, temple spires in the distance, golden sunset, wide landscape",
-      "descriptionHi": "नैमिषारण्य के वन में एकत्रित हुए ऋषियों ने सूत गोस्वामी से महाराज परीक्षित के जन्म के विषय में प्रश्न किया, लेकिन इस …",
-      "generatedAt": "2026-04-10T09:11:06.562Z",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T09:20:48.009Z",
       "sceneIndex": 1
     },
     {
@@ -244,5 +241,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T09:11:06.657Z"
+  "lastUpdated": "2026-04-10T09:20:48.038Z"
 }
