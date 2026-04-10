@@ -336,6 +336,42 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 24,
+      "chapterTitle": "Chapter पाँच",
+      "imagePath": "chapter-024.jpg",
+      "prompt": "Narada humbly requests Brahma to reveal divine knowledge in a serene heavenly setting.",
+      "descriptionHi": "श्री नारद मुनि ने ब्रह्माजी से परमात्मा के बारे में ज्ञान प्राप्त करने के लिए पूछा, जो आत्मा और परमात्मा के सत्य तक ले जाने वाला है। इस अध्याय में ज्ञान प्राप्ति की प्रम्परा की महत्ता बताई गई है।",
+      "personasUsed": [
+        "narada",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T23:05:12.281Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 25,
+      "chapterTitle": "अध्याय छह",
+      "imagePath": "chapter-025.jpg",
+      "prompt": "Brahma describes the cosmic form of the Supreme, with his mouth as the source of speech and Agni as its regulator, in a serene heavenly setting.",
+      "descriptionHi": "ब्रह्माजी ने विराट पुरुष के विभिन्न अंगों का वर्णन किया है, जो विभिन्न देवताओं और प्रकृति के तत्वों के उद्गम केंद्र हैं। यह अध्याय भगवान के दिव्य रूप की महिमा को दर्शाता है।",
+      "personasUsed": [
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T23:05:29.133Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 26,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-026.jpg",
+      "prompt": "Lord Varaha rises from the cosmic ocean to lift the earth, confronting the demon Hiranyaksha in a majestic display of divine power.",
+      "descriptionHi": "ब्रह्माजी ने बताया कि जब भगवान्‌ ने वराह का रूप धारण किया तो पहले एक असुर हिरण्याक्ष प्रकट हुआ। भगवान्‌ ने उसे अपने अगले दाँत से विदीर्ण कर दिया। यह घटना सृष्टि के प्रारम्भ से ही ब्रह्माण्डों के लोकों में असुर तथा देवता की दो श्रेणियों को दर्शाती है।",
+      "generatedAt": "2026-04-10T23:10:06.885Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 30,
       "chapterTitle": "Chapter इक्तीस",
       "imagePath": "chapter-030.jpg",
@@ -418,7 +454,21 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-10T21:25:17.524Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 45,
+      "chapterTitle": "अध्याय दो",
+      "imagePath": "chapter-045.jpg",
+      "prompt": "Vidura asks Brahma about Daksha's hatred towards Lord Shiva in a serene heavenly setting.",
+      "descriptionHi": "इस अध्याय में दक्ष द्वारा शिवजी को शाप देने की कथा है, जिसमें विदुर भगवान ब्रह्मा से पूछते हैं कि दक्ष ने शिवजी के प्रति इतनी शत्रुता क्यों प्रदर्शित की। यह कथा शिवजी और दक्ष के बीच मनमुटाव को दर्शाती है।",
+      "personasUsed": [
+        "brahma",
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T23:12:33.469Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T22:59:36.123Z"
+  "lastUpdated": "2026-04-10T23:12:33.469Z"
 }
