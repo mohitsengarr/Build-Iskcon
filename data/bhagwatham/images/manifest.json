@@ -242,6 +242,19 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 17,
+      "chapterTitle": "Chapter सत्रह",
+      "imagePath": "chapter-017.jpg",
+      "prompt": "King Parikshit, armored and riding his chariot, encounters a troubled scene on a vast open plain — a trembling white bull standing on one leg, and a gentle cow beside it, while a man dressed in royal garments stands over them. Parikshit watches with grave concern, his hand raised in a gesture of authority and protection.",
+      "descriptionHi": "महाराज परीक्षित एक स्थान पर पहुँचते हैं जहाँ वे देखते हैं कि एक शूद्र राजा का वेश धारण किए एक गाय और एक बैल को कष्ट दे रहा है। श्वेत कमल के समान निर्मल बैल एक पैर पर काँपता खड़ा है, जो धर्म के क्षीण होते स्वरूप का प्रतीक है। यह दृश्य कलियुग के पतन का संकेत है जिसमें धर्म, गोरक्षा और न्याय सभी संकट में हैं।",
+      "personasUsed": [
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T14:52:01.445Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 18,
       "chapterTitle": "Chapter अठारह",
       "imagePath": "chapter-018.jpg",
@@ -270,5 +283,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T14:49:09.488Z"
+  "lastUpdated": "2026-04-10T14:52:01.445Z"
 }
