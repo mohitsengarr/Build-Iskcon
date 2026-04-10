@@ -4,37 +4,81 @@
       "chapterNumber": 1,
       "chapterTitle": "अध्याय एक",
       "imagePath": "chapter-001.jpg",
-      "prompt": "Suta Goswami in Naimisharanya forest addressing sages around sacred fire",
-      "generatedAt": "2026-04-10T04:30:00.000Z"
+      "prompt": "Suta Goswami, elderly sage with saffron robes, addressing vast assembly of rishis around sacred fire in Naimisharanya forest, golden twilight sky",
+      "generatedAt": "2026-04-10T10:22:00.000Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 1,
+      "chapterTitle": "अध्याय एक",
+      "imagePath": "chapter-001-2.jpg",
+      "prompt": "Close-up portrait of Suta Goswami, serene wise face, white flowing beard, tilak on forehead, rudraksha mala, saffron silk uttariya, sacred forest clearing with flickering firelight",
+      "generatedAt": "2026-04-10T10:22:00.000Z",
+      "sceneIndex": 1
     },
     {
       "chapterNumber": 2,
       "chapterTitle": "अध्याय दो",
       "imagePath": "chapter-002.jpg",
-      "prompt": "Sage Vyasa meditating and composing scriptures in forest ashram",
-      "generatedAt": "2026-04-10T04:30:00.000Z"
+      "prompt": "Sage Vyasa, majestic elderly rishi, composing sacred scriptures on palm-leaf manuscripts in forest ashram, golden divine light radiating from texts",
+      "generatedAt": "2026-04-10T10:22:00.000Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 2,
+      "chapterTitle": "अध्याय दो",
+      "imagePath": "chapter-002-2.jpg",
+      "prompt": "Vyasadeva in deep contemplation under massive banyan tree, rays of divine knowledge streaming down, sacred books floating around him, peaceful ashram setting",
+      "generatedAt": "2026-04-10T10:25:00.000Z",
+      "sceneIndex": 1
     },
     {
       "chapterNumber": 3,
       "chapterTitle": "अध्याय तीन",
       "imagePath": "chapter-003.jpg",
-      "prompt": "Lord Krishna as charioteer with Arjuna on battlefield of Kurukshetra",
-      "generatedAt": "2026-04-10T04:30:00.000Z"
+      "prompt": "Lord Krishna with blue skin seated on magnificent golden throne in Vaikuntha, peacock feather crown, playing divine flute, avatar forms visible as ethereal silhouettes",
+      "generatedAt": "2026-04-10T10:22:00.000Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 3,
+      "chapterTitle": "अध्याय तीन",
+      "imagePath": "chapter-003-2.jpg",
+      "prompt": "Baby Lord Krishna, divine infant with blue skin, golden crown with peacock feather, pearl ornaments, seated on golden throne in temple, rose garland, divine golden aura",
+      "generatedAt": "2026-04-10T10:27:00.000Z",
+      "sceneIndex": 1
     },
     {
       "chapterNumber": 4,
       "chapterTitle": "अध्याय चार",
       "imagePath": "chapter-004.jpg",
-      "prompt": "Sage Narada traveling through celestial realms playing veena",
-      "generatedAt": "2026-04-10T04:30:00.000Z"
+      "prompt": "Sage Narada flying through golden celestial clouds, playing veena instrument, white dhoti, joyful devotional expression, gandharva musicians on distant clouds",
+      "generatedAt": "2026-04-10T10:27:00.000Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 4,
+      "chapterTitle": "अध्याय चार",
+      "imagePath": "chapter-004-2.jpg",
+      "prompt": "Portrait of Sage Narada, serene radiant face, tilak on forehead, holding veena instrument, rudraksha beads, golden celestial clouds",
+      "generatedAt": "2026-04-10T10:27:00.000Z",
+      "sceneIndex": 1
     },
     {
       "chapterNumber": 6,
       "chapterTitle": "Chapter छह",
       "imagePath": "chapter-006.jpg",
+      "prompt": "Sage Narada traveling through celestial realms playing veena, divine clouds, celestial beings, traditional Indian devotional art painting",
+      "generatedAt": "2026-04-10T04:51:05.430Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 7,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-007.jpg",
       "prompt": "Sage Narada traveling through celestial realms playing veena, divine clouds, celestial beings, traditional Indian devotional art painting, vibrant oil painting style, warm golden divine lighting, lush spiritual landscape, detailed ornate clothing and jewelry, serene devotional atmosphere, rich saturated colors, classical Hindu art aesthetic",
-      "generatedAt": "2026-04-10T04:51:05.430Z"
+      "generatedAt": "2026-04-10T05:01:02.660Z"
     }
   ],
-  "lastUpdated": "2026-04-10T04:51:05.430Z"
+  "lastUpdated": "2026-04-10T05:01:02.660Z"
 }
