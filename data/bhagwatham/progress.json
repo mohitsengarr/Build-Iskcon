@@ -1,10 +1,10 @@
 {
-  "lastProcessedPage": 1000,
-  "totalPagesProcessed": 1000,
+  "lastProcessedPage": 1020,
+  "totalPagesProcessed": 1020,
   "totalPagesInPdf": 10419,
   "batchSize": 20,
-  "batchesCompleted": 50,
-  "lastProcessedAt": "2026-04-10T15:42:25.934Z",
-  "status": "processing",
+  "batchesCompleted": 51,
+  "lastProcessedAt": "2026-04-10T15:47:13.977Z",
+  "status": "idle",
   "pdfPath": "/Users/mohitsengarr/Library/Mobile Documents/com~apple~CloudDocs/Spiritual Books/Bhagwatham/श्रीमद्भागवतम् - Srimad Bhagavatam (All 12 Cantos Set) Bhagavata Purana in Hindi by A. C. Bhaktivedanta Swami Prabhupada, Veda Vyasa, वेदव्यास, व्यास.pdf"
 }
