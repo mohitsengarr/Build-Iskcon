@@ -780,10 +780,9 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
           }
           case "shlok":
             return (
-              <div key={i} className={`rounded-lg p-4 ${themeKey === "dark" ? "bg-orange-950/30 border border-orange-800/40" : themeKey === "sepia" ? "bg-[#ece0c4] border border-[#c4ad80]" : "bg-orange-50 border border-orange-200/60"}`}>
-                <p className={`text-[11px] font-bold mb-2 tracking-wide ${themeKey === "dark" ? "text-orange-400" : "text-orange-400"}`}>श्लोक</p>
+              <div key={i} className="my-3">
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`sm:text-[17px] leading-[1.8] ${t.text} mb-0.5`} style={{ fontFamily: "var(--font-sanskrit)" }}>{l}</p>
+                  <p key={j} className={`text-[18px] sm:text-[20px] font-bold leading-[1.9] mb-0.5 ${themeKey === "dark" ? "text-stone-100" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-800"}`} style={{ fontFamily: "var(--font-sanskrit)" }}>{l}</p>
                 ))}
               </div>
             );
