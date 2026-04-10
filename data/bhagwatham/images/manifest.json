@@ -308,6 +308,19 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 21,
+      "chapterTitle": "अध्याय दो",
+      "imagePath": "chapter-021.jpg",
+      "prompt": "Brahma regains his lost memory and creative power by meditating on the divine form, surrounded by the tranquil cosmos.",
+      "descriptionHi": "श्री शुकदेव गोस्वामी ने बताया कि ब्रह्माजी ने विराट रूप के ध्यान द्वारा भगवान्‌ को प्रसन्न करके विलुप्त हो चुकी अपनी चेतना प्राप्त की और सृष्टि का पुनर्निर्माण किया। यह घटना ब्रह्माजी की विस्मृति और उसके निवारण को दर्शाती है।",
+      "personasUsed": [
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T22:48:54.096Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 30,
       "chapterTitle": "Chapter इक्तीस",
       "imagePath": "chapter-030.jpg",
@@ -392,5 +405,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T22:46:58.712Z"
+  "lastUpdated": "2026-04-10T22:48:54.096Z"
 }
