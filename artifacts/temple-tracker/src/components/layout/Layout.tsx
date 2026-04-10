@@ -28,7 +28,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-surface flex-col relative overflow-hidden text-on-surface">
+    <div className="flex min-h-screen bg-surface flex-col relative text-on-surface">
       {/* TopNavBar */}
       <nav className="fixed top-0 z-50 w-full bg-surface/90 backdrop-blur-md shadow-[0_4px_24px_rgba(27,28,28,0.06)] border-b border-outline-variant/10">
         <div className="flex justify-between items-center w-full px-4 sm:px-8 py-4 max-w-screen-2xl mx-auto">

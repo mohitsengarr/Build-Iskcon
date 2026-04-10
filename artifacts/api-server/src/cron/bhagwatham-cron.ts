@@ -1,11 +1,18 @@
 import cron from "node-cron";
-import { processNextBatch, getProgress, backfillEnglishTranslations } from "../services/bhagwatham-sarvam";
+import { processNextBatch, getProgress, backfillEnglishTranslations, recoverStaleProgress } from "../services/bhagwatham-sarvam";
+import { runAuditPass } from "../services/bhagwatham-audit";
+import { checkAllCredits } from "../services/ai-credit-monitor";
 import { logger } from "../lib/logger";
 
 const CRON_INTERVAL = "*/10 * * * *"; // Every 10 minutes
 const BACKFILL_INTERVAL = "3,13,23,33,43,53 * * * *"; // Offset by 3 min to avoid overlap
+const AUDIT_INTERVAL = "7,37 * * * *"; // Every 30 min, offset by 7 to avoid overlap
+const CREDIT_CHECK_INTERVAL = "0 */2 * * *"; // Every 2 hours
 
 export function startBhagwathamCron(): void {
+  // Recover from stale "processing" state left by previous server crash
+  recoverStaleProgress();
+
   logger.info(
     { interval: CRON_INTERVAL },
     "Bhagwatham PDF processor cron started",
@@ -63,4 +70,47 @@ export function startBhagwathamCron(): void {
       logger.error({ err }, "Backfill cron failed unexpectedly");
     }
   });
+
+  // ── Audit cron — verify images, descriptions, shlok detection ─────────
+  logger.info(
+    { interval: AUDIT_INTERVAL },
+    "Bhagwatham audit cron started",
+  );
+
+  cron.schedule(AUDIT_INTERVAL, async () => {
+    try {
+      const result = await runAuditPass();
+      if (result.issuesFound > 0) {
+        logger.info(
+          { chaptersAudited: result.chaptersAudited, issues: result.issuesFound, fixed: result.issuesFixed },
+          `Audit cron: ${result.message}`,
+        );
+      } else {
+        logger.info({ message: result.message }, "Audit cron: chapter clean");
+      }
+    } catch (err) {
+      logger.error({ err }, "Audit cron failed unexpectedly");
+    }
+  });
+
+  // ── AI credit monitoring — check balances and alert via Flock ─────────
+  logger.info(
+    { interval: CREDIT_CHECK_INTERVAL },
+    "AI credit monitor cron started",
+  );
+
+  cron.schedule(CREDIT_CHECK_INTERVAL, async () => {
+    try {
+      const statuses = await checkAllCredits();
+      const issues = statuses.filter(s => s.status !== "ok" && s.status !== "unknown");
+      if (issues.length > 0) {
+        logger.warn({ issues }, "AI credit issues detected");
+      }
+    } catch (err) {
+      logger.error({ err }, "Credit check cron failed");
+    }
+  });
+
+  // Run initial credit check on startup
+  checkAllCredits().catch(() => {});
 }

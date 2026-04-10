@@ -8,7 +8,7 @@ import {
   RefreshCw, Search, BookMarked, Sparkles,
   List, X, ChevronDown, ChevronUp, Image as ImageIcon, Languages,
   Download, Share2, Bookmark, Trash2, LogIn,
-  Settings, Sun, Moon, Type, Minus, Plus, Maximize2,
+  Settings, Sun, Moon, Type, Minus, Plus, Maximize2, Undo2, Pencil, Wand2, Send,
 } from "lucide-react";
 
 // ── Reading Settings ─────────────────────────────────────────────────────────
@@ -179,6 +179,13 @@ const HINDI_NUMS: Record<string, number> = {
 
 const CHAPTER_RE = /^(?:Chapter\s+\S|अध्याय\s+(?:एक|दो|तीन|चार|पाँच|छः|छह|सात|आठ|नौ|दस|ग्यारह|बारह|तेरह|चौदह|पन्द्रह|सोलह|सत्रह|अठारह|उन्नीस|बीस|\d+))/iu;
 
+// OCR-mangled chapter headings: "Chapter 278 अध्याय" (page num mixed in), "Chapter it" etc.
+// Map these to correct chapter numbers based on known sequence
+const OCR_CHAPTER_FIXES: Record<string, { num: number; label: string }> = {
+  "Chapter 278 अध्याय": { num: 8, label: "अध्याय आठ" },
+  "Chapter it": { num: 9, label: "अध्याय नौ" },
+};
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function formatDate(iso: string) {
@@ -198,34 +205,87 @@ function isGarbagePage(text: string): boolean {
   return false;
 }
 
+function isStandalonePageNumber(line: string): boolean {
+  // Lines that are just a number or number with bracket (OCR page numbers like "43", "430", "42]")
+  return /^\d{1,5}[\]\)]*$/.test(line.trim());
+}
+
+function stripLeadingPageNumber(line: string): string {
+  // Remove leading page numbers like "430 सूत उवाच" → "सूत उवाच", "422 तात्पर्यं" → "तात्पर्यं"
+  // Only strip 2+ digit numbers to avoid stripping numbered lists like "1) श्रवण"
+  // Also handles brackets: "42] दर्शन" → "दर्शन"
+  return line.replace(/^\d{2,5}[\]\)]*\s+/, "");
+}
+
 function cleanOcrText(text: string): string {
-  return text
+  // Preserve known OCR chapter headings before cleaning
+  const OCR_PRESERVES = Object.keys(OCR_CHAPTER_FIXES);
+  let result = text;
+  const placeholders: Array<{ placeholder: string; original: string }> = [];
+  for (const key of OCR_PRESERVES) {
+    if (result.includes(key)) {
+      const ph = `__OCR_FIX_${placeholders.length}__`;
+      placeholders.push({ placeholder: ph, original: key });
+      result = result.replace(key, ph);
+    }
+  }
+  result = result
+    // Remove standalone page number lines BEFORE collapsing whitespace
+    // e.g., "6\n\nशब्दार्थं" → "\n\nशब्दार्थं" (prevents "6 शब्दार्थं" after collapse)
+    .replace(/^(\d{1,5}[\]\)]*)$/gmu, "")
     .replace(/(?<=[\u0900-\u097F\s;,।:—\-\.])\s*\b[a-zA-Z]{1,5}\b\s*[:\|]?\s*(?=[\u0900-\u097F\s;,।:—\-\.])/gu, " ")
     .replace(/(?<=[\u0900-\u097F])\s+[a-zA-Z]{1,4}\s+(?=[\u0900-\u097F])/gu, " ")
     .replace(/©/g, "")
-    .replace(/\s{2,}/g, " ")
+    // Collapse multiple blank lines into one newline, but preserve single newlines
+    .replace(/\n{3,}/g, "\n\n")
+    // Collapse horizontal whitespace (spaces/tabs) but NOT newlines
+    .replace(/[^\S\n]{2,}/g, " ")
     .replace(/;\s*;/g, ";")
     .trim();
+  // Restore OCR chapter heading placeholders
+  for (const { placeholder, original } of placeholders) {
+    result = result.replace(placeholder, original);
+  }
+  return result;
 }
 
 function extractChapterNum(line: string): number {
-  const numMatch = line.match(/\d+/);
-  if (numMatch) return parseInt(numMatch[0], 10);
+  // Check OCR fixes first
+  for (const [key, fix] of Object.entries(OCR_CHAPTER_FIXES)) {
+    if (line.includes(key) || line.includes(fix.label)) return fix.num;
+  }
+  // Check Hindi number words before digits (to avoid matching page numbers in mangled text)
   for (const [word, num] of Object.entries(HINDI_NUMS)) {
     if (line.includes(word)) return num;
+  }
+  const numMatch = line.match(/\d+/);
+  if (numMatch) {
+    const n = parseInt(numMatch[0], 10);
+    // Sanity check: chapter numbers should be reasonable (1-100), not OCR page numbers
+    if (n > 0 && n <= 100) return n;
   }
   return 0;
 }
 
 function toHindiChapterLine(t: string): string {
-  // Strip leading page numbers then convert "Chapter" to "अध्याय"
-  return t.replace(/^\d+\s+/, "").replace(/^Chapter\s*/i, "अध्याय ");
+  const cleaned = t.replace(/^\d+\s+/, "");
+  // Check OCR fixes first
+  for (const [key, fix] of Object.entries(OCR_CHAPTER_FIXES)) {
+    if (cleaned.includes(key) || t.includes(key)) return fix.label;
+  }
+  return cleaned.replace(/^Chapter\s*/i, "अध्याय ");
 }
 
 function isChapterHeading(t: string): boolean {
   // Strip leading page numbers that OCR sometimes picks up (e.g., "42 Chapter दो")
   const cleaned = t.replace(/^\d+\s+/, "");
-  return CHAPTER_RE.test(cleaned) && !t.includes("पूर्ण हुए");
+  if (t.includes("पूर्ण हुए")) return false;
+  if (CHAPTER_RE.test(cleaned)) return true;
+  // Check known OCR-mangled headings
+  for (const key of Object.keys(OCR_CHAPTER_FIXES)) {
+    if (cleaned.includes(key) || t.includes(key)) return true;
+  }
+  return false;
 }
 
 // ── Build chapter index from all loaded pages ─────────────────────────────────
@@ -441,12 +501,12 @@ function BookmarkPanel({ bookmarks, onJump, onDelete }: {
 
 // ── Content Renderer ───────────────────────────────────────────────────────────
 
-function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light" }: { text: string; textEn?: string; lang: "hi" | "en"; chapterImages?: Map<number, Array<{ url: string; description: string }>>; themeKey?: Theme }) {
+function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", onRegenerateImages, regeneratingChapters, onDeleteImage }: { text: string; textEn?: string; lang: "hi" | "en"; chapterImages?: Map<number, Array<{ url: string; description: string; sceneIndex?: number }>>; themeKey?: Theme; onRegenerateImages?: (chapterNum: number) => void; regeneratingChapters?: Set<number>; onDeleteImage?: (chapterNum: number, sceneIndex: number) => void }) {
   const t = THEME_STYLES[themeKey];
   // If English selected and translation available, show English as plain text
   if (lang === "en" && textEn) {
     // Still parse chapter headings from Hindi for anchors/images
-    const hiLines = cleanOcrText(text).split("\n").filter((l) => l.trim());
+    const hiLines = cleanOcrText(text).split("\n").filter((l) => l.trim() && !isStandalonePageNumber(l));
     const chapterAnchors: { chapterNum: number; line: string }[] = [];
     for (const raw of hiLines) {
       const t = raw.trim();
@@ -457,7 +517,9 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light" }
       }
     }
 
-    const enLines = textEn.split("\n").filter((l) => l.trim());
+    const enLines = textEn.split("\n")
+      .filter((l) => l.trim() && !isStandalonePageNumber(l))
+      .map((l) => stripLeadingPageNumber(l));
     return (
       <div className="space-y-4">
         {chapterAnchors.map((ch) => {
@@ -484,7 +546,9 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light" }
     );
   }
 
-  const lines = cleanOcrText(text).split("\n").filter((l) => l.trim());
+  const lines = cleanOcrText(text).split("\n")
+    .filter((l) => l.trim() && !isStandalonePageNumber(l))
+    .map((l) => stripLeadingPageNumber(l));
 
   type Section = { kind: "chapter" | "shlok" | "shabdarth" | "anuvad" | "tatparya" | "text"; lines: string[]; chapterNum?: number };
   const sections: Section[] = [];
@@ -492,7 +556,34 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light" }
 
   const flush = () => { if (current.lines.length > 0) sections.push(current); };
 
-  // Helper: check if a line looks like a verse line (short, Devanagari-heavy, no section markers)
+  // Helper: check if a line looks like a Sanskrit verse line (not Hindi prose)
+  // Key insight: Sanskrit shlokas use case endings (inflections), NOT Hindi postpositions.
+  // Hindi prose uses postpositions like का, की, के, को, में, पर, से, ने as separate words.
+  // If a line has 2+ Hindi postpositions, it's definitely prose.
+  const countHindiPostpositions = (line: string): number => {
+    const matches = line.match(/(?:^|\s)(?:का|की|के|को|में|पर|से|ने|तक|और|या|भी|तो|ही|यह|वह|जो|इस|उस|कि|जब|तब|नहीं|प्रति|बिना|साथ|लिए|बारे|जैसे|क्योंकि|इसलिए|फिर|अभी|कभी|सभी|किसी|अपने|उनके|इनके|जिसमें|जिससे|जिसको)(?:\s|[।,;:\)]|$)/gu);
+    return matches ? matches.length : 0;
+  };
+  const HINDI_VERB_RE = /(?:है[ँं]?|हैं|हैँ|था|थे|थी|गया|गयी|गई|किया|करें|करे|रहा|सकता|चाहिए|हुई|हुए|होता|होती|होते|करते|करता|करना|बताया|कहा|सुना|दिया|लिया|पड़ा|आया|चुके|चुका|रहे|रही|जाता|जाती|जाते|मिलता|रखा|बचा|डाला|बनाकर|कहलाता|कहलाती|सकती|सकते|देखे|लगती|लगते|भोगता|जानता|उठाते|करोगे|करेगा|करेगी|करेंगे|दिखाया|सुनाया|बैठकर|होकर|करके|लाकर|जाकर|दिखाते|चलाते|बताते|सुनाते|पालते|रहते|चलते|बनाते|मानते|जानते|कहते|देते|लेते|आते|होनी|चाहती|चाहते|पाते|दिखती|मिलती|बनती|चलती|आती|पाती)(?:\s|[।,;:\)]|$)/u;
+
+  // ── Positive Sanskrit signals ──────────────────────────────────────────
+  // Visarga (ः) count — strong Sanskrit marker, Hindi almost never uses it
+  const countVisarga = (line: string): number => (line.match(/ः/gu) || []).length;
+  // Sanskrit particles — indeclinables common in shlokas
+  const SANSKRIT_PARTICLES_RE = /(?:^|\s)(?:च|एव|हि|तु|अपि|वै|न|यदा|तदा|तथा|इति|किम्|तत्|एषः|सः|यः|अथ|परम्)(?:\s|[।॥,;:\)]|$)/gu;
+  const countSanskritParticles = (line: string): number => {
+    const matches = line.match(SANSKRIT_PARTICLES_RE);
+    return matches ? matches.length : 0;
+  };
+  // Sanskrit inflectional endings — case suffixes rarely seen in Hindi
+  const countSanskritEndings = (line: string): number => {
+    const matches = line.match(/(?:स्य|ेन|ाय|ात्|ेषु|ानाम्|ेभ्यः|ाभिः|ायाः|म्\s)/gu);
+    return matches ? matches.length : 0;
+  };
+  // Combined Sanskrit score for a line
+  const sanskritScore = (line: string): number =>
+    countVisarga(line) * 4 + countSanskritParticles(line) * 3 + countSanskritEndings(line) * 3;
+
   const isVerseLike = (line: string) => {
     if (line.length > 120 || line.length < 5) return false;
     const dev = (line.match(/[\u0900-\u097F]/gu) || []).length;
@@ -500,19 +591,36 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light" }
     if (total === 0 || dev / total < 0.7) return false;
     if (/^(तात्पर्य|शब्दार्थ|अनुवाद)/u.test(line)) return false;
     if ((line.includes("—") || line.includes("--")) && line.includes(";")) return false; // shabdarth
-    // Prose sentences tend to end with है, हैं, था, etc. — verses don't
-    if (/[।]\s*$/.test(line) && /(है|हैं|था|थे|थी|गया|गयी|करें|रहा|सकता|चाहिए)\s*[।]?\s*$/u.test(line)) return false;
+
+    const hindiPP = countHindiPostpositions(line);
+    const hasHindiVerb = HINDI_VERB_RE.test(line);
+    const sScore = sanskritScore(line);
+
+    // Strong Sanskrit signals can override weak Hindi signals
+    // e.g. a line with 1 postposition but 2 visargas is likely Sanskrit
+    if (sScore >= 8) return true; // strong Sanskrit morphology — definitely verse
+
+    // Hindi postposition count: 2+ means definitely Hindi prose, not Sanskrit
+    if (hindiPP >= 2) return false;
+    // Hindi verb detection
+    if (hasHindiVerb) {
+      // But if Sanskrit score is decent, it might be a mixed line in verse context
+      if (sScore >= 4) return true;
+      return false;
+    }
     return true;
   };
 
   // Helper: lookahead to check if ॥ appears within the next N lines
-  const hasDoubleViramAhead = (fromIdx: number, maxLook: number = 6) => {
+  // Keep maxLook tight (3) to avoid pulling in Hindi prose before the next shlok
+  const hasDoubleViramAhead = (fromIdx: number, maxLook: number = 3) => {
     for (let j = fromIdx; j < Math.min(lines.length, fromIdx + maxLook); j++) {
       const lt = lines[j].trim();
       if (/॥/u.test(lt)) return true;
-      // Stop looking if we hit a section marker
+      // Stop looking if we hit a section marker or Hindi prose
       if (/^(तात्पर्य|शब्दार्थ|अनुवाद)/u.test(lt)) return false;
       if (isChapterHeading(lt)) return false;
+      if (HINDI_VERB_RE.test(lt) || countHindiPostpositions(lt) >= 2) return false;
     }
     return false;
   };
@@ -545,22 +653,25 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light" }
     }
 
     // Line contains ॥ — definitely shlok (closing line of verse)
+    // Track if we were inside tatparya to mark reference shlokas differently
     if (/॥/u.test(t) && t.length < 200) {
-      if (current.kind !== "shlok") { flush(); current = { kind: "shlok", lines: [] }; }
+      const shlokKind = (current.kind === "tatparya" || current.kind === "ref-shlok") ? "ref-shlok" : "shlok";
+      if (current.kind !== "shlok" && current.kind !== "ref-shlok") { flush(); current = { kind: shlokKind, lines: [] }; }
       current.lines.push(t);
       continue;
     }
 
     // Already in a shlok — continue if line looks verse-like
-    if (current.kind === "shlok" && isVerseLike(t)) {
+    if ((current.kind === "shlok" || current.kind === "ref-shlok") && isVerseLike(t)) {
       current.lines.push(t);
       continue;
     }
 
     // Not yet in shlok — check if this verse-like line has ॥ ahead (lookahead)
-    if (current.kind !== "shlok" && isVerseLike(t) && hasDoubleViramAhead(i + 1)) {
+    if (current.kind !== "shlok" && current.kind !== "ref-shlok" && isVerseLike(t) && hasDoubleViramAhead(i + 1)) {
+      const shlokKind = current.kind === "tatparya" ? "ref-shlok" : "shlok";
       flush();
-      current = { kind: "shlok", lines: [t] };
+      current = { kind: shlokKind, lines: [t] };
       continue;
     }
 
@@ -581,6 +692,13 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light" }
       continue;
     }
 
+    // After a ref-shlok (inside tatparya), return to tatparya
+    if (current.kind === "ref-shlok") {
+      flush();
+      current = { kind: "tatparya", lines: [t] };
+      continue;
+    }
+
     current.lines.push(t);
   }
   flush();
@@ -593,15 +711,37 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light" }
             const imgs = sec.chapterNum ? chapterImages?.get(sec.chapterNum) : undefined;
             return (
               <div key={i} id={`chapter-${sec.chapterNum}`} className="mt-6 mb-4 scroll-mt-20">
-                <h3 className={`font-serif text-xl sm:text-2xl font-bold ${t.text} mb-3 pb-2 border-b-2 border-orange-300/50`}>
+                <h3 className={`text-xl sm:text-2xl font-bold ${t.text} mb-3 pb-2 border-b-2 border-orange-300/50`} style={{ fontFamily: "var(--font-devanagari)" }}>
                   {sec.lines.join(" ")}
                 </h3>
                 {imgs && imgs.length > 0 && (
                   <div className="my-6 flex flex-col gap-5">
                     {imgs.map((img, idx) => (
-                      <ImageCard key={idx} img={img} alt={`${sec.lines.join(" ")} — दृश्य ${idx + 1}`} />
+                      <div key={idx} className="relative group">
+                        <ImageCard img={img} alt={`${sec.lines.join(" ")} — दृश्य ${idx + 1}`} />
+                        {onDeleteImage && sec.chapterNum && (
+                          <button
+                            onClick={() => onDeleteImage(sec.chapterNum!, img.sceneIndex ?? idx)}
+                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-red-600/80 hover:bg-red-700 text-white rounded-full p-1.5"
+                            title="चित्र हटाएँ"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
                     ))}
                   </div>
+                )}
+                {sec.chapterNum && onRegenerateImages && (
+                  <button
+                    onClick={() => onRegenerateImages(sec.chapterNum!)}
+                    disabled={regeneratingChapters?.has(sec.chapterNum!) ?? false}
+                    className={`flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-lg transition-colors ${regeneratingChapters?.has(sec.chapterNum!) ? "opacity-60 cursor-wait" : ""} ${themeKey === "dark" ? "text-orange-400 hover:bg-orange-900/30" : "text-orange-500 hover:bg-orange-100"}`}
+                    title="चित्र पुनः बनाएँ"
+                  >
+                    <RefreshCw className={`w-3 h-3 ${regeneratingChapters?.has(sec.chapterNum!) ? "animate-spin" : ""}`} />
+                    {regeneratingChapters?.has(sec.chapterNum!) ? "बना रहे हैं…" : "चित्र पुनः बनाएँ"}
+                  </button>
                 )}
               </div>
             );
@@ -611,34 +751,40 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light" }
               <div key={i} className={`rounded-lg p-4 ${themeKey === "dark" ? "bg-orange-950/30 border border-orange-800/40" : themeKey === "sepia" ? "bg-[#ece0c4] border border-[#c4ad80]" : "bg-orange-50 border border-orange-200/60"}`}>
                 <p className={`text-[11px] font-bold mb-2 tracking-wide ${themeKey === "dark" ? "text-orange-400" : "text-orange-400"}`}>श्लोक</p>
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`font-serif sm:text-[17px] leading-[1.8] ${t.text} mb-0.5`}>{l}</p>
+                  <p key={j} className={`sm:text-[17px] leading-[1.8] ${t.text} mb-0.5`} style={{ fontFamily: "var(--font-sanskrit)" }}>{l}</p>
+                ))}
+              </div>
+            );
+          case "ref-shlok":
+            return (
+              <div key={i} className={`pl-4 border-l-2 my-2 ${themeKey === "dark" ? "border-orange-800/40" : themeKey === "sepia" ? "border-[#c4ad80]" : "border-orange-300/60"}`}>
+                {sec.lines.map((l, j) => (
+                  <p key={j} className={`text-[14px] sm:text-[15px] leading-[1.7] ${t.muted} italic mb-0.5`} style={{ fontFamily: "var(--font-sanskrit)" }}>{l}</p>
                 ))}
               </div>
             );
           case "shabdarth":
             return (
-              <div key={i} className={`rounded-lg p-4 ${themeKey === "dark" ? "bg-stone-800/50 border border-stone-700" : themeKey === "sepia" ? "bg-[#e8dcc6] border border-[#c4b08a]" : "bg-stone-50 border border-stone-200/60"}`}>
-                <p className={`text-[11px] font-bold mb-2 tracking-wide ${t.muted}`}>शब्दार्थ</p>
+              <div key={i}>
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`text-[14px] leading-[1.7] ${t.muted} mb-0.5`}>{l}</p>
+                  <p key={j} className={`text-[14px] leading-[1.7] ${t.muted} mb-0.5`} style={{ fontFamily: "var(--font-devanagari)" }}>{l}</p>
                 ))}
               </div>
             );
           case "anuvad":
             return (
-              <div key={i} className={`rounded-lg p-4 ${themeKey === "dark" ? "bg-blue-950/30 border border-blue-800/30" : themeKey === "sepia" ? "bg-[#e6dcc8] border border-[#bfa878]" : "bg-blue-50/60 border border-blue-200/50"}`}>
-                <p className={`text-[11px] font-bold mb-2 tracking-wide ${themeKey === "dark" ? "text-blue-400" : "text-blue-400"}`}>अनुवाद</p>
+              <div key={i}>
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`leading-[1.8] ${t.text} mb-1`}>{l}</p>
+                  <p key={j} className={`leading-[1.8] ${t.text} mb-1`} style={{ fontFamily: "var(--font-devanagari)" }}>{l}</p>
                 ))}
               </div>
             );
           case "tatparya":
             return (
-              <div key={i} className={`rounded-lg p-4 ${themeKey === "dark" ? "bg-green-950/30 border border-green-800/30" : themeKey === "sepia" ? "bg-[#e2dbc4] border border-[#b5a67a]" : "bg-green-50/50 border border-green-200/50"}`}>
-                <p className={`text-[11px] font-bold mb-2 tracking-wide ${themeKey === "dark" ? "text-green-400" : "text-green-500"}`}>तात्पर्य</p>
+              <div key={i}>
+                <p className={`text-[11px] font-bold mb-2 tracking-wide ${themeKey === "dark" ? "text-green-400" : themeKey === "sepia" ? "text-[#6B4D00]" : "text-green-600"}`}>तात्पर्य</p>
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`text-[14px] sm:text-[15px] leading-[1.8] ${t.text} mb-1`}>{l}</p>
+                  <p key={j} className={`text-[14px] sm:text-[15px] leading-[1.8] ${t.text} mb-1`} style={{ fontFamily: "var(--font-devanagari)" }}>{l}</p>
                 ))}
               </div>
             );
@@ -831,11 +977,29 @@ export default function Bhagwatham() {
   const [settings, setSettings] = useState<ReadingSettings>(loadSettings);
   const [showSettings, setShowSettings] = useState(false);
   const [scrollChapter, setScrollChapter] = useState<string | null>(null);
+  const [visiblePageNum, setVisiblePageNum] = useState<number | null>(null);
+  const [editingPageNum, setEditingPageNum] = useState(false);
+  const [pageInputValue, setPageInputValue] = useState("");
+  const pageInputRef = useRef<HTMLInputElement>(null);
   const [showResume, setShowResume] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const PAGES_PER_VIEW = 20;
   const contentRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  // Undo state for image operations
+  const [undoToast, setUndoToast] = useState<{ message: string; trashIds: string[]; timer: ReturnType<typeof setTimeout> } | null>(null);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Prompt editing modal state
+  const [promptModal, setPromptModal] = useState<{
+    chapterNum: number;
+    chapterTitle: string;
+    prompt: string;
+    summaryHi: string;
+    stories: Array<{ index: number; text: string; fullText: string }>;
+    loading: boolean;
+  } | null>(null);
 
   // Fetch all batch data and flatten into pages
   const fetchAllContent = useCallback(async () => {
@@ -856,12 +1020,27 @@ export default function Bhagwatham() {
     try {
       const res = await fetch(`${API_BASE}/image-manifest`);
       const manifest: ImageManifest = await res.json();
-      const map = new Map<number, Array<{ url: string; description: string }>>();
+      const map = new Map<number, Array<{ url: string; description: string; sceneIndex?: number }>>();
       for (const img of manifest.images) {
         const cacheBuster = new Date(img.generatedAt).getTime() || Date.now();
         const entry = {
+          sceneIndex: img.sceneIndex,
           url: `${API_BASE}/images/${img.imagePath}?v=${cacheBuster}`,
-          description: img.descriptionHi || img.prompt.split(",").slice(0, 2).join(",").trim(),
+          description: img.descriptionHi || (() => {
+            // Try to extract Hindi scene context from the enriched prompt
+            const hindiContextMatch = img.prompt.match(/Scene context:\s*([\u0900-\u097F].+?)$/i);
+            if (hindiContextMatch) {
+              const hindi = hindiContextMatch[1].trim();
+              return hindi.length > 120 ? hindi.slice(0, 120) + "…" : hindi;
+            }
+            // Fallback: use chapter title in Hindi if available
+            const title = img.chapterTitle?.replace(/^Chapter\s*/i, "अध्याय ") || "";
+            if (title && /[\u0900-\u097F]/.test(title)) return title;
+            // Last resort: extract clean scene description from English prompt
+            const sceneMatch = img.prompt.match(/Scene:\s*(.+?)(?:,\s*(?:on the|Indian devotional|temple|realistic|ancient))/i);
+            if (sceneMatch) return sceneMatch[1].trim();
+            return img.prompt.split(",").slice(0, 2).join(",").trim();
+          })(),
         };
         const existing = map.get(img.chapterNumber) || [];
         existing.push(entry);
@@ -870,6 +1049,95 @@ export default function Bhagwatham() {
       setChapterImages(map);
     } catch { /* optional */ }
   }, []);
+
+  // ── Image regeneration ─────────────────────────────────────────────────────
+  const [regeneratingChapters, setRegeneratingChapters] = useState<Set<number>>(new Set());
+
+  const showUndo = useCallback((message: string, trashIds: string[]) => {
+    // Clear any existing undo timer
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    const timer = setTimeout(() => setUndoToast(null), 8000);
+    undoTimerRef.current = timer;
+    setUndoToast({ message, trashIds, timer });
+  }, []);
+
+  const handleUndo = useCallback(async () => {
+    if (!undoToast) return;
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    const { trashIds } = undoToast;
+    setUndoToast(null);
+    try {
+      for (const tid of trashIds) {
+        await fetch(`${API_BASE}/image/restore/${tid}`, { method: "POST" });
+      }
+      await fetchImageManifest();
+    } catch { /* ignore */ }
+  }, [undoToast, fetchImageManifest]);
+
+  const openPromptModal = useCallback(async (chapterNum: number) => {
+    if (regeneratingChapters.has(chapterNum)) return;
+    setPromptModal({ chapterNum, chapterTitle: "", prompt: "", summaryHi: "", stories: [], loading: true });
+    try {
+      const res = await fetch(`${API_BASE}/suggest-prompt/${chapterNum}`);
+      if (res.ok) {
+        const data = await res.json();
+        setPromptModal({
+          chapterNum,
+          chapterTitle: data.chapterTitle || `अध्याय ${chapterNum}`,
+          prompt: data.suggestedPrompt || data.existingPrompt || "",
+          summaryHi: data.summaryHi || "",
+          stories: data.stories || [],
+          loading: false,
+        });
+      } else {
+        setPromptModal(null);
+      }
+    } catch {
+      setPromptModal(null);
+    }
+  }, [regeneratingChapters]);
+
+  const handleRegenerateImages = useCallback(async (chapterNum: number, customPrompt?: string, summaryHi?: string) => {
+    if (regeneratingChapters.has(chapterNum)) return;
+    setRegeneratingChapters((prev) => new Set(prev).add(chapterNum));
+    setPromptModal(null);
+    try {
+      const bodyObj: Record<string, string> = {};
+      if (customPrompt) bodyObj.customPrompt = customPrompt;
+      if (summaryHi) bodyObj.summaryHi = summaryHi;
+      const res = await fetch(`${API_BASE}/regenerate-chapter/${chapterNum}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bodyObj),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        await fetchImageManifest();
+        if (data.trashIds?.length > 0) {
+          showUndo(`अध्याय ${chapterNum} के चित्र पुनः बनाए गए`, data.trashIds);
+        }
+      }
+    } catch { /* ignore */ } finally {
+      setRegeneratingChapters((prev) => {
+        const next = new Set(prev);
+        next.delete(chapterNum);
+        return next;
+      });
+    }
+  }, [regeneratingChapters, fetchImageManifest, showUndo]);
+
+  const handleDeleteImage = useCallback(async (chapterNum: number, sceneIndex: number) => {
+    try {
+      const res = await fetch(`${API_BASE}/image/${chapterNum}/${sceneIndex}`, { method: "DELETE" });
+      if (res.ok) {
+        const data = await res.json();
+        await fetchImageManifest();
+        if (data.trashId) {
+          showUndo(`अध्याय ${chapterNum} का चित्र हटाया गया`, [data.trashId]);
+        }
+      }
+    } catch { /* ignore */ }
+  }, [fetchImageManifest, showUndo]);
 
   // ── Bookmark functions ──────────────────────────────────────────────────────
   const fetchBookmarks = useCallback(async (rid?: string) => {
@@ -885,8 +1153,8 @@ export default function Bhagwatham() {
   const saveBookmark = useCallback(async () => {
     if (!readerId) { setShowIdentityModal(true); return; }
 
-    const idx = (currentPage - 1) * PAGES_PER_VIEW;
-    const pageNum = allPages[idx]?.pageNumber;
+    // Use the currently visible page from scroll tracking, fallback to view-page start
+    const pageNum = visiblePageNum || allPages[(currentPage - 1) * PAGES_PER_VIEW]?.pageNumber;
     if (!pageNum) return;
 
     // Find current chapter context
@@ -909,7 +1177,7 @@ export default function Bhagwatham() {
       setBookmarkSaved(true);
       setTimeout(() => setBookmarkSaved(false), 2000);
     } catch { /* ignore */ }
-  }, [readerId, readerName, allPages, currentPage, fetchBookmarks]);
+  }, [readerId, readerName, allPages, currentPage, visiblePageNum, fetchBookmarks]);
 
   const deleteBookmark = useCallback(async (b: BookmarkEntry) => {
     if (!readerId) return;
@@ -995,6 +1263,20 @@ export default function Bhagwatham() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const goToPageNumber = (pageNum: number) => {
+    const pageIdx = allPages.findIndex(p => p.pageNumber >= pageNum);
+    if (pageIdx >= 0) {
+      const viewPage = Math.floor(pageIdx / PAGES_PER_VIEW) + 1;
+      setCurrentPage(viewPage);
+      // After render, scroll to the exact page element
+      setTimeout(() => {
+        const el = document.querySelector(`[data-page-num="${allPages[pageIdx].pageNumber}"]`);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        else window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 200);
+    }
+  };
+
   const handleChapterClick = (ch: ChapterEntry) => {
     setSidebarOpen(false);
     setSearchQuery("");
@@ -1014,19 +1296,17 @@ export default function Bhagwatham() {
 
   // ── Auto-save reading position ───────────────────────────────────────────
   useEffect(() => {
-    if (allPages.length > 0 && currentPage > 1) {
-      const pageNum = allPages[(currentPage - 1) * PAGES_PER_VIEW]?.pageNumber;
-      if (pageNum) {
-        const currentChapter = chapters.slice().reverse().find(ch => ch.pageNumber <= pageNum);
-        localStorage.setItem("bhagwatham_resume", JSON.stringify({
-          page: currentPage, pageNumber: pageNum,
-          chapter: currentChapter?.title?.split("—")[0].trim() || "",
-          chapterNumber: currentChapter?.number || null,
-          savedAt: Date.now(),
-        }));
-      }
+    const pageNum = visiblePageNum || (allPages.length > 0 ? allPages[(currentPage - 1) * PAGES_PER_VIEW]?.pageNumber : null);
+    if (allPages.length > 0 && pageNum && (currentPage > 1 || visiblePageNum)) {
+      const currentChapter = chapters.slice().reverse().find(ch => ch.pageNumber <= pageNum);
+      localStorage.setItem("bhagwatham_resume", JSON.stringify({
+        page: currentPage, pageNumber: pageNum,
+        chapter: currentChapter?.title?.split("—")[0].trim() || "",
+        chapterNumber: currentChapter?.number || null,
+        savedAt: Date.now(),
+      }));
     }
-  }, [currentPage, allPages, chapters]);
+  }, [currentPage, visiblePageNum, allPages, chapters]);
 
   // Show resume card on load
   useEffect(() => {
@@ -1104,7 +1384,7 @@ export default function Bhagwatham() {
             const num = parseInt(id.replace("chapter-", ""), 10);
             const ch = chapters.find(c => c.number === num);
             if (ch) {
-              setScrollChapter(ch.title.split("—")[0].trim());
+              setScrollChapter(ch.title);
               setActiveChapter(ch.number);
             }
           }
@@ -1118,12 +1398,31 @@ export default function Bhagwatham() {
     return () => observer.disconnect();
   }, [displayPages, chapters]);
 
+  // ── Scroll page tracking ──────────────────────────────────────────────
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const num = parseInt(entry.target.getAttribute("data-page-num") || "0", 10);
+            if (num > 0) setVisiblePageNum(num);
+          }
+        }
+      },
+      { rootMargin: "-120px 0px -60% 0px" }
+    );
+    const pageEls = document.querySelectorAll("[data-page-num]");
+    pageEls.forEach(el => observer.observe(el));
+    return () => observer.disconnect();
+  }, [displayPages]);
+
   // Theme
   const theme = THEME_STYLES[settings.theme];
 
   // Page range display
   const firstPageNum = displayPages[0]?.pageNumber ?? 0;
   const lastPageNum = displayPages[displayPages.length - 1]?.pageNumber ?? 0;
+  const currentVisiblePage = visiblePageNum || firstPageNum;
 
   return (
     <Layout>
@@ -1179,10 +1478,43 @@ export default function Bhagwatham() {
               {/* Page info + sticky chapter */}
               <div className={`flex items-center gap-2 text-xs ${theme.muted} min-w-0`}>
                 <BookOpen className="w-3.5 h-3.5 shrink-0" />
-                {scrollChapter ? (
-                  <span className="truncate font-semibold">{scrollChapter}</span>
+                {editingPageNum ? (
+                  <form className="flex items-center gap-1 whitespace-nowrap" onSubmit={(e) => {
+                    e.preventDefault();
+                    const num = parseInt(pageInputValue, 10);
+                    if (num > 0) goToPageNumber(num);
+                    setEditingPageNum(false);
+                  }}>
+                    <span>पृ.</span>
+                    <input
+                      ref={pageInputRef}
+                      type="number" min={1} max={allPages[allPages.length - 1]?.pageNumber || 999}
+                      value={pageInputValue}
+                      onChange={(e) => setPageInputValue(e.target.value)}
+                      onBlur={() => setEditingPageNum(false)}
+                      onKeyDown={(e) => { if (e.key === "Escape") setEditingPageNum(false); }}
+                      className="w-14 px-1 py-0.5 bg-white border border-orange-300 rounded text-xs text-stone-700 text-center focus:outline-none focus:ring-1 focus:ring-orange-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      autoFocus
+                    />
+                    <span>/ {allPages[allPages.length - 1]?.pageNumber || allPages.length}</span>
+                  </form>
+                ) : scrollChapter ? (
+                  <>
+                    <span className="truncate font-semibold">{scrollChapter?.split("—")[0].trim()}</span>
+                    <span
+                      className="whitespace-nowrap cursor-pointer hover:text-orange-600 transition-colors shrink-0"
+                      onClick={() => { setPageInputValue(String(currentVisiblePage)); setEditingPageNum(true); setTimeout(() => pageInputRef.current?.select(), 50); }}
+                      title="पृष्ठ संख्या टाइप करें"
+                    >पृ. {currentVisiblePage}</span>
+                  </>
                 ) : allPages.length > 0 && !searchQuery ? (
-                  <span className="whitespace-nowrap">पृ. {firstPageNum}–{lastPageNum} / {allPages.length}</span>
+                  <span
+                    className="whitespace-nowrap cursor-pointer hover:text-orange-600 transition-colors"
+                    onClick={() => { setPageInputValue(String(currentVisiblePage)); setEditingPageNum(true); setTimeout(() => pageInputRef.current?.select(), 50); }}
+                    title="पृष्ठ संख्या टाइप करें"
+                  >
+                    पृ. {currentVisiblePage} / {allPages[allPages.length - 1]?.pageNumber || allPages.length}
+                  </span>
                 ) : searchQuery ? (
                   <span>{displayPages.length} परिणाम</span>
                 ) : (
@@ -1265,10 +1597,53 @@ export default function Bhagwatham() {
           {scrollChapter && !searchQuery && (
             <div className={`sticky top-[7.5rem] z-20 ${theme.surface} backdrop-blur-sm border-b ${theme.border} px-4 py-1.5`}>
               <div className="max-w-3xl mx-auto flex items-center gap-2 text-[10px]">
+                {/* Previous chapter */}
+                {(() => {
+                  const idx = chapters.findIndex(c => c.number === activeChapter);
+                  const prev = idx > 0 ? chapters[idx - 1] : null;
+                  return (
+                    <button
+                      onClick={() => prev && handleChapterClick(prev)}
+                      disabled={!prev}
+                      className={`p-1 rounded hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors ${!prev ? "opacity-30 cursor-not-allowed" : "cursor-pointer"}`}
+                      title={prev ? `← ${prev.title}` : "पहला अध्याय"}
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                  );
+                })()}
+
                 <span className={`font-bold ${theme.accent}`}>स्कन्ध १</span>
                 <span className={theme.muted}>/</span>
-                <span className={`font-semibold ${theme.text}`}>{scrollChapter}</span>
-                <span className={`ml-auto ${theme.muted}`}>पृ. {firstPageNum}–{lastPageNum}</span>
+                <span className={`font-semibold ${theme.text}`}>{scrollChapter?.split("—")[0].trim()}</span>
+                {scrollChapter?.includes("—") && (
+                  <>
+                    <span className={theme.muted}>—</span>
+                    <span className={`${theme.muted} truncate`}>{scrollChapter.split("—").slice(1).join("—").trim()}</span>
+                  </>
+                )}
+
+                {/* Next chapter */}
+                {(() => {
+                  const idx = chapters.findIndex(c => c.number === activeChapter);
+                  const next = idx >= 0 && idx < chapters.length - 1 ? chapters[idx + 1] : null;
+                  return (
+                    <button
+                      onClick={() => next && handleChapterClick(next)}
+                      disabled={!next}
+                      className={`p-1 rounded hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors ${!next ? "opacity-30 cursor-not-allowed" : "cursor-pointer"}`}
+                      title={next ? `→ ${next.title}` : "अंतिम अध्याय"}
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  );
+                })()}
+
+                <span
+                  className={`ml-auto ${theme.muted} cursor-pointer hover:text-orange-600 transition-colors`}
+                  onClick={() => { setPageInputValue(String(currentVisiblePage)); setEditingPageNum(true); setTimeout(() => pageInputRef.current?.select(), 50); }}
+                  title="पृष्ठ संख्या टाइप करें"
+                >पृ. {currentVisiblePage}</span>
               </div>
             </div>
           )}
@@ -1351,9 +1726,9 @@ export default function Bhagwatham() {
             ) : (
               <div className="space-y-1">
                 {displayPages.map((page) => (
-                  <div key={page.pageNumber}>
+                  <div key={page.pageNumber} data-page-num={page.pageNumber}>
                     <p className={`text-[10px] ${theme.muted} font-medium text-right my-3 opacity-60`}>पृ. {page.pageNumber}</p>
-                    <RenderContent text={page.text} textEn={page.textEn} lang={lang} chapterImages={chapterImages} themeKey={settings.theme} />
+                    <RenderContent text={page.text} textEn={page.textEn} lang={lang} chapterImages={chapterImages} themeKey={settings.theme} onRegenerateImages={openPromptModal} regeneratingChapters={regeneratingChapters} onDeleteImage={handleDeleteImage} />
                   </div>
                 ))}
               </div>
@@ -1411,6 +1786,145 @@ export default function Bhagwatham() {
           </div>
         </main>
       </div>
+      {/* Prompt editing modal */}
+      <AnimatePresence>
+        {promptModal && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            onClick={(e) => { if (e.target === e.currentTarget) setPromptModal(null); }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-stone-900 rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto"
+            >
+              <div className="p-5 border-b border-stone-200 dark:border-stone-700 flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-stone-800 dark:text-stone-100 text-base">चित्र पुनः बनाएँ</h3>
+                  <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">{promptModal.chapterTitle}</p>
+                </div>
+                <button onClick={() => setPromptModal(null)} className="p-1.5 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full">
+                  <X className="w-4 h-4 text-stone-500" />
+                </button>
+              </div>
+
+              {promptModal.loading ? (
+                <div className="p-10 flex flex-col items-center gap-3">
+                  <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+                  <p className="text-sm text-stone-500">AI से प्रॉम्प्ट बना रहे हैं…</p>
+                </div>
+              ) : (
+                <div className="p-5 space-y-4">
+                  {/* Hindi summary */}
+                  {promptModal.summaryHi && (
+                    <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg p-3">
+                      <p className="text-xs font-semibold text-orange-600 dark:text-orange-400 mb-1">सारांश</p>
+                      <p className="text-sm text-stone-700 dark:text-stone-300" style={{ fontFamily: "var(--font-devanagari)" }}>{promptModal.summaryHi}</p>
+                    </div>
+                  )}
+
+                  {/* Editable prompt */}
+                  <div>
+                    <label className="flex items-center gap-1.5 text-xs font-semibold text-stone-600 dark:text-stone-400 mb-1.5">
+                      <Pencil className="w-3 h-3" />
+                      Image Prompt (English)
+                    </label>
+                    <textarea
+                      value={promptModal.prompt}
+                      onChange={(e) => setPromptModal((prev) => prev ? { ...prev, prompt: e.target.value } : null)}
+                      rows={5}
+                      className="w-full rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800 text-sm text-stone-800 dark:text-stone-200 p-3 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none resize-y"
+                      placeholder="Describe the scene you want to generate..."
+                    />
+                    <p className="text-[10px] text-stone-400 mt-1">प्रॉम्प्ट को संपादित करें या नीचे से कहानी चुनें</p>
+                  </div>
+
+                  {/* Available stories from tatparya */}
+                  {promptModal.stories.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-stone-600 dark:text-stone-400 mb-2">अध्याय की कहानियाँ (तात्पर्य से)</p>
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {promptModal.stories.map((story) => (
+                          <button
+                            key={story.index}
+                            onClick={() => {
+                              // Re-generate AI prompt using this story as context
+                              setPromptModal((prev) => prev ? {
+                                ...prev,
+                                prompt: prev.prompt,
+                                summaryHi: story.text,
+                              } : null);
+                              // Trigger a new AI prompt generation with the story context
+                              (async () => {
+                                try {
+                                  const res = await fetch(`${API_BASE}/suggest-prompt/${promptModal.chapterNum}`);
+                                  if (res.ok) {
+                                    const data = await res.json();
+                                    // Use the AI-generated prompt but show the selected story
+                                    setPromptModal((prev) => prev ? {
+                                      ...prev,
+                                      summaryHi: story.text,
+                                    } : null);
+                                  }
+                                } catch { /* ignore */ }
+                              })();
+                            }}
+                            className="w-full text-left p-2.5 rounded-lg border border-stone-200 dark:border-stone-700 hover:border-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-colors text-xs text-stone-600 dark:text-stone-400"
+                            style={{ fontFamily: "var(--font-devanagari)" }}
+                          >
+                            {story.text}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action buttons */}
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      onClick={() => handleRegenerateImages(promptModal.chapterNum, promptModal.prompt, promptModal.summaryHi)}
+                      disabled={!promptModal.prompt.trim()}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white rounded-xl font-semibold text-sm transition-colors"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      इस प्रॉम्प्ट से बनाएँ
+                    </button>
+                    <button
+                      onClick={() => handleRegenerateImages(promptModal.chapterNum)}
+                      className="flex items-center gap-1.5 px-4 py-2.5 bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 rounded-xl font-medium text-sm transition-colors"
+                    >
+                      <Wand2 className="w-3.5 h-3.5" />
+                      Auto
+                    </button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Undo toast */}
+      <AnimatePresence>
+        {undoToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-stone-800 text-white rounded-xl shadow-2xl px-5 py-3 text-sm"
+          >
+            <span>{undoToast.message}</span>
+            <button
+              onClick={handleUndo}
+              className="flex items-center gap-1.5 px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-semibold text-xs transition-colors"
+            >
+              <Undo2 className="w-3.5 h-3.5" />
+              पूर्ववत करें
+            </button>
+            <button onClick={() => { if (undoTimerRef.current) clearTimeout(undoTimerRef.current); setUndoToast(null); }} className="p-1 hover:bg-stone-700 rounded-full transition-colors">
+              <X className="w-3.5 h-3.5 text-stone-400" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Layout>
   );
 }

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif:ital,wght@0,400;0,700;0,900;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif:ital,wght@0,400;0,700;0,900;1,400&family=Tiro+Devanagari+Sanskrit:ital@0;1&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
@@ -35,6 +35,8 @@
 
   --font-sans: 'Inter', sans-serif;
   --font-serif: 'Noto Serif', serif;
+  --font-sanskrit: 'Tiro Devanagari Sanskrit', 'Noto Serif', serif;
+  --font-devanagari: 'Noto Sans Devanagari', 'Inter', sans-serif;
 
   --color-primary-container: #ff9933;
   --color-on-primary-container: #5C3000;

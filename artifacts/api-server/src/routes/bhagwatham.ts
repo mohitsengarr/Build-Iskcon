@@ -10,9 +10,82 @@ import {
 import {
   getImageManifest,
   getImagesDir,
+  regenerateChapterImages,
+  regenerateWithCustomPrompt,
+  deleteChapterImage,
+  restoreImage,
+  enhancePersona,
+  getPersonaVersions,
+  buildAIScenePrompt,
+  extractTatparyaStory,
 } from "../services/bhagwatham-image-gen";
+import {
+  runAuditPass,
+  getAuditProgress,
+  resetAudit,
+} from "../services/bhagwatham-audit";
+import { checkAllCredits, getCreditStatuses } from "../services/ai-credit-monitor";
 
 const router = Router();
+
+// ── Helper: find chapter content from batches ────────────────────────────────
+
+function findChapterContent(chapterNumber: number): { chapterTitle: string; contentSnippet: string } | null {
+  const allBatches = getAllBatches();
+  const allPages = allBatches.flatMap((b) => b.pages);
+  const chapterPattern = /^(?:\d+\s+)?(?:Chapter|अध्याय)\s+(.+)/imu;
+  const hindiNums: Record<string, number> = {
+    एक: 1, दो: 2, तीन: 3, चार: 4, पाँच: 5, छः: 6, छह: 6,
+    सात: 7, आठ: 8, नौ: 9, दस: 10, ग्यारह: 11, बारह: 12,
+    तेरह: 13, चौदह: 14, पन्द्रह: 15, सोलह: 16,
+  };
+  const OCR_CHAPTER_FIXES: Record<string, { num: number; title: string }> = {
+    "Chapter 278 अध्याय": { num: 8, title: "अध्याय आठ" },
+    "Chapter it": { num: 9, title: "अध्याय नौ" },
+  };
+
+  for (const page of allPages) {
+    const lines = page.text.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const trimmed = lines[i].trim();
+      const match = trimmed.match(chapterPattern);
+      if (match && !trimmed.includes("पूर्ण हुए")) {
+        let title = match[0].replace(/^\d+\s+/, "").trim();
+        let chNum = 0;
+
+        for (const [key, fix] of Object.entries(OCR_CHAPTER_FIXES)) {
+          if (title.includes(key) || trimmed.includes(key)) {
+            chNum = fix.num;
+            title = fix.title;
+            break;
+          }
+        }
+        if (!chNum) {
+          for (const [word, num] of Object.entries(hindiNums)) {
+            if (title.includes(word)) { chNum = num; break; }
+          }
+        }
+        if (!chNum) {
+          const numMatch = title.match(/\d+/);
+          if (numMatch) {
+            const n = parseInt(numMatch[0], 10);
+            if (n > 0 && n <= 100) chNum = n;
+          }
+        }
+
+        if (chNum === chapterNumber) {
+          const remainingLines = lines.slice(i + 1, i + 40).join("\n");
+          const pageIdx = allPages.indexOf(page);
+          const nextPages = allPages.slice(pageIdx + 1, pageIdx + 5);
+          const nextContent = nextPages.map((p) => p.text).join("\n");
+          const contentSnippet = remainingLines + "\n" + nextContent.substring(0, 3000);
+          return { chapterTitle: title, contentSnippet };
+        }
+      }
+    }
+  }
+  return null;
+}
 
 // Serve generated chapter images as static files
 router.use("/bhagwatham/images", express.static(getImagesDir(), { maxAge: 0, etag: true, lastModified: true }));
@@ -104,6 +177,41 @@ router.get("/bhagwatham/image-manifest", (_req, res) => {
   }
 });
 
+// DELETE /api/bhagwatham/image/:chapter/:scene — delete a specific chapter image
+router.delete("/bhagwatham/image/:chapter/:scene", (req, res) => {
+  try {
+    const chapterNumber = parseInt(req.params.chapter, 10);
+    const sceneIndex = parseInt(req.params.scene, 10);
+    if (isNaN(chapterNumber) || isNaN(sceneIndex)) {
+      res.status(400).json({ error: "Invalid chapter or scene number" });
+      return;
+    }
+    const result = deleteChapterImage(chapterNumber, sceneIndex);
+    if (!result.success) {
+      res.status(404).json({ error: "Image not found" });
+      return;
+    }
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete image" });
+  }
+});
+
+// POST /api/bhagwatham/image/restore/:trashId — undo a delete or regenerate
+router.post("/bhagwatham/image/restore/:trashId", (req, res) => {
+  try {
+    const { trashId } = req.params;
+    const result = restoreImage(trashId);
+    if (!result.success) {
+      res.status(404).json({ error: "Trash entry not found or file missing" });
+      return;
+    }
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to restore image" });
+  }
+});
+
 // POST /api/bhagwatham/generate-images — generate images for existing chapters
 router.post("/bhagwatham/generate-images", async (req, res) => {
   try {
@@ -125,6 +233,101 @@ router.post("/bhagwatham/generate-images", async (req, res) => {
     await generateImagesForBatch(allPages);
     const manifest = getImageManifest();
     res.json({ success: true, imagesGenerated: manifest.images.length });
+  } catch (err) {
+    res.status(500).json({ success: false, message: String(err) });
+  }
+});
+
+// GET /api/bhagwatham/suggest-prompt/:number — get AI-generated prompt + available stories for editing
+router.get("/bhagwatham/suggest-prompt/:number", async (req, res) => {
+  try {
+    const chapterNumber = parseInt(req.params.number, 10);
+    if (isNaN(chapterNumber) || chapterNumber < 1) {
+      res.status(400).json({ error: "Invalid chapter number" });
+      return;
+    }
+
+    const chapter = findChapterContent(chapterNumber);
+    if (!chapter) {
+      res.status(404).json({ error: `Chapter ${chapterNumber} not found in processed content` });
+      return;
+    }
+
+    // Get AI-generated prompt
+    const aiScene = await buildAIScenePrompt(chapter.chapterTitle, chapter.contentSnippet);
+
+    // Get available tatparya stories from the chapter
+    const stories = extractTatparyaStory(chapter.contentSnippet);
+
+    // Get existing image prompt if any
+    const manifest = getImageManifest();
+    const existingImage = manifest.images.find((img) => img.chapterNumber === chapterNumber);
+
+    res.json({
+      chapterNumber,
+      chapterTitle: chapter.chapterTitle,
+      suggestedPrompt: aiScene?.scene || existingImage?.prompt || "",
+      summaryHi: aiScene?.descriptionHi || existingImage?.descriptionHi || "",
+      existingPrompt: existingImage?.prompt || null,
+      stories: stories.map((s, i) => ({
+        index: i,
+        text: s.length > 200 ? s.slice(0, 197) + "…" : s,
+        fullText: s,
+      })),
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to generate prompt suggestion" });
+  }
+});
+
+// POST /api/bhagwatham/regenerate-chapter/:number — regenerate images for a specific chapter
+// Accepts optional body: { customPrompt?: string } to use a user-edited prompt
+router.post("/bhagwatham/regenerate-chapter/:number", async (req, res) => {
+  try {
+    const chapterNumber = parseInt(req.params.number, 10);
+    if (isNaN(chapterNumber) || chapterNumber < 1) {
+      res.status(400).json({ error: "Invalid chapter number" });
+      return;
+    }
+
+    const chapter = findChapterContent(chapterNumber);
+    if (!chapter) {
+      res.status(404).json({ error: `Chapter ${chapterNumber} not found in processed content` });
+      return;
+    }
+
+    const customPrompt = req.body?.customPrompt as string | undefined;
+    const summaryHi = req.body?.summaryHi as string | undefined;
+
+    if (customPrompt) {
+      // Use custom prompt for regeneration
+      const result = await regenerateWithCustomPrompt(chapterNumber, chapter.chapterTitle, customPrompt, 0, summaryHi);
+      const manifest = getImageManifest();
+      const chapterImages = manifest.images.filter((img) => img.chapterNumber === chapterNumber);
+
+      res.json({
+        success: true,
+        chapterNumber,
+        chapterTitle: chapter.chapterTitle,
+        imagesGenerated: result.file ? 1 : 0,
+        images: chapterImages,
+        trashIds: result.trashId ? [result.trashId] : [],
+      });
+    } else {
+      // Default: auto-generate prompt via AI
+      const result = await regenerateChapterImages(chapterNumber, chapter.chapterTitle, chapter.contentSnippet);
+      const manifest = getImageManifest();
+      const chapterImages = manifest.images.filter((img) => img.chapterNumber === chapterNumber);
+
+      res.json({
+        success: true,
+        chapterNumber,
+        chapterTitle: chapter.chapterTitle,
+        imagesGenerated: result.files.length,
+        images: chapterImages,
+        trashIds: result.trashIds,
+      });
+    }
   } catch (err) {
     res.status(500).json({ success: false, message: String(err) });
   }
@@ -217,6 +420,81 @@ router.post("/bhagwatham/process", async (_req, res) => {
       success: false,
       message: "Failed to process batch",
     });
+  }
+});
+
+// ── Persona endpoints ──────────────────────────────────────────────────────
+
+// GET /api/bhagwatham/persona/versions — current persona versions and enhancement log
+router.get("/bhagwatham/persona/versions", (_req, res) => {
+  try {
+    const versions = getPersonaVersions();
+    res.json(versions);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to read persona versions" });
+  }
+});
+
+// POST /api/bhagwatham/persona/enhance — enhance a persona with new details
+router.post("/bhagwatham/persona/enhance", (req, res) => {
+  try {
+    const { personaKey, enhancement } = req.body;
+    if (!personaKey || !enhancement) {
+      res.status(400).json({ error: "personaKey and enhancement are required" });
+      return;
+    }
+    const result = enhancePersona(personaKey, enhancement);
+    if (!result.success) {
+      res.status(404).json({ error: `Unknown persona: ${personaKey}` });
+      return;
+    }
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to enhance persona" });
+  }
+});
+
+// ── Audit endpoints ─────────────────────────────────────────────────────────
+
+// GET /api/bhagwatham/audit — audit progress and recent log
+router.get("/bhagwatham/audit", (_req, res) => {
+  try {
+    const progress = getAuditProgress();
+    res.json(progress);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to read audit progress" });
+  }
+});
+
+// POST /api/bhagwatham/audit — manually trigger one audit pass
+router.post("/bhagwatham/audit", async (_req, res) => {
+  try {
+    const result = await runAuditPass();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Audit pass failed" });
+  }
+});
+
+// POST /api/bhagwatham/audit/reset — reset audit to re-check all chapters
+router.post("/bhagwatham/audit/reset", (_req, res) => {
+  try {
+    resetAudit();
+    res.json({ success: true, message: "Audit reset — will re-check all chapters from highest" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to reset audit" });
+  }
+});
+
+// ── AI Credit monitoring ───────────────────────────────────────────────────
+
+// GET /api/bhagwatham/credits — check AI platform credit statuses
+router.get("/bhagwatham/credits", async (_req, res) => {
+  try {
+    const statuses = await checkAllCredits();
+    res.json(statuses);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to check credits" });
   }
 });
 

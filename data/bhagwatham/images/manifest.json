@@ -80,6 +80,19 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 7,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-007.jpg",
+      "prompt": "Vyasa sits in deep meditation beneath berry trees at his hermitage on the western bank of the Saraswati river at Shamyaprasa. Having touched the sacred water for purification, he closes his eyes and stills his mind completely, preparing to receive the divine vision that will become the Srimad Bhagavatam.",
+      "descriptionHi": "इस अध्याय में अश्वत्थामा द्वारा द्रौपदी के पाँच पुत्रों की हत्या और अर्जुन द्वारा उसे दंडित किए जाने की घटना का संदर्भ दिया गया है। नारद मुनि के जाने के बाद, महर्षि व्यासदेव सरस्वती नदी के पश्चिमी तट पर शम्याप्रास आश्रम में बैठकर समाधि में लीन हो गए। यह अध्याय श्रीमद्भागवत के शुभारम्भ की पृष्ठभूमि तैयार करता है, जो परीक्षित के चमत्कारिक रक्षण की घटना से जुड़ी है।",
+      "personasUsed": [
+        "vyasa"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T13:08:13.785Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 8,
       "chapterTitle": "अध्याय आठ",
       "imagePath": "chapter-008.jpg",
@@ -221,5 +234,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T13:07:54.365Z"
+  "lastUpdated": "2026-04-10T13:08:13.785Z"
 }

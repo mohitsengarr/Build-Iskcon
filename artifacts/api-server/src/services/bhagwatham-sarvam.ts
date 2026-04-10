@@ -15,6 +15,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { execSync } from "child_process";
 import { logger } from "../lib/logger";
+import { reportAIFailure } from "./ai-credit-monitor";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -64,6 +65,16 @@ function writeProgress(progress: Progress): void {
 
 export function getProgress(): Progress {
   return readProgress();
+}
+
+/** Call once on server startup to recover from stale "processing" state */
+export function recoverStaleProgress(): void {
+  const progress = readProgress();
+  if (progress.status === "processing") {
+    progress.status = "idle";
+    writeProgress(progress);
+    logger.info("Auto-recovered stale 'processing' status to 'idle' on startup");
+  }
 }
 
 export function getAllBatches(): BatchData[] {
@@ -233,6 +244,7 @@ async function ocrWithSarvam(imagePaths: string[], startPage: number): Promise<P
       logger.info({ pageNumber, textLength: text.length }, "Sarvam OCR completed for page");
     } catch (err) {
       logger.warn({ pageNumber, err }, "Sarvam OCR failed for page, trying Tesseract fallback");
+      reportAIFailure("Sarvam AI", (err as Error)?.message || "OCR failed");
       const fallback = await ocrSinglePageTesseract(imagePath, pageNumber);
       pages.push(fallback);
     }
