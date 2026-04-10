@@ -290,7 +290,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-10T17:43:05.780Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 39,
+      "chapterTitle": "Chapter पन्द्रह",
+      "imagePath": "chapter-039.jpg",
+      "prompt": "The celestial guardians of the various cosmic realms approach Brahma, the creator, in his divine abode, with expressions of deep concern. The entire universe has grown dim, as if a great veil has been drawn over the light of the sun and moon, caused by Diti carrying the powerful child of sage Kashyapa in her womb for a hundred years.",
+      "descriptionHi": "महर्षि मैत्रेय विदुर को बताते हैं कि कश्यप की पत्नी दिति ने यह जानते हुए कि उसके गर्भस्थ पुत्र देवताओं के लिए विक्षोभकारी होंगे, सौ वर्षों तक गर्भ को धारण किए रखा। दिति के इस गर्भधारण के प्रभाव से सारे लोकों में अंधकार छा गया और सूर्य-चन्द्रमा का प्रकाश मंद पड़ गया। विचलित देवताओं ने सृष्टिकर्ता ब्रह्मा के पास जाकर इस अद्भुत अंधकार का कारण पूछा।",
+      "personasUsed": [
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T20:30:17.407Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T20:22:30.593Z"
+  "lastUpdated": "2026-04-10T20:30:17.407Z"
 }
