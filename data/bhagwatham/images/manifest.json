@@ -329,7 +329,22 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-10T21:18:08.080Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 44,
+      "chapterTitle": "Chapter बीस",
+      "imagePath": "chapter-044.jpg",
+      "prompt": "In a serene forest hermitage, the sage Shaunaka sits reverently before Suta Goswami, asking him about the great King Svayambhuva Manu and the spiritual paths he established for future generations after the Earth was restored to its rightful place, with Vidura present as a devoted disciple of Krishna listening to this sacred discourse.",
+      "descriptionHi": "शौनक ऋषि ने सूत गोस्वामी से पूछा कि जब पृथ्वी अपनी कक्ष्या में पुनः स्थापित हो गई, तो स्वायंभुव मनु ने बाद में जन्म लेने वाले प्राणियों के मोक्ष के लिए क्या मार्ग प्रशस्त किए। विदुर, जो कृष्ण के परम भक्त और सुहृद थे, इस ज्ञान परंपरा में एक महत्वपूर्ण कड़ी हैं। यह अध्याय बद्ध जीवों के मोक्ष के प्रति भगवान की असीम करुणा और मनु द्वारा स्थापित धार्मिक नियमों के आध्यात्मिक महत्व को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "suta_goswami",
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T21:25:17.524Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T21:18:08.080Z"
+  "lastUpdated": "2026-04-10T21:25:17.524Z"
 }
