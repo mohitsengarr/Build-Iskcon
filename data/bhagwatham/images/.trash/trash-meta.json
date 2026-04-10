@@ -1,66 +1,5 @@
 [
   {
-    "trashId": "4-0-1775821941474",
-    "originalFile": "chapter-004.jpg",
-    "trashedFile": "4-0-1775821941474.jpg",
-    "manifestEntry": {
-      "chapterNumber": 4,
-      "chapterTitle": "Chapter चार",
-      "imagePath": "chapter-004.jpg",
-      "prompt": "Lord Krishna standing majestically in a palace courtyard, golden architecture, peacocks nearby, devotees gathered with folded hands, warm golden sunset light, wide cinematic landscape",
-      "descriptionHi": "श्री नारद का प्राकट्य",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T10:22:52.717Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T11:52:21.475Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "4-0-1775821977272",
-    "originalFile": "chapter-004.jpg",
-    "trashedFile": "4-0-1775821977272.jpg",
-    "manifestEntry": {
-      "chapterNumber": 4,
-      "chapterTitle": "Chapter चार",
-      "imagePath": "chapter-004.jpg",
-      "prompt": "In the forest of Naimisharanya, the elderly and wise sage Shaunaka rises from among a great assembly of rishis gathered around a sacred fire for a long yajna. With deep reverence and joy, he folds his hands and addresses Suta Goswami, urging him to share the holy Bhagavatam narrative as originally spoken by the great Shukadeva Goswami.",
-      "personasUsed": [
-        "suta_goswami",
-        "shukadeva"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T11:52:33.011Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T11:52:57.273Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "3-0-1775822071633",
-    "originalFile": "chapter-003.jpg",
-    "trashedFile": "3-0-1775822071633.jpg",
-    "manifestEntry": {
-      "chapterNumber": 3,
-      "chapterTitle": "Chapter तीन",
-      "imagePath": "chapter-003.jpg",
-      "prompt": "At the dawn of creation, Lord Vishnu in his cosmic Karanodakashayi form reclines upon the primordial causal ocean, his divine body emanating countless universes from his pores. Brahma is yet to be born as this original Purusha expansion of Krishna manifests the sixteen fundamental elements of material existence, setting all of creation into motion.",
-      "personasUsed": [
-        "krishna_adult",
-        "vishnu",
-        "brahma"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T11:50:47.500Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T11:54:31.634Z",
-    "operation": "regenerate"
-  },
-  {
     "trashId": "4-0-1775822085671",
     "originalFile": "chapter-004.jpg",
     "trashedFile": "4-0-1775822085671.jpg",
@@ -1019,6 +958,64 @@
       "sceneIndex": 0
     },
     "trashedAt": "2026-04-10T13:37:24.609Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "17-0-1775828304625",
+    "originalFile": "chapter-017.jpg",
+    "trashedFile": "17-0-1775828304625.jpg",
+    "manifestEntry": {
+      "chapterNumber": 17,
+      "chapterTitle": "Chapter सत्रह",
+      "imagePath": "chapter-017.jpg",
+      "prompt": "King Parikshit on his chariot encounters Dharma in the form of a white bull standing on one leg, and Mother Earth as a grieving cow, on a dusty ancient road. Kali personified stands nearby in royal disguise. A dramatic sunset sky over the Indian plains.",
+      "descriptionHi": "महाराज परीक्षित ने देखा कि धर्म रूपी श्वेत बैल एक पैर पर खड़ा है और गोमाता दुखी है। कलि ने राजा का वेश धारण किया है। यह कलियुग के आगमन का प्रतीक है।",
+      "personasUsed": [
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T13:36:16.438Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T13:38:24.629Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "14-1-1775828392707",
+    "originalFile": "chapter-014-2.jpg",
+    "trashedFile": "14-1-1775828392707.jpg",
+    "manifestEntry": {
+      "chapterNumber": 14,
+      "chapterTitle": "Chapter चौदह",
+      "imagePath": "chapter-014-2.jpg",
+      "prompt": "A wise sage teaching younger disciples under a massive banyan tree, sacred texts spread on the ground, golden afternoon light, forest ashram setting, wide landscape",
+      "descriptionHi": "जब सभ्यता का सम्बन्ध पूर्ण पुरुषोत्तम भगवान्‌ के प्रेम से टूट जाता है, तो ऋतु कौ नियमितता में परिवर्तन, जीविका के अनु…",
+      "generatedAt": "2026-04-10T09:52:14.413Z",
+      "sceneIndex": 1
+    },
+    "trashedAt": "2026-04-10T13:39:52.708Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "14-0-1775828445646",
+    "originalFile": "chapter-014.jpg",
+    "trashedFile": "14-0-1775828445646.jpg",
+    "manifestEntry": {
+      "chapterNumber": 14,
+      "chapterTitle": "Chapter चौदह",
+      "imagePath": "chapter-014.jpg",
+      "prompt": "Yudhishthira stands anxiously in his royal palace, gazing into the distance with deep unease. Months have passed since Arjuna departed for Dwarka to meet Krishna, yet no word has returned. Around Yudhishthira, the world shows fearful omens — unseasonal skies, restless people consumed by greed and anger — signaling that Krishna may have departed from the earth forever.",
+      "descriptionHi": "अर्जुन भगवान श्रीकृष्ण से मिलने और उनके अगले कार्यक्रम जानने के लिए द्वारका गये, परन्तु कई महीने बीत जाने के बाद भी वापस नहीं लौटे। महाराज युधिष्ठिर को भयानक अपशकुन दिखने लगे — ऋतुओं में व्यतिक्रम, लोगों में लोभ, क्रोध और झूठ का बढ़ना। युधिष्ठिर को आशंका हुई कि भगवान श्रीकृष्ण इस धरा से अन्तर्धान हो गये हैं, क्योंकि उनकी उपस्थिति के बिना ऐसे अशुभ लक्षण प्रकट नहीं हो सकते थे।",
+      "personasUsed": [
+        "krishna_adult",
+        "arjuna",
+        "yudhishthira"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T13:13:32.290Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T13:40:45.647Z",
     "operation": "regenerate"
   }
 ]

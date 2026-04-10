@@ -202,25 +202,16 @@
       "chapterNumber": 14,
       "chapterTitle": "Chapter चौदह",
       "imagePath": "chapter-014.jpg",
-      "prompt": "Yudhishthira stands anxiously in his royal palace, gazing into the distance with deep unease. Months have passed since Arjuna departed for Dwarka to meet Krishna, yet no word has returned. Around Yudhishthira, the world shows fearful omens — unseasonal skies, restless people consumed by greed and anger — signaling that Krishna may have departed from the earth forever.",
-      "descriptionHi": "अर्जुन भगवान श्रीकृष्ण से मिलने और उनके अगले कार्यक्रम जानने के लिए द्वारका गये, परन्तु कई महीने बीत जाने के बाद भी वापस नहीं लौटे। महाराज युधिष्ठिर को भयानक अपशकुन दिखने लगे — ऋतुओं में व्यतिक्रम, लोगों में लोभ, क्रोध और झूठ का बढ़ना। युधिष्ठिर को आशंका हुई कि भगवान श्रीकृष्ण इस धरा से अन्तर्धान हो गये हैं, क्योंकि उनकी उपस्थिति के बिना ऐसे अशुभ लक्षण प्रकट नहीं हो सकते थे।",
+      "prompt": "Yudhishthira stands alone on the terrace of his palace in Hastinapura, gazing anxiously at the horizon. The sky shows unusual signs — stars misaligned, seasons behaving strangely. He awaits Arjuna's return from Dwaraka, his heart heavy with the unspoken fear that Lord Krishna may have departed from this earthly realm forever.",
+      "descriptionHi": "अर्जुन भगवान् श्रीकृष्ण से मिलने और उनके अगले कार्यक्रम जानने के लिए द्वारका गये, किन्तु कई महीने बीत जाने पर भी वापस नहीं लौटे। महाराज युधिष्ठिर को भयानक अपशकुन दिखने लगे — ऋतुओं में अनियमितता, लोगों में क्रोध, लोभ और असत्य का बढ़ना। यह सब देखकर युधिष्ठिर को आशंका हुई कि भगवान् श्रीकृष्ण इस पृथ्वी से अन्तर्धान हो गये हैं, क्योंकि उनकी अनुपस्थिति में ही ऐसा अधर्म संभव था।",
       "personasUsed": [
         "krishna_adult",
         "arjuna",
         "yudhishthira"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T13:13:32.290Z",
+      "generatedAt": "2026-04-10T13:41:08.402Z",
       "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 14,
-      "chapterTitle": "Chapter चौदह",
-      "imagePath": "chapter-014-2.jpg",
-      "prompt": "A wise sage teaching younger disciples under a massive banyan tree, sacred texts spread on the ground, golden afternoon light, forest ashram setting, wide landscape",
-      "descriptionHi": "जब सभ्यता का सम्बन्ध पूर्ण पुरुषोत्तम भगवान्‌ के प्रेम से टूट जाता है, तो ऋतु कौ नियमितता में परिवर्तन, जीविका के अनु…",
-      "generatedAt": "2026-04-10T09:52:14.413Z",
-      "sceneIndex": 1
     },
     {
       "chapterNumber": 15,
@@ -249,20 +240,7 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-10T13:37:40.580Z",
       "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 17,
-      "chapterTitle": "Chapter सत्रह",
-      "imagePath": "chapter-017.jpg",
-      "prompt": "King Parikshit on his chariot encounters Dharma in the form of a white bull standing on one leg, and Mother Earth as a grieving cow, on a dusty ancient road. Kali personified stands nearby in royal disguise. A dramatic sunset sky over the Indian plains.",
-      "descriptionHi": "महाराज परीक्षित ने देखा कि धर्म रूपी श्वेत बैल एक पैर पर खड़ा है और गोमाता दुखी है। कलि ने राजा का वेश धारण किया है। यह कलियुग के आगमन का प्रतीक है।",
-      "personasUsed": [
-        "parikshit"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T13:36:16.438Z",
-      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T13:37:40.580Z"
+  "lastUpdated": "2026-04-10T13:41:08.402Z"
 }
