@@ -67,21 +67,6 @@
       "sceneIndex": 0
     },
     {
-      "chapterNumber": 7,
-      "chapterTitle": "Chapter सात",
-      "imagePath": "chapter-007.jpg",
-      "prompt": "Vyasa sits in deep meditation beside the sacred Saraswati river at his ashram in Shamyaprasa, surrounded by berry trees. Having performed ritual purification with river water, he sits in serene stillness, concentrating his mind inward. Nearby, the memory of Arjuna confronting Ashwatthama and the sorrow of Draupadi weigh upon the spiritual atmosphere.",
-      "descriptionHi": "इस अध्याय में बताया गया है कि नारद मुनि के जाने के बाद महर्षि व्यासदेव सरस्वती नदी के पश्चिमी तट पर स्थित शम्याप्रास आश्रम में ध्यानमग्न हो गए। इस अध्याय में अश्वत्थामा द्वारा द्रौपदी के पाँच पुत्रों को सोते में मार डालने और अर्जुन द्वारा उसे दंडित करने की घटना का भी उल्लेख है। यह सब घटनाएँ महाराज परीक्षित के जीवन से जुड़ी हैं और श्रीमद्भागवत के शुभारम्भ की पृष्ठभूमि बनती हैं।",
-      "personasUsed": [
-        "vyasa",
-        "arjuna",
-        "draupadi"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T15:09:33.150Z",
-      "sceneIndex": 0
-    },
-    {
       "chapterNumber": 8,
       "chapterTitle": "अध्याय आठ",
       "imagePath": "chapter-008.jpg",
@@ -262,5 +247,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T15:27:00.158Z"
+  "lastUpdated": "2026-04-10T15:27:02.554Z"
 }
