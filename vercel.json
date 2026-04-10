@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "pnpm install",
-  "buildCommand": "node artifacts/temple-tracker/scripts/generate-static-api.mjs && pnpm --filter @workspace/temple-tracker run build",
-  "outputDirectory": "artifacts/temple-tracker/dist/public",
+  "buildCommand": "node artifacts/temple-tracker/scripts/generate-static-api.mjs && pnpm --filter @workspace/temple-tracker run build && mkdir -p public && cp -r artifacts/temple-tracker/dist/public/* public/",
+  "outputDirectory": "public",
   "framework": null,
   "headers": [
     {
