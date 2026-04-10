@@ -72,6 +72,61 @@
       "generatedAt": "2026-04-10T10:34:00.000Z",
       "sceneIndex": 1
     }
+    ,
+    {
+      "chapterNumber": 5,
+      "chapterTitle": "अध्याय पाँच",
+      "imagePath": "chapter-005.jpg",
+      "prompt": "Sage Narada standing before Vyasadeva in a peaceful forest ashram, golden morning light, ancient trees",
+      "descriptionHi": "देवर्षि नारद वन के शांत आश्रम में व्यासदेव के समक्ष खड़े, सुनहरी प्रभात किरणें, प्राचीन वृक्षों से घिरा दृश्य",
+      "generatedAt": "2026-04-10T10:52:00.000Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 5,
+      "chapterTitle": "अध्याय पाँच",
+      "imagePath": "chapter-005-2.jpg",
+      "prompt": "Wide view of a serene forest hermitage by a river at dawn, thatched huts, sacred fire pit, mist rising",
+      "descriptionHi": "प्रातःकाल नदी तट पर शांत वन आश्रम का विहंगम दृश्य, छप्पर की कुटियाँ, यज्ञ कुण्ड, उठती कोहरा",
+      "generatedAt": "2026-04-10T10:55:00.000Z",
+      "sceneIndex": 1
+    },
+    {
+      "chapterNumber": 6,
+      "chapterTitle": "अध्याय छह",
+      "imagePath": "chapter-006.jpg",
+      "prompt": "Two sages sitting face to face in deep philosophical discussion on the banks of the river Saraswati, peaceful landscape",
+      "descriptionHi": "दो ऋषि सरस्वती नदी के तट पर आमने-सामने बैठकर गहन दार्शनिक चर्चा करते हुए, शांत प्राकृतिक दृश्य",
+      "generatedAt": "2026-04-10T10:52:00.000Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 6,
+      "chapterTitle": "अध्याय छह",
+      "imagePath": "chapter-006-2.jpg",
+      "prompt": "Panoramic view of a sacred river flowing through an ancient ashram, lush green banks, stone ghats, evening sky",
+      "descriptionHi": "प्राचीन आश्रम से होकर बहती पवित्र नदी का विहंगम दृश्य, हरे-भरे तट, पत्थर के घाट, सन्ध्या का आकाश",
+      "generatedAt": "2026-04-10T10:52:00.000Z",
+      "sceneIndex": 1
+    },
+    {
+      "chapterNumber": 7,
+      "chapterTitle": "अध्याय सात",
+      "imagePath": "chapter-007.jpg",
+      "prompt": "A warrior prince on horseback confronting a kneeling prisoner on a vast battlefield, dramatic sky, ancient Indian setting",
+      "descriptionHi": "एक योद्धा राजकुमार घोड़े पर विशाल रणभूमि में घुटने टेके बन्दी के समक्ष, नाटकीय आकाश, प्राचीन भारतीय परिदृश्य",
+      "generatedAt": "2026-04-10T10:52:00.000Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 7,
+      "chapterTitle": "अध्याय सात",
+      "imagePath": "chapter-007-2.jpg",
+      "prompt": "Panoramic view of an ancient Indian battlefield after a great war, scattered chariots, setting sun, vast plains",
+      "descriptionHi": "महायुद्ध के पश्चात प्राचीन भारतीय रणभूमि का विहंगम दृश्य, बिखरे रथ, अस्त होता सूर्य, विशाल मैदान",
+      "generatedAt": "2026-04-10T10:52:00.000Z",
+      "sceneIndex": 1
+    }
   ],
-  "lastUpdated": "2026-04-10T10:40:00.000Z"
+  "lastUpdated": "2026-04-10T10:55:00.000Z"
 }
