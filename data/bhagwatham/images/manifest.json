@@ -39,19 +39,6 @@
       "sceneIndex": 0
     },
     {
-      "chapterNumber": 4,
-      "chapterTitle": "Chapter चार",
-      "imagePath": "chapter-004.jpg",
-      "prompt": "In the forest of Naimisharanya, the elderly and learned sage Shaunaka rises from among a gathering of sages engaged in a long sacred ritual, and with great reverence and joy addresses Suta Goswami, praising him as the most fortunate among all speakers, and earnestly requests him to narrate the holy Bhagavatam as spoken by the great Shukadeva Goswami.",
-      "personasUsed": [
-        "suta_goswami",
-        "shukadeva"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:49:30.878Z",
-      "sceneIndex": 0
-    },
-    {
       "chapterNumber": 5,
       "chapterTitle": "Chapter पाँच",
       "imagePath": "chapter-005.jpg",
@@ -78,19 +65,6 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-10T13:00:24.789Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 7,
-      "chapterTitle": "Chapter सात",
-      "imagePath": "chapter-007.jpg",
-      "prompt": "Vyasa sits in deep meditation beneath berry trees at his hermitage on the western bank of the Saraswati river at Shamyaprasa. Having touched the sacred water for purification, he closes his eyes and stills his mind completely, preparing to receive the divine vision that will become the Srimad Bhagavatam.",
-      "descriptionHi": "इस अध्याय में अश्वत्थामा द्वारा द्रौपदी के पाँच पुत्रों की हत्या और अर्जुन द्वारा उसे दंडित किए जाने की घटना का संदर्भ दिया गया है। नारद मुनि के जाने के बाद, महर्षि व्यासदेव सरस्वती नदी के पश्चिमी तट पर शम्याप्रास आश्रम में बैठकर समाधि में लीन हो गए। यह अध्याय श्रीमद्भागवत के शुभारम्भ की पृष्ठभूमि तैयार करता है, जो परीक्षित के चमत्कारिक रक्षण की घटना से जुड़ी है।",
-      "personasUsed": [
-        "vyasa"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T13:08:13.785Z",
       "sceneIndex": 0
     },
     {
@@ -217,15 +191,15 @@
       "chapterNumber": 15,
       "chapterTitle": "Chapter पन्द्रह",
       "imagePath": "chapter-015.jpg",
-      "prompt": "In a palace hall, Arjuna stands before his elder brother King Yudhishthira, his face pale and eyes filled with tears, struggling to speak. His lips tremble as he recalls Krishna's friendship, blessings, and the image of Krishna driving his chariot. With great effort, Arjuna wipes his tears and begins to answer in a choked, grief-stricken voice.",
-      "descriptionHi": "In a palace hall, Arjuna stands before his elder brother King Yudhishthira, his face pale and eyes filled with tears, struggling to speak. His lips tremble as he recalls Krishna's friendship, blessings, and the image of Krishna driving his chariot. With great effort, Arjuna wipes his tears and begins to answer in a choked, grief-stricken voice.",
+      "prompt": "Arjuna sits in a palace hall before his elder brother King Yudhishthira, his lotus-like eyes filled with tears, his face pale and voice choked with grief. He struggles to speak, overcome by the deep longing for his departed friend Krishna, remembering Krishna's gentle presence as his charioteer and beloved companion.",
+      "descriptionHi": "इस अध्याय में सूत गोस्वामी बताते हैं कि भगवान कृष्ण के वियोग से अर्जुन अत्यंत शोकसंतप्त था। महाराज युधिष्ठिर के प्रश्नों का उत्तर देने में वह असमर्थ था क्योंकि कृष्ण की मित्रता, आशीर्वाद, पारिवारिक संबंध और सारथी रूप का स्मरण करते हुए उसका गला रुंध जाता था। यह दृश्य शुद्ध भक्ति के सख्य भाव की गहन आध्यात्मिक अनुभूति को दर्शाता है।",
       "personasUsed": [
         "krishna_adult",
         "arjuna",
         "yudhishthira"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:58:51.877Z",
+      "generatedAt": "2026-04-10T15:04:56.177Z",
       "sceneIndex": 0
     },
     {
@@ -283,5 +257,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T14:52:01.445Z"
+  "lastUpdated": "2026-04-10T15:04:56.177Z"
 }
