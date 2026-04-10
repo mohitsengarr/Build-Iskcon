@@ -214,21 +214,48 @@
       "sceneIndex": 1
     },
     {
+      "chapterNumber": 12,
+      "chapterTitle": "Chapter बारह",
+      "imagePath": "chapter-012.jpg",
+      "prompt": "A divine newborn baby glowing with golden light in a grand palace chamber, royal family gathered around with joy, priests performing blessing rituals with sacred fire, wide cinematic composition",
+      "descriptionHi": "सम्राट परीक्षित का जन्म",
+      "generatedAt": "2026-04-10T09:21:23.681Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 12,
+      "chapterTitle": "Chapter बारह",
+      "imagePath": "chapter-012-2.jpg",
+      "prompt": "Young sage Shukadeva narrating to King Parikshit on the banks of the wide Ganges river, four sages listening nearby, temple spires in the distance, golden sunset, wide landscape",
+      "descriptionHi": "नैमिषारण्य के वन में एकत्रित हुए ऋषियों ने सूत गोस्वामी से महाराज परीक्षित के जन्म के विषय में प्रश्न किया, लेकिन इस …",
+      "personasUsed": [
+        "shukadeva",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T09:21:30.621Z",
+      "sceneIndex": 1
+    },
+    {
       "chapterNumber": 14,
       "chapterTitle": "Chapter चौदह",
       "imagePath": "chapter-014.jpg",
-      "prompt": "Krishna, Arjuna, Yudhishthira in an ancient Indian setting depicting: भगवान्‌ श्रीकृष्ण का अन्तर्धान होना, dramatic lighting, ancient Indian architecture, wide cinematic landscape composition",
+      "prompt": "Lord Krishna standing majestically in a palace courtyard, golden architecture, peacocks nearby, devotees gathered with folded hands, warm golden sunset light, wide cinematic landscape",
       "descriptionHi": "भगवान्‌ श्रीकृष्ण का अन्तर्धान होना",
-      "generatedAt": "2026-04-10T08:51:23.482Z",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T09:21:35.408Z",
       "sceneIndex": 0
     },
     {
       "chapterNumber": 14,
       "chapterTitle": "Chapter चौदह",
       "imagePath": "chapter-014-2.jpg",
-      "prompt": "Vast ancient Indian battlefield with golden chariots and warriors, dramatic sky with clouds parting to reveal divine light, eagles circling above, wide panoramic landscape",
-      "descriptionHi": "जैसा कि भगवद्गीता में कहा गया है, भगवान्‌ इस पृथ्वी पर धर्मात्माओं की रक्षा करने तथा अधर्मियों का संहार करने के लिए अ…",
-      "generatedAt": "2026-04-10T08:52:05.840Z",
+      "prompt": "A wise sage teaching younger disciples under a massive banyan tree, sacred texts spread on the ground, golden afternoon light, forest ashram setting, wide landscape",
+      "descriptionHi": "जब सभ्यता का सम्बन्ध पूर्ण पुरुषोत्तम भगवान्‌ के प्रेम से टूट जाता है, तो ऋतु कौ नियमितता में परिवर्तन, जीविका के अनु…",
+      "generatedAt": "2026-04-10T09:22:07.052Z",
       "sceneIndex": 1
     },
     {
@@ -237,9 +264,41 @@
       "imagePath": "chapter-015.jpg",
       "prompt": "Lord Krishna standing majestically in a palace courtyard, golden architecture, peacocks nearby, devotees gathered with folded hands, warm golden sunset light, wide cinematic landscape",
       "descriptionHi": "पाण्डवों की सामयिक निवृत्ति",
-      "generatedAt": "2026-04-10T09:01:23.023Z",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T09:22:11.892Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 15,
+      "chapterTitle": "Chapter पन्द्रह",
+      "imagePath": "chapter-015-2.jpg",
+      "prompt": "Krishna and Arjuna riding golden chariots with white horses through an ancient Indian city, cheering crowds, grand temple architecture, golden hour light, wide landscape",
+      "descriptionHi": "परम पुरुष अपने शुद्ध भक्त के साथ सारे सम्बन्धो में पूर्ण हैं। श्री अर्जुन भगवान्‌ के विशिष्ट भक्तों में से हैं, जो सख…",
+      "personasUsed": [
+        "krishna_adult",
+        "arjuna"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T09:22:18.709Z",
+      "sceneIndex": 1
+    },
+    {
+      "chapterNumber": 16,
+      "chapterTitle": "Chapter सोलह",
+      "imagePath": "chapter-016.jpg",
+      "prompt": "Parikshit and Suta Goswami in a grand ancient Indian palace setting, ornate golden architecture, sacred atmosphere, warm golden light, wide cinematic landscape",
+      "descriptionHi": "परीक्षित ने कलियुग का सत्कार किस तरह किया",
+      "personasUsed": [
+        "suta_goswami",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T09:31:24.587Z",
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T09:20:48.038Z"
+  "lastUpdated": "2026-04-10T09:31:24.587Z"
 }
