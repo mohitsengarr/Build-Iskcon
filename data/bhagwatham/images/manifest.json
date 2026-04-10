@@ -4,81 +4,74 @@
       "chapterNumber": 1,
       "chapterTitle": "अध्याय एक",
       "imagePath": "chapter-001.jpg",
-      "prompt": "Suta Goswami, elderly sage with saffron robes, addressing vast assembly of rishis around sacred fire in Naimisharanya forest, golden twilight sky",
-      "generatedAt": "2026-04-10T10:22:00.000Z",
+      "prompt": "Suta Goswami sitting on a stone seat under a large banyan tree, speaking to a small group of sages around a sacred fire in Naimisharanya forest, golden sunlight",
+      "descriptionHi": "सूत गोस्वामी नैमिषारण्य वन में बरगद के वृक्ष के नीचे ऋषियों को यज्ञ अग्नि के समक्ष उपदेश देते हुए",
+      "generatedAt": "2026-04-10T10:33:00.000Z",
       "sceneIndex": 0
     },
     {
       "chapterNumber": 1,
       "chapterTitle": "अध्याय एक",
       "imagePath": "chapter-001-2.jpg",
-      "prompt": "Close-up portrait of Suta Goswami, serene wise face, white flowing beard, tilak on forehead, rudraksha mala, saffron silk uttariya, sacred forest clearing with flickering firelight",
-      "generatedAt": "2026-04-10T10:22:00.000Z",
+      "prompt": "Suta Goswami speaking to two sages by a sacred fire at dusk, warm firelight on faces, forest clearing, realistic natural lighting",
+      "descriptionHi": "सूत गोस्वामी सन्ध्या काल में यज्ञ अग्नि के पास दो ऋषियों को उपदेश देते हुए",
+      "generatedAt": "2026-04-10T10:34:00.000Z",
       "sceneIndex": 1
     },
     {
       "chapterNumber": 2,
       "chapterTitle": "अध्याय दो",
       "imagePath": "chapter-002.jpg",
-      "prompt": "Sage Vyasa, majestic elderly rishi, composing sacred scriptures on palm-leaf manuscripts in forest ashram, golden divine light radiating from texts",
-      "generatedAt": "2026-04-10T10:22:00.000Z",
+      "prompt": "Vyasadeva sitting in a thatched forest hermitage, writing on palm-leaf manuscripts, golden morning light streaming through doorway",
+      "descriptionHi": "व्यासदेव वन के आश्रम में ताड़-पत्र पांडुलिपियों पर शास्त्र लिखते हुए, सुनहरी प्रभात किरणें",
+      "generatedAt": "2026-04-10T10:34:00.000Z",
       "sceneIndex": 0
     },
     {
       "chapterNumber": 2,
       "chapterTitle": "अध्याय दो",
       "imagePath": "chapter-002-2.jpg",
-      "prompt": "Vyasadeva in deep contemplation under massive banyan tree, rays of divine knowledge streaming down, sacred books floating around him, peaceful ashram setting",
-      "generatedAt": "2026-04-10T10:25:00.000Z",
+      "prompt": "Vyasadeva meditating under a massive banyan tree, morning mist in forest, small stream flowing nearby, natural realistic landscape",
+      "descriptionHi": "व्यासदेव विशाल बरगद के वृक्ष के नीचे ध्यान करते हुए, प्रातःकालीन कोहरे में शांत वन दृश्य",
+      "generatedAt": "2026-04-10T10:33:00.000Z",
       "sceneIndex": 1
     },
     {
       "chapterNumber": 3,
       "chapterTitle": "अध्याय तीन",
       "imagePath": "chapter-003.jpg",
-      "prompt": "Lord Krishna with blue skin seated on magnificent golden throne in Vaikuntha, peacock feather crown, playing divine flute, avatar forms visible as ethereal silhouettes",
-      "generatedAt": "2026-04-10T10:22:00.000Z",
+      "prompt": "Lord Krishna standing in a lush Vrindavan meadow playing bamboo flute, two peacocks nearby, river flowing in background, golden hour sunlight",
+      "descriptionHi": "भगवान श्री कृष्ण वृन्दावन के हरे-भरे मैदान में बाँसुरी बजाते हुए, दो मोर समीप, नदी का सुन्दर दृश्य",
+      "generatedAt": "2026-04-10T10:34:00.000Z",
       "sceneIndex": 0
     },
     {
       "chapterNumber": 3,
       "chapterTitle": "अध्याय तीन",
       "imagePath": "chapter-003-2.jpg",
-      "prompt": "Baby Lord Krishna, divine infant with blue skin, golden crown with peacock feather, pearl ornaments, seated on golden throne in temple, rose garland, divine golden aura",
-      "generatedAt": "2026-04-10T10:27:00.000Z",
+      "prompt": "Lord Krishna seated under a kadamba tree, three cows resting nearby, lotus pond reflecting golden sky, Vrindavan hills in distance",
+      "descriptionHi": "भगवान श्री कृष्ण कदम्ब वृक्ष के नीचे विराजमान, तीन गायें विश्राम करती हुईं, कमल सरोवर में सुनहरे आकाश का प्रतिबिम्ब",
+      "generatedAt": "2026-04-10T10:34:00.000Z",
       "sceneIndex": 1
     },
     {
       "chapterNumber": 4,
       "chapterTitle": "अध्याय चार",
       "imagePath": "chapter-004.jpg",
-      "prompt": "Sage Narada flying through golden celestial clouds, playing veena instrument, white dhoti, joyful devotional expression, gandharva musicians on distant clouds",
-      "generatedAt": "2026-04-10T10:27:00.000Z",
+      "prompt": "Sage Narada walking along a mountain path at sunrise, playing tanpura veena, panoramic Himalayan landscape, golden clouds and snow-capped peaks",
+      "descriptionHi": "देवर्षि नारद सूर्योदय में पर्वतीय मार्ग पर तानपुरा वीणा बजाते हुए, हिमालय का विहंगम दृश्य",
+      "generatedAt": "2026-04-10T10:34:00.000Z",
       "sceneIndex": 0
     },
     {
       "chapterNumber": 4,
       "chapterTitle": "अध्याय चार",
       "imagePath": "chapter-004-2.jpg",
-      "prompt": "Portrait of Sage Narada, serene radiant face, tilak on forehead, holding veena instrument, rudraksha beads, golden celestial clouds",
-      "generatedAt": "2026-04-10T10:27:00.000Z",
+      "prompt": "Sage Narada resting on a rocky outcrop above clouds, veena beside him, spectacular sunset over a valley of rivers and forests",
+      "descriptionHi": "देवर्षि नारद बादलों के ऊपर चट्टान पर विश्राम करते हुए, उनकी वीणा पास में, नदियों और वनों की घाटी पर सूर्यास्त",
+      "generatedAt": "2026-04-10T10:34:00.000Z",
       "sceneIndex": 1
-    },
-    {
-      "chapterNumber": 6,
-      "chapterTitle": "Chapter छह",
-      "imagePath": "chapter-006.jpg",
-      "prompt": "Sage Narada traveling through celestial realms playing veena, divine clouds, celestial beings, traditional Indian devotional art painting",
-      "generatedAt": "2026-04-10T04:51:05.430Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 7,
-      "chapterTitle": "Chapter सात",
-      "imagePath": "chapter-007.jpg",
-      "prompt": "Sage Narada traveling through celestial realms playing veena, divine clouds, celestial beings, traditional Indian devotional art painting, vibrant oil painting style, warm golden divine lighting, lush spiritual landscape, detailed ornate clothing and jewelry, serene devotional atmosphere, rich saturated colors, classical Hindu art aesthetic",
-      "generatedAt": "2026-04-10T05:01:02.660Z"
     }
   ],
-  "lastUpdated": "2026-04-10T05:01:02.660Z"
+  "lastUpdated": "2026-04-10T10:40:00.000Z"
 }
