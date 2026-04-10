@@ -1,26 +1,5 @@
 [
   {
-    "trashId": "1-0-1775822894609",
-    "originalFile": "chapter-001.jpg",
-    "trashedFile": "1-0-1775822894609.jpg",
-    "manifestEntry": {
-      "chapterNumber": 1,
-      "chapterTitle": "Chapter एक",
-      "imagePath": "chapter-001.jpg",
-      "prompt": "Vyasa sits in deep meditative reverence, composing the opening verse of the Bhagavatam. In his vision, he beholds Krishna as the supreme source of all creation — the one who first illuminated Brahma's heart with divine Vedic knowledge at the dawn of the universe, while great sages and gods remain bewildered by His cosmic illusion.",
-      "personasUsed": [
-        "krishna_adult",
-        "vyasa",
-        "brahma"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:03:53.838Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T12:08:14.609Z",
-    "operation": "regenerate"
-  },
-  {
     "trashId": "4-0-1775822912317",
     "originalFile": "chapter-004.jpg",
     "trashedFile": "4-0-1775822912317.jpg",
@@ -1021,6 +1000,31 @@
       "sceneIndex": 0
     },
     "trashedAt": "2026-04-10T15:45:50.488Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "8-0-1775836119247",
+    "originalFile": "chapter-008.jpg",
+    "trashedFile": "8-0-1775836119247.jpg",
+    "manifestEntry": {
+      "chapterNumber": 8,
+      "chapterTitle": "अध्याय आठ",
+      "imagePath": "chapter-008.jpg",
+      "prompt": "On the sacred banks of the Ganga river, Yudhishthira, Dhritarashtra, Gandhari, Kunti, and Draupadi sit together in deep grief after the Kurukshetra war, mourning their fallen kinsmen. Krishna stands among them, gently consoling the bereaved family members alongside sages, explaining the supreme law of time that governs all living beings.",
+      "descriptionHi": "कुरुक्षेत्र युद्ध के बाद पाण्डवगण द्रौपदी सहित मृत परिजनों को जल-दान देने हेतु गंगा तट पर गये। वहाँ युधिष्ठिर, धृतराष्ट्र, गांधारी, कुन्ती और द्रौपदी सभी पुत्र-शोक से पीड़ित बैठे थे। भगवान् कृष्ण ने वहाँ उपस्थित मुनियों के साथ मिलकर सभी शोकाकुल परिजनों को काल की गति समझाकर सान्त्वना दी।",
+      "personasUsed": [
+        "krishna_adult",
+        "kunti",
+        "draupadi",
+        "gandhari",
+        "dhritarashtra",
+        "yudhishthira"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T13:07:09.760Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T15:48:39.248Z",
     "operation": "regenerate"
   }
 ]

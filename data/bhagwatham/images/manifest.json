@@ -100,18 +100,17 @@
       "chapterNumber": 8,
       "chapterTitle": "अध्याय आठ",
       "imagePath": "chapter-008.jpg",
-      "prompt": "On the sacred banks of the Ganga river, Yudhishthira, Dhritarashtra, Gandhari, Kunti, and Draupadi sit together in deep grief after the Kurukshetra war, mourning their fallen kinsmen. Krishna stands among them, gently consoling the bereaved family members alongside sages, explaining the supreme law of time that governs all living beings.",
-      "descriptionHi": "कुरुक्षेत्र युद्ध के बाद पाण्डवगण द्रौपदी सहित मृत परिजनों को जल-दान देने हेतु गंगा तट पर गये। वहाँ युधिष्ठिर, धृतराष्ट्र, गांधारी, कुन्ती और द्रौपदी सभी पुत्र-शोक से पीड़ित बैठे थे। भगवान् कृष्ण ने वहाँ उपस्थित मुनियों के साथ मिलकर सभी शोकाकुल परिजनों को काल की गति समझाकर सान्त्वना दी।",
+      "prompt": "On the sacred banks of the Ganga river, Krishna stands gently beside the grieving Pandavas — Yudhishthira, Kunti, Draupadi, and the elder Dhritarashtra — as they offer water to their departed loved ones. Krishna, surrounded by sages, speaks words of spiritual consolation, bringing calm to the sorrow-filled gathering under the open sky.",
+      "descriptionHi": "कुरुक्षेत्र युद्ध में मारे गए परिजनों को जल-दान देने के लिए पाण्डव, द्रौपदी, कुन्ती, धृतराष्ट्र, गांधारी सहित गंगा तट पर एकत्रित हुए और शोक में डूबे रहे। सभी ने गंगा में स्नान किया और अपने प्रियजनों के लिए विलाप किया। भगवान श्रीकृष्ण ने वहाँ उपस्थित मुनियों के साथ मिलकर सभी शोकाकुल परिजनों को सान्त्वना दी और काल की अपरिहार्य गति का बोध कराया।",
       "personasUsed": [
         "krishna_adult",
         "kunti",
         "draupadi",
-        "gandhari",
         "dhritarashtra",
         "yudhishthira"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T13:07:09.760Z",
+      "generatedAt": "2026-04-10T15:50:16.931Z",
       "sceneIndex": 0
     },
     {
@@ -277,5 +276,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T15:46:08.070Z"
+  "lastUpdated": "2026-04-10T15:50:16.931Z"
 }
