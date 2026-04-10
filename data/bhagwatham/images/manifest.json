@@ -292,6 +292,22 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 20,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-020.jpg",
+      "prompt": "Shukadeva welcomes Parikshit, who seeks guidance on his duties as a dying man, amidst a serene forest setting with Arjuna and Krishna.",
+      "descriptionHi": "इस अध्याय में भगवान कृष्ण की महिमा का वर्णन है और शुकदेव गोस्वामी महाराज परीक्षित को भगवान के विश्वरूप का ध्यान करने की विधि बताते हैं। महाराज परीक्षित को शुकदेव गोस्वामी का स्वागत करते हुए हर्ष हो रहा था और उन्हें गर्व था कि वे कृष्ण के अन्तरंग सखा अर्जुन के वंशज हैं।",
+      "personasUsed": [
+        "krishna_adult",
+        "shukadeva",
+        "arjuna",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T22:46:58.712Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 30,
       "chapterTitle": "Chapter इक्तीस",
       "imagePath": "chapter-030.jpg",
@@ -376,5 +392,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T22:42:15.651Z"
+  "lastUpdated": "2026-04-10T22:46:58.712Z"
 }
