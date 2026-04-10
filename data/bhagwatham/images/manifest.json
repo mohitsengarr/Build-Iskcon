@@ -543,7 +543,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-10T23:31:48.858Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 49,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-049.jpg",
+      "prompt": "Shiv's serene conversation with Brahma, where he explains his gentle punishment to guide the devas back to the right path.",
+      "descriptionHi": "इस अध्याय में मैत्रेय मुनि विदुर को भगवान शिव और ब्रह्मा के बीच के संवाद के कुछ अंश सुना रहे हैं, जिसमें शिवजी देवताओं के अपराधों को क्षमा करते हैं और उन्हें राह पर लाने के लिए दण्डित करते हैं। यह अध्याय शिवजी की दया और क्षमा की महानता को दर्शाता है।",
+      "personasUsed": [
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T23:38:04.035Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T23:31:48.858Z"
+  "lastUpdated": "2026-04-10T23:38:04.035Z"
 }
