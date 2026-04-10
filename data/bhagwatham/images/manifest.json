@@ -39,6 +39,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 4,
+      "chapterTitle": "Chapter चार",
+      "imagePath": "chapter-004.jpg",
+      "prompt": "In a forest hermitage during a great long-running yajna, the elderly and learned sage Shaunaka rises with reverence and joy, addressing Suta Goswami with folded hands. Surrounded by assembled sages and the sacred fire, Shaunaka earnestly requests Suta Goswami to narrate the holy Srimad Bhagavatam as originally spoken by the great Shukadeva Goswami.",
+      "descriptionHi": "इस अध्याय में शौनक मुनि, जो दीर्घकालीन यज्ञ में लगे ऋषियों के वयोवृद्ध अग्रणी हैं, सूत गोस्वामी को बधाई देते हैं और उनसे शुकदेव गोस्वामी द्वारा कही गई श्रीमद्भागवत की पवित्र कथा सुनाने का अनुरोध करते हैं। यह दृश्य गुरु-शिष्य परम्परा के महत्त्व और प्रामाणिक वाचन की आवश्यकता को रेखांकित करता है। इस क्षण की आध्यात्मिक महत्ता यह है कि एक योग्य श्रोता और एक प्रामाणिक वक्ता के मिलन से भागवत-ज्ञान की पवित्र धारा प्रवाहित होती है।",
+      "personasUsed": [
+        "suta_goswami",
+        "shukadeva"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T15:44:06.357Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 5,
       "chapterTitle": "Chapter पाँच",
       "imagePath": "chapter-005.jpg",
@@ -247,5 +261,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T15:42:35.222Z"
+  "lastUpdated": "2026-04-10T15:44:06.357Z"
 }
