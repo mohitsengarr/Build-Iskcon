@@ -1006,7 +1006,7 @@ async function generateWithTogether(prompt: string, destPath: string, model: str
   const apiKey = process.env.TOGETHER_API_KEY;
   if (!apiKey) throw new Error("TOGETHER_API_KEY not set");
 
-  const fullPrompt = prompt + "\nClassic oil painting style, rich warm earth tones, dramatic chiaroscuro lighting, ancient banyan trees and sacred fire, detailed Indian traditional clothing, serene devotional atmosphere, museum quality fine art. Female characters must have smooth clean feminine faces without any facial hair or beard.";
+  const fullPrompt = prompt + "\nClassic oil painting style, rich warm earth tones, dramatic chiaroscuro lighting, ancient banyan trees and sacred fire, detailed Indian traditional clothing, serene devotional atmosphere, museum quality fine art. Female characters must have smooth clean feminine faces without any facial hair or beard. Ancient Vedic era setting — no modern items like glasses, spectacles, watches, or modern clothing.";
   const body: Record<string, unknown> = {
     model,
     prompt: fullPrompt,
