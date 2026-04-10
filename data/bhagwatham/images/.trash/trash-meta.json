@@ -1,25 +1,5 @@
 [
   {
-    "trashId": "5-0-1775822494875",
-    "originalFile": "chapter-005.jpg",
-    "trashedFile": "5-0-1775822494875.jpg",
-    "manifestEntry": {
-      "chapterNumber": 5,
-      "chapterTitle": "Chapter पाँच",
-      "imagePath": "chapter-005.jpg",
-      "prompt": "On the banks of a peaceful river, the divine sage Narada sits beside the great Vyasa, holding his vina and smiling gently. Narada questions Vyasa — who appears visibly restless despite his vast learning and the monumental Mahabharata he has composed — asking whether true self-realization has brought him contentment, hinting at the deeper spiritual purpose Vyasa has yet to fulfill.",
-      "personasUsed": [
-        "narada",
-        "vyasa"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T11:59:11.565Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T12:01:34.876Z",
-    "operation": "regenerate"
-  },
-  {
     "trashId": "1-0-1775822569056",
     "originalFile": "chapter-001.jpg",
     "trashedFile": "1-0-1775822569056.jpg",
@@ -1020,6 +1000,27 @@
       "sceneIndex": 0
     },
     "trashedAt": "2026-04-10T15:05:00.330Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "1-0-1775833596097",
+    "originalFile": "chapter-001.jpg",
+    "trashedFile": "1-0-1775833596097.jpg",
+    "manifestEntry": {
+      "chapterNumber": 1,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-001.jpg",
+      "prompt": "Vyasa sits in deep meditation at his hermitage, his eyes closed and hands folded, as he composes the opening invocation of the Bhagavatam. In his vision, he beholds Krishna as the supreme eternal truth, the origin of all creation, who once illuminated Brahma's heart with divine Vedic knowledge at the dawn of the universe.",
+      "personasUsed": [
+        "krishna_adult",
+        "vyasa",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T12:51:03.076Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T15:06:36.097Z",
     "operation": "regenerate"
   }
 ]
