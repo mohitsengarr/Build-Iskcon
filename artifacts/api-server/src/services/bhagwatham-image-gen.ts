@@ -674,6 +674,7 @@ Read the chapter content above carefully and do TWO things:
    - WHAT: The key action or event happening
    - WHERE: The setting (forest, palace, riverbank, battlefield, etc.)
    Keep it simple and narrative-focused. Do NOT include style instructions, camera angles, or composition directions — just describe the scene as a story moment.
+   IMPORTANT: Avoid violent, aggressive, or graphic language (no "beating", "killing", "blood", "brutally", etc.). Describe conflicts in a dignified, serene way suitable for devotional art.
 
 IMPORTANT: The scene_prompt must be ENGLISH ONLY. No Hindi/Sanskrit text.
 
