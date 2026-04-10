@@ -242,6 +242,9 @@ router.post("/bhagwatham/generate-images", async (req, res) => {
 });
 
 // GET /api/bhagwatham/suggest-prompt/:number — get AI-generated prompt + available stories for editing
+// Cache for AI-generated prompts — avoids re-calling Anthropic for the same chapter
+const promptCache = new Map<number, { scene: string; descriptionHi: string }>();
+
 router.get("/bhagwatham/suggest-prompt/:number", async (req, res) => {
   try {
     const chapterNumber = parseInt(req.params.number, 10);
@@ -256,8 +259,12 @@ router.get("/bhagwatham/suggest-prompt/:number", async (req, res) => {
       return;
     }
 
-    // Get AI-generated prompt
-    const aiScene = await buildAIScenePrompt(chapter.chapterTitle, chapter.contentSnippet);
+    // Use cached prompt if available, otherwise generate and cache
+    let aiScene = promptCache.get(chapterNumber) || null;
+    if (!aiScene) {
+      aiScene = await buildAIScenePrompt(chapter.chapterTitle, chapter.contentSnippet);
+      if (aiScene) promptCache.set(chapterNumber, aiScene);
+    }
 
     // Get available tatparya stories from the chapter
     const stories = extractTatparyaStory(chapter.contentSnippet);
