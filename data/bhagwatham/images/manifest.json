@@ -292,6 +292,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 30,
+      "chapterTitle": "Chapter इक्तीस",
+      "imagePath": "chapter-030.jpg",
+      "prompt": "Vidura inquires about Swayambhuva Manu's lineage with Brahma, seeking wisdom on righteous progeny.",
+      "descriptionHi": "विदुर ने स्वायम्भुव मनु की वंश परम्परा के बारे में जानने की इच्छा व्यक्त की, जिसमें धार्मिक नियमों के अनुसार सन्तति-वृद्धि हुई। स्वायम्भुव मनु के दो पुत्रों प्रियव्रत तथा उत्तानपाद ने धार्मिक नियमानुसार सप्त द्वीपों वाले इस संसार पर राज्य किया।",
+      "personasUsed": [
+        "brahma",
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T22:34:55.531Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 36,
       "chapterTitle": "Chapter 36",
       "imagePath": "chapter-036.jpg",
@@ -362,5 +376,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T22:34:23.011Z"
+  "lastUpdated": "2026-04-10T22:34:55.531Z"
 }
