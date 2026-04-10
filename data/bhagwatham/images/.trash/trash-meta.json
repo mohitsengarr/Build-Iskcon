@@ -1,26 +1,5 @@
 [
   {
-    "trashId": "1-0-1775822569056",
-    "originalFile": "chapter-001.jpg",
-    "trashedFile": "1-0-1775822569056.jpg",
-    "manifestEntry": {
-      "chapterNumber": 1,
-      "chapterTitle": "Chapter एक",
-      "imagePath": "chapter-001.jpg",
-      "prompt": "Vyasa sits in serene meditation by a sacred riverbank, his hands folded in deep reverence, composing the opening prayer of the Bhagavatam. In his vision, Krishna appears as the radiant Supreme Truth — the origin of all creation — having once placed divine Vedic knowledge into the heart of Brahma at the dawn of existence.",
-      "personasUsed": [
-        "krishna_adult",
-        "vyasa",
-        "brahma"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T11:51:46.562Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T12:02:49.057Z",
-    "operation": "regenerate"
-  },
-  {
     "trashId": "1-0-1775822623093",
     "originalFile": "chapter-001.jpg",
     "trashedFile": "1-0-1775822623093.jpg",
@@ -1022,5 +1001,21 @@
     },
     "trashedAt": "2026-04-10T15:06:36.097Z",
     "operation": "regenerate"
+  },
+  {
+    "trashId": "8-1-1775833860347",
+    "originalFile": "chapter-008-2.jpg",
+    "trashedFile": "8-1-1775833860347.jpg",
+    "manifestEntry": {
+      "chapterNumber": 8,
+      "chapterTitle": "अध्याय आठ",
+      "imagePath": "chapter-008-2.jpg",
+      "prompt": "Royal Indian women in white saris performing sacred water rituals on the ancient stone ghats of the Ganges river at sunset, priests chanting nearby, golden light reflecting on the holy water, wide landscape",
+      "descriptionHi": "परम पुरुष अपने शुद्ध भक्त के साथ सारे सम्बन्धो में पूर्ण हैं। श्री अर्जुन भगवान्‌ के विशिष्ट भक्तों में से हैं, जो सख…",
+      "generatedAt": "2026-04-10T09:44:35.776Z",
+      "sceneIndex": 1
+    },
+    "trashedAt": "2026-04-10T15:11:00.348Z",
+    "operation": "delete"
   }
 ]

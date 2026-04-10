@@ -1,6 +1,20 @@
 {
   "images": [
     {
+      "chapterNumber": 1,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-001.jpg",
+      "prompt": "Vyasa, the sage and divine author, sits in serene meditation by a peaceful riverbank, his hands folded in deep reverence. Before him shines a vision of Krishna in his transcendental abode, radiant and all-pervading. Vyasa composes the opening verse of the Bhagavatam, offering his humble salutation to Krishna as the ultimate supreme truth and origin of all creation.",
+      "descriptionHi": "यह अध्याय श्रीमद्भागवत का मंगलाचरण श्लोक प्रस्तुत करता है, जिसमें व्यासदेव भगवान् वासुदेव श्रीकृष्ण को परम सत्य के रूप में नमस्कार करते हैं। व्यासदेव स्पष्ट करते हैं कि श्रीकृष्ण ही समस्त ब्रह्माण्डों की उत्पत्ति, पालन और संहार के आदि कारण हैं तथा उन्होंने ही आदि जीव ब्रह्माजी के हृदय में वैदिक ज्ञान प्रदान किया। इस श्लोक का आध्यात्मिक महत्व यह है कि यह भगवान् श्रीकृष्ण की सर्वोच्चता और परम सत्य स्वरूप की घोषणा करता है, जो समस्त भ्रम और माया से परे अपने दिव्य धाम में विराजमान हैं।",
+      "personasUsed": [
+        "krishna_adult",
+        "vyasa"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T15:15:12.426Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 2,
       "chapterTitle": "अध्याय दो",
       "imagePath": "chapter-002.jpg",
@@ -85,15 +99,6 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-10T13:07:09.760Z",
       "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 8,
-      "chapterTitle": "अध्याय आठ",
-      "imagePath": "chapter-008-2.jpg",
-      "prompt": "Royal Indian women in white saris performing sacred water rituals on the ancient stone ghats of the Ganges river at sunset, priests chanting nearby, golden light reflecting on the holy water, wide landscape",
-      "descriptionHi": "परम पुरुष अपने शुद्ध भक्त के साथ सारे सम्बन्धो में पूर्ण हैं। श्री अर्जुन भगवान्‌ के विशिष्ट भक्तों में से हैं, जो सख…",
-      "generatedAt": "2026-04-10T09:44:35.776Z",
-      "sceneIndex": 1
     },
     {
       "chapterNumber": 9,
@@ -258,5 +263,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T15:09:33.150Z"
+  "lastUpdated": "2026-04-10T15:15:12.426Z"
 }
