@@ -1,10 +1,26 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "pnpm install",
-  "buildCommand": "pnpm --filter @workspace/temple-tracker run build",
+  "buildCommand": "node artifacts/temple-tracker/scripts/generate-static-api.mjs && pnpm --filter @workspace/temple-tracker run build",
   "outputDirectory": "artifacts/temple-tracker/dist/public",
   "framework": null,
+  "headers": [
+    {
+      "source": "/api/bhagwatham/(.*)",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json" },
+        { "key": "Cache-Control", "value": "public, max-age=300, s-maxage=600" }
+      ]
+    }
+  ],
   "rewrites": [
+    { "source": "/api/bhagwatham/content", "destination": "/api/bhagwatham/content" },
+    { "source": "/api/bhagwatham/progress", "destination": "/api/bhagwatham/progress" },
+    { "source": "/api/bhagwatham/batches", "destination": "/api/bhagwatham/batches" },
+    { "source": "/api/bhagwatham/batch/:number", "destination": "/api/bhagwatham/batch/:number" },
+    { "source": "/api/bhagwatham/image-manifest", "destination": "/api/bhagwatham/image-manifest" },
+    { "source": "/api/bhagwatham/images/:path*", "destination": "/api/bhagwatham/images/:path*" },
+    { "source": "/api/bhagwatham/faces/:path*", "destination": "/api/bhagwatham/faces/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
