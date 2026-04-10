@@ -530,7 +530,20 @@
       "descriptionHi": "सती अपने पिता के घर जाने के लिए उत्सुक हैं, लेकिन शिवजी की चेतावनी से भयभीत हैं। यह दुविधा उनके लिए बहुत कठिन है और उन्हें दुखी कर देती है। सती का मन अस्थिर हो जाता है और वे हिंडोले की भाँति कक्ष से बाहर और भीतर आ-जा रही थी।",
       "generatedAt": "2026-04-10T23:22:40.637Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 48,
+      "chapterTitle": "Chapter पाँच",
+      "imagePath": "chapter-048.jpg",
+      "prompt": "Narada informs Shiva about Sati's demise at her father Daksh's yajna, sparking Shiva's intense grief and anger in a serene forest setting.",
+      "descriptionHi": "इस अध्याय में सती के पिता दक्ष द्वारा किए गए अपमान के कारण शिव क्रोधित हुए और अपने सैनिकों को खदेड़ दिया गया। मुख्य पात्र शिव, सती और नारद हैं। इस घटना का महत्व शिव के क्रोध और सती की त्याग की भावना में है।",
+      "personasUsed": [
+        "narada"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T23:31:48.858Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T23:29:02.153Z"
+  "lastUpdated": "2026-04-10T23:31:48.858Z"
 }
