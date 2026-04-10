@@ -1,25 +1,5 @@
 [
   {
-    "trashId": "5-0-1775822342430",
-    "originalFile": "chapter-005.jpg",
-    "trashedFile": "5-0-1775822342430.jpg",
-    "manifestEntry": {
-      "chapterNumber": 5,
-      "chapterTitle": "Chapter पाँच",
-      "imagePath": "chapter-005.jpg",
-      "prompt": "Narada, holding his veena and wearing a gentle smile, sits beside the troubled sage Vyasa on a forest riverbank. He addresses Vyasa with compassion, asking whether he finds true satisfaction by identifying the self with body or mind, gently pointing toward the deeper cause of Vyasa's restlessness despite his great literary accomplishments.",
-      "personasUsed": [
-        "narada",
-        "vyasa"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T11:57:22.611Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T11:59:02.431Z",
-    "operation": "regenerate"
-  },
-  {
     "trashId": "5-0-1775822494875",
     "originalFile": "chapter-005.jpg",
     "trashedFile": "5-0-1775822494875.jpg",
@@ -1018,6 +998,28 @@
       "sceneIndex": 0
     },
     "trashedAt": "2026-04-10T15:01:48.214Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "15-0-1775833500330",
+    "originalFile": "chapter-015.jpg",
+    "trashedFile": "15-0-1775833500330.jpg",
+    "manifestEntry": {
+      "chapterNumber": 15,
+      "chapterTitle": "Chapter पन्द्रह",
+      "imagePath": "chapter-015.jpg",
+      "prompt": "Arjuna sits in a palace hall before his elder brother King Yudhishthira, his lotus-like eyes filled with tears, his face pale and voice choked with grief. He struggles to speak, overcome by the deep longing for his departed friend Krishna, remembering Krishna's gentle presence as his charioteer and beloved companion.",
+      "descriptionHi": "इस अध्याय में सूत गोस्वामी बताते हैं कि भगवान कृष्ण के वियोग से अर्जुन अत्यंत शोकसंतप्त था। महाराज युधिष्ठिर के प्रश्नों का उत्तर देने में वह असमर्थ था क्योंकि कृष्ण की मित्रता, आशीर्वाद, पारिवारिक संबंध और सारथी रूप का स्मरण करते हुए उसका गला रुंध जाता था। यह दृश्य शुद्ध भक्ति के सख्य भाव की गहन आध्यात्मिक अनुभूति को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "arjuna",
+        "yudhishthira"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T15:04:56.177Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T15:05:00.330Z",
     "operation": "regenerate"
   }
 ]
