@@ -3,31 +3,31 @@
     {
       "chapterNumber": 1,
       "chapterTitle": "अध्याय एक",
-      "imagePath": "chapter-001.png",
-      "prompt": "Suta Goswami addressing sages in the forest of Naimisharanya, sacred fire, ancient rishis seated in circle, traditional Indian devotional art painting, vibrant oil painting style, warm golden divine lighting, lush spiritual landscape, detailed ornate clothing and jewelry, serene devotional atmosphere, rich saturated colors, classical Hindu art aesthetic",
-      "generatedAt": "2026-04-10T04:21:00.000Z"
+      "imagePath": "chapter-001.jpg",
+      "prompt": "Suta Goswami in Naimisharanya forest addressing sages around sacred fire",
+      "generatedAt": "2026-04-10T04:30:00.000Z"
     },
     {
       "chapterNumber": 2,
       "chapterTitle": "अध्याय दो",
-      "imagePath": "chapter-002.png",
-      "prompt": "Sage Vyasa meditating and composing scriptures, ancient ashram, sacred texts, divine light of knowledge, traditional Indian devotional art painting, vibrant oil painting style, warm golden divine lighting, lush spiritual landscape, detailed ornate clothing and jewelry, serene devotional atmosphere, rich saturated colors, classical Hindu art aesthetic",
-      "generatedAt": "2026-04-10T04:21:00.000Z"
+      "imagePath": "chapter-002.jpg",
+      "prompt": "Sage Vyasa meditating and composing scriptures in forest ashram",
+      "generatedAt": "2026-04-10T04:30:00.000Z"
     },
     {
       "chapterNumber": 3,
       "chapterTitle": "अध्याय तीन",
-      "imagePath": "chapter-003.png",
-      "prompt": "Lord Krishna as charioteer with Arjuna on battlefield of Kurukshetra, divine chariot, armies in background, traditional Indian devotional art painting, vibrant oil painting style, warm golden divine lighting, lush spiritual landscape, detailed ornate clothing and jewelry, serene devotional atmosphere, rich saturated colors, classical Hindu art aesthetic",
-      "generatedAt": "2026-04-10T04:21:00.000Z"
+      "imagePath": "chapter-003.jpg",
+      "prompt": "Lord Krishna as charioteer with Arjuna on battlefield of Kurukshetra",
+      "generatedAt": "2026-04-10T04:30:00.000Z"
     },
     {
       "chapterNumber": 4,
       "chapterTitle": "अध्याय चार",
-      "imagePath": "chapter-004.png",
-      "prompt": "Sage Narada traveling through celestial realms playing veena, divine clouds, celestial beings, traditional Indian devotional art painting, vibrant oil painting style, warm golden divine lighting, lush spiritual landscape, detailed ornate clothing and jewelry, serene devotional atmosphere, rich saturated colors, classical Hindu art aesthetic",
-      "generatedAt": "2026-04-10T04:21:00.000Z"
+      "imagePath": "chapter-004.jpg",
+      "prompt": "Sage Narada traveling through celestial realms playing veena",
+      "generatedAt": "2026-04-10T04:30:00.000Z"
     }
   ],
-  "lastUpdated": "2026-04-10T04:21:00.000Z"
+  "lastUpdated": "2026-04-10T04:30:00.000Z"
 }
