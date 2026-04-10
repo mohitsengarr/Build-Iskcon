@@ -306,64 +306,16 @@ function isChapterHeading(t: string): boolean {
   return false;
 }
 
-// ── Skandh boundary detection ────────────────────────────────────────────────
-
-const SKANDH_END_RE = /(?:प्रथम|द्वितीय|तृतीय|चतुर्थ|पंचम|पञ्चम|षष्ठ|सप्तम|अष्टम|नवम|दशम|एकादश|द्वादश)\s*(?:स्कन्ध|स्कंध)/u;
-const SKANDH_WORD_TO_NUM: Record<string, number> = {
-  "प्रथम": 1, "द्वितीय": 2, "तृतीय": 3, "चतुर्थ": 4,
-  "पंचम": 5, "पञ्चम": 5, "षष्ठ": 6, "सप्तम": 7,
-  "अष्टम": 8, "नवम": 9, "दशम": 10, "एकादश": 11, "द्वादश": 12,
-};
-
-function detectSkandhFromLine(line: string): number | null {
-  const match = line.match(/(प्रथम|द्वितीय|तृतीय|चतुर्थ|पंचम|पञ्चम|षष्ठ|सप्तम|अष्टम|नवम|दशम|एकादश|द्वादश)\s*(?:स्कन्ध|स्कंध)/u);
-  if (match) return SKANDH_WORD_TO_NUM[match[1]] || null;
-  return null;
-}
-
 // ── Build chapter index from all loaded pages ─────────────────────────────────
 
 function buildChapterIndex(allPages: PageContent[]): ChapterEntry[] {
   const chapters: ChapterEntry[] = [];
   let currentSkandh = 1;
   let globalCounter = 0;
+  let lastChapterNum = 0; // track last chapter number to detect resets
 
-  // First pass: detect skandh boundaries by page
-  const skandhByPage = new Map<number, number>(); // pageNumber → skandh
-  let lastSkandh = 1;
   for (const page of allPages) {
     if (isGarbagePage(page.text)) continue;
-    for (const line of page.text.split("\n")) {
-      const t = line.trim();
-      if (SKANDH_END_RE.test(t)) {
-        const s = detectSkandhFromLine(t);
-        if (s && s >= lastSkandh) {
-          // If line says "प्रथम स्कन्ध ... पूर्ण हुए" it marks END of that skandh
-          if (t.includes("पूर्ण") || t.includes("समाप्त")) {
-            // Next chapter after this page belongs to skandh s+1
-            skandhByPage.set(page.pageNumber, s + 1);
-            lastSkandh = s + 1;
-          } else {
-            // Otherwise it's mentioning the current skandh
-            skandhByPage.set(page.pageNumber, s);
-            lastSkandh = s;
-          }
-        }
-      }
-    }
-  }
-
-  // Second pass: build chapter list with skandh awareness
-  currentSkandh = 1;
-  for (const page of allPages) {
-    if (isGarbagePage(page.text)) continue;
-
-    // Check if skandh changed at or before this page
-    for (const [pg, sk] of skandhByPage) {
-      if (pg <= page.pageNumber && sk > currentSkandh) {
-        currentSkandh = sk;
-      }
-    }
 
     const lines = page.text.split("\n");
     for (const line of lines) {
@@ -371,11 +323,17 @@ function buildChapterIndex(allPages: PageContent[]): ChapterEntry[] {
       if (isChapterHeading(t)) {
         const hindiLine = toHindiChapterLine(t);
         const num = extractChapterNum(hindiLine);
-        // Allow same chapter number in different skandhs
-        if (num > 0 && !chapters.find((c) => c.number === num && c.skandh === currentSkandh)) {
+        if (num > 0) {
+          // If chapter number resets (e.g. goes from 19 back to 1), new skandh started
+          if (num === 1 && lastChapterNum > 1) {
+            currentSkandh++;
+          }
+          // Skip if already added in this skandh
+          if (chapters.find((c) => c.number === num && c.skandh === currentSkandh)) continue;
           const idx = lines.indexOf(line);
           const subtitle = lines.slice(idx + 1, idx + 3).map((l) => l.trim()).filter(Boolean).join(" ");
           globalCounter++;
+          lastChapterNum = num;
           chapters.push({
             number: num,
             skandh: currentSkandh,
