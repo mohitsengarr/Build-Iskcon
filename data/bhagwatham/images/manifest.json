@@ -372,6 +372,15 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 27,
+      "chapterTitle": "अध्याय नौ",
+      "imagePath": "chapter-027.jpg",
+      "prompt": "A humble devotee approaches a wise guru on a serene riverbank, seeking guidance on the path to spiritual enlightenment.",
+      "descriptionHi": "भगवद्भक्ति के लिए समर्पण की आवश्यकता है, जो मनुष्य को आध्यात्मिक जीवन की ओर ले जाता है। ईश्वर का प्रामाणिक प्रतिनिधि मनुष्य को भगवान् के पास पहुँचाने में मदद करता है। यह समर्पण मनुष्य को पापों से मुक्ति दिलाने में सहायक होता है।",
+      "generatedAt": "2026-04-10T23:17:55.124Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 30,
       "chapterTitle": "Chapter इक्तीस",
       "imagePath": "chapter-030.jpg",
@@ -468,7 +477,21 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-10T23:12:33.469Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 46,
+      "chapterTitle": "Chapter तीन",
+      "imagePath": "chapter-046.jpg",
+      "prompt": "Daksh, filled with pride, begins a grand yajna without inviting Lord Shiva, amidst the presence of other deities like Brahma and Vishnu.",
+      "descriptionHi": "इस अध्याय में मैत्रेय द्वारा शिव और दक्ष के बीच तनाव का वर्णन किया गया है, जो दक्ष द्वारा शिव को यज्ञ में आमंत्रित नहीं करने से उत्पन्न हुआ। यह तनाव सती द्वारा अपना शरीर त्यागने का कारण बना।",
+      "personasUsed": [
+        "vishnu",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T23:21:01.638Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T23:12:33.469Z"
+  "lastUpdated": "2026-04-10T23:21:01.638Z"
 }
