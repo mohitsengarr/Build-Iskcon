@@ -56,14 +56,14 @@
       "chapterNumber": 5,
       "chapterTitle": "Chapter पाँच",
       "imagePath": "chapter-005.jpg",
-      "prompt": "Narada, holding his veena and wearing a gentle smile, sits beside the great sage Vyasa on a riverbank. He speaks to Vyasa with compassion and wisdom, asking why the author of the magnificent Mahabharata still appears restless and unfulfilled, hinting that the true path of devotion has yet to be expressed completely.",
-      "descriptionHi": "देवर्षि नारद, हाथ में वीणा लिए और मुस्कुराते हुए, व्यासदेव के पास बैठकर उनसे उनके असंतोष का कारण पूछते हैं। नारद संकेत देते हैं कि इतने महान ग्रंथ महाभारत की रचना के बाद भी व्यासदेव इसलिए अतृप्त हैं क्योंकि उन्होंने भक्तियोग को उचित रूप से प्रस्तुत नहीं किया। यह वार्तालाप आध्यात्मिक दृष्टि से अत्यंत महत्वपूर्ण है क्योंकि यह श्रीमद्भागवत की रचना की प्रेरणा का मूल क्षण है।",
+      "prompt": "Narada, the divine sage holding a veena in his hands, sits serenely beside Vyasa on a riverbank in a peaceful forest ashram. With a gentle smile, Narada addresses the great sage Vyasa, asking why he remains spiritually restless despite having composed the magnificent Mahabharata and mastered all Vedic knowledge.",
+      "descriptionHi": "इस अध्याय में देवर्षि नारद, ऋषि व्यासदेव के पास सुखपूर्वक बैठकर मुस्कराते हुए उनसे उनके असंतोष का कारण पूछते हैं। नारद संकेत देते हैं कि महाभारत जैसे महान ग्रंथ की रचना करने के बावजूद व्यासदेव इसलिए असंतुष्ट हैं क्योंकि उन्होंने भक्तियोग को उचित रूप से प्रस्तुत नहीं किया। यह संवाद श्रीमद्भागवत की रचना की आवश्यकता को स्थापित करने की दिशा में एक महत्वपूर्ण आध्यात्मिक मोड़ है।",
       "personasUsed": [
         "narada",
         "vyasa"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T13:12:29.070Z",
+      "generatedAt": "2026-04-10T15:46:08.070Z",
       "sceneIndex": 0
     },
     {
@@ -277,5 +277,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T15:44:55.121Z"
+  "lastUpdated": "2026-04-10T15:46:08.070Z"
 }

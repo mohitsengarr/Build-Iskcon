@@ -1,25 +1,5 @@
 [
   {
-    "trashId": "4-0-1775822762087",
-    "originalFile": "chapter-004.jpg",
-    "trashedFile": "4-0-1775822762087.jpg",
-    "manifestEntry": {
-      "chapterNumber": 4,
-      "chapterTitle": "Chapter चार",
-      "imagePath": "chapter-004.jpg",
-      "prompt": "In the forest of Naimisharanya, the elderly and learned sage Shaunaka rises from among a great assembly of sages engaged in a long sacrificial ceremony, and with great joy addresses Suta Goswami, praising him as the most fortunate and honourable among all speakers, earnestly requesting him to narrate the sacred Bhagavatam as told by the mighty Shukadeva Goswami.",
-      "personasUsed": [
-        "suta_goswami",
-        "shukadeva"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:05:38.092Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T12:06:02.087Z",
-    "operation": "regenerate"
-  },
-  {
     "trashId": "1-0-1775822894609",
     "originalFile": "chapter-001.jpg",
     "trashedFile": "1-0-1775822894609.jpg",
@@ -1020,6 +1000,27 @@
       "sceneIndex": 0
     },
     "trashedAt": "2026-04-10T15:27:02.553Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "5-0-1775835950487",
+    "originalFile": "chapter-005.jpg",
+    "trashedFile": "5-0-1775835950487.jpg",
+    "manifestEntry": {
+      "chapterNumber": 5,
+      "chapterTitle": "Chapter पाँच",
+      "imagePath": "chapter-005.jpg",
+      "prompt": "Narada, holding his veena and wearing a gentle smile, sits beside the great sage Vyasa on a riverbank. He speaks to Vyasa with compassion and wisdom, asking why the author of the magnificent Mahabharata still appears restless and unfulfilled, hinting that the true path of devotion has yet to be expressed completely.",
+      "descriptionHi": "देवर्षि नारद, हाथ में वीणा लिए और मुस्कुराते हुए, व्यासदेव के पास बैठकर उनसे उनके असंतोष का कारण पूछते हैं। नारद संकेत देते हैं कि इतने महान ग्रंथ महाभारत की रचना के बाद भी व्यासदेव इसलिए अतृप्त हैं क्योंकि उन्होंने भक्तियोग को उचित रूप से प्रस्तुत नहीं किया। यह वार्तालाप आध्यात्मिक दृष्टि से अत्यंत महत्वपूर्ण है क्योंकि यह श्रीमद्भागवत की रचना की प्रेरणा का मूल क्षण है।",
+      "personasUsed": [
+        "narada",
+        "vyasa"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T13:12:29.070Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T15:45:50.488Z",
     "operation": "regenerate"
   }
 ]
