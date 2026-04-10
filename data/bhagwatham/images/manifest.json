@@ -4,14 +4,14 @@
       "chapterNumber": 1,
       "chapterTitle": "Chapter एक",
       "imagePath": "chapter-001.jpg",
-      "prompt": "Vyasa sits in peaceful meditation on a forest riverbank, his eyes closed and hands folded, as he mentally beholds Lord Krishna in His divine abode — radiant and eternal, beyond all illusion. Before him in his vision, Brahma receives the first light of Vedic knowledge flowing directly from Krishna's presence into his heart.",
+      "prompt": "Vyasa sits in deep meditation at his hermitage, his eyes closed and hands folded, as he composes the opening invocation of the Bhagavatam. In his vision, he beholds Krishna as the supreme eternal truth, the origin of all creation, who once illuminated Brahma's heart with divine Vedic knowledge at the dawn of the universe.",
       "personasUsed": [
         "krishna_adult",
         "vyasa",
         "brahma"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:21:16.814Z",
+      "generatedAt": "2026-04-10T12:51:03.076Z",
       "sceneIndex": 0
     },
     {
@@ -27,55 +27,74 @@
       "chapterNumber": 3,
       "chapterTitle": "Chapter तीन",
       "imagePath": "chapter-003.jpg",
-      "prompt": "Krishna, in his cosmic form as Karanodakashayi Vishnu, reclines upon the primordial causal ocean at the dawn of creation. From his divine body, countless universes emerge like bubbles from his pores, while Brahma and Vishnu stand witness to this supreme act of universal manifestation, the sixteen fundamental elements of material existence taking shape around them.",
+      "prompt": "At the dawn of creation, Krishna expands himself as the Purusha avatar, Karanodakashayi Vishnu, reclining on the cosmic waters in the boundless spiritual sky. From his divine body, countless universes emerge like bubbles, while Brahma and Vishnu witness the magnificent unfolding of material creation from the sixteen primordial elements.",
+      "descriptionHi": "At the dawn of creation, Krishna expands himself as the Purusha avatar, Karanodakashayi Vishnu, reclining on the cosmic waters in the boundless spiritual sky. From his divine body, countless universes emerge like bubbles, while Brahma and Vishnu witness the magnificent unfolding of material creation from the sixteen primordial elements.",
       "personasUsed": [
         "krishna_adult",
         "vishnu",
         "brahma"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T11:54:42.360Z",
+      "generatedAt": "2026-04-10T12:56:49.463Z",
       "sceneIndex": 0
     },
     {
       "chapterNumber": 4,
       "chapterTitle": "Chapter चार",
       "imagePath": "chapter-004.jpg",
-      "prompt": "In the sacred forest hermitage of Naimisharanya, the elderly and learned sage Shaunaka rises with deep reverence before Suta Goswami, folding his hands in honor. Surrounded by assembled sages engaged in a great long sacrifice, Shaunaka addresses Suta Goswami with joyful gratitude, urging him to narrate the holy Bhagavatam as told by the mighty Shukadeva Goswami.",
+      "prompt": "In the forest of Naimisharanya, the elderly and learned sage Shaunaka rises from among a gathering of sages engaged in a long sacred ritual, and with great reverence and joy addresses Suta Goswami, praising him as the most fortunate among all speakers, and earnestly requests him to narrate the holy Bhagavatam as spoken by the great Shukadeva Goswami.",
       "personasUsed": [
         "suta_goswami",
         "shukadeva"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:22:15.810Z",
+      "generatedAt": "2026-04-10T12:49:30.878Z",
       "sceneIndex": 0
     },
     {
       "chapterNumber": 5,
       "chapterTitle": "Chapter पाँच",
       "imagePath": "chapter-005.jpg",
-      "prompt": "Narada, the divine sage, sits comfortably beside Vyasa on a riverbank, holding his veena and wearing a gentle smile. He looks at the great but visibly discontented Vyasa and asks him why, despite composing the magnificent Mahabharata and mastering all Vedic knowledge, his soul remains restless and unfulfilled.",
+      "prompt": "Narada, holding his veena and wearing a gentle smile, sits beside the great sage Vyasa on the banks of the Sarasvati river. He questions Vyasa about the deep restlessness troubling him despite having composed the magnificent Mahabharata, hinting that true fulfillment can only come through properly glorifying devotional service to the Supreme.",
       "personasUsed": [
         "narada",
         "vyasa"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:19:43.441Z",
+      "generatedAt": "2026-04-10T12:49:46.853Z",
       "sceneIndex": 0
     },
     {
-      "chapterNumber": 7,
-      "chapterTitle": "Chapter सात",
-      "imagePath": "chapter-007.jpg",
-      "prompt": "In this chapter, it is described that after the departure of Narada Muni, Sage Vyasa Deva sat in deep meditation at his hermitage called Shamyapras, located on the western bank of the Saraswati River, surrounded by bear trees. After purifying himself by touching the water, he entered profound samadhi (spiritual trance). The background of this chapter also includes the incident of Ashwatthama killing Draupadi’s five sons and Arjuna punishing him for that act.\n\nHighly detailed storybook illustration of an ancient Indian forest ashram. In the foreground, a wise old guru with long grey beard and tied‑up hair sits cross‑legged on an animal‑skin mat, surrounded by open palm‑leaf scriptures and scrolls on low wooden stands. In front of him stands a young disciple in saffron robes, holding a stringed instrument and raising one hand respectfully as if asking a question. Behind them are tall trees, a stone path, small sacred fires with smoke, and thatched huts fading into soft mist. The entire scene clearly shows a teaching moment between guru and disciple.\n\nhighly detailed, realistic‑painterly digital illustration, clear and readable scene, all important story elements visible in one frame, cinematic wide composition, soft painterly shading with gentle brushstrokes, warm natural lighting, rich but balanced colors, sharp focus on main subjects with slightly softer background, professional storybook painting, not a photograph.",
+      "chapterNumber": 6,
+      "chapterTitle": "Chapter छह",
+      "imagePath": "chapter-006.jpg",
+      "prompt": "Vyasa sits humbly before Narada on the banks of a sacred river, asking him earnestly how he spent his life after receiving spiritual initiation from the great sages, and how he eventually shed his mortal body to attain his divine eternal form as Brahma's son and celestial sage.",
+      "descriptionHi": "इस अध्याय में व्यासदेव नारद जी से उनके पूर्वजन्म की दीक्षा के बाद के जीवन और शरीर त्याग के विषय में जिज्ञासा करते हैं। व्यासदेव नारद जी के शिष्य होने के नाते उनके आध्यात्मिक अनुभवों को जानना चाहते हैं। यह संवाद गुरु-शिष्य परम्परा की महत्ता और आत्मज्ञान की प्राप्ति के मार्ग को दर्शाता है।",
       "personasUsed": [
         "narada",
         "vyasa",
-        "arjuna",
-        "draupadi"
+        "brahma"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T11:09:07.743Z",
+      "generatedAt": "2026-04-10T13:00:24.789Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 8,
+      "chapterTitle": "अध्याय आठ",
+      "imagePath": "chapter-008.jpg",
+      "prompt": "On the sacred banks of the Ganga river, Yudhishthira, Dhritarashtra, Gandhari, Kunti, and Draupadi sit together in deep grief after the Kurukshetra war, mourning their fallen kinsmen. Krishna stands among them, gently consoling the bereaved family members alongside sages, explaining the supreme law of time that governs all living beings.",
+      "descriptionHi": "कुरुक्षेत्र युद्ध के बाद पाण्डवगण द्रौपदी सहित मृत परिजनों को जल-दान देने हेतु गंगा तट पर गये। वहाँ युधिष्ठिर, धृतराष्ट्र, गांधारी, कुन्ती और द्रौपदी सभी पुत्र-शोक से पीड़ित बैठे थे। भगवान् कृष्ण ने वहाँ उपस्थित मुनियों के साथ मिलकर सभी शोकाकुल परिजनों को काल की गति समझाकर सान्त्वना दी।",
+      "personasUsed": [
+        "krishna_adult",
+        "kunti",
+        "draupadi",
+        "gandhari",
+        "dhritarashtra",
+        "yudhishthira"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T13:07:09.760Z",
       "sceneIndex": 0
     },
     {
@@ -104,26 +123,27 @@
       "chapterNumber": 10,
       "chapterTitle": "Chapter दस",
       "imagePath": "chapter-010.jpg",
-      "prompt": "Lord Krishna departing on a golden chariot from Hastinapura, the Pandava family watching from the palace steps with tearful eyes, dramatic golden sunset sky, ancient city architecture, wide cinematic landscape",
-      "descriptionHi": "द्वारका के लिए भगवान्‌ कृष्ण का प्रस्थान",
+      "prompt": "Krishna stands in the royal court of Hastinapur, his expression radiating deep satisfaction, as he places his hand on Yudhishthira's shoulder, formally restoring him to the throne. Around them, the remnants of the devastated Kuru dynasty look on — a family nearly destroyed by war's fire, now being carefully revived by the Lord's compassionate grace.",
+      "descriptionHi": "महाभारत युद्ध के पश्चात् भगवान् श्रीकृष्ण ने युधिष्ठिर को उनके वैध राज्य में पुनः स्थापित करके और क्रोध की दावाग्नि से विनष्ट हुए कुरुवंश को पुनरुज्जीवित करके अत्यन्त प्रसन्नता अनुभव की। शौनक ऋषि ने सूत गोस्वामी से पूछा कि शत्रुओं के वध के पश्चात् धर्मात्मा युधिष्ठिर ने किस प्रकार अपने राज्य का संचालन किया। यह अध्याय यह दर्शाता है कि भगवान् श्रीकृष्ण सृष्टि के पालनकर्ता हैं जो धर्म की पुनर्स्थापना और जीवों के कल्याण के लिए सदैव प्रयत्नशील रहते हैं।",
       "personasUsed": [
-        "krishna_adult"
+        "krishna_adult",
+        "yudhishthira"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T10:04:42.898Z",
+      "generatedAt": "2026-04-10T13:04:43.930Z",
       "sceneIndex": 0
     },
     {
       "chapterNumber": 11,
       "chapterTitle": "Chapter ग्यारह",
       "imagePath": "chapter-011.jpg",
-      "prompt": "Lord Krishna entering the magnificent golden city of Dwarka on a grand chariot, citizens throwing flowers from ornate balconies, golden domes and spires, ocean in the background, festive wide landscape",
-      "descriptionHi": "भगवान्‌ श्रीकृष्ण का द्वारका में प्रवेश",
+      "prompt": "Krishna stands at the gates of the grand city of Dwarka, returning after a long absence following the Kurukshetra war. He raises his divine white conch Panchajanya to his lips and blows it with great force, the sacred sound rolling across the city. The joyful citizens, who had been grieving his absence, rush eagerly toward him to welcome their beloved Lord home.",
+      "descriptionHi": "भगवान् श्रीकृष्ण दीर्घकाल के बाद कुरुक्षेत्र युद्ध से अपनी समृद्ध राजनगरी द्वारका लौटते हैं और अपने आगमन की सूचना देने तथा नगरवासियों की विरह-वेदना शांत करने के लिए अपना पाञ्चजन्य शंख बजाते हैं। शंख की दिव्य ध्वनि सुनकर द्वारका के समस्त निवासी अपने प्रिय भगवान् के दर्शन के लिए उत्साहित होकर उनके स्वागत हेतु दौड़ पड़ते हैं। यह क्षण भगवान् और उनके भक्तों के बीच के अगाध प्रेम एवं आध्यात्मिक बंधन का प्रतीक है।",
       "personasUsed": [
         "krishna_adult"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T09:55:15.282Z",
+      "generatedAt": "2026-04-10T13:03:19.574Z",
       "sceneIndex": 0
     },
     {
@@ -176,31 +196,30 @@
     {
       "chapterNumber": 15,
       "chapterTitle": "Chapter पन्द्रह",
-      "imagePath": "chapter-015-2.jpg",
-      "prompt": "Krishna and Arjuna riding golden chariots with white horses through an ancient Indian city, cheering crowds, grand temple architecture, golden hour light, wide landscape",
-      "descriptionHi": "परम पुरुष अपने शुद्ध भक्त के साथ सारे सम्बन्धो में पूर्ण हैं। श्री अर्जुन भगवान्‌ के विशिष्ट भक्तों में से हैं, जो सख…",
+      "imagePath": "chapter-015.jpg",
+      "prompt": "In a palace hall, Arjuna stands before his elder brother King Yudhishthira, his face pale and eyes filled with tears, struggling to speak. His lips tremble as he recalls Krishna's friendship, blessings, and the image of Krishna driving his chariot. With great effort, Arjuna wipes his tears and begins to answer in a choked, grief-stricken voice.",
+      "descriptionHi": "In a palace hall, Arjuna stands before his elder brother King Yudhishthira, his face pale and eyes filled with tears, struggling to speak. His lips tremble as he recalls Krishna's friendship, blessings, and the image of Krishna driving his chariot. With great effort, Arjuna wipes his tears and begins to answer in a choked, grief-stricken voice.",
       "personasUsed": [
         "krishna_adult",
-        "arjuna"
+        "arjuna",
+        "yudhishthira"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T09:53:47.501Z",
-      "sceneIndex": 1
+      "generatedAt": "2026-04-10T12:58:51.877Z",
+      "sceneIndex": 0
     },
     {
       "chapterNumber": 16,
       "chapterTitle": "Chapter सोलह",
       "imagePath": "chapter-016.jpg",
-      "prompt": "Parikshit and Suta Goswami in a grand ancient Indian palace setting, ornate golden architecture, sacred atmosphere, warm golden light, wide cinematic landscape",
-      "descriptionHi": "परीक्षित ने कलियुग का सत्कार किस तरह किया",
+      "prompt": "In a grand royal court, King Parikshit sits on his throne surrounded by learned Brahmin sages and rishis who serve as his advisors. He listens reverently to their scriptural guidance on how to govern his kingdom righteously, embodying all the noble qualities the astrologers had predicted at his birth.",
       "personasUsed": [
-        "suta_goswami",
         "parikshit"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T10:05:26.507Z",
+      "generatedAt": "2026-04-10T12:52:26.112Z",
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T12:22:15.810Z"
+  "lastUpdated": "2026-04-10T13:07:54.365Z"
 }
