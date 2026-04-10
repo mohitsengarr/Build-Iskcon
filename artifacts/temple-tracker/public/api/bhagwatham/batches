@@ -568,5 +568,17 @@
     "startPage": 1881,
     "endPage": 1900,
     "pageCount": 20
+  },
+  {
+    "batchNumber": 96,
+    "startPage": 1901,
+    "endPage": 1920,
+    "pageCount": 20
+  },
+  {
+    "batchNumber": 97,
+    "startPage": 1921,
+    "endPage": 1940,
+    "pageCount": 20
   }
 ]
