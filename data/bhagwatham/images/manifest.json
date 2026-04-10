@@ -116,6 +116,22 @@
     {
       "chapterNumber": 9,
       "chapterTitle": "अध्याय नौ",
+      "imagePath": "chapter-009.jpg",
+      "prompt": "Krishna, Arjuna, and the Pandavas gather around the mortally wounded Bhishma on the battlefield, as Vyasa looks on.",
+      "descriptionHi": "इस अध्याय में भीष्मदेव अपने प्राण त्यागने के लिए तैयार हैं, और भगवान श्रीकृष्ण की उपस्थिति में राजा युधिष्ठिर और उनके भाई भीष्मदेव के पास आते हैं। यह एक भावपूर्ण और आध्यात्मिक क्षण है जिसमें भीष्मदेव अपने जीवन के अनुभव और ज्ञान को साझा करने के लिए तैयार हैं।",
+      "personasUsed": [
+        "krishna_adult",
+        "vyasa",
+        "arjuna",
+        "bhishma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T22:34:23.011Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 9,
+      "chapterTitle": "अध्याय नौ",
       "imagePath": "chapter-009-2.jpg",
       "prompt": "Bhishma speaking his final words of wisdom from his bed of arrows, sages and warriors gathered around listening, rays of golden light breaking through dramatic clouds above, wide landscape",
       "descriptionHi": "इस नवम अध्याय में, जैसाकि भगवान्‌ श्रीकृष्ण की इच्छा थी, भीष्पदेव राजा युधिष्ठिर को वृत्ति-विषयक कर्तव्यों के सम्बन्ध…",
@@ -346,5 +362,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T22:27:29.683Z"
+  "lastUpdated": "2026-04-10T22:34:23.011Z"
 }
