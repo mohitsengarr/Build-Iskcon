@@ -1,25 +1,5 @@
 [
   {
-    "trashId": "4-0-1775822690500",
-    "originalFile": "chapter-004.jpg",
-    "trashedFile": "4-0-1775822690500.jpg",
-    "manifestEntry": {
-      "chapterNumber": 4,
-      "chapterTitle": "Chapter चार",
-      "imagePath": "chapter-004.jpg",
-      "prompt": "In a sacred forest hermitage at Naimisharanya, the elderly and venerable sage Shaunaka rises among a great assembly of sages engaged in prolonged ritual sacrifice, and with great reverence and joy addresses Suta Goswami, praising him as the most fortunate and worthy of speakers, earnestly requesting him to narrate the holy Bhagavata Purana as told by the great sage Shukadeva Goswami.",
-      "personasUsed": [
-        "suta_goswami",
-        "shukadeva"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:04:24.399Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T12:04:50.502Z",
-    "operation": "regenerate"
-  },
-  {
     "trashId": "4-0-1775822727571",
     "originalFile": "chapter-004.jpg",
     "trashedFile": "4-0-1775822727571.jpg",
@@ -1016,6 +996,28 @@
       "sceneIndex": 0
     },
     "trashedAt": "2026-04-10T15:24:58.070Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "6-0-1775834804039",
+    "originalFile": "chapter-006.jpg",
+    "trashedFile": "6-0-1775834804039.jpg",
+    "manifestEntry": {
+      "chapterNumber": 6,
+      "chapterTitle": "Chapter छह",
+      "imagePath": "chapter-006.jpg",
+      "prompt": "Vyasa sits humbly before Narada on the banks of a sacred river, asking him earnestly how he spent his life after receiving spiritual initiation from the great sages, and how he eventually shed his mortal body to attain his divine eternal form as Brahma's son and celestial sage.",
+      "descriptionHi": "इस अध्याय में व्यासदेव नारद जी से उनके पूर्वजन्म की दीक्षा के बाद के जीवन और शरीर त्याग के विषय में जिज्ञासा करते हैं। व्यासदेव नारद जी के शिष्य होने के नाते उनके आध्यात्मिक अनुभवों को जानना चाहते हैं। यह संवाद गुरु-शिष्य परम्परा की महत्ता और आत्मज्ञान की प्राप्ति के मार्ग को दर्शाता है।",
+      "personasUsed": [
+        "narada",
+        "vyasa",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T13:00:24.789Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T15:26:44.040Z",
     "operation": "regenerate"
   }
 ]

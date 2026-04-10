@@ -56,15 +56,14 @@
       "chapterNumber": 6,
       "chapterTitle": "Chapter छह",
       "imagePath": "chapter-006.jpg",
-      "prompt": "Vyasa sits humbly before Narada on the banks of a sacred river, asking him earnestly how he spent his life after receiving spiritual initiation from the great sages, and how he eventually shed his mortal body to attain his divine eternal form as Brahma's son and celestial sage.",
-      "descriptionHi": "इस अध्याय में व्यासदेव नारद जी से उनके पूर्वजन्म की दीक्षा के बाद के जीवन और शरीर त्याग के विषय में जिज्ञासा करते हैं। व्यासदेव नारद जी के शिष्य होने के नाते उनके आध्यात्मिक अनुभवों को जानना चाहते हैं। यह संवाद गुरु-शिष्य परम्परा की महत्ता और आत्मज्ञान की प्राप्ति के मार्ग को दर्शाता है।",
+      "prompt": "On the peaceful banks of a sacred river, Vyasa sits humbly before Narada Muni, hands folded in reverence, asking earnest questions about Narada's spiritual journey in his past life — how he lived after receiving divine knowledge from wandering sages, and how he eventually departed from his former body to attain his eternal divine form.",
+      "descriptionHi": "इस अध्याय में व्यासदेव नारद मुनि से उनके पूर्वजन्म की साधना, दीक्षा के बाद के जीवन और शरीर त्याग के विषय में जिज्ञासा पूर्वक प्रश्न करते हैं। व्यासदेव जानना चाहते हैं कि नारद ने महामुनियों के चले जाने के बाद किस प्रकार अपना जीवन व्यतीत किया और किस प्रकार उन्हें दिव्य स्वरूप प्राप्त हुआ। यह संवाद आध्यात्मिक जिज्ञासा और गुरु-शिष्य परम्परा की महत्ता को दर्शाता है।",
       "personasUsed": [
         "narada",
-        "vyasa",
-        "brahma"
+        "vyasa"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T13:00:24.789Z",
+      "generatedAt": "2026-04-10T15:27:00.158Z",
       "sceneIndex": 0
     },
     {
@@ -263,5 +262,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T15:25:21.999Z"
+  "lastUpdated": "2026-04-10T15:27:00.158Z"
 }
