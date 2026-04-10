@@ -5,7 +5,7 @@
       "chapterTitle": "अध्याय एक",
       "imagePath": "chapter-001.jpg",
       "prompt": "Suta Goswami sitting on a stone seat under a large banyan tree, speaking to a small group of sages around a sacred fire in Naimisharanya forest, golden sunlight",
-      "descriptionHi": "सूत गोस्वामी नैमिषारण्य वन में बरगद के वृक्ष के नीचे ऋषियों को यज्ञ अग्नि के समक्ष उपदेश देते हुए",
+      "descriptionHi": "नैमिषारण्य में ऋषिगण सूत गोस्वामी से पूछते हैं — कलियुग में मनुष्यों का परम कल्याण किस प्रकार होगा? सम्पूर्ण शास्त्रों का सार क्या है?",
       "generatedAt": "2026-04-10T10:33:00.000Z",
       "sceneIndex": 0
     },
@@ -14,7 +14,7 @@
       "chapterTitle": "अध्याय एक",
       "imagePath": "chapter-001-2.jpg",
       "prompt": "Suta Goswami speaking to two sages by a sacred fire at dusk, warm firelight on faces, forest clearing, realistic natural lighting",
-      "descriptionHi": "सूत गोस्वामी सन्ध्या काल में यज्ञ अग्नि के पास दो ऋषियों को उपदेश देते हुए",
+      "descriptionHi": "सूत गोस्वामी बताते हैं कि श्रीमद्भागवतम् ही वह ग्रन्थ है जो भगवान श्रीकृष्ण के प्रस्थान के बाद इस संसार में धर्म के प्रकाश के रूप में उदित हुआ।",
       "generatedAt": "2026-04-10T10:34:00.000Z",
       "sceneIndex": 1
     },
@@ -23,7 +23,7 @@
       "chapterTitle": "अध्याय दो",
       "imagePath": "chapter-002.jpg",
       "prompt": "Vyasadeva sitting in a thatched forest hermitage, writing on palm-leaf manuscripts, golden morning light streaming through doorway",
-      "descriptionHi": "व्यासदेव वन के आश्रम में ताड़-पत्र पांडुलिपियों पर शास्त्र लिखते हुए, सुनहरी प्रभात किरणें",
+      "descriptionHi": "इस अध्याय में बताया गया है कि मनुष्य का सर्वोच्च धर्म क्या है — वह भक्ति जो भगवान श्रीकृष्ण में अनन्य प्रेम उत्पन्न करे और जिससे आत्मा को पूर्ण तृप्ति मिले।",
       "generatedAt": "2026-04-10T10:34:00.000Z",
       "sceneIndex": 0
     },
@@ -32,7 +32,7 @@
       "chapterTitle": "अध्याय दो",
       "imagePath": "chapter-002-2.jpg",
       "prompt": "Vyasadeva meditating under a massive banyan tree, morning mist in forest, small stream flowing nearby, natural realistic landscape",
-      "descriptionHi": "व्यासदेव विशाल बरगद के वृक्ष के नीचे ध्यान करते हुए, प्रातःकालीन कोहरे में शांत वन दृश्य",
+      "descriptionHi": "सूत गोस्वामी समझाते हैं कि जो व्यक्ति श्रीकृष्ण कथा सुनता है, उसके हृदय की समस्त अशुद्धियाँ दूर हो जाती हैं और भगवान के प्रति निर्मल भक्ति जागृत होती है।",
       "generatedAt": "2026-04-10T10:33:00.000Z",
       "sceneIndex": 1
     },
@@ -41,7 +41,7 @@
       "chapterTitle": "अध्याय तीन",
       "imagePath": "chapter-003.jpg",
       "prompt": "Lord Krishna standing in a lush Vrindavan meadow playing bamboo flute, two peacocks nearby, river flowing in background, golden hour sunlight",
-      "descriptionHi": "भगवान श्री कृष्ण वृन्दावन के हरे-भरे मैदान में बाँसुरी बजाते हुए, दो मोर समीप, नदी का सुन्दर दृश्य",
+      "descriptionHi": "इस अध्याय में भगवान श्रीकृष्ण के समस्त अवतारों का वर्णन है — मत्स्य, कूर्म, वराह, नृसिंह, वामन, परशुराम, राम और अन्य दिव्य लीलाएँ जो धर्म की रक्षा हेतु प्रकट हुईं।",
       "generatedAt": "2026-04-10T10:34:00.000Z",
       "sceneIndex": 0
     },
@@ -50,7 +50,7 @@
       "chapterTitle": "अध्याय तीन",
       "imagePath": "chapter-003-2.jpg",
       "prompt": "Lord Krishna seated under a kadamba tree, three cows resting nearby, lotus pond reflecting golden sky, Vrindavan hills in distance",
-      "descriptionHi": "भगवान श्री कृष्ण कदम्ब वृक्ष के नीचे विराजमान, तीन गायें विश्राम करती हुईं, कमल सरोवर में सुनहरे आकाश का प्रतिबिम्ब",
+      "descriptionHi": "श्रीकृष्ण सभी अवतारों के मूल स्रोत हैं — 'एते चांश-कलाः पुंसः कृष्णस्तु भगवान् स्वयम्' — ये सब अंश-कलाएँ हैं, किन्तु कृष्ण स्वयं भगवान हैं।",
       "generatedAt": "2026-04-10T10:34:00.000Z",
       "sceneIndex": 1
     },
@@ -59,7 +59,7 @@
       "chapterTitle": "अध्याय चार",
       "imagePath": "chapter-004.jpg",
       "prompt": "Sage Narada walking along a mountain path at sunrise, playing tanpura veena, panoramic Himalayan landscape, golden clouds and snow-capped peaks",
-      "descriptionHi": "देवर्षि नारद सूर्योदय में पर्वतीय मार्ग पर तानपुरा वीणा बजाते हुए, हिमालय का विहंगम दृश्य",
+      "descriptionHi": "वेदव्यास ने सम्पूर्ण वेदों का विभाजन, महाभारत की रचना और ब्रह्मसूत्र लिखने के बाद भी स्वयं को असंतुष्ट अनुभव किया। तब देवर्षि नारद उनके आश्रम में पधारे।",
       "generatedAt": "2026-04-10T10:34:00.000Z",
       "sceneIndex": 0
     },
@@ -68,17 +68,16 @@
       "chapterTitle": "अध्याय चार",
       "imagePath": "chapter-004-2.jpg",
       "prompt": "Sage Narada resting on a rocky outcrop above clouds, veena beside him, spectacular sunset over a valley of rivers and forests",
-      "descriptionHi": "देवर्षि नारद बादलों के ऊपर चट्टान पर विश्राम करते हुए, उनकी वीणा पास में, नदियों और वनों की घाटी पर सूर्यास्त",
+      "descriptionHi": "नारद ने व्यासदेव को बताया कि उनकी असंतुष्टि का कारण यह है कि उन्होंने अभी तक भगवान श्रीकृष्ण की दिव्य लीलाओं का सीधा वर्णन नहीं किया है।",
       "generatedAt": "2026-04-10T10:34:00.000Z",
       "sceneIndex": 1
-    }
-    ,
+    },
     {
       "chapterNumber": 5,
       "chapterTitle": "अध्याय पाँच",
       "imagePath": "chapter-005.jpg",
       "prompt": "Sage Narada standing before Vyasadeva in a peaceful forest ashram, golden morning light, ancient trees",
-      "descriptionHi": "देवर्षि नारद वन के शांत आश्रम में व्यासदेव के समक्ष खड़े, सुनहरी प्रभात किरणें, प्राचीन वृक्षों से घिरा दृश्य",
+      "descriptionHi": "नारद मुनि व्यासदेव को उपदेश देते हैं कि केवल भगवान श्रीकृष्ण की लीलाओं का गान ही जीवात्मा को भवसागर से मुक्ति दिला सकता है। शुष्क ज्ञान अकेला पर्याप्त नहीं।",
       "generatedAt": "2026-04-10T10:52:00.000Z",
       "sceneIndex": 0
     },
@@ -87,7 +86,7 @@
       "chapterTitle": "अध्याय पाँच",
       "imagePath": "chapter-005-2.jpg",
       "prompt": "Wide view of a serene forest hermitage by a river at dawn, thatched huts, sacred fire pit, mist rising",
-      "descriptionHi": "प्रातःकाल नदी तट पर शांत वन आश्रम का विहंगम दृश्य, छप्पर की कुटियाँ, यज्ञ कुण्ड, उठती कोहरा",
+      "descriptionHi": "नारद के उपदेश से प्रेरित होकर व्यासदेव ने सरस्वती नदी के तट पर बैठकर भक्तियोग में समाधि लगाई और भगवान की लीलाओं का ध्यान करके श्रीमद्भागवतम् की रचना आरम्भ की।",
       "generatedAt": "2026-04-10T10:55:00.000Z",
       "sceneIndex": 1
     },
@@ -96,7 +95,7 @@
       "chapterTitle": "अध्याय छह",
       "imagePath": "chapter-006.jpg",
       "prompt": "Two sages sitting face to face in deep philosophical discussion on the banks of the river Saraswati, peaceful landscape",
-      "descriptionHi": "दो ऋषि सरस्वती नदी के तट पर आमने-सामने बैठकर गहन दार्शनिक चर्चा करते हुए, शांत प्राकृतिक दृश्य",
+      "descriptionHi": "नारद अपनी पूर्वजन्म की कथा सुनाते हैं — वे एक दासी के पुत्र थे। बचपन में भक्त सन्तों की सेवा और उनके प्रसाद का शेष ग्रहण करने से उनमें भक्ति का बीज अंकुरित हुआ।",
       "generatedAt": "2026-04-10T10:52:00.000Z",
       "sceneIndex": 0
     },
@@ -105,7 +104,7 @@
       "chapterTitle": "अध्याय छह",
       "imagePath": "chapter-006-2.jpg",
       "prompt": "Panoramic view of a sacred river flowing through an ancient ashram, lush green banks, stone ghats, evening sky",
-      "descriptionHi": "प्राचीन आश्रम से होकर बहती पवित्र नदी का विहंगम दृश्य, हरे-भरे तट, पत्थर के घाट, सन्ध्या का आकाश",
+      "descriptionHi": "माता के देहत्याग के बाद बालक नारद ने निर्भय होकर वन में भगवान का ध्यान किया। एक बार हृदय में भगवान के दर्शन हुए, फिर अदृश्य हो गए — इस विरह ने उनकी भक्ति को और गहरा किया।",
       "generatedAt": "2026-04-10T10:52:00.000Z",
       "sceneIndex": 1
     },
@@ -114,7 +113,7 @@
       "chapterTitle": "अध्याय सात",
       "imagePath": "chapter-007.jpg",
       "prompt": "A warrior prince on horseback confronting a kneeling prisoner on a vast battlefield, dramatic sky, ancient Indian setting",
-      "descriptionHi": "एक योद्धा राजकुमार घोड़े पर विशाल रणभूमि में घुटने टेके बन्दी के समक्ष, नाटकीय आकाश, प्राचीन भारतीय परिदृश्य",
+      "descriptionHi": "द्रोणपुत्र अश्वत्थामा ने सोते हुए पाण्डवों के पाँच पुत्रों की हत्या कर दी। अर्जुन ने क्रोधित होकर उसका पीछा किया और बन्दी बनाकर द्रौपदी के समक्ष लाया।",
       "generatedAt": "2026-04-10T10:52:00.000Z",
       "sceneIndex": 0
     },
@@ -123,10 +122,10 @@
       "chapterTitle": "अध्याय सात",
       "imagePath": "chapter-007-2.jpg",
       "prompt": "Panoramic view of an ancient Indian battlefield after a great war, scattered chariots, setting sun, vast plains",
-      "descriptionHi": "महायुद्ध के पश्चात प्राचीन भारतीय रणभूमि का विहंगम दृश्य, बिखरे रथ, अस्त होता सूर्य, विशाल मैदान",
+      "descriptionHi": "द्रौपदी ने अपने पुत्रों के हत्यारे अश्वत्थामा को भी क्षमा कर दिया, क्योंकि वह गुरुपुत्र था। भगवान श्रीकृष्ण ने इस धर्मसंकट में न्याय और करुणा दोनों का मार्ग दिखाया।",
       "generatedAt": "2026-04-10T10:52:00.000Z",
       "sceneIndex": 1
     }
   ],
-  "lastUpdated": "2026-04-10T10:55:00.000Z"
+  "lastUpdated": "2026-04-10T11:10:00.000Z"
 }

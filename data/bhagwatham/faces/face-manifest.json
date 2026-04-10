@@ -1,0 +1,47 @@
+[
+  {
+    "characterName": "krishna_adult",
+    "imagePath": "krishna_adult.jpg",
+    "generatedAt": "2026-04-10T11:00:00.000Z"
+  },
+  {
+    "characterName": "narada",
+    "imagePath": "narada.jpg",
+    "generatedAt": "2026-04-10T11:00:00.000Z"
+  },
+  {
+    "characterName": "vyasadeva",
+    "imagePath": "vyasadeva.jpg",
+    "generatedAt": "2026-04-10T11:00:00.000Z"
+  },
+  {
+    "characterName": "suta_goswami",
+    "imagePath": "suta_goswami.jpg",
+    "generatedAt": "2026-04-10T11:00:00.000Z"
+  },
+  {
+    "characterName": "shukadeva",
+    "imagePath": "shukadeva.jpg",
+    "generatedAt": "2026-04-10T11:00:00.000Z"
+  },
+  {
+    "characterName": "arjuna",
+    "imagePath": "arjuna.jpg",
+    "generatedAt": "2026-04-10T11:00:00.000Z"
+  },
+  {
+    "characterName": "vishnu",
+    "imagePath": "vishnu.jpg",
+    "generatedAt": "2026-04-10T11:00:00.000Z"
+  },
+  {
+    "characterName": "yashoda",
+    "imagePath": "yashoda.jpg",
+    "generatedAt": "2026-04-10T11:00:00.000Z"
+  },
+  {
+    "characterName": "parikshit",
+    "imagePath": "parikshit.jpg",
+    "generatedAt": "2026-04-10T11:00:00.000Z"
+  }
+]
