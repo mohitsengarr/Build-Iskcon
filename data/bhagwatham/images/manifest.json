@@ -274,7 +274,23 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-10T14:49:09.488Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 36,
+      "chapterTitle": "Chapter 36",
+      "imagePath": "chapter-036.jpg",
+      "prompt": "On the banks of the Ganges, King Parikshit sits reverently before the sage Shukadeva Goswami, asking with folded hands how Narada Muni described the transcendental qualities of the Lord to various disciples. The serene forest setting reflects the sacred flow of divine knowledge passing from Brahma to Narada and onward through the ages.",
+      "descriptionHi": "राजा परीक्षित ने शुकदेव गोस्वामी से पूछा कि नारद मुनि ने निर्गुण भगवान् के दिव्य गुणों का वर्णन किस प्रकार और किन-किन के समक्ष किया। यह प्रश्न शिष्य-परम्परा की महत्ता को दर्शाता है, जिसमें ब्रह्माजी से नारद को और नारद से आगे दिव्य ज्ञान प्रवाहित हुआ। इस प्रसंग का आध्यात्मिक महत्व यह है कि प्रामाणिक गुरु-शिष्य परम्परा ही वैदिक ज्ञान का एकमात्र विश्वसनीय स्रोत है।",
+      "personasUsed": [
+        "narada",
+        "shukadeva",
+        "brahma",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T17:43:05.780Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T17:27:48.907Z"
+  "lastUpdated": "2026-04-10T17:43:05.780Z"
 }
