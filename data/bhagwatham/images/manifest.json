@@ -303,7 +303,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-10T20:30:17.407Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 41,
+      "chapterTitle": "Chapter सत्रह",
+      "imagePath": "chapter-041.jpg",
+      "prompt": "Brahma, the creator seated on his lotus throne, calmly addresses a gathering of anxious devas in the celestial realm, explaining the cause of the great darkness that had engulfed the universe. The gods listen with reverence, their faces slowly transforming from worry to peace and relief as divine wisdom dispels their fear.",
+      "descriptionHi": "जब ब्रह्मा ने देवताओं को ब्रह्माण्ड में व्याप्त अन्धकार का कारण समझाया, तो सभी देवता भय से मुक्त होकर अपने-अपने स्वर्गलोक को वापस चले गये। इस प्रसंग में मैत्रेय मुनि बताते हैं कि भौतिक जगत में देवता भी भय से ग्रस्त रहते हैं। इसका आध्यात्मिक संदेश यह है कि जैसे अर्जुन ने कुरुक्षेत्र में कृष्ण की शरण ली, वैसे ही किसी भी विपत्ति में सच्चे अधिकारी के पास जाने से समस्या का समाधान हो जाता है।",
+      "personasUsed": [
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T21:09:09.859Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T21:08:37.769Z"
+  "lastUpdated": "2026-04-10T21:09:09.859Z"
 }
