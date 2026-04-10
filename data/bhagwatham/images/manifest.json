@@ -321,6 +321,21 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 23,
+      "chapterTitle": "Chapter चार",
+      "imagePath": "chapter-023.jpg",
+      "prompt": "King Parikshit, with Ashwatthama and Uttara nearby, intently listens to Shukadeva's words about Krishna in a serene palace setting.",
+      "descriptionHi": "महाराज परीक्षित ने शुकदेव गोस्वामी से भगवान् कृष्ण के बारे में सुनकर अपना ध्यान कृष्ण में केंद्रित किया, जो उनके जीवन की सबसे महत्वपूर्ण घटना थी। इसमें कृष्ण, परीक्षित, अश्वत्थामा, शुकदेव और उत्तरा प्रमुख पात्र हैं।",
+      "personasUsed": [
+        "krishna_adult",
+        "shukadeva",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T22:54:16.289Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 30,
       "chapterTitle": "Chapter इक्तीस",
       "imagePath": "chapter-030.jpg",
@@ -405,5 +420,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T22:48:54.096Z"
+  "lastUpdated": "2026-04-10T22:59:36.123Z"
 }
