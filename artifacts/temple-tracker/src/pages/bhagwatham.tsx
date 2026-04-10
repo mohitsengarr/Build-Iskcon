@@ -1267,7 +1267,12 @@ export default function Bhagwatham() {
       const viewPage = Math.floor(pageIdx / PAGES_PER_VIEW) + 1;
       setCurrentPage(viewPage);
       if (b.chapter_number) setActiveChapter(b.chapter_number);
-      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 100);
+      // Scroll to the exact bookmarked page, not just the top
+      setTimeout(() => {
+        const el = document.querySelector(`[data-page-num="${b.page_number}"]`);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        else window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 200);
     }
   }, [allPages]);
 
@@ -1474,14 +1479,17 @@ export default function Bhagwatham() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
+        // Pick the last intersecting entry (most recently scrolled into view)
+        let latestNum = 0;
         for (const entry of entries) {
           if (entry.isIntersecting) {
             const num = parseInt(entry.target.getAttribute("data-page-num") || "0", 10);
-            if (num > 0) setVisiblePageNum(num);
+            if (num > latestNum) latestNum = num;
           }
         }
+        if (latestNum > 0) setVisiblePageNum(latestNum);
       },
-      { rootMargin: "-120px 0px -60% 0px" }
+      { rootMargin: "-80px 0px -30% 0px" }
     );
     const pageEls = document.querySelectorAll("[data-page-num]");
     pageEls.forEach(el => observer.observe(el));
