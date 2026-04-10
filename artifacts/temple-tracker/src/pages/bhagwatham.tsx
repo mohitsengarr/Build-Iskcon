@@ -533,7 +533,7 @@ function BookmarkPanel({ bookmarks, onJump, onDelete }: {
 
 // ── Content Renderer ───────────────────────────────────────────────────────────
 
-function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", onRegenerateImages, regeneratingChapters, onDeleteImage }: { text: string; textEn?: string; lang: "hi" | "en"; chapterImages?: Map<number, Array<{ url: string; description: string; sceneIndex?: number }>>; themeKey?: Theme; onRegenerateImages?: (chapterNum: number) => void; regeneratingChapters?: Set<number>; onDeleteImage?: (chapterNum: number, sceneIndex: number) => void }) {
+function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", onRegenerateImages, regeneratingChapters, onDeleteImage, chapterNumMapper }: { text: string; textEn?: string; lang: "hi" | "en"; chapterImages?: Map<number, Array<{ url: string; description: string; sceneIndex?: number }>>; themeKey?: Theme; onRegenerateImages?: (chapterNum: number) => void; regeneratingChapters?: Set<number>; onDeleteImage?: (chapterNum: number, sceneIndex: number) => void; chapterNumMapper?: (perSkandhNum: number) => number }) {
   const t = THEME_STYLES[themeKey];
   // If English selected and translation available, show English as plain text
   if (lang === "en" && textEn) {
@@ -555,9 +555,10 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
     return (
       <div className="space-y-4">
         {chapterAnchors.map((ch) => {
-          const imgs = ch.chapterNum ? chapterImages?.get(ch.chapterNum) : undefined;
+          const globalNum = ch.chapterNum && chapterNumMapper ? chapterNumMapper(ch.chapterNum) : ch.chapterNum;
+          const imgs = globalNum ? chapterImages?.get(globalNum) : undefined;
           return (
-            <div key={ch.chapterNum} id={`chapter-${ch.chapterNum}`} className="mt-6 mb-4 scroll-mt-20">
+            <div key={globalNum} id={`chapter-${globalNum}`} className="mt-6 mb-4 scroll-mt-20">
               <h3 className={`font-serif text-xl sm:text-2xl font-bold ${t.text} mb-3 pb-2 border-b-2 border-orange-300/50`}>
                 {ch.line}
               </h3>
@@ -746,9 +747,10 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
       {sections.map((sec, i) => {
         switch (sec.kind) {
           case "chapter": {
-            const imgs = sec.chapterNum ? chapterImages?.get(sec.chapterNum) : undefined;
+            const globalNum = sec.chapterNum && chapterNumMapper ? chapterNumMapper(sec.chapterNum) : sec.chapterNum;
+            const imgs = globalNum ? chapterImages?.get(globalNum) : undefined;
             return (
-              <div key={i} id={`chapter-${sec.chapterNum}`} className="mt-6 mb-4 scroll-mt-20">
+              <div key={i} id={`chapter-${globalNum}`} className="mt-6 mb-4 scroll-mt-20">
                 <h3 className={`text-xl sm:text-2xl font-bold ${t.text} mb-3 pb-2 border-b-2 border-orange-300/50`} style={{ fontFamily: "var(--font-devanagari)" }}>
                   {sec.lines.join(" ")}
                 </h3>
@@ -757,9 +759,9 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
                     {imgs.map((img, idx) => (
                       <div key={idx} className="relative group">
                         <ImageCard img={img} alt={`${sec.lines.join(" ")} — दृश्य ${idx + 1}`} />
-                        {onDeleteImage && sec.chapterNum && (
+                        {onDeleteImage && globalNum && (
                           <button
-                            onClick={() => onDeleteImage(sec.chapterNum!, img.sceneIndex ?? idx)}
+                            onClick={() => onDeleteImage(globalNum!, img.sceneIndex ?? idx)}
                             className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-red-600/80 hover:bg-red-700 text-white rounded-full p-1.5"
                             title="चित्र हटाएँ"
                           >
@@ -770,15 +772,15 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
                     ))}
                   </div>
                 )}
-                {sec.chapterNum && onRegenerateImages && (
+                {globalNum && onRegenerateImages && (
                   <button
-                    onClick={() => onRegenerateImages(sec.chapterNum!)}
-                    disabled={regeneratingChapters?.has(sec.chapterNum!) ?? false}
-                    className={`flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-lg transition-colors ${regeneratingChapters?.has(sec.chapterNum!) ? "opacity-60 cursor-wait" : ""} ${themeKey === "dark" ? "text-orange-400 hover:bg-orange-900/30" : "text-orange-500 hover:bg-orange-100"}`}
+                    onClick={() => onRegenerateImages(globalNum!)}
+                    disabled={regeneratingChapters?.has(globalNum!) ?? false}
+                    className={`flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-lg transition-colors ${regeneratingChapters?.has(globalNum!) ? "opacity-60 cursor-wait" : ""} ${themeKey === "dark" ? "text-orange-400 hover:bg-orange-900/30" : "text-orange-500 hover:bg-orange-100"}`}
                     title="चित्र पुनः बनाएँ"
                   >
-                    <RefreshCw className={`w-3 h-3 ${regeneratingChapters?.has(sec.chapterNum!) ? "animate-spin" : ""}`} />
-                    {regeneratingChapters?.has(sec.chapterNum!) ? "बना रहे हैं…" : "चित्र पुनः बनाएँ"}
+                    <RefreshCw className={`w-3 h-3 ${regeneratingChapters?.has(globalNum!) ? "animate-spin" : ""}`} />
+                    {regeneratingChapters?.has(globalNum!) ? "बना रहे हैं…" : "चित्र पुनः बनाएँ"}
                   </button>
                 )}
               </div>
@@ -1798,7 +1800,14 @@ export default function Bhagwatham() {
                 {displayPages.map((page) => (
                   <div key={page.pageNumber} data-page-num={page.pageNumber}>
                     <p className={`text-[10px] ${theme.muted} font-medium text-right my-3 opacity-60`}>पृ. {page.pageNumber}</p>
-                    <RenderContent text={page.text} textEn={page.textEn} lang={lang} chapterImages={chapterImages} themeKey={settings.theme} onRegenerateImages={openPromptModal} regeneratingChapters={regeneratingChapters} onDeleteImage={handleDeleteImage} />
+                    <RenderContent text={page.text} textEn={page.textEn} lang={lang} chapterImages={chapterImages} themeKey={settings.theme} onRegenerateImages={openPromptModal} regeneratingChapters={regeneratingChapters} onDeleteImage={handleDeleteImage} chapterNumMapper={(perSkandhNum: number) => {
+                      // Find which skandh this page belongs to based on surrounding chapters
+                      const ch = chapters.find(c => c.number === perSkandhNum && c.pageNumber <= page.pageNumber);
+                      // Pick the last matching chapter (closest to this page)
+                      const candidates = chapters.filter(c => c.number === perSkandhNum && c.pageNumber <= page.pageNumber);
+                      const best = candidates.length > 0 ? candidates[candidates.length - 1] : chapters.find(c => c.number === perSkandhNum);
+                      return best?.globalNumber ?? perSkandhNum;
+                    }} />
                   </div>
                 ))}
               </div>

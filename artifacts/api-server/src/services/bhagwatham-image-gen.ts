@@ -1295,6 +1295,38 @@ const OCR_CHAPTER_FIXES: Record<string, { num: number; title: string }> = {
   "Chapter it": { num: 9, title: "अध्याय नौ" },
 };
 
+// Track the highest global chapter number used across all skandhs
+let lastGlobalChapterNum = 0;
+let lastPerSkandhNum = 0;
+
+function getNextGlobalChapterNum(perSkandhNum: number): number {
+  // If chapter number resets (e.g. goes from 19 back to 1), it's a new skandh
+  if (perSkandhNum <= lastPerSkandhNum && lastPerSkandhNum > 1) {
+    // New skandh — continue global counter from where we left off
+    lastGlobalChapterNum++;
+  } else if (lastGlobalChapterNum === 0) {
+    // First chapter ever — use the per-skandh number
+    lastGlobalChapterNum = perSkandhNum;
+  } else {
+    lastGlobalChapterNum++;
+  }
+  lastPerSkandhNum = perSkandhNum;
+  return lastGlobalChapterNum;
+}
+
+function initGlobalChapterCounter(): void {
+  // Find the highest chapter number from existing manifest
+  const manifest = readManifest();
+  if (manifest.images.length > 0) {
+    lastGlobalChapterNum = Math.max(...manifest.images.map(img => img.chapterNumber));
+    // Also find the last per-skandh chapter number from last batch
+    // by looking at the highest chapter number in manifest
+    const lastImg = manifest.images.sort((a, b) => b.chapterNumber - a.chapterNumber)[0];
+    lastPerSkandhNum = 0; // will be set on next detection
+    logger.info({ lastGlobalChapterNum }, "Initialized global chapter counter from manifest");
+  }
+}
+
 export async function generateImagesForBatch(
   pages: Array<{ pageNumber: number; text: string }>,
 ): Promise<void> {
@@ -1305,6 +1337,11 @@ export async function generateImagesForBatch(
     तेरह: 13, चौदह: 14, पन्द्रह: 15, सोलह: 16, सत्रह: 17,
     अठारह: 18, उन्नीस: 19, बीस: 20,
   };
+
+  // Initialize global counter from manifest on first run
+  if (lastGlobalChapterNum === 0) {
+    initGlobalChapterCounter();
+  }
 
   for (const page of pages) {
     const lines = page.text.split("\n");
@@ -1339,11 +1376,15 @@ export async function generateImagesForBatch(
         }
 
         if (chapterNum > 0) {
+          // Use global chapter number for unique file naming across skandhs
+          const globalNum = getNextGlobalChapterNum(chapterNum);
+          logger.info({ perSkandhNum: chapterNum, globalNum, chapterTitle }, "Detected chapter for image generation");
+
           // Get LARGE content snippet — more context = better prompts
           const remainingLines = lines.slice(i + 1, i + 40).join("\n");
           const contentSnippet = remainingLines.substring(0, 2000);
 
-          await generateChapterImages(chapterNum, chapterTitle, contentSnippet);
+          await generateChapterImages(globalNum, chapterTitle, contentSnippet);
         }
       }
     }
