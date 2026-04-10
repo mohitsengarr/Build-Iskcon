@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { execSync } from "child_process";
 import { logger } from "../lib/logger";
 import Anthropic from "@anthropic-ai/sdk";
 import { reportAIFailure } from "./ai-credit-monitor";
@@ -1237,6 +1238,17 @@ export function regenerateWithCustomPrompt(
         return (a.sceneIndex ?? 0) - (b.sceneIndex ?? 0);
       });
       writeManifest(updatedManifest);
+
+      // Auto commit + push to trigger deploy
+      try {
+        const repoRoot = path.resolve(DATA_DIR, "..", "..");
+        execSync("git add data/bhagwatham/", { cwd: repoRoot, stdio: "pipe" });
+        execSync(`git commit -m "feat(bhagwatham): regenerate chapter ${chapterNumber} image"`, { cwd: repoRoot, stdio: "pipe" });
+        execSync("git push", { cwd: repoRoot, stdio: "pipe" });
+        logger.info({ chapterNumber }, "Regenerated image committed and pushed");
+      } catch (gitErr) {
+        logger.warn({ gitErr }, "Git commit/push failed after regeneration");
+      }
 
       return { file: filename, trashId };
     } catch (err) {
