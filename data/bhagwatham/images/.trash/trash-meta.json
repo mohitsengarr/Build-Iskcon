@@ -1,27 +1,5 @@
 [
   {
-    "trashId": "1-0-1775822623093",
-    "originalFile": "chapter-001.jpg",
-    "trashedFile": "1-0-1775822623093.jpg",
-    "manifestEntry": {
-      "chapterNumber": 1,
-      "chapterTitle": "Chapter एक",
-      "imagePath": "chapter-001.jpg",
-      "prompt": "Vyasa sits in serene meditation at his hermitage, hands folded in deep reverence, his eyes closed in devotion as he offers his opening prayer to Krishna, the Supreme Lord. Before his inner vision appears Krishna in his divine resplendent form, radiant and eternal, the source of all creation, while Narada and Brahma stand witness to this sacred moment of cosmic invocation.",
-      "personasUsed": [
-        "krishna_adult",
-        "narada",
-        "vyasa",
-        "brahma"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:02:59.555Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T12:03:43.094Z",
-    "operation": "regenerate"
-  },
-  {
     "trashId": "4-0-1775822655673",
     "originalFile": "chapter-004.jpg",
     "trashedFile": "4-0-1775822655673.jpg",
@@ -1017,5 +995,25 @@
     },
     "trashedAt": "2026-04-10T15:11:00.348Z",
     "operation": "delete"
+  },
+  {
+    "trashId": "16-0-1775834628780",
+    "originalFile": "chapter-016.jpg",
+    "trashedFile": "16-0-1775834628780.jpg",
+    "manifestEntry": {
+      "chapterNumber": 16,
+      "chapterTitle": "Chapter सोलह",
+      "imagePath": "chapter-016.jpg",
+      "prompt": "King Parikshit sits on his royal throne in a magnificent palace court, surrounded by wise sages and learned Brahmin advisors. He listens with deep reverence as the elder rishis share guidance from the Vedic scriptures, his hands folded in respect. The atmosphere is serene, reflecting his role as a devoted and righteous ruler.",
+      "descriptionHi": "सूत गोस्वामी बताते हैं कि महाराज परीक्षित ने श्रेष्ठ ब्राह्मणों के मार्गदर्शन में एक महान भगवद्भक्त के रूप में पृथ्वी पर शासन किया, ठीक वैसे ही जैसा उनके जन्म के समय ज्योतिषियों ने भविष्यवाणी की थी। वे वैदिक शास्त्रों पर आधारित सलाहकार समिति के निर्देशानुसार राज्य चलाते थे। यह अध्याय आदर्श राजधर्म और भक्ति की शक्ति का आध्यात्मिक महत्व दर्शाता है।",
+      "personasUsed": [
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T13:37:40.580Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T15:23:48.782Z",
+    "operation": "regenerate"
   }
 ]

@@ -212,13 +212,13 @@
       "chapterNumber": 16,
       "chapterTitle": "Chapter सोलह",
       "imagePath": "chapter-016.jpg",
-      "prompt": "King Parikshit sits on his royal throne in a magnificent palace court, surrounded by wise sages and learned Brahmin advisors. He listens with deep reverence as the elder rishis share guidance from the Vedic scriptures, his hands folded in respect. The atmosphere is serene, reflecting his role as a devoted and righteous ruler.",
-      "descriptionHi": "सूत गोस्वामी बताते हैं कि महाराज परीक्षित ने श्रेष्ठ ब्राह्मणों के मार्गदर्शन में एक महान भगवद्भक्त के रूप में पृथ्वी पर शासन किया, ठीक वैसे ही जैसा उनके जन्म के समय ज्योतिषियों ने भविष्यवाणी की थी। वे वैदिक शास्त्रों पर आधारित सलाहकार समिति के निर्देशानुसार राज्य चलाते थे। यह अध्याय आदर्श राजधर्म और भक्ति की शक्ति का आध्यात्मिक महत्व दर्शाता है।",
+      "prompt": "King Parikshit sits on his royal throne in a grand palace hall, surrounded by wise Brahmin sages and learned rishis serving as his advisory council. He listens with humility and devotion as the elders guide him with Vedic wisdom on righteous governance. The atmosphere is serene, reverent, and spiritually illuminated.",
+      "descriptionHi": "सूत गोस्वामी बताते हैं कि महाराज परीक्षित ने श्रेष्ठ ब्राह्मणों के मार्गदर्शन में पृथ्वी पर न्यायपूर्ण शासन किया, जो उनके जन्म के समय ज्योतिषियों द्वारा की गई भविष्यवाणियों के अनुरूप था। एक महाभागवत के रूप में उन्होंने वैदिक शास्त्रों पर आधारित विधि-विधानों का पालन करते हुए राज्य संचालित किया। यह अध्याय दर्शाता है कि सच्चे भक्त और धर्मपरायण राजा किस प्रकार समाज के समस्त प्राणियों के कल्याण हेतु शासन करते हैं।",
       "personasUsed": [
         "parikshit"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T13:37:40.580Z",
+      "generatedAt": "2026-04-10T15:24:55.161Z",
       "sceneIndex": 0
     },
     {
@@ -263,5 +263,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T15:15:12.426Z"
+  "lastUpdated": "2026-04-10T15:24:55.161Z"
 }
