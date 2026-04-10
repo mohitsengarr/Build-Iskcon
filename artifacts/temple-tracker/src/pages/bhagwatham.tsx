@@ -774,8 +774,9 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
           case "anuvad":
             return (
               <div key={i}>
+                <p className={`text-[11px] font-bold mb-2 tracking-wide ${themeKey === "dark" ? "text-blue-400" : themeKey === "sepia" ? "text-[#5B3A00]" : "text-blue-600"}`}>अनुवाद</p>
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`leading-[1.8] ${t.text} mb-1`} style={{ fontFamily: "var(--font-devanagari)" }}>{l}</p>
+                  <p key={j} className={`text-[14px] sm:text-[15px] leading-[1.8] ${t.text} mb-1`} style={{ fontFamily: "var(--font-devanagari)" }}>{l}</p>
                 ))}
               </div>
             );

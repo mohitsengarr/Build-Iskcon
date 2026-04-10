@@ -7,14 +7,8 @@ import { slideDown } from "@/lib/animations";
 
 const NAV_ITEMS: { href: string; label: string; isPage?: boolean }[] = [
   { href: "#hero", label: "Home" },
-  { href: "#projects", label: "Projects" },
-  { href: "#about", label: "About ISKCON" },
-  { href: "#directory", label: "Directory" },
   { href: "#vision", label: "Vision 2051" },
-  { href: "/how-to-build-temple", label: "How to Build", isPage: true },
-  { href: "/krishna-janmabhoomi", label: "Janmabhoomi", isPage: true },
   { href: "/bhagwatham", label: "Bhagwatham", isPage: true },
-  { href: "#faq", label: "FAQ" },
 ];
 
 function scrollTo(hash: string) {
@@ -164,11 +158,7 @@ export function Layout({ children }: { children: ReactNode }) {
           <div className="flex flex-col gap-3">
             <span className="font-sans text-[10px] uppercase tracking-[0.15em] font-bold text-primary mb-1">Explore</span>
             <a href="#hero" onClick={(e) => { e.preventDefault(); scrollTo("#hero"); }} className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Home</a>
-            <a href="#projects" onClick={(e) => { e.preventDefault(); scrollTo("#projects"); }} className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Projects</a>
-            <a href="#about" onClick={(e) => { e.preventDefault(); scrollTo("#about"); }} className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">About ISKCON</a>
             <a href="#vision" onClick={(e) => { e.preventDefault(); scrollTo("#vision"); }} className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Vision 2051</a>
-            <a href="/how-to-build-temple" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">How to Build</a>
-            <a href="/krishna-janmabhoomi" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Krishna Janmabhoomi</a>
             <a href="/bhagwatham" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Bhagwatham</a>
           </div>
           <div className="flex flex-col gap-3">

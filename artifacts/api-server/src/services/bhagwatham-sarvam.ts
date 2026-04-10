@@ -350,12 +350,61 @@ async function translateToEnglish(hindiText: string): Promise<string> {
   }
 }
 
+// ── Sync data to Vercel public dir ───────────────────────────────────────────
+
+const PUBLIC_API_DIR = path.resolve(REPO_ROOT, "artifacts", "temple-tracker", "public", "api", "bhagwatham");
+
+function syncToPublicDir(): void {
+  try {
+    const publicBatchDir = path.join(PUBLIC_API_DIR, "batch");
+    if (!fs.existsSync(publicBatchDir)) fs.mkdirSync(publicBatchDir, { recursive: true });
+
+    // Sync all batch files
+    const batchFiles = fs.readdirSync(PAGES_DIR).filter(f => f.startsWith("batch-") && f.endsWith(".json")).sort();
+    for (const file of batchFiles) {
+      const num = parseInt(file.replace("batch-", "").replace(".json", ""), 10);
+      const dest = path.join(publicBatchDir, String(num));
+      fs.copyFileSync(path.join(PAGES_DIR, file), dest);
+    }
+
+    // Sync batches list (metadata only)
+    const allBatches = getAllBatches().map(b => ({
+      batchNumber: b.batchNumber,
+      startPage: b.startPage,
+      endPage: b.endPage,
+      pageCount: b.pages.length,
+    }));
+    fs.writeFileSync(path.join(PUBLIC_API_DIR, "batches"), JSON.stringify(allBatches, null, 2));
+
+    // Sync progress
+    if (fs.existsSync(PROGRESS_FILE)) {
+      fs.copyFileSync(PROGRESS_FILE, path.join(PUBLIC_API_DIR, "progress"));
+    }
+
+    // Sync content (paginated — all batches)
+    const all = getAllBatches();
+    const content = {
+      batches: all,
+      pagination: { page: 1, limit: all.length, totalBatches: all.length, totalPages: 1, hasMore: false },
+    };
+    fs.writeFileSync(path.join(PUBLIC_API_DIR, "content"), JSON.stringify(content, null, 2));
+
+    logger.info({ batchCount: batchFiles.length }, "Synced data to public dir for Vercel");
+  } catch (err) {
+    logger.warn({ err }, "Failed to sync data to public dir");
+  }
+}
+
 // ── Git commit ────────────────────────────────────────────────────────────────
 
 function gitCommitAndPush(batchNumber: number, startPage: number, endPage: number, hasImages: boolean): void {
   try {
-    // Stage all bhagwatham data: pages, progress, images, manifest
+    // Sync batch data to public dir for Vercel static hosting
+    syncToPublicDir();
+
+    // Stage all bhagwatham data: pages, progress, images, manifest + public API
     execSync("git add data/bhagwatham/", { cwd: REPO_ROOT, stdio: "pipe" });
+    execSync("git add artifacts/temple-tracker/public/api/bhagwatham/", { cwd: REPO_ROOT, stdio: "pipe" });
 
     // Check if there are staged changes
     const diff = execSync("git diff --cached --stat", { cwd: REPO_ROOT, encoding: "utf-8" }).trim();
