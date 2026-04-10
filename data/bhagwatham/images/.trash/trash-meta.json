@@ -1,47 +1,5 @@
 [
   {
-    "trashId": "3-0-1775821044377",
-    "originalFile": "chapter-003.jpg",
-    "trashedFile": "3-0-1775821044377.jpg",
-    "manifestEntry": {
-      "chapterNumber": 3,
-      "chapterTitle": "Chapter तीन",
-      "imagePath": "chapter-003.jpg",
-      "prompt": "Krishna, in his cosmic form as Karanodakashayi Vishnu, reclines upon the primordial causal ocean at the dawn of creation. From his divine body, countless universes emerge like bubbles from his pores, while Brahma prepares to begin creation and Vishnu stands ready to enter each universe as the sustaining force.",
-      "personasUsed": [
-        "krishna_adult",
-        "vishnu",
-        "brahma"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T11:35:51.142Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T11:37:24.378Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "3-0-1775821756129",
-    "originalFile": "chapter-003.jpg",
-    "trashedFile": "3-0-1775821756129.jpg",
-    "manifestEntry": {
-      "chapterNumber": 3,
-      "chapterTitle": "Chapter तीन",
-      "imagePath": "chapter-003.jpg",
-      "prompt": "At the dawn of creation, Lord Krishna expands into the cosmic Purusha form — Karanodakashayi Vishnu — reclining upon the causal waters in the vast spiritual sky. From the pores of His transcendental body, countless universes emerge like bubbles, as Brahma and Vishnu witness the magnificent beginning of material creation from His divine presence.",
-      "personasUsed": [
-        "krishna_adult",
-        "vishnu",
-        "brahma"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T11:37:33.696Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T11:49:16.129Z",
-    "operation": "regenerate"
-  },
-  {
     "trashId": "3-0-1775821831591",
     "originalFile": "chapter-003.jpg",
     "trashedFile": "3-0-1775821831591.jpg",
@@ -1021,6 +979,48 @@
       "sceneIndex": 0
     },
     "trashedAt": "2026-04-10T13:07:54.364Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "5-0-1775826657450",
+    "originalFile": "chapter-005.jpg",
+    "trashedFile": "5-0-1775826657450.jpg",
+    "manifestEntry": {
+      "chapterNumber": 5,
+      "chapterTitle": "Chapter पाँच",
+      "imagePath": "chapter-005.jpg",
+      "prompt": "Narada, holding his veena and wearing a gentle smile, sits beside the great sage Vyasa on the banks of the Sarasvati river. He questions Vyasa about the deep restlessness troubling him despite having composed the magnificent Mahabharata, hinting that true fulfillment can only come through properly glorifying devotional service to the Supreme.",
+      "personasUsed": [
+        "narada",
+        "vyasa"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T12:49:46.853Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T13:10:57.451Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "14-0-1775826793169",
+    "originalFile": "chapter-014.jpg",
+    "trashedFile": "14-0-1775826793169.jpg",
+    "manifestEntry": {
+      "chapterNumber": 14,
+      "chapterTitle": "Chapter चौदह",
+      "imagePath": "chapter-014.jpg",
+      "prompt": "Yudhishthira stands at the entrance of his royal palace in Hastinapura, gazing anxiously at the darkened skies and disturbed surroundings. Seasons are out of order, people around him are angry and deceitful, and there is no news of Arjuna from Dwaraka. A deep dread grips Yudhishthira — he fears Krishna has left this world.",
+      "descriptionHi": "अर्जुन भगवान श्रीकृष्ण से मिलने और उनके अगले कार्यक्रम जानने के लिए द्वारका गए, परंतु कई महीने बीत जाने पर भी वापस नहीं लौटे। महाराज युधिष्ठिर को भयानक अपशकुन दिखने लगे — ऋतुओं में व्यतिक्रम, मनुष्यों में क्रोध, लोभ और झूठ का बोलबाला। यह सब संकेत दे रहा था कि भगवान श्रीकृष्ण इस पृथ्वी से अंतर्धान होने वाले हैं, जिससे युधिष्ठिर अत्यंत चिंतित हो उठे।",
+      "personasUsed": [
+        "krishna_adult",
+        "arjuna",
+        "yudhishthira"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T13:12:45.439Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T13:13:13.170Z",
     "operation": "regenerate"
   }
 ]

@@ -55,13 +55,14 @@
       "chapterNumber": 5,
       "chapterTitle": "Chapter पाँच",
       "imagePath": "chapter-005.jpg",
-      "prompt": "Narada, holding his veena and wearing a gentle smile, sits beside the great sage Vyasa on the banks of the Sarasvati river. He questions Vyasa about the deep restlessness troubling him despite having composed the magnificent Mahabharata, hinting that true fulfillment can only come through properly glorifying devotional service to the Supreme.",
+      "prompt": "Narada, holding his veena and wearing a gentle smile, sits beside the great sage Vyasa on a riverbank. He speaks to Vyasa with compassion and wisdom, asking why the author of the magnificent Mahabharata still appears restless and unfulfilled, hinting that the true path of devotion has yet to be expressed completely.",
+      "descriptionHi": "देवर्षि नारद, हाथ में वीणा लिए और मुस्कुराते हुए, व्यासदेव के पास बैठकर उनसे उनके असंतोष का कारण पूछते हैं। नारद संकेत देते हैं कि इतने महान ग्रंथ महाभारत की रचना के बाद भी व्यासदेव इसलिए अतृप्त हैं क्योंकि उन्होंने भक्तियोग को उचित रूप से प्रस्तुत नहीं किया। यह वार्तालाप आध्यात्मिक दृष्टि से अत्यंत महत्वपूर्ण है क्योंकि यह श्रीमद्भागवत की रचना की प्रेरणा का मूल क्षण है।",
       "personasUsed": [
         "narada",
         "vyasa"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:49:46.853Z",
+      "generatedAt": "2026-04-10T13:12:29.070Z",
       "sceneIndex": 0
     },
     {
@@ -200,6 +201,21 @@
     {
       "chapterNumber": 14,
       "chapterTitle": "Chapter चौदह",
+      "imagePath": "chapter-014.jpg",
+      "prompt": "Yudhishthira stands anxiously in his royal palace, gazing into the distance with deep unease. Months have passed since Arjuna departed for Dwarka to meet Krishna, yet no word has returned. Around Yudhishthira, the world shows fearful omens — unseasonal skies, restless people consumed by greed and anger — signaling that Krishna may have departed from the earth forever.",
+      "descriptionHi": "अर्जुन भगवान श्रीकृष्ण से मिलने और उनके अगले कार्यक्रम जानने के लिए द्वारका गये, परन्तु कई महीने बीत जाने के बाद भी वापस नहीं लौटे। महाराज युधिष्ठिर को भयानक अपशकुन दिखने लगे — ऋतुओं में व्यतिक्रम, लोगों में लोभ, क्रोध और झूठ का बढ़ना। युधिष्ठिर को आशंका हुई कि भगवान श्रीकृष्ण इस धरा से अन्तर्धान हो गये हैं, क्योंकि उनकी उपस्थिति के बिना ऐसे अशुभ लक्षण प्रकट नहीं हो सकते थे।",
+      "personasUsed": [
+        "krishna_adult",
+        "arjuna",
+        "yudhishthira"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T13:13:32.290Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 14,
+      "chapterTitle": "Chapter चौदह",
       "imagePath": "chapter-014-2.jpg",
       "prompt": "A wise sage teaching younger disciples under a massive banyan tree, sacred texts spread on the ground, golden afternoon light, forest ashram setting, wide landscape",
       "descriptionHi": "जब सभ्यता का सम्बन्ध पूर्ण पुरुषोत्तम भगवान्‌ के प्रेम से टूट जाता है, तो ऋतु कौ नियमितता में परिवर्तन, जीविका के अनु…",
@@ -234,5 +250,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T13:08:13.785Z"
+  "lastUpdated": "2026-04-10T13:13:32.290Z"
 }
