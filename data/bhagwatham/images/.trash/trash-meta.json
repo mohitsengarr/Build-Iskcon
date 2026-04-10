@@ -1,25 +1,5 @@
 [
   {
-    "trashId": "4-0-1775822912317",
-    "originalFile": "chapter-004.jpg",
-    "trashedFile": "4-0-1775822912317.jpg",
-    "manifestEntry": {
-      "chapterNumber": 4,
-      "chapterTitle": "Chapter चार",
-      "imagePath": "chapter-004.jpg",
-      "prompt": "In the forest ashram of Naimisharanya, the elderly and venerable sage Shaunaka rises respectfully before Suta Goswami amidst an assembly of sages engaged in a long sacred sacrifice. With great joy and reverence, Shaunaka addresses Suta Goswami twice by name and humbly requests him to narrate the holy Srimad Bhagavatam as originally told by the great Shukadeva Goswami.\n\nmake sure it look like iskcon style painting",
-      "personasUsed": [
-        "suta_goswami",
-        "shukadeva"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:06:11.466Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T12:08:32.318Z",
-    "operation": "regenerate"
-  },
-  {
     "trashId": "1-0-1775822951017",
     "originalFile": "chapter-001.jpg",
     "trashedFile": "1-0-1775822951017.jpg",
@@ -1025,6 +1005,29 @@
       "sceneIndex": 0
     },
     "trashedAt": "2026-04-10T15:48:39.248Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "36-0-1775863729209",
+    "originalFile": "chapter-036.jpg",
+    "trashedFile": "36-0-1775863729209.jpg",
+    "manifestEntry": {
+      "chapterNumber": 36,
+      "chapterTitle": "Chapter 36",
+      "imagePath": "chapter-036.jpg",
+      "prompt": "On the banks of the Ganges, King Parikshit sits reverently before the sage Shukadeva Goswami, asking with folded hands how Narada Muni described the transcendental qualities of the Lord to various disciples. The serene forest setting reflects the sacred flow of divine knowledge passing from Brahma to Narada and onward through the ages.",
+      "descriptionHi": "राजा परीक्षित ने शुकदेव गोस्वामी से पूछा कि नारद मुनि ने निर्गुण भगवान् के दिव्य गुणों का वर्णन किस प्रकार और किन-किन के समक्ष किया। यह प्रश्न शिष्य-परम्परा की महत्ता को दर्शाता है, जिसमें ब्रह्माजी से नारद को और नारद से आगे दिव्य ज्ञान प्रवाहित हुआ। इस प्रसंग का आध्यात्मिक महत्व यह है कि प्रामाणिक गुरु-शिष्य परम्परा ही वैदिक ज्ञान का एकमात्र विश्वसनीय स्रोत है।",
+      "personasUsed": [
+        "narada",
+        "shukadeva",
+        "brahma",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T17:43:05.780Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T23:28:49.210Z",
     "operation": "regenerate"
   }
 ]

@@ -321,6 +321,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 22,
+      "chapterTitle": "Chapter तीन",
+      "imagePath": "chapter-022.jpg",
+      "prompt": "Shukadeva speaks to King Parikshit about the duties of a wise dying man, surrounded by the serene atmosphere of the forest.",
+      "descriptionHi": "श्री शुकदेव गोस्वामी ने महाराज परीक्षित को मरणासन्न बुद्धिमान मनुष्य के कर्तव्य के विषय में उत्तर दिया है, जिसमें आत्मा के विषय में जिज्ञासा करने और स्वरुपसिद्ध गुरु के सम्पर्क में आने की बात कही गई है। यह अध्याय आत्म-साक्षात्कार और भगवान्‌ कृष्ण को जानने के महत्व पर केंद्रित है।",
+      "personasUsed": [
+        "shukadeva",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T23:28:41.694Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 23,
       "chapterTitle": "Chapter चार",
       "imagePath": "chapter-023.jpg",
@@ -381,6 +395,22 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 28,
+      "chapterTitle": "Chapter 36",
+      "imagePath": "chapter-028.jpg",
+      "prompt": "Narada shares divine knowledge with Brahma, who then instructs others, as King Parikshit and Shukadeva observe in a serene forest setting.",
+      "descriptionHi": "राजा परीक्षित शुकदेव गोस्वामी से नारद मुनि द्वारा दिव्य गुणों के वर्णन के बारे में पूछते हैं, जो कि भगवान के दिव्य ज्ञान को वितरित करने का एक महत्वपूर्ण हिस्सा है। नारद मुनि को ब्रह्माजी द्वारा उपदेशित किया गया था, जो कि परमेश्वर द्वारा स्वयं उपदेशित थे। यह शिष्य-परम्परा द्वारा भगवान से प्राप्त होकर अवरोही क्रम से सारे विश्व में फैलता है।",
+      "personasUsed": [
+        "narada",
+        "shukadeva",
+        "brahma",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T23:25:56.817Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 30,
       "chapterTitle": "Chapter इक्तीस",
       "imagePath": "chapter-030.jpg",
@@ -398,16 +428,16 @@
       "chapterNumber": 36,
       "chapterTitle": "Chapter 36",
       "imagePath": "chapter-036.jpg",
-      "prompt": "On the banks of the Ganges, King Parikshit sits reverently before the sage Shukadeva Goswami, asking with folded hands how Narada Muni described the transcendental qualities of the Lord to various disciples. The serene forest setting reflects the sacred flow of divine knowledge passing from Brahma to Narada and onward through the ages.",
-      "descriptionHi": "राजा परीक्षित ने शुकदेव गोस्वामी से पूछा कि नारद मुनि ने निर्गुण भगवान् के दिव्य गुणों का वर्णन किस प्रकार और किन-किन के समक्ष किया। यह प्रश्न शिष्य-परम्परा की महत्ता को दर्शाता है, जिसमें ब्रह्माजी से नारद को और नारद से आगे दिव्य ज्ञान प्रवाहित हुआ। इस प्रसंग का आध्यात्मिक महत्व यह है कि प्रामाणिक गुरु-शिष्य परम्परा ही वैदिक ज्ञान का एकमात्र विश्वसनीय स्रोत है।",
+      "prompt": "King Parikshit asks Shukadeva about Narada's description of Lord Krishna's divine qualities in a serene palace setting.",
+      "descriptionHi": "राजा परीक्षित ने शुकदेव गोस्वामी से नारद मुनि द्वारा भगवान्‌ के दिव्य गुणों के वर्णन के बारे में पूछा, जो कि भगवान्‌ के अद्भुत शक्तियों से सम्पन्न कथाएँ हैं। यह कथाएँ समस्त लोकों के प्राणियों के लिए शुभ हैं।",
       "personasUsed": [
+        "krishna_adult",
         "narada",
         "shukadeva",
-        "brahma",
         "parikshit"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T17:43:05.780Z",
+      "generatedAt": "2026-04-10T23:29:02.153Z",
       "sceneIndex": 0
     },
     {
@@ -502,5 +532,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T23:22:40.637Z"
+  "lastUpdated": "2026-04-10T23:29:02.153Z"
 }
