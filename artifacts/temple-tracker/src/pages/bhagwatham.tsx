@@ -718,6 +718,12 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
       continue;
     }
 
+    // Stay in anuvad until tatparya, new shlok, or chapter heading
+    if (current.kind === "anuvad") {
+      current.lines.push(t);
+      continue;
+    }
+
     if (current.kind === "shlok") {
       flush();
       current = { kind: "anuvad", lines: [t] };
