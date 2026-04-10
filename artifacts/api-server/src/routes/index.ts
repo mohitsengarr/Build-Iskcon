@@ -5,6 +5,7 @@ import syncRouter from "./sync";
 import socialRouter from "./social";
 import insightsRouter from "./insights";
 import videosRouter from "./videos";
+import bhagwathamRouter from "./bhagwatham";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(syncRouter);
 router.use(socialRouter);
 router.use(insightsRouter);
 router.use(videosRouter);
+router.use(bhagwathamRouter);
 
 export default router;

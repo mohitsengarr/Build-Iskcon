@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Home from "@/pages/home";
 import HowToBuildTemple from "@/pages/how-to-build-temple";
 import KrishnaJanmabhoomi from "@/pages/krishna-janmabhoomi";
+import Bhagwatham from "@/pages/bhagwatham";
 
 const queryClient = new QueryClient();
 
@@ -17,6 +18,7 @@ function App() {
           <Switch>
             <Route path="/how-to-build-temple" component={HowToBuildTemple} />
             <Route path="/krishna-janmabhoomi" component={KrishnaJanmabhoomi} />
+            <Route path="/bhagwatham" component={Bhagwatham} />
             <Route path="/" component={Home} />
           </Switch>
           <Toaster />

@@ -1,5 +1,6 @@
 import { ReactNode, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link, useLocation } from "wouter";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { slideDown } from "@/lib/animations";
@@ -12,6 +13,7 @@ const NAV_ITEMS: { href: string; label: string; isPage?: boolean }[] = [
   { href: "#vision", label: "Vision 2051" },
   { href: "/how-to-build-temple", label: "How to Build", isPage: true },
   { href: "/krishna-janmabhoomi", label: "Janmabhoomi", isPage: true },
+  { href: "/bhagwatham", label: "Bhagwatham", isPage: true },
   { href: "#faq", label: "FAQ" },
 ];
 
@@ -43,24 +45,34 @@ export function Layout({ children }: { children: ReactNode }) {
             </button>
 
             {/* Brand Logo */}
-            <a href="#hero" onClick={(e) => { e.preventDefault(); scrollTo("#hero"); }}>
+            <Link href="/">
               <div className="font-serif text-lg sm:text-2xl font-black text-primary uppercase tracking-wider cursor-pointer">
                 Build Iskcon
               </div>
-            </a>
+            </Link>
 
             {/* Desktop Navigation Links */}
             <div className="hidden md:flex items-center gap-8">
-              {NAV_ITEMS.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  onClick={item.isPage ? undefined : (e) => { e.preventDefault(); scrollTo(item.href); }}
-                  className="font-medium text-sm tracking-tight cursor-pointer transition-colors duration-300 px-2 py-1 rounded text-on-surface-variant hover:text-primary hover:bg-primary/5"
-                >
-                  {item.label}
-                </a>
-              ))}
+              {NAV_ITEMS.map((item) =>
+                item.isPage ? (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="font-medium text-sm tracking-tight cursor-pointer transition-colors duration-300 px-2 py-1 rounded text-on-surface-variant hover:text-primary hover:bg-primary/5"
+                  >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    onClick={(e) => { e.preventDefault(); scrollTo(item.href); }}
+                    className="font-medium text-sm tracking-tight cursor-pointer transition-colors duration-300 px-2 py-1 rounded text-on-surface-variant hover:text-primary hover:bg-primary/5"
+                  >
+                    {item.label}
+                  </a>
+                ),
+              )}
             </div>
           </div>
 
@@ -95,13 +107,23 @@ export function Layout({ children }: { children: ReactNode }) {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.05, duration: 0.2 }}
                   >
-                    <a
-                      href={item.href}
-                      onClick={item.isPage ? () => setMobileMenuOpen(false) : (e) => { e.preventDefault(); scrollTo(item.href); setMobileMenuOpen(false); }}
-                      className="block py-3 px-4 rounded-lg font-medium text-sm cursor-pointer transition-colors text-on-surface-variant hover:text-primary hover:bg-primary/5"
-                    >
-                      {item.label}
-                    </a>
+                    {item.isPage ? (
+                      <Link
+                        href={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="block py-3 px-4 rounded-lg font-medium text-sm cursor-pointer transition-colors text-on-surface-variant hover:text-primary hover:bg-primary/5"
+                      >
+                        {item.label}
+                      </Link>
+                    ) : (
+                      <a
+                        href={item.href}
+                        onClick={(e) => { e.preventDefault(); scrollTo(item.href); setMobileMenuOpen(false); }}
+                        className="block py-3 px-4 rounded-lg font-medium text-sm cursor-pointer transition-colors text-on-surface-variant hover:text-primary hover:bg-primary/5"
+                      >
+                        {item.label}
+                      </a>
+                    )}
                   </motion.div>
                 ))}
               </div>
@@ -147,6 +169,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <a href="#vision" onClick={(e) => { e.preventDefault(); scrollTo("#vision"); }} className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Vision 2051</a>
             <a href="/how-to-build-temple" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">How to Build</a>
             <a href="/krishna-janmabhoomi" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Krishna Janmabhoomi</a>
+            <a href="/bhagwatham" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Bhagwatham</a>
           </div>
           <div className="flex flex-col gap-3">
             <span className="font-sans text-[10px] uppercase tracking-[0.15em] font-bold text-primary mb-1">Give</span>
