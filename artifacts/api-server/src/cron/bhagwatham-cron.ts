@@ -4,7 +4,7 @@ import { runAuditPass } from "../services/bhagwatham-audit";
 import { checkAllCredits } from "../services/ai-credit-monitor";
 import { logger } from "../lib/logger";
 
-const CRON_INTERVAL = "*/10 * * * *"; // Every 10 minutes
+const CRON_INTERVAL = "*/5 * * * *"; // Every 5 minutes
 const BACKFILL_INTERVAL = "3,13,23,33,43,53 * * * *"; // Offset by 3 min to avoid overlap
 const AUDIT_INTERVAL = "7,37 * * * *"; // Every 30 min, offset by 7 to avoid overlap
 const CREDIT_CHECK_INTERVAL = "0 */2 * * *"; // Every 2 hours
