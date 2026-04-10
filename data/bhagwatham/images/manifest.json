@@ -240,7 +240,22 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-10T13:37:40.580Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 18,
+      "chapterTitle": "Chapter अठारह",
+      "imagePath": "chapter-018.jpg",
+      "prompt": "In the serene forest of Naimisharanya, Suta Goswami sits before an assembly of sages and begins narrating the miraculous birth of King Parikshit. He describes how the divine grace of Krishna protected the unborn Parikshit within his mother's womb from the powerful weapon of Ashvatthama, revealing Krishna's extraordinary and boundless mercy.",
+      "descriptionHi": "सूत गोस्वामी नैमिषारण्य के ऋषियों को महाराज परीक्षित के अद्भुत जन्म की कथा सुनाते हैं। द्रोणपुत्र अश्वत्थामा के अस्त्र से माता के गर्भ में ही आक्रांत होने पर भी भगवान श्रीकृष्ण की दिव्य कृपा से परीक्षित की रक्षा हुई। यह प्रसंग भगवान कृष्ण के अद्भुत कार्यों और उनकी असीम कृपाशक्ति का प्रमाण है।",
+      "personasUsed": [
+        "krishna_adult",
+        "suta_goswami",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T13:54:51.876Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T13:41:08.402Z"
+  "lastUpdated": "2026-04-10T13:54:51.876Z"
 }
