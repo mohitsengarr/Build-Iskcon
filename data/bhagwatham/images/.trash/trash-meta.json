@@ -1,25 +1,5 @@
 [
   {
-    "trashId": "4-0-1775822655673",
-    "originalFile": "chapter-004.jpg",
-    "trashedFile": "4-0-1775822655673.jpg",
-    "manifestEntry": {
-      "chapterNumber": 4,
-      "chapterTitle": "Chapter चार",
-      "imagePath": "chapter-004.jpg",
-      "prompt": "In a sacred forest hermitage where a long yajna is being conducted, the elderly sage Shaunaka rises from among a gathering of revered rishis and joyfully addresses Suta Goswami with folded hands, calling out to him twice with great reverence, eagerly requesting him to narrate the holy Bhagavata story as told by the great Shukadeva Goswami.",
-      "personasUsed": [
-        "suta_goswami",
-        "shukadeva"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T11:55:46.184Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T12:04:15.674Z",
-    "operation": "regenerate"
-  },
-  {
     "trashId": "4-0-1775822690500",
     "originalFile": "chapter-004.jpg",
     "trashedFile": "4-0-1775822690500.jpg",
@@ -1014,6 +994,28 @@
       "sceneIndex": 0
     },
     "trashedAt": "2026-04-10T15:23:48.782Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "15-0-1775834698069",
+    "originalFile": "chapter-015.jpg",
+    "trashedFile": "15-0-1775834698069.jpg",
+    "manifestEntry": {
+      "chapterNumber": 15,
+      "chapterTitle": "Chapter पन्द्रह",
+      "imagePath": "chapter-015.jpg",
+      "prompt": "Arjuna sits in a palace hall before his elder brother King Yudhishthira, his lotus-like eyes filled with tears, his face pale and voice choked with grief. He struggles to speak, overcome by the deep longing for his departed friend Krishna, remembering Krishna's gentle presence as his charioteer and beloved companion.",
+      "descriptionHi": "इस अध्याय में सूत गोस्वामी बताते हैं कि भगवान कृष्ण के वियोग से अर्जुन अत्यंत शोकसंतप्त था। महाराज युधिष्ठिर के प्रश्नों का उत्तर देने में वह असमर्थ था क्योंकि कृष्ण की मित्रता, आशीर्वाद, पारिवारिक संबंध और सारथी रूप का स्मरण करते हुए उसका गला रुंध जाता था। यह दृश्य शुद्ध भक्ति के सख्य भाव की गहन आध्यात्मिक अनुभूति को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "arjuna",
+        "yudhishthira"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T15:06:33.631Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T15:24:58.070Z",
     "operation": "regenerate"
   }
 ]
