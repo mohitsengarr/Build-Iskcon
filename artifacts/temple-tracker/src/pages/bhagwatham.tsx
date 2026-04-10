@@ -164,9 +164,27 @@ interface BookmarkEntry {
 /** A chapter detected from the OCR content */
 interface ChapterEntry {
   number: number;
+  skandh: number;
+  globalNumber: number; // unique across all skandhs
   title: string;
   pageNumber: number;
 }
+
+/** Skandh (Canto) metadata */
+const SKANDH_NAMES: Record<number, string> = {
+  1: "सृष्टि",
+  2: "दृश्य जगत्",
+  3: "यथार्थ का बोध",
+  4: "चतुर्थ स्कन्ध",
+  5: "सृष्टि प्रेरणा",
+  6: "मानव के कर्तव्य",
+  7: "भगवत् विज्ञान",
+  8: "संहार",
+  9: "मुक्ति",
+  10: "आश्रय",
+  11: "सामान्य इतिहास",
+  12: "युग-धर्म",
+};
 
 const API_BASE = "/api/bhagwatham";
 
@@ -288,24 +306,80 @@ function isChapterHeading(t: string): boolean {
   return false;
 }
 
+// ── Skandh boundary detection ────────────────────────────────────────────────
+
+const SKANDH_END_RE = /(?:प्रथम|द्वितीय|तृतीय|चतुर्थ|पंचम|पञ्चम|षष्ठ|सप्तम|अष्टम|नवम|दशम|एकादश|द्वादश)\s*(?:स्कन्ध|स्कंध)/u;
+const SKANDH_WORD_TO_NUM: Record<string, number> = {
+  "प्रथम": 1, "द्वितीय": 2, "तृतीय": 3, "चतुर्थ": 4,
+  "पंचम": 5, "पञ्चम": 5, "षष्ठ": 6, "सप्तम": 7,
+  "अष्टम": 8, "नवम": 9, "दशम": 10, "एकादश": 11, "द्वादश": 12,
+};
+
+function detectSkandhFromLine(line: string): number | null {
+  const match = line.match(/(प्रथम|द्वितीय|तृतीय|चतुर्थ|पंचम|पञ्चम|षष्ठ|सप्तम|अष्टम|नवम|दशम|एकादश|द्वादश)\s*(?:स्कन्ध|स्कंध)/u);
+  if (match) return SKANDH_WORD_TO_NUM[match[1]] || null;
+  return null;
+}
+
 // ── Build chapter index from all loaded pages ─────────────────────────────────
 
 function buildChapterIndex(allPages: PageContent[]): ChapterEntry[] {
   const chapters: ChapterEntry[] = [];
+  let currentSkandh = 1;
+  let globalCounter = 0;
+
+  // First pass: detect skandh boundaries by page
+  const skandhByPage = new Map<number, number>(); // pageNumber → skandh
+  let lastSkandh = 1;
   for (const page of allPages) {
     if (isGarbagePage(page.text)) continue;
+    for (const line of page.text.split("\n")) {
+      const t = line.trim();
+      if (SKANDH_END_RE.test(t)) {
+        const s = detectSkandhFromLine(t);
+        if (s && s >= lastSkandh) {
+          // If line says "प्रथम स्कन्ध ... पूर्ण हुए" it marks END of that skandh
+          if (t.includes("पूर्ण") || t.includes("समाप्त")) {
+            // Next chapter after this page belongs to skandh s+1
+            skandhByPage.set(page.pageNumber, s + 1);
+            lastSkandh = s + 1;
+          } else {
+            // Otherwise it's mentioning the current skandh
+            skandhByPage.set(page.pageNumber, s);
+            lastSkandh = s;
+          }
+        }
+      }
+    }
+  }
+
+  // Second pass: build chapter list with skandh awareness
+  currentSkandh = 1;
+  for (const page of allPages) {
+    if (isGarbagePage(page.text)) continue;
+
+    // Check if skandh changed at or before this page
+    for (const [pg, sk] of skandhByPage) {
+      if (pg <= page.pageNumber && sk > currentSkandh) {
+        currentSkandh = sk;
+      }
+    }
+
     const lines = page.text.split("\n");
     for (const line of lines) {
       const t = line.trim();
       if (isChapterHeading(t)) {
         const hindiLine = toHindiChapterLine(t);
         const num = extractChapterNum(hindiLine);
-        if (num > 0 && !chapters.find((c) => c.number === num)) {
-          // Get the subtitle (next non-empty line)
+        // Allow same chapter number in different skandhs
+        if (num > 0 && !chapters.find((c) => c.number === num && c.skandh === currentSkandh)) {
           const idx = lines.indexOf(line);
           const subtitle = lines.slice(idx + 1, idx + 3).map((l) => l.trim()).filter(Boolean).join(" ");
+          globalCounter++;
           chapters.push({
             number: num,
+            skandh: currentSkandh,
+            globalNumber: globalCounter,
             title: hindiLine + (subtitle ? ` — ${subtitle}` : ""),
             pageNumber: page.pageNumber,
           });
@@ -313,7 +387,7 @@ function buildChapterIndex(allPages: PageContent[]): ChapterEntry[] {
       }
     }
   }
-  return chapters.sort((a, b) => a.number - b.number);
+  return chapters.sort((a, b) => a.skandh !== b.skandh ? a.skandh - b.skandh : a.number - b.number);
 }
 
 // ── Image Card with Download & Share ──────────────────────────────────────────
@@ -766,20 +840,38 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
           case "shabdarth":
             return (
               <div key={i}>
-                {sec.lines.map((l, j) => (
-                  <p key={j} className={`text-[14px] leading-[1.7] ${t.muted} mb-0.5`} style={{ fontFamily: "var(--font-devanagari)" }}>{l}</p>
-                ))}
+                <p className={`text-[11px] font-bold mb-2 tracking-wide ${themeKey === "dark" ? "text-pink-400" : themeKey === "sepia" ? "text-[#8B2252]" : "text-pink-600"}`}>शब्दार्थ</p>
+                {sec.lines.map((l, j) => {
+                  // Highlight Hindi meanings (after —) in bold, keep Sanskrit words regular
+                  const parts = l.split(/(—|--)/);
+                  return (
+                    <p key={j} className={`text-[14px] leading-[1.7] ${t.muted} mb-0.5`} style={{ fontFamily: "var(--font-devanagari)" }}>
+                      {parts.map((part, k) => {
+                        if (part === "—" || part === "--") return <span key={k}>—</span>;
+                        // Odd indices (after —) are Hindi meanings → bold
+                        const isMeaning = k > 0 && (parts[k - 1] === "—" || parts[k - 1] === "--");
+                        return isMeaning
+                          ? <strong key={k} className={themeKey === "dark" ? "text-stone-200" : themeKey === "sepia" ? "text-[#3a2a10]" : "text-stone-700"}>{part}</strong>
+                          : <span key={k}>{part}</span>;
+                      })}
+                    </p>
+                  );
+                })}
               </div>
             );
-          case "anuvad":
+          case "anuvad": {
+            // Only show label after main shlok/shabdarth, not inside tatparya
+            const prevKind = i > 0 ? sections[i - 1].kind : null;
+            const showLabel = prevKind === "shlok" || prevKind === "shabdarth";
             return (
               <div key={i}>
-                <p className={`text-[11px] font-bold mb-2 tracking-wide ${themeKey === "dark" ? "text-blue-400" : themeKey === "sepia" ? "text-[#5B3A00]" : "text-blue-600"}`}>अनुवाद</p>
+                {showLabel && <p className={`text-[11px] font-bold mb-2 tracking-wide ${themeKey === "dark" ? "text-blue-400" : themeKey === "sepia" ? "text-[#5B3A00]" : "text-blue-600"}`}>अनुवाद</p>}
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`text-[14px] sm:text-[15px] leading-[1.8] ${t.text} mb-1`} style={{ fontFamily: "var(--font-devanagari)" }}>{l}</p>
+                  <p key={j} className={`text-[14px] sm:text-[15px] leading-[1.8] mb-1 ${themeKey === "dark" ? "text-blue-300" : themeKey === "sepia" ? "text-[#4a3520]" : "text-blue-900"}`} style={{ fontFamily: "var(--font-devanagari)" }}>{l}</p>
                 ))}
               </div>
             );
+          }
           case "tatparya":
             return (
               <div key={i}>
@@ -902,45 +994,59 @@ function Sidebar({
           </div>
         ) : (
           <>
-            {/* Chapter list */}
+            {/* Chapter list grouped by skandh */}
             <nav className="py-2">
-              <p className="px-4 py-2 text-[10px] font-bold text-stone-400 uppercase tracking-wider">स्कन्ध १ — सृष्टि</p>
               {chapters.length === 0 ? (
                 <p className="px-4 py-3 text-xs text-stone-400">अभी कोई अध्याय उपलब्ध नहीं</p>
               ) : (
-                chapters.map((ch) => {
-                  const isActive = activeChapter === ch.number;
-                  const imgSrc = chapterImages.get(ch.number)?.[0]?.url;
-                  const shortTitle = ch.title.split("—")[0].trim();
-                  const subtitle = ch.title.includes("—") ? ch.title.split("—").slice(1).join("—").trim() : "";
+                (() => {
+                  // Group chapters by skandh
+                  const skandhGroups = new Map<number, ChapterEntry[]>();
+                  for (const ch of chapters) {
+                    if (!skandhGroups.has(ch.skandh)) skandhGroups.set(ch.skandh, []);
+                    skandhGroups.get(ch.skandh)!.push(ch);
+                  }
+                  return Array.from(skandhGroups.entries()).map(([skandh, chs]) => (
+                    <div key={skandh}>
+                      <p className="px-4 py-2 text-[10px] font-bold text-stone-400 uppercase tracking-wider sticky top-0 bg-white/95 backdrop-blur-sm z-[5]">
+                        स्कन्ध {skandh} {SKANDH_NAMES[skandh] ? `— ${SKANDH_NAMES[skandh]}` : ""}
+                      </p>
+                      {chs.map((ch) => {
+                        const isActive = activeChapter === ch.globalNumber;
+                        const imgSrc = chapterImages.get(ch.globalNumber)?.[0]?.url;
+                        const shortTitle = ch.title.split("—")[0].trim();
+                        const subtitle = ch.title.includes("—") ? ch.title.split("—").slice(1).join("—").trim() : "";
 
-                  return (
-                    <button
-                      key={ch.number}
-                      onClick={() => onChapterClick(ch)}
-                      className={`w-full text-left px-4 py-2.5 flex items-start gap-3 transition-all hover:bg-orange-50/60 ${
-                        isActive ? "bg-orange-50 border-r-2 border-orange-500" : ""
-                      }`}
-                    >
-                      {imgSrc ? (
-                        <img src={imgSrc} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0 mt-0.5" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center shrink-0 mt-0.5">
-                          <span className="text-xs font-bold text-stone-400">{ch.number}</span>
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className={`text-sm font-semibold truncate ${isActive ? "text-orange-700" : "text-stone-700"}`}>
-                          {shortTitle}
-                        </p>
-                        {subtitle && (
-                          <p className="text-[11px] text-stone-400 truncate mt-0.5">{subtitle}</p>
-                        )}
-                        <p className="text-[10px] text-stone-400 mt-0.5">पृष्ठ {ch.pageNumber}</p>
-                      </div>
-                    </button>
-                  );
-                })
+                        return (
+                          <button
+                            key={ch.globalNumber}
+                            onClick={() => onChapterClick(ch)}
+                            className={`w-full text-left px-4 py-2.5 flex items-start gap-3 transition-all hover:bg-orange-50/60 ${
+                              isActive ? "bg-orange-50 border-r-2 border-orange-500" : ""
+                            }`}
+                          >
+                            {imgSrc ? (
+                              <img src={imgSrc} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0 mt-0.5" />
+                            ) : (
+                              <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center shrink-0 mt-0.5">
+                                <span className="text-xs font-bold text-stone-400">{ch.number}</span>
+                              </div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <p className={`text-sm font-semibold truncate ${isActive ? "text-orange-700" : "text-stone-700"}`}>
+                                {shortTitle}
+                              </p>
+                              {subtitle && (
+                                <p className="text-[11px] text-stone-400 truncate mt-0.5">{subtitle}</p>
+                              )}
+                              <p className="text-[10px] text-stone-400 mt-0.5">पृष्ठ {ch.pageNumber}</p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ));
+                })()
               )}
             </nav>
           </>
@@ -1286,10 +1392,10 @@ export default function Bhagwatham() {
     if (pageIdx >= 0) {
       const viewPage = Math.floor(pageIdx / PAGES_PER_VIEW) + 1;
       setCurrentPage(viewPage);
-      setActiveChapter(ch.number);
+      setActiveChapter(ch.globalNumber);
       // Scroll to chapter heading after render
       setTimeout(() => {
-        const el = document.getElementById(`chapter-${ch.number}`);
+        const el = document.getElementById(`chapter-${ch.globalNumber}`);
         if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 200);
     }
@@ -1383,10 +1489,10 @@ export default function Bhagwatham() {
           if (entry.isIntersecting) {
             const id = entry.target.id;
             const num = parseInt(id.replace("chapter-", ""), 10);
-            const ch = chapters.find(c => c.number === num);
+            const ch = chapters.find(c => c.globalNumber === num);
             if (ch) {
               setScrollChapter(ch.title);
-              setActiveChapter(ch.number);
+              setActiveChapter(ch.globalNumber);
             }
           }
         }
@@ -1600,7 +1706,7 @@ export default function Bhagwatham() {
               <div className="max-w-3xl mx-auto flex items-center gap-2 text-[10px]">
                 {/* Previous chapter */}
                 {(() => {
-                  const idx = chapters.findIndex(c => c.number === activeChapter);
+                  const idx = chapters.findIndex(c => c.globalNumber === activeChapter);
                   const prev = idx > 0 ? chapters[idx - 1] : null;
                   return (
                     <button
@@ -1614,7 +1720,7 @@ export default function Bhagwatham() {
                   );
                 })()}
 
-                <span className={`font-bold ${theme.accent}`}>स्कन्ध १</span>
+                <span className={`font-bold ${theme.accent}`}>{(() => { const ch = chapters.find(c => c.globalNumber === activeChapter); return ch ? `स्कन्ध ${ch.skandh}` : "स्कन्ध १"; })()}</span>
                 <span className={theme.muted}>/</span>
                 <span className={`font-semibold ${theme.text}`}>{scrollChapter?.split("—")[0].trim()}</span>
                 {scrollChapter?.includes("—") && (
@@ -1626,7 +1732,7 @@ export default function Bhagwatham() {
 
                 {/* Next chapter */}
                 {(() => {
-                  const idx = chapters.findIndex(c => c.number === activeChapter);
+                  const idx = chapters.findIndex(c => c.globalNumber === activeChapter);
                   const next = idx >= 0 && idx < chapters.length - 1 ? chapters[idx + 1] : null;
                   return (
                     <button
