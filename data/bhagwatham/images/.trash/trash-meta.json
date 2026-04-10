@@ -1,0 +1,988 @@
+[
+  {
+    "trashId": "1-0-1775817026916",
+    "originalFile": "chapter-001.jpg",
+    "trashedFile": "1-0-1775817026916.jpg",
+    "manifestEntry": {
+      "chapterNumber": 1,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-001.jpg",
+      "prompt": "Lord Krishna standing majestically in a palace courtyard, golden architecture, peacocks nearby, devotees gathered with folded hands, warm golden sunset light, wide cinematic landscape",
+      "descriptionHi": "मुनियों की जिज्ञासा",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T10:23:21.689Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T10:30:26.917Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "7-0-1775817042596",
+    "originalFile": "chapter-007.jpg",
+    "trashedFile": "7-0-1775817042596.jpg",
+    "manifestEntry": {
+      "chapterNumber": 7,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-007.jpg",
+      "prompt": "Arjuna standing beside Lord Krishna with the mighty Gandiva bow, ancient Indian palace courtyard, golden light, wide cinematic landscape",
+      "descriptionHi": "द्रोण-पुत्र को दण्ड",
+      "personasUsed": [
+        "krishna_adult",
+        "arjuna"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T10:28:10.318Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T10:30:42.597Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "7-0-1775817364237",
+    "originalFile": "chapter-007.jpg",
+    "trashedFile": "7-0-1775817364237.jpg",
+    "manifestEntry": {
+      "chapterNumber": 7,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-007.jpg",
+      "prompt": "Arjuna standing beside Lord Krishna with the mighty Gandiva bow, ancient Indian palace courtyard, golden light, wide cinematic landscape",
+      "descriptionHi": "द्रोण-पुत्र को दण्ड",
+      "personasUsed": [
+        "krishna_adult",
+        "arjuna"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T10:30:43.023Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T10:36:04.237Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "1-0-1775817370456",
+    "originalFile": "chapter-001.jpg",
+    "trashedFile": "1-0-1775817370456.jpg",
+    "manifestEntry": {
+      "chapterNumber": 1,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-001.jpg",
+      "prompt": "Lord Krishna standing majestically in a palace courtyard, golden architecture, peacocks nearby, devotees gathered with folded hands, warm golden sunset light, wide cinematic landscape",
+      "descriptionHi": "मुनियों की जिज्ञासा",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T10:30:29.068Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T10:36:10.457Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "1-0-1775817661409",
+    "originalFile": "chapter-001.jpg",
+    "trashedFile": "1-0-1775817661409.jpg",
+    "manifestEntry": {
+      "chapterNumber": 1,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-001.jpg",
+      "prompt": "Lord Krishna standing majestically in a palace courtyard, golden architecture, peacocks nearby, devotees gathered with folded hands, warm golden sunset light, wide cinematic landscape",
+      "descriptionHi": "मुनियों की जिज्ञासा",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T10:36:10.948Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T10:41:01.409Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "1-0-1775817757295",
+    "originalFile": "chapter-001.jpg",
+    "trashedFile": "1-0-1775817757295.jpg",
+    "manifestEntry": {
+      "chapterNumber": 1,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-001.jpg",
+      "prompt": "Lord Krishna standing majestically in a palace courtyard, golden architecture, peacocks nearby, devotees gathered with folded hands, warm golden sunset light, wide cinematic landscape",
+      "descriptionHi": "मुनियों की जिज्ञासा",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T10:41:07.481Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T10:42:37.296Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "1-0-1775818301825",
+    "originalFile": "chapter-001.jpg",
+    "trashedFile": "1-0-1775818301825.jpg",
+    "manifestEntry": {
+      "chapterNumber": 1,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-001.jpg",
+      "prompt": "Lord Krishna standing majestically in a palace courtyard, golden architecture, peacocks nearby, devotees gathered with folded hands, warm golden sunset light, wide cinematic landscape",
+      "descriptionHi": "मुनियों की जिज्ञासा",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T10:43:34.628Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T10:51:41.825Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "7-0-1775818472846",
+    "originalFile": "chapter-007.jpg",
+    "trashedFile": "7-0-1775818472846.jpg",
+    "manifestEntry": {
+      "chapterNumber": 7,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-007.jpg",
+      "prompt": "Arjuna standing beside Lord Krishna with the mighty Gandiva bow, ancient Indian palace courtyard, golden light, wide cinematic landscape",
+      "descriptionHi": "द्रोण-पुत्र को दण्ड",
+      "personasUsed": [
+        "krishna_adult",
+        "arjuna"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T10:36:04.609Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T10:54:32.847Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "7-0-1775818924110",
+    "originalFile": "chapter-007.jpg",
+    "trashedFile": "7-0-1775818924110.jpg",
+    "manifestEntry": {
+      "chapterNumber": 7,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-007.jpg",
+      "prompt": "Ancient sage Vyasa seated cross-legged in deep meditation beside the sacred Saraswati river at dusk, his long white matted hair and saffron robes glowing in the amber twilight, hands resting gently after touching the flowing river water, surrounded by dense wild jujube berry trees with gnarled branches framing the scene, the ashram's simple thatched hut visible in the background amid lush forest, mist rising softly from the river surface, fireflies beginning to appear, serene and contemplative atmosphere, wide environmental composition showing the sage as a small but powerful presence within the vast ancient wilderness, warm golden and deep blue tones, painted in classical Indian manuscript style.",
+      "personasUsed": [
+        "vyasa"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T10:54:37.686Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T11:02:04.111Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "7-0-1775818973514",
+    "originalFile": "chapter-007.jpg",
+    "trashedFile": "7-0-1775818973514.jpg",
+    "manifestEntry": {
+      "chapterNumber": 7,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-007.jpg",
+      "prompt": "In this chapter, a hint is given that the Shreemad Bhagavatam will be described, because King Parikshit was miraculously saved in his mother’s womb. This incident is related to Dronacharya’s son Droni (Ashwatthama).\n\nhighly detailed, realistic‑painterly digital art, cinematic composition, natural lighting, coherent anatomy and proportions, rich textures, clean background, professional quality illustration",
+      "personasUsed": [
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T11:02:09.094Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T11:02:53.515Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "7-0-1775819082952",
+    "originalFile": "chapter-007.jpg",
+    "trashedFile": "7-0-1775819082952.jpg",
+    "manifestEntry": {
+      "chapterNumber": 7,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-007.jpg",
+      "prompt": "Sage Vyasadeva, an elderly Indian sage with long white hair and flowing ochre robes, seated cross-legged in deep meditation beneath dense jujube trees along the western bank of the sacred Saraswati river at dawn. He has just touched the cool river water for purification, droplets still glistening on his weathered hands resting on his knees. His eyes are closed, face serene and concentrated. The ashram is simple — thatched hut visible behind him, golden morning mist rising from the river surface. Dappled amber light filters through the beri tree canopy. Wide contemplative scene, slightly low angle, conveying profound spiritual stillness and ancient wisdom.\n\nhighly detailed, realistic‑painterly digital art, cinematic composition, sharp focus on the main subject, natural lighting, coherent anatomy and proportions, rich textures, clean background, professional quality illustration",
+      "personasUsed": [
+        "vyasa"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T11:02:58.028Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T11:04:42.953Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "7-0-1775819137325",
+    "originalFile": "chapter-007.jpg",
+    "trashedFile": "7-0-1775819137325.jpg",
+    "manifestEntry": {
+      "chapterNumber": 7,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-007.jpg",
+      "prompt": "In this chapter, it is described that after the departure of Narada Muni, Sage Vyasa Deva sat in deep meditation at his hermitage called Shamyapras, located on the western bank of the Saraswati River, surrounded by bear trees. After purifying himself by touching the water, he entered profound samadhi (spiritual trance). The background of this chapter also includes the incident of Ashwatthama killing Draupadi’s five sons and Arjuna punishing him for that act.\n\nhighly detailed, realistic‑painterly digital painting, hand‑painted look, visible brushstrokes, soft edges, subtle texture like canvas, cinematic composition, warm natural lighting, rich colors, professional fantasy illustration, not a photograph",
+      "personasUsed": [
+        "narada",
+        "vyasa",
+        "arjuna",
+        "draupadi"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T11:04:48.435Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T11:05:37.326Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "7-0-1775819232299",
+    "originalFile": "chapter-007.jpg",
+    "trashedFile": "7-0-1775819232299.jpg",
+    "manifestEntry": {
+      "chapterNumber": 7,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-007.jpg",
+      "prompt": "In this chapter, it is described that after the departure of Narada Muni, Sage Vyasa Deva sat in deep meditation at his hermitage called Shamyapras, located on the western bank of the Saraswati River, surrounded by bear trees. After purifying himself by touching the water, he entered profound samadhi (spiritual trance). The background of this chapter also includes the incident of Ashwatthama killing Draupadi’s five sons and Arjuna punishing him for that act\n\nhighly detailed, realistic‑painterly digital painting, hand‑painted look, visible brushstrokes, soft edges, subtle texture like canvas, cinematic composition, warm natural lighting, rich colors, professional fantasy illustration, not a photograph",
+      "personasUsed": [
+        "narada",
+        "vyasa",
+        "arjuna",
+        "draupadi"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T11:05:42.793Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T11:07:12.299Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "7-0-1775819342742",
+    "originalFile": "chapter-007.jpg",
+    "trashedFile": "7-0-1775819342742.jpg",
+    "manifestEntry": {
+      "chapterNumber": 7,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-007.jpg",
+      "prompt": "In this chapter, it is described that after the departure of Narada Muni, Sage Vyasa Deva sat in deep meditation at his hermitage called Shamyapras, located on the western bank of the Saraswati River, surrounded by bear trees. After purifying himself by touching the water, he entered profound samadhi (spiritual trance). The background of this chapter also includes the incident of Ashwatthama killing Draupadi’s five sons and Arjuna punishing him for that act.\n\nstylized storybook illustration, semi‑cartoon style, clean shapes and simplified details, soft painterly shading, no photorealism, no photographic textures, warm harmonious color palette, smooth gradients, gentle outlines, high‑quality digital illustration",
+      "personasUsed": [
+        "narada",
+        "vyasa",
+        "arjuna",
+        "draupadi"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T11:07:17.167Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T11:09:02.742Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "1-0-1775820090458",
+    "originalFile": "chapter-001.jpg",
+    "trashedFile": "1-0-1775820090458.jpg",
+    "manifestEntry": {
+      "chapterNumber": 1,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-001.jpg",
+      "prompt": "Vyasa sits in serene meditation on a forest riverbank, his hands folded in deep reverence, composing the opening invocation of the Bhagavatam. Before his mind's eye appears Krishna — radiant and eternal — who once illuminated Brahma's heart with Vedic wisdom at the dawn of creation. Narada stands nearby in witness.",
+      "personasUsed": [
+        "krishna_adult",
+        "narada",
+        "vyasa",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T11:19:03.063Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T11:21:30.459Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "1-0-1775820190717",
+    "originalFile": "chapter-001.jpg",
+    "trashedFile": "1-0-1775820190717.jpg",
+    "manifestEntry": {
+      "chapterNumber": 1,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-001.jpg",
+      "prompt": "Vyasa sits in serene meditation on a riverbank, his eyes closed and hands folded, offering a profound prayer to Krishna — the Supreme Truth and origin of all creation. In his vision, Krishna illuminates the heart of Brahma with divine Vedic knowledge, while Narada and Arjuna stand as witnesses to this eternal cosmic truth.",
+      "personasUsed": [
+        "krishna_adult",
+        "narada",
+        "vyasa",
+        "arjuna",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T11:21:35.865Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T11:23:10.717Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "1-0-1775820468500",
+    "originalFile": "chapter-001.jpg",
+    "trashedFile": "1-0-1775820468500.jpg",
+    "manifestEntry": {
+      "chapterNumber": 1,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-001.jpg",
+      "prompt": "Vyasa sits in deep meditation at his forest hermitage, his eyes closed and hands folded in reverence, as he composes the opening invocation of the Bhagavatam. Before his inner vision appears Krishna, radiant and eternal, identified as the supreme source of all creation, the one who first bestowed Vedic knowledge into the heart of Brahma at the dawn of existence.",
+      "personasUsed": [
+        "krishna_adult",
+        "vyasa",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T11:23:17.274Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T11:27:48.500Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "3-0-1775820497637",
+    "originalFile": "chapter-003.jpg",
+    "trashedFile": "3-0-1775820497637.jpg",
+    "manifestEntry": {
+      "chapterNumber": 3,
+      "chapterTitle": "Chapter तीन",
+      "imagePath": "chapter-003.jpg",
+      "prompt": "Lord Krishna standing majestically in a palace courtyard, golden architecture, peacocks nearby, devotees gathered with folded hands, warm golden sunset light, wide cinematic landscape",
+      "descriptionHi": "समस्त अवतारों के स्त्रोत : कृष्ण",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T10:47:47.363Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T11:28:17.638Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "3-0-1775820799152",
+    "originalFile": "chapter-003.jpg",
+    "trashedFile": "3-0-1775820799152.jpg",
+    "manifestEntry": {
+      "chapterNumber": 3,
+      "chapterTitle": "Chapter तीन",
+      "imagePath": "chapter-003.jpg",
+      "prompt": "At the dawn of creation, Krishna expands himself as the cosmic Purusha form — Karanodakashayi Vishnu — reclining upon the primordial cosmic waters. From his divine body, countless universes emerge from his pores, as Brahma and Vishnu witness the sixteen fundamental material elements being released into existence to begin the cycle of creation.",
+      "personasUsed": [
+        "krishna_adult",
+        "vishnu",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T11:30:51.911Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T11:33:19.152Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "3-0-1775820948076",
+    "originalFile": "chapter-003.jpg",
+    "trashedFile": "3-0-1775820948076.jpg",
+    "manifestEntry": {
+      "chapterNumber": 3,
+      "chapterTitle": "Chapter तीन",
+      "imagePath": "chapter-003.jpg",
+      "prompt": "At the dawn of creation, Krishna expands himself into the cosmic Purusha form, the mighty Karanodakashayi Vishnu, reclining upon the primordial causal ocean. From his body, countless universes emerge like bubbles, while Brahma and Vishnu witness the sixteen fundamental elements of material existence manifesting from this supreme original source of all incarnations.",
+      "personasUsed": [
+        "krishna_adult",
+        "vishnu",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T11:33:21.962Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T11:35:48.076Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "3-0-1775821044377",
+    "originalFile": "chapter-003.jpg",
+    "trashedFile": "3-0-1775821044377.jpg",
+    "manifestEntry": {
+      "chapterNumber": 3,
+      "chapterTitle": "Chapter तीन",
+      "imagePath": "chapter-003.jpg",
+      "prompt": "Krishna, in his cosmic form as Karanodakashayi Vishnu, reclines upon the primordial causal ocean at the dawn of creation. From his divine body, countless universes emerge like bubbles from his pores, while Brahma prepares to begin creation and Vishnu stands ready to enter each universe as the sustaining force.",
+      "personasUsed": [
+        "krishna_adult",
+        "vishnu",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T11:35:51.142Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T11:37:24.378Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "3-0-1775821756129",
+    "originalFile": "chapter-003.jpg",
+    "trashedFile": "3-0-1775821756129.jpg",
+    "manifestEntry": {
+      "chapterNumber": 3,
+      "chapterTitle": "Chapter तीन",
+      "imagePath": "chapter-003.jpg",
+      "prompt": "At the dawn of creation, Lord Krishna expands into the cosmic Purusha form — Karanodakashayi Vishnu — reclining upon the causal waters in the vast spiritual sky. From the pores of His transcendental body, countless universes emerge like bubbles, as Brahma and Vishnu witness the magnificent beginning of material creation from His divine presence.",
+      "personasUsed": [
+        "krishna_adult",
+        "vishnu",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T11:37:33.696Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T11:49:16.129Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "3-0-1775821831591",
+    "originalFile": "chapter-003.jpg",
+    "trashedFile": "3-0-1775821831591.jpg",
+    "manifestEntry": {
+      "chapterNumber": 3,
+      "chapterTitle": "Chapter तीन",
+      "imagePath": "chapter-003.jpg",
+      "prompt": "At the dawn of cosmic creation, Krishna expands himself as the Maha-Vishnu, the Purusha avatar, reclining on the causal ocean in infinite divine form. From his breath and pores, countless universes emerge like bubbles. Brahma and Vishnu witness this primordial moment as the sixteen material elements manifest and the grand cycle of creation begins.",
+      "personasUsed": [
+        "krishna_adult",
+        "vishnu",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T11:49:19.641Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T11:50:31.591Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "4-0-1775821941474",
+    "originalFile": "chapter-004.jpg",
+    "trashedFile": "4-0-1775821941474.jpg",
+    "manifestEntry": {
+      "chapterNumber": 4,
+      "chapterTitle": "Chapter चार",
+      "imagePath": "chapter-004.jpg",
+      "prompt": "Lord Krishna standing majestically in a palace courtyard, golden architecture, peacocks nearby, devotees gathered with folded hands, warm golden sunset light, wide cinematic landscape",
+      "descriptionHi": "श्री नारद का प्राकट्य",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T10:22:52.717Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T11:52:21.475Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "4-0-1775821977272",
+    "originalFile": "chapter-004.jpg",
+    "trashedFile": "4-0-1775821977272.jpg",
+    "manifestEntry": {
+      "chapterNumber": 4,
+      "chapterTitle": "Chapter चार",
+      "imagePath": "chapter-004.jpg",
+      "prompt": "In the forest of Naimisharanya, the elderly and wise sage Shaunaka rises from among a great assembly of rishis gathered around a sacred fire for a long yajna. With deep reverence and joy, he folds his hands and addresses Suta Goswami, urging him to share the holy Bhagavatam narrative as originally spoken by the great Shukadeva Goswami.",
+      "personasUsed": [
+        "suta_goswami",
+        "shukadeva"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T11:52:33.011Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T11:52:57.273Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "3-0-1775822071633",
+    "originalFile": "chapter-003.jpg",
+    "trashedFile": "3-0-1775822071633.jpg",
+    "manifestEntry": {
+      "chapterNumber": 3,
+      "chapterTitle": "Chapter तीन",
+      "imagePath": "chapter-003.jpg",
+      "prompt": "At the dawn of creation, Lord Vishnu in his cosmic Karanodakashayi form reclines upon the primordial causal ocean, his divine body emanating countless universes from his pores. Brahma is yet to be born as this original Purusha expansion of Krishna manifests the sixteen fundamental elements of material existence, setting all of creation into motion.",
+      "personasUsed": [
+        "krishna_adult",
+        "vishnu",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T11:50:47.500Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T11:54:31.634Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "4-0-1775822085671",
+    "originalFile": "chapter-004.jpg",
+    "trashedFile": "4-0-1775822085671.jpg",
+    "manifestEntry": {
+      "chapterNumber": 4,
+      "chapterTitle": "Chapter चार",
+      "imagePath": "chapter-004.jpg",
+      "prompt": "In the sacred forest of Naimisharanya, during a great long-running yajna, the elderly and learned sage Shaunaka rises with joy and addresses Suta Goswami with deep reverence, calling out to him twice with affection, praising him as the most fortunate among all speakers, and earnestly requesting him to narrate the holy Bhagavatam as spoken by the great Shukadeva Goswami.",
+      "personasUsed": [
+        "suta_goswami",
+        "shukadeva"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T11:53:07.120Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T11:54:45.674Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "4-0-1775822132136",
+    "originalFile": "chapter-004.jpg",
+    "trashedFile": "4-0-1775822132136.jpg",
+    "manifestEntry": {
+      "chapterNumber": 4,
+      "chapterTitle": "Chapter चार",
+      "imagePath": "chapter-004.jpg",
+      "prompt": "In a forest ashram where a great long-running yajna is being conducted, the elderly and learned sage Shaunaka rises with deep reverence among the assembled rishis and addresses Suta Goswami with joyful admiration, calling out to him twice with affection, requesting him to narrate the sacred Bhagavata Katha as spoken by the great Shukadeva Goswami.",
+      "personasUsed": [
+        "suta_goswami",
+        "shukadeva"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T11:54:54.311Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T11:55:32.137Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "5-0-1775822230358",
+    "originalFile": "chapter-005.jpg",
+    "trashedFile": "5-0-1775822230358.jpg",
+    "manifestEntry": {
+      "chapterNumber": 5,
+      "chapterTitle": "Chapter पाँच",
+      "imagePath": "chapter-005.jpg",
+      "prompt": "Sage Vyasa seated in meditation in a peaceful forest ashram by a river, golden morning light filtering through trees, palm leaf manuscripts nearby, wide landscape",
+      "descriptionHi": "नारद द्वारा व्यासदेव को श्रीमद्धागवत के विषय में आदेश",
+      "personasUsed": [
+        "vyasa"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T10:48:00.683Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T11:57:10.360Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "5-0-1775822342430",
+    "originalFile": "chapter-005.jpg",
+    "trashedFile": "5-0-1775822342430.jpg",
+    "manifestEntry": {
+      "chapterNumber": 5,
+      "chapterTitle": "Chapter पाँच",
+      "imagePath": "chapter-005.jpg",
+      "prompt": "Narada, holding his veena and wearing a gentle smile, sits beside the troubled sage Vyasa on a forest riverbank. He addresses Vyasa with compassion, asking whether he finds true satisfaction by identifying the self with body or mind, gently pointing toward the deeper cause of Vyasa's restlessness despite his great literary accomplishments.",
+      "personasUsed": [
+        "narada",
+        "vyasa"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T11:57:22.611Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T11:59:02.431Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "5-0-1775822494875",
+    "originalFile": "chapter-005.jpg",
+    "trashedFile": "5-0-1775822494875.jpg",
+    "manifestEntry": {
+      "chapterNumber": 5,
+      "chapterTitle": "Chapter पाँच",
+      "imagePath": "chapter-005.jpg",
+      "prompt": "On the banks of a peaceful river, the divine sage Narada sits beside the great Vyasa, holding his vina and smiling gently. Narada questions Vyasa — who appears visibly restless despite his vast learning and the monumental Mahabharata he has composed — asking whether true self-realization has brought him contentment, hinting at the deeper spiritual purpose Vyasa has yet to fulfill.",
+      "personasUsed": [
+        "narada",
+        "vyasa"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T11:59:11.565Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T12:01:34.876Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "1-0-1775822569056",
+    "originalFile": "chapter-001.jpg",
+    "trashedFile": "1-0-1775822569056.jpg",
+    "manifestEntry": {
+      "chapterNumber": 1,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-001.jpg",
+      "prompt": "Vyasa sits in serene meditation by a sacred riverbank, his hands folded in deep reverence, composing the opening prayer of the Bhagavatam. In his vision, Krishna appears as the radiant Supreme Truth — the origin of all creation — having once placed divine Vedic knowledge into the heart of Brahma at the dawn of existence.",
+      "personasUsed": [
+        "krishna_adult",
+        "vyasa",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T11:51:46.562Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T12:02:49.057Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "1-0-1775822623093",
+    "originalFile": "chapter-001.jpg",
+    "trashedFile": "1-0-1775822623093.jpg",
+    "manifestEntry": {
+      "chapterNumber": 1,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-001.jpg",
+      "prompt": "Vyasa sits in serene meditation at his hermitage, hands folded in deep reverence, his eyes closed in devotion as he offers his opening prayer to Krishna, the Supreme Lord. Before his inner vision appears Krishna in his divine resplendent form, radiant and eternal, the source of all creation, while Narada and Brahma stand witness to this sacred moment of cosmic invocation.",
+      "personasUsed": [
+        "krishna_adult",
+        "narada",
+        "vyasa",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T12:02:59.555Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T12:03:43.094Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "4-0-1775822655673",
+    "originalFile": "chapter-004.jpg",
+    "trashedFile": "4-0-1775822655673.jpg",
+    "manifestEntry": {
+      "chapterNumber": 4,
+      "chapterTitle": "Chapter चार",
+      "imagePath": "chapter-004.jpg",
+      "prompt": "In a sacred forest hermitage where a long yajna is being conducted, the elderly sage Shaunaka rises from among a gathering of revered rishis and joyfully addresses Suta Goswami with folded hands, calling out to him twice with great reverence, eagerly requesting him to narrate the holy Bhagavata story as told by the great Shukadeva Goswami.",
+      "personasUsed": [
+        "suta_goswami",
+        "shukadeva"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T11:55:46.184Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T12:04:15.674Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "4-0-1775822690500",
+    "originalFile": "chapter-004.jpg",
+    "trashedFile": "4-0-1775822690500.jpg",
+    "manifestEntry": {
+      "chapterNumber": 4,
+      "chapterTitle": "Chapter चार",
+      "imagePath": "chapter-004.jpg",
+      "prompt": "In a sacred forest hermitage at Naimisharanya, the elderly and venerable sage Shaunaka rises among a great assembly of sages engaged in prolonged ritual sacrifice, and with great reverence and joy addresses Suta Goswami, praising him as the most fortunate and worthy of speakers, earnestly requesting him to narrate the holy Bhagavata Purana as told by the great sage Shukadeva Goswami.",
+      "personasUsed": [
+        "suta_goswami",
+        "shukadeva"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T12:04:24.399Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T12:04:50.502Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "4-0-1775822727571",
+    "originalFile": "chapter-004.jpg",
+    "trashedFile": "4-0-1775822727571.jpg",
+    "manifestEntry": {
+      "chapterNumber": 4,
+      "chapterTitle": "Chapter चार",
+      "imagePath": "chapter-004.jpg",
+      "prompt": "In the sacred forest of Naimisharanya, the elderly and learned sage Shaunaka rises with great joy before Suta Goswami, offering him heartfelt congratulations. Surrounded by a vast assembly of sages engaged in a long sacrificial ceremony, Shaunaka respectfully requests Suta Goswami to narrate the holy Srimad Bhagavatam as originally told by the powerful sage Shukadeva Goswami.",
+      "personasUsed": [
+        "suta_goswami",
+        "shukadeva"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T12:05:01.265Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T12:05:27.571Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "4-0-1775822762087",
+    "originalFile": "chapter-004.jpg",
+    "trashedFile": "4-0-1775822762087.jpg",
+    "manifestEntry": {
+      "chapterNumber": 4,
+      "chapterTitle": "Chapter चार",
+      "imagePath": "chapter-004.jpg",
+      "prompt": "In the forest of Naimisharanya, the elderly and learned sage Shaunaka rises from among a great assembly of sages engaged in a long sacrificial ceremony, and with great joy addresses Suta Goswami, praising him as the most fortunate and honourable among all speakers, earnestly requesting him to narrate the sacred Bhagavatam as told by the mighty Shukadeva Goswami.",
+      "personasUsed": [
+        "suta_goswami",
+        "shukadeva"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T12:05:38.092Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T12:06:02.087Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "1-0-1775822894609",
+    "originalFile": "chapter-001.jpg",
+    "trashedFile": "1-0-1775822894609.jpg",
+    "manifestEntry": {
+      "chapterNumber": 1,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-001.jpg",
+      "prompt": "Vyasa sits in deep meditative reverence, composing the opening verse of the Bhagavatam. In his vision, he beholds Krishna as the supreme source of all creation — the one who first illuminated Brahma's heart with divine Vedic knowledge at the dawn of the universe, while great sages and gods remain bewildered by His cosmic illusion.",
+      "personasUsed": [
+        "krishna_adult",
+        "vyasa",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T12:03:53.838Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T12:08:14.609Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "4-0-1775822912317",
+    "originalFile": "chapter-004.jpg",
+    "trashedFile": "4-0-1775822912317.jpg",
+    "manifestEntry": {
+      "chapterNumber": 4,
+      "chapterTitle": "Chapter चार",
+      "imagePath": "chapter-004.jpg",
+      "prompt": "In the forest ashram of Naimisharanya, the elderly and venerable sage Shaunaka rises respectfully before Suta Goswami amidst an assembly of sages engaged in a long sacred sacrifice. With great joy and reverence, Shaunaka addresses Suta Goswami twice by name and humbly requests him to narrate the holy Srimad Bhagavatam as originally told by the great Shukadeva Goswami.\n\nmake sure it look like iskcon style painting",
+      "personasUsed": [
+        "suta_goswami",
+        "shukadeva"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T12:06:11.466Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T12:08:32.318Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "1-0-1775822951017",
+    "originalFile": "chapter-001.jpg",
+    "trashedFile": "1-0-1775822951017.jpg",
+    "manifestEntry": {
+      "chapterNumber": 1,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-001.jpg",
+      "prompt": "Vyasa, the great sage, sits in deep meditation at his forest hermitage, his hands folded in reverence, composing the opening verse of the Bhagavatam. He envisions Krishna as the supreme eternal truth — the original source of all creation — while Brahma, Narada, and the cosmic order emanate from that single divine light of Vasudeva.",
+      "personasUsed": [
+        "krishna_adult",
+        "narada",
+        "vyasa",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T12:08:23.741Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T12:09:11.020Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "4-0-1775823063100",
+    "originalFile": "chapter-004.jpg",
+    "trashedFile": "4-0-1775823063100.jpg",
+    "manifestEntry": {
+      "chapterNumber": 4,
+      "chapterTitle": "Chapter चार",
+      "imagePath": "chapter-004.jpg",
+      "prompt": "In the sacred forest of Naimisharanya, the elderly and wise sage Shaunaka rises with great reverence before Suta Goswami amid a gathering of sages engaged in a long sacrificial ceremony. Shaunaka folds his hands and addresses Suta Goswami with joyful praise, earnestly requesting him to recite the holy Bhagavata as originally spoken by the great Shukadeva Goswami.",
+      "personasUsed": [
+        "suta_goswami",
+        "shukadeva"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T12:08:42.799Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T12:11:03.101Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "1-0-1775823104892",
+    "originalFile": "chapter-001.jpg",
+    "trashedFile": "1-0-1775823104892.jpg",
+    "manifestEntry": {
+      "chapterNumber": 1,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-001.jpg",
+      "prompt": "Vyasa sits in serene meditation on a riverbank, hands folded in deep reverence, as he composes the opening invocation of the Bhagavatam. Before his mind's eye appears Krishna in divine radiance, the ultimate source of all creation. Narada and Brahma stand nearby as witnesses to this sacred moment of cosmic revelation.",
+      "personasUsed": [
+        "krishna_adult",
+        "narada",
+        "vyasa",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T12:09:22.431Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T12:11:44.893Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "4-0-1775823218394",
+    "originalFile": "chapter-004.jpg",
+    "trashedFile": "4-0-1775823218394.jpg",
+    "manifestEntry": {
+      "chapterNumber": 4,
+      "chapterTitle": "Chapter चार",
+      "imagePath": "chapter-004.jpg",
+      "prompt": "In the sacred forest of Naimisharanya, the elderly and learned sage Shaunaka rises with joy from among a great assembly of sages engaged in long sacrificial rites, and with deep reverence addresses Suta Goswami, praising him as the most fortunate among all speakers, earnestly requesting him to recite the holy Bhagavata Purana as spoken by the great Shukadeva Goswami.",
+      "personasUsed": [
+        "suta_goswami",
+        "shukadeva"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T12:11:12.315Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T12:13:38.395Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "5-0-1775823272480",
+    "originalFile": "chapter-005.jpg",
+    "trashedFile": "5-0-1775823272480.jpg",
+    "manifestEntry": {
+      "chapterNumber": 5,
+      "chapterTitle": "Chapter पाँच",
+      "imagePath": "chapter-005.jpg",
+      "prompt": "Narada, the divine sage, sits beside a contemplative and sorrowful Vyasa on a forest riverbank, gently holding his veena and smiling with knowing wisdom. He asks Vyasa why, despite composing the great Mahabharata and mastering all Vedic knowledge, the great rishi still appears deeply dissatisfied and unfulfilled in his soul.",
+      "personasUsed": [
+        "narada",
+        "vyasa"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T12:01:44.169Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T12:14:32.481Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "5-0-1775823415872",
+    "originalFile": "chapter-005.jpg",
+    "trashedFile": "5-0-1775823415872.jpg",
+    "manifestEntry": {
+      "chapterNumber": 5,
+      "chapterTitle": "Chapter पाँच",
+      "imagePath": "chapter-005.jpg",
+      "prompt": "On a quiet riverbank, the sage Narada sits comfortably beside Vyasa, holding his veena and wearing a gentle smile. He gazes at the great but discontented Vyasa and asks why, despite composing the magnificent Mahabharata and mastering all Vedic knowledge, Vyasa still appears restless and spiritually unfulfilled.",
+      "personasUsed": [
+        "narada",
+        "vyasa"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T12:14:41.946Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T12:16:55.877Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "5-0-1775823574961",
+    "originalFile": "chapter-005.jpg",
+    "trashedFile": "5-0-1775823574961.jpg",
+    "manifestEntry": {
+      "chapterNumber": 5,
+      "chapterTitle": "Chapter पाँच",
+      "imagePath": "chapter-005.jpg",
+      "prompt": "Narada, holding his veena and wearing a gentle smile, sits beside the great sage Vyasa on the banks of the Sarasvati river. He gazes at the troubled Vyasa with knowing eyes and asks him why, despite composing the vast Mahabharata and mastering all Vedic knowledge, his heart remains restless and unfulfilled.",
+      "personasUsed": [
+        "narada",
+        "vyasa"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T12:17:06.945Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T12:19:34.961Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "1-0-1775823667910",
+    "originalFile": "chapter-001.jpg",
+    "trashedFile": "1-0-1775823667910.jpg",
+    "manifestEntry": {
+      "chapterNumber": 1,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-001.jpg",
+      "prompt": "Vyasa sits in serene meditation on a riverbank, his hands folded in reverence, eyes closed in deep contemplation. Before him in divine light appears Krishna, radiant and all-encompassing, as Vyasa composes the opening verse of the Bhagavatam, recognizing Krishna as the supreme eternal truth and origin of all creation.",
+      "personasUsed": [
+        "krishna_adult",
+        "vyasa"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T12:13:08.720Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T12:21:07.911Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "4-0-1775823725054",
+    "originalFile": "chapter-004.jpg",
+    "trashedFile": "4-0-1775823725054.jpg",
+    "manifestEntry": {
+      "chapterNumber": 4,
+      "chapterTitle": "Chapter चार",
+      "imagePath": "chapter-004.jpg",
+      "prompt": "In a forest ashram at Naimisharanya, the elderly and venerable sage Shaunaka rises with great joy before Suta Goswami, addressing him twice as 'Suta! Suta!' in eagerness. Surrounded by assembled sages engaged in a long sacrifice, Shaunaka respectfully requests Suta Goswami to narrate the sacred Srimad Bhagavatam as originally told by the powerful sage Shukadeva Goswami.",
+      "personasUsed": [
+        "suta_goswami",
+        "shukadeva"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T12:13:49.340Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-10T12:22:05.055Z",
+    "operation": "regenerate"
+  }
+]
