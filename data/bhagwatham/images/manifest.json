@@ -248,7 +248,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-10T12:52:26.112Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 17,
+      "chapterTitle": "Chapter सत्रह",
+      "imagePath": "chapter-017.jpg",
+      "prompt": "King Parikshit on his chariot encounters Dharma in the form of a white bull standing on one leg, and Mother Earth as a grieving cow, on a dusty ancient road. Kali personified stands nearby in royal disguise. A dramatic sunset sky over the Indian plains.",
+      "descriptionHi": "महाराज परीक्षित ने देखा कि धर्म रूपी श्वेत बैल एक पैर पर खड़ा है और गोमाता दुखी है। कलि ने राजा का वेश धारण किया है। यह कलियुग के आगमन का प्रतीक है।",
+      "personasUsed": [
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T13:36:16.438Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T13:13:32.290Z"
+  "lastUpdated": "2026-04-10T13:36:16.438Z"
 }
