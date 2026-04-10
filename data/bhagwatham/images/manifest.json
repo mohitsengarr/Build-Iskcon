@@ -316,7 +316,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-10T21:09:09.859Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 43,
+      "chapterTitle": "Chapter उन्नीस",
+      "imagePath": "chapter-043.jpg",
+      "prompt": "Brahma, the four-headed creator deity, stands with folded hands before the Supreme Lord, his face radiating sincerity and devotion. The Lord listens with a gentle smile, his eyes filled with loving compassion, gracefully accepting Brahma's pure and heartfelt prayer in a celestial realm glowing with divine light.",
+      "descriptionHi": "मैत्रेय ऋषि विदुर को बताते हैं कि ब्रह्माजी के निष्पाप और अमृत के समान मधुर वचनों को सुनकर भगवान् मुस्कुराए और प्रेमपूर्ण दृष्टि से उनकी प्रार्थना स्वीकार कर ली। ब्रह्माजी ने भगवान् से हिरण्याक्ष के अत्याचारों को समाप्त करने की प्रार्थना की थी। इस प्रसंग में देवताओं की निष्कपट प्रार्थना और असुरों की कपटपूर्ण प्रार्थना का आध्यात्मिक अंतर स्पष्ट किया गया है।",
+      "personasUsed": [
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T21:18:08.080Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T21:16:30.692Z"
+  "lastUpdated": "2026-04-10T21:18:08.080Z"
 }
