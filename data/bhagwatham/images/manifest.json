@@ -491,7 +491,16 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-10T23:21:01.638Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 47,
+      "chapterTitle": "Chapter चार",
+      "imagePath": "chapter-047.jpg",
+      "prompt": "SatI stands torn between her desire to visit her family and Shiva's warning, her emotions in turmoil amidst the serene Himalayan setting.",
+      "descriptionHi": "सती अपने पिता के घर जाने के लिए उत्सुक हैं, लेकिन शिवजी की चेतावनी से भयभीत हैं। यह दुविधा उनके लिए बहुत कठिन है और उन्हें दुखी कर देती है। सती का मन अस्थिर हो जाता है और वे हिंडोले की भाँति कक्ष से बाहर और भीतर आ-जा रही थी।",
+      "generatedAt": "2026-04-10T23:22:40.637Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-10T23:21:10.118Z"
+  "lastUpdated": "2026-04-10T23:22:40.637Z"
 }
