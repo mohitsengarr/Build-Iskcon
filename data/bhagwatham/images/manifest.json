@@ -1009,7 +1009,21 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T19:55:10.551Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 105,
+      "chapterTitle": "Chapter चार",
+      "imagePath": "chapter-105.jpg",
+      "prompt": "Brahma and Vishnu witness Hiranyakashipu's tyrannical rule over the universe from a celestial realm.",
+      "descriptionHi": "हिरण्यकशिपु ने ब्रह्माजी से शक्ति प्राप्त की और फिर ब्रह्माण्ड के समस्त जीवों को तंग करने में उसका दुरुपयोग किया। भगवान् विष्णु, ब्रह्मा और शिवजी के अतिरिक्त सारे देवता उसके अधीन होकर उसकी सेवा करने लगे। हिरण्यकशिपु के शासन से मुक्ति पाने के लिए परमेश्वर से प्रार्थना की गई।",
+      "personasUsed": [
+        "vishnu",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T20:03:50.560Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T19:55:10.551Z"
+  "lastUpdated": "2026-04-11T20:03:50.560Z"
 }
