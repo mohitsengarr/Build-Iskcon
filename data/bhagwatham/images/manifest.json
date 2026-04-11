@@ -987,7 +987,16 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T19:15:08.997Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 103,
+      "chapterTitle": "Chapter दो",
+      "imagePath": "chapter-103.jpg",
+      "prompt": "Hiranyakashyapu consoles his grieving nephews in a serene palace setting, sharing a historical lesson to alleviate their sorrow.",
+      "descriptionHi": "हिरण्यकशिपु अपने पुत्र तथा भाई हिरण्याक्ष के विनाश से दुखी हुआ और उसने धार्मिक कार्यकलापों को कम करने का प्रयास किया। उसने अपने भतीजों को इतिहास का उपदेश दिया जिससे उनके शोक कम हो सकें। हिरण्यकशिपु के कार्यों में एक आध्यात्मिक संघर्ष दिखाई देता है।",
+      "generatedAt": "2026-04-11T19:44:49.195Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T19:37:29.674Z"
+  "lastUpdated": "2026-04-11T19:44:49.195Z"
 }
