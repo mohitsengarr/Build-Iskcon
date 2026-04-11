@@ -1079,7 +1079,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T21:12:43.420Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 114,
+      "chapterTitle": "Chapter बारह",
+      "imagePath": "chapter-114.jpg",
+      "prompt": "Narada describes the four ashrams to his disciples in a serene forest setting, emphasizing the importance of spiritual growth and self-discipline.",
+      "descriptionHi": "इस अध्याय में नारद मुनि चारों आश्रमों—ब्रह्मचर्य, गृहस्थ, वानप्रस्थ तथा संन्यास—के महत्व का वर्णन करते हैं। ब्रह्मचारी के लिए गुरु के संरक्षण में रहना और आध्यात्मिक कार्यों में लगना आवश्यक है।",
+      "personasUsed": [
+        "narada"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T22:17:15.848Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T22:15:36.030Z"
+  "lastUpdated": "2026-04-11T22:17:15.848Z"
 }
