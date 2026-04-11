@@ -1092,7 +1092,22 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T22:17:15.848Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 115,
+      "chapterTitle": "Chapter चौदह",
+      "imagePath": "chapter-115.jpg",
+      "prompt": "Narada instructs Yudhishthira on family duties in the palace, emphasizing devotion to Krishna.",
+      "descriptionHi": "इस अध्याय में नारद मुनि युधिष्ठिर महाराज को गृहस्थ के वृत्तिपरक कर्तव्यों के बारे में उपदेश देते हैं, जिसमें वासुदेव कृष्ण पर पूर्णाश्रित रहना और निर्धारित भक्ति के द्वारा उन्हें प्रसन्न करना शामिल है। गृहस्थ को अपने परिवार के पालन के लिए आवश्यक अर्जन करना चाहिए और भौतिक सुविधाओं में वृद्धि नहीं करनी चाहिए।",
+      "personasUsed": [
+        "krishna_adult",
+        "narada",
+        "yudhishthira"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T22:35:52.090Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T22:17:15.848Z"
+  "lastUpdated": "2026-04-11T22:35:52.090Z"
 }
