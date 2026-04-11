@@ -694,7 +694,16 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T03:42:25.028Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 63,
+      "chapterTitle": "Chapter चौबीस",
+      "imagePath": "chapter-063.jpg",
+      "prompt": "Vijitashva, son of Maharaj Prithu, distributes kingdom territories to his younger brothers in a palace ceremony.",
+      "descriptionHi": "मैत्रेय ऋषि ने महाराज पृथु के पुत्र विजिताश्व का वर्णन किया, जो अपने पिता की तरह एक महान राजा बना। विजिताश्व ने अपने छोटे भाइयों को पृथ्वी की विभिन्न दिशाओं पर राज्य करने का अधिकार सौंप दिया, क्योंकि वह अपने भाइयों को अत्यधिक चाहता था।",
+      "generatedAt": "2026-04-11T04:17:37.177Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T03:42:25.028Z"
+  "lastUpdated": "2026-04-11T04:17:37.177Z"
 }
