@@ -973,7 +973,21 @@
       "descriptionHi": "इस अध्याय में चित्रकेतु को माता पार्वती द्वारा शाप मिलने का वर्णन है, जो भगवान् शिव के साथ हँसी करने के कारण हुआ। चित्रकेतु को इसका कोई दुख नहीं हुआ और उसने अपने विचार व्यक्त किए। इस घटना में मुख्य पात्र चित्रकेतु, पार्वती और शिव हैं।",
       "generatedAt": "2026-04-11T19:03:51.541Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 101,
+      "chapterTitle": "Chapter अठारह",
+      "imagePath": "chapter-101.jpg",
+      "prompt": "Krishna and Arjuna share a profound spiritual experience on the riverbank, surrounded by serene nature.",
+      "descriptionHi": "इस अध्याय में कृष्ण और अर्जुन के बीच एक महत्वपूर्ण घटना का वर्णन है, जिसमें वे एक गहरे आध्यात्मिक अनुभव को साझा करते हैं। इस घटना का महत्व आत्म-साक्षात्कार और आध्यात्मिक ज्ञान की प्राप्ति में है।",
+      "personasUsed": [
+        "krishna_adult",
+        "arjuna"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T19:15:08.997Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T19:03:51.541Z"
+  "lastUpdated": "2026-04-11T19:15:08.997Z"
 }
