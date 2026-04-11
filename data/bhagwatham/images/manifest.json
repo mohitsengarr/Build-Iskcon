@@ -579,7 +579,20 @@
       "descriptionHi": "इस अध्याय में ध्रुव महाराज के विवाह का वर्णन है, जिसमें उन्होंने प्रजापति शिशुमार की पुत्री भ्रमि से विवाह किया और उनके दो पुत्र कल्प और वत्सर हुए। यह अध्याय आत्म-साक्षात्कार के महत्व को दर्शाता है।",
       "generatedAt": "2026-04-11T00:24:41.083Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 53,
+      "chapterTitle": "Chapter ग्यारह",
+      "imagePath": "chapter-053.jpg",
+      "prompt": "Dhruva Maharaj loads the divine arrow on his bow, as Maitreya narrates to Vidura in a serene forest setting.",
+      "descriptionHi": "इस अध्याय में ध्रुव महाराज को भगवान्‌ नारायण द्वारा निर्मित विशेष बाण प्राप्त हुआ, जिससे उन्होंने यक्ष की माया को दूर किया। मैत्रेय मुनि विदुर को यह कथा सुना रहे हैं। यह घटना ध्रुव महाराज की भक्ति और नारायण की कृपा को दर्शाती है।",
+      "personasUsed": [
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T00:27:47.984Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T00:24:41.083Z"
+  "lastUpdated": "2026-04-11T00:27:47.984Z"
 }
