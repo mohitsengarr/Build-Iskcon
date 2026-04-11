@@ -1036,7 +1036,22 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T20:25:08.369Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 108,
+      "chapterTitle": "Chapter छह",
+      "imagePath": "chapter-108.jpg",
+      "prompt": "Narada and Krishna observe as Prahlad instructs his demon classmates in a serene forest setting.",
+      "descriptionHi": "प्रह्लाद महाराज अपने असुर सहपाठियों को जीवन के प्रारम्भ से ही आध्यात्मिक अनुभूति में रुचि लेने का उपदेश देते हैं। वे बताते हैं कि मनुष्य को भौतिक भोग में अधिक रुचि नहीं दिखानी चाहिए और जीवन के प्रत्येक क्षण को आध्यात्मिक उन्नति में लगाना चाहिए।",
+      "personasUsed": [
+        "krishna_adult",
+        "narada",
+        "prahlada"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T20:33:07.948Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T20:25:08.369Z"
+  "lastUpdated": "2026-04-11T20:33:07.948Z"
 }
