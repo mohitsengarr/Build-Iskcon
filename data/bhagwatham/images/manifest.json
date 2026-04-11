@@ -845,7 +845,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T06:50:02.012Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 81,
+      "chapterTitle": "Chapter अठारह",
+      "imagePath": "chapter-081.jpg",
+      "prompt": "Shukadeva describes Lord Hayagriva protecting Vedic knowledge in Bhadraswavarsa",
+      "descriptionHi": "शुकदेव गोस्वामी जम्बूद्वीप के विभिन्न वर्षों एवं प्रत्येक में पूजित भगवान् के अवतारों का वर्णन करते हैं। भद्राश्ववर्ष में हयग्रीव नामक अवतार की पूजा की जाती है। भगवान् हयग्रीव वैदिक-ज्ञान की रक्षा करते हैं",
+      "personasUsed": [
+        "shukadeva"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T06:56:50.310Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T06:50:02.012Z"
+  "lastUpdated": "2026-04-11T06:56:50.310Z"
 }
