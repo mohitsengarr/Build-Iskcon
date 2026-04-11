@@ -1120,7 +1120,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T23:18:19.442Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 117,
+      "chapterTitle": "Chapter तीन",
+      "imagePath": "chapter-117.jpg",
+      "prompt": "Gajendra prays to Lord Vishnu on the riverbank, seeking refuge from the crocodile's attack.",
+      "descriptionHi": "गजेन्द्र अपनी विषम स्थिति में भगवान् की स्तुति करता है और अपनी असमर्थता व्यक्त करता है। वह भगवान् को नमस्कार करता है और उनकी महिमा का वर्णन करता है। यह अध्याय गजेन्द्र की भक्ति और समर्पण की भावना को दर्शाता है।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T23:20:50.024Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T23:18:19.442Z"
+  "lastUpdated": "2026-04-11T23:20:50.024Z"
 }
