@@ -819,7 +819,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T06:32:49.558Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 79,
+      "chapterTitle": "Chapter सोलह",
+      "imagePath": "chapter-079.jpg",
+      "prompt": "Shukadeva describes the majestic Mount Sumeru at the heart of Jambudvipa, surrounded by four mighty mountains and lush gardens.",
+      "descriptionHi": "शुकदेव गोस्वामी जम्बूद्वीप का वर्णन करते हैं और इसके मध्य में स्थित सुमेरु पर्वत की महिमा बताते हैं। इस पर्वत की ऊँचाई ८४,००० योजन है और इसके चारों ओर चार पर्वत हैं। यह स्थान बहुत ही पवित्र और मनोकामनाओं को पूर्ण करने वाला है।",
+      "personasUsed": [
+        "shukadeva"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T06:48:58.530Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T06:32:49.558Z"
+  "lastUpdated": "2026-04-11T06:48:58.531Z"
 }
