@@ -867,7 +867,20 @@
       "descriptionHi": "इस अध्याय में भगवान् रामचन्द्र की आराधना और उनके अवतार के उद्देश्य का वर्णन है। किम्पुरुष वर्ष के निवासी भगवान् रामचन्द्र की आराधना करते हैं और उनके भक्तों की रक्षा करते हैं। भगवान् रामचन्द्र की आराधना से मनुष्य को आत्मसमर्पण की क्रिया से प्रसन्न होते हैं।",
       "generatedAt": "2026-04-11T07:06:08.979Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 83,
+      "chapterTitle": "Chapter बीस",
+      "imagePath": "chapter-083.jpg",
+      "prompt": "Brahma describes the creation of Plaksha Island, surrounded by the Lavana Ocean, to his audience in a serene heavenly setting.",
+      "descriptionHi": "इस अध्याय में ब्रह्मा द्वारा प्लक्षद्वीप से लेकर क्रौंचद्वीप तक के विभिन्न द्वीपों और समुद्रों का वर्णन किया गया है, जो भगवान की महिमा को दर्शाता है। यह अध्याय ब्रह्माण्ड की रचना और उसके विभिन्न भागों का विस्तृत वर्णन प्रस्तुत करता है।",
+      "personasUsed": [
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T07:16:56.758Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T07:06:08.979Z"
+  "lastUpdated": "2026-04-11T07:16:56.758Z"
 }
