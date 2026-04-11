@@ -858,7 +858,16 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T06:56:50.310Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 82,
+      "chapterTitle": "Chapter उन्नीस",
+      "imagePath": "chapter-082.jpg",
+      "prompt": "Lord Rama, accompanied by Hanuman, is worshiped by the inhabitants of Kimpurusha Varsha, who are blessed to serve the divine avatar.",
+      "descriptionHi": "इस अध्याय में भगवान् रामचन्द्र की आराधना और उनके अवतार के उद्देश्य का वर्णन है। किम्पुरुष वर्ष के निवासी भगवान् रामचन्द्र की आराधना करते हैं और उनके भक्तों की रक्षा करते हैं। भगवान् रामचन्द्र की आराधना से मनुष्य को आत्मसमर्पण की क्रिया से प्रसन्न होते हैं।",
+      "generatedAt": "2026-04-11T07:06:08.979Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T06:56:50.310Z"
+  "lastUpdated": "2026-04-11T07:06:08.979Z"
 }
