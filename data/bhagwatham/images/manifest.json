@@ -933,7 +933,16 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T17:51:56.560Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 93,
+      "chapterTitle": "Chapter दस",
+      "imagePath": "chapter-093.jpg",
+      "prompt": "Dadhichi Muni hands over his body to Indra amidst a serene landscape, facilitating the creation of a powerful weapon to aid the gods in their battle against Vritraasur.",
+      "descriptionHi": "देवताओं तथा वृत्रासुर के मध्य युद्ध की कहानी इस अध्याय में वर्णित है, जिसमें दधीचि मुनि का शरीर प्राप्त करने के लिए इन्द्र द्वारा एक महत्वपूर्ण भूमिका निभाई जाती है। दधीचि मुनि अपना शरीर त्यागने से पहले धर्म के विषय में देवताओं से सुनना चाहते थे।",
+      "generatedAt": "2026-04-11T18:11:46.890Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T18:04:02.267Z"
+  "lastUpdated": "2026-04-11T18:11:46.890Z"
 }
