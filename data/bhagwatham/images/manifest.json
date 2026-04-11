@@ -1107,7 +1107,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T22:35:52.090Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 116,
+      "chapterTitle": "Chapter दो",
+      "imagePath": "chapter-116.jpg",
+      "prompt": "Gajendra, surrounded by his wives, prays to Lord Krishna for protection from a giant crocodile in a serene lake amidst the beautiful Ritumat garden on Trikuta Mountain.",
+      "descriptionHi": "गजेन्द्र अपनी पत्नियों सहित जलविहार कर रहा था, जब एक घड़ियाल ने उस पर आक्रमण किया और गजेन्द्र ने भगवान् के चरणकमलों पर आत्मसमर्पण कर दिया। यह घटना चतुर्थ मनु के राज्यकाल में हुई थी। गजेन्द्र की भक्ति और भगवान् की कृपा का यह एक अद्भुत उदाहरण है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T23:18:19.442Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T22:35:52.090Z"
+  "lastUpdated": "2026-04-11T23:18:19.442Z"
 }
