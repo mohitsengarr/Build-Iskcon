@@ -1051,7 +1051,21 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T20:33:07.948Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 109,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-109.jpg",
+      "prompt": "Narada comforts Kayadhu at his ashram, ensuring the unborn Prahlad's safety.",
+      "descriptionHi": "इस अध्याय में प्रह्लाद महाराज अपने असुर सहपाठियों को बताते हैं कि कैसे उन्होंने गर्भ में रहते हुए नारद मुनि के उपदेश सुने थे। नारद मुनि ने कयाधु को आश्रम में रखा और गर्भस्थ बालक की रक्षा के लिए प्रार्थना की।",
+      "personasUsed": [
+        "narada",
+        "prahlada"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T20:39:09.468Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T20:33:07.948Z"
+  "lastUpdated": "2026-04-11T20:39:09.468Z"
 }
