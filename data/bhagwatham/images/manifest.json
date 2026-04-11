@@ -601,7 +601,20 @@
       "descriptionHi": "महाराज ध्रुव का क्रोध शान्त हो गया और उन्होने यक्षो का वध करना पूरी तरह बन्द कर दिया, जिसे जानकर धनपति कुबेर प्रसन्न हुए और ध्रुव से मिले। इस अध्याय में ध्रुव और कुबेर के बीच एक महत्वपूर्ण मुलाकात होती है।",
       "generatedAt": "2026-04-11T00:30:54.914Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 55,
+      "chapterTitle": "Chapter तेरह",
+      "imagePath": "chapter-055.jpg",
+      "prompt": "Vidura asks Maitreya about Dhruva's descendants in a serene forest setting, seeking spiritual enlightenment.",
+      "descriptionHi": "इस अध्याय में विदुर और मैत्रेय के बीच ध्रुव महाराज के वंशजों की कथा का वर्णन किया गया है, जिसमें विदुर का भक्तिभाव बढ़ता है और वह मैत्रेय से प्रश्न पूछते हैं। यह अध्याय भगवान और उनके भक्तों के कार्यकलापों की मोहकता को दर्शाता है।",
+      "personasUsed": [
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T02:53:41.355Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T00:30:54.914Z"
+  "lastUpdated": "2026-04-11T02:53:41.355Z"
 }
