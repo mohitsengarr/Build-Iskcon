@@ -627,7 +627,21 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T02:57:47.961Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 57,
+      "chapterTitle": "Chapter पन्द्रह",
+      "imagePath": "chapter-057.jpg",
+      "prompt": "Vidura and Vishnu witness the birth of a divine couple from King Vena's arms in a serene forest setting.",
+      "descriptionHi": "मैत्रेय ऋषि ने बताया कि राजा वेन के मृत शरीर की बाहुओं का मंथन करने से एक स्त्री और एक पुरुष का जोड़ा उत्पन्न हुआ, जो भगवान विष्णु का विस्तार था। यह घटना ऋषियों को अत्यधिक प्रसन्न करती है।",
+      "personasUsed": [
+        "vishnu",
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T03:01:54.533Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T02:57:47.961Z"
+  "lastUpdated": "2026-04-11T03:01:54.533Z"
 }
