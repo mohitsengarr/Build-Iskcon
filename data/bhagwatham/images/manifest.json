@@ -752,7 +752,21 @@
       "descriptionHi": "इस अध्याय में भगवान् शिव की स्तुति और उनकी महिमा का वर्णन किया गया है, जिसमें प्राचीनबर्हि के पुत्रों का भगवान् शिव से मिलन और शिवजी द्वारा स्तुति किया जाना मुख्य घटनाएं हैं। भगवान् शिव को परम प्रिय और सर्वत्र व्याप्त बताया गया है।",
       "generatedAt": "2026-04-11T05:47:49.181Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 70,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-070.jpg",
+      "prompt": "King Parikshit questions Shukadeva in a palace, seeking clarity on Maharaj Priyavrat's journey towards spiritual enlightenment.",
+      "descriptionHi": "महाराज प्रियव्रत का चरित्र इस अध्याय में बताया गया है, जिसमें वे राजसी ऐश्वर्य को भोगते हैं और फिर पूर्ण ज्ञान को प्राप्त करते हैं। राजा परीक्षित इस कथा को सुनकर आश्चर्यचकित होते हैं और शुकदेव गोस्वामी से इसके विषय में प्रश्न करते हैं।",
+      "personasUsed": [
+        "shukadeva",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T05:51:50.616Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T05:47:49.181Z"
+  "lastUpdated": "2026-04-11T05:51:50.616Z"
 }
