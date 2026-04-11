@@ -898,7 +898,20 @@
       "descriptionHi": "इस अध्याय में पापी मनुष्यों के नारकीय लोकों में जाने का वर्णन किया गया है, जहाँ यमदूत उन्हें दण्ड देते हैं। यह अध्याय प्रकृति के नियमों के वश में रहने और अज्ञानतावश अपने को स्वतंत्र मानने की समस्या को उजागर करता है।",
       "generatedAt": "2026-04-11T08:17:27.603Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 86,
+      "chapterTitle": "Chapter दो",
+      "imagePath": "chapter-086.jpg",
+      "prompt": "Vishnu's messengers intervene, freeing Ajamil from Yamadutas on the riverbank, citing his devotion to the Lord's holy name.",
+      "descriptionHi": "विष्णुदूतों ने अजामिल का उद्धार किया क्योंकि उसने भगवान् के पवित्र नाम का उच्चारण किया था। यह घटना अजामिल के जीवन में एक महत्वपूर्ण मोड़ बन गई। विष्णुदूतों ने यमदूतों को समझाया कि अजामिल अब दण्डनीय नहीं है।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T16:44:52.491Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T08:17:27.603Z"
+  "lastUpdated": "2026-04-11T16:44:52.491Z"
 }
