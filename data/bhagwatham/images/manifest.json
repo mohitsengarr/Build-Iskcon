@@ -1160,7 +1160,21 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T23:39:12.607Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 120,
+      "chapterTitle": "Chapter छह",
+      "imagePath": "chapter-120.jpg",
+      "prompt": "Brahma and other gods stand before Vishnu, who appears before them in his divine form, as they offer praises and seek his blessings.",
+      "descriptionHi": "इस अध्याय में देवताओं और असुरों द्वारा सन्धि की घोषणा की जाती है, जिसमें भगवान् विष्णु देवताओं की स्तुति से प्रसन्न होकर उनके समक्ष प्रकट होते हैं। ब्रह्माजी भगवान् की स्तुति करते हैं और उनके दिव्य स्वरूप का वर्णन करते हैं।",
+      "personasUsed": [
+        "vishnu",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T23:48:24.794Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T23:39:12.607Z"
+  "lastUpdated": "2026-04-11T23:48:24.794Z"
 }
