@@ -942,7 +942,20 @@
       "descriptionHi": "देवताओं तथा वृत्रासुर के मध्य युद्ध की कहानी इस अध्याय में वर्णित है, जिसमें दधीचि मुनि का शरीर प्राप्त करने के लिए इन्द्र द्वारा एक महत्वपूर्ण भूमिका निभाई जाती है। दधीचि मुनि अपना शरीर त्यागने से पहले धर्म के विषय में देवताओं से सुनना चाहते थे।",
       "generatedAt": "2026-04-11T18:11:46.890Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 96,
+      "chapterTitle": "Chapter तेरह",
+      "imagePath": "chapter-096.jpg",
+      "prompt": "Indra, filled with regret, flees to the mystical lake, seeking refuge under the protection of Goddess Lakshmi, with Lord Vishnu's guidance.",
+      "descriptionHi": "इस अध्याय में राजा इन्द्र द्वारा वृत्रासुर के वध के बाद उत्पन्न भय और पश्चाताप का वर्णन किया गया है, जिसमें भगवान् विष्णु की कृपा से उसकी रक्षा होती है। यह अध्याय ब्राह्मण-हत्या जैसे पाप के परिणामों और महान् पुरुषों के स्वभाव को दर्शाता है।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T18:29:13.522Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T18:28:49.551Z"
+  "lastUpdated": "2026-04-11T18:29:13.522Z"
 }
