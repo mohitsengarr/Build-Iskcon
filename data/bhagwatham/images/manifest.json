@@ -806,7 +806,20 @@
       "descriptionHi": "ब्राह्मण जड़ भरत राजा रहूगण को संसार रूपी जंगल का अलंकारिक वर्णन करते हैं, जिसमें मनुष्य उलझ जाता है। उन्होंने बताया कि यह जंगल लुटेरों और हिंस्र पशुओं से भरा है, जो मनुष्य की शक्ति का शोषण करना चाहते हैं।",
       "generatedAt": "2026-04-11T06:30:16.345Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 77,
+      "chapterTitle": "Chapter चौदह",
+      "imagePath": "chapter-077.jpg",
+      "prompt": "A devotee navigates a dense forest, seeking spiritual enlightenment amidst life's challenges, with Lord Krishna guiding them.",
+      "descriptionHi": "इस अध्याय में भौतिक जगत को एक विकट वन के रूप में वर्णित किया गया है, जहां जीव प्रभु की शुद्धता की तलाश में आते हैं। यहाँ वन मार्ग संकटों से घिरे रहते हैं और जीव को अपने लाभ के लिए संघर्ष करना पड़ता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T06:32:49.558Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T06:30:16.346Z"
+  "lastUpdated": "2026-04-11T06:32:49.558Z"
 }
