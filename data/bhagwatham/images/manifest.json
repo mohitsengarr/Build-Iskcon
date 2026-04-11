@@ -570,7 +570,16 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T00:15:46.433Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 52,
+      "chapterTitle": "Chapter दस",
+      "imagePath": "chapter-052.jpg",
+      "prompt": "Dhruva Maharaj marries Bhrami, daughter of Shishumara, in a serene palace ceremony, surrounded by family and sages, marking a new chapter in his life.",
+      "descriptionHi": "इस अध्याय में ध्रुव महाराज के विवाह का वर्णन है, जिसमें उन्होंने प्रजापति शिशुमार की पुत्री भ्रमि से विवाह किया और उनके दो पुत्र कल्प और वत्सर हुए। यह अध्याय आत्म-साक्षात्कार के महत्व को दर्शाता है।",
+      "generatedAt": "2026-04-11T00:24:41.083Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T00:15:46.433Z"
+  "lastUpdated": "2026-04-11T00:24:41.083Z"
 }
