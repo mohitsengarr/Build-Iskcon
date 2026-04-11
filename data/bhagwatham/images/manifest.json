@@ -775,7 +775,20 @@
       "descriptionHi": "महाराज आग्नीध्र के चरित्र का वर्णन किया गया है, जिन्होंने जम्बूद्वीप का शासन किया और भगवान् ब्रह्मा की आज्ञा से पूर्वचित्ति नामक स्वर्ग की एक कन्या से विवाह किया। यह अध्याय आग्नीध्र के जीवन और उनके नौ पुत्रों के विवाह के बारे में बताता है।",
       "generatedAt": "2026-04-11T05:54:47.439Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 72,
+      "chapterTitle": "Chapter तीन",
+      "imagePath": "chapter-072.jpg",
+      "prompt": "Lord Vishnu appears before King Nabhii in his four-armed form, granting his wish for a son in the presence of his wife Merudevi.",
+      "descriptionHi": "महाराज नाभि ने पुत्रेच्छा से भगवान् विष्णु की आराधना की और भगवान् ने राजा नाभि की पत्नी मेरुदेवी के गर्भ से ऋषभदेव के अवतार के रूप में जन्म लेना स्वीकार किया। इस अध्याय में भगवान् विष्णु की कृपा और महाराज नाभि की भक्ति का वर्णन किया गया है।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T06:00:30.495Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T05:54:47.439Z"
+  "lastUpdated": "2026-04-11T06:00:30.495Z"
 }
