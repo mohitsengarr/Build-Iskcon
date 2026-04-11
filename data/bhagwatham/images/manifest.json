@@ -663,7 +663,16 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T03:15:17.655Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 60,
+      "chapterTitle": "Chapter अठारह",
+      "imagePath": "chapter-060.jpg",
+      "prompt": "King Prithu and the Earth engage in a serene dialogue, as the Earth attempts to calm the king's anger.",
+      "descriptionHi": "इस अध्याय में राजा पृथु और पृथ्वी के बीच का संवाद वर्णित है, जहां पृथ्वी राजा पृथु को समझाने का प्रयास करती है और उन्हें अपना क्रोध शांत करने के लिए कहती है। मैत्रेय यह संवाद विदुर को सुना रहे हैं।",
+      "generatedAt": "2026-04-11T03:27:09.904Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T03:15:17.656Z"
+  "lastUpdated": "2026-04-11T03:27:09.904Z"
 }
