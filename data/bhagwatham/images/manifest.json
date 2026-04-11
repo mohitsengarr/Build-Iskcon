@@ -681,7 +681,20 @@
       "descriptionHi": "राजा पृथु ने ब्रह्मावर्त में एक सौ अश्वमेध यज्ञ किए, जिससे इन्द्र ईर्ष्या से भर गया। यह अध्याय ईर्ष्या और आत्म-संतुष्टि के विषय में बताता है। राजा पृथु के यज्ञ ने इन्द्र को चुनौती दी",
       "generatedAt": "2026-04-11T03:33:57.727Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 62,
+      "chapterTitle": "Chapter बीस",
+      "imagePath": "chapter-062.jpg",
+      "prompt": "Lord Vishnu appears at King Prithu's yagna site with Indra, urging the king to forgive him.",
+      "descriptionHi": "महाराज पृथु के यज्ञस्थल में भगवान् विष्णु का प्राकट्य होता है, जहाँ वे राजा इन्द्र के साथ मिलकर उसे क्षमा करने के लिए कहते हैं। यह अध्याय भगवान् विष्णु की कृपा और राजा पृथु की भक्ति को दर्शाता है।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T03:42:25.028Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T03:33:57.727Z"
+  "lastUpdated": "2026-04-11T03:42:25.028Z"
 }
