@@ -832,7 +832,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T06:48:58.530Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 80,
+      "chapterTitle": "Chapter सत्रह",
+      "imagePath": "chapter-080.jpg",
+      "prompt": "Lord Vishnu approaches Bali Maharaja as he performs a yajna, surrounded by an aura of serenity and devotion.",
+      "descriptionHi": "इस अध्याय में गंगा नदी के उद्गम का वर्णन किया गया है, जिसमें भगवान विष्णु के चतुर्भुज रूप के अंश संकर्षण के प्रति शिव की वन्दना भी शामिल है। भगवान विष्णु बलि महाराज के पास पहुँचे जब वे यज्ञ में तल्लीन थे।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T06:50:02.012Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T06:48:58.531Z"
+  "lastUpdated": "2026-04-11T06:50:02.012Z"
 }
