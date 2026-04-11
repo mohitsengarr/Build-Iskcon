@@ -650,7 +650,20 @@
       "descriptionHi": "महाराज पृथु की विनम्रता से भरी बातें सुनकर गायक अत्यधिक प्रसन्न हुए और उन्होंने ऋषियों द्वारा दिये गये आदेशों के अनुसार राजा की भूरि-भूरि प्रशंसा करने लगे। राजा पृथु को भगवान् के अवतार के रूप में समझने के लिए सूत, मागध तथा बन्दीजनों ने ऋषियों तथा विद्वान् ब्राह्मणों के द्वारा दिये आदेशों का पालन किया।",
       "generatedAt": "2026-04-11T03:04:50.048Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 59,
+      "chapterTitle": "Chapter सत्रह",
+      "imagePath": "chapter-059.jpg",
+      "prompt": "Vidura in a grand ancient Indian palace setting, ornate golden architecture, sacred atmosphere, warm golden light, wide cinematic landscape",
+      "descriptionHi": "महाराज पृथु का पृथ्वी पर कुपित होना",
+      "personasUsed": [
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T03:15:17.655Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T03:04:50.048Z"
+  "lastUpdated": "2026-04-11T03:15:17.656Z"
 }
