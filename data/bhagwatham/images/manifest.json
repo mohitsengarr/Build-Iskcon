@@ -1023,7 +1023,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T20:03:50.560Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 107,
+      "chapterTitle": "अध्याय पढ़ना चाहिए। इसकी पुष्टि स्कन्द पुराण के अवन्ती खण्ड में की गई है। इसी प्रकार एक अन्य",
+      "imagePath": "chapter-107.jpg",
+      "prompt": "Vishnu blesses his devotees on a serene riverbank as they recite the Vishnu Sahasra Nama.",
+      "descriptionHi": "इस अध्याय में विष्णु सहस्र नाम का पाठ करने के महत्व का वर्णन किया जाता है, जो सभी अपराधों से मुक्ति दिला सकता है। विष्णु इस पाठ के माध्यम से अपने भक्तों को आशीर्वाद देते हैं।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T20:25:08.369Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T20:15:35.993Z"
+  "lastUpdated": "2026-04-11T20:25:08.369Z"
 }
