@@ -1065,7 +1065,21 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T20:39:09.468Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 110,
+      "chapterTitle": "Chapter आठ",
+      "imagePath": "chapter-110.jpg",
+      "prompt": "Lord Narasimha appears before Hiranyakashipu, saving Prahlad Maharaj in a dramatic divine intervention.",
+      "descriptionHi": "भगवान् नृसिंह ने हिरण्यकशिपु का वध किया, जो अपने पुत्र प्रह्लाद महाराज को मारने के लिए तैयार था। यह घटना प्रह्लाद महाराज के उपदेशों का पालन करने से असुरों के सारे पुत्र भगवान् विष्णु के प्रति अनुरक्त हो जाने के कारण हुई।",
+      "personasUsed": [
+        "prahlada",
+        "narasimha"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T21:12:43.420Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T20:39:09.468Z"
+  "lastUpdated": "2026-04-11T21:12:43.420Z"
 }
