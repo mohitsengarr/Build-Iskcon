@@ -614,7 +614,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T02:53:41.355Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 56,
+      "chapterTitle": "Chapter चौदह",
+      "imagePath": "chapter-056.jpg",
+      "prompt": "Maitreya tells Vidura about King Vena's story amidst a serene forest setting.",
+      "descriptionHi": "महर्षि मैत्रेय ने विदुर को राजा वेन की कथा सुनाई, जिसमें भृगु इत्यादि ऋषि लोगों के कल्याण के लिए चिन्तन करते थे। राजा अंग की अनुपस्थिति में जनता के हितों की रक्षा करनेवाला कोई नहीं रह गया था।",
+      "personasUsed": [
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T02:57:47.961Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T02:53:41.355Z"
+  "lastUpdated": "2026-04-11T02:57:47.961Z"
 }
