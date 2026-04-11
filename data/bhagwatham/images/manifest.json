@@ -1146,7 +1146,21 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T23:32:40.445Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 119,
+      "chapterTitle": "Chapter पाँच",
+      "imagePath": "chapter-119.jpg",
+      "prompt": "Brahma and the demigods approach Vishnu on the shore of the Kshirodak sea to pray for protection from the asuras.",
+      "descriptionHi": "इस अध्याय में पाँचवे और छठे मनु का वर्णन है, साथ ही देवताओं की स्तुतियों और दुर्वासा मुनि के शाप का भी वर्णन है। देवता असुरों से परास्त होकर ब्रह्मा के पास जाते हैं और फिर विष्णu की स्तुति करते हैं।",
+      "personasUsed": [
+        "vishnu",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T23:39:12.607Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T23:32:40.445Z"
+  "lastUpdated": "2026-04-11T23:39:12.607Z"
 }
