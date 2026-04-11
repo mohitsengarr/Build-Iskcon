@@ -880,7 +880,16 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T07:16:56.758Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 84,
+      "chapterTitle": "Chapter चौबीस",
+      "imagePath": "chapter-084.jpg",
+      "prompt": "Rahu eclipses the sun, casting a shadow on the lower celestial realms, where asuras and rakshasas reside in darkness illuminated only by serpent jewels.",
+      "descriptionHi": "इस अध्याय में नीचे के स्वर्गीय लोकों का वर्णन किया गया है, जिनमें राहु ग्रह, अतल, सिद्धों के लोक और अन्य निम्न लोक शामिल हैं। इन लोकों में असुर और राक्षसगण वास करते हैं और सूर्य का प्रकाश नहीं पहुँचता।",
+      "generatedAt": "2026-04-11T07:29:24.123Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T07:16:56.758Z"
+  "lastUpdated": "2026-04-11T07:29:24.123Z"
 }
