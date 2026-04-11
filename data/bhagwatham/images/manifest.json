@@ -911,7 +911,16 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T16:44:52.491Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 90,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-090.jpg",
+      "prompt": "Indra offends his guru Brihaspati, who then abandons the gods, in the heavenly palace of Indra.",
+      "descriptionHi": "इस अध्याय में स्वर्ग के राजा इन्द्र द्वारा अपने गुरु बृहस्पति का अपमान किया जाना बताया गया है, जिससे बृहस्पति ने देवताओं का परित्याग कर दिया। मुख्य पात्र इन्द्र, बृहस्पति और विश्वरूप हैं।",
+      "generatedAt": "2026-04-11T17:44:46.306Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T17:42:18.760Z"
+  "lastUpdated": "2026-04-11T17:44:46.306Z"
 }
