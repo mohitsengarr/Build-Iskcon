@@ -920,7 +920,20 @@
       "descriptionHi": "इस अध्याय में स्वर्ग के राजा इन्द्र द्वारा अपने गुरु बृहस्पति का अपमान किया जाना बताया गया है, जिससे बृहस्पति ने देवताओं का परित्याग कर दिया। मुख्य पात्र इन्द्र, बृहस्पति और विश्वरूप हैं।",
       "generatedAt": "2026-04-11T17:44:46.306Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 91,
+      "chapterTitle": "Chapter आठ",
+      "imagePath": "chapter-091.jpg",
+      "prompt": "Vishnu imparts the Narayana-kavach mantra to Indra, who seeks protection against the asuras in a serene heavenly setting.",
+      "descriptionHi": "इस अध्याय में नारायण-कवच का वर्णन हुआ है, जिसमें विष्णु-मंत्र का जीवन में महत्व बताया गया है। स्वर्ग के राजा इन्द्र ने इसका उपयोग असुरों पर विजय प्राप्त करने के लिए किया। विष्णु-मंत्र के द्वारा रक्षा प्राप्त करने की विशेष विधि भी बताई गई है।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T17:51:56.560Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T17:44:46.306Z"
+  "lastUpdated": "2026-04-11T17:51:56.560Z"
 }
