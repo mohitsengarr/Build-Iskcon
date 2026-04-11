@@ -766,7 +766,16 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T05:51:50.616Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 71,
+      "chapterTitle": "Chapter दो",
+      "imagePath": "chapter-071.jpg",
+      "prompt": "King Agnidhra meets Purvachitti, a heavenly maiden, in a cave on Mount Mandara, and they exchange gentle, loving glances.",
+      "descriptionHi": "महाराज आग्नीध्र के चरित्र का वर्णन किया गया है, जिन्होंने जम्बूद्वीप का शासन किया और भगवान् ब्रह्मा की आज्ञा से पूर्वचित्ति नामक स्वर्ग की एक कन्या से विवाह किया। यह अध्याय आग्नीध्र के जीवन और उनके नौ पुत्रों के विवाह के बारे में बताता है।",
+      "generatedAt": "2026-04-11T05:54:47.439Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T05:51:50.616Z"
+  "lastUpdated": "2026-04-11T05:54:47.439Z"
 }
