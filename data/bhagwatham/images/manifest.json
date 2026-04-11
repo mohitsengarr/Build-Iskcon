@@ -1133,7 +1133,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T23:20:50.024Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 118,
+      "chapterTitle": "Chapter चार",
+      "imagePath": "chapter-118.jpg",
+      "prompt": "Vishnu rescues Gajendra from the crocodile's grasp on the riverbank, freeing him from the curse.",
+      "descriptionHi": "गजेन्द्र का वैकुण्ठ गमन इस अध्याय में वर्णित है, जिसमें गजेन्द्र और घड़ियाल के पूर्व जन्मों का वर्णन है। भगवान् विष्णु की कृपा से गजेन्द्र को सारूप्य मुक्ति प्राप्त हुई।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T23:32:40.445Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T23:20:50.024Z"
+  "lastUpdated": "2026-04-11T23:32:40.445Z"
 }
