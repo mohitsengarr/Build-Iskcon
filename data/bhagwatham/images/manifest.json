@@ -730,7 +730,29 @@
       "descriptionHi": "ध्रुव महाराज ने अपने अपमान के बाद राजमहल का परित्याग किया और वनगमन किया, जहाँ उन्हें अपने जीवन का सही मार्ग मिलेगा। इस अध्याय में ब्रह्मा का उल्लेख भी है। ध्रुव महाराज की यह यात्रा उनके आध्यात्मिक जीवन की शुरुआत है।",
       "generatedAt": "2026-04-11T05:39:13.644Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 68,
+      "chapterTitle": "अध्याय बीस",
+      "imagePath": "chapter-068.jpg",
+      "prompt": "Vishnu appears at King Prithu's yajna site, teaching him and expressing delight at his character amidst a serene gathering.",
+      "descriptionHi": "इस अध्याय में भगवान् विष्णु का राजा पृथु के यज्ञस्थल में प्राकट्य होता है, जहां वे राजा पृथु को उपदेश देते हैं और उनके चरित्र से प्रसन्न होते हैं। यह अध्याय भक्ति और आध्यात्मिक ज्ञान के महत्व को दर्शाता है।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T05:47:31.803Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 69,
+      "chapterTitle": "अध्याय चौबीस",
+      "imagePath": "chapter-069.jpg",
+      "prompt": "Lord Shiva meets Prachetasons on a serene riverbank, surrounded by lush greenery, and engages in a heartfelt conversation.",
+      "descriptionHi": "इस अध्याय में भगवान् शिव की स्तुति और उनकी महिमा का वर्णन किया गया है, जिसमें प्राचीनबर्हि के पुत्रों का भगवान् शिव से मिलन और शिवजी द्वारा स्तुति किया जाना मुख्य घटनाएं हैं। भगवान् शिव को परम प्रिय और सर्वत्र व्याप्त बताया गया है।",
+      "generatedAt": "2026-04-11T05:47:49.181Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T05:39:13.644Z"
+  "lastUpdated": "2026-04-11T05:47:49.181Z"
 }
