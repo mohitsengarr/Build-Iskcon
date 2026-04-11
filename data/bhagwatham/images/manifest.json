@@ -556,7 +556,21 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-10T23:38:04.035Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 51,
+      "chapterTitle": "अध्याय नौ",
+      "imagePath": "chapter-051.jpg",
+      "prompt": "Vidura and Vishnu are present as Vishnu, on Garuda, visits Dhruva in the divine forest of Madhuvan.",
+      "descriptionHi": "महाराज ध्रुव के घर लौटने की कहानी में, मैत्रेय मुनि विदुर को बताते हैं कि भगवान विष्णु ने देवताओं को आश्वस्त किया और फिर गरुड़ पर सवार होकर मधुवन गए। इस प्रकार, भगवान की दिव्य यात्रा का वर्णन किया गया है।",
+      "personasUsed": [
+        "vishnu",
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T00:15:46.433Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T00:10:29.781Z"
+  "lastUpdated": "2026-04-11T00:15:46.433Z"
 }
