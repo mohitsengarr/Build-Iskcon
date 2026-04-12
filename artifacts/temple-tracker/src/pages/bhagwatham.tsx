@@ -1238,7 +1238,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
               <div key={i} className={isContinuation ? "" : "mt-3"}>
                 {sec.lines.map((l, j) => (
                   <p key={j} className={`text-[14px] sm:text-[15px] leading-[2] mb-1 ${t.text}`} style={{ fontFamily: "var(--font-devanagari)" }}>
-                    {j === 0 && !isContinuation && <><span className="font-bold italic">तात्पर्य :</span>{" "}</>}
+                    {j === 0 && !isContinuation && <><span className="font-bold">तात्पर्य :</span>{" "}</>}
                     {l}
                   </p>
                 ))}
