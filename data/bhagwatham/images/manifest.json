@@ -1592,7 +1592,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T08:12:51.181Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 164,
+      "chapterTitle": "Chapter पन्द्रह",
+      "imagePath": "chapter-164.jpg",
+      "prompt": "Krishna and Balaram play with friends in a serene forest near a calm lake, surrounded by lush greenery and vibrant flowers.",
+      "descriptionHi": "इस अध्याय में कृष्ण और बलराम द्वारा धेनुकासुर का वध वर्णित है, जो वृन्दावन की चरागाहों में गायों को चराते समय हुआ। यह घटना व्रजवासियों के लिए बहुत महत्वपूर्ण थी क्योंकि इससे उन्हें ताल वृक्ष के फल खाने का अवसर मिला।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T08:24:04.644Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T08:12:51.181Z"
+  "lastUpdated": "2026-04-12T08:24:04.644Z"
 }
