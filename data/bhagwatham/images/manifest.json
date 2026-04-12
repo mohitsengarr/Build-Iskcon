@@ -1310,7 +1310,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T02:53:31.286Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 135,
+      "chapterTitle": "Chapter चौबीस",
+      "imagePath": "chapter-135.jpg",
+      "prompt": "Lord Vishnu as Matsya avatar guides King Satyavrata on a boat amidst a massive flood.",
+      "descriptionHi": "भगवान् के मत्स्यावतार के वर्णन और महाराज सत्यव्रत के एक बाढ़ से बचने का उल्लेख हुआ है, जिसमें भगवान् ने मत्स्यावतार धारण करके वेदों की रक्षा की। यह अध्याय भगवान् की परम नियामक शक्ति का द्योतक है।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T04:01:22.385Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T02:53:31.286Z"
+  "lastUpdated": "2026-04-12T04:01:22.385Z"
 }
