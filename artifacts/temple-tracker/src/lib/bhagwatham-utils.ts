@@ -30,25 +30,77 @@ export interface Section {
 // ── Constants ────────────────────────────────────────────────────────────────
 
 export const HINDI_NUMS: Record<string, number> = {
-  एक: 1, दो: 2, तीन: 3, चार: 4, पाँच: 5, छः: 6, छह: 6,
-  सात: 7, आठ: 8, नौ: 9, दस: 10, ग्यारह: 11, बारह: 12,
-  तेरह: 13, चौदह: 14, पन्द्रह: 15, सोलह: 16, सत्रह: 17,
-  अठारह: 18, उन्नीस: 19, बीस: 20, इक्कीस: 21, बाईस: 22,
-  तेईस: 23, चौबीस: 24, पच्चीस: 25, छब्बीस: 26, सत्ताईस: 27, सताईस: 27,
-  अट्ठाईस: 28, उनतीस: 29, उन्तीस: 29, तीस: 30, इकतीस: 31, इक्तीस: 31,
-  बत्तीस: 32, तैंतीस: 33, चौंतीस: 34, पैंतीस: 35, छत्तीस: 36,
-  सैंतीस: 37, अड़तीस: 38, उनतालीस: 39, चालीस: 40, इकतालीस: 41,
-  बयालीस: 42, तैंतालीस: 43, चवालीस: 44, पैंतालीस: 45, छियालीस: 46, छियालिस: 46,
-  सैंतालीस: 47, अड़तालीस: 48, उनचास: 49, पचास: 50, इक्यावन: 51,
-  बावन: 52, तिरपन: 53, चौवन: 54, पचपन: 55, छप्पन: 56,
-  सत्तावन: 57, अट्ठावन: 58, उनसठ: 59, साठ: 60, इकसठ: 61,
-  बासठ: 62, तिरसठ: 63, चौंसठ: 64, पैंसठ: 65, छियासठ: 66,
-  सतसठ: 67, अड़सठ: 68, उनहत्तर: 69, सत्तर: 70, इकहत्तर: 71,
-  बहत्तर: 72, तिहत्तर: 73, चौहत्तर: 74, पचहत्तर: 75, छिहत्तर: 76,
-  सतहत्तर: 77, अठहत्तर: 78, उन्यासी: 79, अस्सी: 80, इक्यासी: 81,
-  बयासी: 82, तिरासी: 83, चौरासी: 84, पिचासी: 85, छियासी: 86,
-  सत्तासी: 87, अट्ठासी: 88, नवासी: 89, नब्बे: 90,
+  // 1–10
+  एक: 1, दो: 2, तीन: 3, चार: 4, पाँच: 5, पांच: 5, छः: 6, छह: 6,
+  सात: 7, आठ: 8, नौ: 9, दस: 10,
+  // 11–20
+  ग्यारह: 11, बारह: 12, तेरह: 13, चौदह: 14, पन्द्रह: 15, पंद्रह: 15,
+  सोलह: 16, सत्रह: 17, अठारह: 18, उन्नीस: 19, बीस: 20,
+  // 21–30
+  इक्कीस: 21, बाईस: 22, तेईस: 23, चौबीस: 24, पच्चीस: 25,
+  छब्बीस: 26, सत्ताईस: 27, सताईस: 27, अट्ठाईस: 28,
+  उनतीस: 29, उन्तीस: 29, तीस: 30,
+  // 31–40
+  इकतीस: 31, इक्तीस: 31, बत्तीस: 32, तैंतीस: 33, चौंतीस: 34,
+  पैंतीस: 35, छत्तीस: 36, सैंतीस: 37, अड़तीस: 38,
+  उनतालीस: 39, चालीस: 40,
+  // 41–50
+  इकतालीस: 41, बयालीस: 42, तैंतालीस: 43, चवालीस: 44,
+  पैंतालीस: 45, छियालीस: 46, छियालिस: 46, सैंतालीस: 47,
+  अड़तालीस: 48, उनचास: 49, पचास: 50,
+  // 51–60
+  इक्यावन: 51, बावन: 52, तिरपन: 53, चौवन: 54, पचपन: 55,
+  छप्पन: 56, सत्तावन: 57, अट्ठावन: 58, उनसठ: 59, साठ: 60,
+  // 61–70
+  इकसठ: 61, बासठ: 62, तिरसठ: 63, चौंसठ: 64, पैंसठ: 65,
+  छियासठ: 66, सतसठ: 67, सड़सठ: 67, अड़सठ: 68, उनहत्तर: 69, सत्तर: 70,
+  // 71–80
+  इकहत्तर: 71, बहत्तर: 72, तिहत्तर: 73, चौहत्तर: 74, पचहत्तर: 75,
+  छिहत्तर: 76, सतहत्तर: 77, अठहत्तर: 78, उन्यासी: 79, उनासी: 79, अस्सी: 80,
+  // 81–90
+  इक्यासी: 81, बयासी: 82, तिरासी: 83, चौरासी: 84, पिचासी: 85, पचासी: 85,
+  छियासी: 86, सत्तासी: 87, अट्ठासी: 88, नवासी: 89, नब्बे: 90,
+  // 91–99
+  इक्यानवे: 91, इक्यानबे: 91, बानवे: 92, बानबे: 92,
+  तिरानवे: 93, तिरानबे: 93, चौरानवे: 94, चौरानबे: 94,
+  पचानवे: 95, पचानबे: 95, छियानवे: 96, छियानबे: 96,
+  सत्तानवे: 97, सत्तानबे: 97, अट्ठानवे: 98, अट्ठानबे: 98,
+  निन्यानवे: 99, निन्यानबे: 99,
+  // 100 (standalone)
+  सौ: 100,
 };
+
+/** Hindi hundred-multiplier words → multiplier value */
+const HINDI_HUNDREDS: Record<string, number> = {
+  एक: 100, दो: 200, तीन: 300, चार: 400, पाँच: 500, पांच: 500,
+};
+
+/**
+ * Parse a Hindi number string that may be a compound like "एक सौ इक्कीस" (121)
+ * or "दो सौ पचास" (250), or a simple word like "बीस" (20).
+ * Supports values 1–500+.
+ */
+export function parseHindiNumber(text: string): number {
+  const trimmed = text.trim();
+
+  // Try direct lookup first (covers 1–100)
+  if (HINDI_NUMS[trimmed] !== undefined) return HINDI_NUMS[trimmed];
+
+  // Try compound: "<X> सौ [<Y>]" → X*100 + Y
+  const sauMatch = trimmed.match(/^(.+?)\s+सौ(?:\s+(.+))?$/u);
+  if (sauMatch) {
+    const hundredWord = sauMatch[1].trim();
+    const hundredVal = HINDI_HUNDREDS[hundredWord];
+    if (hundredVal) {
+      const remainder = sauMatch[2]?.trim();
+      if (!remainder) return hundredVal; // "दो सौ" → 200
+      const unit = HINDI_NUMS[remainder];
+      if (unit !== undefined) return hundredVal + unit; // "दो सौ पचास" → 250
+    }
+  }
+
+  return 0; // not recognized
+}
 
 // Match chapter headings: "Chapter <anything>" or "अध्याय <any-hindi-word-or-digit>"
 export const CHAPTER_RE = /^(?:Chapter\s+\S|अध्याय\s+(?:[\u0900-\u097F]+|\d+))/iu;
@@ -109,16 +161,29 @@ export function cleanOcrText(text: string): string {
 }
 
 export function extractChapterNum(line: string): number {
+  // 1. OCR fixes take priority
   for (const [key, fix] of Object.entries(OCR_CHAPTER_FIXES)) {
     if (line.includes(key) || line.includes(fix.label)) return fix.num;
   }
+
+  // 2. Try compound Hindi number parser (handles "एक सौ इक्कीस" = 121, etc.)
+  //    Extract the number portion after "अध्याय" or "Chapter"
+  const afterHeading = line.replace(/^(?:अध्याय|Chapter)\s*/iu, "").trim();
+  if (afterHeading) {
+    const compound = parseHindiNumber(afterHeading);
+    if (compound > 0) return compound;
+  }
+
+  // 3. Simple Hindi word lookup (fallback for lines without heading prefix)
   for (const [word, num] of Object.entries(HINDI_NUMS)) {
     if (line.includes(word)) return num;
   }
+
+  // 4. Arabic digit fallback
   const numMatch = line.match(/\d+/);
   if (numMatch) {
     const n = parseInt(numMatch[0], 10);
-    if (n > 0 && n <= 100) return n;
+    if (n > 0 && n <= 500) return n;
   }
   return 0;
 }

@@ -236,25 +236,66 @@ function sbFetch(path: string, opts?: RequestInit) {
 }
 
 const HINDI_NUMS: Record<string, number> = {
-  एक: 1, दो: 2, तीन: 3, चार: 4, पाँच: 5, छः: 6, छह: 6,
-  सात: 7, आठ: 8, नौ: 9, दस: 10, ग्यारह: 11, बारह: 12,
-  तेरह: 13, चौदह: 14, पन्द्रह: 15, सोलह: 16, सत्रह: 17,
-  अठारह: 18, उन्नीस: 19, बीस: 20, इक्कीस: 21, बाईस: 22,
-  तेईस: 23, चौबीस: 24, पच्चीस: 25, छब्बीस: 26, सत्ताईस: 27, सताईस: 27,
-  अट्ठाईस: 28, उनतीस: 29, उन्तीस: 29, तीस: 30, इकतीस: 31, इक्तीस: 31,
-  बत्तीस: 32, तैंतीस: 33, चौंतीस: 34, पैंतीस: 35, छत्तीस: 36,
-  सैंतीस: 37, अड़तीस: 38, उनतालीस: 39, चालीस: 40, इकतालीस: 41,
-  बयालीस: 42, तैंतालीस: 43, चवालीस: 44, पैंतालीस: 45, छियालीस: 46, छियालिस: 46,
-  सैंतालीस: 47, अड़तालीस: 48, उनचास: 49, पचास: 50, इक्यावन: 51,
-  बावन: 52, तिरपन: 53, चौवन: 54, पचपन: 55, छप्पन: 56,
-  सत्तावन: 57, अट्ठावन: 58, उनसठ: 59, साठ: 60, इकसठ: 61,
-  बासठ: 62, तिरसठ: 63, चौंसठ: 64, पैंसठ: 65, छियासठ: 66,
-  सतसठ: 67, अड़सठ: 68, उनहत्तर: 69, सत्तर: 70, इकहत्तर: 71,
-  बहत्तर: 72, तिहत्तर: 73, चौहत्तर: 74, पचहत्तर: 75, छिहत्तर: 76,
-  सतहत्तर: 77, अठहत्तर: 78, उन्यासी: 79, अस्सी: 80, इक्यासी: 81,
-  बयासी: 82, तिरासी: 83, चौरासी: 84, पिचासी: 85, छियासी: 86,
-  सत्तासी: 87, अट्ठासी: 88, नवासी: 89, नब्बे: 90,
+  // 1–10
+  एक: 1, दो: 2, तीन: 3, चार: 4, पाँच: 5, पांच: 5, छः: 6, छह: 6,
+  सात: 7, आठ: 8, नौ: 9, दस: 10,
+  // 11–20
+  ग्यारह: 11, बारह: 12, तेरह: 13, चौदह: 14, पन्द्रह: 15, पंद्रह: 15,
+  सोलह: 16, सत्रह: 17, अठारह: 18, उन्नीस: 19, बीस: 20,
+  // 21–30
+  इक्कीस: 21, बाईस: 22, तेईस: 23, चौबीस: 24, पच्चीस: 25,
+  छब्बीस: 26, सत्ताईस: 27, सताईस: 27, अट्ठाईस: 28,
+  उनतीस: 29, उन्तीस: 29, तीस: 30,
+  // 31–40
+  इकतीस: 31, इक्तीस: 31, बत्तीस: 32, तैंतीस: 33, चौंतीस: 34,
+  पैंतीस: 35, छत्तीस: 36, सैंतीस: 37, अड़तीस: 38,
+  उनतालीस: 39, चालीस: 40,
+  // 41–50
+  इकतालीस: 41, बयालीस: 42, तैंतालीस: 43, चवालीस: 44,
+  पैंतालीस: 45, छियालीस: 46, छियालिस: 46, सैंतालीस: 47,
+  अड़तालीस: 48, उनचास: 49, पचास: 50,
+  // 51–60
+  इक्यावन: 51, बावन: 52, तिरपन: 53, चौवन: 54, पचपन: 55,
+  छप्पन: 56, सत्तावन: 57, अट्ठावन: 58, उनसठ: 59, साठ: 60,
+  // 61–70
+  इकसठ: 61, बासठ: 62, तिरसठ: 63, चौंसठ: 64, पैंसठ: 65,
+  छियासठ: 66, सतसठ: 67, सड़सठ: 67, अड़सठ: 68, उनहत्तर: 69, सत्तर: 70,
+  // 71–80
+  इकहत्तर: 71, बहत्तर: 72, तिहत्तर: 73, चौहत्तर: 74, पचहत्तर: 75,
+  छिहत्तर: 76, सतहत्तर: 77, अठहत्तर: 78, उन्यासी: 79, उनासी: 79, अस्सी: 80,
+  // 81–90
+  इक्यासी: 81, बयासी: 82, तिरासी: 83, चौरासी: 84, पिचासी: 85, पचासी: 85,
+  छियासी: 86, सत्तासी: 87, अट्ठासी: 88, नवासी: 89, नब्बे: 90,
+  // 91–99
+  इक्यानवे: 91, इक्यानबे: 91, बानवे: 92, बानबे: 92,
+  तिरानवे: 93, तिरानबे: 93, चौरानवे: 94, चौरानबे: 94,
+  पचानवे: 95, पचानबे: 95, छियानवे: 96, छियानबे: 96,
+  सत्तानवे: 97, सत्तानबे: 97, अट्ठानवे: 98, अट्ठानबे: 98,
+  निन्यानवे: 99, निन्यानबे: 99,
+  // 100 (standalone)
+  सौ: 100,
 };
+
+const HINDI_HUNDREDS: Record<string, number> = {
+  एक: 100, दो: 200, तीन: 300, चार: 400, पाँच: 500, पांच: 500,
+};
+
+/** Parse compound Hindi numbers like "एक सौ इक्कीस" → 121 or simple "बीस" → 20 */
+function parseHindiNumber(text: string): number {
+  const trimmed = text.trim();
+  if (HINDI_NUMS[trimmed] !== undefined) return HINDI_NUMS[trimmed];
+  const sauMatch = trimmed.match(/^(.+?)\s+सौ(?:\s+(.+))?$/u);
+  if (sauMatch) {
+    const hundredVal = HINDI_HUNDREDS[sauMatch[1].trim()];
+    if (hundredVal) {
+      const remainder = sauMatch[2]?.trim();
+      if (!remainder) return hundredVal;
+      const unit = HINDI_NUMS[remainder];
+      if (unit !== undefined) return hundredVal + unit;
+    }
+  }
+  return 0;
+}
 
 // Match chapter headings: "Chapter <anything>" or "अध्याय <any-hindi-word-or-digit>"
 const CHAPTER_RE = /^(?:Chapter\s+\S|अध्याय\s+(?:[\u0900-\u097F]+|\d+))/iu;
@@ -335,19 +376,25 @@ function cleanOcrText(text: string): string {
 }
 
 function extractChapterNum(line: string): number {
-  // Check OCR fixes first
+  // 1. OCR fixes take priority
   for (const [key, fix] of Object.entries(OCR_CHAPTER_FIXES)) {
     if (line.includes(key) || line.includes(fix.label)) return fix.num;
   }
-  // Check Hindi number words before digits (to avoid matching page numbers in mangled text)
+  // 2. Try compound Hindi number parser ("एक सौ इक्कीस" = 121)
+  const afterHeading = line.replace(/^(?:अध्याय|Chapter)\s*/iu, "").trim();
+  if (afterHeading) {
+    const compound = parseHindiNumber(afterHeading);
+    if (compound > 0) return compound;
+  }
+  // 3. Simple Hindi word lookup (fallback)
   for (const [word, num] of Object.entries(HINDI_NUMS)) {
     if (line.includes(word)) return num;
   }
+  // 4. Arabic digit fallback
   const numMatch = line.match(/\d+/);
   if (numMatch) {
     const n = parseInt(numMatch[0], 10);
-    // Sanity check: chapter numbers should be reasonable (1-100), not OCR page numbers
-    if (n > 0 && n <= 100) return n;
+    if (n > 0 && n <= 500) return n;
   }
   return 0;
 }
@@ -1317,40 +1364,44 @@ function Sidebar({
                     const isExpanded = expandedCantos.has(skandh);
                     const hasActiveChapter = chs.some(ch => ch.globalNumber === activeChapter);
                     return (
-                    <div key={skandh} className="border-b border-stone-100 last:border-b-0">
+                    <div key={skandh}>
                       <button
                         onClick={() => toggleCanto(skandh)}
-                        className={`w-full px-4 py-3 flex items-center justify-between sticky top-0 backdrop-blur-sm z-[5] transition-all cursor-pointer group ${
+                        className={`w-full px-3 py-2.5 flex items-center justify-between sticky top-0 z-[5] transition-all cursor-pointer group ${
                           hasActiveChapter
-                            ? "bg-orange-50/95 border-l-3 border-orange-500"
-                            : "bg-white/95 hover:bg-orange-50/40"
+                            ? "bg-gradient-to-r from-orange-600 to-orange-500 shadow-md"
+                            : "bg-gradient-to-r from-stone-700 to-stone-600 hover:from-stone-600 hover:to-stone-500"
                         }`}
                       >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
-                            hasActiveChapter ? "bg-orange-500 text-white" : "bg-stone-100 text-stone-500 group-hover:bg-orange-100 group-hover:text-orange-600"
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black shrink-0 ${
+                            hasActiveChapter
+                              ? "bg-white/25 text-white ring-2 ring-white/40"
+                              : "bg-white/15 text-white/90 group-hover:bg-white/25"
                           }`}>
                             {skandh}
                           </div>
                           <div className="min-w-0">
-                            <p className={`text-xs font-bold truncate ${hasActiveChapter ? "text-orange-700" : "text-stone-600 group-hover:text-stone-800"}`}>
+                            <p className="text-sm font-bold text-white truncate">
                               Canto {skandh}
                             </p>
                             {SKANDH_NAMES[skandh] && (
-                              <p className={`text-[10px] truncate ${hasActiveChapter ? "text-orange-500" : "text-stone-400"}`}>
+                              <p className={`text-[11px] truncate ${hasActiveChapter ? "text-orange-100" : "text-stone-300"}`}>
                                 {SKANDH_NAMES[skandh]}
                               </p>
                             )}
                           </div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className={`text-[10px] ${hasActiveChapter ? "text-orange-400" : "text-stone-400"}`}>
-                            {chs.length} ch
+                          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                            hasActiveChapter ? "bg-white/20 text-white" : "bg-white/10 text-stone-300"
+                          }`}>
+                            {chs.length}
                           </span>
                           {isExpanded ? (
-                            <ChevronUp className={`w-3.5 h-3.5 ${hasActiveChapter ? "text-orange-400" : "text-stone-400"}`} />
+                            <ChevronUp className="w-4 h-4 text-white/70" />
                           ) : (
-                            <ChevronDown className={`w-3.5 h-3.5 ${hasActiveChapter ? "text-orange-400" : "text-stone-400"}`} />
+                            <ChevronDown className="w-4 h-4 text-white/70" />
                           )}
                         </div>
                       </button>
