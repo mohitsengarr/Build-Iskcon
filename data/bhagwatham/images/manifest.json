@@ -1368,7 +1368,20 @@
       "descriptionHi": "इस अध्याय में महाराज अम्बरीष की भक्ति के कारण सुदर्शन चक्र दुर्वासा मुनि पर कृपालु होता है और उनकी जान बच जाती है। महाराज अम्बरीष और दुर्वासा मुनि इस घटना के मुख्य पात्र हैं। इस घटना का महत्व वैष्णवों की उपेक्षा का गर्हित विचार त्यागने में है।",
       "generatedAt": "2026-04-12T04:19:41.826Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 141,
+      "chapterTitle": "Chapter छह",
+      "imagePath": "chapter-141.jpg",
+      "prompt": "Shukadeva narrates the story of Saubhari Muni's marriage to Mandhata's daughters in a serene forest setting.",
+      "descriptionHi": "इस अध्याय में महाराज अम्बरीष के वंशजों का वर्णन किया गया है, जिनमें विरूप, केतुमान और शम्भु प्रमुख हैं। सौभरि मुनि ने मान्धाता की पुत्रियों से विवाह किया और यह प्रसंग भी वर्णित किया गया है।",
+      "personasUsed": [
+        "shukadeva"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T04:22:52.300Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T04:19:41.826Z"
+  "lastUpdated": "2026-04-12T04:22:52.300Z"
 }
