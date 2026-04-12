@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { runTempleDiscovery } from "../cron/temple-discovery-cron";
 
 const router = Router();
 
@@ -12,6 +13,16 @@ router.get("/sync/status", (_req, res) => {
     latestJob: null,
     recentJobs: [],
   });
+});
+
+// POST /api/discover-temples — manually trigger temple discovery
+router.post("/discover-temples", async (_req, res) => {
+  try {
+    await runTempleDiscovery();
+    res.json({ success: true, message: "Temple discovery completed" });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err?.message || "Discovery failed" });
+  }
 });
 
 export default router;

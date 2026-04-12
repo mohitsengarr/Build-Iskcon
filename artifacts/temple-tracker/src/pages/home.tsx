@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
@@ -13,7 +13,7 @@ import {
 import {
   ISKCON_STATS, ISKCON_PROGRAMS, ISKCON_REGIONS, TOTAL_CATALOGUED,
 } from "@/data/iskcon-centers";
-import { TEMPLES, TEMPLE_STATS } from "@/data/temples";
+import { TEMPLES, TEMPLE_STATS, fetchLiveTemples, computeStats, type Temple } from "@/data/temples";
 
 // ── Constants ───────────────────────────────────────────────────────────────
 
@@ -282,7 +282,11 @@ function FeaturedProject() {
 // ── Section: Temple Projects ─────────────────────────────────────────────────
 
 function TempleProjectsSection() {
-  const temples = TEMPLES;
+  const [temples, setTemples] = useState<Temple[]>(TEMPLES);
+  useEffect(() => { fetchLiveTemples().then(setTemples); }, []);
+  const liveStats = computeStats(temples);
+  const liveTotalNeeded = liveStats.totalFundraisingGoal - liveStats.totalFundraisingRaised;
+  const countries = new Set(temples.map(t => { const parts = t.location.split(","); return parts[parts.length - 1]?.trim(); }).filter(Boolean));
   const urgentTemples = [...temples]
     .filter((t) => t.id !== 1 && t.status !== "consecrated" && t.fundraisingGoal > 0) // exclude TOVP (shown as featured)
     .sort((a, b) => (b.constructionProgress) - (a.constructionProgress))
@@ -293,7 +297,7 @@ function TempleProjectsSection() {
       <motion.div variants={fadeInUp}>
         <p className="text-primary font-sans text-xs uppercase tracking-[0.2em] font-bold mb-3">Active Sites Worldwide</p>
         <h2 className="font-serif text-2xl sm:text-3xl font-black text-on-surface">How Many ISKCON Temples Are Under Construction?</h2>
-        <p className="text-sm text-on-surface-variant mt-2 max-w-2xl">{temples.length} sacred projects across 11 countries need your support. ${(totalNeeded / 1_000_000).toFixed(0)}M is still needed to complete them all. Pick the one that moves your heart — every rupee counts.</p>
+        <p className="text-sm text-on-surface-variant mt-2 max-w-2xl">{temples.length} sacred projects across {countries.size} countries need your support. ${(liveTotalNeeded / 1_000_000).toFixed(0)}M is still needed to complete them all. Pick the one that moves your heart — every rupee counts.</p>
       </motion.div>
 
       {/* Global Map */}
@@ -342,7 +346,7 @@ function TempleProjectsSection() {
                   <td className="py-3 pr-4 text-right font-bold text-primary text-xs sm:text-sm">{pct}%</td>
                   <td className="py-3 pr-4 text-right text-on-surface-variant hidden sm:table-cell">${gap}M</td>
                   <td className="py-3 text-center">
-                    <a href={t.donateUrl || "https://www.iskcon.org/donate"} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:text-primary/80 transition-colors">
+                    <a href={t.donateUrl || "https://tovp.org/donate/"} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:text-primary/80 transition-colors">
                       <Heart className="w-3 h-3" /> Give
                     </a>
                   </td>
@@ -358,7 +362,7 @@ function TempleProjectsSection() {
         <h3 className="font-serif text-xl font-bold text-on-surface mb-6">Projects That Need Your Help Most</h3>
         <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {urgentTemples.map((temple, idx) => {
-            const donateUrl = temple.donateUrl || "https://www.iskcon.org/donate";
+            const donateUrl = temple.donateUrl || "https://tovp.org/donate/";
             const pct = temple.fundraisingGoal > 0 ? Math.round((temple.fundraisingRaised / temple.fundraisingGoal) * 100) : 0;
             const gap = Math.max(0, (temple.fundraisingGoal - temple.fundraisingRaised) / 1_000_000).toFixed(1);
             const c = STATUS_CFG[temple.status] ?? STATUS_CFG.planning;
@@ -469,7 +473,7 @@ function SevaSection() {
               <p className="text-[10px] text-on-surface-variant font-semibold">{currency !== "INR" ? formatSevaAmount(tier.baseINR, "INR") : formatSevaAmount(tier.baseINR, "USD")} approx.</p>
             </div>
             <p className="text-xs text-on-surface-variant leading-relaxed flex-1">{tier.desc}</p>
-            <a href="https://www.iskcon.org/donate" target="_blank" rel="noopener noreferrer">
+            <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer">
               <button className="w-full py-2.5 bg-primary/10 text-primary rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-primary hover:text-on-primary transition-colors">
                 Give {formatSevaAmount(tier.baseINR, currency)}
               </button>

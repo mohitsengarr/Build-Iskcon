@@ -75,7 +75,7 @@ export function Layout({ children }: { children: ReactNode }) {
           {/* Trailing Controls */}
           <div className="flex items-center gap-1 sm:gap-3">
             <a
-              href="https://www.iskcon.org/donate"
+              href="https://tovp.org/donate/"
               target="_blank"
               rel="noopener noreferrer"
               className="hidden sm:inline-flex items-center bg-primary text-on-primary px-4 py-2 rounded-lg font-bold text-xs tracking-wide hover:bg-primary/90 transition-all active:scale-95"
@@ -139,7 +139,7 @@ export function Layout({ children }: { children: ReactNode }) {
           Choose a Project
         </a>
         <a
-          href="https://www.iskcon.org/donate"
+          href="https://tovp.org/donate/"
           target="_blank"
           rel="noopener noreferrer"
           className="border-2 border-primary/40 text-primary py-3 rounded-xl font-bold text-sm tracking-wide text-center hover:bg-primary/5 transition-all active:scale-95"
@@ -167,7 +167,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
           <div className="flex flex-col gap-3">
             <span className="font-sans text-[10px] uppercase tracking-[0.15em] font-bold text-primary mb-1">Give</span>
-            <a href="https://www.iskcon.org/donate" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-primary text-xs font-medium transition-colors">Donate to ISKCON</a>
+            <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-primary text-xs font-medium transition-colors">Donate to ISKCON</a>
             <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-primary text-xs font-medium transition-colors">Donate to TOVP</a>
           </div>
           <div className="flex flex-col gap-3">

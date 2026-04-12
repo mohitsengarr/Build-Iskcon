@@ -42,7 +42,7 @@ test.describe("Landing Page", () => {
     await page.waitForLoadState("networkidle");
 
     // At least one donate link should be visible (hero on desktop, sticky bar on mobile)
-    const donateLinks = page.locator("a[href='https://www.iskcon.org/donate']");
+    const donateLinks = page.locator("a[href='https://tovp.org/donate/']");
     const count = await donateLinks.count();
     expect(count).toBeGreaterThan(0);
 
@@ -98,7 +98,7 @@ test.describe("Navigation", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    const navDonate = page.locator("nav a[href='https://www.iskcon.org/donate']");
+    const navDonate = page.locator("nav a[href='https://tovp.org/donate/']");
     await expect(navDonate).toBeVisible({ timeout: 10_000 });
   });
 

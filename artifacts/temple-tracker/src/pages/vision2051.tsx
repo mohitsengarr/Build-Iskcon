@@ -713,7 +713,7 @@ export default function Vision2051() {
                 Choose a Project
               </Link>
               <a
-                href="https://www.iskcon.org/donate"
+                href="https://tovp.org/donate/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="border-2 border-primary/40 text-primary px-8 py-3 rounded-xl font-bold text-sm tracking-wide hover:bg-primary/5 transition-all active:scale-95"
@@ -921,7 +921,7 @@ export default function Vision2051() {
               Choose a Project
             </Link>
             <a
-              href="https://www.iskcon.org/donate"
+              href="https://tovp.org/donate/"
               target="_blank"
               rel="noopener noreferrer"
               className="border-2 border-primary/40 text-primary font-bold px-8 py-3 rounded-xl hover:bg-primary/5 transition-all active:scale-95"

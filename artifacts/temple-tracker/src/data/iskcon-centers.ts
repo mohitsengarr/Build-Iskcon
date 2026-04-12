@@ -176,7 +176,7 @@ export const ISKCON_REGIONS: IskconRegion[] = [
   {
     name: "Global Digital Platforms",
     centers: [
-      { name: "ISKCON.org (Global Official Website)", city: "Global", country: "Global", website: "https://iskcon.org", donateUrl: "https://iskcon.org/donate", insight: "Central ISKCON website managed by the GBC; global events directory and news." },
+      { name: "ISKCON.org (Global Official Website)", city: "Global", country: "Global", website: "https://iskcon.org", donateUrl: "https://tovp.org/donate/", insight: "Central ISKCON website managed by the GBC; global events directory and news." },
       { name: "Temple of the Vedic Planetarium (TOVP)", city: "Mayapur, India", country: "India", website: "https://tovp.org", donateUrl: "https://tovp.org/donate", insight: "Srila Prabhupada's most cherished project; among the largest religious structures being built globally." },
       { name: "ISKCON Desire Tree", city: "Global (Digital)", country: "Global", website: "https://iskcondesiretree.com", donateUrl: "https://iskcondesiretree.com/donate", insight: "Largest online ISKCON resource; 108M+ TV households via Hare Krsna channel; 29.7M+ YouTube subscribers." },
       { name: "ISKCON Centres Directory", city: "Global (Digital)", country: "Global", website: "https://centres.iskcon.org", donateUrl: null, insight: "Official global directory for locating any ISKCON center worldwide with map and search." },

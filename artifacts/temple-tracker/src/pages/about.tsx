@@ -406,7 +406,7 @@ function CTASection() {
           View Temple Projects
         </Link>
         <a
-          href="https://www.iskcon.org/donate"
+          href="https://tovp.org/donate/"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 border-2 border-primary/30 text-primary px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary/5 transition-all active:scale-95"

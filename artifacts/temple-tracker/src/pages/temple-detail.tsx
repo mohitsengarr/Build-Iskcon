@@ -114,7 +114,7 @@ export default function TempleDetail() {
           </div>
 
           <div className="relative z-10 flex flex-col sm:flex-row gap-3">
-            <a href={(temple as any).donateUrl || "https://www.iskcon.org/donate"} target="_blank" rel="noopener noreferrer">
+            <a href={(temple as any).donateUrl || "https://tovp.org/donate/"} target="_blank" rel="noopener noreferrer">
               <button className="bg-primary text-on-primary px-8 py-3.5 rounded-xl font-bold text-lg hover:shadow-[0_6px_24px_rgba(27,28,28,0.12)] hover:bg-primary/90 transition-all active:scale-95 cursor-pointer flex items-center gap-2">
                 <Heart className="w-5 h-5" />
                 Support Project
@@ -202,7 +202,7 @@ export default function TempleDetail() {
 
           {/* Donation & QR Panel — full width */}
           {(() => {
-            const donateUrl = (temple as any).donateUrl || "https://www.iskcon.org/donate";
+            const donateUrl = (temple as any).donateUrl || "https://tovp.org/donate/";
             const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&bgcolor=FFFBF5&color=A0612B&data=${encodeURIComponent(donateUrl)}`;
             const gapM = Math.max(0, (temple.fundraisingGoal - temple.fundraisingRaised) / 1_000_000).toFixed(1);
             const SEVA = [

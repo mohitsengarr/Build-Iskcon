@@ -247,3 +247,64 @@ export const TEMPLE_STATS = {
   templesByStatus,
   recentUpdates: [] as unknown[],
 };
+
+// ── Supabase live data ──────────────────────────────────────────────────────
+
+const SUPABASE_URL = "https://etfmndcrchundvgtvmot.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0Zm1uZGNyY2h1bmR2Z3R2bW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2NDE1MTIsImV4cCI6MjA2MzIxNzUxMn0.7GXS820xSFcUy2TRdbspN7s-NP3sgKFFtUP-Zw0Qbrs";
+
+/** Fetch temples from Supabase (live data). Falls back to static TEMPLES on error. */
+export async function fetchLiveTemples(): Promise<Temple[]> {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/discovered_temples?select=*&order=id.asc`,
+      {
+        headers: {
+          apikey: SUPABASE_ANON,
+          Authorization: `Bearer ${SUPABASE_ANON}`,
+        },
+      },
+    );
+    if (!res.ok) return TEMPLES;
+    const rows = await res.json();
+    if (!Array.isArray(rows) || rows.length === 0) return TEMPLES;
+
+    return rows.map((r: any, i: number) => ({
+      id: r.id || i + 1,
+      name: r.name,
+      location: r.location,
+      deity: r.deity || "Sri Sri Radha Krishna",
+      description: r.description || "",
+      status: r.status || "construction",
+      phase: r.phase || "",
+      constructionProgress: Number(r.construction_progress) || 0,
+      fundraisingGoal: Number(r.fundraising_goal) || 0,
+      fundraisingRaised: Number(r.fundraising_raised) || 0,
+      startDate: r.start_date || "",
+      expectedCompletion: r.expected_completion || "",
+      projectLead: r.project_lead || "",
+      coverImage: r.cover_image || null,
+      donateUrl: r.donate_url || null,
+      latitude: r.latitude ? Number(r.latitude) : null,
+      longitude: r.longitude ? Number(r.longitude) : null,
+    }));
+  } catch {
+    return TEMPLES;
+  }
+}
+
+export function computeStats(temples: Temple[]) {
+  const activeStatuses2 = ["planning", "construction", "finishing"];
+  const active2 = temples.filter((t) => activeStatuses2.includes(t.status));
+  const byStatus: Record<string, number> = {};
+  for (const t of temples) byStatus[t.status] = (byStatus[t.status] || 0) + 1;
+  return {
+    totalTemples: temples.length,
+    activeProjects: active2.length,
+    totalFundraisingGoal: temples.reduce((s, t) => s + t.fundraisingGoal, 0),
+    totalFundraisingRaised: temples.reduce((s, t) => s + t.fundraisingRaised, 0),
+    averageProgress: temples.length > 0 ? Math.round(temples.reduce((s, t) => s + t.constructionProgress, 0) / temples.length) : 0,
+    templesByStatus: byStatus,
+    recentUpdates: [] as unknown[],
+  };
+}

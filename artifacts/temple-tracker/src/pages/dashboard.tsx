@@ -251,7 +251,7 @@ function ActiveProjectsDonation() {
       ) : (
         <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {urgentTemples.map((temple, idx) => {
-            const donateUrl = temple.donateUrl || "https://www.iskcon.org/donate";
+            const donateUrl = temple.donateUrl || "https://tovp.org/donate/";
             const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&bgcolor=FFFBF5&color=A0612B&data=${encodeURIComponent(donateUrl)}`;
             const pct = temple.fundraisingGoal > 0
               ? Math.round((temple.fundraisingRaised / temple.fundraisingGoal) * 100)
@@ -408,7 +408,7 @@ function SevaOpportunities() {
               )}
             </div>
             <p className="text-xs text-on-surface-variant leading-relaxed flex-1">{tier.desc}</p>
-            <a href="https://www.iskcon.org/donate" target="_blank" rel="noopener noreferrer">
+            <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer">
               <button className="w-full mt-auto py-2 bg-primary/10 text-primary rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-primary hover:text-on-primary transition-colors">
                 Choose Seva
               </button>
@@ -478,7 +478,7 @@ function HowToGive() {
       </motion.div>
 
       <motion.div variants={fadeInUp} className="mt-10 flex flex-col sm:flex-row gap-4">
-        <a href="https://www.iskcon.org/donate" target="_blank" rel="noopener noreferrer">
+        <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer">
           <button className="bg-primary text-on-primary px-8 py-3.5 rounded-xl font-bold text-sm tracking-wide hover:bg-primary/90 transition-colors flex items-center gap-2">
             <Heart className="w-4 h-4" />
             Donate Now

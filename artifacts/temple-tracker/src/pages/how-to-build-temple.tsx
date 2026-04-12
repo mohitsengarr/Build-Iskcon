@@ -216,7 +216,7 @@ export default function HowToBuildTemple() {
             </a>
           </div>
           <a
-            href="https://www.iskcon.org/donate"
+            href="https://tovp.org/donate/"
             target="_blank"
             rel="noopener noreferrer"
             className="hidden sm:inline-flex items-center bg-primary text-on-primary px-4 py-2 rounded-lg font-bold text-xs tracking-wide hover:bg-primary/90 transition-all active:scale-95"
@@ -911,7 +911,7 @@ export default function HowToBuildTemple() {
                   View All Projects <ArrowLeft className="w-4 h-4 rotate-180" />
                 </a>
                 <a
-                  href="https://www.iskcon.org/donate"
+                  href="https://tovp.org/donate/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 border-2 border-primary/40 text-primary px-6 py-3 rounded-xl font-bold text-sm tracking-wide hover:bg-primary/5 transition-all active:scale-95"
@@ -944,7 +944,7 @@ export default function HowToBuildTemple() {
               </div>
               <div className="flex flex-col gap-3">
                 <span className="font-sans text-[10px] uppercase tracking-[0.15em] font-bold text-primary mb-1">Give</span>
-                <a href="https://www.iskcon.org/donate" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-primary text-xs font-medium transition-colors">Donate to ISKCON</a>
+                <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-primary text-xs font-medium transition-colors">Donate to ISKCON</a>
                 <a href="https://tovp.org/donate/" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-primary text-xs font-medium transition-colors">Donate to TOVP</a>
               </div>
             </div>
