@@ -1538,7 +1538,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T07:46:16.954Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 159,
+      "chapterTitle": "Chapter दस",
+      "imagePath": "chapter-159.jpg",
+      "prompt": "Narada encounters Nalakuvara and Manigriva, sons of Kuvera, near a serene lake, where they are indulging in careless behavior, oblivious to the sage's presence.",
+      "descriptionHi": "इस अध्याय में कृष्ण द्वारा यमलार्जुन वृक्षों को गिराने का वर्णन है, जिससे नलकूवर और मणिग्रीव नामक कुवेर के दो पुत्र प्रकट हुए। नारदमुनि के आगमन पर भी वे अपने ऐश्वर्य और मिथ्या प्रतिष्ठा से मदान्ध रहते हैं।",
+      "personasUsed": [
+        "narada"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T07:51:37.896Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T07:46:16.954Z"
+  "lastUpdated": "2026-04-12T07:51:37.896Z"
 }
