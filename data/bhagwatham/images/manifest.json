@@ -1227,7 +1227,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T00:32:33.162Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 126,
+      "chapterTitle": "Chapter बारह",
+      "imagePath": "chapter-126.jpg",
+      "prompt": "Shiva, accompanied by Uma and his servants, approaches Lord Krishna's enchanting Mohini form, offering reverence and admiration.",
+      "descriptionHi": "इस अध्याय में भगवान के मोहिनी-मूर्ति अवतार को देखकर शिवजी मोहित हो जाते हैं और बाद में उन्हें होश आता है। भगवान की लीलाओं को सुनकर शिवजी अपने बैल पर सवार होकर भगवान को देखने जाते हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T02:14:40.030Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T00:32:33.162Z"
+  "lastUpdated": "2026-04-12T02:14:40.030Z"
 }
