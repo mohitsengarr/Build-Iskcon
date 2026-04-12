@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { startBhagwathamCron } from "./cron/bhagwatham-cron";
+import { startInstagramCron } from "./cron/instagram-cron";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -42,6 +43,9 @@ export async function createApp(): Promise<Express> {
 
   // Start Bhagwatham PDF processing cron (every 10 minutes)
   startBhagwathamCron();
+
+  // Start Instagram posting cron (every 6 hours — reverse chapter order)
+  startInstagramCron();
 
   if (IS_DEV) {
     // In development, use Vite's dev server as middleware for HMR + frontend

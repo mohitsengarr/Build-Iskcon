@@ -8,7 +8,9 @@
     "build": "BASE_PATH=/ NODE_ENV=production pnpm --filter @workspace/temple-tracker run build && node ./build.mjs",
     "build:server": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@anthro-ai/krutidev-unicode": "^0.1.0",
@@ -42,6 +44,7 @@
     "pino-pretty": "^13",
     "thread-stream": "3.1.0",
     "tsx": "^4.21.0",
-    "vite": "^7"
+    "vite": "^7",
+    "vitest": "^4.1.4"
   }
 }

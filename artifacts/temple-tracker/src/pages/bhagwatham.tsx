@@ -612,7 +612,7 @@ function getPageEndKind(text: string): string {
 
 // ── Content Renderer ───────────────────────────────────────────────────────────
 
-function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", onRegenerateImages, regeneratingChapters, onDeleteImage, chapterNumMapper, pageNumber, overrides, onOverridesChange, prevPageEndKind }: { text: string; textEn?: string; lang: "hi" | "en"; chapterImages?: Map<number, Array<{ url: string; description: string; sceneIndex?: number }>>; themeKey?: Theme; onRegenerateImages?: (chapterNum: number) => void; regeneratingChapters?: Set<number>; onDeleteImage?: (chapterNum: number, sceneIndex: number) => void; chapterNumMapper?: (perSkandhNum: number) => number; pageNumber?: number; overrides?: SectionOverride[]; onOverridesChange?: (pageNum: number, overrides: SectionOverride[]) => void; prevPageEndKind?: string }) {
+function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", onRegenerateImages, regeneratingChapters, onDeleteImage, chapterNumMapper, pageNumber, overrides, onOverridesChange, prevPageEndKind }: { text: string; textEn?: string; lang: "hi" | "en"; chapterImages?: Map<number, Array<{ url: string; description: string; sceneIndex?: number; isInstagram?: boolean }>>; themeKey?: Theme; onRegenerateImages?: (chapterNum: number) => void; regeneratingChapters?: Set<number>; onDeleteImage?: (chapterNum: number, sceneIndex: number) => void; chapterNumMapper?: (perSkandhNum: number) => number; pageNumber?: number; overrides?: SectionOverride[]; onOverridesChange?: (pageNum: number, overrides: SectionOverride[]) => void; prevPageEndKind?: string }) {
   const t = THEME_STYLES[themeKey];
   // If English selected and translation available, show English as plain text
   if (lang === "en" && textEn) {
@@ -635,17 +635,36 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
       <div className="space-y-4">
         {chapterAnchors.map((ch) => {
           const globalNum = ch.chapterNum && chapterNumMapper ? chapterNumMapper(ch.chapterNum) : ch.chapterNum;
-          const imgs = globalNum ? chapterImages?.get(globalNum) : undefined;
+          const allImgs = globalNum ? chapterImages?.get(globalNum) : undefined;
+          const regularImgs = allImgs?.filter(img => !img.isInstagram);
+          const igImgs = allImgs?.filter(img => img.isInstagram);
           return (
             <div key={globalNum} id={`chapter-${globalNum}`} className="mt-6 mb-4 scroll-mt-20">
               <h3 className={`font-serif text-xl sm:text-2xl font-bold ${t.text} mb-3 pb-2 border-b-2 border-orange-300/50`}>
                 {ch.line}
               </h3>
-              {imgs && imgs.length > 0 && (
+              {regularImgs && regularImgs.length > 0 && (
                 <div className="my-6 flex flex-col gap-5">
-                  {imgs.map((img, idx) => (
+                  {regularImgs.map((img, idx) => (
                     <ImageCard key={idx} img={img} alt={`${ch.line} — दृश्य ${idx + 1}`} />
                   ))}
+                </div>
+              )}
+              {igImgs && igImgs.length > 0 && (
+                <div className="my-6">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider mb-3 text-pink-600/70">Scene Gallery</p>
+                  <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-orange-300/40">
+                    {igImgs.map((img, idx) => (
+                      <div key={idx} className="snap-start shrink-0 w-[200px] sm:w-[240px] rounded-2xl overflow-hidden shadow-lg border border-pink-200/30 bg-white">
+                        <div className="aspect-[4/5] overflow-hidden">
+                          <img src={img.url} alt={`Scene ${idx + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                        </div>
+                        <div className="px-3 py-2">
+                          <p className="text-[10px] text-stone-500 leading-relaxed line-clamp-2">{img.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -992,15 +1011,17 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
         switch (sec.kind) {
           case "chapter": {
             const globalNum = sec.chapterNum && chapterNumMapper ? chapterNumMapper(sec.chapterNum) : sec.chapterNum;
-            const imgs = globalNum ? chapterImages?.get(globalNum) : undefined;
+            const allImgs = globalNum ? chapterImages?.get(globalNum) : undefined;
+            const regularImgs = allImgs?.filter(img => !img.isInstagram);
+            const igImgs = allImgs?.filter(img => img.isInstagram);
             return (
               <div key={i} id={`chapter-${globalNum}`} className="mt-6 mb-4 scroll-mt-20">
                 <h3 className={`text-xl sm:text-2xl font-bold ${t.text} mb-3 pb-2 border-b-2 border-orange-300/50`} style={{ fontFamily: "var(--font-devanagari)" }}>
                   {sec.lines.join(" ")}
                 </h3>
-                {imgs && imgs.length > 0 && (
+                {regularImgs && regularImgs.length > 0 && (
                   <div className="my-6 flex flex-col gap-5">
-                    {imgs.map((img, idx) => (
+                    {regularImgs.map((img, idx) => (
                       <div key={idx} className="relative group">
                         <ImageCard img={img} alt={`${sec.lines.join(" ")} — दृश्य ${idx + 1}`} />
                         {onDeleteImage && globalNum && (
@@ -1014,6 +1035,26 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
                         )}
                       </div>
                     ))}
+                  </div>
+                )}
+                {/* Instagram scene gallery — horizontal scroll */}
+                {igImgs && igImgs.length > 0 && (
+                  <div className="my-6">
+                    <p className={`text-[11px] font-semibold uppercase tracking-wider mb-3 ${themeKey === "dark" ? "text-pink-400/70" : "text-pink-600/70"}`}>
+                      Scene Gallery
+                    </p>
+                    <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-orange-300/40">
+                      {igImgs.map((img, idx) => (
+                        <div key={idx} className="snap-start shrink-0 w-[200px] sm:w-[240px] rounded-2xl overflow-hidden shadow-lg border border-pink-200/30 bg-white">
+                          <div className="aspect-[4/5] overflow-hidden">
+                            <img src={img.url} alt={`Scene ${idx + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                          </div>
+                          <div className="px-3 py-2">
+                            <p className="text-[10px] text-stone-500 leading-relaxed line-clamp-2">{img.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
                 {globalNum && onRegenerateImages && (
@@ -1132,7 +1173,7 @@ function Sidebar({
   onBookmarkDelete,
 }: {
   chapters: ChapterEntry[];
-  chapterImages: Map<number, Array<{ url: string; description: string }>>;
+  chapterImages: Map<number, Array<{ url: string; description: string; isInstagram?: boolean }>>;
   activeChapter: number | null;
   progress: Progress | null;
   isOpen: boolean;
@@ -1293,7 +1334,7 @@ export default function Bhagwatham() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [chapterImages, setChapterImages] = useState<Map<number, Array<{ url: string; description: string }>>>(new Map());
+  const [chapterImages, setChapterImages] = useState<Map<number, Array<{ url: string; description: string; isInstagram?: boolean }>>>(new Map());
   const [sectionOverrides, setSectionOverrides] = useState<PageOverrides>(loadSectionOverrides);
   const handleOverridesChange = useCallback((pageNum: number, newOverrides: SectionOverride[]) => {
     setSectionOverrides(prev => {
@@ -1358,7 +1399,7 @@ export default function Bhagwatham() {
     try {
       const res = await fetch(`${API_BASE}/image-manifest`);
       const manifest: ImageManifest = await res.json();
-      const map = new Map<number, Array<{ url: string; description: string; sceneIndex?: number }>>();
+      const map = new Map<number, Array<{ url: string; description: string; sceneIndex?: number; isInstagram?: boolean }>>();
       for (const img of manifest.images) {
         const cacheBuster = new Date(img.generatedAt).getTime() || Date.now();
         const entry = {
@@ -1384,6 +1425,27 @@ export default function Bhagwatham() {
         existing.push(entry);
         map.set(img.chapterNumber, existing);
       }
+
+      // Also fetch Instagram images and merge
+      try {
+        const igRes = await fetch(`${API_BASE}/instagram/manifest`);
+        const igManifest = await igRes.json();
+        if (igManifest?.images?.length) {
+          for (const igImg of igManifest.images) {
+            const url = igImg.publicUrl || `${API_BASE}/instagram/images/${igImg.imagePath}`;
+            const entry = {
+              sceneIndex: (igImg.sceneIndex ?? 0) + 100, // offset to avoid collisions
+              url,
+              description: igImg.caption?.split("\n")[0] || igImg.prompt || "",
+              isInstagram: true,
+            };
+            const existing = map.get(igImg.chapterNumber) || [];
+            existing.push(entry);
+            map.set(igImg.chapterNumber, existing);
+          }
+        }
+      } catch { /* IG manifest not available yet — fine */ }
+
       setChapterImages(map);
     } catch { /* optional */ }
   }, []);

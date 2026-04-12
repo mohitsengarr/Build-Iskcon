@@ -27,6 +27,13 @@ import {
   resetAudit,
 } from "../services/bhagwatham-audit";
 import { checkAllCredits, getCreditStatuses } from "../services/ai-credit-monitor";
+import {
+  generateInstagramForChapter,
+  queueChapterToBuffer,
+  getInstagramManifest,
+  getInstagramDir,
+  getBufferChannels,
+} from "../services/bhagwatham-instagram";
 
 const router = Router();
 
@@ -530,6 +537,203 @@ router.get("/bhagwatham/credits", async (_req, res) => {
     res.json(statuses);
   } catch (err) {
     res.status(500).json({ error: "Failed to check credits" });
+  }
+});
+
+// ── Instagram image pipeline ─────────────────────────────────────────────────
+
+// Serve Instagram images
+router.use("/bhagwatham/instagram/images", express.static(getInstagramDir(), { maxAge: "7d" }));
+
+// GET /api/bhagwatham/instagram/manifest — list all generated Instagram images
+router.get("/bhagwatham/instagram/manifest", (_req, res) => {
+  try {
+    res.json(getInstagramManifest());
+  } catch (err) {
+    res.status(500).json({ error: "Failed to read Instagram manifest" });
+  }
+});
+
+// POST /api/bhagwatham/instagram/generate/:chapter — generate Instagram images for a chapter
+router.post("/bhagwatham/instagram/generate/:chapter", async (req, res): Promise<void> => {
+  try {
+    const chapterNumber = parseInt(req.params.chapter, 10);
+    if (!chapterNumber) { res.status(400).json({ error: "Invalid chapter number" }); return; }
+
+    const { title, content, queueToBuffer: queue, numScenes, cantoNumber, forceRegenerate } = req.body as {
+      title?: string;
+      content?: string;
+      queueToBuffer?: boolean;
+      numScenes?: number;
+      cantoNumber?: number;
+      forceRegenerate?: boolean;
+    };
+
+    // Try to get chapter info from image manifest if not provided
+    let chapterTitle = title || "";
+    let contentSnippet = content || "";
+
+    if (!chapterTitle || !contentSnippet) {
+      const manifest = getImageManifest();
+      const chImg = manifest.images.find((img) => img.chapterNumber === chapterNumber);
+      if (chImg) {
+        chapterTitle = chapterTitle || chImg.chapterTitle;
+      }
+      if (!contentSnippet) {
+        // Load from batch data
+        const batchFiles = getAllBatches();
+        for (const b of batchFiles) {
+          const batch = getBatch(b.batchNumber);
+          if (batch) {
+            for (const page of batch.pages || []) {
+              if (page.text && page.text.includes(chapterTitle)) {
+                contentSnippet = page.text.substring(0, 2000);
+                break;
+              }
+            }
+          }
+          if (contentSnippet) break;
+        }
+      }
+    }
+
+    if (!chapterTitle) {
+      res.status(400).json({ error: "Chapter title required — provide in body or chapter must exist in manifest" });
+      return;
+    }
+
+    const result = await generateInstagramForChapter(chapterNumber, chapterTitle, contentSnippet, {
+      queueToBuffer: queue,
+      numScenes: numScenes || 4,
+      cantoNumber,
+      forceRegenerate,
+    });
+
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Instagram generation failed" });
+  }
+});
+
+// POST /api/bhagwatham/instagram/queue/:chapter — queue existing images to Buffer
+router.post("/bhagwatham/instagram/queue/:chapter", async (req, res): Promise<void> => {
+  try {
+    const chapterNumber = parseInt(req.params.chapter, 10);
+    if (!chapterNumber) { res.status(400).json({ error: "Invalid chapter number" }); return; }
+
+    const result = await queueChapterToBuffer(chapterNumber);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Buffer queue failed" });
+  }
+});
+
+// POST /api/bhagwatham/instagram/generate-batch — generate Instagram images for all chapters missing them
+router.post("/bhagwatham/instagram/generate-batch", async (req, res) => {
+  try {
+    const { queueToBuffer: queue, limit: maxChapters } = req.body as {
+      queueToBuffer?: boolean;
+      limit?: number;
+    };
+
+    const imageManifest = getImageManifest();
+    const igManifest = getInstagramManifest();
+    const processedChapters = new Set(igManifest.images.map((img) => img.chapterNumber));
+
+    // Find chapters that have chapter images but no Instagram images
+    const chaptersToProcess = imageManifest.images
+      .filter((img) => !processedChapters.has(img.chapterNumber))
+      .slice(0, maxChapters || 5); // Default: process 5 chapters per call
+
+    let totalGenerated = 0;
+    let totalQueued = 0;
+    const results: Array<{ chapter: number; generated: number; queued: number }> = [];
+
+    for (const chImg of chaptersToProcess) {
+      // Get content from batches
+      let contentSnippet = "";
+      const batchFiles = getAllBatches();
+      for (const b of batchFiles) {
+        const batch = getBatch(b.batchNumber);
+        if (batch) {
+          for (const page of batch.pages || []) {
+            if (page.text && page.text.includes(chImg.chapterTitle)) {
+              contentSnippet = page.text.substring(0, 2000);
+              break;
+            }
+          }
+        }
+        if (contentSnippet) break;
+      }
+
+      const result = await generateInstagramForChapter(
+        chImg.chapterNumber,
+        chImg.chapterTitle,
+        contentSnippet,
+        { queueToBuffer: queue, numScenes: 4 },
+      );
+
+      totalGenerated += result.generated;
+      totalQueued += result.queued;
+      results.push({ chapter: chImg.chapterNumber, generated: result.generated, queued: result.queued });
+    }
+
+    res.json({
+      processed: results.length,
+      totalGenerated,
+      totalQueued,
+      remaining: imageManifest.images.length - processedChapters.size - results.length,
+      results,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Batch Instagram generation failed" });
+  }
+});
+
+// GET /api/bhagwatham/instagram/channels — list Buffer channels (to find Instagram channel)
+router.get("/bhagwatham/instagram/channels", async (_req, res) => {
+  try {
+    const channels = await getBufferChannels();
+    res.json({ channels });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Failed to fetch Buffer channels" });
+  }
+});
+
+// ── Instagram Cron Controls ─────────────────────────────────────────────────
+
+import { instagramCronTick } from "../cron/instagram-cron";
+import fs from "fs";
+import path from "path";
+
+const IG_CRON_STATE_FILE = path.resolve(
+  new URL(".", import.meta.url).pathname, "..", "..", "..", "..", "data", "bhagwatham", "instagram", "ig-cron-state.json",
+);
+
+// GET /api/bhagwatham/instagram/cron-status — check cron state
+router.get("/bhagwatham/instagram/cron-status", (_req, res) => {
+  try {
+    if (fs.existsSync(IG_CRON_STATE_FILE)) {
+      res.json(JSON.parse(fs.readFileSync(IG_CRON_STATE_FILE, "utf-8")));
+    } else {
+      res.json({ status: "not started", message: "Cron state file does not exist yet" });
+    }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/bhagwatham/instagram/cron-trigger — manually trigger one tick
+router.post("/bhagwatham/instagram/cron-trigger", async (_req, res): Promise<void> => {
+  try {
+    await instagramCronTick();
+    if (fs.existsSync(IG_CRON_STATE_FILE)) {
+      res.json({ triggered: true, state: JSON.parse(fs.readFileSync(IG_CRON_STATE_FILE, "utf-8")) });
+    } else {
+      res.json({ triggered: true });
+    }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 });
 
