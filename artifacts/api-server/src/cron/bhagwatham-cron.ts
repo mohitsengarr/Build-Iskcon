@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import { processNextBatch, getProgress, backfillEnglishTranslations, recoverStaleProgress } from "../services/bhagwatham-sarvam";
+import { processNextBatch, getProgress, backfillEnglishTranslations, recoverStaleProgress, reprocessEmptyPages } from "../services/bhagwatham-sarvam";
 import { runAuditPass } from "../services/bhagwatham-audit";
 import { checkAllCredits } from "../services/ai-credit-monitor";
 import { logger } from "../lib/logger";
@@ -90,6 +90,26 @@ export function startBhagwathamCron(): void {
       }
     } catch (err) {
       logger.error({ err }, "Audit cron failed unexpectedly");
+    }
+  });
+
+  // ── Re-OCR empty pages cron — fills gaps from failed OCR passes ──────
+  const REOCR_INTERVAL = "17,47 * * * *"; // Every 30 min, offset by 17
+  logger.info({ interval: REOCR_INTERVAL }, "Bhagwatham re-OCR empty pages cron started");
+
+  cron.schedule(REOCR_INTERVAL, async () => {
+    try {
+      const result = await reprocessEmptyPages(10); // Process 10 pages per tick
+      if (result.reprocessed > 0) {
+        logger.info(
+          { reprocessed: result.reprocessed, totalEmpty: result.totalEmpty },
+          `Re-OCR cron: ${result.message}`,
+        );
+      } else if (result.totalEmpty > 0) {
+        logger.info({ totalEmpty: result.totalEmpty }, "Re-OCR cron: no pages recovered this tick");
+      }
+    } catch (err) {
+      logger.error({ err }, "Re-OCR cron failed");
     }
   });
 

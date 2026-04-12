@@ -52,7 +52,7 @@ const HINDI_NUMS: Record<string, number> = {
   छब्बीस: 26, सत्ताईस: 27, सताईस: 27, अट्ठाईस: 28,
   उनतीस: 29, उन्तीस: 29, तीस: 30,
   // 31–40
-  इकतीस: 31, इक्तीस: 31, बत्तीस: 32, तैंतीस: 33, चौंतीस: 34,
+  इकतीस: 31, बत्तीस: 32, तैंतीस: 33, चौंतीस: 34,
   पैंतीस: 35, छत्तीस: 36, सैंतीस: 37, अड़तीस: 38,
   उनतालीस: 39, चालीस: 40,
   // 41–50
@@ -114,6 +114,7 @@ const OCR_CHAPTER_FIXES: Record<string, { num: number; title: string }> = {
   "Chapter छ:": { num: 6, title: "अध्याय छह" },
   "छल्नीस": { num: 26, title: "अध्याय छब्बीस" },
   "अदुईस": { num: 28, title: "अध्याय अट्ठाईस" },
+  "Chapter इक्तीस": { num: 21, title: "अध्याय इक्कीस" }, // OCR "इक्कीस"(21) → "इक्तीस"(looks like 31)
 };
 
 let _chapterIndexCache: ChapterInfo[] | null = null;
@@ -359,18 +360,31 @@ function gitCommitPushDeploy(chapterNumber: number, cantoNumber: number, sceneIn
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 function getChaptersDescending(): number[] {
+  // Use detected chapters from batch data (not just image manifest)
+  // This ensures we generate IG content for ALL 274+ detected chapters
+  const chapterIndex = buildChapterIndex();
+  if (chapterIndex.length > 0) {
+    return chapterIndex.map(c => c.globalNumber).sort((a, b) => b - a);
+  }
+  // Fallback to image manifest if batch data unavailable
   const manifest = getImageManifest();
   const chapters = [...new Set(manifest.images.map((img) => img.chapterNumber))];
   return chapters.sort((a, b) => b - a);
 }
 
 function findChapterContent(chapterNumber: number): { title: string; content: string } | null {
+  // First try chapter index for title
+  const chapters = buildChapterIndex();
+  const chInfo = chapters.find(c => c.globalNumber === chapterNumber);
+
+  // Also try image manifest
   const imgManifest = getImageManifest();
   const chImg = imgManifest.images.find((img) => img.chapterNumber === chapterNumber);
-  if (!chImg) return null;
 
-  let title = chImg.chapterTitle;
-  const descHi = (chImg as any).descriptionHi || "";
+  let title = chInfo?.title || chImg?.chapterTitle || "";
+  if (!title) return null;
+
+  const descHi = (chImg as any)?.descriptionHi || "";
 
   // Add subtitle from description if title doesn't have one
   if (descHi && !title.includes("—")) {
@@ -383,21 +397,23 @@ function findChapterContent(chapterNumber: number): { title: string; content: st
   // Try to load richer content from batches
   let content = "";
   try {
-    const allBatches = getAllBatches();
-    const searchTerm = chImg.chapterTitle.replace(/^Chapter\s+/, "").trim();
-    outer: for (const b of allBatches) {
-      const batch = getBatch(b.batchNumber);
-      if (!batch) continue;
-      for (const page of batch.pages || []) {
-        if (page.text?.includes(searchTerm)) {
-          const lines = page.text.split("\n");
-          const idx = lines.findIndex((l: string) => l.includes(searchTerm));
-          if (idx >= 0) {
-            content = lines.slice(idx, idx + 40).join("\n");
-            const pageIdx = batch.pages.indexOf(page);
-            const next = batch.pages.slice(pageIdx + 1, pageIdx + 4);
-            content += "\n" + next.map((p: any) => p.text).join("\n").substring(0, 2000);
-            break outer;
+    const searchTerm = (chInfo?.title || chImg?.chapterTitle || "").replace(/^Chapter\s+/, "").trim();
+    if (searchTerm) {
+      const allBatches = getAllBatches();
+      outer: for (const b of allBatches) {
+        const batch = getBatch(b.batchNumber);
+        if (!batch) continue;
+        for (const page of batch.pages || []) {
+          if (page.text?.includes(searchTerm)) {
+            const lines = page.text.split("\n");
+            const idx = lines.findIndex((l: string) => l.includes(searchTerm));
+            if (idx >= 0) {
+              content = lines.slice(idx, idx + 40).join("\n");
+              const pageIdx = batch.pages.indexOf(page);
+              const next = batch.pages.slice(pageIdx + 1, pageIdx + 4);
+              content += "\n" + next.map((p: any) => p.text).join("\n").substring(0, 2000);
+              break outer;
+            }
           }
         }
       }
@@ -406,7 +422,7 @@ function findChapterContent(chapterNumber: number): { title: string; content: st
 
   // Fallback to description + prompt
   if (!content || content.length < 50) {
-    content = `${title}\n${descHi}\nScene: ${chImg.prompt || ""}`;
+    content = `${title}\n${descHi}\nScene: ${chImg?.prompt || ""}`;
   }
 
   return { title, content };
@@ -446,9 +462,9 @@ async function instagramCronTick() {
     const currentChapter = state.nextChapter;
     const cantoNumber = getCantoNumber(currentChapter);
 
-    // Skip chapters that don't exist in the image manifest
+    // Skip chapters that don't exist in detected chapters
     if (!chapters.includes(currentChapter)) {
-      logger.info({ currentChapter }, "Chapter not in manifest, skipping backward");
+      logger.info({ currentChapter }, "Chapter not detected, skipping backward");
       state.nextChapter = currentChapter - 1;
       writeState(state);
       isRunning = false;
@@ -472,11 +488,11 @@ async function instagramCronTick() {
         return;
       }
 
-      logger.info({ currentChapter, canto: cantoNumber }, "Generating 3 Instagram scenes");
+      logger.info({ currentChapter, canto: cantoNumber }, "Generating 1 Instagram scene");
       try {
         const result = await generateInstagramForChapter(
           currentChapter, chapterData.title, chapterData.content,
-          { queueToBuffer: false, numScenes: 3, cantoNumber },
+          { queueToBuffer: false, numScenes: 1, cantoNumber },
         );
         scenes = result.images;
         if (scenes.length === 0) {

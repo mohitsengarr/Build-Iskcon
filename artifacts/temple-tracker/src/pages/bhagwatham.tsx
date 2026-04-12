@@ -247,7 +247,7 @@ const HINDI_NUMS: Record<string, number> = {
   छब्बीस: 26, सत्ताईस: 27, सताईस: 27, अट्ठाईस: 28,
   उनतीस: 29, उन्तीस: 29, तीस: 30,
   // 31–40
-  इकतीस: 31, इक्तीस: 31, बत्तीस: 32, तैंतीस: 33, चौंतीस: 34,
+  इकतीस: 31, बत्तीस: 32, तैंतीस: 33, चौंतीस: 34,
   पैंतीस: 35, छत्तीस: 36, सैंतीस: 37, अड़तीस: 38,
   उनतालीस: 39, चालीस: 40,
   // 41–50
@@ -316,6 +316,7 @@ const OCR_CHAPTER_FIXES: Record<string, { num: number; label: string }> = {
   "Chapter छ:": { num: 6, label: "अध्याय छह" },
   "छल्नीस": { num: 26, label: "अध्याय छब्बीस" },
   "अदुईस": { num: 28, label: "अध्याय अट्ठाईस" },
+  "Chapter इक्तीस": { num: 21, label: "अध्याय इक्कीस" }, // OCR "इक्कीस"(21) → "इक्तीस"(looks like 31)
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -1261,6 +1262,7 @@ function Sidebar({
   bookmarks,
   onBookmarkJump,
   onBookmarkDelete,
+  vedabaseTitles,
 }: {
   chapters: ChapterEntry[];
   chapterImages: Map<number, Array<{ url: string; description: string; isInstagram?: boolean }>>;
@@ -1271,6 +1273,7 @@ function Sidebar({
   onChapterClick: (chapter: ChapterEntry) => void;
   bookmarks: BookmarkEntry[];
   onBookmarkJump: (b: BookmarkEntry) => void;
+  vedabaseTitles: Map<string, string>;
   onBookmarkDelete: (b: BookmarkEntry) => void;
 }) {
   const [sidebarTab, setSidebarTab] = useState<"chapters" | "bookmarks">("chapters");
@@ -1440,6 +1443,7 @@ function Sidebar({
                             const imgSrc = chapterImages.get(ch.globalNumber)?.[0]?.url;
                             const shortTitle = ch.title.split("—")[0].trim();
                             const subtitle = ch.title.includes("—") ? ch.title.split("—").slice(1).join("—").trim() : "";
+                            const vedabaseTitle = vedabaseTitles.get(`${skandh}-${ch.number}`) || "";
 
                             return (
                               <button
@@ -1460,7 +1464,10 @@ function Sidebar({
                                   <p className={`text-sm font-semibold truncate ${isActive ? "text-orange-700" : "text-stone-700"}`}>
                                     {shortTitle}
                                   </p>
-                                  {subtitle && (
+                                  {vedabaseTitle && (
+                                    <p className={`text-[11px] truncate mt-0.5 ${isActive ? "text-orange-500" : "text-stone-500"}`}>{vedabaseTitle}</p>
+                                  )}
+                                  {subtitle && !vedabaseTitle && (
                                     <p className="text-[11px] text-stone-400 truncate mt-0.5">{subtitle}</p>
                                   )}
                                   <p className="text-[10px] text-stone-400 mt-0.5">Page {ch.pageNumber}</p>
@@ -1525,6 +1532,7 @@ export default function Bhagwatham() {
   const pageInputRef = useRef<HTMLInputElement>(null);
   const [showResume, setShowResume] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
+  const [vedabaseTitles, setVedabaseTitles] = useState<Map<string, string>>(new Map());
   const PAGES_PER_VIEW = 20;
   const contentRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -1808,6 +1816,12 @@ export default function Bhagwatham() {
   useEffect(() => {
     fetchProgress(); fetchAllContent(); fetchImageManifest();
     if (readerId) fetchBookmarks();
+    // Load Vedabase chapter titles for sidebar
+    fetch(`${API_BASE}/vedabase-chapters.json`).then(r => r.json()).then((data: { cantos: Array<{ number: number; chapters: Array<{ number: number; title: string }> }> }) => {
+      const map = new Map<string, string>();
+      for (const c of data.cantos) for (const ch of c.chapters) map.set(`${c.number}-${ch.number}`, ch.title);
+      setVedabaseTitles(map);
+    }).catch(() => {});
     const interval = setInterval(fetchProgress, 60_000);
     return () => clearInterval(interval);
   }, [fetchProgress, fetchAllContent, fetchImageManifest, fetchBookmarks, readerId]);
@@ -2079,6 +2093,7 @@ export default function Bhagwatham() {
           bookmarks={bookmarks}
           onBookmarkJump={handleBookmarkJump}
           onBookmarkDelete={deleteBookmark}
+          vedabaseTitles={vedabaseTitles}
         />
 
         {/* ── Main content ── */}

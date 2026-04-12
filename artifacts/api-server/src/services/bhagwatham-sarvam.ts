@@ -778,3 +778,99 @@ export async function processNextBatch(): Promise<{
     };
   }
 }
+
+// ── Re-OCR empty pages ────────────────────────────────────────────────────────
+
+/**
+ * Find all pages with empty/near-empty text in existing batches and re-OCR them.
+ * Processes up to `limit` pages per call to avoid overloading the API.
+ */
+export async function reprocessEmptyPages(limit = 20): Promise<{
+  reprocessed: number;
+  totalEmpty: number;
+  message: string;
+}> {
+  const progress = readProgress();
+  const pdfPath = progress.pdfPath;
+  if (!fs.existsSync(pdfPath)) {
+    return { reprocessed: 0, totalEmpty: 0, message: `PDF not found: ${pdfPath}` };
+  }
+
+  // Scan all batch files for empty pages
+  const batchFiles = fs.readdirSync(PAGES_DIR)
+    .filter(f => f.startsWith("batch-") && f.endsWith(".json"))
+    .sort();
+
+  const emptyPages: Array<{ pageNumber: number; batchFile: string; batchIndex: number }> = [];
+
+  for (const bf of batchFiles) {
+    const batch: BatchData = JSON.parse(fs.readFileSync(path.join(PAGES_DIR, bf), "utf-8"));
+    for (let i = 0; i < batch.pages.length; i++) {
+      const page = batch.pages[i];
+      if (!page.text || page.text.trim().length < 10) {
+        emptyPages.push({ pageNumber: page.pageNumber, batchFile: bf, batchIndex: i });
+      }
+    }
+  }
+
+  if (emptyPages.length === 0) {
+    return { reprocessed: 0, totalEmpty: 0, message: "No empty pages found" };
+  }
+
+  logger.info({ totalEmpty: emptyPages.length, limit }, "Found empty pages to reprocess");
+
+  // Process up to `limit` pages
+  const toProcess = emptyPages.slice(0, limit);
+  let reprocessed = 0;
+
+  for (const ep of toProcess) {
+    try {
+      // Convert single PDF page to image
+      const imagePaths = convertPagesToImages(pdfPath, ep.pageNumber, ep.pageNumber);
+      if (imagePaths.length === 0) {
+        logger.warn({ pageNumber: ep.pageNumber }, "No image generated for page");
+        continue;
+      }
+
+      // OCR the page
+      const [page] = await ocrWithSarvam(imagePaths, ep.pageNumber);
+      cleanupTmpImages();
+
+      if (!page || !page.text || page.text.trim().length < 10) {
+        logger.warn({ pageNumber: ep.pageNumber }, "Re-OCR still produced empty text");
+        continue;
+      }
+
+      // Translate if possible
+      const apiKey = process.env.SARVAM_API_KEY;
+      if (apiKey && page.text.length > 30) {
+        try {
+          page.textEn = await translateToEnglish(page.text);
+        } catch { /* non-blocking */ }
+      }
+
+      // Update the batch file
+      const batchPath = path.join(PAGES_DIR, ep.batchFile);
+      const batch: BatchData = JSON.parse(fs.readFileSync(batchPath, "utf-8"));
+      batch.pages[ep.batchIndex] = page;
+      fs.writeFileSync(batchPath, JSON.stringify(batch, null, 2) + "\n");
+
+      // Also sync to public dir
+      const publicBatchDir = path.join(PUBLIC_API_DIR, "batch");
+      const batchNum = parseInt(ep.batchFile.replace("batch-", "").replace(".json", ""), 10);
+      fs.copyFileSync(batchPath, path.join(publicBatchDir, String(batchNum)));
+
+      reprocessed++;
+      logger.info({ pageNumber: ep.pageNumber, textLength: page.text.length }, "Page re-OCR'd successfully");
+    } catch (err) {
+      logger.error({ pageNumber: ep.pageNumber, err }, "Failed to re-OCR page");
+      cleanupTmpImages();
+    }
+  }
+
+  return {
+    reprocessed,
+    totalEmpty: emptyPages.length,
+    message: `Re-OCR'd ${reprocessed}/${toProcess.length} pages (${emptyPages.length - reprocessed} still empty)`,
+  };
+}

@@ -6,6 +6,7 @@ import {
   getBatch,
   processNextBatch,
   backfillEnglishTranslations,
+  reprocessEmptyPages,
 } from "../services/bhagwatham-sarvam";
 import {
   getImageManifest,
@@ -439,6 +440,17 @@ router.post("/bhagwatham/backfill-translations", async (_req, res) => {
     res.json(result);
   } catch (err) {
     res.status(500).json({ success: false, message: "Failed to backfill translations" });
+  }
+});
+
+// POST /api/bhagwatham/reprocess-empty — re-OCR empty pages
+router.post("/bhagwatham/reprocess-empty", async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 20;
+    const result = await reprocessEmptyPages(limit);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Failed to reprocess empty pages" });
   }
 });
 

@@ -102,64 +102,120 @@ function loadAllBatches(): BatchData[] {
   return files.map((f) => JSON.parse(fs.readFileSync(path.join(PAGES_DIR, f), "utf-8")));
 }
 
-/** Find all chapter headings across all batches */
-function findChaptersInBatches(batches: BatchData[]): Map<number, { title: string; contentSnippet: string; pageNumber: number }> {
-  const chapters = new Map<number, { title: string; contentSnippet: string; pageNumber: number }>();
-  const chapterPattern = /^(?:\d+\s+)?(?:Chapter|अध्याय)\s+(.+)/imu;
-  const hindiNums: Record<string, number> = {
-    एक: 1, दो: 2, तीन: 3, चार: 4, पाँच: 5, छः: 6, छह: 6,
-    सात: 7, आठ: 8, नौ: 9, दस: 10, ग्यारह: 11, बारह: 12,
-    तेरह: 13, चौदह: 14, पन्द्रह: 15, सोलह: 16, सत्रह: 17,
-    अठारह: 18, उन्नीस: 19, बीस: 20,
-  };
-  // OCR-mangled chapter headings
-  const OCR_CHAPTER_FIXES: Record<string, { num: number; title: string }> = {
-    "Chapter 278 अध्याय": { num: 8, title: "अध्याय आठ" },
-    "Chapter it": { num: 9, title: "अध्याय नौ" },
-  };
+// ── Full Hindi number map (matches bhagwatham-utils.ts) ─────────────────────
+const HINDI_NUMS: Record<string, number> = {
+  एक:1,दो:2,तीन:3,चार:4,पाँच:5,पांच:5,छः:6,छह:6,सात:7,आठ:8,नौ:9,दस:10,
+  ग्यारह:11,बारह:12,तेरह:13,चौदह:14,पन्द्रह:15,पंद्रह:15,सोलह:16,सत्रह:17,
+  अठारह:18,उन्नीस:19,बीस:20,इक्कीस:21,बाईस:22,तेईस:23,चौबीस:24,पच्चीस:25,
+  छब्बीस:26,सत्ताईस:27,सताईस:27,अट्ठाईस:28,उनतीस:29,उन्तीस:29,तीस:30,
+  इकतीस:31,बत्तीस:32,तैंतीस:33,चौंतीस:34,पैंतीस:35,छत्तीस:36,
+  सैंतीस:37,अड़तीस:38,उनतालीस:39,चालीस:40,इकतालीस:41,बयालीस:42,तैंतालीस:43,
+  चवालीस:44,पैंतालीस:45,छियालीस:46,छियालिस:46,सैंतालीस:47,अड़तालीस:48,
+  उनचास:49,पचास:50,इक्यावन:51,बावन:52,तिरपन:53,चौवन:54,पचपन:55,छप्पन:56,
+  सत्तावन:57,अट्ठावन:58,उनसठ:59,साठ:60,इकसठ:61,बासठ:62,तिरसठ:63,चौंसठ:64,
+  पैंसठ:65,छियासठ:66,सतसठ:67,सड़सठ:67,अड़सठ:68,उनहत्तर:69,सत्तर:70,
+  इकहत्तर:71,बहत्तर:72,तिहत्तर:73,चौहत्तर:74,पचहत्तर:75,छिहत्तर:76,सतहत्तर:77,
+  अठहत्तर:78,उन्यासी:79,उनासी:79,अस्सी:80,इक्यासी:81,बयासी:82,तिरासी:83,
+  चौरासी:84,पिचासी:85,पचासी:85,छियासी:86,सत्तासी:87,अट्ठासी:88,नवासी:89,नब्बे:90,
+  // OCR variants
+  तेइस:23,छियलीस:46,पचीस:25,सत्ताइस:27,
+};
 
-  for (const batch of batches) {
-    for (const page of batch.pages) {
-      const lines = page.text.split("\n");
-      for (let i = 0; i < lines.length; i++) {
-        const trimmed = lines[i].trim();
-        const match = trimmed.match(chapterPattern);
-        if (match && !trimmed.includes("पूर्ण हुए")) {
-          let chapterTitle = match[0].replace(/^\d+\s+/, "").trim();
-          let chapterNum = 0;
+const OCR_CHAPTER_FIXES: Record<string, number> = {
+  "Chapter 278 अध्याय": 8, "Chapter it": 9, "(शुषा दो": 2, "Chapter 3:": 6,
+  "(नौ": 9, "Chapter 36": 8, "Chapter छ:": 6, "छल्नीस": 26, "अदुईस": 28,
+  "Chapter इक्तीस": 21,
+};
 
-          // Check OCR fixes first
-          for (const [key, fix] of Object.entries(OCR_CHAPTER_FIXES)) {
-            if (chapterTitle.includes(key) || trimmed.includes(key)) {
-              chapterNum = fix.num;
-              chapterTitle = fix.title;
-              break;
-            }
-          }
+const CHAPTER_RE = /^(?:Chapter\s+\S+|अध्याय\s+(?:[\u0900-\u097F]+(?:\s+[\u0900-\u097F]+){0,2}|\d+))\s*$/iu;
 
-          if (!chapterNum) {
-            for (const [word, num] of Object.entries(hindiNums)) {
-              if (chapterTitle.includes(word)) { chapterNum = num; break; }
-            }
-          }
-          if (!chapterNum) {
-            const numMatch = chapterTitle.match(/\d+/);
-            if (numMatch) {
-              const n = parseInt(numMatch[0], 10);
-              if (n > 0 && n <= 100) chapterNum = n;
-            }
-          }
+const SKANDH_PAGE_RANGES = [
+  { s: 1, p: 1 }, { s: 2, p: 874 }, { s: 3, p: 1399 }, { s: 4, p: 2617 },
+  { s: 5, p: 3900 }, { s: 6, p: 4540 }, { s: 7, p: 5204 }, { s: 8, p: 5849 },
+  { s: 9, p: 6373 }, { s: 10, p: 7080 }, { s: 11, p: 9059 }, { s: 12, p: 9500 },
+];
 
-          if (chapterNum > 0 && !chapters.has(chapterNum)) {
-            const remainingLines = lines.slice(i + 1, i + 40).join("\n");
-            const contentSnippet = remainingLines.substring(0, 1500);
-            chapters.set(chapterNum, { title: chapterTitle, contentSnippet, pageNumber: page.pageNumber });
-          }
-        }
-      }
+function getSkandh(pageNum: number): number {
+  for (let i = SKANDH_PAGE_RANGES.length - 1; i >= 0; i--) {
+    if (pageNum >= SKANDH_PAGE_RANGES[i].p) return SKANDH_PAGE_RANGES[i].s;
+  }
+  return 1;
+}
+
+function extractChapterNum(line: string): number {
+  for (const [key, num] of Object.entries(OCR_CHAPTER_FIXES)) {
+    if (line.includes(key)) return num;
+  }
+  const after = line.replace(/^(?:अध्याय|Chapter)\s*/iu, "").trim();
+  if (after && HINDI_NUMS[after] !== undefined) return HINDI_NUMS[after];
+  for (const [w, n] of Object.entries(HINDI_NUMS)) {
+    if (line.includes(w)) return n;
+  }
+  const m = line.match(/\d+/);
+  if (m) { const n = parseInt(m[0]); if (n > 0 && n <= 500) return n; }
+  return 0;
+}
+
+function isChapterHeadingAudit(t: string): boolean {
+  const cleaned = t.replace(/^\d+\s+/, "");
+  if (cleaned.length > 60) return false;
+  if (t.includes("पूर्ण हुए") || t.includes("पूर्ण हुआ")) return false;
+  if (CHAPTER_RE.test(cleaned)) return true;
+  for (const key of Object.keys(OCR_CHAPTER_FIXES)) {
+    if (cleaned.includes(key) || t.includes(key)) return true;
+  }
+  return false;
+}
+
+/** Find all chapter headings across all batches — uses skandh-aware detection matching frontend logic */
+function findChaptersInBatches(batches: BatchData[]): Map<number, { title: string; contentSnippet: string; pageNumber: number; skandh: number }> {
+  const allPages = batches.flatMap(b => b.pages).filter(p => p.text && p.text.length >= 20);
+  const chapters: Array<{ number: number; skandh: number; title: string; pageNumber: number }> = [];
+  const lastChapterPerSkandh = new Map<number, number>();
+
+  for (const page of allPages) {
+    const skandh = getSkandh(page.pageNumber);
+    const lines = page.text.split("\n");
+    const headingCount = lines.filter(l => isChapterHeadingAudit(l.trim())).length;
+    if (headingCount >= 2) continue; // TOC page
+
+    for (const line of lines) {
+      const t = line.trim();
+      if (!isChapterHeadingAudit(t)) continue;
+      const num = extractChapterNum(t);
+      if (num <= 0) continue;
+
+      const lastNum = lastChapterPerSkandh.get(skandh) ?? 0;
+      if (num < lastNum && lastNum > 2) continue;
+      if (chapters.find(c => c.number === num && c.skandh === skandh)) continue;
+
+      lastChapterPerSkandh.set(skandh, num);
+      chapters.push({ number: num, skandh, title: t.substring(0, 60), pageNumber: page.pageNumber });
     }
   }
-  return chapters;
+
+  chapters.sort((a, b) => a.skandh !== b.skandh ? a.skandh - b.skandh : a.number - b.number);
+
+  // Build global chapter numbers and return as Map
+  const EXPECTED_PER_CANTO = [19, 10, 33, 31, 26, 19, 15, 24, 24, 90, 31, 13];
+  const result = new Map<number, { title: string; contentSnippet: string; pageNumber: number; skandh: number }>();
+
+  let globalNum = 0;
+  for (const ch of chapters) {
+    // Compute global number = sum of expected chapters in prior cantos + per-canto number
+    let offset = 0;
+    for (let i = 0; i < ch.skandh - 1; i++) offset += EXPECTED_PER_CANTO[i];
+    globalNum = offset + ch.number;
+
+    // Get content snippet for image generation
+    const pageIdx = allPages.findIndex(p => p.pageNumber === ch.pageNumber);
+    const remainingPages = allPages.slice(pageIdx, pageIdx + 5);
+    const contentSnippet = remainingPages.map(p => p.text).join("\n").substring(0, 1500);
+
+    result.set(globalNum, { title: ch.title, contentSnippet, pageNumber: ch.pageNumber, skandh: ch.skandh });
+  }
+
+  return result;
 }
 
 // ── descriptionHi generation via Sarvam Translate ───────────────────────────
