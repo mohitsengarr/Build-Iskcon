@@ -1409,23 +1409,23 @@ function Sidebar({
                         className={`w-full px-3 py-2.5 flex items-center justify-between sticky top-0 z-[5] transition-all cursor-pointer group ${
                           hasActiveChapter
                             ? "bg-gradient-to-r from-orange-600 to-orange-500 shadow-md"
-                            : "bg-gradient-to-r from-stone-500 to-stone-400 hover:from-stone-400 hover:to-stone-300"
+                            : "bg-white hover:bg-stone-50 border-b border-stone-100"
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black shrink-0 ${
                             hasActiveChapter
                               ? "bg-white/25 text-white ring-2 ring-white/40"
-                              : "bg-white/15 text-white/90 group-hover:bg-white/25"
+                              : "bg-orange-100 text-orange-700"
                           }`}>
                             {skandh}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-bold text-white truncate">
+                            <p className={`text-sm font-bold truncate ${hasActiveChapter ? "text-white" : "text-stone-800"}`}>
                               Canto {skandh}
                             </p>
                             {SKANDH_NAMES[skandh] && (
-                              <p className={`text-[11px] truncate ${hasActiveChapter ? "text-orange-100" : "text-stone-300"}`}>
+                              <p className={`text-[11px] truncate ${hasActiveChapter ? "text-orange-100" : "text-stone-400"}`}>
                                 {SKANDH_NAMES[skandh].hi}
                               </p>
                             )}
@@ -1433,14 +1433,14 @@ function Sidebar({
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
-                            hasActiveChapter ? "bg-white/20 text-white" : "bg-white/10 text-stone-300"
+                            hasActiveChapter ? "bg-white/20 text-white" : "bg-stone-100 text-stone-500"
                           }`}>
                             {chs.length}
                           </span>
                           {isExpanded ? (
-                            <ChevronUp className="w-4 h-4 text-white/70" />
+                            <ChevronUp className={`w-4 h-4 ${hasActiveChapter ? "text-white/70" : "text-stone-400"}`} />
                           ) : (
-                            <ChevronDown className="w-4 h-4 text-white/70" />
+                            <ChevronDown className={`w-4 h-4 ${hasActiveChapter ? "text-white/70" : "text-stone-400"}`} />
                           )}
                         </div>
                       </button>
