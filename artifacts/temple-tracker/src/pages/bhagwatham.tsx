@@ -1348,6 +1348,7 @@ function Sidebar({
                 <span className="flex items-center gap-1.5"><BookMarked className="w-3.5 h-3.5" /> Contents</span>
               </button>
               <button
+                data-tab="bookmarks"
                 onClick={() => setSidebarTab("bookmarks")}
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${sidebarTab === "bookmarks" ? "bg-white text-orange-700 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
               >
@@ -2302,6 +2303,17 @@ export default function Bhagwatham() {
               >
                 <Bookmark className={`w-4 h-4 ${bookmarkSaved ? "fill-orange-500" : ""}`} />
               </button>
+              {/* View saved bookmarks — opens sidebar to bookmarks tab */}
+              {bookmarks.length > 0 && (
+                <button
+                  onClick={() => { setSidebarOpen(true); setTimeout(() => { const el = document.querySelector('[data-tab="bookmarks"]') as HTMLElement; el?.click(); }, 100); }}
+                  className={`relative p-1.5 rounded-lg transition-all active:scale-95 hover:bg-stone-100 ${theme.muted} hover:text-orange-600`}
+                  title="View bookmarks"
+                >
+                  <List className="w-4 h-4" />
+                  <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[8px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">{bookmarks.length}</span>
+                </button>
+              )}
 
               {/* Settings button */}
               <div className="relative">
