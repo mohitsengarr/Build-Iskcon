@@ -1892,7 +1892,20 @@
       "descriptionHi": "इस अध्याय में शिवजी और पार्वती द्वारा मार्कण्डेय ऋषि का गुणगान किया जाता है, जो शिवजी से वर प्राप्त करते हैं। मार्कण्डेय ऋषि की भक्ति और शिवजी की कृपा का वर्णन किया गया है।",
       "generatedAt": "2026-04-12T17:15:39.921Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 180,
+      "chapterTitle": "Chapter ग्यारह",
+      "imagePath": "chapter-180.jpg",
+      "prompt": "Suta Goswami explains to Shounak Rishi the divine forms of Lord Hari as the sun god, in a serene forest setting.",
+      "descriptionHi": "इस अध्याय में श्री सूत गोस्वामी शौनक ऋषि को भगवान् श्री हरि के मुख्य अंगों, उपांगों, आयुधों तथा वस्त्रों के बारे में बताते हैं और सूर्य देव के रूप में उनके विस्तार का वर्णन करते हैं। यह वर्णन अमरता प्राप्ति के लिए मर्त्य प्राणी के लिए महत्वपूर्ण है।",
+      "personasUsed": [
+        "suta_goswami"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T17:37:19.104Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T17:15:39.921Z"
+  "lastUpdated": "2026-04-12T17:37:19.104Z"
 }
