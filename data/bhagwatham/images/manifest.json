@@ -1240,7 +1240,16 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T02:14:40.030Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 127,
+      "chapterTitle": "Chapter तेरह",
+      "imagePath": "chapter-127.jpg",
+      "prompt": "Shraddhadeva, the seventh Manu, sits with his ten sons in a serene forest, surrounded by sages like Kashyap and Vasishth.",
+      "descriptionHi": "The chapter describes the seventh to fourteenth Manu, with the seventh Manu being Shraddhadeva, the son of Vivasvan. His ten sons are also mentioned, along with the deities and sages of that era. This chapter provides valuable information about the different Manus and their significance in Hindu mythology.",
+      "generatedAt": "2026-04-12T02:29:29.719Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T02:14:40.030Z"
+  "lastUpdated": "2026-04-12T02:29:29.719Z"
 }
