@@ -102,8 +102,10 @@ export function parseHindiNumber(text: string): number {
   return 0; // not recognized
 }
 
-// Match chapter headings: "Chapter <anything>" or "अध्याय <any-hindi-word-or-digit>"
-export const CHAPTER_RE = /^(?:Chapter\s+\S|अध्याय\s+(?:[\u0900-\u097F]+|\d+))/iu;
+// Match chapter headings: must be ONLY the heading (no trailing prose).
+// "अध्याय आठ" ✓  |  "Chapter बीस" ✓  |  "अध्याय आठ में जहाँ..." ✗
+// The \s*$ anchor rejects inline references like "अध्याय का सारांश"
+export const CHAPTER_RE = /^(?:Chapter\s+\S+|अध्याय\s+(?:[\u0900-\u097F]+(?:\s+[\u0900-\u097F]+){0,2}|\d+))\s*$/iu;
 
 export const OCR_CHAPTER_FIXES: Record<string, { num: number; label: string }> = {
   "Chapter 278 अध्याय": { num: 8, label: "अध्याय आठ" },
@@ -198,7 +200,9 @@ export function toHindiChapterLine(t: string): string {
 
 export function isChapterHeading(t: string): boolean {
   const cleaned = t.replace(/^\d+\s+/, "");
-  if (t.includes("पूर्ण हुए")) return false;
+  // Reject colophons and long inline references (real headings are short)
+  if (t.includes("पूर्ण हुए") || t.includes("पूर्ण हुआ")) return false;
+  if (cleaned.length > 60) return false; // Real headings: "अध्याय बीस" (~15 chars)
   if (CHAPTER_RE.test(cleaned)) return true;
   for (const key of Object.keys(OCR_CHAPTER_FIXES)) {
     if (cleaned.includes(key) || t.includes(key)) return true;
@@ -403,12 +407,14 @@ export function buildChapterIndex(allPages: PageContent[]): ChapterEntry[] {
         const hindiLine = toHindiChapterLine(t);
         let num = extractChapterNum(hindiLine);
         if (num > 0) {
-          if (num > lastChapterNum + 5 && lastChapterNum > 0 && num > 20) {
-            num = lastChapterNum + 1;
-          }
+          // Detect new skandh: chapter resets to 1 after a higher chapter
           if (num === 1 && lastChapterNum > 1) {
             currentSkandh++;
           }
+          // Skip backward jumps within same skandh (likely false positives from inline text)
+          // Exception: num=1 is allowed (new skandh boundary)
+          if (num < lastChapterNum && num !== 1 && lastChapterNum > 2) continue;
+          // Skip duplicates within same skandh
           if (chapters.find((c) => c.number === num && c.skandh === currentSkandh)) continue;
           const idx = lines.indexOf(line);
           const subtitle = lines.slice(idx + 1, idx + 3).map((l) => l.trim()).filter(Boolean).join(" ");

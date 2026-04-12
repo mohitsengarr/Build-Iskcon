@@ -298,7 +298,7 @@ function parseHindiNumber(text: string): number {
 }
 
 // Match chapter headings: "Chapter <anything>" or "अध्याय <any-hindi-word-or-digit>"
-const CHAPTER_RE = /^(?:Chapter\s+\S|अध्याय\s+(?:[\u0900-\u097F]+|\d+))/iu;
+const CHAPTER_RE = /^(?:Chapter\s+\S+|अध्याय\s+(?:[\u0900-\u097F]+(?:\s+[\u0900-\u097F]+){0,2}|\d+))\s*$/iu;
 
 // OCR-mangled chapter headings mapped to correct chapter numbers.
 // Skandh 1: "Chapter 278 अध्याय" → ch 8, "Chapter it" → ch 9
@@ -411,7 +411,9 @@ function toHindiChapterLine(t: string): string {
 function isChapterHeading(t: string): boolean {
   // Strip leading page numbers that OCR sometimes picks up (e.g., "42 Chapter दो")
   const cleaned = t.replace(/^\d+\s+/, "");
-  if (t.includes("पूर्ण हुए")) return false;
+  // Reject long lines — real chapter headings are short
+  if (cleaned.length > 60) return false;
+  if (t.includes("पूर्ण हुए") || t.includes("पूर्ण हुआ")) return false;
   if (CHAPTER_RE.test(cleaned)) return true;
   // Check known OCR-mangled headings
   for (const key of Object.keys(OCR_CHAPTER_FIXES)) {
@@ -444,11 +446,9 @@ function buildChapterIndex(allPages: PageContent[]): ChapterEntry[] {
         const hindiLine = toHindiChapterLine(t);
         let num = extractChapterNum(hindiLine);
         if (num > 0) {
-          // Context-aware OCR fix: big jumps in chapter number are likely OCR noise
-          // e.g., "Chapter 36" is OCR of "Chapter आठ" (8) when lastChapterNum is 7
-          if (num > lastChapterNum + 5 && lastChapterNum > 0 && num > 20) {
-            num = lastChapterNum + 1;
-          }
+          // Backward-jump rejection: if number goes backward (but isn't a reset to 1),
+          // it's a false positive — skip it
+          if (num < lastChapterNum && num !== 1 && lastChapterNum > 2) continue;
           // If chapter number resets (e.g. goes from 19 back to 1), new skandh started
           if (num === 1 && lastChapterNum > 1) {
             currentSkandh++;
