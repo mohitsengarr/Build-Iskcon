@@ -1461,7 +1461,20 @@
       "descriptionHi": "इस अध्याय में पुरुरवा और उर्वशी की प्रेम कहानी का वर्णन है, जिसमें पुरुरवा उर्वशी के सौन्दर्य पर मोहित हो जाता है और उनके प्रेम की कहानी कुरुक्षेत्र में आगे बढ़ती है। ब्रह्मा और विष्णु की उत्पत्ति का वर्णन भी इस अध्याय में है।",
       "generatedAt": "2026-04-12T06:07:02.837Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 150,
+      "chapterTitle": "Chapter पन्द्रह",
+      "imagePath": "chapter-150.jpg",
+      "prompt": "Parashurama stands before King Kartavirya Arjuna, refusing to back down, as Jamadagni looks on, amidst a serene landscape.",
+      "descriptionHi": "इस अध्याय में परशुराम की कथा का वर्णन है, जो भगवान् के योद्धा अवतार हैं और उन्होंने कार्तवीर्यार्जुन का वध किया। मुख्य पात्र परशुराम, जमदग्नि और कार्तवीर्यार्जुन हैं।",
+      "personasUsed": [
+        "arjuna"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T06:10:23.310Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T06:07:02.837Z"
+  "lastUpdated": "2026-04-12T06:10:23.311Z"
 }
