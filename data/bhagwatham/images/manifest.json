@@ -1284,7 +1284,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T02:41:17.924Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 132,
+      "chapterTitle": "Chapter अठारह",
+      "imagePath": "chapter-132.jpg",
+      "prompt": "Vishnu, as Vamandev, emerges from Aditi's womb and approaches Maharaj Bali's altar, where he is warmly welcomed.",
+      "descriptionHi": "भगवान् वामनदेव के अवतार का वर्णन किया गया है, जो अदिति के गर्भ से उत्पन्न हुए और महाराज बलि की यज्ञशाला में गये। उन्होंने वर देकर बलि की इच्छा पूरी की। यह अध्याय वामनदेव की महिमा को दर्शाता है।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T02:44:29.614Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T02:41:17.924Z"
+  "lastUpdated": "2026-04-12T02:44:29.614Z"
 }
