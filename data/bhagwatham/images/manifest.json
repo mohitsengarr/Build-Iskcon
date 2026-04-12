@@ -1381,7 +1381,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T04:22:52.300Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 142,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-142.jpg",
+      "prompt": "Narada guides Harishchandra to worship Varuna, resulting in the birth of his son Rohit, in the royal palace.",
+      "descriptionHi": "इस अध्याय में मान्धाता के वंशजों का वर्णन हुआ है, जिसमें पुरुकुत्स तथा हरिश्चन्द्र की कथाएँ भी शामिल हैं। नरद मुनि के कहने पर हरिश्चन्द्र ने वरुण की उपासना की और उसके रोहित नाम का पुत्र उत्पन्न हुआ।",
+      "personasUsed": [
+        "narada"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T04:30:07.203Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T04:22:52.300Z"
+  "lastUpdated": "2026-04-12T04:30:07.203Z"
 }
