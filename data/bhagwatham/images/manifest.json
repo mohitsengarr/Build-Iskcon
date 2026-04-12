@@ -1631,7 +1631,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T08:38:47.647Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 167,
+      "chapterTitle": "Chapter चौबीस",
+      "imagePath": "chapter-167.jpg",
+      "prompt": "Krishna stops the ritual for Indra and initiates Govardhan Puja in a serene countryside setting with Nanda.",
+      "descriptionHi": "इस अध्याय में कृष्ण ने इन्द्र के लिए किये जाने वाले यज्ञ को रोककर गोवर्धन-पूजा का शुभारम्भ किया, जिससे इन्द्र का गर्व चूर हुआ। कृष्ण ने नन्द से इसके विषय में पूछा और उन्हें समझाया कि सारे जीव कर्मवश ही जन्म लेते हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T09:00:52.527Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T08:38:47.647Z"
+  "lastUpdated": "2026-04-12T09:00:52.527Z"
 }
