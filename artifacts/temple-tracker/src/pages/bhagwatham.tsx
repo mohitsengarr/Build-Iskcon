@@ -1232,41 +1232,16 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             );
           }
           case "tatparya": {
-            // BBT style: Hindi commentary, black text, medium size, bold prefix
+            // Same style as regular text, only "तात्पर्य :" prefix is bold italic
             const isContinuation = i === 0 && prevPageEndKind === "tatparya";
             return (
-              <div key={i} className={isContinuation ? "" : "mt-4"}>
-                {sec.lines.map((l, j) => {
-                  // Highlight key religious terms in red
-                  const highlighted = l.replace(/(श्रीमद्भागवत(?:म्)?|भगवान्?|कृष्ण|विष्णु|ब्रह्मा|शिव|प्रभुपाद)/gu, "___HIGHLIGHT___$1___END___");
-                  const hlParts = highlighted.split(/(___HIGHLIGHT___|___END___)/);
-                  let inHighlight = false;
-                  if (j === 0 && !isContinuation) {
-                    return (
-                      <p key={j} className={`text-[14px] sm:text-[15px] leading-[2] mb-1 indent-8 ${themeKey === "dark" ? "text-stone-300" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-800"}`} style={{ fontFamily: "var(--font-devanagari)" }}>
-                        <span className="font-bold italic">तात्पर्य :</span>{" "}
-                        {hlParts.map((part, k) => {
-                          if (part === "___HIGHLIGHT___") { inHighlight = true; return null; }
-                          if (part === "___END___") { inHighlight = false; return null; }
-                          return inHighlight
-                            ? <span key={k} className={themeKey === "dark" ? "text-red-400" : themeKey === "sepia" ? "text-[#8b1a1a]" : "text-red-700"}>{part}</span>
-                            : <span key={k}>{part}</span>;
-                        })}
-                      </p>
-                    );
-                  }
-                  return (
-                    <p key={j} className={`text-[14px] sm:text-[15px] leading-[2] mb-1 ${themeKey === "dark" ? "text-stone-300" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-800"}`} style={{ fontFamily: "var(--font-devanagari)" }}>
-                      {hlParts.map((part, k) => {
-                        if (part === "___HIGHLIGHT___") { inHighlight = true; return null; }
-                        if (part === "___END___") { inHighlight = false; return null; }
-                        return inHighlight
-                          ? <span key={k} className={themeKey === "dark" ? "text-red-400" : themeKey === "sepia" ? "text-[#8b1a1a]" : "text-red-700"}>{part}</span>
-                          : <span key={k}>{part}</span>;
-                      })}
-                    </p>
-                  );
-                })}
+              <div key={i} className={isContinuation ? "" : "mt-3"}>
+                {sec.lines.map((l, j) => (
+                  <p key={j} className={`text-[14px] sm:text-[15px] leading-[2] mb-1 ${t.text}`} style={{ fontFamily: "var(--font-devanagari)" }}>
+                    {j === 0 && !isContinuation && <><span className="font-bold italic">तात्पर्य :</span>{" "}</>}
+                    {l}
+                  </p>
+                ))}
               </div>
             );
           }
