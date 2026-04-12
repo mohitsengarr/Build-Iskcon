@@ -1496,7 +1496,22 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T07:33:33.080Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 156,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-156.jpg",
+      "prompt": "Krishna displays the entire universe within his mouth, astonishing Parikshit and Shukadeva in a serene divine moment.",
+      "descriptionHi": "इस अध्याय में श्रीकृष्ण द्वारा तृणावर्त असुर का वध और अपने मुख के भीतर सारे ब्रह्माण्ड का प्रदर्शन किया गया है। महाराज परीक्षित भगवान् कृष्ण की बाल-लीलाओं को सुनने के लिए उत्सुक हैं। शुकदेव गोस्वामी उनका वर्णन करते हैं।",
+      "personasUsed": [
+        "krishna_adult",
+        "shukadeva",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T07:33:58.633Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T07:33:33.080Z"
+  "lastUpdated": "2026-04-12T07:33:58.633Z"
 }
