@@ -1214,7 +1214,20 @@
       "descriptionHi": "दसवें अध्याय में असुरों और देवताओं के बीच युद्ध का वर्णन है, जो ईर्ष्या के कारण होता है। इस युद्ध में देवता और असुर अपनी-अपनी शक्तियों का प्रदर्शन करते हैं। यह युद्ध आध्यात्मिक और भावनात्मक रूप से महत्वपूर्ण है।",
       "generatedAt": "2026-04-12T00:25:23.625Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 125,
+      "chapterTitle": "Chapter ग्यारह",
+      "imagePath": "chapter-125.jpg",
+      "prompt": "Narada shows compassion to the defeated asuras in a serene heavenly setting.",
+      "descriptionHi": "महान् मुनि नारद ने असुरों पर दया की जो इन्द्र द्वारा पराजित हुए थे, इस अध्याय में नारद की दया और असुरों की पराजय का वर्णन है। नारद की दया इस अध्याय का मुख्य भाव है।",
+      "personasUsed": [
+        "narada"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T00:32:33.162Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T00:25:23.625Z"
+  "lastUpdated": "2026-04-12T00:32:33.162Z"
 }
