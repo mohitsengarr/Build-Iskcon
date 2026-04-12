@@ -1564,7 +1564,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T07:55:41.273Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 161,
+      "chapterTitle": "Chapter बारह",
+      "imagePath": "chapter-161.jpg",
+      "prompt": "Krishna enters the massive serpent's mouth in the forest to save his friends, calmly expanding his form to suffocate the demon.",
+      "descriptionHi": "इस अध्याय में कृष्ण द्वारा अघासुर का वध वर्णित है, जिसमें कृष्ण अपने मित्रों की रक्षा करते हैं और असुर को पराजित करते हैं। यह घटना कृष्ण की दिव्य शक्ति और उनके मित्रों के प्रति उनके प्रेम को दर्शाती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T08:00:56.818Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T07:55:41.273Z"
+  "lastUpdated": "2026-04-12T08:00:56.818Z"
 }
