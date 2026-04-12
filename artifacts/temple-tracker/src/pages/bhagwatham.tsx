@@ -201,19 +201,19 @@ interface ChapterEntry {
 }
 
 /** Skandh (Canto) metadata */
-const SKANDH_NAMES: Record<number, string> = {
-  1: "सृष्टि",
-  2: "दृश्य जगत्",
-  3: "यथार्थ का बोध",
-  4: "चतुर्थ स्कन्ध",
-  5: "सृष्टि प्रेरणा",
-  6: "मानव के कर्तव्य",
-  7: "भगवत् विज्ञान",
-  8: "संहार",
-  9: "मुक्ति",
-  10: "आश्रय",
-  11: "सामान्य इतिहास",
-  12: "युग-धर्म",
+const SKANDH_NAMES: Record<number, { hi: string; en: string }> = {
+  1:  { hi: "सृष्टि",            en: "Creation" },
+  2:  { hi: "दृश्य जगत्",       en: "The Cosmic Manifestation" },
+  3:  { hi: "यथार्थ का बोध",    en: "The Status Quo" },
+  4:  { hi: "चतुर्थ सर्ग",       en: "The Creation of the Fourth Order" },
+  5:  { hi: "सृष्टि प्रेरणा",    en: "The Creative Impetus" },
+  6:  { hi: "मानव के कर्तव्य",  en: "Prescribed Duties for Mankind" },
+  7:  { hi: "भगवत् विज्ञान",    en: "The Science of God" },
+  8:  { hi: "संहार",             en: "Withdrawal of the Cosmic Creations" },
+  9:  { hi: "मुक्ति",            en: "Liberation" },
+  10: { hi: "आश्रय",            en: "The Summum Bonum" },
+  11: { hi: "सामान्य इतिहास",   en: "General History" },
+  12: { hi: "युग-धर्म",         en: "The Age of Deterioration" },
 };
 
 const API_BASE = "/api/bhagwatham";
@@ -1383,11 +1383,11 @@ function Sidebar({
                           </div>
                           <div className="min-w-0">
                             <p className="text-sm font-bold text-white truncate">
-                              Canto {skandh}
+                              Canto {skandh} — {SKANDH_NAMES[skandh]?.en || ""}
                             </p>
                             {SKANDH_NAMES[skandh] && (
                               <p className={`text-[11px] truncate ${hasActiveChapter ? "text-orange-100" : "text-stone-300"}`}>
-                                {SKANDH_NAMES[skandh]}
+                                {SKANDH_NAMES[skandh].hi}
                               </p>
                             )}
                           </div>
