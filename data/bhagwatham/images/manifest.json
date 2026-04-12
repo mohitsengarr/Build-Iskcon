@@ -1297,7 +1297,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T02:44:29.614Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 134,
+      "chapterTitle": "Chapter बीस",
+      "imagePath": "chapter-134.jpg",
+      "prompt": "Vamandev expands his body, revealing his vast divine form as Lord Vishnu, before Bali Maharaj in a serene celestial setting.",
+      "descriptionHi": "बलि महाराज ने अपना सर्वस्व भगवान् वामनदेव को दान में दे दिया, जो वास्तव में भगवान् विष्णु का अवतार थे। यह घटना बलि महाराज की बड़ी भक्ति और त्याग को दर्शाती है। भगवान् वामनदेव ने अपने विराट रूप को प्रकट किया।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T02:53:31.286Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T02:48:51.937Z"
+  "lastUpdated": "2026-04-12T02:53:31.286Z"
 }
