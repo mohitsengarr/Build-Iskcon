@@ -1249,7 +1249,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
                           if (part === "___HIGHLIGHT___") { inHighlight = true; return null; }
                           if (part === "___END___") { inHighlight = false; return null; }
                           return inHighlight
-                            ? <span key={k} className={themeKey === "dark" ? "text-red-400 font-semibold" : themeKey === "sepia" ? "text-[#8b1a1a] font-semibold" : "text-red-700 font-semibold"}>{part}</span>
+                            ? <span key={k} className={themeKey === "dark" ? "text-red-400" : themeKey === "sepia" ? "text-[#8b1a1a]" : "text-red-700"}>{part}</span>
                             : <span key={k}>{part}</span>;
                         })}
                       </p>
@@ -1261,7 +1261,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
                         if (part === "___HIGHLIGHT___") { inHighlight = true; return null; }
                         if (part === "___END___") { inHighlight = false; return null; }
                         return inHighlight
-                          ? <span key={k} className={themeKey === "dark" ? "text-red-400 font-semibold" : themeKey === "sepia" ? "text-[#8b1a1a] font-semibold" : "text-red-700 font-semibold"}>{part}</span>
+                          ? <span key={k} className={themeKey === "dark" ? "text-red-400" : themeKey === "sepia" ? "text-[#8b1a1a]" : "text-red-700"}>{part}</span>
                           : <span key={k}>{part}</span>;
                       })}
                     </p>

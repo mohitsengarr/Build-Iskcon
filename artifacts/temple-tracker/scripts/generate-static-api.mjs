@@ -113,8 +113,8 @@ for (const batch of allBatches) {
     const lines = page.text.split("\n");
     const hc = lines.filter(l => isHeading(l.trim())).length;
     if (hc >= 2) continue;
-    for (const line of lines) {
-      const t = line.trim();
+    for (let li = 0; li < lines.length; li++) {
+      const t = lines[li].trim();
       if (!isHeading(t)) continue;
       const num = extractNum(t);
       if (num <= 0) continue;
@@ -122,9 +122,12 @@ for (const batch of allBatches) {
       if (num < last && last > 2) continue;
       if (chapterEntries.find(c => c.number === num && c.skandh === skandh)) continue;
       lastPerSkandh.set(skandh, num);
-      // Find which batch contains this page
+      // Grab next 2 non-empty lines as Hindi subtitle (matches bhagwatham-utils.ts)
+      const subtitle = lines.slice(li + 1, li + 3).map(l => l.trim()).filter(Boolean).join(" ");
+      const hindiTitle = t.replace(/^Chapter\s*/i, "अध्याय ");
+      const fullTitle = hindiTitle + (subtitle ? ` — ${subtitle}` : "");
       const batchNum = batch.batchNumber;
-      chapterEntries.push({ number: num, skandh, title: t.substring(0, 80), pageNumber: page.pageNumber, batchNumber: batchNum });
+      chapterEntries.push({ number: num, skandh, title: fullTitle.substring(0, 120), pageNumber: page.pageNumber, batchNumber: batchNum });
     }
   }
 }
