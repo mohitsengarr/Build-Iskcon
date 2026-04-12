@@ -1852,7 +1852,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T17:03:35.430Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 176,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-176.jpg",
+      "prompt": "Krishna and his companions stroll along a serene riverbank, engaged in gentle conversation.",
+      "descriptionHi": "इस अध्याय में कोई विशेष घटना नहीं है, क्योंकि अध्याय सामग्री खाली है। इसलिए, कोई सारांश नहीं लिखा जा सकता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T17:07:39.724Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T17:03:35.430Z"
+  "lastUpdated": "2026-04-12T17:07:39.724Z"
 }
