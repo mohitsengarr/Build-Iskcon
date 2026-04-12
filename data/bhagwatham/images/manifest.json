@@ -1323,7 +1323,16 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T04:01:22.385Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 136,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-136.jpg",
+      "prompt": "Sudyumna transforms into a woman in Sumeru's forest, surrounded by his ministers, marking a pivotal moment in his journey.",
+      "descriptionHi": "इस अध्याय में राजा सुद्युम्न के जीवन की कथा वर्णित है, जो एक पुरुष से स्त्री बन जाते हैं और फिर शिवजी की कृपा से अपना राज्य पुनः प्राप्त करते हैं। मुख्य पात्र सुद्युम्न, शुकदेव और ब्रह्मा हैं।",
+      "generatedAt": "2026-04-12T04:05:44.673Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T04:01:22.385Z"
+  "lastUpdated": "2026-04-12T04:05:44.673Z"
 }
