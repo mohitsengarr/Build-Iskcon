@@ -1816,5 +1816,11 @@
     "startPage": 6041,
     "endPage": 6060,
     "pageCount": 20
+  },
+  {
+    "batchNumber": 304,
+    "startPage": 6061,
+    "endPage": 6080,
+    "pageCount": 20
   }
 ]
