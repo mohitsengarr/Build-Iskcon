@@ -1905,7 +1905,37 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T17:37:19.104Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 181,
+      "chapterTitle": "Chapter बारह",
+      "imagePath": "chapter-181.jpg",
+      "prompt": "Krishna and Vishnu sit with Suta Goswami in a serene forest, discussing the divine glory of Lord Hari.",
+      "descriptionHi": "इस अध्याय में श्री सूत गोस्वामी श्रीमद्भागवत की विषय-सूची प्रस्तुत करते हैं और भगवान् श्री हरि की महिमा का वर्णन करते हैं। भगवान् कृष्ण का निरन्तर स्मरण करने से मनुष्य की अशुभ इच्छाएँ विनष्ट हो जाती हैं और मन शुद्ध बन जाता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "suta_goswami",
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T17:41:08.991Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 182,
+      "chapterTitle": "Chapter तेरह",
+      "imagePath": "chapter-182.jpg",
+      "prompt": "Suta Goswami bows to Lord Narayana, while Shukadeva and Brahma look on, in a serene forest setting.",
+      "descriptionHi": "श्रीमद्भागवत की महिमा का वर्णन किया गया है, जिसमें सूत गोस्वामी ने इसकी कथावस्तु, उद्देश्य और महिमा का वर्णन किया है। भगवान् नारायण ने ब्रह्मा को इसका उपदेश दिया था। यह पुराणों में सर्वश्रेष्ठ है और वैष्णवों को सर्वाधिक प्रिय वस्तु है।",
+      "personasUsed": [
+        "suta_goswami",
+        "shukadeva",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T17:45:38.461Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T17:37:19.104Z"
+  "lastUpdated": "2026-04-12T17:45:38.461Z"
 }
