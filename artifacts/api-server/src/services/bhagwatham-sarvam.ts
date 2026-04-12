@@ -145,7 +145,51 @@ function cleanupTmpImages(): void {
   } catch { /* ignore */ }
 }
 
-// ── Sarvam AI OCR ─────────────────────────────────────────────────────────────
+// ── PaddleOCR (local, free, primary engine) ──────────────────────────────────
+
+/**
+ * Process a single image through PaddleOCR (local Python subprocess).
+ * Free, no API key needed, runs on CPU. Uses PP-OCRv5 Devanagari model.
+ */
+async function ocrSinglePagePaddleOCR(imagePath: string, pageNumber: number): Promise<string> {
+  const { execFile } = await import("child_process");
+  const { promisify } = await import("util");
+  const execFileAsync = promisify(execFile);
+
+  const scriptPath = path.resolve(__dirname, "..", "..", "..", "..", "services", "ocr-worker", "python", "ocr_engine.py");
+
+  const { stdout, stderr } = await execFileAsync("python3", [scriptPath, imagePath], {
+    timeout: 180_000, // 3 min timeout for CPU inference
+    maxBuffer: 10 * 1024 * 1024,
+    env: { ...process.env, PYTHONIOENCODING: "utf-8", PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK: "True" },
+  });
+
+  if (stderr && stderr.includes("Error")) {
+    logger.warn({ pageNumber, stderr: stderr.slice(0, 300) }, "PaddleOCR stderr");
+  }
+
+  let lines: Array<{ text: string; confidence: number }>;
+  try {
+    lines = JSON.parse(stdout);
+  } catch {
+    throw new Error(`PaddleOCR returned invalid JSON: ${stdout.slice(0, 200)}`);
+  }
+
+  // Filter out garbage lines (low confidence or non-Devanagari)
+  const cleanLines = lines
+    .filter((l) => l.confidence >= 0.4)
+    .filter((l) => {
+      const devanagari = (l.text.match(/[\u0900-\u097F]/gu) || []).length;
+      const total = l.text.replace(/\s/g, "").length;
+      return total === 0 || devanagari / total >= 0.3;
+    })
+    .map((l) => l.text.trim())
+    .filter((t) => t.length > 0);
+
+  return cleanLines.join("\n");
+}
+
+// ── Sarvam AI OCR (fallback, paid API) ───────────────────────────────────────
 
 /**
  * Process a single image through Sarvam Document Intelligence API (REST).
@@ -319,32 +363,62 @@ async function ocrSinglePageSarvam(imagePath: string, pageNumber: number, apiKey
 }
 
 /**
- * Process images through Sarvam Document Intelligence API.
- * Falls back to Tesseract if SARVAM_API_KEY is not set.
+ * Process images through OCR.
+ *
+ * Priority chain:
+ *   1. PaddleOCR (local, free, no API needed)
+ *   2. Sarvam Vision (cloud, paid, if PaddleOCR fails and SARVAM_API_KEY is set)
+ *   3. Tesseract (embedded, worst quality, last resort)
  */
 async function ocrWithSarvam(imagePaths: string[], startPage: number): Promise<PageContent[]> {
-  const apiKey = process.env.SARVAM_API_KEY;
-  if (!apiKey) {
-    logger.warn("SARVAM_API_KEY not set — falling back to Tesseract");
-    return ocrWithTesseract(imagePaths, startPage);
-  }
-
+  const sarvamApiKey = process.env.SARVAM_API_KEY;
   const pages: PageContent[] = [];
 
   for (let i = 0; i < imagePaths.length; i++) {
     const imagePath = imagePaths[i];
     const pageNumber = startPage + i;
 
+    // 1. Try PaddleOCR first (free, local)
     try {
-      logger.info({ pageNumber }, "Processing page with Sarvam Vision");
-      const text = await ocrSinglePageSarvam(imagePath, pageNumber, apiKey);
-      pages.push({ pageNumber, text });
-      logger.info({ pageNumber, textLength: text.length }, "Sarvam OCR completed for page");
+      logger.info({ pageNumber }, "Processing page with PaddleOCR (local)");
+      const text = await ocrSinglePagePaddleOCR(imagePath, pageNumber);
+      if (text && text.trim().length >= 10) {
+        pages.push({ pageNumber, text });
+        logger.info({ pageNumber, textLength: text.length, engine: "paddleocr" }, "OCR completed for page");
+        continue;
+      }
+      logger.warn({ pageNumber, textLength: text?.length ?? 0 }, "PaddleOCR returned insufficient text, trying fallback");
     } catch (err) {
-      logger.error({ pageNumber, err }, "Sarvam OCR failed for page after all retries");
-      reportAIFailure("Sarvam AI", (err as Error)?.message || "OCR failed");
-      // Push empty page — will be retried in next batch. No Tesseract fallback.
+      logger.warn({ pageNumber, err: (err as Error)?.message }, "PaddleOCR failed, trying fallback");
+    }
+
+    // 2. Try Sarvam Vision (if API key available)
+    if (sarvamApiKey) {
+      try {
+        logger.info({ pageNumber }, "Falling back to Sarvam Vision");
+        const text = await ocrSinglePageSarvam(imagePath, pageNumber, sarvamApiKey);
+        if (text && text.trim().length >= 10) {
+          pages.push({ pageNumber, text });
+          logger.info({ pageNumber, textLength: text.length, engine: "sarvam" }, "OCR completed for page");
+          continue;
+        }
+        logger.warn({ pageNumber }, "Sarvam also returned insufficient text");
+      } catch (err) {
+        logger.warn({ pageNumber, err: (err as Error)?.message }, "Sarvam OCR also failed");
+        reportAIFailure("Sarvam AI", (err as Error)?.message || "OCR failed");
+      }
+    }
+
+    // 3. Last resort: Tesseract
+    try {
+      logger.info({ pageNumber }, "Last resort: Tesseract OCR");
+      const result = await ocrSinglePageTesseract(imagePath, pageNumber);
+      pages.push(result);
+      logger.info({ pageNumber, textLength: result.text.length, engine: "tesseract" }, "OCR completed for page");
+    } catch {
+      // All engines failed — push empty page for later retry
       pages.push({ pageNumber, text: "" });
+      logger.error({ pageNumber }, "All OCR engines failed — page will be retried later");
     }
   }
 
@@ -667,7 +741,7 @@ export async function processNextBatch(): Promise<{
       return { success: false, message: "All pages have been processed" };
     }
 
-    logger.info({ batchNumber, startPage, endPage, ocr: process.env.SARVAM_API_KEY ? "sarvam" : "tesseract" },
+    logger.info({ batchNumber, startPage, endPage, ocr: "paddleocr (primary) → sarvam (fallback) → tesseract (last resort)" },
       "Starting batch processing");
 
     // Step 1: Convert PDF pages to images
@@ -726,7 +800,7 @@ export async function processNextBatch(): Promise<{
     progress.status = isComplete ? "completed" : "idle";
     writeProgress(progress);
 
-    const ocrEngine = process.env.SARVAM_API_KEY ? "Sarvam Vision" : "Tesseract";
+    const ocrEngine = "PaddleOCR (primary)";
     const hasTranslations = extractedPages.some((p) => p.textEn);
 
     logger.info({
