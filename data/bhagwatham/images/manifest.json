@@ -1183,7 +1183,20 @@
       "descriptionHi": "शिवजी ने विषपान करके ब्रह्माण्ड की रक्षा की, जो मन्थन से उत्पन्न हुआ था। यह घटना शिवजी की महानता और उनके भक्तों के प्रति प्रेम को दर्शाती है।",
       "generatedAt": "2026-04-12T00:01:45.952Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 122,
+      "chapterTitle": "Chapter आठ",
+      "imagePath": "chapter-122.jpg",
+      "prompt": "Vishnu, as Mohini, appears amidst the churning of the ocean, captivating the asuras and ensuring the gods receive the amrit.",
+      "descriptionHi": "इस अध्याय में समुद्र मन्थन के दौरान लक्ष्मीजी के प्रकट होने और भगवान् विष्णु को पति के रूप में स्वीकार करने की कथा बताई गई है, जो देवताओं और असुरों के बीच एक महत्वपूर्ण घटना है। भगवान् विष्णु के मोहिनी रूप में प्रकट होने से असुरों को मोहित किया गया और देवताओं को अमृत मिला।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T00:11:10.765Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T00:01:45.953Z"
+  "lastUpdated": "2026-04-12T00:11:10.765Z"
 }
