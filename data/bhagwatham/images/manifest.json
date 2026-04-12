@@ -1196,7 +1196,16 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T00:11:10.765Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 123,
+      "chapterTitle": "Chapter नौ",
+      "imagePath": "chapter-123.jpg",
+      "prompt": "Mohini, as a beautiful maiden, stands between the asuras and devatas, distributing the amrit to the deserving gods.",
+      "descriptionHi": "इस अध्याय में भगवान् के मोहिनी-मूर्ति अवतार का वर्णन है, जिसमें वह असुरों को अमृत पाने से रोकने के लिए एक सुन्दरी का रूप धारण करते हैं। मोहिनी असुरों को अपने सौन्दर्य से मोहित कर देती है और देवताओं को अमृत पिलाने में सफल होती है।",
+      "generatedAt": "2026-04-12T00:15:08.376Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T00:11:10.765Z"
+  "lastUpdated": "2026-04-12T00:15:08.377Z"
 }
