@@ -358,14 +358,25 @@ export async function runAuditPass(): Promise<{ chaptersAudited: number; issuesF
 
     const chapters = findChaptersInBatches(batches);
     const manifest = readManifest();
+    const existingImageChapters = new Set(manifest.images.map(img => img.chapterNumber));
     const sortedChapters = Array.from(chapters.keys()).sort((a, b) => b - a); // reverse order
 
-    // Find the next chapter to audit (going in reverse)
+    // PRIORITY: chapters without any images first (highest global number first)
+    const chaptersWithoutImages = sortedChapters.filter(ch => !existingImageChapters.has(ch));
+
     let targetChapter: number | null = null;
-    for (const ch of sortedChapters) {
-      if (ch < auditProgress.lastAuditedChapter) {
-        targetChapter = ch;
-        break;
+
+    if (chaptersWithoutImages.length > 0) {
+      // Pick the highest chapter without images
+      targetChapter = chaptersWithoutImages[0];
+      logger.info({ targetChapter, missingCount: chaptersWithoutImages.length }, "Audit: prioritizing chapter without images");
+    } else {
+      // All chapters have images — fall back to reverse-order audit
+      for (const ch of sortedChapters) {
+        if (ch < auditProgress.lastAuditedChapter) {
+          targetChapter = ch;
+          break;
+        }
       }
     }
 
