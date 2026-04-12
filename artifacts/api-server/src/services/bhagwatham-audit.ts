@@ -14,6 +14,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { execSync } from "child_process";
 import { logger } from "../lib/logger";
 import {
   type ChapterImage,
@@ -554,6 +555,24 @@ export async function runAuditPass(): Promise<{ chaptersAudited: number; issuesF
       : `Chapter ${targetChapter} — ${issues.length} issue(s), ${fixes.length} fixed`;
 
     logger.info({ chapter: targetChapter, issues: issues.length, fixes: fixes.length }, msg);
+
+    // Git commit + push if any fixes were made (images generated, descriptions added, etc.)
+    if (fixes.length > 0) {
+      try {
+        const REPO_ROOT = path.resolve(__dirname, "..", "..", "..", "..");
+        execSync("git add data/bhagwatham/images/ data/bhagwatham/audit-progress.json", { cwd: REPO_ROOT, stdio: "pipe" });
+        const diff = execSync("git diff --cached --stat", { cwd: REPO_ROOT, encoding: "utf-8" }).trim();
+        if (diff) {
+          const skandh = chapterInfo.skandh || "?";
+          const commitMsg = `feat(bhagwatham): audit ch ${targetChapter} (canto ${skandh}) — ${fixes.length} fix(es)`;
+          execSync(`git commit -m "${commitMsg}"`, { cwd: REPO_ROOT, stdio: "pipe" });
+          execSync("git push", { cwd: REPO_ROOT, stdio: "pipe" });
+          logger.info({ chapter: targetChapter, fixes: fixes.length }, "Audit: git commit + push done");
+        }
+      } catch (err) {
+        logger.warn({ err }, "Audit: git commit/push failed — continuing");
+      }
+    }
 
     return {
       chaptersAudited: 1,
