@@ -255,13 +255,13 @@ export default function JapaCounter() {
   const todayTotal = todayRounds * BEADS_PER_ROUND + count;
   const lifetimeTotal = lifetimeRounds * BEADS_PER_ROUND;
   const progress = targetRounds > 0 ? Math.min((todayRounds / targetRounds) * 100, 100) : 0;
-  const todayStr = new Date().toLocaleDateString("hi-IN", { day: "numeric", month: "short", year: "numeric" });
+  const todayStr = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
   // ── Focused mode: full screen tap ──────────────────────────────────────────
   if (mode === "focused") {
     return (
       <>
-        <SEOHead title="जप काउंटर — Build ISKCON" description="हरे कृष्ण महामन्त्र जप काउंटर" />
+        <SEOHead title="Japa Counter — Build ISKCON" description="Hare Krishna Maha Mantra Japa Counter" />
         <div
           className="fixed inset-0 bg-[#1a1108] flex flex-col items-center justify-center select-none touch-manipulation"
           onClick={handleTap}
@@ -270,9 +270,9 @@ export default function JapaCounter() {
           {/* Top bar */}
           <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-3" onClick={e => e.stopPropagation()}>
             <button onClick={() => setMode("onscreen")} className="text-amber-400/70 text-sm font-medium px-3 py-1.5 rounded-lg bg-amber-900/20">
-              वापस
+              Back
             </button>
-            <span className="text-amber-400/50 text-xs">{todayRounds} माला</span>
+            <span className="text-amber-400/50 text-xs">{todayRounds} rounds</span>
             <button onClick={() => setSoundOn(!soundOn)} className="text-amber-400/70 p-1.5 rounded-lg bg-amber-900/20">
               {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </button>
@@ -289,7 +289,7 @@ export default function JapaCounter() {
             {count}
           </motion.div>
 
-          <p className="text-amber-400/40 text-sm mt-2">{BEADS_PER_ROUND - count} शेष</p>
+          <p className="text-amber-400/40 text-sm mt-2">{BEADS_PER_ROUND - count} remaining</p>
 
           {/* Progress ring */}
           <div className="mt-8">
@@ -304,7 +304,7 @@ export default function JapaCounter() {
             </svg>
           </div>
 
-          <p className="text-amber-500/30 text-xs mt-8">कहीं भी टैप करें</p>
+          <p className="text-amber-500/30 text-xs mt-8">Tap anywhere</p>
         </div>
       </>
     );
@@ -313,7 +313,7 @@ export default function JapaCounter() {
   // ── On-screen mode ─────────────────────────────────────────────────────────
   return (
     <>
-      <SEOHead title="जप काउंटर — Build ISKCON" description="हरे कृष्ण महामन्त्र जप काउंटर" />
+      <SEOHead title="Japa Counter — Build ISKCON" description="Hare Krishna Maha Mantra Japa Counter" />
 
       <div className="min-h-screen bg-[#111] text-white select-none" style={{ WebkitTapHighlightColor: "transparent" }}>
         {/* Header */}
@@ -323,15 +323,17 @@ export default function JapaCounter() {
           </h1>
           <div className="flex items-center gap-2">
             {loggedIn ? (
-              <button onClick={handleLogout} className="text-amber-400/60 p-1.5 rounded-lg hover:bg-white/5" title="लॉग आउट">
-                <LogOut className="w-4 h-4" />
+              <button onClick={handleLogout} className="flex items-center gap-1 text-amber-400/60 px-2 py-1.5 rounded-lg hover:bg-white/5 text-xs" title="Log out">
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden xs:inline">{name || "Logout"}</span>
               </button>
             ) : (
-              <button onClick={() => setShowLogin(true)} className="text-amber-400/60 p-1.5 rounded-lg hover:bg-white/5" title="लॉग इन">
-                <LogIn className="w-4 h-4" />
+              <button onClick={() => setShowLogin(true)} className="flex items-center gap-1 text-amber-400 px-2.5 py-1.5 rounded-lg bg-amber-900/30 hover:bg-amber-900/50 text-xs font-medium" title="Log in">
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Login</span>
               </button>
             )}
-            <button onClick={openEdit} className="text-amber-400/60 p-1.5 rounded-lg hover:bg-white/5" title="संपादित करें">
+            <button onClick={openEdit} className="text-amber-400/60 p-1.5 rounded-lg hover:bg-white/5" title="Edit">
               <Pencil className="w-4 h-4" />
             </button>
           </div>
@@ -339,7 +341,7 @@ export default function JapaCounter() {
 
         {/* Session date */}
         <p className="text-center text-amber-400/40 text-xs py-2">
-          {loggedIn && name ? `${name} — ` : ""}सत्र: {todayStr}
+          {loggedIn && name ? `${name} — ` : ""}Session: {todayStr}
         </p>
 
         {/* Mode toggle */}
@@ -348,13 +350,13 @@ export default function JapaCounter() {
             onClick={() => setMode("onscreen")}
             className={`px-4 py-1.5 text-xs font-bold tracking-wider transition-colors ${mode === "onscreen" ? "text-white border-b-2 border-amber-500" : "text-white/30"}`}
           >
-            ऑन-स्क्रीन
+            ON-SCREEN
           </button>
           <button
             onClick={() => setMode("focused")}
             className={`px-4 py-1.5 text-xs font-bold tracking-wider transition-colors text-white/30`}
           >
-            फोकस मोड
+            FOCUSED
           </button>
         </div>
 
@@ -382,11 +384,11 @@ export default function JapaCounter() {
           </div>
 
           {/* Today stats */}
-          <p className="text-white/40 text-sm">आज</p>
+          <p className="text-white/40 text-sm">Today</p>
           <p className="text-white/70 text-sm">
             {BEADS_PER_ROUND} &times; <span className="font-bold text-white">{todayRounds}</span>
             {targetRounds > 0 && (
-              <span className="text-amber-500/50 ml-2">/ {targetRounds} लक्ष्य</span>
+              <span className="text-amber-500/50 ml-2">/ {targetRounds} target</span>
             )}
           </p>
 
@@ -408,10 +410,10 @@ export default function JapaCounter() {
           <div className="w-24 h-px bg-white/10 mx-auto my-3" />
 
           {/* Lifetime stats */}
-          <p className="text-white/40 text-sm">कुल जप</p>
-          <p className="text-white text-lg font-bold tabular-nums">{lifetimeTotal.toLocaleString("hi-IN")}</p>
+          <p className="text-white/40 text-sm">Lifetime</p>
+          <p className="text-white text-lg font-bold tabular-nums">{lifetimeTotal.toLocaleString("en-IN")}</p>
           <p className="text-white/50 text-sm">
-            {BEADS_PER_ROUND} &times; <span className="font-bold text-white/80">{lifetimeRounds.toLocaleString("hi-IN")}</span>
+            {BEADS_PER_ROUND} &times; <span className="font-bold text-white/80">{lifetimeRounds.toLocaleString("en-IN")}</span>
           </p>
         </div>
 
@@ -421,14 +423,14 @@ export default function JapaCounter() {
             onClick={handleResetToday}
             className="flex items-center gap-1.5 text-amber-400/80 text-sm px-4 py-2 rounded-xl bg-white/5 active:bg-white/10 transition-colors"
           >
-            <RotateCcw className="w-4 h-4" /> रीसेट
+            <RotateCcw className="w-4 h-4" /> Reset
           </button>
           <button
             onClick={() => setSoundOn(!soundOn)}
             className="flex items-center gap-1.5 text-amber-400/80 text-sm px-4 py-2 rounded-xl bg-white/5 active:bg-white/10 transition-colors"
           >
             {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-            {soundOn ? "ध्वनि" : "मौन"}
+            {soundOn ? "Sound" : "Mute"}
           </button>
         </div>
 
@@ -454,7 +456,7 @@ export default function JapaCounter() {
         {/* Sync indicator */}
         {loggedIn && (
           <p className="text-center text-amber-400/20 text-[10px] pb-4">
-            <Phone className="w-3 h-3 inline mr-1" />{phone} — सिंक चालू
+            <Phone className="w-3 h-3 inline mr-1" />{phone} — Synced
           </p>
         )}
       </div>
@@ -476,8 +478,8 @@ export default function JapaCounter() {
               onClick={e => e.stopPropagation()}
               className="bg-[#1a1a1a] rounded-t-2xl sm:rounded-2xl w-full max-w-sm p-6 space-y-4"
             >
-              <h3 className="text-lg font-bold text-amber-100">अपनी प्रगति सहेजें</h3>
-              <p className="text-white/40 text-sm">फोन नंबर या ईमेल से लॉग इन करें — आपकी जप प्रगति सुरक्षित रहेगी।</p>
+              <h3 className="text-lg font-bold text-amber-100">Save your progress</h3>
+              <p className="text-white/40 text-sm">Log in with your phone number or email to keep your japa progress safe.</p>
 
               <div className="space-y-3">
                 <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2.5">
@@ -486,7 +488,7 @@ export default function JapaCounter() {
                     type="text"
                     value={loginPhone}
                     onChange={e => setLoginPhone(e.target.value)}
-                    placeholder="फोन या ईमेल"
+                    placeholder="Phone or Email"
                     className="bg-transparent flex-1 text-white outline-none text-sm placeholder-white/20"
                     autoFocus
                   />
@@ -497,7 +499,7 @@ export default function JapaCounter() {
                     type="text"
                     value={loginName}
                     onChange={e => setLoginName(e.target.value)}
-                    placeholder="आपका नाम (वैकल्पिक)"
+                    placeholder="Your name (optional)"
                     className="bg-transparent flex-1 text-white outline-none text-sm placeholder-white/20"
                   />
                 </div>
@@ -508,7 +510,7 @@ export default function JapaCounter() {
                 disabled={loginLoading || !loginPhone.trim()}
                 className="w-full py-3 bg-amber-600 text-white font-bold rounded-xl hover:bg-amber-700 disabled:opacity-40 transition-colors text-sm"
               >
-                {loginLoading ? "..." : "सहेजें और जारी रखें"}
+                {loginLoading ? "..." : "Save & Continue"}
               </button>
             </motion.div>
           </motion.div>
@@ -532,11 +534,11 @@ export default function JapaCounter() {
               onClick={e => e.stopPropagation()}
               className="bg-[#1a1a1a] rounded-t-2xl sm:rounded-2xl w-full max-w-sm p-6 space-y-4"
             >
-              <h3 className="text-lg font-bold text-amber-100">संपादित करें</h3>
+              <h3 className="text-lg font-bold text-amber-100">Edit</h3>
 
               <div className="space-y-3">
                 <label className="block">
-                  <span className="text-white/40 text-xs">आज की माला</span>
+                  <span className="text-white/40 text-xs">Today's rounds</span>
                   <input
                     type="number"
                     min={0}
@@ -546,7 +548,7 @@ export default function JapaCounter() {
                   />
                 </label>
                 <label className="block">
-                  <span className="text-white/40 text-xs">कुल माला (Lifetime)</span>
+                  <span className="text-white/40 text-xs">Lifetime rounds</span>
                   <input
                     type="number"
                     min={0}
@@ -556,7 +558,7 @@ export default function JapaCounter() {
                   />
                 </label>
                 <label className="block">
-                  <span className="text-white/40 text-xs flex items-center gap-1"><Target className="w-3 h-3" /> दैनिक लक्ष्य (माला)</span>
+                  <span className="text-white/40 text-xs flex items-center gap-1"><Target className="w-3 h-3" /> Daily target (rounds)</span>
                   <input
                     type="number"
                     min={0}
@@ -572,13 +574,13 @@ export default function JapaCounter() {
                   onClick={() => setEditing(false)}
                   className="flex-1 py-2.5 bg-white/5 text-white/60 font-medium rounded-xl text-sm hover:bg-white/10 transition-colors"
                 >
-                  रद्द करें
+                  Cancel
                 </button>
                 <button
                   onClick={handleEditSave}
                   className="flex-1 py-2.5 bg-amber-600 text-white font-bold rounded-xl text-sm hover:bg-amber-700 transition-colors"
                 >
-                  सहेजें
+                  Save
                 </button>
               </div>
             </motion.div>

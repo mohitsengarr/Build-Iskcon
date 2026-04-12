@@ -60,7 +60,7 @@ function ReadingSettingsPanel({ settings, onChange, onClose }: {
       className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-stone-800 rounded-xl shadow-xl border border-stone-200 dark:border-stone-700 p-4 z-50"
     >
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-bold text-stone-600 dark:text-stone-300">पठन सेटिंग्स</span>
+        <span className="text-xs font-bold text-stone-600 dark:text-stone-300">Reading Settings</span>
         <button onClick={onClose} className="p-1 hover:bg-stone-100 dark:hover:bg-stone-700 rounded">
           <X className="w-3.5 h-3.5 text-stone-400" />
         </button>
@@ -68,7 +68,7 @@ function ReadingSettingsPanel({ settings, onChange, onClose }: {
 
       {/* Font size */}
       <div className="mb-3">
-        <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5 block">फ़ॉन्ट आकार</label>
+        <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5 block">Font Size</label>
         <div className="flex items-center gap-2">
           <button onClick={() => update({ fontSize: Math.max(12, settings.fontSize - 1) })}
             className="p-1.5 rounded-lg border border-stone-200 hover:bg-stone-50 transition-colors">
@@ -84,19 +84,19 @@ function ReadingSettingsPanel({ settings, onChange, onClose }: {
 
       {/* Line height */}
       <div className="mb-3">
-        <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5 block">लाइन ऊँचाई</label>
+        <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5 block">Line Height</label>
         <input type="range" min="1.4" max="2.6" step="0.1" value={settings.lineHeight}
           onChange={(e) => update({ lineHeight: parseFloat(e.target.value) })}
           className="w-full h-1.5 bg-stone-200 rounded-full appearance-none cursor-pointer accent-orange-500"
         />
         <div className="flex justify-between text-[9px] text-stone-400 mt-0.5">
-          <span>सघन</span><span>{settings.lineHeight.toFixed(1)}</span><span>विरल</span>
+          <span>Compact</span><span>{settings.lineHeight.toFixed(1)}</span><span>Spacious</span>
         </div>
       </div>
 
       {/* Content width */}
       <div className="mb-3">
-        <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5 block">पृष्ठ चौड़ाई</label>
+        <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5 block">Page Width</label>
         <div className="flex gap-1.5">
           {[640, 768, 896].map((w) => (
             <button key={w} onClick={() => update({ maxWidth: w })}
@@ -104,7 +104,7 @@ function ReadingSettingsPanel({ settings, onChange, onClose }: {
                 settings.maxWidth === w ? "bg-orange-100 border-orange-300 text-orange-700" : "border-stone-200 text-stone-500 hover:bg-stone-50"
               }`}
             >
-              {w === 640 ? "संकीर्ण" : w === 768 ? "मध्यम" : "चौड़ा"}
+              {w === 640 ? "Narrow" : w === 768 ? "Medium" : "Wide"}
             </button>
           ))}
         </div>
@@ -112,9 +112,9 @@ function ReadingSettingsPanel({ settings, onChange, onClose }: {
 
       {/* Theme */}
       <div>
-        <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5 block">थीम</label>
+        <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5 block">Theme</label>
         <div className="flex gap-1.5">
-          {([["light", "प्रकाश", "bg-white border-stone-300 text-stone-800"], ["sepia", "सेपिया", "bg-[#f4ecd8] border-[#d4c5a9] text-[#5b4636]"], ["dark", "अंधेरा", "bg-[#1a1a1a] border-stone-600 text-stone-200"]] as const).map(([t, label, cls]) => (
+          {([["light", "Light", "bg-white border-stone-300 text-stone-800"], ["sepia", "Sepia", "bg-[#f4ecd8] border-[#d4c5a9] text-[#5b4636]"], ["dark", "Dark", "bg-[#1a1a1a] border-stone-600 text-stone-200"]] as const).map(([t, label, cls]) => (
             <button key={t} onClick={() => update({ theme: t })}
               className={`flex-1 py-2 rounded-lg text-[10px] font-semibold border transition-all ${cls} ${settings.theme === t ? "ring-2 ring-orange-400 ring-offset-1" : ""}`}
             >
@@ -184,11 +184,11 @@ function saveSectionOverrides(o: PageOverrides) {
 }
 
 const SECTION_KIND_LABELS: Record<SectionKind, { label: string; color: string; bg: string }> = {
-  shlok:     { label: "श्लोक",    color: "text-orange-700", bg: "bg-orange-100 border-orange-300" },
-  shabdarth: { label: "शब्दार्थ", color: "text-pink-700",   bg: "bg-pink-100 border-pink-300" },
-  anuvad:    { label: "अनुवाद",   color: "text-blue-700",   bg: "bg-blue-100 border-blue-300" },
-  tatparya:  { label: "तात्पर्य", color: "text-green-700",  bg: "bg-green-100 border-green-300" },
-  text:      { label: "पाठ",     color: "text-stone-600",  bg: "bg-stone-100 border-stone-300" },
+  shlok:     { label: "Shlok",      color: "text-orange-700", bg: "bg-orange-100 border-orange-300" },
+  shabdarth: { label: "Shabdarth",  color: "text-pink-700",   bg: "bg-pink-100 border-pink-300" },
+  anuvad:    { label: "Anuvad",     color: "text-blue-700",   bg: "bg-blue-100 border-blue-300" },
+  tatparya:  { label: "Tatparya",   color: "text-green-700",  bg: "bg-green-100 border-green-300" },
+  text:      { label: "Text",       color: "text-stone-600",  bg: "bg-stone-100 border-stone-300" },
 };
 
 /** A chapter detected from the OCR content */
@@ -259,7 +259,7 @@ const OCR_CHAPTER_FIXES: Record<string, { num: number; label: string }> = {
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("hi-IN", {
+  return new Date(iso).toLocaleDateString("en-IN", {
     day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
   });
 }
@@ -445,7 +445,7 @@ function ImageCard({ img, alt }: { img: { url: string; description: string }; al
       } else {
         // Fallback: copy image URL
         await navigator.clipboard.writeText(window.location.origin + img.url);
-        alert("लिंक कॉपी हो गया! अब आप इसे कहीं भी शेयर कर सकते हैं।");
+        alert("Link copied! You can share it anywhere.");
       }
     } catch {
       // User cancelled or error
@@ -461,14 +461,14 @@ function ImageCard({ img, alt }: { img: { url: string; description: string }; al
           <button
             onClick={handleDownload}
             className="p-1.5 rounded-lg hover:bg-orange-100 text-stone-500 hover:text-orange-700 transition-colors"
-            title="डाउनलोड करें"
+            title="Download"
           >
             <Download className="w-4 h-4" />
           </button>
           <button
             onClick={handleShare}
             className="p-1.5 rounded-lg hover:bg-orange-100 text-stone-500 hover:text-orange-700 transition-colors"
-            title="शेयर करें"
+            title="Share"
           >
             <Share2 className="w-4 h-4" />
           </button>
@@ -502,26 +502,26 @@ function ReaderIdentityModal({ onSave, onClose }: { onSave: (id: string, name: s
             <BookMarked className="w-5 h-5 text-orange-600" />
           </div>
           <div>
-            <h3 className="font-serif text-lg font-bold text-stone-800">बुकमार्क सेव करें</h3>
-            <p className="text-xs text-stone-500">अपनी पढ़ने की प्रगति सेव करें</p>
+            <h3 className="font-serif text-lg font-bold text-stone-800">Save Bookmark</h3>
+            <p className="text-xs text-stone-500">Save your reading progress</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="block text-xs font-semibold text-stone-600 mb-1">ईमेल या फ़ोन नम्बर *</label>
+            <label className="block text-xs font-semibold text-stone-600 mb-1">Email or Phone *</label>
             <input
               type="text" value={contact} onChange={(e) => setContact(e.target.value)}
-              placeholder="email@example.com या 9876543210"
+              placeholder="email@example.com or 9876543210"
               className="w-full px-3 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm text-stone-700 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-300"
               autoFocus required
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-stone-600 mb-1">आपका नाम (वैकल्पिक)</label>
+            <label className="block text-xs font-semibold text-stone-600 mb-1">Your Name (optional)</label>
             <input
               type="text" value={name} onChange={(e) => setName(e.target.value)}
-              placeholder="आपका नाम"
+              placeholder="Your name"
               className="w-full px-3 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm text-stone-700 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-300"
             />
           </div>
@@ -529,12 +529,12 @@ function ReaderIdentityModal({ onSave, onClose }: { onSave: (id: string, name: s
             <button type="button" onClick={onClose}
               className="flex-1 px-4 py-2.5 bg-stone-100 text-stone-600 rounded-xl text-sm font-semibold hover:bg-stone-200 transition-colors"
             >
-              रद्द करें
+              Cancel
             </button>
             <button type="submit"
               className="flex-1 px-4 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold hover:bg-orange-700 transition-colors"
             >
-              सेव करें
+              Save
             </button>
           </div>
         </form>
@@ -554,8 +554,8 @@ function BookmarkPanel({ bookmarks, onJump, onDelete }: {
     return (
       <div className="px-4 py-6 text-center">
         <Bookmark className="w-6 h-6 text-stone-300 mx-auto mb-2" />
-        <p className="text-xs text-stone-400">अभी कोई बुकमार्क नहीं</p>
-        <p className="text-[10px] text-stone-300 mt-1">पृष्ठ पढ़ते समय बुकमार्क आइकन दबाएं</p>
+        <p className="text-xs text-stone-400">No bookmarks yet</p>
+        <p className="text-[10px] text-stone-300 mt-1">Tap the bookmark icon while reading</p>
       </div>
     );
   }
@@ -572,10 +572,10 @@ function BookmarkPanel({ bookmarks, onJump, onDelete }: {
               <Bookmark className="w-3.5 h-3.5 text-orange-500 shrink-0" />
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-stone-700 truncate">
-                  {b.label || (b.chapter_title ? b.chapter_title.split("—")[0].trim() : `पृष्ठ ${b.page_number}`)}
+                  {b.label || (b.chapter_title ? b.chapter_title.split("—")[0].trim() : `Page ${b.page_number}`)}
                 </p>
                 <p className="text-[10px] text-stone-400">
-                  पृष्ठ {b.page_number}
+                  Page {b.page_number}
                   {b.chapter_title && ` · ${b.chapter_title.split("—")[0].trim()}`}
                 </p>
               </div>
@@ -584,7 +584,7 @@ function BookmarkPanel({ bookmarks, onJump, onDelete }: {
           <button
             onClick={() => onDelete(b)}
             className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-50 text-stone-400 hover:text-red-500 transition-all"
-            title="हटाएं"
+            title="Delete"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -918,13 +918,13 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
         <div className="flex items-center gap-2 flex-wrap">
           <button onClick={() => { setEditMode(false); setSelStart(null); setSelEnd(null); }}
             className="text-[11px] px-2.5 py-1 rounded-lg bg-stone-200 hover:bg-stone-300 text-stone-700 font-semibold transition-colors">
-            ← वापस
+            ← Back
           </button>
-          <span className="text-[11px] text-stone-500 font-medium">पृ. {pageNumber} — पंक्तियाँ चुनें, फिर प्रकार दबाएँ</span>
+          <span className="text-[11px] text-stone-500 font-medium">Pg. {pageNumber} — Select lines, then choose type</span>
           {(overrides && overrides.length > 0) && (
             <button onClick={clearOverrides}
               className="text-[11px] px-2.5 py-1 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 font-semibold transition-colors ml-auto">
-              <Undo2 className="w-3 h-3 inline mr-1" />सब हटाएँ
+              <Undo2 className="w-3 h-3 inline mr-1" />Clear All
             </button>
           )}
         </div>
@@ -932,7 +932,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
         {/* Type buttons — shown when selection active */}
         {selStart !== null && (
           <div className="flex items-center gap-1.5 flex-wrap sticky top-12 z-20 bg-white/95 backdrop-blur py-2 px-1 rounded-lg border border-stone-200 shadow-sm">
-            <span className="text-[10px] text-stone-400 font-semibold mr-1">चयनित ({selMax - selMin + 1} पंक्तियाँ):</span>
+            <span className="text-[10px] text-stone-400 font-semibold mr-1">Selected ({selMax - selMin + 1} lines):</span>
             {(Object.keys(SECTION_KIND_LABELS) as SectionKind[]).map((k) => (
               <button key={k} onClick={() => applyKind(k)}
                 className={`text-[11px] px-2.5 py-1 rounded-md border font-semibold transition-colors ${SECTION_KIND_LABELS[k].bg} ${SECTION_KIND_LABELS[k].color}`}>
@@ -983,7 +983,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
         <button
           onClick={() => setEditMode(true)}
           className="absolute -right-1 top-0 opacity-0 group-hover/page:opacity-60 hover:!opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-stone-100"
-          title="श्लोक सीमा संपादित करें"
+          title="Edit section boundaries"
         >
           <Pencil className="w-3.5 h-3.5 text-stone-400" />
         </button>
@@ -1007,7 +1007,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
                           <button
                             onClick={() => onDeleteImage(globalNum!, img.sceneIndex ?? idx)}
                             className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-red-600/80 hover:bg-red-700 text-white rounded-full p-1.5"
-                            title="चित्र हटाएँ"
+                            title="Delete image"
                           >
                             <X className="w-3 h-3" />
                           </button>
@@ -1021,10 +1021,10 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
                     onClick={() => onRegenerateImages(globalNum!)}
                     disabled={regeneratingChapters?.has(globalNum!) ?? false}
                     className={`flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-lg transition-colors ${regeneratingChapters?.has(globalNum!) ? "opacity-60 cursor-wait" : ""} ${themeKey === "dark" ? "text-orange-400 hover:bg-orange-900/30" : "text-orange-500 hover:bg-orange-100"}`}
-                    title="चित्र पुनः बनाएँ"
+                    title="Regenerate images"
                   >
                     <RefreshCw className={`w-3 h-3 ${regeneratingChapters?.has(globalNum!) ? "animate-spin" : ""}`} />
-                    {regeneratingChapters?.has(globalNum!) ? "बना रहे हैं…" : "चित्र पुनः बनाएँ"}
+                    {regeneratingChapters?.has(globalNum!) ? "Generating…" : "Regenerate images"}
                   </button>
                 )}
               </div>
@@ -1174,14 +1174,14 @@ function Sidebar({
                 onClick={() => setSidebarTab("chapters")}
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${sidebarTab === "chapters" ? "bg-white text-orange-700 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
               >
-                <span className="flex items-center gap-1.5"><BookMarked className="w-3.5 h-3.5" /> विषय सूची</span>
+                <span className="flex items-center gap-1.5"><BookMarked className="w-3.5 h-3.5" /> Contents</span>
               </button>
               <button
                 onClick={() => setSidebarTab("bookmarks")}
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${sidebarTab === "bookmarks" ? "bg-white text-orange-700 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
               >
                 <span className="flex items-center gap-1.5">
-                  <Bookmark className="w-3.5 h-3.5" /> बुकमार्क
+                  <Bookmark className="w-3.5 h-3.5" /> Bookmarks
                   {bookmarks.length > 0 && <span className="bg-orange-500 text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center">{bookmarks.length}</span>}
                 </span>
               </button>
@@ -1196,15 +1196,15 @@ function Sidebar({
         {progress && (
           <div className="px-4 py-3 border-b border-stone-100">
             <div className="flex items-center justify-between text-[11px] text-stone-500 mb-1.5">
-              <span>{progress.totalPagesProcessed.toLocaleString()} / {progress.totalPagesInPdf.toLocaleString()} पृष्ठ</span>
+              <span>{progress.totalPagesProcessed.toLocaleString()} / {progress.totalPagesInPdf.toLocaleString()} pages</span>
               <span className="font-bold text-orange-600">{percent.toFixed(1)}%</span>
             </div>
             <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
               <div className="h-full bg-gradient-to-r from-orange-400 to-amber-500 rounded-full transition-all duration-700" style={{ width: `${percent}%` }} />
             </div>
             <div className="flex items-center justify-between text-[10px] text-stone-400 mt-1.5">
-              <span>{progress.batchesCompleted} बैच पूर्ण</span>
-              <span>{progress.status === "processing" ? "चल रहा..." : progress.status === "completed" ? "पूर्ण" : "प्रतीक्षा"}</span>
+              <span>{progress.batchesCompleted} batches done</span>
+              <span>{progress.status === "processing" ? "Processing..." : progress.status === "completed" ? "Complete" : "Waiting"}</span>
             </div>
           </div>
         )}
@@ -1219,7 +1219,7 @@ function Sidebar({
             {/* Chapter list grouped by skandh */}
             <nav className="py-2">
               {chapters.length === 0 ? (
-                <p className="px-4 py-3 text-xs text-stone-400">अभी कोई अध्याय उपलब्ध नहीं</p>
+                <p className="px-4 py-3 text-xs text-stone-400">No chapters available yet</p>
               ) : (
                 (() => {
                   // Group chapters by skandh
@@ -1231,7 +1231,7 @@ function Sidebar({
                   return Array.from(skandhGroups.entries()).map(([skandh, chs]) => (
                     <div key={skandh}>
                       <p className="px-4 py-2 text-[10px] font-bold text-stone-400 uppercase tracking-wider sticky top-0 bg-white/95 backdrop-blur-sm z-[5]">
-                        स्कन्ध {skandh} {SKANDH_NAMES[skandh] ? `— ${SKANDH_NAMES[skandh]}` : ""}
+                        Canto {skandh} {SKANDH_NAMES[skandh] ? `— ${SKANDH_NAMES[skandh]}` : ""}
                       </p>
                       {chs.map((ch) => {
                         const isActive = activeChapter === ch.globalNumber;
@@ -1261,7 +1261,7 @@ function Sidebar({
                               {subtitle && (
                                 <p className="text-[11px] text-stone-400 truncate mt-0.5">{subtitle}</p>
                               )}
-                              <p className="text-[10px] text-stone-400 mt-0.5">पृष्ठ {ch.pageNumber}</p>
+                              <p className="text-[10px] text-stone-400 mt-0.5">Page {ch.pageNumber}</p>
                             </div>
                           </button>
                         );
@@ -1452,7 +1452,7 @@ export default function Bhagwatham() {
         const data = await res.json();
         await fetchImageManifest();
         if (data.trashIds?.length > 0) {
-          showUndo(`अध्याय ${chapterNum} के चित्र पुनः बनाए गए`, data.trashIds);
+          showUndo(`Chapter ${chapterNum} images regenerated`, data.trashIds);
         }
       }
     } catch { /* ignore */ } finally {
@@ -1471,7 +1471,7 @@ export default function Bhagwatham() {
         const data = await res.json();
         await fetchImageManifest();
         if (data.trashId) {
-          showUndo(`अध्याय ${chapterNum} का चित्र हटाया गया`, [data.trashId]);
+          showUndo(`Chapter ${chapterNum} image deleted`, [data.trashId]);
         }
       }
     } catch { /* ignore */ }
@@ -1866,7 +1866,7 @@ export default function Bhagwatham() {
                 <button
                   onClick={() => setSidebarOpen(true)}
                   className={`lg:hidden p-2 hover:bg-stone-100 rounded-lg transition-colors`}
-                  aria-label="विषय सूची खोलें"
+                  aria-label="Open contents"
                 >
                   <List className={`w-5 h-5 ${theme.muted}`} />
                 </button>
@@ -1882,7 +1882,7 @@ export default function Bhagwatham() {
                     if (num > 0) goToPageNumber(num);
                     setEditingPageNum(false);
                   }}>
-                    <span>पृ.</span>
+                    <span>Pg.</span>
                     <input
                       ref={pageInputRef}
                       type="number" min={1} max={allPages[allPages.length - 1]?.pageNumber || 999}
@@ -1901,21 +1901,21 @@ export default function Bhagwatham() {
                     <span
                       className="whitespace-nowrap cursor-pointer hover:text-orange-600 transition-colors shrink-0"
                       onClick={() => { setPageInputValue(String(currentVisiblePage)); setEditingPageNum(true); setTimeout(() => pageInputRef.current?.select(), 50); }}
-                      title="पृष्ठ संख्या टाइप करें"
-                    >पृ. {currentVisiblePage}</span>
+                      title="Type page number"
+                    >Pg. {currentVisiblePage}</span>
                   </>
                 ) : allPages.length > 0 && !searchQuery ? (
                   <span
                     className="whitespace-nowrap cursor-pointer hover:text-orange-600 transition-colors"
                     onClick={() => { setPageInputValue(String(currentVisiblePage)); setEditingPageNum(true); setTimeout(() => pageInputRef.current?.select(), 50); }}
-                    title="पृष्ठ संख्या टाइप करें"
+                    title="Type page number"
                   >
-                    पृ. {currentVisiblePage} / {allPages[allPages.length - 1]?.pageNumber || allPages.length}
+                    Pg. {currentVisiblePage} / {allPages[allPages.length - 1]?.pageNumber || allPages.length}
                   </span>
                 ) : searchQuery ? (
-                  <span>{displayPages.length} परिणाम</span>
+                  <span>{displayPages.length} results</span>
                 ) : (
-                  <span>लोड हो रहा है...</span>
+                  <span>Loading...</span>
                 )}
               </div>
 
@@ -1924,7 +1924,7 @@ export default function Bhagwatham() {
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
                 <input
                   ref={searchRef}
-                  type="text" placeholder="खोजें... (/)" value={searchQuery}
+                  type="text" placeholder="Search... (/)" value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-8 pr-3 py-1.5 bg-stone-50 border border-stone-200 rounded-lg text-xs text-stone-700 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-orange-200 focus:border-orange-300 transition-all"
                 />
@@ -1950,7 +1950,7 @@ export default function Bhagwatham() {
                 className={`relative p-1.5 rounded-lg transition-all active:scale-95 ${
                   bookmarkSaved ? "bg-orange-100 text-orange-600" : `hover:bg-stone-100 ${theme.muted} hover:text-orange-600`
                 }`}
-                title="बुकमार्क (B)"
+                title="Bookmark (B)"
               >
                 <Bookmark className={`w-4 h-4 ${bookmarkSaved ? "fill-orange-500" : ""}`} />
               </button>
@@ -1960,7 +1960,7 @@ export default function Bhagwatham() {
                 <button
                   onClick={() => setShowSettings(!showSettings)}
                   className={`p-1.5 rounded-lg transition-all ${showSettings ? "bg-orange-100 text-orange-600" : `hover:bg-stone-100 ${theme.muted}`}`}
-                  title="पठन सेटिंग्स"
+                  title="Reading Settings"
                 >
                   <Settings className="w-4 h-4" />
                 </button>
@@ -1973,7 +1973,7 @@ export default function Bhagwatham() {
               <button
                 onClick={() => setFocusMode(!focusMode)}
                 className={`hidden sm:block p-1.5 rounded-lg transition-all ${focusMode ? "bg-orange-100 text-orange-600" : `hover:bg-stone-100 ${theme.muted}`}`}
-                title="फ़ोकस मोड (F)"
+                title="Focus Mode (F)"
               >
                 <Maximize2 className="w-4 h-4" />
               </button>
@@ -1984,7 +1984,7 @@ export default function Bhagwatham() {
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white rounded-lg font-semibold text-xs hover:bg-orange-700 transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap"
                 >
                   {isProcessing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                  <span className="hidden sm:inline">{isProcessing ? "चल रहा..." : "अगले 20 पृष्ठ"}</span>
+                  <span className="hidden sm:inline">{isProcessing ? "Processing..." : "Next 20 Pages"}</span>
                 </button>
               )}
             </div>
@@ -2003,14 +2003,14 @@ export default function Bhagwatham() {
                       onClick={() => prev && handleChapterClick(prev)}
                       disabled={!prev}
                       className={`p-1 rounded hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors ${!prev ? "opacity-30 cursor-not-allowed" : "cursor-pointer"}`}
-                      title={prev ? `← ${prev.title}` : "पहला अध्याय"}
+                      title={prev ? `← ${prev.title}` : "First chapter"}
                     >
                       <ChevronLeft className="w-3.5 h-3.5" />
                     </button>
                   );
                 })()}
 
-                <span className={`font-bold ${theme.accent}`}>{(() => { const ch = chapters.find(c => c.globalNumber === activeChapter); return ch ? `स्कन्ध ${ch.skandh}` : "स्कन्ध १"; })()}</span>
+                <span className={`font-bold ${theme.accent}`}>{(() => { const ch = chapters.find(c => c.globalNumber === activeChapter); return ch ? `Canto ${ch.skandh}` : "Canto 1"; })()}</span>
                 <span className={theme.muted}>/</span>
                 <span className={`font-semibold ${theme.text}`}>{scrollChapter?.split("—")[0].trim()}</span>
                 {scrollChapter?.includes("—") && (
@@ -2029,7 +2029,7 @@ export default function Bhagwatham() {
                       onClick={() => next && handleChapterClick(next)}
                       disabled={!next}
                       className={`p-1 rounded hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors ${!next ? "opacity-30 cursor-not-allowed" : "cursor-pointer"}`}
-                      title={next ? `→ ${next.title}` : "अंतिम अध्याय"}
+                      title={next ? `→ ${next.title}` : "Last chapter"}
                     >
                       <ChevronRight className="w-3.5 h-3.5" />
                     </button>
@@ -2039,8 +2039,8 @@ export default function Bhagwatham() {
                 <span
                   className={`ml-auto ${theme.muted} cursor-pointer hover:text-orange-600 transition-colors`}
                   onClick={() => { setPageInputValue(String(currentVisiblePage)); setEditingPageNum(true); setTimeout(() => pageInputRef.current?.select(), 50); }}
-                  title="पृष्ठ संख्या टाइप करें"
-                >पृ. {currentVisiblePage}</span>
+                  title="Type page number"
+                >Pg. {currentVisiblePage}</span>
               </div>
             </div>
           )}
@@ -2073,15 +2073,15 @@ export default function Bhagwatham() {
                     <BookOpen className={`w-5 h-5 ${theme.accent}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-semibold ${theme.text}`}>पिछली बार पढ़ रहे थे?</p>
+                    <p className={`text-sm font-semibold ${theme.text}`}>Continue reading?</p>
                     <p className={`text-xs ${theme.muted} mt-0.5`}>
-                      {(() => { try { const r = JSON.parse(localStorage.getItem("bhagwatham_resume") || "{}"); return r.chapter ? `${r.chapter} — पृष्ठ ${r.pageNumber}` : `पृष्ठ ${r.pageNumber}`; } catch { return ""; } })()}
+                      {(() => { try { const r = JSON.parse(localStorage.getItem("bhagwatham_resume") || "{}"); return r.chapter ? `${r.chapter} — Page ${r.pageNumber}` : `Page ${r.pageNumber}`; } catch { return ""; } })()}
                     </p>
                   </div>
                   <button onClick={handleResume}
                     className="px-4 py-2 bg-orange-600 text-white rounded-lg text-xs font-bold hover:bg-orange-700 transition-all active:scale-95 shrink-0"
                   >
-                    जारी रखें
+                    Resume
                   </button>
                   <button onClick={() => setShowResume(false)} className={`p-1.5 rounded-lg hover:bg-stone-200/50 ${theme.muted}`}>
                     <X className="w-4 h-4" />
@@ -2099,7 +2099,7 @@ export default function Bhagwatham() {
             {loading ? (
               <div className={`flex flex-col items-center justify-center py-24 ${theme.muted}`}>
                 <Loader2 className="w-8 h-8 animate-spin mb-4" />
-                <p className="text-sm">लोड हो रहा है...</p>
+                <p className="text-sm">Loading...</p>
               </div>
             ) : displayPages.length === 0 ? (
               <motion.div variants={fadeInUp} initial="hidden" animate="visible" className="text-center py-20">
@@ -2107,16 +2107,16 @@ export default function Bhagwatham() {
                   <BookOpen className="w-8 h-8 text-orange-400" />
                 </div>
                 <h3 className={`font-serif text-xl font-bold ${theme.text} mb-2`}>
-                  {searchQuery ? "कोई परिणाम नहीं" : "अभी कोई पृष्ठ तैयार नहीं"}
+                  {searchQuery ? "No results found" : "No pages ready yet"}
                 </h3>
                 <p className={`${theme.muted} text-sm max-w-sm mx-auto mb-5`}>
-                  {searchQuery ? "कृपया अन्य शब्द खोजें।" : "\"अगले 20 पृष्ठ\" बटन दबाएं या स्वचालित प्रक्रिया की प्रतीक्षा करें।"}
+                  {searchQuery ? "Try different keywords." : "Press \"Next 20 Pages\" or wait for automatic processing."}
                 </p>
                 {!searchQuery && (
                   <button onClick={triggerProcess} disabled={isProcessing}
                     className="inline-flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-bold text-sm hover:bg-orange-700 transition-all active:scale-95"
                   >
-                    <Sparkles className="w-4 h-4" /> प्रारम्भ करें
+                    <Sparkles className="w-4 h-4" /> Get Started
                   </button>
                 )}
               </motion.div>
@@ -2133,7 +2133,7 @@ export default function Bhagwatham() {
                   const prevEndKind = prevPage ? getPageEndKind(prevPage.text) : undefined;
                   return (
                   <div key={page.pageNumber} data-page-num={page.pageNumber}>
-                    <p className={`text-[10px] ${theme.muted} font-medium text-right mt-0 mb-1 opacity-40`}>पृ. {page.pageNumber}</p>
+                    <p className={`text-[10px] ${theme.muted} font-medium text-right mt-0 mb-1 opacity-40`}>Pg. {page.pageNumber}</p>
                     <RenderContent text={page.text} textEn={page.textEn} lang={lang} chapterImages={chapterImages} themeKey={settings.theme} onRegenerateImages={openPromptModal} regeneratingChapters={regeneratingChapters} onDeleteImage={handleDeleteImage} pageNumber={page.pageNumber} overrides={sectionOverrides[page.pageNumber]} onOverridesChange={handleOverridesChange} prevPageEndKind={prevEndKind} chapterNumMapper={(perSkandhNum: number) => {
                       // Find which skandh this page belongs to based on surrounding chapters
                       const ch = chapters.find(c => c.number === perSkandhNum && c.pageNumber <= page.pageNumber);
@@ -2154,7 +2154,7 @@ export default function Bhagwatham() {
                 <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage <= 1}
                   className={`inline-flex items-center gap-1 px-3 py-1.5 ${theme.surface} border ${theme.border} rounded-lg text-xs font-semibold ${theme.text} hover:border-orange-300 transition-all disabled:opacity-30`}
                 >
-                  <ChevronLeft className="w-3 h-3" /> पिछला
+                  <ChevronLeft className="w-3 h-3" /> Previous
                 </button>
 
                 {/* Page numbers */}
@@ -2185,7 +2185,7 @@ export default function Bhagwatham() {
                 <button onClick={() => goToPage(currentPage + 1)} disabled={currentPage >= totalViewPages}
                   className={`inline-flex items-center gap-1 px-3 py-1.5 ${theme.surface} border ${theme.border} rounded-lg text-xs font-semibold ${theme.text} hover:border-orange-300 transition-all disabled:opacity-30`}
                 >
-                  अगला <ChevronRight className="w-3 h-3" />
+                  Next <ChevronRight className="w-3 h-3" />
                 </button>
               </div>
             )}
@@ -2214,7 +2214,7 @@ export default function Bhagwatham() {
             >
               <div className="p-5 border-b border-stone-200 dark:border-stone-700 flex items-center justify-between">
                 <div>
-                  <h3 className="font-bold text-stone-800 dark:text-stone-100 text-base">चित्र पुनः बनाएँ</h3>
+                  <h3 className="font-bold text-stone-800 dark:text-stone-100 text-base">Regenerate Images</h3>
                   <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">{promptModal.chapterTitle}</p>
                 </div>
                 <button onClick={() => setPromptModal(null)} className="p-1.5 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full">
@@ -2225,14 +2225,14 @@ export default function Bhagwatham() {
               {promptModal.loading ? (
                 <div className="p-10 flex flex-col items-center gap-3">
                   <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
-                  <p className="text-sm text-stone-500">AI से प्रॉम्प्ट बना रहे हैं…</p>
+                  <p className="text-sm text-stone-500">Generating prompt with AI…</p>
                 </div>
               ) : (
                 <div className="p-5 space-y-4">
                   {/* Hindi summary */}
                   {promptModal.summaryHi && (
                     <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg p-3">
-                      <p className="text-xs font-semibold text-orange-600 dark:text-orange-400 mb-1">सारांश</p>
+                      <p className="text-xs font-semibold text-orange-600 dark:text-orange-400 mb-1">Summary</p>
                       <p className="text-sm text-stone-700 dark:text-stone-300" style={{ fontFamily: "var(--font-devanagari)" }}>{promptModal.summaryHi}</p>
                     </div>
                   )}
@@ -2250,13 +2250,13 @@ export default function Bhagwatham() {
                       className="w-full rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800 text-sm text-stone-800 dark:text-stone-200 p-3 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none resize-y"
                       placeholder="Describe the scene you want to generate..."
                     />
-                    <p className="text-[10px] text-stone-400 mt-1">प्रॉम्प्ट को संपादित करें या नीचे से कहानी चुनें</p>
+                    <p className="text-[10px] text-stone-400 mt-1">Edit the prompt or choose a story below</p>
                   </div>
 
                   {/* Available stories from tatparya */}
                   {promptModal.stories.length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold text-stone-600 dark:text-stone-400 mb-2">अध्याय की कहानियाँ (तात्पर्य से)</p>
+                      <p className="text-xs font-semibold text-stone-600 dark:text-stone-400 mb-2">Stories from this chapter (from Tatparya)</p>
                       <div className="space-y-2 max-h-40 overflow-y-auto">
                         {promptModal.stories.map((story) => (
                           <button
@@ -2301,7 +2301,7 @@ export default function Bhagwatham() {
                       className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white rounded-xl font-semibold text-sm transition-colors"
                     >
                       <Send className="w-3.5 h-3.5" />
-                      इस प्रॉम्प्ट से बनाएँ
+                      Generate with this prompt
                     </button>
                     <button
                       onClick={() => handleRegenerateImages(promptModal.chapterNum)}
@@ -2331,7 +2331,7 @@ export default function Bhagwatham() {
               className="flex items-center gap-1.5 px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-semibold text-xs transition-colors"
             >
               <Undo2 className="w-3.5 h-3.5" />
-              पूर्ववत करें
+              Undo
             </button>
             <button onClick={() => { if (undoTimerRef.current) clearTimeout(undoTimerRef.current); setUndoToast(null); }} className="p-1 hover:bg-stone-700 rounded-full transition-colors">
               <X className="w-3.5 h-3.5 text-stone-400" />

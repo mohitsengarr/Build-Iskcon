@@ -19,6 +19,7 @@ import {
   buildAIScenePrompt,
   extractTatparyaStory,
   backfillMissingImages,
+  getPersonaGallery,
 } from "../services/bhagwatham-image-gen";
 import {
   runAuditPass,
@@ -444,6 +445,16 @@ router.post("/bhagwatham/process", async (_req, res) => {
       success: false,
       message: "Failed to process batch",
     });
+  }
+});
+
+// GET /api/bhagwatham/persona/gallery — all personas with face images for gallery page
+router.get("/bhagwatham/persona/gallery", (_req, res) => {
+  try {
+    const gallery = getPersonaGallery();
+    res.json(gallery);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to load persona gallery" });
   }
 });
 

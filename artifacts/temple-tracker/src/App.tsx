@@ -8,6 +8,7 @@ import HowToBuildTemple from "@/pages/how-to-build-temple";
 import KrishnaJanmabhoomi from "@/pages/krishna-janmabhoomi";
 import Bhagwatham from "@/pages/bhagwatham";
 import JapaCounter from "@/pages/japa-counter";
+import PersonaGallery from "@/pages/persona-gallery";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ function App() {
             <Route path="/krishna-janmabhoomi" component={KrishnaJanmabhoomi} />
             <Route path="/bhagwatham" component={Bhagwatham} />
             <Route path="/japa" component={JapaCounter} />
+            <Route path="/personas" component={PersonaGallery} />
             <Route path="/" component={Home} />
           </Switch>
           <Toaster />

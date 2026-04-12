@@ -1037,7 +1037,7 @@ async function generateWithTogether(prompt: string, destPath: string, model: str
 
   // Style suffix — concise to leave maximum room for the scene description.
   // Scene accuracy is the #1 priority; style can be shorter.
-  const styleSuffix = "\nRaja Ravi Varma style classic oil painting, soft painterly brushstrokes, NOT photorealistic. Warm golden sunlight, vibrant sky. Traditional Indian devotional art, serene atmosphere, museum quality fine art. Ancient Vedic era — no modern items. Smooth feminine faces for women, no facial hair on women.";
+  const styleSuffix = "\nRaja Ravi Varma style classic oil painting, soft painterly brushstrokes, NOT photorealistic. Warm golden sunlight, vibrant sky. Traditional Indian devotional art, serene atmosphere, museum quality fine art. Ancient Vedic era 5000 years ago — absolutely NO modern items, NO modern hairstyles, NO trimmed beards, NO glasses, NO modern clothing. All men have long flowing uncut beards and matted jata hair or topknots as per ancient Vedic tradition. Women have long braided hair with flowers. Smooth feminine faces for women, no facial hair on women. Ancient ashram and forest settings only.";
 
   // Build the full prompt: scene first (most important), then style
   let fullPrompt = prompt + styleSuffix;
@@ -1460,6 +1460,36 @@ export async function generateImagesForBatch(
       }
     }
   }
+}
+
+/** Return all character personas with their face images for the gallery page */
+export function getPersonaGallery(): Array<{
+  key: string;
+  name: string;
+  shortDescription: string;
+  fullDescription: string;
+  faceImage: string | null;
+}> {
+  let faceManifest: Array<{ characterName: string; imagePath: string }> = [];
+  try {
+    if (fs.existsSync(FACE_MANIFEST)) {
+      faceManifest = JSON.parse(fs.readFileSync(FACE_MANIFEST, "utf-8"));
+    }
+  } catch { /* ignore */ }
+
+  return Object.entries(CHARACTER_PERSONAS).map(([key, fullDesc]) => {
+    const shortDesc = PERSONA_SHORT[key] || "";
+    // Extract a readable name from the short description (before the colon)
+    const name = shortDesc.split(":")[0]?.trim() || key.replace(/_/g, " ");
+    const face = faceManifest.find(f => f.characterName === key);
+    return {
+      key,
+      name,
+      shortDescription: shortDesc.split(":").slice(1).join(":").trim(),
+      fullDescription: fullDesc,
+      faceImage: face ? face.imagePath : null,
+    };
+  });
 }
 
 export function getImagesDir(): string {
