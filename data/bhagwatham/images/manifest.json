@@ -1551,7 +1551,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T07:51:37.896Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 160,
+      "chapterTitle": "Chapter ग्यारह",
+      "imagePath": "chapter-160.jpg",
+      "prompt": "Krishna stands calmly amidst fallen trees in the forest, as Nanda and elderly villagers gather around him in wonder.",
+      "descriptionHi": "इस अध्याय में कृष्ण की बाल-लीलाएँ बताई गई हैं, जिसमें वे वत्सासुर और बकासुर का वध करते हैं और गोकुलवासियों को आश्चर्यचकित करते हैं। कृष्ण के पिता नन्द और गोकुल के वृद्ध निवासी इस घटना को देखकर आश्चर्यचकित होते हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T07:55:41.273Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T07:51:37.896Z"
+  "lastUpdated": "2026-04-12T07:55:41.273Z"
 }
