@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SEOHead } from "@/components/SEOHead";
+import { Link } from "wouter";
 import { Phone, User, LogIn, LogOut, Pencil, Check, X, RotateCcw, Target, Volume2, VolumeX } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -324,9 +325,14 @@ export default function JapaCounter() {
         >
           {/* Top bar */}
           <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-3" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setMode("onscreen")} className="text-amber-400/70 text-sm font-medium px-3 py-1.5 rounded-lg bg-amber-900/20">
-              Back
-            </button>
+            <div className="flex items-center gap-2">
+              <Link href="/">
+                <span className="font-serif text-xs font-black text-amber-500 uppercase tracking-wider cursor-pointer">Build Iskcon</span>
+              </Link>
+              <button onClick={() => setMode("onscreen")} className="text-amber-400/70 text-xs font-medium px-2 py-1 rounded-lg bg-amber-900/20">
+                Back
+              </button>
+            </div>
             <span className="text-amber-400/50 text-xs">{todayRounds} rounds</span>
             <button onClick={() => setSoundOn(!soundOn)} className="text-amber-400/70 p-1.5 rounded-lg bg-amber-900/20">
               {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
@@ -373,9 +379,15 @@ export default function JapaCounter() {
       <div className="min-h-screen bg-[#111] text-white select-none" style={{ WebkitTapHighlightColor: "transparent" }}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
-          <h1 className="text-lg font-bold text-amber-100 tracking-wide" style={{ fontFamily: "var(--font-devanagari, serif)" }}>
-            हरे कृष्ण
-          </h1>
+          <div className="flex items-center gap-3">
+            <Link href="/">
+              <span className="font-serif text-sm font-black text-amber-500 uppercase tracking-wider cursor-pointer">Build Iskcon</span>
+            </Link>
+            <span className="text-white/10">|</span>
+            <h1 className="text-lg font-bold text-amber-100 tracking-wide" style={{ fontFamily: "var(--font-devanagari, serif)" }}>
+              हरे कृष्ण
+            </h1>
+          </div>
           <div className="flex items-center gap-2">
             {loggedIn ? (
               <button onClick={handleLogout} className="flex items-center gap-1 text-amber-400/60 px-2 py-1.5 rounded-lg hover:bg-white/5 text-xs" title="Log out">
