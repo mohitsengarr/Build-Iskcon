@@ -1618,7 +1618,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T08:32:49.772Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 166,
+      "chapterTitle": "Chapter उन्नीस",
+      "imagePath": "chapter-166.jpg",
+      "prompt": "Krishna shields cows and cowherds from a massive forest fire in the Munjavana forest.",
+      "descriptionHi": "इस अध्याय में कृष्ण द्वारा मुञ्जारण्य में लगी महाग्नि से गौवों तथा ग्वालों की रक्षा की जानकारी दी गई है, जिसमें कृष्ण की दिव्य शक्ति और ग्वालों की रक्षा के लिए उनकी चिंता को दर्शाया गया है। यह घटना कृष्ण की दिव्य शक्ति और उनके अनुयायियों के प्रति उनके प्रेम को प्रकट करती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T08:38:47.647Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T08:32:49.772Z"
+  "lastUpdated": "2026-04-12T08:38:47.647Z"
 }
