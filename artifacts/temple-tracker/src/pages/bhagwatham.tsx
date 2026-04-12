@@ -486,7 +486,7 @@ function ReaderIdentityModal({ onSave, onClose }: { onSave: (id: string, name: s
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = contact.trim();
+    const trimmed = contact.trim().toLowerCase();
     if (!trimmed) return;
     onSave(trimmed, name.trim());
   };
@@ -1307,7 +1307,7 @@ export default function Bhagwatham() {
   const [activeChapter, setActiveChapter] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [lang, setLang] = useState<"hi" | "en">("hi");
-  const [readerId, setReaderId] = useState<string | null>(() => localStorage.getItem("bhagwatham_reader_id"));
+  const [readerId, setReaderId] = useState<string | null>(() => (localStorage.getItem("bhagwatham_reader_id") || "").toLowerCase() || null);
   const [readerName, setReaderName] = useState<string | null>(() => localStorage.getItem("bhagwatham_reader_name"));
   const [bookmarks, setBookmarks] = useState<BookmarkEntry[]>([]);
   const [showIdentityModal, setShowIdentityModal] = useState(false);

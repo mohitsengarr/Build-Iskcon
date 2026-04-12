@@ -123,11 +123,12 @@ export default function JapaCounter() {
       const auth = localStorage.getItem("japa_auth");
       if (auth) {
         const a = JSON.parse(auth);
-        setPhone(a.phone);
+        const normalizedPhone = (a.phone || "").toLowerCase();
+        setPhone(normalizedPhone);
         setName(a.name || "");
         setLoggedIn(true);
         // Fetch latest from server
-        fetchFromServer(a.phone);
+        fetchFromServer(normalizedPhone);
       }
     } catch { /* ignore */ }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -191,7 +192,7 @@ export default function JapaCounter() {
     if (!loginPhone.trim()) return;
     setLoginLoading(true);
     try {
-      const ph = loginPhone.trim();
+      const ph = loginPhone.trim().toLowerCase();
       const nm = loginName.trim() || null;
       const today = new Date().toISOString().slice(0, 10);
 
