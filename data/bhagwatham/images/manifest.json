@@ -344,6 +344,21 @@
       "cantoNumber": 2
     },
     {
+      "chapterNumber": 21,
+      "chapterTitle": "अध्याय दो",
+      "imagePath": "chapter-045.jpg",
+      "prompt": "Vidura asks Brahma about Daksha's hatred towards Lord Shiva in a serene heavenly setting.",
+      "descriptionHi": "इस अध्याय में दक्ष द्वारा शिवजी को शाप देने की कथा है, जिसमें विदुर भगवान ब्रह्मा से पूछते हैं कि दक्ष ने शिवजी के प्रति इतनी शत्रुता क्यों प्रदर्शित की। यह कथा शिवजी और दक्ष के बीच मनमुटाव को दर्शाती है।",
+      "personasUsed": [
+        "brahma",
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T23:12:33.469Z",
+      "sceneIndex": 0,
+      "cantoNumber": 2
+    },
+    {
       "chapterNumber": 22,
       "chapterTitle": "Chapter तीन",
       "imagePath": "chapter-022.jpg",
@@ -355,6 +370,21 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-10T23:28:41.694Z",
+      "sceneIndex": 0,
+      "cantoNumber": 2
+    },
+    {
+      "chapterNumber": 22,
+      "chapterTitle": "Chapter तीन",
+      "imagePath": "chapter-046.jpg",
+      "prompt": "Daksh, filled with pride, begins a grand yajna without inviting Lord Shiva, amidst the presence of other deities like Brahma and Vishnu.",
+      "descriptionHi": "इस अध्याय में मैत्रेय द्वारा शिव और दक्ष के बीच तनाव का वर्णन किया गया है, जो दक्ष द्वारा शिव को यज्ञ में आमंत्रित नहीं करने से उत्पन्न हुआ। यह तनाव सती द्वारा अपना शरीर त्यागने का कारण बना।",
+      "personasUsed": [
+        "vishnu",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T23:21:01.638Z",
       "sceneIndex": 0,
       "cantoNumber": 2
     },
@@ -375,6 +405,16 @@
       "cantoNumber": 2
     },
     {
+      "chapterNumber": 23,
+      "chapterTitle": "Chapter चार",
+      "imagePath": "chapter-047.jpg",
+      "prompt": "SatI stands torn between her desire to visit her family and Shiva's warning, her emotions in turmoil amidst the serene Himalayan setting.",
+      "descriptionHi": "सती अपने पिता के घर जाने के लिए उत्सुक हैं, लेकिन शिवजी की चेतावनी से भयभीत हैं। यह दुविधा उनके लिए बहुत कठिन है और उन्हें दुखी कर देती है। सती का मन अस्थिर हो जाता है और वे हिंडोले की भाँति कक्ष से बाहर और भीतर आ-जा रही थी।",
+      "generatedAt": "2026-04-10T23:22:40.637Z",
+      "sceneIndex": 0,
+      "cantoNumber": 2
+    },
+    {
       "chapterNumber": 24,
       "chapterTitle": "Chapter पाँच",
       "imagePath": "chapter-024.jpg",
@@ -386,6 +426,20 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-10T23:05:12.281Z",
+      "sceneIndex": 0,
+      "cantoNumber": 2
+    },
+    {
+      "chapterNumber": 24,
+      "chapterTitle": "Chapter पाँच",
+      "imagePath": "chapter-048.jpg",
+      "prompt": "Narada informs Shiva about Sati's demise at her father Daksh's yajna, sparking Shiva's intense grief and anger in a serene forest setting.",
+      "descriptionHi": "इस अध्याय में सती के पिता दक्ष द्वारा किए गए अपमान के कारण शिव क्रोधित हुए और अपने सैनिकों को खदेड़ दिया गया। मुख्य पात्र शिव, सती और नारद हैं। इस घटना का महत्व शिव के क्रोध और सती की त्याग की भावना में है।",
+      "personasUsed": [
+        "narada"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T23:31:48.858Z",
       "sceneIndex": 0,
       "cantoNumber": 2
     },
@@ -410,6 +464,20 @@
       "prompt": "Lord Varaha rises from the cosmic ocean to lift the earth, confronting the demon Hiranyaksha in a majestic display of divine power.",
       "descriptionHi": "ब्रह्माजी ने बताया कि जब भगवान्‌ ने वराह का रूप धारण किया तो पहले एक असुर हिरण्याक्ष प्रकट हुआ। भगवान्‌ ने उसे अपने अगले दाँत से विदीर्ण कर दिया। यह घटना सृष्टि के प्रारम्भ से ही ब्रह्माण्डों के लोकों में असुर तथा देवता की दो श्रेणियों को दर्शाती है।",
       "generatedAt": "2026-04-10T23:10:06.885Z",
+      "sceneIndex": 0,
+      "cantoNumber": 2
+    },
+    {
+      "chapterNumber": 26,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-049.jpg",
+      "prompt": "Shiv's serene conversation with Brahma, where he explains his gentle punishment to guide the devas back to the right path.",
+      "descriptionHi": "इस अध्याय में मैत्रेय मुनि विदुर को भगवान शिव और ब्रह्मा के बीच के संवाद के कुछ अंश सुना रहे हैं, जिसमें शिवजी देवताओं के अपराधों को क्षमा करते हैं और उन्हें राह पर लाने के लिए दण्डित करते हैं। यह अध्याय शिवजी की दया और क्षमा की महानता को दर्शाता है।",
+      "personasUsed": [
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T23:38:04.035Z",
       "sceneIndex": 0,
       "cantoNumber": 2
     },
@@ -440,6 +508,31 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 28,
+      "chapterTitle": "अध्याय नौ",
+      "imagePath": "chapter-051.jpg",
+      "prompt": "Vidura and Vishnu are present as Vishnu, on Garuda, visits Dhruva in the divine forest of Madhuvan.",
+      "descriptionHi": "महाराज ध्रुव के घर लौटने की कहानी में, मैत्रेय मुनि विदुर को बताते हैं कि भगवान विष्णु ने देवताओं को आश्वस्त किया और फिर गरुड़ पर सवार होकर मधुवन गए। इस प्रकार, भगवान की दिव्य यात्रा का वर्णन किया गया है।",
+      "personasUsed": [
+        "vishnu",
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T00:15:46.433Z",
+      "sceneIndex": 0,
+      "cantoNumber": 2
+    },
+    {
+      "chapterNumber": 29,
+      "chapterTitle": "Chapter दस",
+      "imagePath": "chapter-052.jpg",
+      "prompt": "Dhruva Maharaj marries Bhrami, daughter of Shishumara, in a serene palace ceremony, surrounded by family and sages, marking a new chapter in his life.",
+      "descriptionHi": "इस अध्याय में ध्रुव महाराज के विवाह का वर्णन है, जिसमें उन्होंने प्रजापति शिशुमार की पुत्री भ्रमि से विवाह किया और उनके दो पुत्र कल्प और वत्सर हुए। यह अध्याय आत्म-साक्षात्कार के महत्व को दर्शाता है।",
+      "generatedAt": "2026-04-11T00:24:41.083Z",
+      "sceneIndex": 0,
+      "cantoNumber": 2
+    },
+    {
       "chapterNumber": 30,
       "chapterTitle": "Chapter इक्तीस",
       "imagePath": "chapter-030.jpg",
@@ -452,6 +545,16 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-10T22:34:55.531Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 30,
+      "chapterTitle": "अध्याय एक",
+      "imagePath": "chapter-065.jpg",
+      "prompt": "Manu's daughters gather around him in a serene forest, listening intently as he shares ancient wisdom and family lineage.",
+      "descriptionHi": "इस अध्याय में मनु की पुत्रियों की वंशावली का वर्णन किया गया है, जो प्रजापति मनु की संतान हैं। यह अध्याय उनके जीवन और उनकी संतानों के बारे में बताता है।",
+      "generatedAt": "2026-04-11T05:37:06.269Z",
+      "sceneIndex": 0,
+      "cantoNumber": 3
     },
     {
       "chapterNumber": 36,
@@ -468,6 +571,16 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-10T23:29:02.153Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 37,
+      "chapterTitle": "अध्याय आठ",
+      "imagePath": "chapter-066.jpg",
+      "prompt": "Dhruva Maharaj leaves the royal palace, walking towards the forest, seeking spiritual guidance and solace after being insulted.",
+      "descriptionHi": "ध्रुव महाराज ने अपने अपमान के बाद राजमहल का परित्याग किया और वनगमन किया, जहाँ उन्हें अपने जीवन का सही मार्ग मिलेगा। इस अध्याय में ब्रह्मा का उल्लेख भी है। ध्रुव महाराज की यह यात्रा उनके आध्यात्मिक जीवन की शुरुआत है।",
+      "generatedAt": "2026-04-11T05:39:13.644Z",
+      "sceneIndex": 0,
+      "cantoNumber": 3
     },
     {
       "chapterNumber": 39,
@@ -524,97 +637,28 @@
       "sceneIndex": 0
     },
     {
-      "chapterNumber": 21,
-      "chapterTitle": "अध्याय दो",
-      "imagePath": "chapter-045.jpg",
-      "prompt": "Vidura asks Brahma about Daksha's hatred towards Lord Shiva in a serene heavenly setting.",
-      "descriptionHi": "इस अध्याय में दक्ष द्वारा शिवजी को शाप देने की कथा है, जिसमें विदुर भगवान ब्रह्मा से पूछते हैं कि दक्ष ने शिवजी के प्रति इतनी शत्रुता क्यों प्रदर्शित की। यह कथा शिवजी और दक्ष के बीच मनमुटाव को दर्शाती है।",
+      "chapterNumber": 49,
+      "chapterTitle": "अध्याय बीस",
+      "imagePath": "chapter-068.jpg",
+      "prompt": "Vishnu appears at King Prithu's yajna site, teaching him and expressing delight at his character amidst a serene gathering.",
+      "descriptionHi": "इस अध्याय में भगवान् विष्णु का राजा पृथु के यज्ञस्थल में प्राकट्य होता है, जहां वे राजा पृथु को उपदेश देते हैं और उनके चरित्र से प्रसन्न होते हैं। यह अध्याय भक्ति और आध्यात्मिक ज्ञान के महत्व को दर्शाता है।",
       "personasUsed": [
-        "brahma",
-        "vidura"
+        "vishnu"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T23:12:33.469Z",
+      "generatedAt": "2026-04-11T05:47:31.803Z",
       "sceneIndex": 0,
-      "cantoNumber": 2
+      "cantoNumber": 3
     },
     {
-      "chapterNumber": 22,
-      "chapterTitle": "Chapter तीन",
-      "imagePath": "chapter-046.jpg",
-      "prompt": "Daksh, filled with pride, begins a grand yajna without inviting Lord Shiva, amidst the presence of other deities like Brahma and Vishnu.",
-      "descriptionHi": "इस अध्याय में मैत्रेय द्वारा शिव और दक्ष के बीच तनाव का वर्णन किया गया है, जो दक्ष द्वारा शिव को यज्ञ में आमंत्रित नहीं करने से उत्पन्न हुआ। यह तनाव सती द्वारा अपना शरीर त्यागने का कारण बना।",
-      "personasUsed": [
-        "vishnu",
-        "brahma"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T23:21:01.638Z",
+      "chapterNumber": 49,
+      "chapterTitle": "अध्याय चौबीस",
+      "imagePath": "chapter-069.jpg",
+      "prompt": "Lord Shiva meets Prachetasons on a serene riverbank, surrounded by lush greenery, and engages in a heartfelt conversation.",
+      "descriptionHi": "इस अध्याय में भगवान् शिव की स्तुति और उनकी महिमा का वर्णन किया गया है, जिसमें प्राचीनबर्हि के पुत्रों का भगवान् शिव से मिलन और शिवजी द्वारा स्तुति किया जाना मुख्य घटनाएं हैं। भगवान् शिव को परम प्रिय और सर्वत्र व्याप्त बताया गया है।",
+      "generatedAt": "2026-04-11T05:47:49.181Z",
       "sceneIndex": 0,
-      "cantoNumber": 2
-    },
-    {
-      "chapterNumber": 23,
-      "chapterTitle": "Chapter चार",
-      "imagePath": "chapter-047.jpg",
-      "prompt": "SatI stands torn between her desire to visit her family and Shiva's warning, her emotions in turmoil amidst the serene Himalayan setting.",
-      "descriptionHi": "सती अपने पिता के घर जाने के लिए उत्सुक हैं, लेकिन शिवजी की चेतावनी से भयभीत हैं। यह दुविधा उनके लिए बहुत कठिन है और उन्हें दुखी कर देती है। सती का मन अस्थिर हो जाता है और वे हिंडोले की भाँति कक्ष से बाहर और भीतर आ-जा रही थी।",
-      "generatedAt": "2026-04-10T23:22:40.637Z",
-      "sceneIndex": 0,
-      "cantoNumber": 2
-    },
-    {
-      "chapterNumber": 24,
-      "chapterTitle": "Chapter पाँच",
-      "imagePath": "chapter-048.jpg",
-      "prompt": "Narada informs Shiva about Sati's demise at her father Daksh's yajna, sparking Shiva's intense grief and anger in a serene forest setting.",
-      "descriptionHi": "इस अध्याय में सती के पिता दक्ष द्वारा किए गए अपमान के कारण शिव क्रोधित हुए और अपने सैनिकों को खदेड़ दिया गया। मुख्य पात्र शिव, सती और नारद हैं। इस घटना का महत्व शिव के क्रोध और सती की त्याग की भावना में है।",
-      "personasUsed": [
-        "narada"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T23:31:48.858Z",
-      "sceneIndex": 0,
-      "cantoNumber": 2
-    },
-    {
-      "chapterNumber": 26,
-      "chapterTitle": "Chapter सात",
-      "imagePath": "chapter-049.jpg",
-      "prompt": "Shiv's serene conversation with Brahma, where he explains his gentle punishment to guide the devas back to the right path.",
-      "descriptionHi": "इस अध्याय में मैत्रेय मुनि विदुर को भगवान शिव और ब्रह्मा के बीच के संवाद के कुछ अंश सुना रहे हैं, जिसमें शिवजी देवताओं के अपराधों को क्षमा करते हैं और उन्हें राह पर लाने के लिए दण्डित करते हैं। यह अध्याय शिवजी की दया और क्षमा की महानता को दर्शाता है।",
-      "personasUsed": [
-        "brahma"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T23:38:04.035Z",
-      "sceneIndex": 0,
-      "cantoNumber": 2
-    },
-    {
-      "chapterNumber": 28,
-      "chapterTitle": "अध्याय नौ",
-      "imagePath": "chapter-051.jpg",
-      "prompt": "Vidura and Vishnu are present as Vishnu, on Garuda, visits Dhruva in the divine forest of Madhuvan.",
-      "descriptionHi": "महाराज ध्रुव के घर लौटने की कहानी में, मैत्रेय मुनि विदुर को बताते हैं कि भगवान विष्णु ने देवताओं को आश्वस्त किया और फिर गरुड़ पर सवार होकर मधुवन गए। इस प्रकार, भगवान की दिव्य यात्रा का वर्णन किया गया है।",
-      "personasUsed": [
-        "vishnu",
-        "vidura"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-11T00:15:46.433Z",
-      "sceneIndex": 0,
-      "cantoNumber": 2
-    },
-    {
-      "chapterNumber": 29,
-      "chapterTitle": "Chapter दस",
-      "imagePath": "chapter-052.jpg",
-      "prompt": "Dhruva Maharaj marries Bhrami, daughter of Shishumara, in a serene palace ceremony, surrounded by family and sages, marking a new chapter in his life.",
-      "descriptionHi": "इस अध्याय में ध्रुव महाराज के विवाह का वर्णन है, जिसमें उन्होंने प्रजापति शिशुमार की पुत्री भ्रमि से विवाह किया और उनके दो पुत्र कल्प और वत्सर हुए। यह अध्याय आत्म-साक्षात्कार के महत्व को दर्शाता है।",
-      "generatedAt": "2026-04-11T00:24:41.083Z",
-      "sceneIndex": 0,
-      "cantoNumber": 2
+      "cantoNumber": 3
     },
     {
       "chapterNumber": 53,
@@ -741,59 +785,6 @@
       "sceneIndex": 0
     },
     {
-      "chapterNumber": 64,
-      "chapterTitle": "Chapter छब्बीस",
-      "imagePath": "chapter-064.jpg",
-      "prompt": "King Puranjana goes for hunting, while the Queen becomes upset in the palace.",
-      "descriptionHi": "राजा पुरञ्जन आखेट के लिए जाते हैं और रानी क्रुद्ध हो जाती है, इस प्रकार एक महत्वपूर्ण घटना का वर्णन किया जाता है। राजा पुरञ्जन और रानी इस अध्याय के मुख्य पात्र हैं।",
-      "generatedAt": "2026-04-11T04:41:23.558Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 30,
-      "chapterTitle": "अध्याय एक",
-      "imagePath": "chapter-065.jpg",
-      "prompt": "Manu's daughters gather around him in a serene forest, listening intently as he shares ancient wisdom and family lineage.",
-      "descriptionHi": "इस अध्याय में मनु की पुत्रियों की वंशावली का वर्णन किया गया है, जो प्रजापति मनु की संतान हैं। यह अध्याय उनके जीवन और उनकी संतानों के बारे में बताता है।",
-      "generatedAt": "2026-04-11T05:37:06.269Z",
-      "sceneIndex": 0,
-      "cantoNumber": 3
-    },
-    {
-      "chapterNumber": 37,
-      "chapterTitle": "अध्याय आठ",
-      "imagePath": "chapter-066.jpg",
-      "prompt": "Dhruva Maharaj leaves the royal palace, walking towards the forest, seeking spiritual guidance and solace after being insulted.",
-      "descriptionHi": "ध्रुव महाराज ने अपने अपमान के बाद राजमहल का परित्याग किया और वनगमन किया, जहाँ उन्हें अपने जीवन का सही मार्ग मिलेगा। इस अध्याय में ब्रह्मा का उल्लेख भी है। ध्रुव महाराज की यह यात्रा उनके आध्यात्मिक जीवन की शुरुआत है।",
-      "generatedAt": "2026-04-11T05:39:13.644Z",
-      "sceneIndex": 0,
-      "cantoNumber": 3
-    },
-    {
-      "chapterNumber": 49,
-      "chapterTitle": "अध्याय बीस",
-      "imagePath": "chapter-068.jpg",
-      "prompt": "Vishnu appears at King Prithu's yajna site, teaching him and expressing delight at his character amidst a serene gathering.",
-      "descriptionHi": "इस अध्याय में भगवान् विष्णु का राजा पृथु के यज्ञस्थल में प्राकट्य होता है, जहां वे राजा पृथु को उपदेश देते हैं और उनके चरित्र से प्रसन्न होते हैं। यह अध्याय भक्ति और आध्यात्मिक ज्ञान के महत्व को दर्शाता है।",
-      "personasUsed": [
-        "vishnu"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-11T05:47:31.803Z",
-      "sceneIndex": 0,
-      "cantoNumber": 3
-    },
-    {
-      "chapterNumber": 49,
-      "chapterTitle": "अध्याय चौबीस",
-      "imagePath": "chapter-069.jpg",
-      "prompt": "Lord Shiva meets Prachetasons on a serene riverbank, surrounded by lush greenery, and engages in a heartfelt conversation.",
-      "descriptionHi": "इस अध्याय में भगवान् शिव की स्तुति और उनकी महिमा का वर्णन किया गया है, जिसमें प्राचीनबर्हि के पुत्रों का भगवान् शिव से मिलन और शिवजी द्वारा स्तुति किया जाना मुख्य घटनाएं हैं। भगवान् शिव को परम प्रिय और सर्वत्र व्याप्त बताया गया है।",
-      "generatedAt": "2026-04-11T05:47:49.181Z",
-      "sceneIndex": 0,
-      "cantoNumber": 3
-    },
-    {
       "chapterNumber": 63,
       "chapterTitle": "Chapter एक",
       "imagePath": "chapter-070.jpg",
@@ -810,11 +801,44 @@
     },
     {
       "chapterNumber": 64,
+      "chapterTitle": "Chapter छब्बीस",
+      "imagePath": "chapter-064.jpg",
+      "prompt": "King Puranjana goes for hunting, while the Queen becomes upset in the palace.",
+      "descriptionHi": "राजा पुरञ्जन आखेट के लिए जाते हैं और रानी क्रुद्ध हो जाती है, इस प्रकार एक महत्वपूर्ण घटना का वर्णन किया जाता है। राजा पुरञ्जन और रानी इस अध्याय के मुख्य पात्र हैं।",
+      "generatedAt": "2026-04-11T04:41:23.558Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 64,
       "chapterTitle": "Chapter दो",
       "imagePath": "chapter-071.jpg",
       "prompt": "King Agnidhra meets Purvachitti, a heavenly maiden, in a cave on Mount Mandara, and they exchange gentle, loving glances.",
       "descriptionHi": "महाराज आग्नीध्र के चरित्र का वर्णन किया गया है, जिन्होंने जम्बूद्वीप का शासन किया और भगवान् ब्रह्मा की आज्ञा से पूर्वचित्ति नामक स्वर्ग की एक कन्या से विवाह किया। यह अध्याय आग्नीध्र के जीवन और उनके नौ पुत्रों के विवाह के बारे में बताता है।",
       "generatedAt": "2026-04-11T05:54:47.439Z",
+      "sceneIndex": 0,
+      "cantoNumber": 4
+    },
+    {
+      "chapterNumber": 64,
+      "chapterTitle": "Chapter दो",
+      "imagePath": "chapter-086.jpg",
+      "prompt": "Vishnu's messengers intervene, freeing Ajamil from Yamadutas on the riverbank, citing his devotion to the Lord's holy name.",
+      "descriptionHi": "विष्णुदूतों ने अजामिल का उद्धार किया क्योंकि उसने भगवान् के पवित्र नाम का उच्चारण किया था। यह घटना अजामिल के जीवन में एक महत्वपूर्ण मोड़ बन गई। विष्णुदूतों ने यमदूतों को समझाया कि अजामिल अब दण्डनीय नहीं है।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T16:44:52.491Z",
+      "sceneIndex": 0,
+      "cantoNumber": 4
+    },
+    {
+      "chapterNumber": 64,
+      "chapterTitle": "Chapter दो",
+      "imagePath": "chapter-103.jpg",
+      "prompt": "Hiranyakashyapu consoles his grieving nephews in a serene palace setting, sharing a historical lesson to alleviate their sorrow.",
+      "descriptionHi": "हिरण्यकशिपु अपने पुत्र तथा भाई हिरण्याक्ष के विनाश से दुखी हुआ और उसने धार्मिक कार्यकलापों को कम करने का प्रयास किया। उसने अपने भतीजों को इतिहास का उपदेश दिया जिससे उनके शोक कम हो सकें। हिरण्यकशिपु के कार्यों में एक आध्यात्मिक संघर्ष दिखाई देता है।",
+      "generatedAt": "2026-04-11T19:44:49.195Z",
       "sceneIndex": 0,
       "cantoNumber": 4
     },
@@ -829,6 +853,69 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-11T06:00:30.495Z",
+      "sceneIndex": 0,
+      "cantoNumber": 4
+    },
+    {
+      "chapterNumber": 65,
+      "chapterTitle": "Chapter तीन",
+      "imagePath": "chapter-104.jpg",
+      "prompt": "Brahma visits Hiranyakashipu at Mandar mountain, concerned about his intense meditation and its impact on the universe.",
+      "descriptionHi": "हिरण्यकशिपु अमर बनने की योजना बनाता है और कठोर तपस्या करता है, जिससे ब्रह्माण्ड भर में उपद्रव मच जाता है। ब्रह्मा भी विचलित हो जाते हैं और हिरण्यकशिपु की तपस्या का कारण जानने जाते हैं। हिरण्यकशिपु की यह तपस्या समस्त ब्रह्माण्ड को प्रभावित करती है।",
+      "personasUsed": [
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T19:55:10.551Z",
+      "sceneIndex": 0,
+      "cantoNumber": 4
+    },
+    {
+      "chapterNumber": 66,
+      "chapterTitle": "Chapter चार",
+      "imagePath": "chapter-105.jpg",
+      "prompt": "Brahma and Vishnu witness Hiranyakashipu's tyrannical rule over the universe from a celestial realm.",
+      "descriptionHi": "हिरण्यकशिपु ने ब्रह्माजी से शक्ति प्राप्त की और फिर ब्रह्माण्ड के समस्त जीवों को तंग करने में उसका दुरुपयोग किया। भगवान् विष्णु, ब्रह्मा और शिवजी के अतिरिक्त सारे देवता उसके अधीन होकर उसकी सेवा करने लगे। हिरण्यकशिपु के शासन से मुक्ति पाने के लिए परमेश्वर से प्रार्थना की गई।",
+      "personasUsed": [
+        "vishnu",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T20:03:50.560Z",
+      "sceneIndex": 0,
+      "cantoNumber": 4
+    },
+    {
+      "chapterNumber": 69,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-090.jpg",
+      "prompt": "Indra offends his guru Brihaspati, who then abandons the gods, in the heavenly palace of Indra.",
+      "descriptionHi": "इस अध्याय में स्वर्ग के राजा इन्द्र द्वारा अपने गुरु बृहस्पति का अपमान किया जाना बताया गया है, जिससे बृहस्पति ने देवताओं का परित्याग कर दिया। मुख्य पात्र इन्द्र, बृहस्पति और विश्वरूप हैं।",
+      "generatedAt": "2026-04-11T17:44:46.306Z",
+      "sceneIndex": 0,
+      "cantoNumber": 4
+    },
+    {
+      "chapterNumber": 70,
+      "chapterTitle": "Chapter आठ",
+      "imagePath": "chapter-091.jpg",
+      "prompt": "Vishnu imparts the Narayana-kavach mantra to Indra, who seeks protection against the asuras in a serene heavenly setting.",
+      "descriptionHi": "इस अध्याय में नारायण-कवच का वर्णन हुआ है, जिसमें विष्णु-मंत्र का जीवन में महत्व बताया गया है। स्वर्ग के राजा इन्द्र ने इसका उपयोग असुरों पर विजय प्राप्त करने के लिए किया। विष्णु-मंत्र के द्वारा रक्षा प्राप्त करने की विशेष विधि भी बताई गई है।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T17:51:56.560Z",
+      "sceneIndex": 0,
+      "cantoNumber": 4
+    },
+    {
+      "chapterNumber": 72,
+      "chapterTitle": "Chapter दस",
+      "imagePath": "chapter-093.jpg",
+      "prompt": "Dadhichi Muni hands over his body to Indra amidst a serene landscape, facilitating the creation of a powerful weapon to aid the gods in their battle against Vritraasur.",
+      "descriptionHi": "देवताओं तथा वृत्रासुर के मध्य युद्ध की कहानी इस अध्याय में वर्णित है, जिसमें दधीचि मुनि का शरीर प्राप्त करने के लिए इन्द्र द्वारा एक महत्वपूर्ण भूमिका निभाई जाती है। दधीचि मुनि अपना शरीर त्यागने से पहले धर्म के विषय में देवताओं से सुनना चाहते थे।",
+      "generatedAt": "2026-04-11T18:11:46.890Z",
       "sceneIndex": 0,
       "cantoNumber": 4
     },
@@ -853,6 +940,20 @@
       "cantoNumber": 4
     },
     {
+      "chapterNumber": 75,
+      "chapterTitle": "Chapter तेरह",
+      "imagePath": "chapter-096.jpg",
+      "prompt": "Indra, filled with regret, flees to the mystical lake, seeking refuge under the protection of Goddess Lakshmi, with Lord Vishnu's guidance.",
+      "descriptionHi": "इस अध्याय में राजा इन्द्र द्वारा वृत्रासुर के वध के बाद उत्पन्न भय और पश्चाताप का वर्णन किया गया है, जिसमें भगवान् विष्णु की कृपा से उसकी रक्षा होती है। यह अध्याय ब्राह्मण-हत्या जैसे पाप के परिणामों और महान् पुरुषों के स्वभाव को दर्शाता है।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T18:29:13.522Z",
+      "sceneIndex": 0,
+      "cantoNumber": 4
+    },
+    {
       "chapterNumber": 76,
       "chapterTitle": "Chapter चौदह",
       "imagePath": "chapter-077.jpg",
@@ -863,6 +964,16 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-11T06:32:49.558Z",
+      "sceneIndex": 0,
+      "cantoNumber": 4
+    },
+    {
+      "chapterNumber": 76,
+      "chapterTitle": "Chapter चौदह",
+      "imagePath": "chapter-097.jpg",
+      "prompt": "King Chitraketu mourns the loss of his son in the palace, surrounded by wise sages and devotees, seeking solace and spiritual guidance.",
+      "descriptionHi": "राजा चित्रकेतु को अपनी संतान की मृत्यु का शोक है, जिसमें उन्हें भगवान की कृपा से मोक्ष की प्राप्ति होती है। इस अध्याय में राजा चित्रकेतु की कहानी को विस्तार से बताया गया है। यह अध्याय आत्म-साक्षात्कार और मोक्ष की ओर ले जाने वाले मार्ग को दर्शाता है।",
+      "generatedAt": "2026-04-11T18:34:54.756Z",
       "sceneIndex": 0,
       "cantoNumber": 4
     },
@@ -895,6 +1006,16 @@
       "cantoNumber": 4
     },
     {
+      "chapterNumber": 79,
+      "chapterTitle": "Chapter सत्रह",
+      "imagePath": "chapter-100.jpg",
+      "prompt": "Chitракetu laughs at Lord Shiva and Parvati in the gardens of Mount Sumeru, prompting Parvati to curse him.",
+      "descriptionHi": "इस अध्याय में चित्रकेतु को माता पार्वती द्वारा शाप मिलने का वर्णन है, जो भगवान् शिव के साथ हँसी करने के कारण हुआ। चित्रकेतु को इसका कोई दुख नहीं हुआ और उसने अपने विचार व्यक्त किए। इस घटना में मुख्य पात्र चित्रकेतु, पार्वती और शिव हैं।",
+      "generatedAt": "2026-04-11T19:03:51.541Z",
+      "sceneIndex": 0,
+      "cantoNumber": 4
+    },
+    {
       "chapterNumber": 80,
       "chapterTitle": "Chapter अठारह",
       "imagePath": "chapter-081.jpg",
@@ -905,6 +1026,21 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-11T06:56:50.310Z",
+      "sceneIndex": 0,
+      "cantoNumber": 4
+    },
+    {
+      "chapterNumber": 80,
+      "chapterTitle": "Chapter अठारह",
+      "imagePath": "chapter-101.jpg",
+      "prompt": "Krishna and Arjuna share a profound spiritual experience on the riverbank, surrounded by serene nature.",
+      "descriptionHi": "इस अध्याय में कृष्ण और अर्जुन के बीच एक महत्वपूर्ण घटना का वर्णन है, जिसमें वे एक गहरे आध्यात्मिक अनुभव को साझा करते हैं। इस घटना का महत्व आत्म-साक्षात्कार और आध्यात्मिक ज्ञान की प्राप्ति में है।",
+      "personasUsed": [
+        "krishna_adult",
+        "arjuna"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T19:15:08.997Z",
       "sceneIndex": 0,
       "cantoNumber": 4
     },
@@ -953,142 +1089,6 @@
       "cantoNumber": 4
     },
     {
-      "chapterNumber": 64,
-      "chapterTitle": "Chapter दो",
-      "imagePath": "chapter-086.jpg",
-      "prompt": "Vishnu's messengers intervene, freeing Ajamil from Yamadutas on the riverbank, citing his devotion to the Lord's holy name.",
-      "descriptionHi": "विष्णुदूतों ने अजामिल का उद्धार किया क्योंकि उसने भगवान् के पवित्र नाम का उच्चारण किया था। यह घटना अजामिल के जीवन में एक महत्वपूर्ण मोड़ बन गई। विष्णुदूतों ने यमदूतों को समझाया कि अजामिल अब दण्डनीय नहीं है।",
-      "personasUsed": [
-        "vishnu"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-11T16:44:52.491Z",
-      "sceneIndex": 0,
-      "cantoNumber": 4
-    },
-    {
-      "chapterNumber": 69,
-      "chapterTitle": "Chapter सात",
-      "imagePath": "chapter-090.jpg",
-      "prompt": "Indra offends his guru Brihaspati, who then abandons the gods, in the heavenly palace of Indra.",
-      "descriptionHi": "इस अध्याय में स्वर्ग के राजा इन्द्र द्वारा अपने गुरु बृहस्पति का अपमान किया जाना बताया गया है, जिससे बृहस्पति ने देवताओं का परित्याग कर दिया। मुख्य पात्र इन्द्र, बृहस्पति और विश्वरूप हैं।",
-      "generatedAt": "2026-04-11T17:44:46.306Z",
-      "sceneIndex": 0,
-      "cantoNumber": 4
-    },
-    {
-      "chapterNumber": 70,
-      "chapterTitle": "Chapter आठ",
-      "imagePath": "chapter-091.jpg",
-      "prompt": "Vishnu imparts the Narayana-kavach mantra to Indra, who seeks protection against the asuras in a serene heavenly setting.",
-      "descriptionHi": "इस अध्याय में नारायण-कवच का वर्णन हुआ है, जिसमें विष्णु-मंत्र का जीवन में महत्व बताया गया है। स्वर्ग के राजा इन्द्र ने इसका उपयोग असुरों पर विजय प्राप्त करने के लिए किया। विष्णु-मंत्र के द्वारा रक्षा प्राप्त करने की विशेष विधि भी बताई गई है।",
-      "personasUsed": [
-        "vishnu"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-11T17:51:56.560Z",
-      "sceneIndex": 0,
-      "cantoNumber": 4
-    },
-    {
-      "chapterNumber": 72,
-      "chapterTitle": "Chapter दस",
-      "imagePath": "chapter-093.jpg",
-      "prompt": "Dadhichi Muni hands over his body to Indra amidst a serene landscape, facilitating the creation of a powerful weapon to aid the gods in their battle against Vritraasur.",
-      "descriptionHi": "देवताओं तथा वृत्रासुर के मध्य युद्ध की कहानी इस अध्याय में वर्णित है, जिसमें दधीचि मुनि का शरीर प्राप्त करने के लिए इन्द्र द्वारा एक महत्वपूर्ण भूमिका निभाई जाती है। दधीचि मुनि अपना शरीर त्यागने से पहले धर्म के विषय में देवताओं से सुनना चाहते थे।",
-      "generatedAt": "2026-04-11T18:11:46.890Z",
-      "sceneIndex": 0,
-      "cantoNumber": 4
-    },
-    {
-      "chapterNumber": 75,
-      "chapterTitle": "Chapter तेरह",
-      "imagePath": "chapter-096.jpg",
-      "prompt": "Indra, filled with regret, flees to the mystical lake, seeking refuge under the protection of Goddess Lakshmi, with Lord Vishnu's guidance.",
-      "descriptionHi": "इस अध्याय में राजा इन्द्र द्वारा वृत्रासुर के वध के बाद उत्पन्न भय और पश्चाताप का वर्णन किया गया है, जिसमें भगवान् विष्णु की कृपा से उसकी रक्षा होती है। यह अध्याय ब्राह्मण-हत्या जैसे पाप के परिणामों और महान् पुरुषों के स्वभाव को दर्शाता है।",
-      "personasUsed": [
-        "vishnu"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-11T18:29:13.522Z",
-      "sceneIndex": 0,
-      "cantoNumber": 4
-    },
-    {
-      "chapterNumber": 76,
-      "chapterTitle": "Chapter चौदह",
-      "imagePath": "chapter-097.jpg",
-      "prompt": "King Chitraketu mourns the loss of his son in the palace, surrounded by wise sages and devotees, seeking solace and spiritual guidance.",
-      "descriptionHi": "राजा चित्रकेतु को अपनी संतान की मृत्यु का शोक है, जिसमें उन्हें भगवान की कृपा से मोक्ष की प्राप्ति होती है। इस अध्याय में राजा चित्रकेतु की कहानी को विस्तार से बताया गया है। यह अध्याय आत्म-साक्षात्कार और मोक्ष की ओर ले जाने वाले मार्ग को दर्शाता है।",
-      "generatedAt": "2026-04-11T18:34:54.756Z",
-      "sceneIndex": 0,
-      "cantoNumber": 4
-    },
-    {
-      "chapterNumber": 79,
-      "chapterTitle": "Chapter सत्रह",
-      "imagePath": "chapter-100.jpg",
-      "prompt": "Chitракetu laughs at Lord Shiva and Parvati in the gardens of Mount Sumeru, prompting Parvati to curse him.",
-      "descriptionHi": "इस अध्याय में चित्रकेतु को माता पार्वती द्वारा शाप मिलने का वर्णन है, जो भगवान् शिव के साथ हँसी करने के कारण हुआ। चित्रकेतु को इसका कोई दुख नहीं हुआ और उसने अपने विचार व्यक्त किए। इस घटना में मुख्य पात्र चित्रकेतु, पार्वती और शिव हैं।",
-      "generatedAt": "2026-04-11T19:03:51.541Z",
-      "sceneIndex": 0,
-      "cantoNumber": 4
-    },
-    {
-      "chapterNumber": 80,
-      "chapterTitle": "Chapter अठारह",
-      "imagePath": "chapter-101.jpg",
-      "prompt": "Krishna and Arjuna share a profound spiritual experience on the riverbank, surrounded by serene nature.",
-      "descriptionHi": "इस अध्याय में कृष्ण और अर्जुन के बीच एक महत्वपूर्ण घटना का वर्णन है, जिसमें वे एक गहरे आध्यात्मिक अनुभव को साझा करते हैं। इस घटना का महत्व आत्म-साक्षात्कार और आध्यात्मिक ज्ञान की प्राप्ति में है।",
-      "personasUsed": [
-        "krishna_adult",
-        "arjuna"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-11T19:15:08.997Z",
-      "sceneIndex": 0,
-      "cantoNumber": 4
-    },
-    {
-      "chapterNumber": 64,
-      "chapterTitle": "Chapter दो",
-      "imagePath": "chapter-103.jpg",
-      "prompt": "Hiranyakashyapu consoles his grieving nephews in a serene palace setting, sharing a historical lesson to alleviate their sorrow.",
-      "descriptionHi": "हिरण्यकशिपु अपने पुत्र तथा भाई हिरण्याक्ष के विनाश से दुखी हुआ और उसने धार्मिक कार्यकलापों को कम करने का प्रयास किया। उसने अपने भतीजों को इतिहास का उपदेश दिया जिससे उनके शोक कम हो सकें। हिरण्यकशिपु के कार्यों में एक आध्यात्मिक संघर्ष दिखाई देता है।",
-      "generatedAt": "2026-04-11T19:44:49.195Z",
-      "sceneIndex": 0,
-      "cantoNumber": 4
-    },
-    {
-      "chapterNumber": 65,
-      "chapterTitle": "Chapter तीन",
-      "imagePath": "chapter-104.jpg",
-      "prompt": "Brahma visits Hiranyakashipu at Mandar mountain, concerned about his intense meditation and its impact on the universe.",
-      "descriptionHi": "हिरण्यकशिपु अमर बनने की योजना बनाता है और कठोर तपस्या करता है, जिससे ब्रह्माण्ड भर में उपद्रव मच जाता है। ब्रह्मा भी विचलित हो जाते हैं और हिरण्यकशिपु की तपस्या का कारण जानने जाते हैं। हिरण्यकशिपु की यह तपस्या समस्त ब्रह्माण्ड को प्रभावित करती है।",
-      "personasUsed": [
-        "brahma"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-11T19:55:10.551Z",
-      "sceneIndex": 0,
-      "cantoNumber": 4
-    },
-    {
-      "chapterNumber": 66,
-      "chapterTitle": "Chapter चार",
-      "imagePath": "chapter-105.jpg",
-      "prompt": "Brahma and Vishnu witness Hiranyakashipu's tyrannical rule over the universe from a celestial realm.",
-      "descriptionHi": "हिरण्यकशिपु ने ब्रह्माजी से शक्ति प्राप्त की और फिर ब्रह्माण्ड के समस्त जीवों को तंग करने में उसका दुरुपयोग किया। भगवान् विष्णु, ब्रह्मा और शिवजी के अतिरिक्त सारे देवता उसके अधीन होकर उसकी सेवा करने लगे। हिरण्यकशिपु के शासन से मुक्ति पाने के लिए परमेश्वर से प्रार्थना की गई।",
-      "personasUsed": [
-        "vishnu",
-        "brahma"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-11T20:03:50.560Z",
-      "sceneIndex": 0,
-      "cantoNumber": 4
-    },
-    {
       "chapterNumber": 94,
       "chapterTitle": "अध्याय पढ़ना चाहिए। इसकी पुष्टि स्कन्द पुराण के अवन्ती खण्ड में की गई है। इसी प्रकार एक अन्य",
       "imagePath": "chapter-107.jpg",
@@ -1099,82 +1099,6 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-11T20:25:08.369Z",
-      "sceneIndex": 0,
-      "cantoNumber": 5
-    },
-    {
-      "chapterNumber": 99,
-      "chapterTitle": "Chapter छह",
-      "imagePath": "chapter-108.jpg",
-      "prompt": "Narada and Krishna observe as Prahlad instructs his demon classmates in a serene forest setting.",
-      "descriptionHi": "प्रह्लाद महाराज अपने असुर सहपाठियों को जीवन के प्रारम्भ से ही आध्यात्मिक अनुभूति में रुचि लेने का उपदेश देते हैं। वे बताते हैं कि मनुष्य को भौतिक भोग में अधिक रुचि नहीं दिखानी चाहिए और जीवन के प्रत्येक क्षण को आध्यात्मिक उन्नति में लगाना चाहिए।",
-      "personasUsed": [
-        "krishna_adult",
-        "narada",
-        "prahlada"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-11T20:33:07.948Z",
-      "sceneIndex": 0,
-      "cantoNumber": 5
-    },
-    {
-      "chapterNumber": 100,
-      "chapterTitle": "Chapter सात",
-      "imagePath": "chapter-109.jpg",
-      "prompt": "Narada comforts Kayadhu at his ashram, ensuring the unborn Prahlad's safety.",
-      "descriptionHi": "इस अध्याय में प्रह्लाद महाराज अपने असुर सहपाठियों को बताते हैं कि कैसे उन्होंने गर्भ में रहते हुए नारद मुनि के उपदेश सुने थे। नारद मुनि ने कयाधु को आश्रम में रखा और गर्भस्थ बालक की रक्षा के लिए प्रार्थना की।",
-      "personasUsed": [
-        "narada",
-        "prahlada"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-11T20:39:09.468Z",
-      "sceneIndex": 0,
-      "cantoNumber": 5
-    },
-    {
-      "chapterNumber": 101,
-      "chapterTitle": "Chapter आठ",
-      "imagePath": "chapter-110.jpg",
-      "prompt": "Lord Narasimha appears before Hiranyakashipu, saving Prahlad Maharaj in a dramatic divine intervention.",
-      "descriptionHi": "भगवान् नृसिंह ने हिरण्यकशिपु का वध किया, जो अपने पुत्र प्रह्लाद महाराज को मारने के लिए तैयार था। यह घटना प्रह्लाद महाराज के उपदेशों का पालन करने से असुरों के सारे पुत्र भगवान् विष्णु के प्रति अनुरक्त हो जाने के कारण हुई।",
-      "personasUsed": [
-        "prahlada",
-        "narasimha"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-11T21:12:43.420Z",
-      "sceneIndex": 0,
-      "cantoNumber": 5
-    },
-    {
-      "chapterNumber": 105,
-      "chapterTitle": "Chapter बारह",
-      "imagePath": "chapter-114.jpg",
-      "prompt": "Narada describes the four ashrams to his disciples in a serene forest setting, emphasizing the importance of spiritual growth and self-discipline.",
-      "descriptionHi": "इस अध्याय में नारद मुनि चारों आश्रमों—ब्रह्मचर्य, गृहस्थ, वानप्रस्थ तथा संन्यास—के महत्व का वर्णन करते हैं। ब्रह्मचारी के लिए गुरु के संरक्षण में रहना और आध्यात्मिक कार्यों में लगना आवश्यक है।",
-      "personasUsed": [
-        "narada"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-11T22:17:15.848Z",
-      "sceneIndex": 0,
-      "cantoNumber": 5
-    },
-    {
-      "chapterNumber": 107,
-      "chapterTitle": "Chapter चौदह",
-      "imagePath": "chapter-115.jpg",
-      "prompt": "Narada instructs Yudhishthira on family duties in the palace, emphasizing devotion to Krishna.",
-      "descriptionHi": "इस अध्याय में नारद मुनि युधिष्ठिर महाराज को गृहस्थ के वृत्तिपरक कर्तव्यों के बारे में उपदेश देते हैं, जिसमें वासुदेव कृष्ण पर पूर्णाश्रित रहना और निर्धारित भक्ति के द्वारा उन्हें प्रसन्न करना शामिल है। गृहस्थ को अपने परिवार के पालन के लिए आवश्यक अर्जन करना चाहिए और भौतिक सुविधाओं में वृद्धि नहीं करनी चाहिए।",
-      "personasUsed": [
-        "krishna_adult",
-        "narada",
-        "yudhishthira"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-11T22:35:52.090Z",
       "sceneIndex": 0,
       "cantoNumber": 5
     },
@@ -1238,6 +1162,22 @@
     {
       "chapterNumber": 99,
       "chapterTitle": "Chapter छह",
+      "imagePath": "chapter-108.jpg",
+      "prompt": "Narada and Krishna observe as Prahlad instructs his demon classmates in a serene forest setting.",
+      "descriptionHi": "प्रह्लाद महाराज अपने असुर सहपाठियों को जीवन के प्रारम्भ से ही आध्यात्मिक अनुभूति में रुचि लेने का उपदेश देते हैं। वे बताते हैं कि मनुष्य को भौतिक भोग में अधिक रुचि नहीं दिखानी चाहिए और जीवन के प्रत्येक क्षण को आध्यात्मिक उन्नति में लगाना चाहिए।",
+      "personasUsed": [
+        "krishna_adult",
+        "narada",
+        "prahlada"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T20:33:07.948Z",
+      "sceneIndex": 0,
+      "cantoNumber": 5
+    },
+    {
+      "chapterNumber": 99,
+      "chapterTitle": "Chapter छह",
       "imagePath": "chapter-120.jpg",
       "prompt": "Brahma and other gods stand before Vishnu, who appears before them in his divine form, as they offer praises and seek his blessings.",
       "descriptionHi": "इस अध्याय में देवताओं और असुरों द्वारा सन्धि की घोषणा की जाती है, जिसमें भगवान् विष्णु देवताओं की स्तुति से प्रसन्न होकर उनके समक्ष प्रकट होते हैं। ब्रह्माजी भगवान् की स्तुति करते हैं और उनके दिव्य स्वरूप का वर्णन करते हैं।",
@@ -1253,10 +1193,40 @@
     {
       "chapterNumber": 100,
       "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-109.jpg",
+      "prompt": "Narada comforts Kayadhu at his ashram, ensuring the unborn Prahlad's safety.",
+      "descriptionHi": "इस अध्याय में प्रह्लाद महाराज अपने असुर सहपाठियों को बताते हैं कि कैसे उन्होंने गर्भ में रहते हुए नारद मुनि के उपदेश सुने थे। नारद मुनि ने कयाधु को आश्रम में रखा और गर्भस्थ बालक की रक्षा के लिए प्रार्थना की।",
+      "personasUsed": [
+        "narada",
+        "prahlada"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T20:39:09.468Z",
+      "sceneIndex": 0,
+      "cantoNumber": 5
+    },
+    {
+      "chapterNumber": 100,
+      "chapterTitle": "Chapter सात",
       "imagePath": "chapter-121.jpg",
       "prompt": "Shivji calmly collects and consumes the deadly poison in the ocean, saving the universe from destruction.",
       "descriptionHi": "शिवजी ने विषपान करके ब्रह्माण्ड की रक्षा की, जो मन्थन से उत्पन्न हुआ था। यह घटना शिवजी की महानता और उनके भक्तों के प्रति प्रेम को दर्शाती है।",
       "generatedAt": "2026-04-12T00:01:45.952Z",
+      "sceneIndex": 0,
+      "cantoNumber": 5
+    },
+    {
+      "chapterNumber": 101,
+      "chapterTitle": "Chapter आठ",
+      "imagePath": "chapter-110.jpg",
+      "prompt": "Lord Narasimha appears before Hiranyakashipu, saving Prahlad Maharaj in a dramatic divine intervention.",
+      "descriptionHi": "भगवान् नृसिंह ने हिरण्यकशिपु का वध किया, जो अपने पुत्र प्रह्लाद महाराज को मारने के लिए तैयार था। यह घटना प्रह्लाद महाराज के उपदेशों का पालन करने से असुरों के सारे पुत्र भगवान् विष्णु के प्रति अनुरक्त हो जाने के कारण हुई।",
+      "personasUsed": [
+        "prahlada",
+        "narasimha"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T21:12:43.420Z",
       "sceneIndex": 0,
       "cantoNumber": 5
     },
@@ -1311,6 +1281,20 @@
     {
       "chapterNumber": 105,
       "chapterTitle": "Chapter बारह",
+      "imagePath": "chapter-114.jpg",
+      "prompt": "Narada describes the four ashrams to his disciples in a serene forest setting, emphasizing the importance of spiritual growth and self-discipline.",
+      "descriptionHi": "इस अध्याय में नारद मुनि चारों आश्रमों—ब्रह्मचर्य, गृहस्थ, वानप्रस्थ तथा संन्यास—के महत्व का वर्णन करते हैं। ब्रह्मचारी के लिए गुरु के संरक्षण में रहना और आध्यात्मिक कार्यों में लगना आवश्यक है।",
+      "personasUsed": [
+        "narada"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T22:17:15.848Z",
+      "sceneIndex": 0,
+      "cantoNumber": 5
+    },
+    {
+      "chapterNumber": 105,
+      "chapterTitle": "Chapter बारह",
       "imagePath": "chapter-126.jpg",
       "prompt": "Shiva, accompanied by Uma and his servants, approaches Lord Krishna's enchanting Mohini form, offering reverence and admiration.",
       "descriptionHi": "इस अध्याय में भगवान के मोहिनी-मूर्ति अवतार को देखकर शिवजी मोहित हो जाते हैं और बाद में उन्हें होश आता है। भगवान की लीलाओं को सुनकर शिवजी अपने बैल पर सवार होकर भगवान को देखने जाते हैं।",
@@ -1329,6 +1313,22 @@
       "prompt": "Shraddhadeva, the seventh Manu, sits with his ten sons in a serene forest, surrounded by sages like Kashyap and Vasishth.",
       "descriptionHi": "The chapter describes the seventh to fourteenth Manu, with the seventh Manu being Shraddhadeva, the son of Vivasvan. His ten sons are also mentioned, along with the deities and sages of that era. This chapter provides valuable information about the different Manus and their significance in Hindu mythology.",
       "generatedAt": "2026-04-12T02:29:29.719Z",
+      "sceneIndex": 0,
+      "cantoNumber": 5
+    },
+    {
+      "chapterNumber": 107,
+      "chapterTitle": "Chapter चौदह",
+      "imagePath": "chapter-115.jpg",
+      "prompt": "Narada instructs Yudhishthira on family duties in the palace, emphasizing devotion to Krishna.",
+      "descriptionHi": "इस अध्याय में नारद मुनि युधिष्ठिर महाराज को गृहस्थ के वृत्तिपरक कर्तव्यों के बारे में उपदेश देते हैं, जिसमें वासुदेव कृष्ण पर पूर्णाश्रित रहना और निर्धारित भक्ति के द्वारा उन्हें प्रसन्न करना शामिल है। गृहस्थ को अपने परिवार के पालन के लिए आवश्यक अर्जन करना चाहिए और भौतिक सुविधाओं में वृद्धि नहीं करनी चाहिए।",
+      "personasUsed": [
+        "krishna_adult",
+        "narada",
+        "yudhishthira"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-11T22:35:52.090Z",
       "sceneIndex": 0,
       "cantoNumber": 5
     },
@@ -1477,6 +1477,20 @@
       "cantoNumber": 6
     },
     {
+      "chapterNumber": 125,
+      "chapterTitle": "Chapter छह",
+      "imagePath": "chapter-155.jpg",
+      "prompt": "Krishna encounters Putana in the village of Gokul, where she attempts to harm him with her mystical powers.",
+      "descriptionHi": "इस अध्याय में कृष्ण की कहानी है जब पूतना नाम की एक राक्षसी गोकुल में आती है और कृष्ण को अपना शिकार बनाने की कोशिश करती है। कृष्ण इस चुनौती का सामना करते हैं और अपनी शक्ति का प्रदर्शन करते हैं। यह घटना कृष्ण की अलौकिक शक्ति को दर्शाती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T07:33:33.080Z",
+      "sceneIndex": 0,
+      "cantoNumber": 6
+    },
+    {
       "chapterNumber": 126,
       "chapterTitle": "Chapter सात",
       "imagePath": "chapter-142.jpg",
@@ -1491,12 +1505,56 @@
       "cantoNumber": 6
     },
     {
+      "chapterNumber": 126,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-156.jpg",
+      "prompt": "Krishna displays the entire universe within his mouth, astonishing Parikshit and Shukadeva in a serene divine moment.",
+      "descriptionHi": "इस अध्याय में श्रीकृष्ण द्वारा तृणावर्त असुर का वध और अपने मुख के भीतर सारे ब्रह्माण्ड का प्रदर्शन किया गया है। महाराज परीक्षित भगवान् कृष्ण की बाल-लीलाओं को सुनने के लिए उत्सुक हैं। शुकदेव गोस्वामी उनका वर्णन करते हैं।",
+      "personasUsed": [
+        "krishna_adult",
+        "shukadeva",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T07:33:58.633Z",
+      "sceneIndex": 0,
+      "cantoNumber": 6
+    },
+    {
       "chapterNumber": 127,
       "chapterTitle": "Chapter आठ",
       "imagePath": "chapter-143.jpg",
       "prompt": "Sagar's sons meet Kapildev near a vast excavation, where they mistakenly accuse him of stealing their ashvamedha horse.",
       "descriptionHi": "इस अध्याय में रोहित के वंशजों का वर्णन मिलता है, जिसमें सगर नाम का एक राजा हुआ जिसकी कथा कपिलदेव तथा सगर के पुत्रों के विनाश के सम्बन्ध में वर्णित है। राजा सगर के पुत्रों ने अश्वमेघ यज्ञ के घोड़े की खोज के दौरान कपिलदेव से भेंट की।",
       "generatedAt": "2026-04-12T04:33:38.306Z",
+      "sceneIndex": 0,
+      "cantoNumber": 6
+    },
+    {
+      "chapterNumber": 127,
+      "chapterTitle": "Chapter आठ",
+      "imagePath": "chapter-157.jpg",
+      "prompt": "Krishna's naming ceremony takes place at Nand Maharaj's home, where Gargamuni secretly performs the ritual to avoid attracting Kansa's attention.",
+      "descriptionHi": "भगवान् कृष्ण के नामकरण-संस्कार का वर्णन किया गया है, जिसमें गर्गमुनि द्वारा उनका नामकरण किया जाता है। कृष्ण के विभिन्न नामों और गुणों का वर्णन है। यह अध्याय कृष्ण के बाल्यकाल और उनके परिवार के बीच के प्रेम को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T07:41:23.500Z",
+      "sceneIndex": 0,
+      "cantoNumber": 6
+    },
+    {
+      "chapterNumber": 127,
+      "chapterTitle": "अध्याय आठ में जहाँ ये श्लोक मूल रूप में दिए गए हैं श्रील प्रभुपाद द्वारा लिखित विस्तृत तात्पर्य",
+      "imagePath": "chapter-169.jpg",
+      "prompt": "Krishna stands serene in a palace, surrounded by gentle smiles, as wise men proclaim him Vasudeva, a name reflecting his divine nature.",
+      "descriptionHi": "इस अध्याय में कृष्ण के जन्म और उनके नामकरण का वर्णन है, जिसमें उन्हें वासुदेव कहा जाता है। यह अध्याय कृष्ण के जीवन और उनके महत्व को दर्शाता है। कृष्ण के नाम का अर्थ और उनकी महानता का वर्णन किया गया है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T09:05:48.898Z",
       "sceneIndex": 0,
       "cantoNumber": 6
     },
@@ -1511,12 +1569,41 @@
       "cantoNumber": 6
     },
     {
+      "chapterNumber": 128,
+      "chapterTitle": "Chapter नौ",
+      "imagePath": "chapter-158.jpg",
+      "prompt": "Krishna becomes upset as Mother Yashoda stops feeding him to attend to overflowing milk, leading to a moment of tender conflict in their humble home.",
+      "descriptionHi": "माता यशोदा कृष्ण को स्तन-पान करा रहीं थीं लेकिन जब उन्होंने दूध उबलते हुए देखा तो वे तुरन्त वहाँ गईं और कृष्ण को दूध पिलाना बन्द कर दिया, जिससे कृष्ण क्रुद्ध हो गये। इस अध्याय में कृष्ण की माता यशोदा द्वारा बाँधने की कोशिश का वर्णन किया गया है।",
+      "personasUsed": [
+        "krishna_adult",
+        "yashoda"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T07:46:16.954Z",
+      "sceneIndex": 0,
+      "cantoNumber": 6
+    },
+    {
       "chapterNumber": 129,
       "chapterTitle": "Chapter दस",
       "imagePath": "chapter-145.jpg",
       "prompt": "Lord Rama, accompanied by Lakshmana, searches for Sita in the forest after her abduction by Ravana.",
       "descriptionHi": "इस अध्याय में भगवान् रामचन्द्र की लीलाओं का वर्णन किया गया है, जिनमें रावण को हराना और अयोध्या लौटना शामिल है। भगवान् रामचन्द्र के कार्यकलापों का भी वर्णन हुआ है।",
       "generatedAt": "2026-04-12T04:39:55.182Z",
+      "sceneIndex": 0,
+      "cantoNumber": 6
+    },
+    {
+      "chapterNumber": 129,
+      "chapterTitle": "Chapter दस",
+      "imagePath": "chapter-159.jpg",
+      "prompt": "Narada encounters Nalakuvara and Manigriva, sons of Kuvera, near a serene lake, where they are indulging in careless behavior, oblivious to the sage's presence.",
+      "descriptionHi": "इस अध्याय में कृष्ण द्वारा यमलार्जुन वृक्षों को गिराने का वर्णन है, जिससे नलकूवर और मणिग्रीव नामक कुवेर के दो पुत्र प्रकट हुए। नारदमुनि के आगमन पर भी वे अपने ऐश्वर्य और मिथ्या प्रतिष्ठा से मदान्ध रहते हैं।",
+      "personasUsed": [
+        "narada"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T07:51:37.896Z",
       "sceneIndex": 0,
       "cantoNumber": 6
     },
@@ -1531,6 +1618,20 @@
       "cantoNumber": 6
     },
     {
+      "chapterNumber": 130,
+      "chapterTitle": "Chapter ग्यारह",
+      "imagePath": "chapter-160.jpg",
+      "prompt": "Krishna stands calmly amidst fallen trees in the forest, as Nanda and elderly villagers gather around him in wonder.",
+      "descriptionHi": "इस अध्याय में कृष्ण की बाल-लीलाएँ बताई गई हैं, जिसमें वे वत्सासुर और बकासुर का वध करते हैं और गोकुलवासियों को आश्चर्यचकित करते हैं। कृष्ण के पिता नन्द और गोकुल के वृद्ध निवासी इस घटना को देखकर आश्चर्यचकित होते हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T07:55:41.273Z",
+      "sceneIndex": 0,
+      "cantoNumber": 6
+    },
+    {
       "chapterNumber": 131,
       "chapterTitle": "Chapter बारह",
       "imagePath": "chapter-147.jpg",
@@ -1541,6 +1642,20 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-12T06:03:12.960Z",
+      "sceneIndex": 0,
+      "cantoNumber": 6
+    },
+    {
+      "chapterNumber": 131,
+      "chapterTitle": "Chapter बारह",
+      "imagePath": "chapter-161.jpg",
+      "prompt": "Krishna enters the massive serpent's mouth in the forest to save his friends, calmly expanding his form to suffocate the demon.",
+      "descriptionHi": "इस अध्याय में कृष्ण द्वारा अघासुर का वध वर्णित है, जिसमें कृष्ण अपने मित्रों की रक्षा करते हैं और असुर को पराजित करते हैं। यह घटना कृष्ण की दिव्य शक्ति और उनके मित्रों के प्रति उनके प्रेम को दर्शाती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T08:00:56.818Z",
       "sceneIndex": 0,
       "cantoNumber": 6
     },
@@ -1565,131 +1680,6 @@
       "cantoNumber": 6
     },
     {
-      "chapterNumber": 134,
-      "chapterTitle": "Chapter पन्द्रह",
-      "imagePath": "chapter-150.jpg",
-      "prompt": "Parashurama stands before King Kartavirya Arjuna, refusing to back down, as Jamadagni looks on, amidst a serene landscape.",
-      "descriptionHi": "इस अध्याय में परशुराम की कथा का वर्णन है, जो भगवान् के योद्धा अवतार हैं और उन्होंने कार्तवीर्यार्जुन का वध किया। मुख्य पात्र परशुराम, जमदग्नि और कार्तवीर्यार्जुन हैं।",
-      "personasUsed": [
-        "arjuna"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-12T06:10:23.310Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
-    },
-    {
-      "chapterNumber": 137,
-      "chapterTitle": "Chapter अठारह",
-      "imagePath": "chapter-153.jpg",
-      "prompt": "Yayati meets Devayani at a well and rescues her, leading to their marriage, in a serene forest setting.",
-      "descriptionHi": "राजा ययाति को अपने पुत्र पूरु से यौवन की पुनःप्राप्ति होती है, जो एक महत्वपूर्ण घटना है। इस अध्याय में ययाति के जीवन और उसके परिवार के सदस्यों के बीच के संबंधों का वर्णन किया गया है। यह अध्याय ययाति के जीवन के महत्वपूर्ण पहलुओं को उजागर करता है।",
-      "generatedAt": "2026-04-12T06:26:05.944Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
-    },
-    {
-      "chapterNumber": 125,
-      "chapterTitle": "Chapter छह",
-      "imagePath": "chapter-155.jpg",
-      "prompt": "Krishna encounters Putana in the village of Gokul, where she attempts to harm him with her mystical powers.",
-      "descriptionHi": "इस अध्याय में कृष्ण की कहानी है जब पूतना नाम की एक राक्षसी गोकुल में आती है और कृष्ण को अपना शिकार बनाने की कोशिश करती है। कृष्ण इस चुनौती का सामना करते हैं और अपनी शक्ति का प्रदर्शन करते हैं। यह घटना कृष्ण की अलौकिक शक्ति को दर्शाती है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-12T07:33:33.080Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
-    },
-    {
-      "chapterNumber": 126,
-      "chapterTitle": "Chapter सात",
-      "imagePath": "chapter-156.jpg",
-      "prompt": "Krishna displays the entire universe within his mouth, astonishing Parikshit and Shukadeva in a serene divine moment.",
-      "descriptionHi": "इस अध्याय में श्रीकृष्ण द्वारा तृणावर्त असुर का वध और अपने मुख के भीतर सारे ब्रह्माण्ड का प्रदर्शन किया गया है। महाराज परीक्षित भगवान् कृष्ण की बाल-लीलाओं को सुनने के लिए उत्सुक हैं। शुकदेव गोस्वामी उनका वर्णन करते हैं।",
-      "personasUsed": [
-        "krishna_adult",
-        "shukadeva",
-        "parikshit"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-12T07:33:58.633Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
-    },
-    {
-      "chapterNumber": 127,
-      "chapterTitle": "Chapter आठ",
-      "imagePath": "chapter-157.jpg",
-      "prompt": "Krishna's naming ceremony takes place at Nand Maharaj's home, where Gargamuni secretly performs the ritual to avoid attracting Kansa's attention.",
-      "descriptionHi": "भगवान् कृष्ण के नामकरण-संस्कार का वर्णन किया गया है, जिसमें गर्गमुनि द्वारा उनका नामकरण किया जाता है। कृष्ण के विभिन्न नामों और गुणों का वर्णन है। यह अध्याय कृष्ण के बाल्यकाल और उनके परिवार के बीच के प्रेम को दर्शाता है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-12T07:41:23.500Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
-    },
-    {
-      "chapterNumber": 128,
-      "chapterTitle": "Chapter नौ",
-      "imagePath": "chapter-158.jpg",
-      "prompt": "Krishna becomes upset as Mother Yashoda stops feeding him to attend to overflowing milk, leading to a moment of tender conflict in their humble home.",
-      "descriptionHi": "माता यशोदा कृष्ण को स्तन-पान करा रहीं थीं लेकिन जब उन्होंने दूध उबलते हुए देखा तो वे तुरन्त वहाँ गईं और कृष्ण को दूध पिलाना बन्द कर दिया, जिससे कृष्ण क्रुद्ध हो गये। इस अध्याय में कृष्ण की माता यशोदा द्वारा बाँधने की कोशिश का वर्णन किया गया है।",
-      "personasUsed": [
-        "krishna_adult",
-        "yashoda"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-12T07:46:16.954Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
-    },
-    {
-      "chapterNumber": 129,
-      "chapterTitle": "Chapter दस",
-      "imagePath": "chapter-159.jpg",
-      "prompt": "Narada encounters Nalakuvara and Manigriva, sons of Kuvera, near a serene lake, where they are indulging in careless behavior, oblivious to the sage's presence.",
-      "descriptionHi": "इस अध्याय में कृष्ण द्वारा यमलार्जुन वृक्षों को गिराने का वर्णन है, जिससे नलकूवर और मणिग्रीव नामक कुवेर के दो पुत्र प्रकट हुए। नारदमुनि के आगमन पर भी वे अपने ऐश्वर्य और मिथ्या प्रतिष्ठा से मदान्ध रहते हैं।",
-      "personasUsed": [
-        "narada"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-12T07:51:37.896Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
-    },
-    {
-      "chapterNumber": 130,
-      "chapterTitle": "Chapter ग्यारह",
-      "imagePath": "chapter-160.jpg",
-      "prompt": "Krishna stands calmly amidst fallen trees in the forest, as Nanda and elderly villagers gather around him in wonder.",
-      "descriptionHi": "इस अध्याय में कृष्ण की बाल-लीलाएँ बताई गई हैं, जिसमें वे वत्सासुर और बकासुर का वध करते हैं और गोकुलवासियों को आश्चर्यचकित करते हैं। कृष्ण के पिता नन्द और गोकुल के वृद्ध निवासी इस घटना को देखकर आश्चर्यचकित होते हैं।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-12T07:55:41.273Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
-    },
-    {
-      "chapterNumber": 131,
-      "chapterTitle": "Chapter बारह",
-      "imagePath": "chapter-161.jpg",
-      "prompt": "Krishna enters the massive serpent's mouth in the forest to save his friends, calmly expanding his form to suffocate the demon.",
-      "descriptionHi": "इस अध्याय में कृष्ण द्वारा अघासुर का वध वर्णित है, जिसमें कृष्ण अपने मित्रों की रक्षा करते हैं और असुर को पराजित करते हैं। यह घटना कृष्ण की दिव्य शक्ति और उनके मित्रों के प्रति उनके प्रेम को दर्शाती है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-12T08:00:56.818Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
-    },
-    {
       "chapterNumber": 133,
       "chapterTitle": "Chapter चौदह",
       "imagePath": "chapter-163.jpg",
@@ -1702,6 +1692,20 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-12T08:12:51.181Z",
+      "sceneIndex": 0,
+      "cantoNumber": 6
+    },
+    {
+      "chapterNumber": 134,
+      "chapterTitle": "Chapter पन्द्रह",
+      "imagePath": "chapter-150.jpg",
+      "prompt": "Parashurama stands before King Kartavirya Arjuna, refusing to back down, as Jamadagni looks on, amidst a serene landscape.",
+      "descriptionHi": "इस अध्याय में परशुराम की कथा का वर्णन है, जो भगवान् के योद्धा अवतार हैं और उन्होंने कार्तवीर्यार्जुन का वध किया। मुख्य पात्र परशुराम, जमदग्नि और कार्तवीर्यार्जुन हैं।",
+      "personasUsed": [
+        "arjuna"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T06:10:23.310Z",
       "sceneIndex": 0,
       "cantoNumber": 6
     },
@@ -1734,6 +1738,16 @@
       "cantoNumber": 6
     },
     {
+      "chapterNumber": 137,
+      "chapterTitle": "Chapter अठारह",
+      "imagePath": "chapter-153.jpg",
+      "prompt": "Yayati meets Devayani at a well and rescues her, leading to their marriage, in a serene forest setting.",
+      "descriptionHi": "राजा ययाति को अपने पुत्र पूरु से यौवन की पुनःप्राप्ति होती है, जो एक महत्वपूर्ण घटना है। इस अध्याय में ययाति के जीवन और उसके परिवार के सदस्यों के बीच के संबंधों का वर्णन किया गया है। यह अध्याय ययाति के जीवन के महत्वपूर्ण पहलुओं को उजागर करता है।",
+      "generatedAt": "2026-04-12T06:26:05.944Z",
+      "sceneIndex": 0,
+      "cantoNumber": 6
+    },
+    {
       "chapterNumber": 138,
       "chapterTitle": "Chapter उन्नीस",
       "imagePath": "chapter-166.jpg",
@@ -1746,55 +1760,6 @@
       "generatedAt": "2026-04-12T08:38:47.647Z",
       "sceneIndex": 0,
       "cantoNumber": 6
-    },
-    {
-      "chapterNumber": 167,
-      "chapterTitle": "Chapter चौबीस",
-      "imagePath": "chapter-167.jpg",
-      "prompt": "Krishna stops the ritual for Indra and initiates Govardhan Puja in a serene countryside setting with Nanda.",
-      "descriptionHi": "इस अध्याय में कृष्ण ने इन्द्र के लिए किये जाने वाले यज्ञ को रोककर गोवर्धन-पूजा का शुभारम्भ किया, जिससे इन्द्र का गर्व चूर हुआ। कृष्ण ने नन्द से इसके विषय में पूछा और उन्हें समझाया कि सारे जीव कर्मवश ही जन्म लेते हैं।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-12T09:00:52.527Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 168,
-      "chapterTitle": "Chapter छब्बीस",
-      "imagePath": "chapter-168.jpg",
-      "prompt": "Krishna lifts a mountain, astonishing the cowherds in Vrindavan, as Nanda Maharaj recounts Garuda Muni's words about Krishna's divine powers.",
-      "descriptionHi": "नन्द महाराज गोपों को गर्ग मुनि के मुख से सुनी गई कृष्ण की अद्भुत शक्ति का वर्णन करते हैं, जिसमें कृष्ण के विविध असामान्य कार्यों का वर्णन है। गोपगण कृष्ण की शक्ति से अनजान होने के कारण उनके कार्यों से चकित रह जाते थे।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-12T09:05:30.550Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 127,
-      "chapterTitle": "अध्याय आठ में जहाँ ये श्लोक मूल रूप में दिए गए हैं श्रील प्रभुपाद द्वारा लिखित विस्तृत तात्पर्य",
-      "imagePath": "chapter-169.jpg",
-      "prompt": "Krishna stands serene in a palace, surrounded by gentle smiles, as wise men proclaim him Vasudeva, a name reflecting his divine nature.",
-      "descriptionHi": "इस अध्याय में कृष्ण के जन्म और उनके नामकरण का वर्णन है, जिसमें उन्हें वासुदेव कहा जाता है। यह अध्याय कृष्ण के जीवन और उनके महत्व को दर्शाता है। कृष्ण के नाम का अर्थ और उनकी महानता का वर्णन किया गया है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-12T09:05:48.898Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
-    },
-    {
-      "chapterNumber": 170,
-      "chapterTitle": "अध्याय में आगे चलकर वरुण कहते हैं—अजानता मामकेन मूढेन—मेरे अज्ञानी नौकर ने यह किया",
-      "imagePath": "chapter-170.jpg",
-      "prompt": "Varuna apologizes for his servant's mistake in his palace, highlighting the importance of knowledge and ignorance.",
-      "descriptionHi": "वरुण अपने अज्ञानी नौकर की गलती के लिए माफी मांगते हैं और इस अध्याय में अज्ञान और ज्ञान के महत्व पर प्रकाश डाला जाता है। मुख्य पात्र वरुण हैं और यह घटना उनके दरबार में घटित होती है।",
-      "generatedAt": "2026-04-12T09:08:54.728Z",
-      "sceneIndex": 0
     },
     {
       "chapterNumber": 139,
@@ -1824,7 +1789,70 @@
       "generatedAt": "2026-04-12T13:03:10.695Z",
       "sceneIndex": 0,
       "cantoNumber": 7
+    },
+    {
+      "chapterNumber": 167,
+      "chapterTitle": "Chapter चौबीस",
+      "imagePath": "chapter-167.jpg",
+      "prompt": "Krishna stops the ritual for Indra and initiates Govardhan Puja in a serene countryside setting with Nanda.",
+      "descriptionHi": "इस अध्याय में कृष्ण ने इन्द्र के लिए किये जाने वाले यज्ञ को रोककर गोवर्धन-पूजा का शुभारम्भ किया, जिससे इन्द्र का गर्व चूर हुआ। कृष्ण ने नन्द से इसके विषय में पूछा और उन्हें समझाया कि सारे जीव कर्मवश ही जन्म लेते हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T09:00:52.527Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 168,
+      "chapterTitle": "Chapter छब्बीस",
+      "imagePath": "chapter-168.jpg",
+      "prompt": "Krishna lifts a mountain, astonishing the cowherds in Vrindavan, as Nanda Maharaj recounts Garuda Muni's words about Krishna's divine powers.",
+      "descriptionHi": "नन्द महाराज गोपों को गर्ग मुनि के मुख से सुनी गई कृष्ण की अद्भुत शक्ति का वर्णन करते हैं, जिसमें कृष्ण के विविध असामान्य कार्यों का वर्णन है। गोपगण कृष्ण की शक्ति से अनजान होने के कारण उनके कार्यों से चकित रह जाते थे।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T09:05:30.550Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 170,
+      "chapterTitle": "अध्याय में आगे चलकर वरुण कहते हैं—अजानता मामकेन मूढेन—मेरे अज्ञानी नौकर ने यह किया",
+      "imagePath": "chapter-170.jpg",
+      "prompt": "Varuna apologizes for his servant's mistake in his palace, highlighting the importance of knowledge and ignorance.",
+      "descriptionHi": "वरुण अपने अज्ञानी नौकर की गलती के लिए माफी मांगते हैं और इस अध्याय में अज्ञान और ज्ञान के महत्व पर प्रकाश डाला जाता है। मुख्य पात्र वरुण हैं और यह घटना उनके दरबार में घटित होती है।",
+      "generatedAt": "2026-04-12T09:08:54.728Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 174,
+      "chapterTitle": "Chapter पाँच",
+      "imagePath": "chapter-174.jpg",
+      "prompt": "Shukadeva counsels King Parikshit in a serene forest setting, guiding him to focus on Lord Vasudeva's divine presence.",
+      "descriptionHi": "महाराज परीक्षित को शुकदेव गोस्वामी का अन्तिम उपदेश मिलता है, जिसमें उन्हें तक्षक-दंश भय से मुक्ति का मार्ग प्रशस्त किया जाता है। शुकदेव गोस्वामी ब्रह्मा और परमात्मा के यश का बारम्बार कीर्तन करते हैं। आत्मा की अमरता और भौतिक शरीर की नाशवानता की व्याख्या की जाती है।",
+      "personasUsed": [
+        "shukadeva",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T17:03:12.792Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 175,
+      "chapterTitle": "Chapter छह",
+      "imagePath": "chapter-175.jpg",
+      "prompt": "Parikshit, with Shukadeva's guidance, attains liberation and merges his heart into Lord Hari's divine presence on the riverbank.",
+      "descriptionHi": "महाराज परीक्षित ने श्री शुकदेव के वचन सुनने के बाद मुक्ति प्राप्त की और भगवान् हरि का दर्शन प्राप्त किया। उनका अज्ञान दूर हो चुका था और मृत्यु-भय समाप्त हो गया था। श्री शुकदेव की कृपा से उन्होंने अपना हृदय भगवान् हरि के चरणकमलों में स्थिर किया।",
+      "personasUsed": [
+        "shukadeva",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T17:03:35.430Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T13:03:10.695Z"
+  "lastUpdated": "2026-04-12T17:03:35.430Z"
 }
