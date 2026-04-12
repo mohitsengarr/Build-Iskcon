@@ -1164,36 +1164,38 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             );
           }
           case "shlok":
+            // BBT style: Sanskrit verse in brown, largest text (~1.4-1.6x body), bold
             return (
-              <div key={i} className="my-4">
+              <div key={i} className="my-5">
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`text-[18px] sm:text-[20px] font-bold leading-[1.9] mb-0.5 ${themeKey === "dark" ? "text-blue-300" : themeKey === "sepia" ? "text-[#1a3a6a]" : "text-blue-900"}`} style={{ fontFamily: "var(--font-sanskrit)" }}>{l}</p>
+                  <p key={j} className={`text-[20px] sm:text-[22px] font-bold leading-[1.9] mb-0.5 ${themeKey === "dark" ? "text-amber-300" : themeKey === "sepia" ? "text-[#5a3010]" : "text-[#6b3a1a]"}`} style={{ fontFamily: "var(--font-sanskrit)" }}>{l}</p>
                 ))}
               </div>
             );
           case "ref-shlok":
+            // Referenced shlok inside tatparya — smaller, indented, brown-tinted
             return (
-              <div key={i} className={`pl-4 border-l-2 my-2 ${themeKey === "dark" ? "border-orange-800/40" : themeKey === "sepia" ? "border-[#c4ad80]" : "border-orange-300/60"}`}>
+              <div key={i} className={`pl-4 border-l-2 my-2 ${themeKey === "dark" ? "border-amber-800/40" : themeKey === "sepia" ? "border-[#c4ad80]" : "border-[#c4956a]/40"}`}>
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`text-[14px] sm:text-[15px] leading-[1.7] ${t.muted} italic mb-0.5`} style={{ fontFamily: "var(--font-sanskrit)" }}>{l}</p>
+                  <p key={j} className={`text-[14px] sm:text-[15px] leading-[1.7] italic mb-0.5 ${themeKey === "dark" ? "text-amber-400/70" : themeKey === "sepia" ? "text-[#6b4020]" : "text-[#8b5a30]"}`} style={{ fontFamily: "var(--font-sanskrit)" }}>{l}</p>
                 ))}
               </div>
             );
           case "shabdarth":
+            // BBT style: blue word-by-word meanings, smallest text, bold meanings after dashes
             return (
-              <div key={i} className="my-4">
-                <p className={`text-[13px] font-bold mb-2 text-center ${themeKey === "dark" ? "text-pink-400" : themeKey === "sepia" ? "text-[#8B2252]" : "text-pink-700"}`} style={{ fontFamily: "var(--font-devanagari)" }}>शब्दार्थ</p>
+              <div key={i} className="my-3">
+                <p className={`text-[13px] font-bold mb-2 text-center ${themeKey === "dark" ? "text-blue-400" : themeKey === "sepia" ? "text-[#1a3a6a]" : "text-[#1a4a8a]"}`} style={{ fontFamily: "var(--font-devanagari)" }}>शब्दार्थ</p>
                 {sec.lines.map((l, j) => {
                   // Highlight Hindi meanings (after —) in bold, keep Sanskrit words regular
-                  const parts = l.split(/(—|--)/);
+                  const parts = l.split(/(—|--|-\s)/);
                   return (
-                    <p key={j} className={`text-[12px] sm:text-[13px] leading-[1.7] mb-0.5 ${themeKey === "dark" ? "text-pink-300/80" : themeKey === "sepia" ? "text-[#6a2040]" : "text-pink-900/80"}`} style={{ fontFamily: "var(--font-devanagari)" }}>
+                    <p key={j} className={`text-[12px] sm:text-[13px] leading-[1.7] mb-0.5 ${themeKey === "dark" ? "text-blue-300/80" : themeKey === "sepia" ? "text-[#1a3a6a]" : "text-[#1a4a8a]"}`} style={{ fontFamily: "var(--font-devanagari)" }}>
                       {parts.map((part, k) => {
-                        if (part === "—" || part === "--") return <span key={k}>—</span>;
-                        // Odd indices (after —) are Hindi meanings → bold
-                        const isMeaning = k > 0 && (parts[k - 1] === "—" || parts[k - 1] === "--");
+                        if (part === "—" || part === "--" || part === "- ") return <span key={k}>—</span>;
+                        const isMeaning = k > 0 && (parts[k - 1] === "—" || parts[k - 1] === "--" || parts[k - 1] === "- ");
                         return isMeaning
-                          ? <strong key={k} className={themeKey === "dark" ? "text-pink-200 font-bold" : themeKey === "sepia" ? "text-[#3a1020] font-bold" : "text-pink-950 font-bold"}>{part}</strong>
+                          ? <strong key={k} className={themeKey === "dark" ? "text-blue-200 font-bold" : themeKey === "sepia" ? "text-[#0a2a5a] font-bold" : "text-[#0a2a5a] font-bold"}>{part}</strong>
                           : <span key={k}>{part}</span>;
                       })}
                     </p>
@@ -1202,35 +1204,67 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
               </div>
             );
           case "anuvad": {
-            // Only show label after main shlok/shabdarth, not inside tatparya, and not on page continuations
+            // BBT style: Hindi translation, medium text, bold, black with red emphasis on key terms
             const prevKind = i > 0 ? sections[i - 1].kind : null;
             const isAnuvadContinuation = i === 0 && prevPageEndKind === "anuvad";
             const showLabel = !isAnuvadContinuation && (prevKind === "shlok" || prevKind === "shabdarth");
             return (
               <div key={i} className={isAnuvadContinuation ? "" : "mt-3"}>
-                {showLabel && <p className={`text-[15px] sm:text-[16px] font-bold mb-1 indent-8 ${themeKey === "dark" ? "text-stone-200" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-800"}`} style={{ fontFamily: "var(--font-devanagari)" }}>अनुवाद :</p>}
-                {sec.lines.map((l, j) => (
-                  <p key={j} className={`text-[16px] sm:text-[18px] font-bold leading-[2] mb-1 ${j === 0 ? "indent-8" : ""} ${themeKey === "dark" ? "text-stone-100" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-900"}`} style={{ fontFamily: "var(--font-devanagari)" }}>{l}</p>
-                ))}
+                {showLabel && <p className={`text-[14px] sm:text-[15px] font-bold mb-1 indent-8 ${themeKey === "dark" ? "text-stone-200" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-800"}`} style={{ fontFamily: "var(--font-devanagari)" }}>अनुवाद :</p>}
+                {sec.lines.map((l, j) => {
+                  // Highlight key terms like श्रीमद्भागवत in red
+                  const highlighted = l.replace(/(श्रीमद्भागवत(?:म्)?|भगवान्?|कृष्ण|विष्णु|ब्रह्मा|शिव|प्रभुपाद)/gu, "___HIGHLIGHT___$1___END___");
+                  const hlParts = highlighted.split(/(___HIGHLIGHT___|___END___)/);
+                  let inHighlight = false;
+                  return (
+                    <p key={j} className={`text-[15px] sm:text-[16px] font-bold leading-[2] mb-1 ${j === 0 && !isAnuvadContinuation ? "indent-8" : ""} ${themeKey === "dark" ? "text-stone-100" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-900"}`} style={{ fontFamily: "var(--font-devanagari)" }}>
+                      {hlParts.map((part, k) => {
+                        if (part === "___HIGHLIGHT___") { inHighlight = true; return null; }
+                        if (part === "___END___") { inHighlight = false; return null; }
+                        return inHighlight
+                          ? <span key={k} className={themeKey === "dark" ? "text-red-400" : themeKey === "sepia" ? "text-[#8b1a1a]" : "text-red-700"}>{part}</span>
+                          : <span key={k}>{part}</span>;
+                      })}
+                    </p>
+                  );
+                })}
               </div>
             );
           }
           case "tatparya": {
-            // Don't show "तात्पर्य :" label if this is a continuation from previous page
+            // BBT style: Hindi commentary, black text, medium size, bold prefix
             const isContinuation = i === 0 && prevPageEndKind === "tatparya";
             return (
               <div key={i} className={isContinuation ? "" : "mt-4"}>
                 {sec.lines.map((l, j) => {
-                  // First line: prepend "तात्पर्य :" as bold-italic prefix inline (only if not continuation)
+                  // Highlight key religious terms in red
+                  const highlighted = l.replace(/(श्रीमद्भागवत(?:म्)?|भगवान्?|कृष्ण|विष्णु|ब्रह्मा|शिव|प्रभुपाद)/gu, "___HIGHLIGHT___$1___END___");
+                  const hlParts = highlighted.split(/(___HIGHLIGHT___|___END___)/);
+                  let inHighlight = false;
                   if (j === 0 && !isContinuation) {
                     return (
-                      <p key={j} className={`text-[15px] sm:text-[17px] font-semibold leading-[2] mb-1 ${themeKey === "dark" ? "text-green-300" : themeKey === "sepia" ? "text-[#1a3a10]" : "text-green-900"}`} style={{ fontFamily: "var(--font-devanagari)" }}>
-                        <span className="font-bold italic">तात्पर्य :</span>{" "}{l}
+                      <p key={j} className={`text-[14px] sm:text-[15px] leading-[2] mb-1 indent-8 ${themeKey === "dark" ? "text-stone-300" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-800"}`} style={{ fontFamily: "var(--font-devanagari)" }}>
+                        <span className="font-bold italic">तात्पर्य :</span>{" "}
+                        {hlParts.map((part, k) => {
+                          if (part === "___HIGHLIGHT___") { inHighlight = true; return null; }
+                          if (part === "___END___") { inHighlight = false; return null; }
+                          return inHighlight
+                            ? <span key={k} className={themeKey === "dark" ? "text-red-400 font-semibold" : themeKey === "sepia" ? "text-[#8b1a1a] font-semibold" : "text-red-700 font-semibold"}>{part}</span>
+                            : <span key={k}>{part}</span>;
+                        })}
                       </p>
                     );
                   }
                   return (
-                    <p key={j} className={`text-[15px] sm:text-[17px] font-semibold leading-[2] mb-1 pl-1 ${themeKey === "dark" ? "text-green-300" : themeKey === "sepia" ? "text-[#1a3a10]" : "text-green-900"}`} style={{ fontFamily: "var(--font-devanagari)" }}>{l}</p>
+                    <p key={j} className={`text-[14px] sm:text-[15px] leading-[2] mb-1 ${themeKey === "dark" ? "text-stone-300" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-800"}`} style={{ fontFamily: "var(--font-devanagari)" }}>
+                      {hlParts.map((part, k) => {
+                        if (part === "___HIGHLIGHT___") { inHighlight = true; return null; }
+                        if (part === "___END___") { inHighlight = false; return null; }
+                        return inHighlight
+                          ? <span key={k} className={themeKey === "dark" ? "text-red-400 font-semibold" : themeKey === "sepia" ? "text-[#8b1a1a] font-semibold" : "text-red-700 font-semibold"}>{part}</span>
+                          : <span key={k}>{part}</span>;
+                      })}
+                    </p>
                   );
                 })}
               </div>
@@ -1400,7 +1434,7 @@ function Sidebar({
                         className={`w-full px-3 py-2.5 flex items-center justify-between sticky top-0 z-[5] transition-all cursor-pointer group ${
                           hasActiveChapter
                             ? "bg-gradient-to-r from-orange-600 to-orange-500 shadow-md"
-                            : "bg-gradient-to-r from-stone-700 to-stone-600 hover:from-stone-600 hover:to-stone-500"
+                            : "bg-gradient-to-r from-stone-500 to-stone-400 hover:from-stone-400 hover:to-stone-300"
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
@@ -1501,6 +1535,7 @@ export default function Bhagwatham() {
   const [precomputedChapters, setPrecomputedChapters] = useState<ChapterEntry[] | null>(null);
   const [totalBatchCount, setTotalBatchCount] = useState(0);
   const [loadedBatches, setLoadedBatches] = useState<Set<number>>(new Set());
+  const [loadingMore, setLoadingMore] = useState(false);
   const batchCacheRef = useRef<Map<number, PageContent[]>>(new Map());
   const [searchQuery, setSearchQuery] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -1576,6 +1611,7 @@ export default function Bhagwatham() {
       if (!batchCacheRef.current.has(b)) toLoad.push(b);
     }
     if (toLoad.length === 0) return;
+    setLoadingMore(true);
 
     const results = await Promise.all(
       toLoad.map(async (batchNum) => {
@@ -1599,6 +1635,7 @@ export default function Bhagwatham() {
     const merged = sortedBatches.flatMap(([, pages]) => pages);
     setAllPages(merged);
     setLoadedBatches(new Set(batchCacheRef.current.keys()));
+    setLoadingMore(false);
   }, []);
 
   // Load content: try chapter-index + lazy batches, fallback to full content load
@@ -2424,17 +2461,26 @@ export default function Bhagwatham() {
                 <p className="text-sm">Loading...</p>
               </div>
             ) : displayPages.length === 0 ? (
-              <motion.div variants={fadeInUp} initial="hidden" animate="visible" className="text-center py-20">
-                <div className="w-16 h-16 mx-auto mb-5 bg-orange-100 rounded-2xl flex items-center justify-center">
-                  <BookOpen className="w-8 h-8 text-orange-400" />
-                </div>
-                <h3 className={`font-serif text-xl font-bold ${theme.text} mb-2`}>
-                  {searchQuery ? "No results found" : "No pages ready yet"}
-                </h3>
-                <p className={`${theme.muted} text-sm max-w-sm mx-auto mb-5`}>
-                  {searchQuery ? "Try different keywords." : "Pages are being processed automatically. Please wait."}
-                </p>
-              </motion.div>
+              <div className={`flex flex-col items-center justify-center py-24 ${theme.muted}`}>
+                {loadingMore ? (
+                  <>
+                    <Loader2 className="w-8 h-8 animate-spin mb-4 text-orange-500" />
+                    <p className="text-sm">Loading pages...</p>
+                  </>
+                ) : (
+                  <motion.div variants={fadeInUp} initial="hidden" animate="visible" className="text-center">
+                    <div className="w-16 h-16 mx-auto mb-5 bg-orange-100 rounded-2xl flex items-center justify-center">
+                      <BookOpen className="w-8 h-8 text-orange-400" />
+                    </div>
+                    <h3 className={`font-serif text-xl font-bold ${theme.text} mb-2`}>
+                      {searchQuery ? "No results found" : "No pages ready yet"}
+                    </h3>
+                    <p className={`${theme.muted} text-sm max-w-sm mx-auto mb-5`}>
+                      {searchQuery ? "Try different keywords." : "Pages are being processed automatically. Please wait."}
+                    </p>
+                  </motion.div>
+                )}
+              </div>
             ) : (
               <div>
                 {displayPages.map((page, pageIdx) => {
