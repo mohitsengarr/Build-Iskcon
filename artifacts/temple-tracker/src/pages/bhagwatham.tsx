@@ -1164,9 +1164,9 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
           }
           case "shlok":
             return (
-              <div key={i} className="my-3">
+              <div key={i} className="my-4">
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`text-[18px] sm:text-[20px] font-bold leading-[1.9] mb-0.5 ${themeKey === "dark" ? "text-stone-100" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-800"}`} style={{ fontFamily: "var(--font-sanskrit)" }}>{l}</p>
+                  <p key={j} className={`text-[18px] sm:text-[20px] font-bold leading-[1.9] mb-0.5 ${themeKey === "dark" ? "text-blue-300" : themeKey === "sepia" ? "text-[#1a3a6a]" : "text-blue-900"}`} style={{ fontFamily: "var(--font-sanskrit)" }}>{l}</p>
                 ))}
               </div>
             );
@@ -1180,19 +1180,19 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             );
           case "shabdarth":
             return (
-              <div key={i}>
-                <p className={`text-[11px] font-bold mb-2 tracking-wide ${themeKey === "dark" ? "text-pink-400" : themeKey === "sepia" ? "text-[#8B2252]" : "text-pink-600"}`}>शब्दार्थ</p>
+              <div key={i} className="my-4">
+                <p className={`text-[16px] font-bold mb-2 text-center ${themeKey === "dark" ? "text-pink-400" : themeKey === "sepia" ? "text-[#8B2252]" : "text-pink-700"}`} style={{ fontFamily: "var(--font-devanagari)" }}>शब्दार्थ</p>
                 {sec.lines.map((l, j) => {
                   // Highlight Hindi meanings (after —) in bold, keep Sanskrit words regular
                   const parts = l.split(/(—|--)/);
                   return (
-                    <p key={j} className={`text-[14px] leading-[1.7] ${t.muted} mb-0.5`} style={{ fontFamily: "var(--font-devanagari)" }}>
+                    <p key={j} className={`text-[14px] sm:text-[15px] leading-[1.8] mb-0.5 ${themeKey === "dark" ? "text-pink-300/80" : themeKey === "sepia" ? "text-[#6a2040]" : "text-pink-900/80"}`} style={{ fontFamily: "var(--font-devanagari)" }}>
                       {parts.map((part, k) => {
                         if (part === "—" || part === "--") return <span key={k}>—</span>;
                         // Odd indices (after —) are Hindi meanings → bold
                         const isMeaning = k > 0 && (parts[k - 1] === "—" || parts[k - 1] === "--");
                         return isMeaning
-                          ? <strong key={k} className={themeKey === "dark" ? "text-stone-200" : themeKey === "sepia" ? "text-[#3a2a10]" : "text-stone-700"}>{part}</strong>
+                          ? <strong key={k} className={themeKey === "dark" ? "text-pink-200 font-bold" : themeKey === "sepia" ? "text-[#3a1020] font-bold" : "text-pink-950 font-bold"}>{part}</strong>
                           : <span key={k}>{part}</span>;
                       })}
                     </p>
@@ -1206,10 +1206,10 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             const isAnuvadContinuation = i === 0 && prevPageEndKind === "anuvad";
             const showLabel = !isAnuvadContinuation && (prevKind === "shlok" || prevKind === "shabdarth");
             return (
-              <div key={i} className={isAnuvadContinuation ? "" : "mt-2"}>
-                {showLabel && <p className={`text-[15px] sm:text-[16px] font-bold mb-1 ${themeKey === "dark" ? "text-stone-200" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-800"}`} style={{ fontFamily: "var(--font-devanagari)" }}>अनुवाद :</p>}
+              <div key={i} className={isAnuvadContinuation ? "" : "mt-3"}>
+                {showLabel && <p className={`text-[15px] sm:text-[16px] font-bold mb-1 indent-8 ${themeKey === "dark" ? "text-stone-200" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-800"}`} style={{ fontFamily: "var(--font-devanagari)" }}>अनुवाद :</p>}
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`text-[16px] sm:text-[18px] font-bold leading-[2] mb-1 ${themeKey === "dark" ? "text-stone-100" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-900"}`} style={{ fontFamily: "var(--font-devanagari)" }}>{l}</p>
+                  <p key={j} className={`text-[16px] sm:text-[18px] font-bold leading-[2] mb-1 indent-8 ${themeKey === "dark" ? "text-stone-100" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-900"}`} style={{ fontFamily: "var(--font-devanagari)" }}>{l}</p>
                 ))}
               </div>
             );
@@ -1218,18 +1218,18 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             // Don't show "तात्पर्य :" label if this is a continuation from previous page
             const isContinuation = i === 0 && prevPageEndKind === "tatparya";
             return (
-              <div key={i} className={isContinuation ? "" : "mt-3"}>
+              <div key={i} className={isContinuation ? "" : "mt-4"}>
                 {sec.lines.map((l, j) => {
                   // First line: prepend "तात्पर्य :" as bold-italic prefix inline (only if not continuation)
                   if (j === 0 && !isContinuation) {
                     return (
-                      <p key={j} className={`text-[15px] sm:text-[16px] leading-[1.9] mb-1 ${themeKey === "dark" ? "text-stone-300" : themeKey === "sepia" ? "text-[#3a2a10]" : "text-stone-700"}`} style={{ fontFamily: "var(--font-devanagari)" }}>
+                      <p key={j} className={`text-[15px] sm:text-[17px] font-semibold leading-[2] mb-1 ${themeKey === "dark" ? "text-green-300" : themeKey === "sepia" ? "text-[#1a3a10]" : "text-green-900"}`} style={{ fontFamily: "var(--font-devanagari)" }}>
                         <span className="font-bold italic">तात्पर्य :</span>{" "}{l}
                       </p>
                     );
                   }
                   return (
-                    <p key={j} className={`text-[15px] sm:text-[16px] leading-[1.9] mb-1 pl-1 ${themeKey === "dark" ? "text-stone-300" : themeKey === "sepia" ? "text-[#3a2a10]" : "text-stone-700"}`} style={{ fontFamily: "var(--font-devanagari)" }}>{l}</p>
+                    <p key={j} className={`text-[15px] sm:text-[17px] font-semibold leading-[2] mb-1 pl-1 ${themeKey === "dark" ? "text-green-300" : themeKey === "sepia" ? "text-[#1a3a10]" : "text-green-900"}`} style={{ fontFamily: "var(--font-devanagari)" }}>{l}</p>
                   );
                 })}
               </div>
@@ -1464,10 +1464,7 @@ function Sidebar({
                                   <p className={`text-sm font-semibold truncate ${isActive ? "text-orange-700" : "text-stone-700"}`}>
                                     {shortTitle}
                                   </p>
-                                  {vedabaseTitle && (
-                                    <p className={`text-[11px] truncate mt-0.5 ${isActive ? "text-orange-500" : "text-stone-500"}`}>{vedabaseTitle}</p>
-                                  )}
-                                  {subtitle && !vedabaseTitle && (
+                                  {subtitle && (
                                     <p className="text-[11px] text-stone-400 truncate mt-0.5">{subtitle}</p>
                                   )}
                                   <p className="text-[10px] text-stone-400 mt-0.5">Page {ch.pageNumber}</p>
@@ -1502,6 +1499,10 @@ export default function Bhagwatham() {
   const [progress, setProgress] = useState<Progress | null>(null);
   const [allPages, setAllPages] = useState<PageContent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [precomputedChapters, setPrecomputedChapters] = useState<ChapterEntry[] | null>(null);
+  const [totalBatchCount, setTotalBatchCount] = useState(0);
+  const [loadedBatches, setLoadedBatches] = useState<Set<number>>(new Set());
+  const batchCacheRef = useRef<Map<number, PageContent[]>>(new Map());
   const [searchQuery, setSearchQuery] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [chapterImages, setChapterImages] = useState<Map<number, Array<{ url: string; description: string; isInstagram?: boolean }>>>(new Map());
@@ -1551,16 +1552,98 @@ export default function Bhagwatham() {
     loading: boolean;
   } | null>(null);
 
-  // Fetch all batch data and flatten into pages
+  // Fetch lightweight chapter index first, then load batches on demand
+  const fetchChapterIndex = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/chapter-index`);
+      const data = await res.json();
+      if (data.chapters?.length > 0) {
+        const entries: ChapterEntry[] = data.chapters.map((c: any) => ({
+          number: c.number,
+          skandh: c.skandh,
+          globalNumber: c.globalNumber,
+          title: c.title,
+          pageNumber: c.pageNumber,
+        }));
+        setPrecomputedChapters(entries);
+        setTotalBatchCount(data.totalBatches || 0);
+      }
+    } catch { /* chapter index not available — will build from loaded pages */ }
+  }, []);
+
+  const fetchBatchRange = useCallback(async (startBatch: number, endBatch: number) => {
+    const toLoad: number[] = [];
+    for (let b = startBatch; b <= endBatch; b++) {
+      if (!batchCacheRef.current.has(b)) toLoad.push(b);
+    }
+    if (toLoad.length === 0) return;
+
+    const results = await Promise.all(
+      toLoad.map(async (batchNum) => {
+        try {
+          const res = await fetch(`${API_BASE}/batch/${batchNum}`);
+          const batch = await res.json();
+          const pages = (batch.pages || []).filter((p: PageContent) => !isGarbagePage(p.text));
+          return { batchNum, pages };
+        } catch {
+          return { batchNum, pages: [] as PageContent[] };
+        }
+      }),
+    );
+
+    for (const { batchNum, pages } of results) {
+      batchCacheRef.current.set(batchNum, pages);
+    }
+
+    // Rebuild allPages from all loaded batches (sorted by batch number)
+    const sortedBatches = [...batchCacheRef.current.entries()].sort((a, b) => a[0] - b[0]);
+    const merged = sortedBatches.flatMap(([, pages]) => pages);
+    setAllPages(merged);
+    setLoadedBatches(new Set(batchCacheRef.current.keys()));
+  }, []);
+
+  // Load content: try chapter-index + lazy batches, fallback to full content load
   const fetchAllContent = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/content?page=1&limit=100`);
-      const data: ContentResponse = await res.json();
-      const pages = data.batches.flatMap((b) => b.pages).filter((p) => !isGarbagePage(p.text));
-      setAllPages(pages);
+      // Step 1: Try pre-built chapter index (fast, ~30KB)
+      let batchCount = 0;
+      try {
+        const ciRes = await fetch(`${API_BASE}/chapter-index`);
+        if (ciRes.ok) {
+          const ciData = await ciRes.json();
+          if (ciData.chapters?.length > 0) {
+            setPrecomputedChapters(ciData.chapters.map((c: any) => ({
+              number: c.number, skandh: c.skandh, globalNumber: c.globalNumber,
+              title: c.title, pageNumber: c.pageNumber,
+            })));
+            batchCount = ciData.totalBatches || 0;
+            setTotalBatchCount(batchCount);
+          }
+        }
+      } catch { /* not available */ }
+
+      if (batchCount > 0) {
+        // Lazy mode: load first 5 batches, rest in background
+        await fetchBatchRange(1, 5);
+        if (batchCount > 5) {
+          (async () => {
+            for (let start = 6; start <= batchCount; start += 20) {
+              await fetchBatchRange(start, Math.min(start + 19, batchCount));
+            }
+          })();
+        }
+      } else {
+        // Fallback: load everything via content endpoint (dev mode or no chapter-index)
+        const res = await fetch(`${API_BASE}/content?page=1&limit=100`);
+        if (res.ok) {
+          const data: ContentResponse = await res.json();
+          const pages = data.batches.flatMap((b) => b.pages).filter((p) => !isGarbagePage(p.text));
+          if (pages.length > 0) setAllPages(pages);
+        }
+      }
     } catch { /* empty */ } finally { setLoading(false); }
-  }, []);
+  }, [fetchBatchRange]);
 
   const fetchProgress = useCallback(async () => {
     try { const res = await fetch(`${API_BASE}/progress`); setProgress(await res.json()); } catch { /* retry */ }
@@ -1816,18 +1899,26 @@ export default function Bhagwatham() {
   useEffect(() => {
     fetchProgress(); fetchAllContent(); fetchImageManifest();
     if (readerId) fetchBookmarks();
-    // Load Vedabase chapter titles for sidebar
-    fetch(`${API_BASE}/vedabase-chapters.json`).then(r => r.json()).then((data: { cantos: Array<{ number: number; chapters: Array<{ number: number; title: string }> }> }) => {
-      const map = new Map<string, string>();
-      for (const c of data.cantos) for (const ch of c.chapters) map.set(`${c.number}-${ch.number}`, ch.title);
-      setVedabaseTitles(map);
-    }).catch(() => {});
     const interval = setInterval(fetchProgress, 60_000);
     return () => clearInterval(interval);
   }, [fetchProgress, fetchAllContent, fetchImageManifest, fetchBookmarks, readerId]);
 
-  // Build chapter index from loaded pages
-  const chapters = useMemo(() => buildChapterIndex(allPages), [allPages]);
+  // Use precomputed chapter index if available (instant), else build from loaded pages
+  const chapters = useMemo(
+    () => precomputedChapters || buildChapterIndex(allPages),
+    [precomputedChapters, allPages],
+  );
+
+  // Load more batches when user navigates to a page range not yet loaded
+  useEffect(() => {
+    if (totalBatchCount === 0) return;
+    const startIdx = (currentPage - 1) * PAGES_PER_VIEW;
+    // Estimate which batch the user needs: each batch has ~20 pages
+    const neededBatch = Math.floor(startIdx / 20) + 1;
+    const endBatch = Math.min(neededBatch + 2, totalBatchCount); // load 3 batches ahead
+    const startBatch = Math.max(1, neededBatch - 1); // 1 batch behind
+    fetchBatchRange(startBatch, endBatch);
+  }, [currentPage, totalBatchCount, fetchBatchRange]);
 
   // Paginate pages for the current view
   const totalViewPages = Math.max(1, Math.ceil(allPages.length / PAGES_PER_VIEW));
@@ -2373,7 +2464,14 @@ export default function Bhagwatham() {
                   const prevEndKind = prevPage ? getPageEndKind(prevPage.text) : undefined;
                   return (
                   <div key={page.pageNumber} data-page-num={page.pageNumber}>
-                    <p className={`text-[10px] ${theme.muted} font-medium text-right mt-0 mb-1 opacity-40`}>Pg. {page.pageNumber}</p>
+                    {pageIdx > 0 && (
+                      <div className={`flex items-center gap-3 my-6 ${theme.muted}`}>
+                        <div className={`flex-1 h-px ${settings.theme === "dark" ? "bg-white/10" : settings.theme === "sepia" ? "bg-amber-300/40" : "bg-stone-200"}`} />
+                        <span className="text-[10px] font-medium opacity-40 shrink-0">Pg. {page.pageNumber}</span>
+                        <div className={`flex-1 h-px ${settings.theme === "dark" ? "bg-white/10" : settings.theme === "sepia" ? "bg-amber-300/40" : "bg-stone-200"}`} />
+                      </div>
+                    )}
+                    {pageIdx === 0 && <p className={`text-[10px] ${theme.muted} font-medium text-right mt-0 mb-1 opacity-40`}>Pg. {page.pageNumber}</p>}
                     <RenderContent text={page.text} textEn={page.textEn} lang={lang} chapterImages={chapterImages} themeKey={settings.theme} onRegenerateImages={openPromptModal} regeneratingChapters={regeneratingChapters} onDeleteImage={handleDeleteImage} pageNumber={page.pageNumber} overrides={sectionOverrides[page.pageNumber]} onOverridesChange={handleOverridesChange} prevPageEndKind={prevEndKind} chapterNumMapper={(perSkandhNum: number) => {
                       // Find which skandh this page belongs to based on surrounding chapters
                       const ch = chapters.find(c => c.number === perSkandhNum && c.pageNumber <= page.pageNumber);

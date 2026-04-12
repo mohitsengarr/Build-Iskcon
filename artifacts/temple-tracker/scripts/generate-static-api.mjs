@@ -48,20 +48,105 @@ for (const batch of allBatches) {
 }
 console.log(`✓ batch files`);
 
-// 5. /api/bhagwatham/content?page=1&limit=100 — all content as single file
-// The frontend always fetches page=1&limit=100, so serve everything
+// 5. /api/bhagwatham/content — kept for backwards compatibility but frontend prefers lazy loading
 const contentResponse = {
   batches: allBatches,
-  pagination: {
-    page: 1,
-    limit: 100,
-    totalBatches: allBatches.length,
-    totalPages: 1,
-    hasMore: false,
-  },
+  pagination: { page: 1, limit: 100, totalBatches: allBatches.length, totalPages: 1, hasMore: false },
 };
 fs.writeFileSync(path.join(OUT_DIR, "content"), JSON.stringify(contentResponse));
-console.log(`✓ content (${allBatches.length} batches, ${allBatches.reduce((s, b) => s + b.pages.length, 0)} pages)`);
+console.log(`✓ content (${allBatches.length} batches — frontend uses chapter-index + lazy batch loading when available)`);
+
+// 5b. /api/bhagwatham/chapter-index — lightweight chapter index for sidebar (~10KB)
+// Pre-compute chapter index from all pages so frontend doesn't need full text
+const SKANDH_RANGES = [
+  { s: 1, p: 1 }, { s: 2, p: 874 }, { s: 3, p: 1399 }, { s: 4, p: 2617 },
+  { s: 5, p: 3900 }, { s: 6, p: 4540 }, { s: 7, p: 5204 }, { s: 8, p: 5849 },
+  { s: 9, p: 6373 }, { s: 10, p: 7080 }, { s: 11, p: 9059 }, { s: 12, p: 9500 },
+];
+const CHAPTER_RE = /^(?:\d+\s+)?(?:Chapter\s+\S+|अध्याय\s+(?:[\u0900-\u097F]+(?:\s+[\u0900-\u097F]+){0,2}|\d+))\s*$/iu;
+const HINDI_NUMS = {
+  एक:1,दो:2,तीन:3,चार:4,पाँच:5,पांच:5,छः:6,छह:6,सात:7,आठ:8,नौ:9,दस:10,
+  ग्यारह:11,बारह:12,तेरह:13,चौदह:14,पन्द्रह:15,पंद्रह:15,सोलह:16,सत्रह:17,
+  अठारह:18,उन्नीस:19,बीस:20,इक्कीस:21,बाईस:22,तेईस:23,चौबीस:24,पच्चीस:25,
+  छब्बीस:26,सत्ताईस:27,सताईस:27,अट्ठाईस:28,उनतीस:29,उन्तीस:29,तीस:30,
+  इकतीस:31,बत्तीस:32,तैंतीस:33,चौंतीस:34,पैंतीस:35,छत्तीस:36,
+  सैंतीस:37,अड़तीस:38,उनतालीस:39,चालीस:40,इकतालीस:41,बयालीस:42,तैंतालीस:43,
+  चवालीस:44,पैंतालीस:45,छियालीस:46,छियालिस:46,सैंतालीस:47,अड़तालीस:48,
+  उनचास:49,पचास:50,इक्यावन:51,बावन:52,तिरपन:53,चौवन:54,पचपन:55,छप्पन:56,
+  सत्तावन:57,अट्ठावन:58,उनसठ:59,साठ:60,इकसठ:61,बासठ:62,तिरसठ:63,चौंसठ:64,
+  पैंसठ:65,छियासठ:66,सतसठ:67,सड़सठ:67,अड़सठ:68,उनहत्तर:69,सत्तर:70,
+  इकहत्तर:71,बहत्तर:72,तिहत्तर:73,चौहत्तर:74,पचहत्तर:75,छिहत्तर:76,सतहत्तर:77,
+  अठहत्तर:78,उन्यासी:79,उनासी:79,अस्सी:80,इक्यासी:81,बयासी:82,तिरासी:83,
+  चौरासी:84,पिचासी:85,पचासी:85,छियासी:86,सत्तासी:87,अट्ठासी:88,नवासी:89,नब्बे:90,
+  तेइस:23,छियलीस:46,पचीस:25,सत्ताइस:27,
+};
+const OCR_FIXES = {
+  "Chapter 278 अध्याय": 8, "Chapter it": 9, "(शुषा दो": 2, "Chapter 3:": 6,
+  "(नौ": 9, "Chapter 36": 8, "Chapter छ:": 6, "छल्नीस": 26, "अदुईस": 28,
+  "Chapter इक्तीस": 21,
+};
+function getSkandh(pn) { for (let i = SKANDH_RANGES.length - 1; i >= 0; i--) if (pn >= SKANDH_RANGES[i].p) return SKANDH_RANGES[i].s; return 1; }
+function extractNum(line) {
+  for (const [k,v] of Object.entries(OCR_FIXES)) if (line.includes(k)) return v;
+  const after = line.replace(/^(?:अध्याय|Chapter)\s*/iu, "").trim();
+  if (after && HINDI_NUMS[after] !== undefined) return HINDI_NUMS[after];
+  for (const [w,n] of Object.entries(HINDI_NUMS)) if (line.includes(w)) return n;
+  const m = line.match(/\d+/); if (m) { const n = parseInt(m[0]); if (n > 0 && n <= 500) return n; }
+  return 0;
+}
+function isHeading(t) {
+  const c = t.replace(/^\d+\s+/, "");
+  if (c.length > 60 || t.includes("पूर्ण हुए") || t.includes("पूर्ण हुआ")) return false;
+  if (CHAPTER_RE.test(c)) return true;
+  for (const k of Object.keys(OCR_FIXES)) if (c.includes(k) || t.includes(k)) return true;
+  return false;
+}
+
+const chapterEntries = [];
+const lastPerSkandh = new Map();
+const EXPECTED = [19,10,33,31,26,19,15,24,24,90,31,13];
+
+for (const batch of allBatches) {
+  for (const page of batch.pages) {
+    if (!page.text || page.text.length < 20) continue;
+    const skandh = getSkandh(page.pageNumber);
+    const lines = page.text.split("\n");
+    const hc = lines.filter(l => isHeading(l.trim())).length;
+    if (hc >= 2) continue;
+    for (const line of lines) {
+      const t = line.trim();
+      if (!isHeading(t)) continue;
+      const num = extractNum(t);
+      if (num <= 0) continue;
+      const last = lastPerSkandh.get(skandh) ?? 0;
+      if (num < last && last > 2) continue;
+      if (chapterEntries.find(c => c.number === num && c.skandh === skandh)) continue;
+      lastPerSkandh.set(skandh, num);
+      // Find which batch contains this page
+      const batchNum = batch.batchNumber;
+      chapterEntries.push({ number: num, skandh, title: t.substring(0, 80), pageNumber: page.pageNumber, batchNumber: batchNum });
+    }
+  }
+}
+chapterEntries.sort((a, b) => a.skandh !== b.skandh ? a.skandh - b.skandh : a.number - b.number);
+chapterEntries.forEach(ch => {
+  let offset = 0;
+  for (let i = 0; i < ch.skandh - 1; i++) offset += EXPECTED[i];
+  ch.globalNumber = offset + ch.number;
+});
+
+// Also store total page count per batch for pagination
+const batchPageMap = {};
+for (const b of allBatches) batchPageMap[b.batchNumber] = b.pages.length;
+
+const chapterIndex = {
+  chapters: chapterEntries,
+  totalPages: allBatches.reduce((s, b) => s + b.pages.length, 0),
+  totalBatches: allBatches.length,
+  batchPageCounts: batchPageMap,
+};
+fs.writeFileSync(path.join(OUT_DIR, "chapter-index"), JSON.stringify(chapterIndex));
+console.log(`✓ chapter-index (${chapterEntries.length} chapters, ${JSON.stringify(chapterIndex).length} bytes)`);
 
 // 6. /api/bhagwatham/image-manifest
 const manifestPath = path.join(DATA_DIR, "images", "manifest.json");
