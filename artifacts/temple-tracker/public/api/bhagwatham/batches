@@ -2356,5 +2356,17 @@
     "startPage": 7841,
     "endPage": 7860,
     "pageCount": 20
+  },
+  {
+    "batchNumber": 394,
+    "startPage": 7861,
+    "endPage": 7880,
+    "pageCount": 20
+  },
+  {
+    "batchNumber": 395,
+    "startPage": 7881,
+    "endPage": 7900,
+    "pageCount": 20
   }
 ]
