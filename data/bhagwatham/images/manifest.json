@@ -1249,7 +1249,20 @@
       "descriptionHi": "The chapter describes the seventh to fourteenth Manu, with the seventh Manu being Shraddhadeva, the son of Vivasvan. His ten sons are also mentioned, along with the deities and sages of that era. This chapter provides valuable information about the different Manus and their significance in Hindu mythology.",
       "generatedAt": "2026-04-12T02:29:29.719Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 128,
+      "chapterTitle": "Chapter चौदह",
+      "imagePath": "chapter-128.jpg",
+      "prompt": "Lord Vishnu instructs Manu on his duties in a serene heavenly setting",
+      "descriptionHi": "इस अध्याय में भगवान् द्वारा मनु के लिए नियत कर्तव्यों का वर्णन हुआ है, जिसमें सारे मनु तथा उनसे जुड़े महत्वपूर्ण कार्यों का उल्लेख है। भगवान् की ओर से मनु को दिए गए निर्देशों का महत्व समझाया गया है।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T02:29:56.407Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T02:29:29.719Z"
+  "lastUpdated": "2026-04-12T02:33:29.645Z"
 }
