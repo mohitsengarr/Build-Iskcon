@@ -1865,7 +1865,25 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T17:07:39.724Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 177,
+      "chapterTitle": "Chapter आठ",
+      "imagePath": "chapter-177.jpg",
+      "prompt": "Markandeya Rishi offers prayers to Nar-Narayana Rishi in a serene forest setting, seeking their divine blessings and wisdom.",
+      "descriptionHi": "मार्कण्डेय ऋषि नर-नारायण ऋषि की स्तुति करते हैं और उनकी महानता का वर्णन करते हैं। इस अध्याय में नर-नारायण ऋषि की भक्ति और ज्ञान का महत्व दर्शाया गया है। मार्कण्डेय ऋषि की स्तुति से नर-नारायण ऋषि की दिव्य महानता का पता चलता है।",
+      "generatedAt": "2026-04-12T17:11:25.696Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 178,
+      "chapterTitle": "Chapter नौ",
+      "imagePath": "chapter-178.jpg",
+      "prompt": "Markandeya Rishi requests Lord Hari to reveal His divine maya power at Badarikashram.",
+      "descriptionHi": "इस अध्याय में मार्कण्डेय ऋषि भगवान् की मायाशक्ति का दर्शन करते हुए वर्णित है। भगवान् मार्कण्डेय ऋषि को वर माँगने के लिए कहते हैं और ऋषि उनकी मायाशक्ति का दर्शन करना चाहते हैं।",
+      "generatedAt": "2026-04-12T17:11:46.347Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T17:07:39.724Z"
+  "lastUpdated": "2026-04-12T17:11:46.348Z"
 }
