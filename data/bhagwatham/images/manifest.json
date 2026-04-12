@@ -1511,7 +1511,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T07:33:58.633Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 157,
+      "chapterTitle": "Chapter आठ",
+      "imagePath": "chapter-157.jpg",
+      "prompt": "Krishna's naming ceremony takes place at Nand Maharaj's home, where Gargamuni secretly performs the ritual to avoid attracting Kansa's attention.",
+      "descriptionHi": "भगवान् कृष्ण के नामकरण-संस्कार का वर्णन किया गया है, जिसमें गर्गमुनि द्वारा उनका नामकरण किया जाता है। कृष्ण के विभिन्न नामों और गुणों का वर्णन है। यह अध्याय कृष्ण के बाल्यकाल और उनके परिवार के बीच के प्रेम को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T07:41:23.500Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T07:33:58.633Z"
+  "lastUpdated": "2026-04-12T07:41:23.500Z"
 }
