@@ -1271,7 +1271,20 @@
       "descriptionHi": "इस अध्याय में देवताओं की माता अदिति के दुख का वर्णन किया गया है, जो अपने पुत्रों के लाभ के लिए तपस्या करने के लिए प्रेरित होती है। कश्यपमुनि अपनी पत्नी को व्रत रखने की सलाह देते हैं। अदिति का दुख और कश्यपमुनि की सलाह इस अध्याय का मुख्य विषय है।",
       "generatedAt": "2026-04-12T02:34:29.171Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 131,
+      "chapterTitle": "Chapter सत्रह",
+      "imagePath": "chapter-131.jpg",
+      "prompt": "Aditi falls at the feet of Lord Krishna, overcome with devotion and joy, as he appears before her in his four-armed form.",
+      "descriptionHi": "इस अध्याय में अदिति द्वारा सम्पन्न पयोव्रत अनुष्ठान से भगवान् प्रसन्न होकर उनके समक्ष प्रकट हुए और उनकी प्रार्थना पर पुत्र बनना स्वीकार किया। अदिति की भक्ति और भगवान् की कृपा इस अध्याय की मुख्य विशेषता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T02:41:17.924Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T02:34:29.171Z"
+  "lastUpdated": "2026-04-12T02:41:17.924Z"
 }
