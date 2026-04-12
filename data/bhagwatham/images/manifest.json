@@ -1524,7 +1524,21 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T07:41:23.500Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 158,
+      "chapterTitle": "Chapter नौ",
+      "imagePath": "chapter-158.jpg",
+      "prompt": "Krishna becomes upset as Mother Yashoda stops feeding him to attend to overflowing milk, leading to a moment of tender conflict in their humble home.",
+      "descriptionHi": "माता यशोदा कृष्ण को स्तन-पान करा रहीं थीं लेकिन जब उन्होंने दूध उबलते हुए देखा तो वे तुरन्त वहाँ गईं और कृष्ण को दूध पिलाना बन्द कर दिया, जिससे कृष्ण क्रुद्ध हो गये। इस अध्याय में कृष्ण की माता यशोदा द्वारा बाँधने की कोशिश का वर्णन किया गया है।",
+      "personasUsed": [
+        "krishna_adult",
+        "yashoda"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T07:46:16.954Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T07:41:23.500Z"
+  "lastUpdated": "2026-04-12T07:46:16.954Z"
 }
