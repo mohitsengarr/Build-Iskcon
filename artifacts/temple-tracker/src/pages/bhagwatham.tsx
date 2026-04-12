@@ -1299,10 +1299,8 @@ function Sidebar({
 
   const toggleCanto = (skandh: number) => {
     setExpandedCantos(prev => {
-      const next = new Set(prev);
-      if (next.has(skandh)) next.delete(skandh);
-      else next.add(skandh);
-      return next;
+      if (prev.has(skandh)) return new Set(); // close if already open
+      return new Set([skandh]); // open this one, close all others
     });
   };
 
@@ -2309,15 +2307,7 @@ export default function Bhagwatham() {
                 <Maximize2 className="w-4 h-4" />
               </button>
 
-              {/* Process button */}
-              {!focusMode && (
-                <button onClick={triggerProcess} disabled={isProcessing}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white rounded-lg font-semibold text-xs hover:bg-orange-700 transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap"
-                >
-                  {isProcessing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                  <span className="hidden sm:inline">{isProcessing ? "Processing..." : "Next 20 Pages"}</span>
-                </button>
-              )}
+              {/* Process button removed — OCR runs automatically via cron */}
             </div>
           </div>
 
@@ -2441,15 +2431,8 @@ export default function Bhagwatham() {
                   {searchQuery ? "No results found" : "No pages ready yet"}
                 </h3>
                 <p className={`${theme.muted} text-sm max-w-sm mx-auto mb-5`}>
-                  {searchQuery ? "Try different keywords." : "Press \"Next 20 Pages\" or wait for automatic processing."}
+                  {searchQuery ? "Try different keywords." : "Pages are being processed automatically. Please wait."}
                 </p>
-                {!searchQuery && (
-                  <button onClick={triggerProcess} disabled={isProcessing}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-bold text-sm hover:bg-orange-700 transition-all active:scale-95"
-                  >
-                    <Sparkles className="w-4 h-4" /> Get Started
-                  </button>
-                )}
               </motion.div>
             ) : (
               <div>
