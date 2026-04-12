@@ -218,6 +218,23 @@ const SKANDH_NAMES: Record<number, string> = {
 
 const API_BASE = "/api/bhagwatham";
 
+// ── Supabase direct access (for bookmarks — works on both Replit & Vercel) ──
+const SUPABASE_URL = "https://etfmndcrchundvgtvmot.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0Zm1uZGNyY2h1bmR2Z3R2bW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2NDE1MTIsImV4cCI6MjA2MzIxNzUxMn0.7GXS820xSFcUy2TRdbspN7s-NP3sgKFFtUP-Zw0Qbrs";
+
+function sbFetch(path: string, opts?: RequestInit) {
+  return fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...opts,
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      "Content-Type": "application/json",
+      Prefer: "return=representation",
+      ...(opts?.headers || {}),
+    },
+  });
+}
+
 const HINDI_NUMS: Record<string, number> = {
   एक: 1, दो: 2, तीन: 3, चार: 4, पाँच: 5, छः: 6, छह: 6,
   सात: 7, आठ: 8, नौ: 9, दस: 10, ग्यारह: 11, बारह: 12,
@@ -1052,11 +1069,12 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
               </div>
             );
           case "anuvad": {
-            // Only show label after main shlok/shabdarth, not inside tatparya
+            // Only show label after main shlok/shabdarth, not inside tatparya, and not on page continuations
             const prevKind = i > 0 ? sections[i - 1].kind : null;
-            const showLabel = prevKind === "shlok" || prevKind === "shabdarth";
+            const isAnuvadContinuation = i === 0 && prevPageEndKind === "anuvad";
+            const showLabel = !isAnuvadContinuation && (prevKind === "shlok" || prevKind === "shabdarth");
             return (
-              <div key={i} className="mt-2">
+              <div key={i} className={isAnuvadContinuation ? "" : "mt-2"}>
                 {showLabel && <p className={`text-[15px] sm:text-[16px] font-bold mb-1 ${themeKey === "dark" ? "text-stone-200" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-800"}`} style={{ fontFamily: "var(--font-devanagari)" }}>अनुवाद :</p>}
                 {sec.lines.map((l, j) => (
                   <p key={j} className={`text-[16px] sm:text-[18px] font-bold leading-[2] mb-1 ${themeKey === "dark" ? "text-stone-100" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-900"}`} style={{ fontFamily: "var(--font-devanagari)" }}>{l}</p>
@@ -1064,12 +1082,14 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
               </div>
             );
           }
-          case "tatparya":
+          case "tatparya": {
+            // Don't show "तात्पर्य :" label if this is a continuation from previous page
+            const isContinuation = i === 0 && prevPageEndKind === "tatparya";
             return (
-              <div key={i} className="mt-3">
+              <div key={i} className={isContinuation ? "" : "mt-3"}>
                 {sec.lines.map((l, j) => {
-                  // First line: prepend "तात्पर्य :" as bold-italic prefix inline
-                  if (j === 0) {
+                  // First line: prepend "तात्पर्य :" as bold-italic prefix inline (only if not continuation)
+                  if (j === 0 && !isContinuation) {
                     return (
                       <p key={j} className={`text-[15px] sm:text-[16px] leading-[1.9] mb-1 ${themeKey === "dark" ? "text-stone-300" : themeKey === "sepia" ? "text-[#3a2a10]" : "text-stone-700"}`} style={{ fontFamily: "var(--font-devanagari)" }}>
                         <span className="font-bold italic">तात्पर्य :</span>{" "}{l}
@@ -1082,6 +1102,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
                 })}
               </div>
             );
+          }
           default:
             return (
               <div key={i}>
@@ -1461,7 +1482,7 @@ export default function Bhagwatham() {
     const id = rid || readerId;
     if (!id) return;
     try {
-      const res = await fetch(`${API_BASE}/bookmarks?reader_id=${encodeURIComponent(id)}`);
+      const res = await sbFetch(`bhagavatam_bookmarks?reader_id=eq.${encodeURIComponent(id)}&order=created_at.desc`);
       const data: BookmarkEntry[] = await res.json();
       setBookmarks(Array.isArray(data) ? data : []);
     } catch { /* ignore */ }
@@ -1479,15 +1500,16 @@ export default function Bhagwatham() {
     const currentChapter = chapterList.slice().reverse().find(ch => ch.pageNumber <= pageNum);
 
     try {
-      await fetch(`${API_BASE}/bookmarks`, {
+      await sbFetch("bhagavatam_bookmarks", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { Prefer: "return=representation,resolution=merge-duplicates" },
         body: JSON.stringify({
           reader_id: readerId,
           reader_name: readerName,
           page_number: pageNum,
           chapter_number: currentChapter?.number || null,
           chapter_title: currentChapter?.title || null,
+          updated_at: new Date().toISOString(),
         }),
       });
       await fetchBookmarks();
@@ -1499,7 +1521,7 @@ export default function Bhagwatham() {
   const deleteBookmark = useCallback(async (b: BookmarkEntry) => {
     if (!readerId) return;
     try {
-      await fetch(`${API_BASE}/bookmarks/${b.id}?reader_id=${encodeURIComponent(readerId)}`, { method: "DELETE" });
+      await sbFetch(`bhagavatam_bookmarks?id=eq.${b.id}&reader_id=eq.${encodeURIComponent(readerId)}`, { method: "DELETE" });
       setBookmarks(prev => prev.filter(x => x.id !== b.id));
     } catch { /* ignore */ }
   }, [readerId]);
@@ -1541,14 +1563,15 @@ export default function Bhagwatham() {
       if (!pageNum) return;
       const chapterList = buildChapterIndex(allPages);
       const currentChapter = chapterList.slice().reverse().find(ch => ch.pageNumber <= pageNum);
-      fetch(`${API_BASE}/bookmarks`, {
+      sbFetch("bhagavatam_bookmarks", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { Prefer: "return=representation,resolution=merge-duplicates" },
         body: JSON.stringify({
           reader_id: id, reader_name: name || null,
           page_number: pageNum,
           chapter_number: currentChapter?.number || null,
           chapter_title: currentChapter?.title || null,
+          updated_at: new Date().toISOString(),
         }),
       }).then(() => fetchBookmarks(id)).then(() => {
         setBookmarkSaved(true);
