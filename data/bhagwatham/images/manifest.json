@@ -1483,7 +1483,20 @@
       "descriptionHi": "राजा ययाति को अपने पुत्र पूरु से यौवन की पुनःप्राप्ति होती है, जो एक महत्वपूर्ण घटना है। इस अध्याय में ययाति के जीवन और उसके परिवार के सदस्यों के बीच के संबंधों का वर्णन किया गया है। यह अध्याय ययाति के जीवन के महत्वपूर्ण पहलुओं को उजागर करता है।",
       "generatedAt": "2026-04-12T06:26:05.944Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 155,
+      "chapterTitle": "Chapter छह",
+      "imagePath": "chapter-155.jpg",
+      "prompt": "Krishna encounters Putana in the village of Gokul, where she attempts to harm him with her mystical powers.",
+      "descriptionHi": "इस अध्याय में कृष्ण की कहानी है जब पूतना नाम की एक राक्षसी गोकुल में आती है और कृष्ण को अपना शिकार बनाने की कोशिश करती है। कृष्ण इस चुनौती का सामना करते हैं और अपनी शक्ति का प्रदर्शन करते हैं। यह घटना कृष्ण की अलौकिक शक्ति को दर्शाती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T07:33:33.080Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T07:28:55.059Z"
+  "lastUpdated": "2026-04-12T07:33:33.080Z"
 }
