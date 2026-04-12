@@ -415,13 +415,30 @@ export default function JapaCounter() {
           </p>
         </div>
 
+        {/* Bottom controls */}
+        <div className="flex items-center justify-center gap-6 mt-4 mb-4">
+          <button
+            onClick={handleResetToday}
+            className="flex items-center gap-1.5 text-amber-400/80 text-sm px-4 py-2 rounded-xl bg-white/5 active:bg-white/10 transition-colors"
+          >
+            <RotateCcw className="w-4 h-4" /> रीसेट
+          </button>
+          <button
+            onClick={() => setSoundOn(!soundOn)}
+            className="flex items-center gap-1.5 text-amber-400/80 text-sm px-4 py-2 rounded-xl bg-white/5 active:bg-white/10 transition-colors"
+          >
+            {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            {soundOn ? "ध्वनि" : "मौन"}
+          </button>
+        </div>
+
         {/* Tap buttons */}
-        <div className="flex flex-col items-center mt-8 gap-5 pb-8">
+        <div className="flex flex-col items-center gap-4 pb-8">
           {/* Small bead */}
           <motion.button
             whileTap={{ scale: 0.92 }}
             onClick={handleTap}
-            className="w-28 h-28 rounded-full bg-gradient-to-b from-amber-700 to-amber-900 shadow-lg shadow-amber-900/40 active:shadow-inner touch-manipulation"
+            className="w-20 h-20 rounded-full bg-gradient-to-b from-amber-700 to-amber-900 shadow-lg shadow-amber-900/40 active:shadow-inner touch-manipulation"
             style={{ WebkitTapHighlightColor: "transparent" }}
           />
 
@@ -429,26 +446,9 @@ export default function JapaCounter() {
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={handleTap}
-            className="w-52 h-52 rounded-full bg-gradient-to-b from-amber-600 to-amber-800 shadow-xl shadow-amber-900/50 active:shadow-inner touch-manipulation"
+            className="w-44 h-44 rounded-full bg-gradient-to-b from-amber-600 to-amber-800 shadow-xl shadow-amber-900/50 active:shadow-inner touch-manipulation"
             style={{ WebkitTapHighlightColor: "transparent" }}
           />
-
-          {/* Bottom controls */}
-          <div className="flex items-center gap-4 mt-2">
-            <button
-              onClick={handleResetToday}
-              className="flex items-center gap-1.5 text-amber-400/40 text-xs px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
-            >
-              <RotateCcw className="w-3.5 h-3.5" /> रीसेट
-            </button>
-            <button
-              onClick={() => setSoundOn(!soundOn)}
-              className="flex items-center gap-1.5 text-amber-400/40 text-xs px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
-            >
-              {soundOn ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
-              {soundOn ? "ध्वनि" : "मौन"}
-            </button>
-          </div>
         </div>
 
         {/* Sync indicator */}
@@ -477,16 +477,16 @@ export default function JapaCounter() {
               className="bg-[#1a1a1a] rounded-t-2xl sm:rounded-2xl w-full max-w-sm p-6 space-y-4"
             >
               <h3 className="text-lg font-bold text-amber-100">अपनी प्रगति सहेजें</h3>
-              <p className="text-white/40 text-sm">फोन नंबर से लॉग इन करें — आपकी जप प्रगति सुरक्षित रहेगी।</p>
+              <p className="text-white/40 text-sm">फोन नंबर या ईमेल से लॉग इन करें — आपकी जप प्रगति सुरक्षित रहेगी।</p>
 
               <div className="space-y-3">
                 <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2.5">
                   <Phone className="w-4 h-4 text-amber-500/50" />
                   <input
-                    type="tel"
+                    type="text"
                     value={loginPhone}
                     onChange={e => setLoginPhone(e.target.value)}
-                    placeholder="+91 98765 43210"
+                    placeholder="फोन या ईमेल"
                     className="bg-transparent flex-1 text-white outline-none text-sm placeholder-white/20"
                     autoFocus
                   />
