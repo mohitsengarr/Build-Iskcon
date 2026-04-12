@@ -123,8 +123,20 @@ for (const batch of allBatches) {
       if (chapterEntries.find(c => c.number === num && c.skandh === skandh)) continue;
       lastPerSkandh.set(skandh, num);
       // Grab next 2 non-empty lines as Hindi subtitle (matches bhagwatham-utils.ts)
-      const subtitle = lines.slice(li + 1, li + 3).map(l => l.trim()).filter(Boolean).join(" ");
-      const hindiTitle = t.replace(/^Chapter\s*/i, "अध्याय ");
+      const subtitleLines = lines.slice(li + 1, li + 3).map(l => l.trim()).filter(l => l && !isHeading(l));
+      const subtitle = subtitleLines.join(" ");
+      // Apply OCR fixes for title display (e.g., "Chapter 278 अध्याय" → "अध्याय आठ")
+      let hindiTitle = t;
+      const OCR_TITLE_FIXES = {
+        "Chapter 278 अध्याय": "अध्याय आठ", "Chapter it": "अध्याय नौ",
+        "(शुषा दो": "अध्याय दो", "Chapter 3:": "अध्याय छह",
+        "(नौ": "अध्याय नौ", "Chapter 36": "अध्याय आठ",
+        "Chapter छ:": "अध्याय छह", "Chapter इक्तीस": "अध्याय इक्कीस",
+      };
+      for (const [k, v] of Object.entries(OCR_TITLE_FIXES)) {
+        if (hindiTitle.includes(k)) { hindiTitle = v; break; }
+      }
+      hindiTitle = hindiTitle.replace(/^Chapter\s*/i, "अध्याय ");
       const fullTitle = hindiTitle + (subtitle ? ` — ${subtitle}` : "");
       const batchNum = batch.batchNumber;
       chapterEntries.push({ number: num, skandh, title: fullTitle.substring(0, 120), pageNumber: page.pageNumber, batchNumber: batchNum });
