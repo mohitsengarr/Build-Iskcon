@@ -1430,7 +1430,29 @@
       "descriptionHi": "इस अध्याय में भगवान् रामचन्द्र के जीवन के महत्वपूर्ण घटनाओं का वर्णन किया गया है, जिनमें उनका अयोध्या में रहना, यज्ञों का सम्पन्न करना और सीतादेवी को वनवास देना शामिल है। भगवान् रामचन्द्र की ओर से भरत और शत्रुघ्न ने विभिन्न देशों पर विजय प्राप्त की। सीतादेवी अपने पुत्रों को वाल्मीकि के संरक्षण में छोड़कर पृथ्वी में समा गईं।",
       "generatedAt": "2026-04-12T05:22:31.590Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 147,
+      "chapterTitle": "Chapter बारह",
+      "imagePath": "chapter-147.jpg",
+      "prompt": "Shukadeva narrates the lineage of Lord Rama's son Kush to Uttara in a serene forest setting.",
+      "descriptionHi": "भगवान् रामचन्द्र के पुत्र कुश की वंशावली का वर्णन किया गया है, जिसमें उनके वंश के सदस्यों के नाम और उनके उत्तराधिकारी बताए गए हैं। शुकदेव गोस्वामी ने यह वंशावली बताई है।",
+      "personasUsed": [
+        "shukadeva"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T06:03:12.960Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 148,
+      "chapterTitle": "Chapter तेरह",
+      "imagePath": "chapter-148.jpg",
+      "prompt": "Vasistha and King Nimi exchange curses in a serene palace setting, leading to their demise.",
+      "descriptionHi": "महाराज निमि की वंशावली का वर्णन किया गया है, जिसमें जनक का जन्म हुआ था। वसिष्ठ और निमि के बीच शाप और प्रतिशाप के कारण वे दोनों मर गये। इसके बाद जनक का जन्म हुआ और उनकी वंशावली का वर्णन किया गया है।",
+      "generatedAt": "2026-04-12T06:03:32.285Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T05:22:31.591Z"
+  "lastUpdated": "2026-04-12T06:03:32.285Z"
 }
