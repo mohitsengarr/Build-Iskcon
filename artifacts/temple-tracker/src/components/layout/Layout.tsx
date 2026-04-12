@@ -9,6 +9,7 @@ const NAV_ITEMS: { href: string; label: string; isPage?: boolean }[] = [
   { href: "#hero", label: "Home" },
   { href: "#vision", label: "Vision 2051" },
   { href: "/bhagwatham", label: "Bhagwatham", isPage: true },
+  { href: "/japa", label: "Japa Counter", isPage: true },
 ];
 
 function scrollTo(hash: string) {
@@ -160,6 +161,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <a href="#hero" onClick={(e) => { e.preventDefault(); scrollTo("#hero"); }} className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Home</a>
             <a href="#vision" onClick={(e) => { e.preventDefault(); scrollTo("#vision"); }} className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Vision 2051</a>
             <a href="/bhagwatham" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Bhagwatham</a>
+            <a href="/japa" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Japa Counter</a>
           </div>
           <div className="flex flex-col gap-3">
             <span className="font-sans text-[10px] uppercase tracking-[0.15em] font-bold text-primary mb-1">Give</span>

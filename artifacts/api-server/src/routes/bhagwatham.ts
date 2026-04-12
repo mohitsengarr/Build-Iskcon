@@ -18,6 +18,7 @@ import {
   getPersonaVersions,
   buildAIScenePrompt,
   extractTatparyaStory,
+  backfillMissingImages,
 } from "../services/bhagwatham-image-gen";
 import {
   runAuditPass,
@@ -236,6 +237,19 @@ router.post("/bhagwatham/generate-images", async (req, res) => {
     await generateImagesForBatch(allPages);
     const manifest = getImageManifest();
     res.json({ success: true, imagesGenerated: manifest.images.length });
+  } catch (err) {
+    res.status(500).json({ success: false, message: String(err) });
+  }
+});
+
+// POST /api/bhagwatham/backfill-images — generate images for chapters that are missing them
+router.post("/bhagwatham/backfill-images", async (_req, res) => {
+  try {
+    const allBatches = getAllBatches();
+    const allPages = allBatches.flatMap((b) => b.pages);
+    const result = await backfillMissingImages(allPages);
+    const manifest = getImageManifest();
+    res.json({ success: true, ...result, totalImages: manifest.images.length });
   } catch (err) {
     res.status(500).json({ success: false, message: String(err) });
   }

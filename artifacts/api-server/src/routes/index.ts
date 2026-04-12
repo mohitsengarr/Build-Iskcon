@@ -6,6 +6,7 @@ import socialRouter from "./social";
 import insightsRouter from "./insights";
 import videosRouter from "./videos";
 import bhagwathamRouter from "./bhagwatham";
+import japaRouter from "./japa";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(socialRouter);
 router.use(insightsRouter);
 router.use(videosRouter);
 router.use(bhagwathamRouter);
+router.use(japaRouter);
 
 export default router;

@@ -153,71 +153,169 @@ function cleanupTmpImages(): void {
  */
 async function ocrSinglePageSarvam(imagePath: string, pageNumber: number, apiKey: string): Promise<string> {
   const baseUrl = "https://api.sarvam.ai";
+  const apiPath = "/doc-digitization/job/v1";
   const headers = {
     "API-Subscription-Key": apiKey,
     "Content-Type": "application/json",
   };
 
+  const SARVAM_MAX_RETRIES = 3;
+
   // Step 1: Create a job
-  const createRes = await fetch(`${baseUrl}/documents/jobs`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      page_count: 1,
-      document_category: "general",
-      language_hint: "hi",
-      output_content_types: ["text"],
-    }),
-  });
-  if (!createRes.ok) throw new Error(`Create job failed: ${createRes.status} ${await createRes.text()}`);
-  const job = await createRes.json() as { job_id: string; upload_links: Array<{ page_number: number; upload_url: string }> };
+  let createRes: Response | null = null;
+  for (let attempt = 1; attempt <= SARVAM_MAX_RETRIES; attempt++) {
+    createRes = await fetch(`${baseUrl}${apiPath}`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        job_parameters: {
+          language_code: "hi-IN",
+          output_format: "md",
+        },
+      }),
+    });
+    if (createRes.ok) break;
+    const errText = await createRes.text();
+    logger.warn({ pageNumber, attempt, status: createRes.status, errText }, "Sarvam create job failed, retrying");
+    if (attempt < SARVAM_MAX_RETRIES) {
+      await new Promise(r => setTimeout(r, 3000 * attempt));
+    } else {
+      throw new Error(`Create job failed after ${SARVAM_MAX_RETRIES} retries: ${createRes.status} ${errText}`);
+    }
+  }
+  if (!createRes || !createRes.ok) throw new Error("Create job failed: no response");
+  const jobRaw = await createRes.json() as Record<string, unknown>;
+  logger.info({ pageNumber, jobResponse: JSON.stringify(jobRaw).substring(0, 500) }, "Sarvam create job response");
+  const jobId = (jobRaw.job_id || jobRaw.id || (jobRaw as any).job?.id) as string;
+  if (!jobId) throw new Error(`No job_id in Sarvam response: ${JSON.stringify(jobRaw).substring(0, 200)}`);
 
-  // Step 2: Upload the image
+  // Check if upload URLs were returned in create response (old API style)
+  const inlineUploadLinks = (jobRaw.upload_links || jobRaw.upload_urls) as Array<{ upload_url: string }> | undefined;
+
+  let uploadUrl: string | undefined;
+
+  if (inlineUploadLinks?.[0]?.upload_url) {
+    // Old-style: upload URLs in create response
+    uploadUrl = inlineUploadLinks[0].upload_url;
+  } else {
+    // New-style: separate upload-files endpoint
+    const fileName = path.basename(imagePath);
+    const uploadReq = await fetch(`${baseUrl}${apiPath}/upload-files`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        job_id: jobId,
+        files: [fileName],
+      }),
+    });
+    if (!uploadReq.ok) throw new Error(`Upload URL request failed: ${uploadReq.status} ${await uploadReq.text()}`);
+    const uploadData = await uploadReq.json() as Record<string, unknown>;
+    // upload_urls is a dict keyed by filename: { "file.png": { "file_url": "...", ... } }
+    const uploadUrls = uploadData.upload_urls as Record<string, { file_url?: string; upload_url?: string }> | undefined;
+    if (uploadUrls) {
+      const entry = uploadUrls[fileName] || Object.values(uploadUrls)[0];
+      uploadUrl = entry?.file_url || entry?.upload_url;
+    }
+  }
+  if (!uploadUrl) throw new Error("No upload URL returned from Sarvam");
+
+  // Step 3: Upload the image to Azure Blob Storage
   const imageBuffer = fs.readFileSync(imagePath);
-  const uploadUrl = job.upload_links[0]?.upload_url;
-  if (!uploadUrl) throw new Error("No upload URL returned");
-
   const uploadRes = await fetch(uploadUrl, {
     method: "PUT",
-    headers: { "Content-Type": "image/png" },
+    headers: {
+      "Content-Type": "image/png",
+      "x-ms-blob-type": "BlockBlob",
+    },
     body: imageBuffer,
   });
-  if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.status}`);
+  if (!uploadRes.ok) {
+    const uploadErr = await uploadRes.text();
+    throw new Error(`Upload failed: ${uploadRes.status} ${uploadErr.substring(0, 200)}`);
+  }
 
-  // Step 3: Start processing
-  const startRes = await fetch(`${baseUrl}/documents/jobs/${job.job_id}/start`, {
+  // Step 4: Start processing
+  const startRes = await fetch(`${baseUrl}${apiPath}/${jobId}/start`, {
     method: "POST",
     headers,
   });
   if (!startRes.ok) throw new Error(`Start failed: ${startRes.status} ${await startRes.text()}`);
 
-  // Step 4: Poll for completion (max 60 seconds)
+  // Step 5: Poll for completion (max 90 seconds)
   let status = "Processing";
-  for (let attempt = 0; attempt < 30; attempt++) {
+  for (let attempt = 0; attempt < 45; attempt++) {
     await new Promise((r) => setTimeout(r, 2000));
-    const statusRes = await fetch(`${baseUrl}/documents/jobs/${job.job_id}`, { headers });
+    const statusRes = await fetch(`${baseUrl}${apiPath}/${jobId}/status`, { headers });
     if (!statusRes.ok) continue;
-    const statusData = await statusRes.json() as { status: string };
-    status = statusData.status;
-    if (status === "Completed") break;
-    if (status === "Failed") throw new Error("Sarvam job failed");
+    const statusData = await statusRes.json() as Record<string, unknown>;
+    // API may use "status" or "job_state"
+    status = (statusData.status || statusData.job_state || statusData.state || "unknown") as string;
+    if (attempt === 0) logger.info({ pageNumber, statusKeys: Object.keys(statusData), status }, "Sarvam status poll sample");
+    if (status === "Completed" || status === "completed") break;
+    if (status === "Failed" || status === "failed") throw new Error("Sarvam job failed");
   }
-  if (status !== "Completed") throw new Error(`Sarvam job timed out (status: ${status})`);
+  if (!/^[Cc]ompleted$/.test(status)) throw new Error(`Sarvam job timed out (status: ${status})`);
 
-  // Step 5: Download results
-  const dlRes = await fetch(`${baseUrl}/documents/jobs/${job.job_id}/download-links`, { headers });
-  if (!dlRes.ok) throw new Error(`Download links failed: ${dlRes.status}`);
-  const dlData = await dlRes.json() as { download_links: Array<{ page_number: number; download_url: string; content_type: string }> };
+  // Step 6: Download results
+  const dlRes = await fetch(`${baseUrl}${apiPath}/${jobId}/download-files`, {
+    method: "POST",
+    headers,
+  });
+  if (!dlRes.ok) throw new Error(`Download files failed: ${dlRes.status} ${await dlRes.text()}`);
+  const dlData = await dlRes.json() as Record<string, unknown>;
+  logger.info({ pageNumber, downloadKeys: Object.keys(dlData) }, "Sarvam download response keys");
 
   let extractedText = "";
-  for (const link of dlData.download_links) {
-    if (link.content_type === "text" || !link.content_type) {
-      const textRes = await fetch(link.download_url);
-      if (textRes.ok) extractedText += await textRes.text();
+
+  // Collect all download URLs from dict or array format
+  const dlUrls = dlData.download_urls as Record<string, { file_url?: string; download_url?: string }> | undefined;
+  const dlLinks = dlData.download_links as Array<{ download_url?: string; file_url?: string }> | undefined;
+
+  const urls: string[] = [];
+  if (dlUrls && !Array.isArray(dlUrls)) {
+    for (const entry of Object.values(dlUrls)) {
+      const url = entry.file_url || entry.download_url;
+      if (url) urls.push(url);
+    }
+  } else if (dlLinks) {
+    for (const link of dlLinks) {
+      const url = link.file_url || link.download_url;
+      if (url) urls.push(url);
     }
   }
 
-  return extractedText.trim();
+  for (const url of urls) {
+    const fileRes = await fetch(url);
+    if (!fileRes.ok) continue;
+
+    const buf = Buffer.from(await fileRes.arrayBuffer());
+
+    // Check if the response is a ZIP file (starts with PK\x03\x04)
+    if (buf.length > 4 && buf[0] === 0x50 && buf[1] === 0x4B && buf[2] === 0x03 && buf[3] === 0x04) {
+      // Extract text files from ZIP
+      const AdmZip = (await import("adm-zip")).default;
+      const zip = new AdmZip(buf);
+      for (const entry of zip.getEntries()) {
+        if (entry.entryName.endsWith(".md") || entry.entryName.endsWith(".txt")) {
+          extractedText += entry.getData().toString("utf-8");
+        }
+      }
+    } else {
+      // Plain text response
+      extractedText += buf.toString("utf-8");
+    }
+  }
+
+  // Strip markdown formatting (headers, bold, etc.) to get clean text
+  extractedText = extractedText
+    .replace(/^#{1,6}\s*/gm, "")        // Remove markdown headers
+    .replace(/\*\*([^*]+)\*\*/g, "$1")   // Remove bold markers
+    .replace(/\*([^*]+)\*/g, "$1")       // Remove italic markers
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // Remove markdown links
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, "") // Remove images
+    .trim();
+
+  return extractedText;
 }
 
 /**
@@ -243,10 +341,10 @@ async function ocrWithSarvam(imagePaths: string[], startPage: number): Promise<P
       pages.push({ pageNumber, text });
       logger.info({ pageNumber, textLength: text.length }, "Sarvam OCR completed for page");
     } catch (err) {
-      logger.warn({ pageNumber, err }, "Sarvam OCR failed for page, trying Tesseract fallback");
+      logger.error({ pageNumber, err }, "Sarvam OCR failed for page after all retries");
       reportAIFailure("Sarvam AI", (err as Error)?.message || "OCR failed");
-      const fallback = await ocrSinglePageTesseract(imagePath, pageNumber);
-      pages.push(fallback);
+      // Push empty page — will be retried in next batch. No Tesseract fallback.
+      pages.push({ pageNumber, text: "" });
     }
   }
 

@@ -161,6 +161,36 @@ interface BookmarkEntry {
   created_at: string;
 }
 
+/** Manual section override — user marks line ranges with a specific type */
+type SectionKind = "shlok" | "shabdarth" | "anuvad" | "tatparya" | "text";
+interface SectionOverride {
+  startLine: number; // 0-based line index
+  endLine: number;   // inclusive
+  kind: SectionKind;
+}
+
+// Page overrides map: pageNumber → overrides
+type PageOverrides = Record<number, SectionOverride[]>;
+
+function loadSectionOverrides(): PageOverrides {
+  try {
+    const raw = localStorage.getItem("bhagwatham_section_overrides");
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
+function saveSectionOverrides(o: PageOverrides) {
+  localStorage.setItem("bhagwatham_section_overrides", JSON.stringify(o));
+}
+
+const SECTION_KIND_LABELS: Record<SectionKind, { label: string; color: string; bg: string }> = {
+  shlok:     { label: "श्लोक",    color: "text-orange-700", bg: "bg-orange-100 border-orange-300" },
+  shabdarth: { label: "शब्दार्थ", color: "text-pink-700",   bg: "bg-pink-100 border-pink-300" },
+  anuvad:    { label: "अनुवाद",   color: "text-blue-700",   bg: "bg-blue-100 border-blue-300" },
+  tatparya:  { label: "तात्पर्य", color: "text-green-700",  bg: "bg-green-100 border-green-300" },
+  text:      { label: "पाठ",     color: "text-stone-600",  bg: "bg-stone-100 border-stone-300" },
+};
+
 /** A chapter detected from the OCR content */
 interface ChapterEntry {
   number: number;
@@ -197,11 +227,16 @@ const HINDI_NUMS: Record<string, number> = {
 
 const CHAPTER_RE = /^(?:Chapter\s+\S|अध्याय\s+(?:एक|दो|तीन|चार|पाँच|छः|छह|सात|आठ|नौ|दस|ग्यारह|बारह|तेरह|चौदह|पन्द्रह|सोलह|सत्रह|अठारह|उन्नीस|बीस|\d+))/iu;
 
-// OCR-mangled chapter headings: "Chapter 278 अध्याय" (page num mixed in), "Chapter it" etc.
-// Map these to correct chapter numbers based on known sequence
+// OCR-mangled chapter headings mapped to correct chapter numbers.
+// Skandh 1: "Chapter 278 अध्याय" → ch 8, "Chapter it" → ch 9
+// Skandh 2: "(शुषा दो" → ch 2, "Chapter 3:" → ch 6 (छ→3, ः→:), "(नौ" → ch 9
+// Note: "Chapter 36" (OCR of "Chapter आठ") handled contextually in buildChapterIndex
 const OCR_CHAPTER_FIXES: Record<string, { num: number; label: string }> = {
   "Chapter 278 अध्याय": { num: 8, label: "अध्याय आठ" },
   "Chapter it": { num: 9, label: "अध्याय नौ" },
+  "(शुषा दो": { num: 2, label: "अध्याय दो" },
+  "Chapter 3:": { num: 6, label: "अध्याय छह" },
+  "(नौ": { num: 9, label: "अध्याय नौ" },
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -318,12 +353,23 @@ function buildChapterIndex(allPages: PageContent[]): ChapterEntry[] {
     if (isGarbagePage(page.text)) continue;
 
     const lines = page.text.split("\n");
+
+    // ToC detection: if a page has 2+ chapter heading lines, skip them all
+    // (Table of contents pages list multiple chapters on a single page)
+    const chapterHeadingCount = lines.filter((l) => isChapterHeading(l.trim())).length;
+    if (chapterHeadingCount >= 2) continue;
+
     for (const line of lines) {
       const t = line.trim();
       if (isChapterHeading(t)) {
         const hindiLine = toHindiChapterLine(t);
-        const num = extractChapterNum(hindiLine);
+        let num = extractChapterNum(hindiLine);
         if (num > 0) {
+          // Context-aware OCR fix: big jumps in chapter number are likely OCR noise
+          // e.g., "Chapter 36" is OCR of "Chapter आठ" (8) when lastChapterNum is 7
+          if (num > lastChapterNum + 5 && lastChapterNum > 0 && num > 20) {
+            num = lastChapterNum + 1;
+          }
           // If chapter number resets (e.g. goes from 19 back to 1), new skandh started
           if (num === 1 && lastChapterNum > 1) {
             currentSkandh++;
@@ -531,9 +577,25 @@ function BookmarkPanel({ bookmarks, onJump, onDelete }: {
   );
 }
 
+// ── Determine what section kind a page ends with (for cross-page continuity) ──
+function getPageEndKind(text: string): string {
+  if (!text) return "text";
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+  // Walk backwards to find the last section marker
+  let lastKind = "text";
+  for (const line of lines) {
+    if (/^तात्पर्य/u.test(line)) lastKind = "tatparya";
+    else if (/^अनुवाद/u.test(line)) lastKind = "anuvad";
+    else if (/^शब्दार्थ/u.test(line)) lastKind = "shabdarth";
+    else if (/॥/u.test(line)) lastKind = (lastKind === "tatparya") ? "ref-shlok" : "shlok";
+    else if (/^(अध्याय|स्कन्ध|Chapter)/iu.test(line)) lastKind = "text";
+  }
+  return lastKind;
+}
+
 // ── Content Renderer ───────────────────────────────────────────────────────────
 
-function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", onRegenerateImages, regeneratingChapters, onDeleteImage, chapterNumMapper }: { text: string; textEn?: string; lang: "hi" | "en"; chapterImages?: Map<number, Array<{ url: string; description: string; sceneIndex?: number }>>; themeKey?: Theme; onRegenerateImages?: (chapterNum: number) => void; regeneratingChapters?: Set<number>; onDeleteImage?: (chapterNum: number, sceneIndex: number) => void; chapterNumMapper?: (perSkandhNum: number) => number }) {
+function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", onRegenerateImages, regeneratingChapters, onDeleteImage, chapterNumMapper, pageNumber, overrides, onOverridesChange, prevPageEndKind }: { text: string; textEn?: string; lang: "hi" | "en"; chapterImages?: Map<number, Array<{ url: string; description: string; sceneIndex?: number }>>; themeKey?: Theme; onRegenerateImages?: (chapterNum: number) => void; regeneratingChapters?: Set<number>; onDeleteImage?: (chapterNum: number, sceneIndex: number) => void; chapterNumMapper?: (perSkandhNum: number) => number; pageNumber?: number; overrides?: SectionOverride[]; onOverridesChange?: (pageNum: number, overrides: SectionOverride[]) => void; prevPageEndKind?: string }) {
   const t = THEME_STYLES[themeKey];
   // If English selected and translation available, show English as plain text
   if (lang === "en" && textEn) {
@@ -583,9 +645,11 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
     .filter((l) => l.trim() && !isStandalonePageNumber(l))
     .map((l) => stripLeadingPageNumber(l));
 
-  type Section = { kind: "chapter" | "shlok" | "shabdarth" | "anuvad" | "tatparya" | "text"; lines: string[]; chapterNum?: number };
+  type Section = { kind: "chapter" | "shlok" | "ref-shlok" | "shabdarth" | "anuvad" | "tatparya" | "text"; lines: string[]; chapterNum?: number };
   const sections: Section[] = [];
-  let current: Section = { kind: "text", lines: [] };
+  // If previous page ended in tatparya/anuvad, continue that section kind
+  const initialKind = (prevPageEndKind === "tatparya" || prevPageEndKind === "anuvad" || prevPageEndKind === "ref-shlok") ? prevPageEndKind as Section["kind"] : "text";
+  let current: Section = { kind: initialKind, lines: [] };
 
   const flush = () => { if (current.lines.length > 0) sections.push(current); };
 
@@ -681,6 +745,11 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
 
     if (/^शब्दार्थ/u.test(t)) {
       flush();
+      // If the previous section was "text", it was likely a shlok that wasn't detected
+      // (e.g. OCR missed ॥ markers). Retroactively reclassify it as shlok.
+      if (sections.length > 0 && sections[sections.length - 1].kind === "text") {
+        sections[sections.length - 1].kind = "shlok";
+      }
       current = { kind: "shabdarth", lines: [] };
       continue;
     }
@@ -742,8 +811,166 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
   }
   flush();
 
+  // ── Apply manual overrides ──────────────────────────────────────────
+  // If overrides exist for this page, rebuild sections using them.
+  // Override lines replace auto-detected types for the specified ranges.
+  if (overrides && overrides.length > 0) {
+    // Build a line-level type map from auto-detected sections
+    const lineTypes: SectionKind[] = [];
+    const lineTexts: string[] = [];
+    for (const sec of sections) {
+      for (const l of sec.lines) {
+        lineTypes.push(sec.kind === "chapter" || sec.kind === "ref-shlok" ? sec.kind as unknown as SectionKind : sec.kind as SectionKind);
+        lineTexts.push(l);
+      }
+    }
+    // Apply overrides
+    for (const ov of overrides) {
+      for (let li = ov.startLine; li <= Math.min(ov.endLine, lineTypes.length - 1); li++) {
+        lineTypes[li] = ov.kind;
+      }
+    }
+    // Rebuild sections from lineTypes
+    sections.length = 0;
+    let curKind: string = lineTypes[0] || "text";
+    let curLines: string[] = [];
+    for (let li = 0; li < lineTexts.length; li++) {
+      if (lineTypes[li] !== curKind && curLines.length > 0) {
+        sections.push({ kind: curKind as Section["kind"], lines: curLines });
+        curLines = [];
+        curKind = lineTypes[li];
+      }
+      curLines.push(lineTexts[li]);
+    }
+    if (curLines.length > 0) sections.push({ kind: curKind as Section["kind"], lines: curLines });
+  }
+
+  // ── Section Editor (inline) ─────────────────────────────────────────
+  const [editMode, setEditMode] = useState(false);
+  const [selStart, setSelStart] = useState<number | null>(null);
+  const [selEnd, setSelEnd] = useState<number | null>(null);
+
+  // Flatten sections into lines for the editor
+  const editorLines = useMemo(() => {
+    const result: { text: string; kind: SectionKind; lineIdx: number }[] = [];
+    let idx = 0;
+    for (const sec of sections) {
+      for (const l of sec.lines) {
+        const kind = (sec.kind === "chapter" || sec.kind === "ref-shlok") ? "text" : sec.kind as SectionKind;
+        result.push({ text: l, kind, lineIdx: idx++ });
+      }
+    }
+    return result;
+  }, [sections, editMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleLineClick = (lineIdx: number) => {
+    if (selStart === null) {
+      setSelStart(lineIdx);
+      setSelEnd(lineIdx);
+    } else if (selEnd !== null) {
+      // Extend or set range
+      setSelEnd(lineIdx);
+    }
+  };
+
+  const applyKind = (kind: SectionKind) => {
+    if (selStart === null || selEnd === null || !pageNumber || !onOverridesChange) return;
+    const s = Math.min(selStart, selEnd);
+    const e = Math.max(selStart, selEnd);
+    const newOverride: SectionOverride = { startLine: s, endLine: e, kind };
+    const existing = overrides || [];
+    // Remove any overlapping overrides, then add the new one
+    const filtered = existing.filter(o => o.endLine < s || o.startLine > e);
+    const merged = [...filtered, newOverride].sort((a, b) => a.startLine - b.startLine);
+    onOverridesChange(pageNumber, merged);
+    setSelStart(null);
+    setSelEnd(null);
+  };
+
+  const clearOverrides = () => {
+    if (pageNumber && onOverridesChange) {
+      onOverridesChange(pageNumber, []);
+    }
+  };
+
+  if (editMode && pageNumber) {
+    const selMin = selStart !== null && selEnd !== null ? Math.min(selStart, selEnd) : -1;
+    const selMax = selStart !== null && selEnd !== null ? Math.max(selStart, selEnd) : -1;
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <button onClick={() => { setEditMode(false); setSelStart(null); setSelEnd(null); }}
+            className="text-[11px] px-2.5 py-1 rounded-lg bg-stone-200 hover:bg-stone-300 text-stone-700 font-semibold transition-colors">
+            ← वापस
+          </button>
+          <span className="text-[11px] text-stone-500 font-medium">पृ. {pageNumber} — पंक्तियाँ चुनें, फिर प्रकार दबाएँ</span>
+          {(overrides && overrides.length > 0) && (
+            <button onClick={clearOverrides}
+              className="text-[11px] px-2.5 py-1 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 font-semibold transition-colors ml-auto">
+              <Undo2 className="w-3 h-3 inline mr-1" />सब हटाएँ
+            </button>
+          )}
+        </div>
+
+        {/* Type buttons — shown when selection active */}
+        {selStart !== null && (
+          <div className="flex items-center gap-1.5 flex-wrap sticky top-12 z-20 bg-white/95 backdrop-blur py-2 px-1 rounded-lg border border-stone-200 shadow-sm">
+            <span className="text-[10px] text-stone-400 font-semibold mr-1">चयनित ({selMax - selMin + 1} पंक्तियाँ):</span>
+            {(Object.keys(SECTION_KIND_LABELS) as SectionKind[]).map((k) => (
+              <button key={k} onClick={() => applyKind(k)}
+                className={`text-[11px] px-2.5 py-1 rounded-md border font-semibold transition-colors ${SECTION_KIND_LABELS[k].bg} ${SECTION_KIND_LABELS[k].color}`}>
+                {SECTION_KIND_LABELS[k].label}
+              </button>
+            ))}
+            <button onClick={() => { setSelStart(null); setSelEnd(null); }}
+              className="text-[11px] px-2 py-1 rounded-md bg-stone-100 text-stone-500 hover:bg-stone-200 ml-1">
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        )}
+
+        {/* Lines */}
+        <div className="space-y-0.5">
+          {editorLines.map((line) => {
+            const isSelected = line.lineIdx >= selMin && line.lineIdx <= selMax;
+            const kindInfo = SECTION_KIND_LABELS[line.kind] || SECTION_KIND_LABELS.text;
+            return (
+              <div
+                key={line.lineIdx}
+                onClick={() => handleLineClick(line.lineIdx)}
+                className={`flex items-start gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors select-none ${
+                  isSelected ? "bg-orange-100 ring-1 ring-orange-400" : "hover:bg-stone-50"
+                }`}
+              >
+                <span className={`text-[9px] font-mono mt-1 shrink-0 w-4 text-right ${isSelected ? "text-orange-600 font-bold" : "text-stone-300"}`}>
+                  {line.lineIdx + 1}
+                </span>
+                <span className={`text-[10px] shrink-0 mt-0.5 px-1.5 py-0.5 rounded border font-semibold ${kindInfo.bg} ${kindInfo.color}`}>
+                  {kindInfo.label}
+                </span>
+                <span className={`text-[13px] leading-relaxed ${isSelected ? "text-stone-900" : "text-stone-600"}`} style={{ fontFamily: "var(--font-devanagari)" }}>
+                  {line.text}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 group/page relative">
+      {/* Edit mode toggle */}
+      {pageNumber && onOverridesChange && (
+        <button
+          onClick={() => setEditMode(true)}
+          className="absolute -right-1 top-0 opacity-0 group-hover/page:opacity-60 hover:!opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-stone-100"
+          title="श्लोक सीमा संपादित करें"
+        >
+          <Pencil className="w-3.5 h-3.5 text-stone-400" />
+        </button>
+      )}
       {sections.map((sec, i) => {
         switch (sec.kind) {
           case "chapter": {
@@ -829,21 +1056,30 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             const prevKind = i > 0 ? sections[i - 1].kind : null;
             const showLabel = prevKind === "shlok" || prevKind === "shabdarth";
             return (
-              <div key={i}>
-                {showLabel && <p className={`text-[11px] font-bold mb-2 tracking-wide ${themeKey === "dark" ? "text-blue-400" : themeKey === "sepia" ? "text-[#5B3A00]" : "text-blue-600"}`}>अनुवाद</p>}
+              <div key={i} className="mt-2">
+                {showLabel && <p className={`text-[15px] sm:text-[16px] font-bold mb-1 ${themeKey === "dark" ? "text-stone-200" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-800"}`} style={{ fontFamily: "var(--font-devanagari)" }}>अनुवाद :</p>}
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`text-[14px] sm:text-[15px] leading-[1.8] mb-1 ${themeKey === "dark" ? "text-blue-300" : themeKey === "sepia" ? "text-[#4a3520]" : "text-blue-900"}`} style={{ fontFamily: "var(--font-devanagari)" }}>{l}</p>
+                  <p key={j} className={`text-[16px] sm:text-[18px] font-bold leading-[2] mb-1 ${themeKey === "dark" ? "text-stone-100" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-900"}`} style={{ fontFamily: "var(--font-devanagari)" }}>{l}</p>
                 ))}
               </div>
             );
           }
           case "tatparya":
             return (
-              <div key={i}>
-                <p className={`text-[11px] font-bold mb-2 tracking-wide ${themeKey === "dark" ? "text-green-400" : themeKey === "sepia" ? "text-[#6B4D00]" : "text-green-600"}`}>तात्पर्य</p>
-                {sec.lines.map((l, j) => (
-                  <p key={j} className={`text-[14px] sm:text-[15px] leading-[1.8] ${t.text} mb-1`} style={{ fontFamily: "var(--font-devanagari)" }}>{l}</p>
-                ))}
+              <div key={i} className="mt-3">
+                {sec.lines.map((l, j) => {
+                  // First line: prepend "तात्पर्य :" as bold-italic prefix inline
+                  if (j === 0) {
+                    return (
+                      <p key={j} className={`text-[15px] sm:text-[16px] leading-[1.9] mb-1 ${themeKey === "dark" ? "text-stone-300" : themeKey === "sepia" ? "text-[#3a2a10]" : "text-stone-700"}`} style={{ fontFamily: "var(--font-devanagari)" }}>
+                        <span className="font-bold italic">तात्पर्य :</span>{" "}{l}
+                      </p>
+                    );
+                  }
+                  return (
+                    <p key={j} className={`text-[15px] sm:text-[16px] leading-[1.9] mb-1 pl-1 ${themeKey === "dark" ? "text-stone-300" : themeKey === "sepia" ? "text-[#3a2a10]" : "text-stone-700"}`} style={{ fontFamily: "var(--font-devanagari)" }}>{l}</p>
+                  );
+                })}
               </div>
             );
           default:
@@ -1037,6 +1273,15 @@ export default function Bhagwatham() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [chapterImages, setChapterImages] = useState<Map<number, Array<{ url: string; description: string }>>>(new Map());
+  const [sectionOverrides, setSectionOverrides] = useState<PageOverrides>(loadSectionOverrides);
+  const handleOverridesChange = useCallback((pageNum: number, newOverrides: SectionOverride[]) => {
+    setSectionOverrides(prev => {
+      const next = { ...prev };
+      if (newOverrides.length === 0) { delete next[pageNum]; } else { next[pageNum] = newOverrides; }
+      saveSectionOverrides(next);
+      return next;
+    });
+  }, []);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeChapter, setActiveChapter] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -1266,7 +1511,13 @@ export default function Bhagwatham() {
     if (pageIdx >= 0) {
       const viewPage = Math.floor(pageIdx / PAGES_PER_VIEW) + 1;
       setCurrentPage(viewPage);
-      if (b.chapter_number) setActiveChapter(b.chapter_number);
+      // Find the chapter for this page using the chapter index
+      const chapterList = buildChapterIndex(allPages);
+      const ch = chapterList.slice().reverse().find(c => c.pageNumber <= b.page_number);
+      if (ch) {
+        setActiveChapter(ch.globalNumber);
+        setScrollChapter(ch.title);
+      }
       // Scroll to the exact bookmarked page, not just the top
       setTimeout(() => {
         const el = document.querySelector(`[data-page-num="${b.page_number}"]`);
@@ -1373,26 +1624,69 @@ export default function Bhagwatham() {
 
   // ── Auto-save reading position ───────────────────────────────────────────
   useEffect(() => {
-    const pageNum = visiblePageNum || (allPages.length > 0 ? allPages[(currentPage - 1) * PAGES_PER_VIEW]?.pageNumber : null);
-    if (allPages.length > 0 && pageNum && (currentPage > 1 || visiblePageNum)) {
-      const currentChapter = chapters.slice().reverse().find(ch => ch.pageNumber <= pageNum);
-      localStorage.setItem("bhagwatham_resume", JSON.stringify({
-        page: currentPage, pageNumber: pageNum,
-        chapter: currentChapter?.title?.split("—")[0].trim() || "",
-        chapterNumber: currentChapter?.number || null,
-        savedAt: Date.now(),
-      }));
-    }
+    const savePosition = () => {
+      const pageNum = visiblePageNum || (allPages.length > 0 ? allPages[(currentPage - 1) * PAGES_PER_VIEW]?.pageNumber : null);
+      if (allPages.length > 0 && pageNum && (currentPage > 1 || visiblePageNum)) {
+        // Calculate scroll offset relative to the visible page element
+        let scrollOffset = 0;
+        const pageEl = document.querySelector(`[data-page-num="${pageNum}"]`);
+        if (pageEl) {
+          const rect = pageEl.getBoundingClientRect();
+          scrollOffset = -rect.top; // how far past the top of this page element we've scrolled
+        }
+        const currentChapter = chapters.slice().reverse().find(ch => ch.pageNumber <= pageNum);
+        localStorage.setItem("bhagwatham_resume", JSON.stringify({
+          page: currentPage, pageNumber: pageNum,
+          chapter: currentChapter?.title?.split("—")[0].trim() || "",
+          chapterNumber: currentChapter?.number || null,
+          scrollOffset,
+          savedAt: Date.now(),
+        }));
+      }
+    };
+
+    // Save on scroll (throttled) + on page change
+    let ticking = false;
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(() => {
+          savePosition();
+          ticking = false;
+        });
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    savePosition(); // also save on page/chapter change
+
+    return () => window.removeEventListener("scroll", onScroll);
   }, [currentPage, visiblePageNum, allPages, chapters]);
 
-  // Show resume card on load
+  // Auto-resume reading position on load
   useEffect(() => {
     if (!loading && allPages.length > 0) {
       try {
         const raw = localStorage.getItem("bhagwatham_resume");
         if (raw) {
           const resume = JSON.parse(raw);
-          if (resume.page > 1 && currentPage === 1) setShowResume(true);
+          if (resume.page > 1 && currentPage === 1) {
+            // Auto-resume: jump directly to saved position
+            setCurrentPage(resume.page);
+            if (resume.chapterNumber) setActiveChapter(resume.chapterNumber);
+            if (resume.chapter) setScrollChapter(resume.chapter);
+            // Scroll to exact position (page element + saved offset) after render
+            setTimeout(() => {
+              if (resume.pageNumber) {
+                const el = document.querySelector(`[data-page-num="${resume.pageNumber}"]`);
+                if (el) {
+                  const rect = el.getBoundingClientRect();
+                  const scrollOffset = resume.scrollOffset || 0;
+                  // Scroll so the page element is at top, then add the saved offset
+                  window.scrollTo({ top: window.scrollY + rect.top + scrollOffset, behavior: "auto" });
+                }
+              }
+            }, 300);
+          }
         }
       } catch { /* ignore */ }
     }
@@ -1804,11 +2098,20 @@ export default function Bhagwatham() {
                 )}
               </motion.div>
             ) : (
-              <div className="space-y-1">
-                {displayPages.map((page) => (
+              <div>
+                {displayPages.map((page, pageIdx) => {
+                  // Determine the previous page's ending section kind for cross-page continuity
+                  let prevPage = pageIdx > 0 ? displayPages[pageIdx - 1] : null;
+                  // For first page in view, check the page right before it in allPages
+                  if (!prevPage && !searchQuery.trim()) {
+                    const allIdx = allPages.findIndex(p => p.pageNumber === page.pageNumber);
+                    if (allIdx > 0) prevPage = allPages[allIdx - 1];
+                  }
+                  const prevEndKind = prevPage ? getPageEndKind(prevPage.text) : undefined;
+                  return (
                   <div key={page.pageNumber} data-page-num={page.pageNumber}>
-                    <p className={`text-[10px] ${theme.muted} font-medium text-right my-3 opacity-60`}>पृ. {page.pageNumber}</p>
-                    <RenderContent text={page.text} textEn={page.textEn} lang={lang} chapterImages={chapterImages} themeKey={settings.theme} onRegenerateImages={openPromptModal} regeneratingChapters={regeneratingChapters} onDeleteImage={handleDeleteImage} chapterNumMapper={(perSkandhNum: number) => {
+                    <p className={`text-[10px] ${theme.muted} font-medium text-right mt-0 mb-1 opacity-40`}>पृ. {page.pageNumber}</p>
+                    <RenderContent text={page.text} textEn={page.textEn} lang={lang} chapterImages={chapterImages} themeKey={settings.theme} onRegenerateImages={openPromptModal} regeneratingChapters={regeneratingChapters} onDeleteImage={handleDeleteImage} pageNumber={page.pageNumber} overrides={sectionOverrides[page.pageNumber]} onOverridesChange={handleOverridesChange} prevPageEndKind={prevEndKind} chapterNumMapper={(perSkandhNum: number) => {
                       // Find which skandh this page belongs to based on surrounding chapters
                       const ch = chapters.find(c => c.number === perSkandhNum && c.pageNumber <= page.pageNumber);
                       // Pick the last matching chapter (closest to this page)
@@ -1817,7 +2120,8 @@ export default function Bhagwatham() {
                       return best?.globalNumber ?? perSkandhNum;
                     }} />
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 

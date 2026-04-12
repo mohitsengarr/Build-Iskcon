@@ -156,40 +156,69 @@ const CHARACTER_PERSONAS: Record<string, string> = {
   yudhishthira: "King Yudhishthira: a fair-complexioned noble Indian king aged 35-40 with oval gentle face (hex #d4b080), calm gentle soft features without sharp angles, kind thoughtful medium dark brown eyes with a hint of sadness, thin neatly groomed dark beard trimmed close along jawline, straight nose, wearing white royal garments with minimal thin gold chain and small gold earrings befitting a dharmic king, simple golden band crown on head",
 };
 
+// Short persona summaries for image prompts (FLUX.2-pro has ~800 char limit)
+// Full descriptions in CHARACTER_PERSONAS are kept for reference and face bank
+const PERSONA_SHORT: Record<string, string> = {
+  krishna_adult: "Lord Krishna: deep blue-skinned young man, peacock feather in curly black hair, golden crown, yellow silk dhoti, Kaustubha gem necklace",
+  krishna_child: "Baby Krishna: chubby blue-tinted infant, tiny peacock feather, gold anklets, playful smile",
+  narada: "Sage Narada: clean-shaven male sage, white U-shaped tilak on forehead, grey-streaked topknot, white dhoti, carrying tanpura veena",
+  vyasa: "Sage Vyasa: majestic dark-skinned elderly rishi, long silver-white beard, matted grey dreadlocks, bark-cloth garment, rudraksha mala",
+  suta_goswami: "Suta Goswami: elderly fair sage, short white beard, bald crown, saffron silk robes, rudraksha mala",
+  shukadeva: "Shukadeva Goswami: radiant young bald sage aged 16, luminous fair skin, large innocent eyes, simple white cloth, no ornaments",
+  arjuna: "Arjuna: tall muscular warrior prince, dark hair in tight topknot, golden armor, carrying Gandiva bow",
+  vishnu: "Lord Vishnu: royal blue-skinned divine being, four arms holding conch discus mace lotus, tall golden crown, yellow silk",
+  brahma: "Lord Brahma: four-faced creator god, white beard, red-golden robes, holding Vedas and water pot",
+  prahlada: "Prahlada: young boy aged 6-7, warm brown skin, innocent devotional eyes, simple white kurta, tulsi mala",
+  narasimha: "Lord Narasimha: fierce half-lion half-man, golden lion mane, blue-skinned muscular torso, blazing golden eyes, sharp fangs",
+  parikshit: "King Parikshit: dignified middle-aged king, short dark beard, white renunciation cloth, sitting cross-legged",
+  yashoda: "Mother Yashoda: beautiful middle-aged woman, loving face, dark hair with red sindoor, maroon silk sari with gold border",
+  kunti: "Queen Kunti: dignified elderly woman, greying hair in bun, white and gold silk sari, sorrowful gentle eyes",
+  draupadi: "Draupadi: beautiful young woman, dark olive skin, thick black wavy hair with jasmine flowers, red and gold silk sari",
+  gandhari: "Queen Gandhari: elderly woman with white silk blindfold over eyes, white sari, greying hair covered with pallu",
+  dhritarashtra: "King Dhritarashtra: very old blind king, closed sunken eyes, long white beard, white garments, wooden walking staff",
+  vidura: "Vidura: wise dark-skinned middle-aged man, short grey beard, saffron dhoti, pilgrim's walking staff",
+  bhishma: "Bhishma: majestic elderly warrior, silver-white hair, long white beard, lying on bed of arrows",
+  yudhishthira: "King Yudhishthira: fair gentle-faced king, thin dark beard, white royal garments, simple golden crown",
+};
+
 /** Look up which persona names appear in a scene prompt */
 function injectPersona(scene: string): string {
   let result = scene;
   const checks: Array<[RegExp, string]> = [
-    [/\bBaby\b.*\bKrishna\b/i, CHARACTER_PERSONAS.krishna_child],
-    [/\b(?:child|infant|baby)\b.*\bKrishna\b/i, CHARACTER_PERSONAS.krishna_child],
-    [/\bKrishna\b(?!.*\b(?:child|infant|baby)\b)/i, CHARACTER_PERSONAS.krishna_adult],
-    [/\bNarada\b/i, CHARACTER_PERSONAS.narada],
-    [/\bVyasa(?:deva)?\b/i, CHARACTER_PERSONAS.vyasa],
-    [/\bSuta\s*Goswami\b/i, CHARACTER_PERSONAS.suta_goswami],
-    [/\bShukadeva\b/i, CHARACTER_PERSONAS.shukadeva],
-    [/\bArjuna\b/i, CHARACTER_PERSONAS.arjuna],
-    [/\bVishnu\b/i, CHARACTER_PERSONAS.vishnu],
-    [/\bBrahma\b/i, CHARACTER_PERSONAS.brahma],
-    [/\bPrahlada?\b/i, CHARACTER_PERSONAS.prahlada],
-    [/\bNarasimha\b|\bNrisimha\b/i, CHARACTER_PERSONAS.narasimha],
-    [/\bParikshit\b/i, CHARACTER_PERSONAS.parikshit],
-    [/\bYashoda\b/i, CHARACTER_PERSONAS.yashoda],
-    [/\bKunti\b/i, CHARACTER_PERSONAS.kunti],
-    [/\bDraupadi\b/i, CHARACTER_PERSONAS.draupadi],
-    [/\bGandhari\b/i, CHARACTER_PERSONAS.gandhari],
-    [/\bDhritarashtra\b/i, CHARACTER_PERSONAS.dhritarashtra],
-    [/\bVidura\b/i, CHARACTER_PERSONAS.vidura],
-    [/\bBhishma\b/i, CHARACTER_PERSONAS.bhishma],
-    [/\bYudhishthira\b/i, CHARACTER_PERSONAS.yudhishthira],
+    [/\bBaby\b.*\bKrishna\b/i, "krishna_child"],
+    [/\b(?:child|infant|baby)\b.*\bKrishna\b/i, "krishna_child"],
+    [/\bKrishna\b(?!.*\b(?:child|infant|baby)\b)/i, "krishna_adult"],
+    [/\bNarada\b/i, "narada"],
+    [/\bVyasa(?:deva)?\b/i, "vyasa"],
+    [/\bSuta\s*Goswami\b/i, "suta_goswami"],
+    [/\bShukadeva\b/i, "shukadeva"],
+    [/\bArjuna\b/i, "arjuna"],
+    [/\bVishnu\b/i, "vishnu"],
+    [/\bBrahma\b/i, "brahma"],
+    [/\bPrahlada?\b/i, "prahlada"],
+    [/\bNarasimha\b|\bNrisimha\b/i, "narasimha"],
+    [/\bParikshit\b/i, "parikshit"],
+    [/\bYashoda\b/i, "yashoda"],
+    [/\bKunti\b/i, "kunti"],
+    [/\bDraupadi\b/i, "draupadi"],
+    [/\bGandhari\b/i, "gandhari"],
+    [/\bDhritarashtra\b/i, "dhritarashtra"],
+    [/\bVidura\b/i, "vidura"],
+    [/\bBhishma\b/i, "bhishma"],
+    [/\bYudhishthira\b/i, "yudhishthira"],
   ];
 
-  // Find the first matching persona and prepend it
-  for (const [pattern, persona] of checks) {
-    if (pattern.test(scene)) {
-      // Replace the character name portion with the full persona description
-      result = `${persona}. Scene: ${scene}`;
-      break;
+  // Collect ALL matching personas (short descriptions for prompt brevity)
+  const matchedPersonas: string[] = [];
+  for (const [pattern, key] of checks) {
+    if (pattern.test(scene) && PERSONA_SHORT[key] && !matchedPersonas.includes(PERSONA_SHORT[key])) {
+      matchedPersonas.push(PERSONA_SHORT[key]);
     }
+  }
+
+  if (matchedPersonas.length > 0) {
+    // Prepend only matched personas (short versions to stay within prompt limit)
+    result = `${matchedPersonas.join(". ")}. Scene: ${scene}`;
   }
   return result;
 }
@@ -1006,7 +1035,22 @@ async function generateWithTogether(prompt: string, destPath: string, model: str
   const apiKey = process.env.TOGETHER_API_KEY;
   if (!apiKey) throw new Error("TOGETHER_API_KEY not set");
 
-  const fullPrompt = prompt + "\nClassic oil painting style with soft painterly brushstrokes, NOT photorealistic. Faces should be idealized and stylized like traditional Indian devotional art (Raja Ravi Varma style), NOT hyperrealistic or photo-like. Bright vibrant sky with warm golden sunlight, soft blue sky with golden-orange clouds, luminous and uplifting atmosphere. Rich warm earth tones, ancient banyan trees and sacred fire, detailed Indian traditional clothing, serene devotional atmosphere, museum quality fine art. Female characters must have smooth clean feminine faces without any facial hair or beard. Ancient Vedic era setting — no modern items like glasses, spectacles, watches, or modern clothing. Men should have traditional Vedic beards (long flowing or clean-shaven), not modern trimmed or styled beards.";
+  // Style suffix — concise to leave maximum room for the scene description.
+  // Scene accuracy is the #1 priority; style can be shorter.
+  const styleSuffix = "\nRaja Ravi Varma style classic oil painting, soft painterly brushstrokes, NOT photorealistic. Warm golden sunlight, vibrant sky. Traditional Indian devotional art, serene atmosphere, museum quality fine art. Ancient Vedic era — no modern items. Smooth feminine faces for women, no facial hair on women.";
+
+  // Build the full prompt: scene first (most important), then style
+  let fullPrompt = prompt + styleSuffix;
+
+  // FLUX.2-pro prompt limit ~2000 chars. Log a warning if we're truncating.
+  const PROMPT_LIMIT = 2000;
+  if (fullPrompt.length > PROMPT_LIMIT) {
+    const maxPromptLen = PROMPT_LIMIT - styleSuffix.length;
+    logger.warn({ originalLen: fullPrompt.length, truncatedTo: PROMPT_LIMIT }, "Truncating prompt for FLUX");
+    fullPrompt = prompt.substring(0, maxPromptLen) + styleSuffix;
+  }
+
+  logger.info({ promptLen: fullPrompt.length, sceneLen: prompt.length }, "FLUX prompt composed");
   const body: Record<string, unknown> = {
     model,
     prompt: fullPrompt,
@@ -1293,6 +1337,9 @@ export async function generateChapterImage(
 const OCR_CHAPTER_FIXES: Record<string, { num: number; title: string }> = {
   "Chapter 278 अध्याय": { num: 8, title: "अध्याय आठ" },
   "Chapter it": { num: 9, title: "अध्याय नौ" },
+  "(शुषा दो": { num: 2, title: "अध्याय दो" },
+  "Chapter 3:": { num: 6, title: "अध्याय छह" },
+  "(नौ": { num: 9, title: "अध्याय नौ" },
 };
 
 // Track the highest global chapter number used across all skandhs
@@ -1343,29 +1390,46 @@ export async function generateImagesForBatch(
     initGlobalChapterCounter();
   }
 
+  const ocrFixKeys = Object.keys(OCR_CHAPTER_FIXES);
+
   for (const page of pages) {
     const lines = page.text.split("\n");
+
+    // ToC detection: skip pages with 2+ chapter heading lines (table of contents)
+    let headingCount = 0;
+    for (const line of lines) {
+      const t = line.trim();
+      if (t.includes("पूर्ण हुए")) continue;
+      const isOcrFix = ocrFixKeys.some(k => t.includes(k));
+      if (isOcrFix || chapterPattern.test(t)) headingCount++;
+    }
+    if (headingCount >= 2) {
+      logger.info({ pageNumber: page.pageNumber, headingCount }, "Skipping ToC page (multiple chapter headings)");
+      continue;
+    }
+
     for (let i = 0; i < lines.length; i++) {
       const trimmed = lines[i].trim();
-      const match = trimmed.match(chapterPattern);
-      if (match && !trimmed.includes("पूर्ण हुए")) {
-        let chapterTitle = match[0].replace(/^\d+\s+/, "").trim();
 
-        // Check OCR fixes first
-        let chapterNum = 0;
-        for (const [key, fix] of Object.entries(OCR_CHAPTER_FIXES)) {
-          if (chapterTitle.includes(key) || trimmed.includes(key)) {
-            chapterNum = fix.num;
-            chapterTitle = fix.title;
-            break;
-          }
+      // Check OCR fixes first (some headings don't match the main pattern)
+      let chapterTitle = "";
+      let chapterNum = 0;
+      for (const [key, fix] of Object.entries(OCR_CHAPTER_FIXES)) {
+        if (trimmed.includes(key)) {
+          chapterNum = fix.num;
+          chapterTitle = fix.title;
+          break;
         }
+      }
 
-        if (!chapterNum) {
-          // Check Hindi words before digits (avoid matching page numbers)
-          for (const [word, num] of Object.entries(hindiNums)) {
-            if (chapterTitle.includes(word)) { chapterNum = num; break; }
-          }
+      if (!chapterNum) {
+        const match = trimmed.match(chapterPattern);
+        if (!match || trimmed.includes("पूर्ण हुए")) continue;
+        chapterTitle = match[0].replace(/^\d+\s+/, "").trim();
+
+        // Check Hindi words before digits (avoid matching page numbers)
+        for (const [word, num] of Object.entries(hindiNums)) {
+          if (chapterTitle.includes(word)) { chapterNum = num; break; }
         }
         if (!chapterNum) {
           const numMatch = chapterTitle.match(/\d+/);
@@ -1374,18 +1438,25 @@ export async function generateImagesForBatch(
             if (n > 0 && n <= 100) chapterNum = n;
           }
         }
+      }
 
-        if (chapterNum > 0) {
-          // Use global chapter number for unique file naming across skandhs
-          const globalNum = getNextGlobalChapterNum(chapterNum);
-          logger.info({ perSkandhNum: chapterNum, globalNum, chapterTitle }, "Detected chapter for image generation");
-
-          // Get LARGE content snippet — more context = better prompts
-          const remainingLines = lines.slice(i + 1, i + 40).join("\n");
-          const contentSnippet = remainingLines.substring(0, 2000);
-
-          await generateChapterImages(globalNum, chapterTitle, contentSnippet);
+      if (chapterNum > 0) {
+        // Context-aware OCR fix: big chapter number jumps are OCR noise
+        // e.g., "Chapter 36" is OCR of "Chapter आठ" (8) when lastPerSkandhNum is 7
+        if (chapterNum > lastPerSkandhNum + 5 && lastPerSkandhNum > 0 && chapterNum > 20) {
+          logger.info({ detectedNum: chapterNum, lastPerSkandhNum, correctedTo: lastPerSkandhNum + 1 }, "Correcting OCR chapter number jump");
+          chapterNum = lastPerSkandhNum + 1;
         }
+
+        // Use global chapter number for unique file naming across skandhs
+        const globalNum = getNextGlobalChapterNum(chapterNum);
+        logger.info({ perSkandhNum: chapterNum, globalNum, chapterTitle }, "Detected chapter for image generation");
+
+        // Get LARGE content snippet — more context = better prompts
+        const remainingLines = lines.slice(i + 1, i + 40).join("\n");
+        const contentSnippet = remainingLines.substring(0, 2000);
+
+        await generateChapterImages(globalNum, chapterTitle, contentSnippet);
       }
     }
   }
@@ -1394,4 +1465,152 @@ export async function generateImagesForBatch(
 export function getImagesDir(): string {
   ensureImageDir();
   return IMAGES_DIR;
+}
+
+/**
+ * Backfill missing chapter images by scanning all pages, building a complete
+ * chapter→globalNumber mapping from scratch, and generating images for any
+ * chapters that don't yet have images in the manifest.
+ */
+export async function backfillMissingImages(
+  allPages: Array<{ pageNumber: number; text: string }>,
+): Promise<{ generated: number; skipped: number; errors: number }> {
+  const chapterPattern = /^(?:\d+\s+)?(?:Chapter|अध्याय)\s+(.+)/imu;
+  // Also detect OCR-mangled headings that don't match the main pattern
+  const ocrFixKeys = Object.keys(OCR_CHAPTER_FIXES);
+  const hindiNums: Record<string, number> = {
+    एक: 1, दो: 2, तीन: 3, चार: 4, पाँच: 5, छः: 6, छह: 6,
+    सात: 7, आठ: 8, नौ: 9, दस: 10, ग्यारह: 11, बारह: 12,
+    तेरह: 13, चौदह: 14, पन्द्रह: 15, सोलह: 16, सत्रह: 17,
+    अठारह: 18, उन्नीस: 19, बीस: 20,
+  };
+
+  // Phase 1: Scan all pages to build complete chapter list with global numbers
+  interface ChapterInfo {
+    globalNumber: number;
+    perSkandhNum: number;
+    skandh: number;
+    title: string;
+    contentSnippet: string;
+  }
+  const chapters: ChapterInfo[] = [];
+  let skandh = 1;
+  let globalCounter = 0;
+  let lastChNum = 0;
+
+  for (const page of allPages) {
+    const lines = page.text.split("\n");
+
+    // ToC detection: skip pages with 2+ chapter heading lines
+    let headingCount = 0;
+    for (const line of lines) {
+      const t = line.trim();
+      if (t.includes("पूर्ण हुए")) continue;
+      const isOcrFix = ocrFixKeys.some(k => t.includes(k));
+      if (isOcrFix || chapterPattern.test(t)) headingCount++;
+    }
+    if (headingCount >= 2) continue;
+
+    for (let i = 0; i < lines.length; i++) {
+      const trimmed = lines[i].trim();
+      if (trimmed.includes("पूर्ण हुए")) continue;
+
+      // Check if line is a chapter heading (via pattern or OCR fixes)
+      let chapterTitle = "";
+      let chapterNum = 0;
+
+      // Check OCR fixes first
+      for (const [key, fix] of Object.entries(OCR_CHAPTER_FIXES)) {
+        if (trimmed.includes(key)) {
+          chapterNum = fix.num;
+          chapterTitle = fix.title;
+          break;
+        }
+      }
+
+      if (!chapterNum) {
+        const match = trimmed.match(chapterPattern);
+        if (!match) continue;
+        chapterTitle = match[0].replace(/^\d+\s+/, "").trim();
+
+        // Extract chapter number
+        for (const [word, num] of Object.entries(hindiNums)) {
+          if (chapterTitle.includes(word)) { chapterNum = num; break; }
+        }
+        if (!chapterNum) {
+          const numMatch = chapterTitle.match(/\d+/);
+          if (numMatch) {
+            const n = parseInt(numMatch[0], 10);
+            if (n > 0 && n <= 100) chapterNum = n;
+          }
+        }
+      }
+
+      if (chapterNum <= 0) continue;
+
+      // Context-aware OCR fix: big jumps are OCR noise (e.g. "Chapter 36" = "Chapter आठ")
+      if (chapterNum > lastChNum + 5 && lastChNum > 0 && chapterNum > 20) {
+        chapterNum = lastChNum + 1;
+      }
+
+      // Skandh boundary detection
+      if (chapterNum === 1 && lastChNum > 1) {
+        skandh++;
+      }
+
+      // Dedup check
+      if (chapters.find(c => c.perSkandhNum === chapterNum && c.skandh === skandh)) continue;
+
+      globalCounter++;
+      lastChNum = chapterNum;
+
+      const contentSnippet = lines.slice(i + 1, i + 40).join("\n").substring(0, 2000);
+      chapters.push({
+        globalNumber: globalCounter,
+        perSkandhNum: chapterNum,
+        skandh,
+        title: chapterTitle,
+        contentSnippet,
+      });
+    }
+  }
+
+  // Phase 2: Find chapters missing from manifest and generate images
+  const manifest = readManifest();
+  const existingChapters = new Set(manifest.images.map(img => img.chapterNumber));
+  const missingChapters = chapters.filter(ch => !existingChapters.has(ch.globalNumber));
+
+  logger.info({
+    totalChapters: chapters.length,
+    existingImages: existingChapters.size,
+    missingCount: missingChapters.length,
+    missingGlobalNums: missingChapters.map(c => c.globalNumber),
+  }, "Backfill: scanning for missing chapter images");
+
+  let generated = 0;
+  let skipped = 0;
+  let errors = 0;
+
+  for (const ch of missingChapters) {
+    try {
+      logger.info({ globalNumber: ch.globalNumber, skandh: ch.skandh, perSkandhNum: ch.perSkandhNum, title: ch.title }, "Backfill: generating image");
+      const files = await generateChapterImages(ch.globalNumber, ch.title, ch.contentSnippet);
+      if (files.length > 0) {
+        generated++;
+      } else {
+        skipped++;
+      }
+    } catch (err) {
+      logger.warn({ globalNumber: ch.globalNumber, err }, "Backfill: failed to generate image");
+      errors++;
+    }
+  }
+
+  // Update global counter to match the highest chapter we now have
+  if (chapters.length > 0) {
+    lastGlobalChapterNum = Math.max(...chapters.map(c => c.globalNumber));
+    lastPerSkandhNum = chapters[chapters.length - 1].perSkandhNum;
+  }
+
+  return { generated, skipped, errors };
 }

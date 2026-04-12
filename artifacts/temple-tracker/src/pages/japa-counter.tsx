@@ -1,0 +1,590 @@
+import { useState, useEffect, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { SEOHead } from "@/components/SEOHead";
+import { Phone, User, LogIn, LogOut, Pencil, Check, X, RotateCcw, Target, Volume2, VolumeX } from "lucide-react";
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface JapaData {
+  id: string;
+  phone: string;
+  name: string | null;
+  lifetime_rounds: number;
+  today_rounds: number;
+  today_date: string;
+  target_rounds: number;
+}
+
+type Mode = "onscreen" | "focused";
+
+const BEADS_PER_ROUND = 108;
+
+// ── Haptic / Audio Feedback ──────────────────────────────────────────────────
+
+function vibrate(ms: number = 15) {
+  if (navigator.vibrate) navigator.vibrate(ms);
+}
+
+let clickAudioCtx: AudioContext | null = null;
+function playClick() {
+  try {
+    if (!clickAudioCtx) clickAudioCtx = new AudioContext();
+    const osc = clickAudioCtx.createOscillator();
+    const gain = clickAudioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(clickAudioCtx.destination);
+    osc.frequency.value = 800;
+    gain.gain.value = 0.08;
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.001, clickAudioCtx.currentTime + 0.06);
+    osc.stop(clickAudioCtx.currentTime + 0.06);
+  } catch { /* silent */ }
+}
+
+function playRoundComplete() {
+  try {
+    if (!clickAudioCtx) clickAudioCtx = new AudioContext();
+    const osc = clickAudioCtx.createOscillator();
+    const gain = clickAudioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(clickAudioCtx.destination);
+    osc.type = "sine";
+    osc.frequency.value = 523.25; // C5
+    gain.gain.value = 0.15;
+    osc.start();
+    osc.frequency.exponentialRampToValueAtTime(783.99, clickAudioCtx.currentTime + 0.15); // G5
+    gain.gain.exponentialRampToValueAtTime(0.001, clickAudioCtx.currentTime + 0.4);
+    osc.stop(clickAudioCtx.currentTime + 0.4);
+  } catch { /* silent */ }
+}
+
+// ── Main Component ───────────────────────────────────────────────────────────
+
+export default function JapaCounter() {
+  // ── State ──────────────────────────────────────────────────────────────────
+  const [mode, setMode] = useState<Mode>("onscreen");
+  const [count, setCount] = useState(0); // current bead in this round (0-107)
+  const [todayRounds, setTodayRounds] = useState(0);
+  const [lifetimeRounds, setLifetimeRounds] = useState(0);
+  const [targetRounds, setTargetRounds] = useState(16);
+  const [soundOn, setSoundOn] = useState(true);
+
+  // Auth
+  const [phone, setPhone] = useState("");
+  const [name, setName] = useState("");
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [loginPhone, setLoginPhone] = useState("");
+  const [loginName, setLoginName] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+
+  // Edit mode
+  const [editing, setEditing] = useState(false);
+  const [editToday, setEditToday] = useState(0);
+  const [editLifetime, setEditLifetime] = useState(0);
+  const [editTarget, setEditTarget] = useState(16);
+
+  // Sync
+  const syncTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSyncedRef = useRef({ today: 0, lifetime: 0 });
+
+  // ── Load from localStorage on mount ────────────────────────────────────────
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("japa_local");
+      if (saved) {
+        const d = JSON.parse(saved);
+        const today = new Date().toISOString().slice(0, 10);
+        if (d.today_date === today) {
+          setTodayRounds(d.today_rounds || 0);
+          setCount(d.current_count || 0);
+        }
+        setLifetimeRounds(d.lifetime_rounds || 0);
+        setTargetRounds(d.target_rounds || 16);
+      }
+      const auth = localStorage.getItem("japa_auth");
+      if (auth) {
+        const a = JSON.parse(auth);
+        setPhone(a.phone);
+        setName(a.name || "");
+        setLoggedIn(true);
+        // Fetch latest from server
+        fetchFromServer(a.phone);
+      }
+    } catch { /* ignore */ }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Save to localStorage whenever state changes ────────────────────────────
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    localStorage.setItem("japa_local", JSON.stringify({
+      today_rounds: todayRounds,
+      lifetime_rounds: lifetimeRounds,
+      target_rounds: targetRounds,
+      current_count: count,
+      today_date: today,
+    }));
+  }, [todayRounds, lifetimeRounds, targetRounds, count]);
+
+  // ── Server sync (debounced) ────────────────────────────────────────────────
+  const syncToServer = useCallback(() => {
+    if (!loggedIn || !phone) return;
+    if (syncTimeout.current) clearTimeout(syncTimeout.current);
+    syncTimeout.current = setTimeout(async () => {
+      if (lastSyncedRef.current.today === todayRounds && lastSyncedRef.current.lifetime === lifetimeRounds) return;
+      try {
+        await fetch("/api/japa", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phone, today_rounds: todayRounds, lifetime_rounds: lifetimeRounds,
+            target_rounds: targetRounds,
+          }),
+        });
+        lastSyncedRef.current = { today: todayRounds, lifetime: lifetimeRounds };
+      } catch { /* silent */ }
+    }, 2000);
+  }, [loggedIn, phone, todayRounds, lifetimeRounds, targetRounds]);
+
+  useEffect(() => { syncToServer(); }, [todayRounds, lifetimeRounds, syncToServer]);
+
+  const fetchFromServer = async (ph: string) => {
+    try {
+      const r = await fetch(`/api/japa?phone=${encodeURIComponent(ph)}`);
+      const data = await r.json();
+      if (data && data.phone) {
+        setTodayRounds(data.today_rounds || 0);
+        setLifetimeRounds(data.lifetime_rounds || 0);
+        setTargetRounds(data.target_rounds || 16);
+        if (data.name) setName(data.name);
+        lastSyncedRef.current = { today: data.today_rounds || 0, lifetime: data.lifetime_rounds || 0 };
+      }
+    } catch { /* ignore */ }
+  };
+
+  // ── Login / Register ──────────────────────────────────────────────────────
+  const handleLogin = async () => {
+    if (!loginPhone.trim()) return;
+    setLoginLoading(true);
+    try {
+      const r = await fetch("/api/japa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: loginPhone.trim(), name: loginName.trim() || null }),
+      });
+      const data = await r.json();
+      if (data && data.phone) {
+        setPhone(data.phone);
+        setName(data.name || loginName.trim());
+        setLoggedIn(true);
+        // Merge: take the higher values
+        const serverToday = data.today_rounds || 0;
+        const serverLifetime = data.lifetime_rounds || 0;
+        if (serverLifetime > lifetimeRounds) setLifetimeRounds(serverLifetime);
+        if (serverToday > todayRounds) setTodayRounds(serverToday);
+        if (data.target_rounds) setTargetRounds(data.target_rounds);
+        localStorage.setItem("japa_auth", JSON.stringify({ phone: data.phone, name: data.name || loginName.trim() }));
+        lastSyncedRef.current = { today: serverToday, lifetime: serverLifetime };
+        setShowLogin(false);
+      }
+    } catch { /* ignore */ }
+    setLoginLoading(false);
+  };
+
+  const handleLogout = () => {
+    setLoggedIn(false);
+    setPhone("");
+    setName("");
+    localStorage.removeItem("japa_auth");
+  };
+
+  // ── Count tap ──────────────────────────────────────────────────────────────
+  const handleTap = useCallback(() => {
+    vibrate();
+    if (soundOn) playClick();
+    setCount(prev => {
+      const next = prev + 1;
+      if (next >= BEADS_PER_ROUND) {
+        // Round complete
+        setTimeout(() => {
+          vibrate(100);
+          if (soundOn) playRoundComplete();
+        }, 50);
+        setTodayRounds(t => t + 1);
+        setLifetimeRounds(l => l + 1);
+        return 0;
+      }
+      return next;
+    });
+  }, [soundOn]);
+
+  // ── Reset today ────────────────────────────────────────────────────────────
+  const handleResetToday = () => {
+    setCount(0);
+    setTodayRounds(0);
+  };
+
+  // ── Edit save ──────────────────────────────────────────────────────────────
+  const handleEditSave = async () => {
+    setTodayRounds(editToday);
+    setLifetimeRounds(editLifetime);
+    setTargetRounds(editTarget);
+    setEditing(false);
+    if (loggedIn && phone) {
+      try {
+        await fetch("/api/japa", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phone, today_rounds: editToday, lifetime_rounds: editLifetime, target_rounds: editTarget,
+          }),
+        });
+        lastSyncedRef.current = { today: editToday, lifetime: editLifetime };
+      } catch { /* ignore */ }
+    }
+  };
+
+  const openEdit = () => {
+    setEditToday(todayRounds);
+    setEditLifetime(lifetimeRounds);
+    setEditTarget(targetRounds);
+    setEditing(true);
+  };
+
+  // ── Computed values ────────────────────────────────────────────────────────
+  const todayTotal = todayRounds * BEADS_PER_ROUND + count;
+  const lifetimeTotal = lifetimeRounds * BEADS_PER_ROUND;
+  const progress = targetRounds > 0 ? Math.min((todayRounds / targetRounds) * 100, 100) : 0;
+  const todayStr = new Date().toLocaleDateString("hi-IN", { day: "numeric", month: "short", year: "numeric" });
+
+  // ── Focused mode: full screen tap ──────────────────────────────────────────
+  if (mode === "focused") {
+    return (
+      <>
+        <SEOHead title="जप काउंटर — Build ISKCON" description="हरे कृष्ण महामन्त्र जप काउंटर" />
+        <div
+          className="fixed inset-0 bg-[#1a1108] flex flex-col items-center justify-center select-none touch-manipulation"
+          onClick={handleTap}
+          style={{ WebkitTapHighlightColor: "transparent", userSelect: "none" }}
+        >
+          {/* Top bar */}
+          <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-3" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setMode("onscreen")} className="text-amber-400/70 text-sm font-medium px-3 py-1.5 rounded-lg bg-amber-900/20">
+              वापस
+            </button>
+            <span className="text-amber-400/50 text-xs">{todayRounds} माला</span>
+            <button onClick={() => setSoundOn(!soundOn)} className="text-amber-400/70 p-1.5 rounded-lg bg-amber-900/20">
+              {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
+          </div>
+
+          {/* Big counter */}
+          <motion.div
+            key={count}
+            initial={{ scale: 1.15, opacity: 0.7 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.15 }}
+            className="text-[120px] sm:text-[160px] font-bold text-amber-100 leading-none tabular-nums"
+          >
+            {count}
+          </motion.div>
+
+          <p className="text-amber-400/40 text-sm mt-2">{BEADS_PER_ROUND - count} शेष</p>
+
+          {/* Progress ring */}
+          <div className="mt-8">
+            <svg width="60" height="60" viewBox="0 0 60 60">
+              <circle cx="30" cy="30" r="26" fill="none" stroke="#3d2b0a" strokeWidth="4" />
+              <circle
+                cx="30" cy="30" r="26" fill="none" stroke="#d97706" strokeWidth="4"
+                strokeDasharray={`${(count / BEADS_PER_ROUND) * 163.36} 163.36`}
+                strokeLinecap="round"
+                transform="rotate(-90 30 30)"
+              />
+            </svg>
+          </div>
+
+          <p className="text-amber-500/30 text-xs mt-8">कहीं भी टैप करें</p>
+        </div>
+      </>
+    );
+  }
+
+  // ── On-screen mode ─────────────────────────────────────────────────────────
+  return (
+    <>
+      <SEOHead title="जप काउंटर — Build ISKCON" description="हरे कृष्ण महामन्त्र जप काउंटर" />
+
+      <div className="min-h-screen bg-[#111] text-white select-none" style={{ WebkitTapHighlightColor: "transparent" }}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+          <h1 className="text-lg font-bold text-amber-100 tracking-wide" style={{ fontFamily: "var(--font-devanagari, serif)" }}>
+            हरे कृष्ण
+          </h1>
+          <div className="flex items-center gap-2">
+            {loggedIn ? (
+              <button onClick={handleLogout} className="text-amber-400/60 p-1.5 rounded-lg hover:bg-white/5" title="लॉग आउट">
+                <LogOut className="w-4 h-4" />
+              </button>
+            ) : (
+              <button onClick={() => setShowLogin(true)} className="text-amber-400/60 p-1.5 rounded-lg hover:bg-white/5" title="लॉग इन">
+                <LogIn className="w-4 h-4" />
+              </button>
+            )}
+            <button onClick={openEdit} className="text-amber-400/60 p-1.5 rounded-lg hover:bg-white/5" title="संपादित करें">
+              <Pencil className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Session date */}
+        <p className="text-center text-amber-400/40 text-xs py-2">
+          {loggedIn && name ? `${name} — ` : ""}सत्र: {todayStr}
+        </p>
+
+        {/* Mode toggle */}
+        <div className="flex justify-center gap-0 mb-4">
+          <button
+            onClick={() => setMode("onscreen")}
+            className={`px-4 py-1.5 text-xs font-bold tracking-wider transition-colors ${mode === "onscreen" ? "text-white border-b-2 border-amber-500" : "text-white/30"}`}
+          >
+            ऑन-स्क्रीन
+          </button>
+          <button
+            onClick={() => setMode("focused")}
+            className={`px-4 py-1.5 text-xs font-bold tracking-wider transition-colors text-white/30`}
+          >
+            फोकस मोड
+          </button>
+        </div>
+
+        {/* Counter display */}
+        <div className="text-center px-4">
+          <motion.div
+            key={count}
+            initial={{ scale: 1.08, opacity: 0.8 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.12 }}
+            className="text-[80px] sm:text-[100px] font-bold text-white leading-none tabular-nums"
+          >
+            {count}
+          </motion.div>
+
+          {/* Progress ring around count */}
+          <div className="flex justify-center mt-1 mb-3">
+            <div className="w-32 h-1.5 rounded-full bg-white/5 overflow-hidden">
+              <motion.div
+                className="h-full bg-amber-600 rounded-full"
+                animate={{ width: `${(count / BEADS_PER_ROUND) * 100}%` }}
+                transition={{ duration: 0.15 }}
+              />
+            </div>
+          </div>
+
+          {/* Today stats */}
+          <p className="text-white/40 text-sm">आज</p>
+          <p className="text-white/70 text-sm">
+            {BEADS_PER_ROUND} &times; <span className="font-bold text-white">{todayRounds}</span>
+            {targetRounds > 0 && (
+              <span className="text-amber-500/50 ml-2">/ {targetRounds} लक्ष्य</span>
+            )}
+          </p>
+
+          {/* Today progress bar */}
+          {targetRounds > 0 && (
+            <div className="flex justify-center mt-2 mb-3">
+              <div className="w-48 h-1 rounded-full bg-white/5 overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full"
+                  style={{ backgroundColor: progress >= 100 ? "#16a34a" : "#d97706" }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 0.3 }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Divider */}
+          <div className="w-24 h-px bg-white/10 mx-auto my-3" />
+
+          {/* Lifetime stats */}
+          <p className="text-white/40 text-sm">कुल जप</p>
+          <p className="text-white text-lg font-bold tabular-nums">{lifetimeTotal.toLocaleString("hi-IN")}</p>
+          <p className="text-white/50 text-sm">
+            {BEADS_PER_ROUND} &times; <span className="font-bold text-white/80">{lifetimeRounds.toLocaleString("hi-IN")}</span>
+          </p>
+        </div>
+
+        {/* Tap buttons */}
+        <div className="flex flex-col items-center mt-8 gap-5 pb-8">
+          {/* Small bead */}
+          <motion.button
+            whileTap={{ scale: 0.92 }}
+            onClick={handleTap}
+            className="w-28 h-28 rounded-full bg-gradient-to-b from-amber-700 to-amber-900 shadow-lg shadow-amber-900/40 active:shadow-inner touch-manipulation"
+            style={{ WebkitTapHighlightColor: "transparent" }}
+          />
+
+          {/* Large bead */}
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={handleTap}
+            className="w-52 h-52 rounded-full bg-gradient-to-b from-amber-600 to-amber-800 shadow-xl shadow-amber-900/50 active:shadow-inner touch-manipulation"
+            style={{ WebkitTapHighlightColor: "transparent" }}
+          />
+
+          {/* Bottom controls */}
+          <div className="flex items-center gap-4 mt-2">
+            <button
+              onClick={handleResetToday}
+              className="flex items-center gap-1.5 text-amber-400/40 text-xs px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
+            >
+              <RotateCcw className="w-3.5 h-3.5" /> रीसेट
+            </button>
+            <button
+              onClick={() => setSoundOn(!soundOn)}
+              className="flex items-center gap-1.5 text-amber-400/40 text-xs px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
+            >
+              {soundOn ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+              {soundOn ? "ध्वनि" : "मौन"}
+            </button>
+          </div>
+        </div>
+
+        {/* Sync indicator */}
+        {loggedIn && (
+          <p className="text-center text-amber-400/20 text-[10px] pb-4">
+            <Phone className="w-3 h-3 inline mr-1" />{phone} — सिंक चालू
+          </p>
+        )}
+      </div>
+
+      {/* ── Login Modal ─────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showLogin && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/70 flex items-end sm:items-center justify-center"
+            onClick={() => setShowLogin(false)}
+          >
+            <motion.div
+              initial={{ y: 100 }}
+              animate={{ y: 0 }}
+              exit={{ y: 100 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-[#1a1a1a] rounded-t-2xl sm:rounded-2xl w-full max-w-sm p-6 space-y-4"
+            >
+              <h3 className="text-lg font-bold text-amber-100">अपनी प्रगति सहेजें</h3>
+              <p className="text-white/40 text-sm">फोन नंबर से लॉग इन करें — आपकी जप प्रगति सुरक्षित रहेगी।</p>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2.5">
+                  <Phone className="w-4 h-4 text-amber-500/50" />
+                  <input
+                    type="tel"
+                    value={loginPhone}
+                    onChange={e => setLoginPhone(e.target.value)}
+                    placeholder="+91 98765 43210"
+                    className="bg-transparent flex-1 text-white outline-none text-sm placeholder-white/20"
+                    autoFocus
+                  />
+                </div>
+                <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2.5">
+                  <User className="w-4 h-4 text-amber-500/50" />
+                  <input
+                    type="text"
+                    value={loginName}
+                    onChange={e => setLoginName(e.target.value)}
+                    placeholder="आपका नाम (वैकल्पिक)"
+                    className="bg-transparent flex-1 text-white outline-none text-sm placeholder-white/20"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={handleLogin}
+                disabled={loginLoading || !loginPhone.trim()}
+                className="w-full py-3 bg-amber-600 text-white font-bold rounded-xl hover:bg-amber-700 disabled:opacity-40 transition-colors text-sm"
+              >
+                {loginLoading ? "..." : "सहेजें और जारी रखें"}
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Edit Modal ──────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {editing && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/70 flex items-end sm:items-center justify-center"
+            onClick={() => setEditing(false)}
+          >
+            <motion.div
+              initial={{ y: 100 }}
+              animate={{ y: 0 }}
+              exit={{ y: 100 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-[#1a1a1a] rounded-t-2xl sm:rounded-2xl w-full max-w-sm p-6 space-y-4"
+            >
+              <h3 className="text-lg font-bold text-amber-100">संपादित करें</h3>
+
+              <div className="space-y-3">
+                <label className="block">
+                  <span className="text-white/40 text-xs">आज की माला</span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={editToday}
+                    onChange={e => setEditToday(Math.max(0, parseInt(e.target.value) || 0))}
+                    className="mt-1 w-full bg-white/5 rounded-xl px-3 py-2.5 text-white outline-none text-sm focus:ring-1 focus:ring-amber-600"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-white/40 text-xs">कुल माला (Lifetime)</span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={editLifetime}
+                    onChange={e => setEditLifetime(Math.max(0, parseInt(e.target.value) || 0))}
+                    className="mt-1 w-full bg-white/5 rounded-xl px-3 py-2.5 text-white outline-none text-sm focus:ring-1 focus:ring-amber-600"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-white/40 text-xs flex items-center gap-1"><Target className="w-3 h-3" /> दैनिक लक्ष्य (माला)</span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={editTarget}
+                    onChange={e => setEditTarget(Math.max(0, parseInt(e.target.value) || 0))}
+                    className="mt-1 w-full bg-white/5 rounded-xl px-3 py-2.5 text-white outline-none text-sm focus:ring-1 focus:ring-amber-600"
+                  />
+                </label>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setEditing(false)}
+                  className="flex-1 py-2.5 bg-white/5 text-white/60 font-medium rounded-xl text-sm hover:bg-white/10 transition-colors"
+                >
+                  रद्द करें
+                </button>
+                <button
+                  onClick={handleEditSave}
+                  className="flex-1 py-2.5 bg-amber-600 text-white font-bold rounded-xl text-sm hover:bg-amber-700 transition-colors"
+                >
+                  सहेजें
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
