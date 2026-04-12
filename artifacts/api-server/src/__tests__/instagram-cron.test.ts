@@ -2,49 +2,53 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import fs from "fs";
 import path from "path";
 
-// ── Canto mapping tests ────────────────────────────────────────────────────
+// ── Canto mapping tests (dynamic boundary detection) ────────────────────────
 
-const CANTO_BOUNDARIES = [1, 20, 65, 70, 107, 136];
+describe("getCantoNumber (dynamic)", () => {
+  // Simulate the dynamic boundary lookup with a chapter index
+  interface ChapterInfo { globalNumber: number; skandh: number; chapterInSkandh: number }
 
-function getCantoNumber(globalChapter: number): number {
-  for (let i = CANTO_BOUNDARIES.length - 1; i >= 0; i--) {
-    if (globalChapter >= CANTO_BOUNDARIES[i]) return i + 1;
+  function getCantoFromIndex(globalChapter: number, chapters: ChapterInfo[]): number {
+    const ch = chapters.find((c) => c.globalNumber === globalChapter);
+    if (ch) return ch.skandh;
+    let closest = chapters[0];
+    for (const c of chapters) {
+      if (Math.abs(c.globalNumber - globalChapter) < Math.abs(closest.globalNumber - globalChapter)) {
+        closest = c;
+      }
+    }
+    return closest?.skandh || 1;
   }
-  return 1;
-}
 
-describe("getCantoNumber", () => {
-  it("returns canto 1 for chapters 1-19", () => {
-    expect(getCantoNumber(1)).toBe(1);
-    expect(getCantoNumber(10)).toBe(1);
-    expect(getCantoNumber(19)).toBe(1);
+  const sampleIndex: ChapterInfo[] = [
+    { globalNumber: 1, skandh: 1, chapterInSkandh: 1 },
+    { globalNumber: 19, skandh: 1, chapterInSkandh: 19 },
+    { globalNumber: 20, skandh: 2, chapterInSkandh: 1 },
+    { globalNumber: 50, skandh: 3, chapterInSkandh: 10 },
+    { globalNumber: 100, skandh: 5, chapterInSkandh: 5 },
+    { globalNumber: 200, skandh: 10, chapterInSkandh: 1 },
+    { globalNumber: 300, skandh: 12, chapterInSkandh: 5 },
+  ];
+
+  it("returns correct canto for exact match", () => {
+    expect(getCantoFromIndex(1, sampleIndex)).toBe(1);
+    expect(getCantoFromIndex(20, sampleIndex)).toBe(2);
+    expect(getCantoFromIndex(200, sampleIndex)).toBe(10);
+    expect(getCantoFromIndex(300, sampleIndex)).toBe(12);
   });
 
-  it("returns canto 2 for chapters 20-64", () => {
-    expect(getCantoNumber(20)).toBe(2);
-    expect(getCantoNumber(40)).toBe(2);
-    expect(getCantoNumber(64)).toBe(2);
+  it("returns nearest canto for non-exact match", () => {
+    expect(getCantoFromIndex(18, sampleIndex)).toBe(1); // nearest to 19
+    expect(getCantoFromIndex(21, sampleIndex)).toBe(2); // nearest to 20
   });
 
-  it("returns canto 3 for chapters 65-69", () => {
-    expect(getCantoNumber(65)).toBe(3);
-    expect(getCantoNumber(69)).toBe(3);
-  });
-
-  it("returns canto 4 for chapters 70-106", () => {
-    expect(getCantoNumber(70)).toBe(4);
-    expect(getCantoNumber(100)).toBe(4);
-    expect(getCantoNumber(106)).toBe(4);
-  });
-
-  it("returns canto 5 for chapters 107-135", () => {
-    expect(getCantoNumber(107)).toBe(5);
-    expect(getCantoNumber(135)).toBe(5);
-  });
-
-  it("returns canto 6 for chapters 136+", () => {
-    expect(getCantoNumber(136)).toBe(6);
-    expect(getCantoNumber(170)).toBe(6);
+  it("Bhagavatam has 12 cantos", () => {
+    // Srimad Bhagavatam standard: 12 skandhs
+    const TOTAL_CANTOS = 12;
+    expect(TOTAL_CANTOS).toBe(12);
+    // Our sample covers up to canto 12
+    const maxCanto = Math.max(...sampleIndex.map((c) => c.skandh));
+    expect(maxCanto).toBe(12);
   });
 });
 

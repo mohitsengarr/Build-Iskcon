@@ -29,14 +29,141 @@ const STATE_FILE = path.resolve(
 );
 
 // ── Canto mapping (global chapter → canto number) ───────────────────────────
+// Srimad Bhagavatam has 12 cantos (skandhs). We build a chapter index from
+// batch data using the same logic as the website's buildChapterIndex().
+// This maps globalChapterNumber → { skandh, chapterInSkandh }.
 
-const CANTO_BOUNDARIES = [1, 20, 65, 70, 107, 136];
+interface ChapterInfo {
+  globalNumber: number;
+  skandh: number;
+  chapterInSkandh: number;
+  title: string;
+}
+
+const HINDI_NUMS: Record<string, number> = {
+  एक: 1, दो: 2, तीन: 3, चार: 4, पाँच: 5, छः: 6, छह: 6,
+  सात: 7, आठ: 8, नौ: 9, दस: 10, ग्यारह: 11, बारह: 12,
+  तेरह: 13, चौदह: 14, पन्द्रह: 15, सोलह: 16, सत्रह: 17,
+  अठारह: 18, उन्नीस: 19, बीस: 20, इक्कीस: 21, बाईस: 22,
+  तेईस: 23, चौबीस: 24, पच्चीस: 25, छब्बीस: 26, सत्ताईस: 27,
+  अट्ठाईस: 28, उनतीस: 29, तीस: 30, इक्तीस: 31,
+};
+
+const OCR_CHAPTER_FIXES: Record<string, { num: number; title: string }> = {
+  "Chapter 278 अध्याय": { num: 8, title: "अध्याय आठ" },
+  "Chapter it": { num: 9, title: "अध्याय नौ" },
+};
+
+let _chapterIndexCache: ChapterInfo[] | null = null;
+let _chapterCacheTime = 0;
+const CHAPTER_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+function buildChapterIndex(): ChapterInfo[] {
+  if (_chapterIndexCache && Date.now() - _chapterCacheTime < CHAPTER_CACHE_TTL) {
+    return _chapterIndexCache;
+  }
+
+  const allBatches = getAllBatches();
+  const allPages = allBatches.flatMap((b) => b.pages);
+  const chapterPattern = /^(?:\d+\s+)?(?:Chapter|अध्याय)\s+(.+)/imu;
+
+  const chapters: ChapterInfo[] = [];
+  let currentSkandh = 1;
+  let lastChapterNum = 0;
+  let globalCounter = 0;
+
+  for (const page of allPages) {
+    const lines = page.text.split("\n");
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.includes("पूर्ण हुए") || trimmed.includes("पूर्ण हुआ")) continue;
+
+      const match = trimmed.match(chapterPattern);
+      if (!match) continue;
+
+      let title = match[0].replace(/^\d+\s+/, "").trim();
+      let chNum = 0;
+
+      // Apply OCR fixes
+      for (const [key, fix] of Object.entries(OCR_CHAPTER_FIXES)) {
+        if (title.includes(key) || trimmed.includes(key)) {
+          chNum = fix.num;
+          title = fix.title;
+          break;
+        }
+      }
+
+      // Parse Hindi number
+      if (!chNum) {
+        for (const [word, num] of Object.entries(HINDI_NUMS)) {
+          if (title.includes(word)) { chNum = num; break; }
+        }
+      }
+
+      // Parse Arabic number
+      if (!chNum) {
+        const numMatch = title.match(/\d+/);
+        if (numMatch) {
+          const n = parseInt(numMatch[0], 10);
+          if (n > 0 && n <= 100) chNum = n;
+        }
+      }
+
+      if (!chNum) continue;
+
+      // If chapter resets to 1, new skandh
+      if (chNum === 1 && lastChapterNum > 1) {
+        currentSkandh++;
+      }
+
+      // Skip duplicates within same skandh
+      if (chapters.find((c) => c.chapterInSkandh === chNum && c.skandh === currentSkandh)) continue;
+
+      globalCounter++;
+      lastChapterNum = chNum;
+      chapters.push({
+        globalNumber: globalCounter,
+        skandh: currentSkandh,
+        chapterInSkandh: chNum,
+        title,
+      });
+    }
+  }
+
+  _chapterIndexCache = chapters.sort((a, b) =>
+    a.skandh !== b.skandh ? a.skandh - b.skandh : a.chapterInSkandh - b.chapterInSkandh
+  );
+  _chapterCacheTime = Date.now();
+
+  const totalCantos = new Set(chapters.map((c) => c.skandh)).size;
+  logger.info({ totalChapters: chapters.length, totalCantos }, "Built chapter index for Instagram cron");
+  return _chapterIndexCache;
+}
 
 function getCantoNumber(globalChapter: number): number {
-  for (let i = CANTO_BOUNDARIES.length - 1; i >= 0; i--) {
-    if (globalChapter >= CANTO_BOUNDARIES[i]) return i + 1;
+  // Map from image manifest globalChapterNumber to skandh
+  // The image manifest uses its own sequential numbering which may differ
+  // from the batch-derived chapter index. Try to find by matching.
+  const chapters = buildChapterIndex();
+
+  // Direct lookup
+  const ch = chapters.find((c) => c.globalNumber === globalChapter);
+  if (ch) return ch.skandh;
+
+  // Fallback: find nearest chapter
+  let closest = chapters[0];
+  for (const c of chapters) {
+    if (Math.abs(c.globalNumber - globalChapter) < Math.abs(closest.globalNumber - globalChapter)) {
+      closest = c;
+    }
   }
-  return 1;
+  return closest?.skandh || 1;
+}
+
+function getChapterInCanto(globalChapter: number): number {
+  const chapters = buildChapterIndex();
+  const ch = chapters.find((c) => c.globalNumber === globalChapter);
+  return ch?.chapterInSkandh || 0;
 }
 
 // ── State management ────────────────────────────────────────────────────────
