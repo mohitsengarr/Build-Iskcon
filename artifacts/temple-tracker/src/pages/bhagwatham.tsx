@@ -1414,7 +1414,7 @@ function Sidebar({
                           </div>
                           <div className="min-w-0">
                             <p className="text-sm font-bold text-white truncate">
-                              Canto {skandh} — {SKANDH_NAMES[skandh]?.en || ""}
+                              Canto {skandh}
                             </p>
                             {SKANDH_NAMES[skandh] && (
                               <p className={`text-[11px] truncate ${hasActiveChapter ? "text-orange-100" : "text-stone-300"}`}>
