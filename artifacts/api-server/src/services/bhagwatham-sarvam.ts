@@ -784,8 +784,9 @@ export async function processNextBatch(): Promise<{
 /**
  * Find all pages with empty/near-empty text in existing batches and re-OCR them.
  * Processes up to `limit` pages per call to avoid overloading the API.
+ * When reverse=true, processes highest page numbers first (prioritizes later cantos).
  */
-export async function reprocessEmptyPages(limit = 20): Promise<{
+export async function reprocessEmptyPages(limit = 20, reverse = false): Promise<{
   reprocessed: number;
   totalEmpty: number;
   message: string;
@@ -817,7 +818,12 @@ export async function reprocessEmptyPages(limit = 20): Promise<{
     return { reprocessed: 0, totalEmpty: 0, message: "No empty pages found" };
   }
 
-  logger.info({ totalEmpty: emptyPages.length, limit }, "Found empty pages to reprocess");
+  // Sort by page number: reverse=true processes highest pages first (Canto 11-12 priority)
+  if (reverse) {
+    emptyPages.sort((a, b) => b.pageNumber - a.pageNumber);
+  }
+
+  logger.info({ totalEmpty: emptyPages.length, limit, reverse }, "Found empty pages to reprocess");
 
   // Process up to `limit` pages
   const toProcess = emptyPages.slice(0, limit);

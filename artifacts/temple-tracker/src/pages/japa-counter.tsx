@@ -273,6 +273,20 @@ export default function JapaCounter() {
     });
   }, [soundOn]);
 
+  const handleDecrement = useCallback(() => {
+    vibrate();
+    setCount(prev => {
+      if (prev > 0) return prev - 1;
+      // If at 0 and we have completed rounds, undo last round completion
+      if (todayRounds > 0) {
+        setTodayRounds(t => t - 1);
+        setLifetimeRounds(l => l - 1);
+        return BEADS_PER_ROUND - 1;
+      }
+      return 0;
+    });
+  }, [todayRounds]);
+
   // ── Reset today ────────────────────────────────────────────────────────────
   const handleResetToday = () => {
     setCount(0);
@@ -504,19 +518,19 @@ export default function JapaCounter() {
 
         {/* Tap buttons */}
         <div className="flex flex-col items-center gap-4 pb-8">
-          {/* Small bead */}
+          {/* Small bead — decrement */}
           <motion.button
-            whileTap={{ scale: 0.92 }}
-            onClick={handleTap}
-            className="w-20 h-20 rounded-full bg-gradient-to-b from-amber-700 to-amber-900 shadow-lg shadow-amber-900/40 active:shadow-inner touch-manipulation"
+            whileTap={{ scale: 0.90 }}
+            onClick={handleDecrement}
+            className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-b from-amber-700 to-amber-900 shadow-lg shadow-amber-900/40 active:shadow-inner touch-manipulation"
             style={{ WebkitTapHighlightColor: "transparent" }}
           />
 
-          {/* Large bead */}
+          {/* Large bead — increment */}
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={handleTap}
-            className="w-44 h-44 rounded-full bg-gradient-to-b from-amber-600 to-amber-800 shadow-xl shadow-amber-900/50 active:shadow-inner touch-manipulation"
+            className="w-52 h-52 sm:w-64 sm:h-64 rounded-full bg-gradient-to-b from-amber-600 to-amber-800 shadow-xl shadow-amber-900/50 active:shadow-inner touch-manipulation"
             style={{ WebkitTapHighlightColor: "transparent" }}
           />
         </div>

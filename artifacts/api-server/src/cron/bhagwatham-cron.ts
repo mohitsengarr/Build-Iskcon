@@ -94,12 +94,15 @@ export function startBhagwathamCron(): void {
   });
 
   // ── Re-OCR empty pages cron — fills gaps from failed OCR passes ──────
-  const REOCR_INTERVAL = "17,47 * * * *"; // Every 30 min, offset by 17
-  logger.info({ interval: REOCR_INTERVAL }, "Bhagwatham re-OCR empty pages cron started");
+  // High throughput: 50 pages every 5 min (reverse order = Canto 11-12 first)
+  // This processes ~600 pages/hour to fill the 1,000+ empty Canto 11-12 pages quickly.
+  const REOCR_INTERVAL = "*/5 * * * *"; // Every 5 min
+  const REOCR_BATCH_SIZE = 50;
+  logger.info({ interval: REOCR_INTERVAL, batchSize: REOCR_BATCH_SIZE }, "Bhagwatham re-OCR empty pages cron started (reverse priority)");
 
   cron.schedule(REOCR_INTERVAL, async () => {
     try {
-      const result = await reprocessEmptyPages(10); // Process 10 pages per tick
+      const result = await reprocessEmptyPages(REOCR_BATCH_SIZE, true); // reverse=true: highest pages first
       if (result.reprocessed > 0) {
         logger.info(
           { reprocessed: result.reprocessed, totalEmpty: result.totalEmpty },

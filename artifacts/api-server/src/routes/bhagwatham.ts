@@ -447,7 +447,8 @@ router.post("/bhagwatham/backfill-translations", async (_req, res) => {
 router.post("/bhagwatham/reprocess-empty", async (req, res) => {
   try {
     const limit = parseInt(req.query.limit as string) || 20;
-    const result = await reprocessEmptyPages(limit);
+    const reverse = req.query.reverse === "true";
+    const result = await reprocessEmptyPages(limit, reverse);
     res.json(result);
   } catch (err) {
     res.status(500).json({ success: false, message: "Failed to reprocess empty pages" });
