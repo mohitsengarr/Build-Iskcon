@@ -1262,7 +1262,16 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T02:29:56.407Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 130,
+      "chapterTitle": "Chapter सोलह",
+      "imagePath": "chapter-130.jpg",
+      "prompt": "Kashyapamuni advises his wife Aditi to observe a vow in their ashram to alleviate her sorrow.",
+      "descriptionHi": "इस अध्याय में देवताओं की माता अदिति के दुख का वर्णन किया गया है, जो अपने पुत्रों के लाभ के लिए तपस्या करने के लिए प्रेरित होती है। कश्यपमुनि अपनी पत्नी को व्रत रखने की सलाह देते हैं। अदिति का दुख और कश्यपमुनि की सलाह इस अध्याय का मुख्य विषय है।",
+      "generatedAt": "2026-04-12T02:34:29.171Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T02:33:29.645Z"
+  "lastUpdated": "2026-04-12T02:34:29.171Z"
 }
