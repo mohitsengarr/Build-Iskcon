@@ -1605,7 +1605,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T08:24:04.644Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 165,
+      "chapterTitle": "Chapter सत्रह",
+      "imagePath": "chapter-165.jpg",
+      "prompt": "Krishna and his companions stroll peacefully along a serene riverbank.",
+      "descriptionHi": "इस अध्याय में कोई विशेष घटना नहीं है क्योंकि अध्याय सामग्री खाली है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T08:32:49.772Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T08:24:04.644Z"
+  "lastUpdated": "2026-04-12T08:32:49.772Z"
 }
