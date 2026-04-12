@@ -1577,7 +1577,22 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T08:00:56.818Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 163,
+      "chapterTitle": "Chapter चौदह",
+      "imagePath": "chapter-163.jpg",
+      "prompt": "Krishna stands serenely as Brahma and Vishnu offer devotion and praise in a heavenly setting.",
+      "descriptionHi": "ब्रह्मा द्वारा भगवान् कृष्ण की स्तुति की जा रही है, जिसमें उनके दिव्य अंगों और माधुरी की स्तुति की जा रही है। भगवान् को प्रसन्न करने के लिए ब्रह्मा ने वैदिक प्रमाणों से प्राप्त दिव्य ध्वनि के श्रवण तथा कीर्तन की भक्तिमयी विधि का वर्णन किया है।",
+      "personasUsed": [
+        "krishna_adult",
+        "vishnu",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T08:12:51.181Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T08:07:36.774Z"
+  "lastUpdated": "2026-04-12T08:12:51.181Z"
 }
