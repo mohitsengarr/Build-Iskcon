@@ -1644,7 +1644,33 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T09:00:52.527Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 168,
+      "chapterTitle": "Chapter छब्बीस",
+      "imagePath": "chapter-168.jpg",
+      "prompt": "Krishna lifts a mountain, astonishing the cowherds in Vrindavan, as Nanda Maharaj recounts Garuda Muni's words about Krishna's divine powers.",
+      "descriptionHi": "नन्द महाराज गोपों को गर्ग मुनि के मुख से सुनी गई कृष्ण की अद्भुत शक्ति का वर्णन करते हैं, जिसमें कृष्ण के विविध असामान्य कार्यों का वर्णन है। गोपगण कृष्ण की शक्ति से अनजान होने के कारण उनके कार्यों से चकित रह जाते थे।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T09:05:30.550Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 169,
+      "chapterTitle": "अध्याय आठ में जहाँ ये श्लोक मूल रूप में दिए गए हैं श्रील प्रभुपाद द्वारा लिखित विस्तृत तात्पर्य",
+      "imagePath": "chapter-169.jpg",
+      "prompt": "Krishna stands serene in a palace, surrounded by gentle smiles, as wise men proclaim him Vasudeva, a name reflecting his divine nature.",
+      "descriptionHi": "इस अध्याय में कृष्ण के जन्म और उनके नामकरण का वर्णन है, जिसमें उन्हें वासुदेव कहा जाता है। यह अध्याय कृष्ण के जीवन और उनके महत्व को दर्शाता है। कृष्ण के नाम का अर्थ और उनकी महानता का वर्णन किया गया है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T09:05:48.898Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T09:00:52.527Z"
+  "lastUpdated": "2026-04-12T09:05:48.898Z"
 }
