@@ -6,7 +6,7 @@ import { logger } from "../lib/logger";
 
 const CRON_INTERVAL = "*/5 * * * *"; // Every 5 minutes
 const BACKFILL_INTERVAL = "3,13,23,33,43,53 * * * *"; // Offset by 3 min to avoid overlap
-const AUDIT_INTERVAL = "7,37 * * * *"; // Every 30 min, offset by 7 to avoid overlap
+const AUDIT_INTERVAL = "*/5 * * * *"; // Every 5 min — prioritizes chapters without images
 const CREDIT_CHECK_INTERVAL = "0 */2 * * *"; // Every 2 hours
 
 export function startBhagwathamCron(): void {
