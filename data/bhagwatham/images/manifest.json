@@ -1174,7 +1174,16 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-11T23:48:24.794Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 121,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-121.jpg",
+      "prompt": "Shivji calmly collects and consumes the deadly poison in the ocean, saving the universe from destruction.",
+      "descriptionHi": "शिवजी ने विषपान करके ब्रह्माण्ड की रक्षा की, जो मन्थन से उत्पन्न हुआ था। यह घटना शिवजी की महानता और उनके भक्तों के प्रति प्रेम को दर्शाती है।",
+      "generatedAt": "2026-04-12T00:01:45.952Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-11T23:48:24.794Z"
+  "lastUpdated": "2026-04-12T00:01:45.953Z"
 }
