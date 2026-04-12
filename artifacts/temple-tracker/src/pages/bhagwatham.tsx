@@ -1402,6 +1402,8 @@ function Sidebar({
                   return Array.from(skandhGroups.entries()).map(([skandh, chs]) => {
                     const isExpanded = expandedCantos.has(skandh);
                     const hasActiveChapter = chs.some(ch => ch.globalNumber === activeChapter);
+                    // Get first chapter's image for canto thumbnail
+                    const cantoImg = chs.map(ch => chapterImages.get(ch.globalNumber)?.[0]?.url).find(Boolean);
                     return (
                     <div key={skandh}>
                       <button
@@ -1413,13 +1415,17 @@ function Sidebar({
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black shrink-0 ${
-                            hasActiveChapter
-                              ? "bg-white/25 text-white ring-2 ring-white/40"
-                              : "bg-orange-100 text-orange-700"
-                          }`}>
-                            {skandh}
-                          </div>
+                          {cantoImg ? (
+                            <img src={cantoImg} alt="" className={`w-10 h-10 rounded-xl object-cover shrink-0 ${hasActiveChapter ? "ring-2 ring-white/40" : ""}`} />
+                          ) : (
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0 ${
+                              hasActiveChapter
+                                ? "bg-white/25 text-white ring-2 ring-white/40"
+                                : "bg-orange-100 text-orange-700"
+                            }`}>
+                              {skandh}
+                            </div>
+                          )}
                           <div className="min-w-0">
                             <p className={`text-sm font-bold truncate ${hasActiveChapter ? "text-white" : "text-stone-800"}`}>
                               Canto {skandh}
