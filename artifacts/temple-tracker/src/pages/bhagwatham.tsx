@@ -183,10 +183,11 @@ function saveSectionOverrides(o: PageOverrides) {
   localStorage.setItem("bhagwatham_section_overrides", JSON.stringify(o));
 }
 
+// BBT print-style section colors
 const SECTION_KIND_LABELS: Record<SectionKind, { label: string; color: string; bg: string }> = {
-  shlok:     { label: "Shlok",      color: "text-orange-700", bg: "bg-orange-100 border-orange-300" },
+  shlok:     { label: "Shlok",      color: "text-blue-700",   bg: "bg-blue-100 border-blue-300" },
   shabdarth: { label: "Shabdarth",  color: "text-pink-700",   bg: "bg-pink-100 border-pink-300" },
-  anuvad:    { label: "Anuvad",     color: "text-blue-700",   bg: "bg-blue-100 border-blue-300" },
+  anuvad:    { label: "Anuvad",     color: "text-stone-900",  bg: "bg-stone-100 border-stone-300" },
   tatparya:  { label: "Tatparya",   color: "text-green-700",  bg: "bg-green-100 border-green-300" },
   text:      { label: "Text",       color: "text-stone-600",  bg: "bg-stone-100 border-stone-300" },
 };
@@ -1181,12 +1182,12 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
           case "shabdarth":
             return (
               <div key={i} className="my-4">
-                <p className={`text-[16px] font-bold mb-2 text-center ${themeKey === "dark" ? "text-pink-400" : themeKey === "sepia" ? "text-[#8B2252]" : "text-pink-700"}`} style={{ fontFamily: "var(--font-devanagari)" }}>शब्दार्थ</p>
+                <p className={`text-[13px] font-bold mb-2 text-center ${themeKey === "dark" ? "text-pink-400" : themeKey === "sepia" ? "text-[#8B2252]" : "text-pink-700"}`} style={{ fontFamily: "var(--font-devanagari)" }}>शब्दार्थ</p>
                 {sec.lines.map((l, j) => {
                   // Highlight Hindi meanings (after —) in bold, keep Sanskrit words regular
                   const parts = l.split(/(—|--)/);
                   return (
-                    <p key={j} className={`text-[14px] sm:text-[15px] leading-[1.8] mb-0.5 ${themeKey === "dark" ? "text-pink-300/80" : themeKey === "sepia" ? "text-[#6a2040]" : "text-pink-900/80"}`} style={{ fontFamily: "var(--font-devanagari)" }}>
+                    <p key={j} className={`text-[12px] sm:text-[13px] leading-[1.7] mb-0.5 ${themeKey === "dark" ? "text-pink-300/80" : themeKey === "sepia" ? "text-[#6a2040]" : "text-pink-900/80"}`} style={{ fontFamily: "var(--font-devanagari)" }}>
                       {parts.map((part, k) => {
                         if (part === "—" || part === "--") return <span key={k}>—</span>;
                         // Odd indices (after —) are Hindi meanings → bold
@@ -1209,7 +1210,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
               <div key={i} className={isAnuvadContinuation ? "" : "mt-3"}>
                 {showLabel && <p className={`text-[15px] sm:text-[16px] font-bold mb-1 indent-8 ${themeKey === "dark" ? "text-stone-200" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-800"}`} style={{ fontFamily: "var(--font-devanagari)" }}>अनुवाद :</p>}
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`text-[16px] sm:text-[18px] font-bold leading-[2] mb-1 indent-8 ${themeKey === "dark" ? "text-stone-100" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-900"}`} style={{ fontFamily: "var(--font-devanagari)" }}>{l}</p>
+                  <p key={j} className={`text-[16px] sm:text-[18px] font-bold leading-[2] mb-1 ${j === 0 ? "indent-8" : ""} ${themeKey === "dark" ? "text-stone-100" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-900"}`} style={{ fontFamily: "var(--font-devanagari)" }}>{l}</p>
                 ))}
               </div>
             );
