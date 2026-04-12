@@ -19,6 +19,23 @@ type Mode = "onscreen" | "focused";
 
 const BEADS_PER_ROUND = 108;
 
+// ── Supabase direct access (works on both Replit & Vercel static) ───────────
+const SUPABASE_URL = "https://etfmndcrchundvgtvmot.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0Zm1uZGNyY2h1bmR2Z3R2bW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2NDE1MTIsImV4cCI6MjA2MzIxNzUxMn0.7GXS820xSFcUy2TRdbspN7s-NP3sgKFFtUP-Zw0Qbrs";
+
+function sbFetch(path: string, opts?: RequestInit) {
+  return fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...opts,
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      "Content-Type": "application/json",
+      Prefer: "return=representation",
+      ...(opts?.headers || {}),
+    },
+  });
+}
+
 // ── Haptic / Audio Feedback ──────────────────────────────────────────────────
 
 function vibrate(ms: number = 15) {
@@ -133,12 +150,15 @@ export default function JapaCounter() {
     syncTimeout.current = setTimeout(async () => {
       if (lastSyncedRef.current.today === todayRounds && lastSyncedRef.current.lifetime === lifetimeRounds) return;
       try {
-        await fetch("/api/japa", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
+        const today = new Date().toISOString().slice(0, 10);
+        await sbFetch(`japa_counter?phone=eq.${encodeURIComponent(phone)}`, {
+          method: "PATCH",
           body: JSON.stringify({
-            phone, today_rounds: todayRounds, lifetime_rounds: lifetimeRounds,
+            today_rounds: todayRounds,
+            lifetime_rounds: lifetimeRounds,
             target_rounds: targetRounds,
+            today_date: today,
+            updated_at: new Date().toISOString(),
           }),
         });
         lastSyncedRef.current = { today: todayRounds, lifetime: lifetimeRounds };
@@ -150,14 +170,17 @@ export default function JapaCounter() {
 
   const fetchFromServer = async (ph: string) => {
     try {
-      const r = await fetch(`/api/japa?phone=${encodeURIComponent(ph)}`);
-      const data = await r.json();
-      if (data && data.phone) {
-        setTodayRounds(data.today_rounds || 0);
+      const r = await sbFetch(`japa_counter?phone=eq.${encodeURIComponent(ph)}`);
+      const rows = await r.json();
+      if (Array.isArray(rows) && rows.length > 0) {
+        const data = rows[0];
+        const today = new Date().toISOString().slice(0, 10);
+        const todayR = data.today_date === today ? (data.today_rounds || 0) : 0;
+        setTodayRounds(todayR);
         setLifetimeRounds(data.lifetime_rounds || 0);
         setTargetRounds(data.target_rounds || 16);
         if (data.name) setName(data.name);
-        lastSyncedRef.current = { today: data.today_rounds || 0, lifetime: data.lifetime_rounds || 0 };
+        lastSyncedRef.current = { today: todayR, lifetime: data.lifetime_rounds || 0 };
       }
     } catch { /* ignore */ }
   };
@@ -167,23 +190,53 @@ export default function JapaCounter() {
     if (!loginPhone.trim()) return;
     setLoginLoading(true);
     try {
-      const r = await fetch("/api/japa", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: loginPhone.trim(), name: loginName.trim() || null }),
-      });
-      const data = await r.json();
+      const ph = loginPhone.trim();
+      const nm = loginName.trim() || null;
+      const today = new Date().toISOString().slice(0, 10);
+
+      // Check if user exists
+      const checkR = await sbFetch(`japa_counter?phone=eq.${encodeURIComponent(ph)}`);
+      const existing = await checkR.json();
+
+      let data: Record<string, unknown>;
+
+      if (Array.isArray(existing) && existing.length > 0) {
+        data = existing[0];
+        if (data.today_date !== today) {
+          data.today_rounds = 0;
+          data.today_date = today;
+        }
+        if (nm && nm !== data.name) {
+          await sbFetch(`japa_counter?phone=eq.${encodeURIComponent(ph)}`, {
+            method: "PATCH",
+            body: JSON.stringify({ name: nm, updated_at: new Date().toISOString() }),
+          });
+          data.name = nm;
+        }
+      } else {
+        const createR = await sbFetch("japa_counter", {
+          method: "POST",
+          headers: { Prefer: "return=representation" },
+          body: JSON.stringify({
+            phone: ph, name: nm,
+            lifetime_rounds: 0, today_rounds: 0,
+            today_date: today, target_rounds: 16,
+          }),
+        });
+        const created = await createR.json();
+        data = Array.isArray(created) ? created[0] : created;
+      }
+
       if (data && data.phone) {
-        setPhone(data.phone);
-        setName(data.name || loginName.trim());
+        setPhone(data.phone as string);
+        setName((data.name as string) || loginPhone.trim());
         setLoggedIn(true);
-        // Merge: take the higher values
-        const serverToday = data.today_rounds || 0;
-        const serverLifetime = data.lifetime_rounds || 0;
+        const serverToday = (data.today_rounds as number) || 0;
+        const serverLifetime = (data.lifetime_rounds as number) || 0;
         if (serverLifetime > lifetimeRounds) setLifetimeRounds(serverLifetime);
         if (serverToday > todayRounds) setTodayRounds(serverToday);
-        if (data.target_rounds) setTargetRounds(data.target_rounds);
-        localStorage.setItem("japa_auth", JSON.stringify({ phone: data.phone, name: data.name || loginName.trim() }));
+        if (data.target_rounds) setTargetRounds(data.target_rounds as number);
+        localStorage.setItem("japa_auth", JSON.stringify({ phone: data.phone, name: data.name || loginPhone.trim() }));
         lastSyncedRef.current = { today: serverToday, lifetime: serverLifetime };
         setShowLogin(false);
       }
@@ -232,11 +285,13 @@ export default function JapaCounter() {
     setEditing(false);
     if (loggedIn && phone) {
       try {
-        await fetch("/api/japa", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
+        const today = new Date().toISOString().slice(0, 10);
+        await sbFetch(`japa_counter?phone=eq.${encodeURIComponent(phone)}`, {
+          method: "PATCH",
           body: JSON.stringify({
-            phone, today_rounds: editToday, lifetime_rounds: editLifetime, target_rounds: editTarget,
+            today_rounds: editToday, lifetime_rounds: editLifetime,
+            target_rounds: editTarget, today_date: today,
+            updated_at: new Date().toISOString(),
           }),
         });
         lastSyncedRef.current = { today: editToday, lifetime: editLifetime };
