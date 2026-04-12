@@ -1,4 +1,27 @@
 {
-  "images": [],
-  "lastUpdated": "2026-04-12T08:48:25.278Z"
+  "images": [
+    {
+      "chapterNumber": 1,
+      "chapterTitle": "Chapter एक",
+      "sceneIndex": 1,
+      "imagePath": "ig-chapter-001-scene-2.jpg",
+      "publicUrl": "https://etfmndcrchundvgtvmot.supabase.co/storage/v1/object/public/instagram-images/ig-chapter-001-scene-2.jpg",
+      "prompt": "Brahma, the first created being, is receiving Vedic knowledge from Lord Krishna, who is imparting wisdom to him.",
+      "caption": "📖 Chapter एक\n\nA scene from Srimad Bhagavatam — the timeless wisdom of the Supreme Lord, narrated for the upliftment of all souls.\n\n🙏 Hare Krishna",
+      "hashtags": "#SrimadBhagavatam #ISKCON #BhagavatamArt #Devotion #Krishna",
+      "generatedAt": "2026-04-12T08:54:47.867Z"
+    },
+    {
+      "chapterNumber": 1,
+      "chapterTitle": "Chapter एक",
+      "sceneIndex": 2,
+      "imagePath": "ig-chapter-001-scene-3.jpg",
+      "publicUrl": "https://etfmndcrchundvgtvmot.supabase.co/storage/v1/object/public/instagram-images/ig-chapter-001-scene-3.jpg",
+      "prompt": "Arjuna and other great sages are pondering the mysteries of the universe, seeking to understand the ultimate truth and reality.",
+      "caption": "तत्त्वमसि - As Arjuna and great sages ponder the universe's mysteries, they seek the ultimate truth. May their quest inspire our own journey of self-discovery and devotion. Reflect on the mysteries of the universe and your place within it.",
+      "hashtags": "#SrimadBhagavatam #ISKCON #SpiritualQuest #CosmicContemplation #BhaktiYoga",
+      "generatedAt": "2026-04-12T08:57:14.183Z"
+    }
+  ],
+  "lastUpdated": "2026-04-12T09:01:36.607Z"
 }
