@@ -1184,6 +1184,35 @@ function Sidebar({
   onBookmarkDelete: (b: BookmarkEntry) => void;
 }) {
   const [sidebarTab, setSidebarTab] = useState<"chapters" | "bookmarks">("chapters");
+  // Track which cantos are expanded — default: only the active chapter's canto
+  const activeSkandh = activeChapter
+    ? chapters.find(c => c.globalNumber === activeChapter)?.skandh ?? null
+    : null;
+  const [expandedCantos, setExpandedCantos] = useState<Set<number>>(
+    activeSkandh ? new Set([activeSkandh]) : new Set()
+  );
+
+  // When active chapter changes, auto-expand its canto
+  useEffect(() => {
+    if (activeSkandh) {
+      setExpandedCantos(prev => {
+        if (prev.has(activeSkandh)) return prev;
+        const next = new Set(prev);
+        next.add(activeSkandh);
+        return next;
+      });
+    }
+  }, [activeSkandh]);
+
+  const toggleCanto = (skandh: number) => {
+    setExpandedCantos(prev => {
+      const next = new Set(prev);
+      if (next.has(skandh)) next.delete(skandh);
+      else next.add(skandh);
+      return next;
+    });
+  };
+
   const percent = progress && progress.totalPagesInPdf > 0
     ? (progress.totalPagesProcessed / progress.totalPagesInPdf) * 100 : 0;
 
@@ -1269,46 +1298,86 @@ function Sidebar({
                     if (!skandhGroups.has(ch.skandh)) skandhGroups.set(ch.skandh, []);
                     skandhGroups.get(ch.skandh)!.push(ch);
                   }
-                  return Array.from(skandhGroups.entries()).map(([skandh, chs]) => (
-                    <div key={skandh}>
-                      <p className="px-4 py-2 text-[10px] font-bold text-stone-400 uppercase tracking-wider sticky top-0 bg-white/95 backdrop-blur-sm z-[5]">
-                        Canto {skandh} {SKANDH_NAMES[skandh] ? `— ${SKANDH_NAMES[skandh]}` : ""}
-                      </p>
-                      {chs.map((ch) => {
-                        const isActive = activeChapter === ch.globalNumber;
-                        const imgSrc = chapterImages.get(ch.globalNumber)?.[0]?.url;
-                        const shortTitle = ch.title.split("—")[0].trim();
-                        const subtitle = ch.title.includes("—") ? ch.title.split("—").slice(1).join("—").trim() : "";
-
-                        return (
-                          <button
-                            key={ch.globalNumber}
-                            onClick={() => onChapterClick(ch)}
-                            className={`w-full text-left px-4 py-2.5 flex items-start gap-3 transition-all hover:bg-orange-50/60 ${
-                              isActive ? "bg-orange-50 border-r-2 border-orange-500" : ""
-                            }`}
-                          >
-                            {imgSrc ? (
-                              <img src={imgSrc} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0 mt-0.5" />
-                            ) : (
-                              <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center shrink-0 mt-0.5">
-                                <span className="text-xs font-bold text-stone-400">{ch.number}</span>
-                              </div>
-                            )}
-                            <div className="min-w-0 flex-1">
-                              <p className={`text-sm font-semibold truncate ${isActive ? "text-orange-700" : "text-stone-700"}`}>
-                                {shortTitle}
+                  return Array.from(skandhGroups.entries()).map(([skandh, chs]) => {
+                    const isExpanded = expandedCantos.has(skandh);
+                    const hasActiveChapter = chs.some(ch => ch.globalNumber === activeChapter);
+                    return (
+                    <div key={skandh} className="border-b border-stone-100 last:border-b-0">
+                      <button
+                        onClick={() => toggleCanto(skandh)}
+                        className={`w-full px-4 py-3 flex items-center justify-between sticky top-0 backdrop-blur-sm z-[5] transition-all cursor-pointer group ${
+                          hasActiveChapter
+                            ? "bg-orange-50/95 border-l-3 border-orange-500"
+                            : "bg-white/95 hover:bg-orange-50/40"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
+                            hasActiveChapter ? "bg-orange-500 text-white" : "bg-stone-100 text-stone-500 group-hover:bg-orange-100 group-hover:text-orange-600"
+                          }`}>
+                            {skandh}
+                          </div>
+                          <div className="min-w-0">
+                            <p className={`text-xs font-bold truncate ${hasActiveChapter ? "text-orange-700" : "text-stone-600 group-hover:text-stone-800"}`}>
+                              Canto {skandh}
+                            </p>
+                            {SKANDH_NAMES[skandh] && (
+                              <p className={`text-[10px] truncate ${hasActiveChapter ? "text-orange-500" : "text-stone-400"}`}>
+                                {SKANDH_NAMES[skandh]}
                               </p>
-                              {subtitle && (
-                                <p className="text-[11px] text-stone-400 truncate mt-0.5">{subtitle}</p>
-                              )}
-                              <p className="text-[10px] text-stone-400 mt-0.5">Page {ch.pageNumber}</p>
-                            </div>
-                          </button>
-                        );
-                      })}
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className={`text-[10px] ${hasActiveChapter ? "text-orange-400" : "text-stone-400"}`}>
+                            {chs.length} ch
+                          </span>
+                          {isExpanded ? (
+                            <ChevronUp className={`w-3.5 h-3.5 ${hasActiveChapter ? "text-orange-400" : "text-stone-400"}`} />
+                          ) : (
+                            <ChevronDown className={`w-3.5 h-3.5 ${hasActiveChapter ? "text-orange-400" : "text-stone-400"}`} />
+                          )}
+                        </div>
+                      </button>
+                      {isExpanded && (
+                        <div className="pb-1">
+                          {chs.map((ch) => {
+                            const isActive = activeChapter === ch.globalNumber;
+                            const imgSrc = chapterImages.get(ch.globalNumber)?.[0]?.url;
+                            const shortTitle = ch.title.split("—")[0].trim();
+                            const subtitle = ch.title.includes("—") ? ch.title.split("—").slice(1).join("—").trim() : "";
+
+                            return (
+                              <button
+                                key={ch.globalNumber}
+                                onClick={() => onChapterClick(ch)}
+                                className={`w-full text-left px-4 py-2.5 flex items-start gap-3 transition-all hover:bg-orange-50/60 ${
+                                  isActive ? "bg-orange-50 border-r-2 border-orange-500" : ""
+                                }`}
+                              >
+                                {imgSrc ? (
+                                  <img src={imgSrc} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0 mt-0.5" />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center shrink-0 mt-0.5">
+                                    <span className="text-xs font-bold text-stone-400">{ch.number}</span>
+                                  </div>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  <p className={`text-sm font-semibold truncate ${isActive ? "text-orange-700" : "text-stone-700"}`}>
+                                    {shortTitle}
+                                  </p>
+                                  {subtitle && (
+                                    <p className="text-[11px] text-stone-400 truncate mt-0.5">{subtitle}</p>
+                                  )}
+                                  <p className="text-[10px] text-stone-400 mt-0.5">Page {ch.pageNumber}</p>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                  ));
+                  );});
                 })()
               )}
             </nav>

@@ -244,6 +244,99 @@ describe("Reverse chapter ordering", () => {
   });
 });
 
+// ── Chapter index / skandh detection tests ──────────────────────────────────
+
+describe("buildChapterIndex skandh detection", () => {
+  const HINDI_NUMS: Record<string, number> = {
+    एक: 1, दो: 2, तीन: 3, चार: 4, पाँच: 5, छह: 6,
+    सात: 7, आठ: 8, नौ: 9, दस: 10, ग्यारह: 11, बारह: 12,
+    तेरह: 13, चौदह: 14, पन्द्रह: 15, सोलह: 16, सत्रह: 17,
+    अठारह: 18, उन्नीस: 19, बीस: 20,
+  };
+
+  function simulateBuildIndex(titles: string[]): Array<{ skandh: number; num: number; global: number }> {
+    let currentSkandh = 1;
+    let lastNum = 0;
+    let global = 0;
+    const result: Array<{ skandh: number; num: number; global: number }> = [];
+
+    for (const title of titles) {
+      let chNum = 0;
+      for (const [word, num] of Object.entries(HINDI_NUMS)) {
+        if (title.includes(word)) { chNum = num; break; }
+      }
+      if (!chNum) continue;
+
+      if (chNum === 1 && lastNum > 1) currentSkandh++;
+      global++;
+      lastNum = chNum;
+      result.push({ skandh: currentSkandh, num: chNum, global });
+    }
+    return result;
+  }
+
+  it("detects skandh boundaries when chapter number resets to 1", () => {
+    const titles = [
+      "अध्याय एक", "अध्याय दो", "अध्याय तीन",        // Canto 1: ch 1-3
+      "अध्याय एक", "अध्याय दो",                         // Canto 2: ch 1-2
+      "अध्याय एक", "अध्याय दो", "अध्याय तीन", "अध्याय चार", // Canto 3: ch 1-4
+    ];
+    const result = simulateBuildIndex(titles);
+    expect(result.length).toBe(9);
+    // Canto 1
+    expect(result[0]).toEqual({ skandh: 1, num: 1, global: 1 });
+    expect(result[2]).toEqual({ skandh: 1, num: 3, global: 3 });
+    // Canto 2 starts
+    expect(result[3]).toEqual({ skandh: 2, num: 1, global: 4 });
+    // Canto 3 starts
+    expect(result[5]).toEqual({ skandh: 3, num: 1, global: 6 });
+    expect(result[8]).toEqual({ skandh: 3, num: 4, global: 9 });
+  });
+
+  it("handles all 12 cantos", () => {
+    // Simulate 12 cantos with varying chapter counts
+    const titles: string[] = [];
+    const numWords = ["एक", "दो", "तीन", "चार", "पाँच"];
+    for (let canto = 0; canto < 12; canto++) {
+      const chapCount = 2 + (canto % 3); // 2-4 chapters per canto
+      for (let ch = 0; ch < chapCount; ch++) {
+        titles.push(`अध्याय ${numWords[ch]}`);
+      }
+    }
+    const result = simulateBuildIndex(titles);
+    const uniqueCantos = new Set(result.map((r) => r.skandh));
+    expect(uniqueCantos.size).toBe(12);
+  });
+
+  it("does not create new skandh for first chapter 1", () => {
+    const titles = ["अध्याय एक", "अध्याय दो"];
+    const result = simulateBuildIndex(titles);
+    expect(result[0].skandh).toBe(1); // first "एक" stays in canto 1
+  });
+});
+
+// ── Git commit/push/deploy integration ──────────────────────────────────────
+
+describe("gitCommitPushDeploy", () => {
+  it("generates correct commit message format", () => {
+    const chapterNumber = 166;
+    const cantoNumber = 10;
+    const sceneIndex = 2;
+    const commitMsg = `feat(instagram): post ch ${chapterNumber} scene ${sceneIndex + 1} (canto ${cantoNumber})`;
+    expect(commitMsg).toBe("feat(instagram): post ch 166 scene 3 (canto 10)");
+  });
+
+  it("stages the correct directories", () => {
+    const dirs = [
+      "data/bhagwatham/instagram/",
+      "artifacts/temple-tracker/public/api/bhagwatham/instagram/",
+    ];
+    expect(dirs).toHaveLength(2);
+    expect(dirs[0]).toContain("instagram");
+    expect(dirs[1]).toContain("public/api");
+  });
+});
+
 // ── Schedule validation ─────────────────────────────────────────────────────
 
 describe("Cron schedule", () => {

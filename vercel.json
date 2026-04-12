@@ -21,6 +21,8 @@
     { "source": "/api/bhagwatham/image-manifest", "destination": "/api/bhagwatham/image-manifest" },
     { "source": "/api/bhagwatham/images/:path*", "destination": "/api/bhagwatham/images/:path*" },
     { "source": "/api/bhagwatham/faces/:path*", "destination": "/api/bhagwatham/faces/:path*" },
+    { "source": "/api/bhagwatham/persona/gallery", "destination": "/api/bhagwatham/persona/gallery" },
+    { "source": "/api/bhagwatham/instagram/manifest", "destination": "/api/bhagwatham/instagram/manifest" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
