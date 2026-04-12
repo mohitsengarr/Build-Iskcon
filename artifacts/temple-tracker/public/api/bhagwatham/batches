@@ -2212,5 +2212,11 @@
     "startPage": 7361,
     "endPage": 7380,
     "pageCount": 20
+  },
+  {
+    "batchNumber": 370,
+    "startPage": 7381,
+    "endPage": 7400,
+    "pageCount": 20
   }
 ]
