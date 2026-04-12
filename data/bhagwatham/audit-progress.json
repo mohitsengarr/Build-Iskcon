@@ -1,9 +1,17 @@
 {
-  "lastAuditedChapter": 5,
+  "lastAuditedChapter": 36,
   "totalIssuesFixed": 0,
-  "lastRunAt": "2026-04-10T14:37:01.053Z",
-  "status": "running",
+  "lastRunAt": "2026-04-12T15:07:00.642Z",
+  "status": "idle",
   "log": [
+    {
+      "chapter": 36,
+      "timestamp": "2026-04-12T15:07:00.642Z",
+      "issues": [
+        "Chapter title not in Hindi: \"Chapter 36\""
+      ],
+      "fixes": []
+    },
     {
       "chapter": 5,
       "timestamp": "2026-04-10T14:37:01.053Z",
