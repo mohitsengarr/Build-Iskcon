@@ -1693,7 +1693,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T12:57:18.611Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 173,
+      "chapterTitle": "Chapter दो",
+      "imagePath": "chapter-173.jpg",
+      "prompt": "Narada shares spiritual wisdom with Vasudeva in a serene palace setting, discussing the conversation between King Nimi and the nine Yogendras.",
+      "descriptionHi": "इस अध्याय में नारद मुनि वसुदेव को भगवान् कृष्ण के दर्शन और भागवत धर्म की शिक्षा देते हैं, जिसमें महाराज निमि और नौ योगेन्द्रों की वार्ता का वर्णन है। नारद मुनि वसुदेव को शुद्ध भक्ति के विषय में बताते हैं।",
+      "personasUsed": [
+        "narada"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T13:03:10.695Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T12:57:18.611Z"
+  "lastUpdated": "2026-04-12T13:03:10.695Z"
 }
