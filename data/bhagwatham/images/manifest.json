@@ -1394,7 +1394,16 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T04:30:07.203Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 143,
+      "chapterTitle": "Chapter आठ",
+      "imagePath": "chapter-143.jpg",
+      "prompt": "Sagar's sons meet Kapildev near a vast excavation, where they mistakenly accuse him of stealing their ashvamedha horse.",
+      "descriptionHi": "इस अध्याय में रोहित के वंशजों का वर्णन मिलता है, जिसमें सगर नाम का एक राजा हुआ जिसकी कथा कपिलदेव तथा सगर के पुत्रों के विनाश के सम्बन्ध में वर्णित है। राजा सगर के पुत्रों ने अश्वमेघ यज्ञ के घोड़े की खोज के दौरान कपिलदेव से भेंट की।",
+      "generatedAt": "2026-04-12T04:33:38.306Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T04:30:07.203Z"
+  "lastUpdated": "2026-04-12T04:33:38.306Z"
 }
