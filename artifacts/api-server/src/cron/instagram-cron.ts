@@ -79,6 +79,8 @@ const HINDI_NUMS: Record<string, number> = {
   निन्यानवे: 99, निन्यानबे: 99,
   // 100
   सौ: 100,
+  // OCR spelling variants
+  तेइस: 23, तेइेस: 23, छियलीस: 46, पचीस: 25, सत्ताइस: 27,
 };
 
 const HINDI_HUNDREDS: Record<string, number> = {
@@ -105,11 +107,41 @@ function parseHindiNumber(text: string): number {
 const OCR_CHAPTER_FIXES: Record<string, { num: number; title: string }> = {
   "Chapter 278 अध्याय": { num: 8, title: "अध्याय आठ" },
   "Chapter it": { num: 9, title: "अध्याय नौ" },
+  "(शुषा दो": { num: 2, title: "अध्याय दो" },
+  "Chapter 3:": { num: 6, title: "अध्याय छह" },
+  "(नौ": { num: 9, title: "अध्याय नौ" },
+  "Chapter 36": { num: 8, title: "अध्याय आठ" },
+  "Chapter छ:": { num: 6, title: "अध्याय छह" },
+  "छल्नीस": { num: 26, title: "अध्याय छब्बीस" },
+  "अदुईस": { num: 28, title: "अध्याय अट्ठाईस" },
 };
 
 let _chapterIndexCache: ChapterInfo[] | null = null;
 let _chapterCacheTime = 0;
 const CHAPTER_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+// Skandh page-range anchors (derived from OCR title pages and colophons)
+const SKANDH_PAGE_RANGES: Array<{ skandh: number; startPage: number }> = [
+  { skandh: 1,  startPage: 1 },
+  { skandh: 2,  startPage: 874 },
+  { skandh: 3,  startPage: 1399 },
+  { skandh: 4,  startPage: 2617 },
+  { skandh: 5,  startPage: 3900 },
+  { skandh: 6,  startPage: 4540 },
+  { skandh: 7,  startPage: 5204 },
+  { skandh: 8,  startPage: 5849 },
+  { skandh: 9,  startPage: 6373 },
+  { skandh: 10, startPage: 7080 },
+  { skandh: 11, startPage: 9059 },
+  { skandh: 12, startPage: 9500 },
+];
+
+function getSkandh(pageNumber: number): number {
+  for (let i = SKANDH_PAGE_RANGES.length - 1; i >= 0; i--) {
+    if (pageNumber >= SKANDH_PAGE_RANGES[i].startPage) return SKANDH_PAGE_RANGES[i].skandh;
+  }
+  return 1;
+}
 
 function buildChapterIndex(): ChapterInfo[] {
   if (_chapterIndexCache && Date.now() - _chapterCacheTime < CHAPTER_CACHE_TTL) {
@@ -121,15 +153,16 @@ function buildChapterIndex(): ChapterInfo[] {
   const chapterPattern = /^(?:\d+\s+)?(?:Chapter|अध्याय)\s+(.+)/imu;
 
   const chapters: ChapterInfo[] = [];
-  let currentSkandh = 1;
-  let lastChapterNum = 0;
   let globalCounter = 0;
+  const lastChapterPerSkandh = new Map<number, number>();
 
   for (const page of allPages) {
+    const skandh = getSkandh(page.pageNumber);
     const lines = page.text.split("\n");
     for (const line of lines) {
       const trimmed = line.trim();
       if (trimmed.includes("पूर्ण हुए") || trimmed.includes("पूर्ण हुआ")) continue;
+      if (trimmed.length > 60) continue; // reject long lines (inline text, not headings)
 
       const match = trimmed.match(chapterPattern);
       if (!match) continue;
@@ -146,7 +179,16 @@ function buildChapterIndex(): ChapterInfo[] {
         }
       }
 
-      // Parse Hindi number
+      // Parse Hindi number (compound parser)
+      if (!chNum) {
+        const afterHeading = title.replace(/^(?:अध्याय|Chapter)\s*/iu, "").trim();
+        if (afterHeading) {
+          const compound = parseHindiNumber(afterHeading);
+          if (compound > 0) chNum = compound;
+        }
+      }
+
+      // Fallback: simple Hindi word lookup
       if (!chNum) {
         for (const [word, num] of Object.entries(HINDI_NUMS)) {
           if (title.includes(word)) { chNum = num; break; }
@@ -158,34 +200,35 @@ function buildChapterIndex(): ChapterInfo[] {
         const numMatch = title.match(/\d+/);
         if (numMatch) {
           const n = parseInt(numMatch[0], 10);
-          if (n > 0 && n <= 100) chNum = n;
+          if (n > 0 && n <= 500) chNum = n;
         }
       }
 
       if (!chNum) continue;
 
-      // If chapter resets to 1, new skandh
-      if (chNum === 1 && lastChapterNum > 1) {
-        currentSkandh++;
-      }
+      const lastNum = lastChapterPerSkandh.get(skandh) ?? 0;
+      // Skip backward jumps within same skandh
+      if (chNum < lastNum && lastNum > 2) continue;
 
       // Skip duplicates within same skandh
-      if (chapters.find((c) => c.chapterInSkandh === chNum && c.skandh === currentSkandh)) continue;
+      if (chapters.find((c) => c.chapterInSkandh === chNum && c.skandh === skandh)) continue;
 
       globalCounter++;
-      lastChapterNum = chNum;
+      lastChapterPerSkandh.set(skandh, chNum);
       chapters.push({
         globalNumber: globalCounter,
-        skandh: currentSkandh,
+        skandh,
         chapterInSkandh: chNum,
         title,
       });
     }
   }
 
-  _chapterIndexCache = chapters.sort((a, b) =>
+  const sorted = chapters.sort((a, b) =>
     a.skandh !== b.skandh ? a.skandh - b.skandh : a.chapterInSkandh - b.chapterInSkandh
   );
+  sorted.forEach((ch, i) => { ch.globalNumber = i + 1; });
+  _chapterIndexCache = sorted;
   _chapterCacheTime = Date.now();
 
   const totalCantos = new Set(chapters.map((c) => c.skandh)).size;

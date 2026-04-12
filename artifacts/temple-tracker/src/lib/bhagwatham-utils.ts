@@ -68,6 +68,11 @@ export const HINDI_NUMS: Record<string, number> = {
   निन्यानवे: 99, निन्यानबे: 99,
   // 100 (standalone)
   सौ: 100,
+  // OCR spelling variants
+  तेइस: 23, तेइेस: 23,    // OCR "तेईस" → "तेइस"
+  छियलीस: 46,              // OCR "छियालीस" → "छियलीस"
+  पचीस: 25,                // OCR "पच्चीस" → "पचीस"
+  सत्ताइस: 27,              // OCR "सत्ताईस" → "सत्ताइस"
 };
 
 /** Hindi hundred-multiplier words → multiplier value */
@@ -113,6 +118,10 @@ export const OCR_CHAPTER_FIXES: Record<string, { num: number; label: string }> =
   "(शुषा दो": { num: 2, label: "अध्याय दो" },
   "Chapter 3:": { num: 6, label: "अध्याय छह" },
   "(नौ": { num: 9, label: "अध्याय नौ" },
+  "Chapter 36": { num: 8, label: "अध्याय आठ" },    // OCR "Chapter आठ" → "Chapter 36"
+  "Chapter छ:": { num: 6, label: "अध्याय छह" },     // OCR "छह" → "छ:"
+  "छल्नीस": { num: 26, label: "अध्याय छब्बीस" },   // OCR "छब्बीस" → "छल्नीस"
+  "अदुईस": { num: 28, label: "अध्याय अट्ठाईस" },    // OCR "अट्ठाईस" → "अदुईस"
 };
 
 // ── Helper Functions ─────────────────────────────────────────────────────────
@@ -386,17 +395,47 @@ export function getPageEndKind(text: string): string {
   return lastKind;
 }
 
+// ── Skandh (Canto) page-range anchors ─────────────────────────────────────
+// Derived from OCR title pages, colophons ("समाप्तः"), and "Chapter एक" markers.
+// Using page ranges is far more robust than detecting chapter-number resets,
+// which breaks when OCR corrupts headings (e.g., "Chapter 36" instead of "आठ").
+const SKANDH_PAGE_RANGES: Array<{ skandh: number; startPage: number }> = [
+  { skandh: 1,  startPage: 1 },
+  { skandh: 2,  startPage: 874 },
+  { skandh: 3,  startPage: 1399 },
+  { skandh: 4,  startPage: 2617 },
+  { skandh: 5,  startPage: 3900 },
+  { skandh: 6,  startPage: 4540 },
+  { skandh: 7,  startPage: 5204 },
+  { skandh: 8,  startPage: 5849 },
+  { skandh: 9,  startPage: 6373 },
+  { skandh: 10, startPage: 7080 },
+  { skandh: 11, startPage: 9059 },
+  { skandh: 12, startPage: 9500 }, // estimated — pages 9241+ not yet scanned
+];
+
+/** Determine which skandh a page belongs to based on page-range anchors */
+export function getSkandh(pageNumber: number): number {
+  for (let i = SKANDH_PAGE_RANGES.length - 1; i >= 0; i--) {
+    if (pageNumber >= SKANDH_PAGE_RANGES[i].startPage) {
+      return SKANDH_PAGE_RANGES[i].skandh;
+    }
+  }
+  return 1;
+}
+
 // ── Chapter index builder ───────────────────────────────────────────────────
 
 export function buildChapterIndex(allPages: PageContent[]): ChapterEntry[] {
   const chapters: ChapterEntry[] = [];
-  let currentSkandh = 1;
   let globalCounter = 0;
-  let lastChapterNum = 0;
+  // Track last chapter number PER skandh to handle backward-jump rejection correctly
+  const lastChapterPerSkandh = new Map<number, number>();
 
   for (const page of allPages) {
     if (isGarbagePage(page.text)) continue;
 
+    const skandh = getSkandh(page.pageNumber);
     const lines = page.text.split("\n");
     const chapterHeadingCount = lines.filter((l) => isChapterHeading(l.trim())).length;
     if (chapterHeadingCount >= 2) continue;
@@ -405,24 +444,20 @@ export function buildChapterIndex(allPages: PageContent[]): ChapterEntry[] {
       const t = line.trim();
       if (isChapterHeading(t)) {
         const hindiLine = toHindiChapterLine(t);
-        let num = extractChapterNum(hindiLine);
+        const num = extractChapterNum(hindiLine);
         if (num > 0) {
-          // Detect new skandh: chapter resets to 1 after a higher chapter
-          if (num === 1 && lastChapterNum > 1) {
-            currentSkandh++;
-          }
-          // Skip backward jumps within same skandh (likely false positives from inline text)
-          // Exception: num=1 is allowed (new skandh boundary)
-          if (num < lastChapterNum && num !== 1 && lastChapterNum > 2) continue;
+          const lastNum = lastChapterPerSkandh.get(skandh) ?? 0;
+          // Skip backward jumps within same skandh (likely false positives)
+          if (num < lastNum && lastNum > 2) continue;
           // Skip duplicates within same skandh
-          if (chapters.find((c) => c.number === num && c.skandh === currentSkandh)) continue;
+          if (chapters.find((c) => c.number === num && c.skandh === skandh)) continue;
           const idx = lines.indexOf(line);
           const subtitle = lines.slice(idx + 1, idx + 3).map((l) => l.trim()).filter(Boolean).join(" ");
           globalCounter++;
-          lastChapterNum = num;
+          lastChapterPerSkandh.set(skandh, num);
           chapters.push({
             number: num,
-            skandh: currentSkandh,
+            skandh,
             globalNumber: globalCounter,
             title: hindiLine + (subtitle ? ` — ${subtitle}` : ""),
             pageNumber: page.pageNumber,
@@ -431,5 +466,8 @@ export function buildChapterIndex(allPages: PageContent[]): ChapterEntry[] {
       }
     }
   }
-  return chapters.sort((a, b) => a.skandh !== b.skandh ? a.skandh - b.skandh : a.number - b.number);
+  // Sort and reassign globalNumber sequentially
+  const sorted = chapters.sort((a, b) => a.skandh !== b.skandh ? a.skandh - b.skandh : a.number - b.number);
+  sorted.forEach((ch, i) => { ch.globalNumber = i + 1; });
+  return sorted;
 }

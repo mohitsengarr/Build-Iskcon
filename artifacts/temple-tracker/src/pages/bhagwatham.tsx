@@ -274,6 +274,8 @@ const HINDI_NUMS: Record<string, number> = {
   निन्यानवे: 99, निन्यानबे: 99,
   // 100 (standalone)
   सौ: 100,
+  // OCR spelling variants
+  तेइस: 23, तेइेस: 23, छियलीस: 46, पचीस: 25, सत्ताइस: 27,
 };
 
 const HINDI_HUNDREDS: Record<string, number> = {
@@ -310,6 +312,10 @@ const OCR_CHAPTER_FIXES: Record<string, { num: number; label: string }> = {
   "(शुषा दो": { num: 2, label: "अध्याय दो" },
   "Chapter 3:": { num: 6, label: "अध्याय छह" },
   "(नौ": { num: 9, label: "अध्याय नौ" },
+  "Chapter 36": { num: 8, label: "अध्याय आठ" },
+  "Chapter छ:": { num: 6, label: "अध्याय छह" },
+  "छल्नीस": { num: 26, label: "अध्याय छब्बीस" },
+  "अदुईस": { num: 28, label: "अध्याय अट्ठाईस" },
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -422,21 +428,45 @@ function isChapterHeading(t: string): boolean {
   return false;
 }
 
+// ── Skandh (Canto) page-range anchors ─────────────────────────────────────
+// Derived from OCR title pages, colophons, and "Chapter एक" markers.
+// Using page ranges is far more robust than detecting chapter-number resets.
+const SKANDH_PAGE_RANGES: Array<{ skandh: number; startPage: number }> = [
+  { skandh: 1,  startPage: 1 },
+  { skandh: 2,  startPage: 874 },
+  { skandh: 3,  startPage: 1399 },
+  { skandh: 4,  startPage: 2617 },
+  { skandh: 5,  startPage: 3900 },
+  { skandh: 6,  startPage: 4540 },
+  { skandh: 7,  startPage: 5204 },
+  { skandh: 8,  startPage: 5849 },
+  { skandh: 9,  startPage: 6373 },
+  { skandh: 10, startPage: 7080 },
+  { skandh: 11, startPage: 9059 },
+  { skandh: 12, startPage: 9500 },
+];
+
+function getSkandh(pageNumber: number): number {
+  for (let i = SKANDH_PAGE_RANGES.length - 1; i >= 0; i--) {
+    if (pageNumber >= SKANDH_PAGE_RANGES[i].startPage) return SKANDH_PAGE_RANGES[i].skandh;
+  }
+  return 1;
+}
+
 // ── Build chapter index from all loaded pages ─────────────────────────────────
 
 function buildChapterIndex(allPages: PageContent[]): ChapterEntry[] {
   const chapters: ChapterEntry[] = [];
-  let currentSkandh = 1;
   let globalCounter = 0;
-  let lastChapterNum = 0; // track last chapter number to detect resets
+  const lastChapterPerSkandh = new Map<number, number>();
 
   for (const page of allPages) {
     if (isGarbagePage(page.text)) continue;
 
+    const skandh = getSkandh(page.pageNumber);
     const lines = page.text.split("\n");
 
     // ToC detection: if a page has 2+ chapter heading lines, skip them all
-    // (Table of contents pages list multiple chapters on a single page)
     const chapterHeadingCount = lines.filter((l) => isChapterHeading(l.trim())).length;
     if (chapterHeadingCount >= 2) continue;
 
@@ -444,24 +474,20 @@ function buildChapterIndex(allPages: PageContent[]): ChapterEntry[] {
       const t = line.trim();
       if (isChapterHeading(t)) {
         const hindiLine = toHindiChapterLine(t);
-        let num = extractChapterNum(hindiLine);
+        const num = extractChapterNum(hindiLine);
         if (num > 0) {
-          // Backward-jump rejection: if number goes backward (but isn't a reset to 1),
-          // it's a false positive — skip it
-          if (num < lastChapterNum && num !== 1 && lastChapterNum > 2) continue;
-          // If chapter number resets (e.g. goes from 19 back to 1), new skandh started
-          if (num === 1 && lastChapterNum > 1) {
-            currentSkandh++;
-          }
-          // Skip if already added in this skandh
-          if (chapters.find((c) => c.number === num && c.skandh === currentSkandh)) continue;
+          const lastNum = lastChapterPerSkandh.get(skandh) ?? 0;
+          // Skip backward jumps within same skandh (likely false positives)
+          if (num < lastNum && lastNum > 2) continue;
+          // Skip duplicates within same skandh
+          if (chapters.find((c) => c.number === num && c.skandh === skandh)) continue;
           const idx = lines.indexOf(line);
           const subtitle = lines.slice(idx + 1, idx + 3).map((l) => l.trim()).filter(Boolean).join(" ");
           globalCounter++;
-          lastChapterNum = num;
+          lastChapterPerSkandh.set(skandh, num);
           chapters.push({
             number: num,
-            skandh: currentSkandh,
+            skandh,
             globalNumber: globalCounter,
             title: hindiLine + (subtitle ? ` — ${subtitle}` : ""),
             pageNumber: page.pageNumber,
@@ -470,7 +496,9 @@ function buildChapterIndex(allPages: PageContent[]): ChapterEntry[] {
       }
     }
   }
-  return chapters.sort((a, b) => a.skandh !== b.skandh ? a.skandh - b.skandh : a.number - b.number);
+  const sorted = chapters.sort((a, b) => a.skandh !== b.skandh ? a.skandh - b.skandh : a.number - b.number);
+  sorted.forEach((ch, i) => { ch.globalNumber = i + 1; });
+  return sorted;
 }
 
 // ── Image Card with Download & Share ──────────────────────────────────────────
