@@ -1679,7 +1679,21 @@
       "descriptionHi": "वरुण अपने अज्ञानी नौकर की गलती के लिए माफी मांगते हैं और इस अध्याय में अज्ञान और ज्ञान के महत्व पर प्रकाश डाला जाता है। मुख्य पात्र वरुण हैं और यह घटना उनके दरबार में घटित होती है।",
       "generatedAt": "2026-04-12T09:08:54.728Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 172,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-172.jpg",
+      "prompt": "Krishna watches as Narada and other sages gather at Pindaraka, foretelling the birth of an iron club that will destroy the Yadava clan.",
+      "descriptionHi": "इस अध्याय में भगवान श्रीकृष्ण के यदुवंश के विनाश की कहानी है, जिसमें नारद और अन्य महर्षियों की भूमिका है। यह घटना द्वारका के निकट पिण्डारक में घटित होती है और इसका महत्व भौतिक जगत से विरक्त होने की प्रेरणा देना है।",
+      "personasUsed": [
+        "krishna_adult",
+        "narada"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-12T12:57:18.611Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T10:32:44.333Z"
+  "lastUpdated": "2026-04-12T12:57:18.611Z"
 }
