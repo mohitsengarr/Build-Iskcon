@@ -1937,6 +1937,19 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 281,
+      "chapterTitle": "Chapter अस्सी",
+      "imagePath": "chapter-281.jpg",
+      "prompt": "Krishna and Balarama sit together in a serene palace setting, embodying divine grace and wisdom.",
+      "descriptionHi": "इस अध्याय में भगवान् कृष्ण और भगवान् बलराम की महिमा का वर्णन किया गया है, जो अपनी योगमाया से मनुष्य के रूप में दिखते हैं। जो कोई भी उनका निरन्तर स्मरण करता है, वह भगवान् श्री विष्णु का अत्यन्त प्रिय बन जाता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T17:45:37.233Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 282,
       "chapterTitle": "Chapter इक्यासी",
       "imagePath": "chapter-282.jpg",
@@ -2251,5 +2264,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T17:10:21.552Z"
+  "lastUpdated": "2026-04-13T17:45:37.234Z"
 }
