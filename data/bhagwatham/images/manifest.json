@@ -1937,6 +1937,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 327,
+      "chapterTitle": "Chapter पाँच",
+      "imagePath": "chapter-327.jpg",
+      "prompt": "Shukadeva Goswami imparts final wisdom to Maharaj Parikshit on the riverbank, enlightening him about the soul's immortality.",
+      "descriptionHi": "महाराज परीक्षित को शुकदेव गोस्वामी का अन्तिम उपदेश मिलता है, जिसमें उन्हें आत्मा की अमरता और मृत्यु की अपरिहार्यता के बारे में बताया जाता है। इस अध्याय में शुकदेव गोस्वामी और महाराज परीक्षित के बीच गहन आध्यात्मिक चर्चा होती है।",
+      "personasUsed": [
+        "shukadeva",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T10:45:23.902Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 328,
       "chapterTitle": "Chapter छह",
       "imagePath": "chapter-328.jpg",
@@ -2043,5 +2057,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T10:40:30.492Z"
+  "lastUpdated": "2026-04-13T10:45:23.902Z"
 }
