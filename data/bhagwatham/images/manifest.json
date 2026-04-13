@@ -1937,6 +1937,19 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 284,
+      "chapterTitle": "Chapter तिरासी",
+      "imagePath": "chapter-284.jpg",
+      "prompt": "Krishna meets his queens, including Rukmini and Satyabhama, in the palace, where they share stories of their divine weddings.",
+      "descriptionHi": "इस अध्याय में द्रौपदी और भगवान् कृष्ण की पत्नियों के बीच एक वार्ता होती है, जिसमें वे भगवान् कृष्ण के साथ अपने विवाह की कहानियाँ सुनाती हैं। यह अध्याय कृष्ण की प्रेम और भक्ति की कहानियों को उजागर करता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T16:28:02.410Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 285,
       "chapterTitle": "Chapter चौरासी",
       "imagePath": "chapter-285.jpg",
@@ -2212,5 +2225,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T14:50:28.447Z"
+  "lastUpdated": "2026-04-13T16:28:02.411Z"
 }
