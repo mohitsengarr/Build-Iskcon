@@ -43,11 +43,13 @@ export async function createApp(): Promise<Express> {
 
   app.use("/api", router);
 
-  // OCR services disabled for now
-  // startBhagwathamCron();
+  // Bhagwatham OCR + audit + image gen + re-OCR (Sarvam AI)
+  startBhagwathamCron();
+
+  // Gita OCR disabled for now
   // startGitaCron();
 
-  // Non-OCR services still active
+  // Instagram + Temple Discovery
   startInstagramCron();
   startTempleDiscoveryCron();
 

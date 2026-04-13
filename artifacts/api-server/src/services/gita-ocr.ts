@@ -1,12 +1,11 @@
 /**
- * Bhagavad Gita OCR Service — PaddleOCR primary, Tesseract fallback
+ * Bhagavad Gita OCR Service — Sarvam AI primary, Tesseract fallback
  *
  * Processes Bhagavad Gita PDF pages through OCR and extracts text.
- * English translations are backfilled from an English PDF via pdf-parse
- * rather than a translation API.
+ * English translations are backfilled from an English PDF via pdf-parse.
  *
  * OCR priority chain:
- *   1. PaddleOCR (local, free, no API needed)
+ *   1. Sarvam AI Document Intelligence (~87% accuracy, ₹1.50/page)
  *   2. Tesseract (embedded, last resort)
  */
 
@@ -145,78 +144,70 @@ function cleanupTmpImages(): void {
   } catch { /* ignore */ }
 }
 
-// ── PaddleOCR (local, free, primary engine) ──────────────────────────────────
+// ── Sarvam AI OCR (primary engine, same as Bhagwatham) ───────────────────────
 
-/**
- * Process a single image through PaddleOCR (local Python subprocess).
- * Free, no API key needed, runs on CPU. Uses PP-OCRv5 Devanagari model.
- */
-// PaddleOCR server URL — model stays in memory, avoids 10-15s reload per page
-const PADDLEOCR_PORT = 8765;
-const PADDLEOCR_URL = `http://127.0.0.1:${PADDLEOCR_PORT}/ocr`;
-let paddleServerStarted = false;
+const SARVAM_MAX_RETRIES = 3;
 
-function ensurePaddleOCRServer(): void {
-  if (paddleServerStarted) return;
-  // Check if server is already running
-  try {
-    execSync(`curl -s http://127.0.0.1:${PADDLEOCR_PORT}/health`, { timeout: 2000 });
-    paddleServerStarted = true;
-    logger.info("PaddleOCR server already running");
-    return;
-  } catch {
-    // Not running — start it
+async function ocrSinglePageSarvam(imagePath: string, pageNumber: number): Promise<string> {
+  const apiKey = process.env.SARVAM_API_KEY;
+  if (!apiKey) throw new Error("SARVAM_API_KEY not set");
+
+  const baseUrl = "https://api.sarvam.ai";
+  const apiPath = "/doc-digitization/job/v1";
+  const headers: Record<string, string> = {
+    "API-Subscription-Key": apiKey,
+    "Content-Type": "application/json",
+  };
+
+  // Step 1: Create a job
+  let createRes: Response | null = null;
+  for (let attempt = 1; attempt <= SARVAM_MAX_RETRIES; attempt++) {
+    createRes = await fetch(`${baseUrl}${apiPath}`, {
+      method: "POST", headers,
+      body: JSON.stringify({ job_parameters: { language_code: "hi-IN", output_format: "md" } }),
+    });
+    if (createRes.ok) break;
+    if (attempt < SARVAM_MAX_RETRIES) await new Promise(r => setTimeout(r, 3000 * attempt));
+    else throw new Error(`Create job failed: ${createRes.status}`);
   }
+  const jobRaw: any = await createRes!.json();
+  const jobId = jobRaw.job_id || jobRaw.id || jobRaw.job?.id;
+  if (!jobId) throw new Error("No job_id in response");
 
-  const pythonScript = path.resolve(__dirname, "..", "..", "..", "..", "services", "ocr-worker", "python", "ocr_engine.py");
-  const { spawn } = require("child_process");
-  const proc = spawn("python3", [pythonScript, "--serve", "--port", String(PADDLEOCR_PORT)], {
-    stdio: ["ignore", "ignore", "pipe"],
-    detached: true,
-    env: {
-      ...process.env,
-      PYTHONIOENCODING: "utf-8",
-      OMP_NUM_THREADS: "2",
-      MKL_NUM_THREADS: "2",
-      FLAGS_use_cuda: "0",
-      CUDA_VISIBLE_DEVICES: "",
-    },
+  // Step 2: Get upload URL
+  const uploadReq = await fetch(`${baseUrl}${apiPath}/upload-files`, {
+    method: "POST", headers,
+    body: JSON.stringify({ job_id: jobId, file_names: [path.basename(imagePath)] }),
   });
-  proc.unref();
-  proc.stderr?.on("data", (data: Buffer) => logger.info({ msg: data.toString().trim() }, "PaddleOCR server"));
-  logger.info({ port: PADDLEOCR_PORT }, "Starting PaddleOCR server (model loading ~15s)...");
+  const uploadData: any = await uploadReq.json();
+  const uploadUrl = uploadData.upload_urls?.[0] || uploadData.upload_links?.[0]?.upload_url;
+  if (!uploadUrl) throw new Error("No upload URL");
 
-  // Wait for server to be ready (up to 30s)
-  for (let i = 0; i < 30; i++) {
-    try {
-      execSync(`sleep 1 && curl -sf http://127.0.0.1:${PADDLEOCR_PORT}/health`, { timeout: 3000 });
-      paddleServerStarted = true;
-      logger.info("PaddleOCR server ready");
-      return;
-    } catch { /* still loading */ }
-  }
-  throw new Error("PaddleOCR server failed to start within 30s");
-}
+  // Step 3: Upload image
+  const imageBuffer = fs.readFileSync(imagePath);
+  await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": "image/png" }, body: imageBuffer });
 
-async function ocrSinglePagePaddleOCR(imagePath: string, pageNumber: number): Promise<string> {
-  ensurePaddleOCRServer();
-
-  const res = await fetch(PADDLEOCR_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ image_path: imagePath }),
+  // Step 4: Start processing
+  await fetch(`${baseUrl}${apiPath}/start`, {
+    method: "POST", headers,
+    body: JSON.stringify({ job_id: jobId }),
   });
 
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`PaddleOCR HTTP ${res.status}: ${errText}`);
+  // Step 5: Poll for completion
+  for (let poll = 0; poll < 45; poll++) {
+    await new Promise(r => setTimeout(r, 2000));
+    const statusRes = await fetch(`${baseUrl}${apiPath}/status?job_id=${jobId}`, { headers });
+    const status: any = await statusRes.json();
+    if (status.status === "completed" || status.job_status === "completed") {
+      // Step 6: Download result
+      const dlRes = await fetch(`${baseUrl}${apiPath}/download?job_id=${jobId}`, { headers });
+      const text = await dlRes.text();
+      // Clean markdown artifacts
+      return text.replace(/^#+\s*/gm, "").replace(/\*\*/g, "").replace(/\[.*?\]\(.*?\)/g, "").replace(/!\[.*?\]\(.*?\)/g, "").replace(/\n{3,}/g, "\n\n").trim();
+    }
+    if (status.status === "failed" || status.job_status === "failed") throw new Error("Sarvam job failed");
   }
-
-  const data: any = await res.json();
-  if (data.error) throw new Error(data.error);
-  if (!Array.isArray(data)) return "";
-
-  return data.map((l: any) => l.text).join("\n");
+  throw new Error("Sarvam polling timeout");
 }
 
 // ── Tesseract fallback ────────────────────────────────────────────────────────
@@ -233,15 +224,8 @@ async function ocrSinglePageTesseract(imagePath: string, pageNumber: number): Pr
   }
 }
 
-// ── OCR dispatcher (PaddleOCR primary → Tesseract fallback) ─────────────────
+// ── OCR dispatcher (Sarvam primary → Tesseract fallback) ─────────────────────
 
-/**
- * Process images through OCR.
- *
- * Priority chain:
- *   1. PaddleOCR (local, free, no API needed)
- *   2. Tesseract (embedded, last resort)
- */
 async function ocrPages(imagePaths: string[], startPage: number): Promise<PageContent[]> {
   const pages: PageContent[] = [];
 
@@ -249,32 +233,28 @@ async function ocrPages(imagePaths: string[], startPage: number): Promise<PageCo
     const imagePath = imagePaths[i];
     const pageNumber = startPage + i;
 
-    // 1. Try PaddleOCR first (free, local)
+    // 1. Try Sarvam AI first
     try {
-      logger.info({ pageNumber }, "Processing page with PaddleOCR (local)");
-      const text = ocrSinglePagePaddleOCR instanceof Function
-        ? await ocrSinglePagePaddleOCR(imagePath, pageNumber)
-        : "";
+      logger.info({ pageNumber }, "Processing page with Sarvam AI");
+      const text = await ocrSinglePageSarvam(imagePath, pageNumber);
       if (text && text.trim().length >= 10) {
         pages.push({ pageNumber, text });
-        logger.info({ pageNumber, textLength: text.length, engine: "paddleocr" }, "OCR completed for page");
+        logger.info({ pageNumber, textLength: text.length, engine: "sarvam" }, "OCR completed for page");
         continue;
       }
-      logger.warn({ pageNumber, textLength: text?.length ?? 0 }, "PaddleOCR returned insufficient text, trying Tesseract fallback");
+      logger.warn({ pageNumber }, "Sarvam returned insufficient text, trying Tesseract");
     } catch (err) {
-      logger.warn({ pageNumber, err: (err as Error)?.message }, "PaddleOCR failed, trying Tesseract fallback");
+      logger.warn({ pageNumber, err: (err as Error)?.message }, "Sarvam failed, trying Tesseract");
     }
 
     // 2. Fallback: Tesseract
     try {
-      logger.info({ pageNumber }, "Falling back to Tesseract OCR");
       const result = await ocrSinglePageTesseract(imagePath, pageNumber);
       pages.push(result);
       logger.info({ pageNumber, textLength: result.text.length, engine: "tesseract" }, "OCR completed for page");
     } catch {
-      // All engines failed — push empty page for later retry
       pages.push({ pageNumber, text: "" });
-      logger.error({ pageNumber }, "All OCR engines failed -- page will be retried later");
+      logger.error({ pageNumber }, "All OCR engines failed");
     }
   }
 
