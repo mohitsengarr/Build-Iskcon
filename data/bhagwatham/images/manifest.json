@@ -2036,6 +2036,19 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 325,
+      "chapterTitle": "Chapter तीन",
+      "imagePath": "chapter-325.jpg",
+      "prompt": "Krishna stands on a serene riverbank, witnessing the Earth's sorrow as kings blinded by ambition overlook their inner struggles.",
+      "descriptionHi": "इस अध्याय में पृथ्वी की दुर्दशा और राजाओं की मूर्वता का वर्णन किया गया है, जो अपने छ: आन्तरिक शत्रुओं से जूझते हैं। कलियुग के दोषों के बावजूद, हरिनाम के कीर्तन से वे दोष नष्ट हो जाते हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T13:49:22.057Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 326,
       "chapterTitle": "Chapter चार",
       "imagePath": "chapter-326.jpg",
@@ -2171,5 +2184,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T11:45:25.983Z"
+  "lastUpdated": "2026-04-13T13:49:22.057Z"
 }
