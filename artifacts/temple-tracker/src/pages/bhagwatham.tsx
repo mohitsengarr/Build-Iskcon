@@ -1277,29 +1277,16 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
               </div>
             );
           case "anuvad": {
-            // BBT style: Hindi translation, bold, 1x body size, red keywords
+            // BBT style: Hindi translation, bold, 1x body size, no special highlighting
             const prevKind = i > 0 ? sections[i - 1].kind : null;
             const isAnuvadContinuation = i === 0 && prevPageEndKind === "anuvad";
             const showLabel = !isAnuvadContinuation && (prevKind === "shlok" || prevKind === "shabdarth");
             return (
               <div key={i} className={isAnuvadContinuation ? "" : "mt-3"}>
                 {showLabel && <p className={`font-bold mb-1 indent-8 ${themeKey === "dark" ? "text-stone-200" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-800"}`} style={{ fontSize: "1em", fontFamily: "var(--font-devanagari)" }}>अनुवाद :</p>}
-                {sec.lines.map((l, j) => {
-                  const highlighted = l.replace(/(श्रीमद्भागवत(?:म्)?|भगवान्?|कृष्ण|विष्णु|ब्रह्मा|शिव|प्रभुपाद)/gu, "___HIGHLIGHT___$1___END___");
-                  const hlParts = highlighted.split(/(___HIGHLIGHT___|___END___)/);
-                  let inHighlight = false;
-                  return (
-                    <p key={j} className={`font-bold leading-[2] mb-1 ${j === 0 && !isAnuvadContinuation ? "indent-8" : ""} ${themeKey === "dark" ? "text-stone-100" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-900"}`} style={{ fontSize: "1em", fontFamily: "var(--font-devanagari)" }}>
-                      {hlParts.map((part, k) => {
-                        if (part === "___HIGHLIGHT___") { inHighlight = true; return null; }
-                        if (part === "___END___") { inHighlight = false; return null; }
-                        return inHighlight
-                          ? <span key={k} className={themeKey === "dark" ? "text-red-400" : themeKey === "sepia" ? "text-[#8b1a1a]" : "text-red-700"}>{part}</span>
-                          : <span key={k}>{part}</span>;
-                      })}
-                    </p>
-                  );
-                })}
+                {sec.lines.map((l, j) => (
+                  <p key={j} className={`font-bold leading-[2] mb-1 ${j === 0 && !isAnuvadContinuation ? "indent-8" : ""} ${themeKey === "dark" ? "text-stone-100" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-900"}`} style={{ fontSize: "1em", fontFamily: "var(--font-devanagari)" }}>{l}</p>
+                ))}
               </div>
             );
           }
@@ -2105,18 +2092,37 @@ export default function Bhagwatham() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [currentPage, visiblePageNum, allPages, chapters]);
 
-  // Auto-resume reading position on load — uses pageNumber (not view index)
+  // Auto-resume reading position on load — loads the right batches first
+  const resumedRef = useRef(false);
   useEffect(() => {
+    if (resumedRef.current) return;
     if (!loading && allPages.length > 0) {
       try {
         const raw = localStorage.getItem("bhagwatham_resume");
-        if (raw) {
-          const resume = JSON.parse(raw);
-          if (resume.pageNumber && currentPage === 1) {
-            // Find which view page contains this PDF page number
-            const pageIdx = allPages.findIndex(p => p.pageNumber >= resume.pageNumber);
-            if (pageIdx >= 0) {
-              const viewPage = Math.floor(pageIdx / PAGES_PER_VIEW) + 1;
+        if (!raw) return;
+        const resume = JSON.parse(raw);
+        if (!resume.pageNumber || resume.pageNumber <= 20) return;
+
+        resumedRef.current = true;
+
+        // Calculate which batch contains this page (each batch = 20 pages)
+        const targetBatch = Math.ceil(resume.pageNumber / 20);
+        const startBatch = Math.max(1, targetBatch - 1);
+        const endBatch = Math.min(targetBatch + 2, totalBatchCount || targetBatch + 2);
+
+        // Load the batches around the resume point, then navigate
+        fetchBatchRange(startBatch, endBatch).then(() => {
+          // After batches loaded, find the page and navigate
+          setTimeout(() => {
+            const pages = batchCacheRef.current;
+            // Find page in loaded batches
+            let foundIdx = -1;
+            const sorted = [...pages.entries()].sort((a, b) => a[0] - b[0]);
+            const allLoaded = sorted.flatMap(([, p]) => p);
+            foundIdx = allLoaded.findIndex(p => p.pageNumber >= resume.pageNumber);
+
+            if (foundIdx >= 0) {
+              const viewPage = Math.floor(foundIdx / PAGES_PER_VIEW) + 1;
               setCurrentPage(viewPage);
               if (resume.chapterNumber) setActiveChapter(resume.chapterNumber);
               if (resume.chapter) setScrollChapter(resume.chapter);
@@ -2127,24 +2133,27 @@ export default function Bhagwatham() {
                   const rect = el.getBoundingClientRect();
                   window.scrollTo({ top: window.scrollY + rect.top + scrollOffset, behavior: "auto" });
                 }
-              }, 300);
+              }, 500);
             }
-          }
-        }
+          }, 100);
+        });
       } catch { /* ignore */ }
     }
   }, [loading, allPages.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleResume = () => {
+  const handleResume = async () => {
     try {
       const raw = localStorage.getItem("bhagwatham_resume");
       if (raw) {
         const resume = JSON.parse(raw);
         if (resume.pageNumber) {
-          const pageIdx = allPages.findIndex(p => p.pageNumber >= resume.pageNumber);
-          if (pageIdx >= 0) {
-            setCurrentPage(Math.floor(pageIdx / PAGES_PER_VIEW) + 1);
-          }
+          // Load the right batches first
+          const targetBatch = Math.ceil(resume.pageNumber / 20);
+          await fetchBatchRange(Math.max(1, targetBatch - 1), targetBatch + 2);
+          setTimeout(() => {
+            const pageIdx = allPages.findIndex(p => p.pageNumber >= resume.pageNumber);
+            if (pageIdx >= 0) setCurrentPage(Math.floor(pageIdx / PAGES_PER_VIEW) + 1);
+          }, 100);
         }
         if (resume.chapterNumber) setActiveChapter(resume.chapterNumber);
       }
