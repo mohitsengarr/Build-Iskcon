@@ -2376,6 +2376,19 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 351,
+      "chapterTitle": "Chapter उन्तीस",
+      "imagePath": "chapter-351.jpg",
+      "prompt": "Krishna teaches Udhhav about bhakti-yoga in a serene forest setting, guiding him towards selfless devotion and inner peace.",
+      "descriptionHi": "भगवान श्रीकृष्ण उद्धव को भक्ति-योग के विषय में संक्षिप्त आदेश देते हैं, जिसमें उन्हें भगवान की शरण में जाने और लालसा से मुक्त होकर आत्मा के सुख का अनुभव करने की बात कही जाती है। यह अध्याय भक्ति के महत्व को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T21:30:29.310Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 352,
       "chapterTitle": "Chapter तीस",
       "imagePath": "chapter-352.jpg",
@@ -2403,5 +2416,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T21:00:59.557Z"
+  "lastUpdated": "2026-04-13T21:30:29.310Z"
 }
