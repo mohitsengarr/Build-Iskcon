@@ -1937,6 +1937,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 287,
+      "chapterTitle": "Chapter छियासी",
+      "imagePath": "chapter-287.jpg",
+      "prompt": "Arjuna, disguised as a sage, escapes with Subhadra from the palace during a chariot festival, as Krishna looks on.",
+      "descriptionHi": "इस अध्याय में अर्जुन द्वारा सुभद्रा का हरण और कृष्ण द्वारा अपने भक्तों को आशीर्वाद देने का वर्णन है। अर्जुन ने सुभद्रा को दुर्योधन से विवाह होने से बचाने के लिए यह कदम उठाया। कृष्ण ने अपने भक्तों को आशीर्वाद देने मिथिला गये।",
+      "personasUsed": [
+        "krishna_adult",
+        "arjuna"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T11:45:25.982Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 288,
       "chapterTitle": "Chapter सत्तासी",
       "imagePath": "chapter-288.jpg",
@@ -2157,5 +2171,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T11:40:27.887Z"
+  "lastUpdated": "2026-04-13T11:45:25.983Z"
 }
