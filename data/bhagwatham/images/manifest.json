@@ -1937,6 +1937,22 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 330,
+      "chapterTitle": "Chapter आठ",
+      "imagePath": "chapter-330.jpg",
+      "prompt": "Vyasa, Narada, Brahma, and Vishnu discuss the eighteen major Puranas in a serene forest setting.",
+      "descriptionHi": "इस अध्याय में पुराणों के विभाजन का वर्णन किया गया है, जिसमें अठारह प्रधान पुराणों और अठारह गौण पुराणों का उल्लेख है। इसमें व्यास, नारद, ब्रह्मा और विष्णु जैसे प्रमुख पात्र शामिल हैं। यह अध्याय पुराणों के महत्व और उनके विस्तार को समझने में मदद करता है।",
+      "personasUsed": [
+        "narada",
+        "vyasa",
+        "vishnu",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T04:25:43.014Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 331,
       "chapterTitle": "Chapter नौ",
       "imagePath": "chapter-331.jpg",
@@ -2004,5 +2020,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T04:15:19.311Z"
+  "lastUpdated": "2026-04-13T04:25:43.015Z"
 }
