@@ -7,7 +7,7 @@ import {
   BookOpen, ChevronLeft, ChevronRight, Loader2,
   RefreshCw, Search, BookMarked, Sparkles,
   List, X, ChevronDown, ChevronUp, Image as ImageIcon, Languages,
-  Download, Share2, Bookmark, Trash2, LogIn,
+  Download, Share2, Bookmark, Trash2, LogIn, Volume2, Square,
   Settings, Sun, Moon, Type, Minus, Plus, Maximize2, Undo2, Pencil, Wand2, Send,
 } from "lucide-react";
 
@@ -710,6 +710,54 @@ function getPageEndKind(text: string): string {
   return lastKind;
 }
 
+// ── Shlok Text-to-Speech ────────────────────────────────────────────────────
+
+function ShlokSpeaker({ text, themeKey }: { text: string; themeKey: string }) {
+  const [playing, setPlaying] = useState(false);
+  const utterRef = useRef<SpeechSynthesisUtterance | null>(null);
+
+  const speak = useCallback(() => {
+    if (playing) {
+      window.speechSynthesis.cancel();
+      setPlaying(false);
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "hi-IN"; // Hindi voice works well for Sanskrit Devanagari
+    utterance.rate = 0.85; // slightly slower for shlok recitation
+    utterance.pitch = 1.0;
+
+    // Try to find a Hindi voice
+    const voices = window.speechSynthesis.getVoices();
+    const hindiVoice = voices.find(v => v.lang.startsWith("hi")) || voices.find(v => v.lang.includes("IN"));
+    if (hindiVoice) utterance.voice = hindiVoice;
+
+    utterance.onend = () => setPlaying(false);
+    utterance.onerror = () => setPlaying(false);
+    utterRef.current = utterance;
+    window.speechSynthesis.speak(utterance);
+    setPlaying(true);
+  }, [text, playing]);
+
+  // Cleanup on unmount
+  useEffect(() => () => { window.speechSynthesis.cancel(); }, []);
+
+  return (
+    <button
+      onClick={speak}
+      className={`inline-flex items-center justify-center w-7 h-7 rounded-full transition-all shrink-0 ${
+        playing
+          ? "bg-red-100 text-red-600 hover:bg-red-200"
+          : themeKey === "dark" ? "bg-amber-900/30 text-amber-400 hover:bg-amber-900/50" : "bg-amber-100/60 text-amber-700 hover:bg-amber-200/80"
+      }`}
+      title={playing ? "Stop" : "Listen to shlok"}
+    >
+      {playing ? <Square className="w-3 h-3" /> : <Volume2 className="w-3.5 h-3.5" />}
+    </button>
+  );
+}
+
 // ── Content Renderer ───────────────────────────────────────────────────────────
 
 function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", onRegenerateImages, regeneratingChapters, onDeleteImage, chapterNumMapper, pageNumber, overrides, onOverridesChange, prevPageEndKind }: { text: string; textEn?: string; lang: "hi" | "en"; chapterImages?: Map<number, Array<{ url: string; description: string; sceneIndex?: number; isInstagram?: boolean }>>; themeKey?: Theme; onRegenerateImages?: (chapterNum: number) => void; regeneratingChapters?: Set<number>; onDeleteImage?: (chapterNum: number, sceneIndex: number) => void; chapterNumMapper?: (perSkandhNum: number) => number; pageNumber?: number; overrides?: SectionOverride[]; onOverridesChange?: (pageNum: number, overrides: SectionOverride[]) => void; prevPageEndKind?: string }) {
@@ -1172,12 +1220,17 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             );
           }
           case "shlok":
-            // BBT style: Sanskrit verse in brown, 1.4x body size, bold
+            // BBT style: Sanskrit verse in brown, 1.4x body size, bold, with speaker button
             return (
               <div key={i} className="my-5">
-                {sec.lines.map((l, j) => (
-                  <p key={j} className={`font-bold leading-[1.9] mb-0.5 ${themeKey === "dark" ? "text-amber-300" : themeKey === "sepia" ? "text-[#5a3010]" : "text-[#6b3a1a]"}`} style={{ fontSize: "1.35em", fontFamily: "var(--font-sanskrit)" }}>{l}</p>
-                ))}
+                <div className="flex items-start gap-2">
+                  <div className="flex-1">
+                    {sec.lines.map((l, j) => (
+                      <p key={j} className={`font-bold leading-[1.9] mb-0.5 ${themeKey === "dark" ? "text-amber-300" : themeKey === "sepia" ? "text-[#5a3010]" : "text-[#6b3a1a]"}`} style={{ fontSize: "1.35em", fontFamily: "var(--font-sanskrit)" }}>{l}</p>
+                    ))}
+                  </div>
+                  <ShlokSpeaker text={sec.lines.join(" ")} themeKey={themeKey} />
+                </div>
               </div>
             );
           case "ref-shlok":
