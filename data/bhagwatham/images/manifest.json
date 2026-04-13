@@ -1937,6 +1937,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 328,
+      "chapterTitle": "Chapter छह",
+      "imagePath": "chapter-328.jpg",
+      "prompt": "Shukadeva Goswami imparts final wisdom to King Parikshit on a serene riverbank, guiding him towards spiritual liberation.",
+      "descriptionHi": "महाराज परीक्षित को शुकदेव गोस्वामी का अन्तिम उपदेश मिलता है, जिसमें उन्हें अपने मन को कृष्ण में स्थिर करने और भगवद्धाम वापस जाने के लिए तैयार किया जाता है। इस अध्याय में महाराज परीक्षित के मुक्ति-लाभ की कहानी है।",
+      "personasUsed": [
+        "shukadeva",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T10:40:30.492Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 329,
       "chapterTitle": "Chapter सात",
       "imagePath": "chapter-329.jpg",
@@ -2029,5 +2043,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T10:35:52.467Z"
+  "lastUpdated": "2026-04-13T10:40:30.492Z"
 }
