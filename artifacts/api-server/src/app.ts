@@ -52,8 +52,8 @@ export async function createApp(): Promise<Express> {
   // Start temple discovery cron (hourly — Firecrawl + Claude → Supabase)
   startTempleDiscoveryCron();
 
-  // Start Bhagavad Gita OCR processing cron (PaddleOCR, every 5 min offset +2)
-  startGitaCron();
+  // Gita OCR cron disabled for now
+  // startGitaCron();
 
   if (IS_DEV) {
     // In development, use Vite's dev server as middleware for HMR + frontend
