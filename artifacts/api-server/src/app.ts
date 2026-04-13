@@ -8,6 +8,7 @@ import { logger } from "./lib/logger";
 import { startBhagwathamCron } from "./cron/bhagwatham-cron";
 import { startInstagramCron } from "./cron/instagram-cron";
 import { startTempleDiscoveryCron } from "./cron/temple-discovery-cron";
+import { startGitaCron } from "./cron/gita-cron";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -50,6 +51,9 @@ export async function createApp(): Promise<Express> {
 
   // Start temple discovery cron (hourly — Firecrawl + Claude → Supabase)
   startTempleDiscoveryCron();
+
+  // Start Bhagavad Gita OCR processing cron (PaddleOCR, every 5 min offset +2)
+  startGitaCron();
 
   if (IS_DEV) {
     // In development, use Vite's dev server as middleware for HMR + frontend

@@ -11,6 +11,13 @@
         { "key": "Content-Type", "value": "application/json" },
         { "key": "Cache-Control", "value": "public, max-age=300, s-maxage=600" }
       ]
+    },
+    {
+      "source": "/api/gita/(.*)",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json" },
+        { "key": "Cache-Control", "value": "public, max-age=300, s-maxage=600" }
+      ]
     }
   ],
   "rewrites": [
@@ -23,6 +30,14 @@
     { "source": "/api/bhagwatham/faces/:path*", "destination": "/api/bhagwatham/faces/:path*" },
     { "source": "/api/bhagwatham/persona/gallery", "destination": "/api/bhagwatham/persona/gallery" },
     { "source": "/api/bhagwatham/instagram/manifest", "destination": "/api/bhagwatham/instagram/manifest" },
+    { "source": "/api/bhagwatham/chapter-index", "destination": "/api/bhagwatham/chapter-index" },
+    { "source": "/api/gita/content", "destination": "/api/gita/content" },
+    { "source": "/api/gita/progress", "destination": "/api/gita/progress" },
+    { "source": "/api/gita/batches", "destination": "/api/gita/batches" },
+    { "source": "/api/gita/batch/:number", "destination": "/api/gita/batch/:number" },
+    { "source": "/api/gita/image-manifest", "destination": "/api/gita/image-manifest" },
+    { "source": "/api/gita/images/:path*", "destination": "/api/gita/images/:path*" },
+    { "source": "/api/gita/chapter-index", "destination": "/api/gita/chapter-index" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
