@@ -2262,7 +2262,20 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-13T03:50:26.990Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 340,
+      "chapterTitle": "अध्याय अठारह",
+      "imagePath": "chapter-340.jpg",
+      "prompt": "Krishna stands on a serene riverbank, imparting wisdom to his devotees, surrounded by a tranquil natural setting.",
+      "descriptionHi": "इस अध्याय में कृष्ण के जीवन के विभिन्न पहलुओं का वर्णन किया गया है, जिसमें उनकी शुद्ध भक्ति और आत्म-साक्षात्कार की प्रक्रिया शामिल है। कृष्ण की शिक्षाएँ और उनके अनुयायियों के साथ उनके संबंध इस अध्याय के केंद्र में हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T17:50:41.671Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T17:45:37.234Z"
+  "lastUpdated": "2026-04-13T17:50:41.671Z"
 }
