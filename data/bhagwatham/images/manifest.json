@@ -1937,6 +1937,19 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 286,
+      "chapterTitle": "Chapter पिचासी",
+      "imagePath": "chapter-286.jpg",
+      "prompt": "Krishna teaches divine wisdom to his father Vasudeva in the palace of Dwaraka.",
+      "descriptionHi": "इस अध्याय में कृष्ण ने अपने पिता वसुदेव को दिव्य ज्ञान दिया और बलराम के साथ मिल कर अपनी माता के मृत पुत्रों का उद्धार किया। वृष्णिजन द्वारका वापस चले गये और उन्होंने नगर के लोगों को यदुओं के स्वामी वसुदेव के महान उत्सव के बारे में बताया।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T13:50:22.204Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 287,
       "chapterTitle": "Chapter छियासी",
       "imagePath": "chapter-287.jpg",
@@ -2184,5 +2197,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T13:49:22.057Z"
+  "lastUpdated": "2026-04-13T13:50:22.204Z"
 }
