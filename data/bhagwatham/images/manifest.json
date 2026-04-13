@@ -1937,6 +1937,19 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 274,
+      "chapterTitle": "Chapter तिहत्तर",
+      "imagePath": "chapter-274.jpg",
+      "prompt": "Krishna frees 20,800 captive kings and blesses them in his palace, advising them to follow dharma and remember his divine feet always.",
+      "descriptionHi": "इस अध्याय में जरासन्ध द्वारा बन्दी बनाये गये राजाओं को कृष्ण द्वारा छुड़ाये जाने और उन्हें आशीर्वाद देने का वर्णन है, जिसमें राजाओं ने कृष्ण के चरणकमलों को निरन्तर स्मरण करने की प्रार्थना की। कृष्ण ने उन्हें आश्वासन दिया और अनुदेश दिये।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T20:15:19.795Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 275,
       "chapterTitle": "Chapter चौहत्तर",
       "imagePath": "chapter-275.jpg",
@@ -2376,5 +2389,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T19:55:33.909Z"
+  "lastUpdated": "2026-04-13T20:15:19.795Z"
 }
