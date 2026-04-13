@@ -1937,6 +1937,15 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 280,
+      "chapterTitle": "Chapter उन्यासी",
+      "imagePath": "chapter-280.jpg",
+      "prompt": "Lord Balaram subdues the demon Balval in Naimisharanya forest, saving the sages.",
+      "descriptionHi": "इस अध्याय में भगवान् बलराम की तीर्थयात्रा का वर्णन है, जहाँ वे बल्वल असुर को पराजित करते हैं और फिर विविध पवित्र तीर्थस्थानों में स्नान करते हैं। भगवान् बलराम भीमसेन और दुर्योधन के बीच युद्ध को रोकने का प्रयास करते हैं।",
+      "generatedAt": "2026-04-13T18:15:21.622Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 281,
       "chapterTitle": "Chapter अस्सी",
       "imagePath": "chapter-281.jpg",
@@ -2277,5 +2286,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T17:50:41.671Z"
+  "lastUpdated": "2026-04-13T18:15:21.622Z"
 }
