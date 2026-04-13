@@ -1937,6 +1937,15 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 269,
+      "chapterTitle": "Chapter अड़सठ",
+      "imagePath": "chapter-269.jpg",
+      "prompt": "Balarama pulls the city of Hastinapura to rescue Samba, son of Jambavati, from the Kauravas.",
+      "descriptionHi": "इस अध्याय में साम्ब का विवाह और कौरवों द्वारा उसे छुड़ाने के लिए बलदेव के प्रयासों का वर्णन है, जिसमें बलदेव हस्तिनापुर नगरी को खींच डालते हैं। साम्ब दुर्योधन की पुत्री लक्ष्मणा को स्वयंवर सभा से बलपूर्वक भगा ले जाता है।",
+      "generatedAt": "2026-04-13T21:55:59.083Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 270,
       "chapterTitle": "Chapter उनहत्तर",
       "imagePath": "chapter-270.jpg",
@@ -2454,5 +2463,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T21:50:24.067Z"
+  "lastUpdated": "2026-04-13T21:55:59.086Z"
 }
