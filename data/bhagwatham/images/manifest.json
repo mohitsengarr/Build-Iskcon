@@ -1937,6 +1937,19 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 282,
+      "chapterTitle": "Chapter इक्यासी",
+      "imagePath": "chapter-282.jpg",
+      "prompt": "Krishna warmly welcomes Sudama to his palace, accepting the humble gift of rice.",
+      "descriptionHi": "भगवान् कृष्ण ने अपने मित्र सुदामा को वरदान दिया और उसकी गरीबी दूर की। सुदामा ने कृष्ण के महल में रात बिताई और सुबह घर लौटा, जहाँ उसने अपनी टूटी कुटिया के स्थान पर वैभवशाली महलों की श्रृंखला देखी।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T17:10:21.552Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 283,
       "chapterTitle": "Chapter बयासी",
       "imagePath": "chapter-283.jpg",
@@ -2238,5 +2251,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T16:30:24.823Z"
+  "lastUpdated": "2026-04-13T17:10:21.552Z"
 }
