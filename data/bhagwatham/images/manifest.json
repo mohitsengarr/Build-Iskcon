@@ -1937,6 +1937,19 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 293,
+      "chapterTitle": "Chapter दो",
+      "imagePath": "chapter-293.jpg",
+      "prompt": "Narada shares spiritual wisdom with Vasudeva in his home, discussing the path to pure devotion and liberation.",
+      "descriptionHi": "इस अध्याय में नारद मुनि महाराज निमि तथा नौ योगेन्द्रों के बीच हुई वार्ता को सुनाकर भागवत धर्म की शिक्षा देते हैं। भगवान् कृष्ण का दर्शन पाने के लिए परम इच्छुक देवर्षि नारद प्रायः द्वारका में ही रहते थे। नारद मुनि वसुदेव के घर पधारे और उन्हें शुद्ध भक्ति के विषय में सुनाया।",
+      "personasUsed": [
+        "narada"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T10:55:21.378Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 326,
       "chapterTitle": "Chapter चार",
       "imagePath": "chapter-326.jpg",
@@ -2072,5 +2085,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T10:50:24.501Z"
+  "lastUpdated": "2026-04-13T10:55:21.378Z"
 }
