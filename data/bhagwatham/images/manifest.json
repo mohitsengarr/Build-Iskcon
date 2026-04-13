@@ -1937,6 +1937,21 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 271,
+      "chapterTitle": "Chapter सत्तर",
+      "imagePath": "chapter-271.jpg",
+      "prompt": "Krishna, surrounded by Yudhishthira and Narada, receives a messenger in the royal assembly hall, seeking help for imprisoned kings.",
+      "descriptionHi": "भगवान् कृष्ण की दैनिक चर्या का वर्णन इस अध्याय में किया गया है, जिसमें वे ब्राह्म-मuhूर्त में उठकर स्नान करते हैं और धार्मिक कृत्य करते हैं। नारदमुनि के आगमन और दूत के निवेदन के साथ, अध्याय में एक महत्वपूर्ण घटना की शुरुआत होती है।",
+      "personasUsed": [
+        "krishna_adult",
+        "narada",
+        "yudhishthira"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T21:45:55.493Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 272,
       "chapterTitle": "Chapter इकहत्तर",
       "imagePath": "chapter-272.jpg",
@@ -2430,5 +2445,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T21:40:29.590Z"
+  "lastUpdated": "2026-04-13T21:45:55.495Z"
 }
