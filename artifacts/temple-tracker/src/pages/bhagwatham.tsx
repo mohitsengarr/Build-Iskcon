@@ -834,10 +834,16 @@ function ShlokSpeaker({ text, themeKey }: { text: string; themeKey: string }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const speak = useCallback(async () => {
-    if (playing) {
-      audioRef.current?.pause();
-      audioRef.current = null;
+    // Stop if already playing or loading
+    if (playing || audioRef.current) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current = null;
+      }
+      window.speechSynthesis.cancel();
       setPlaying(false);
+      setLoading(false);
       return;
     }
 
@@ -883,7 +889,6 @@ function ShlokSpeaker({ text, themeKey }: { text: string; themeKey: string }) {
   return (
     <button
       onClick={speak}
-      disabled={loading}
       className={`inline-flex items-center justify-center w-7 h-7 rounded-full transition-all shrink-0 ${
         loading
           ? "bg-stone-100 text-stone-400 cursor-wait"
