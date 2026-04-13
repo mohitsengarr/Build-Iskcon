@@ -1937,6 +1937,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 334,
+      "chapterTitle": "Chapter बारह",
+      "imagePath": "chapter-334.jpg",
+      "prompt": "Brahma and Suta Goswami witness sixty thousand Valakhilya sages praising Lord Hari with Vedic hymns.",
+      "descriptionHi": "इस अध्याय में भगवान हरि की महिमा का वर्णन किया गया है, जहां साठ हजार वालखिल्य ब्रह्मर्षि उनकी स्तुति करते हैं। भगवान हरि के दिव्य गुणों का श्रवण करने से जीव को शांति और सुख की प्राप्ति होती है।",
+      "personasUsed": [
+        "suta_goswami",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T03:55:24.116Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 335,
       "chapterTitle": "Chapter तेरह",
       "imagePath": "chapter-335.jpg",
@@ -1954,5 +1968,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T03:50:26.991Z"
+  "lastUpdated": "2026-04-13T03:55:24.117Z"
 }
