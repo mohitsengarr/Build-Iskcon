@@ -831,8 +831,9 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
 
   type Section = { kind: "chapter" | "shlok" | "ref-shlok" | "shabdarth" | "anuvad" | "tatparya" | "text"; lines: string[]; chapterNum?: number };
   const sections: Section[] = [];
-  // If previous page ended in tatparya/anuvad, continue that section kind
-  const initialKind = (prevPageEndKind === "tatparya" || prevPageEndKind === "anuvad" || prevPageEndKind === "ref-shlok") ? prevPageEndKind as Section["kind"] : "text";
+  // Continue the previous page's section kind across page boundaries
+  const continuableKinds = ["tatparya", "anuvad", "ref-shlok", "shlok", "shabdarth"];
+  const initialKind = (prevPageEndKind && continuableKinds.includes(prevPageEndKind)) ? prevPageEndKind as Section["kind"] : "text";
   let current: Section = { kind: initialKind, lines: [] };
 
   const flush = () => { if (current.lines.length > 0) sections.push(current); };
