@@ -1937,6 +1937,15 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 277,
+      "chapterTitle": "Chapter छिहत्तर",
+      "imagePath": "chapter-277.jpg",
+      "prompt": "Pradyumna confronts Shalva in the skies above Dwaraka, dispelling the asura's illusions with his divine weapons.",
+      "descriptionHi": "इस अध्याय में शाल्व नामक असुर द्वारा द्वारका पर आक्रमण का वर्णन है, जिसमें प्रद्युम्न और अन्य यदुवीरों ने शाल्व की सेना से लड़ाई लड़ी और उसके विमान को नष्ट करने का प्रयास किया। यह अध्याय शाल्व की प्रतिज्ञा और उसके परिणामों को दर्शाता है।",
+      "generatedAt": "2026-04-13T19:10:31.140Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 278,
       "chapterTitle": "Chapter सतहत्तर",
       "imagePath": "chapter-278.jpg",
@@ -2326,5 +2335,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T18:30:31.005Z"
+  "lastUpdated": "2026-04-13T19:10:31.141Z"
 }
