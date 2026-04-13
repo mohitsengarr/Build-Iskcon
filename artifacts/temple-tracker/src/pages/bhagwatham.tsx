@@ -944,20 +944,27 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
                 </div>
               )}
               {igImgs && igImgs.length > 0 && (
-                <div className="my-6">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider mb-3 text-pink-600/70">Scene Gallery</p>
-                  <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-orange-300/40">
-                    {igImgs.map((img, idx) => (
-                      <div key={idx} className="snap-start shrink-0 w-[200px] sm:w-[240px] rounded-2xl overflow-hidden shadow-lg border border-pink-200/30 bg-white">
-                        <div className="aspect-[4/5] overflow-hidden">
-                          <img src={img.url} alt={`Scene ${idx + 1}`} className="w-full h-full object-cover" loading="lazy" />
-                        </div>
-                        <div className="px-3 py-2">
-                          <p className="text-[10px] text-stone-500 leading-relaxed line-clamp-2">{img.description}</p>
+                <div className="my-6 space-y-5">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-pink-600/70">Scene Gallery</p>
+                  {igImgs.map((img, idx) => (
+                    <div key={idx} className="rounded-2xl overflow-hidden shadow-lg border border-stone-200/60 bg-white">
+                      <div className="relative">
+                        <img src={img.url} alt={`Scene ${idx + 1}`} className="w-full object-cover" loading="lazy" />
+                        <div className="absolute top-3 left-3 bg-black/50 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full">Scene {idx + 1}</div>
+                      </div>
+                      <div className="px-4 py-3">
+                        <p className="text-sm text-stone-600 leading-relaxed">{img.description}</p>
+                        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-stone-100">
+                          <a href={img.url} download={`bhagavatam-scene-${idx + 1}.jpg`} className="flex items-center gap-1.5 text-[11px] font-medium text-stone-500 hover:text-orange-600 px-2.5 py-1.5 rounded-lg hover:bg-stone-50 transition-colors">
+                            <Download className="w-3.5 h-3.5" /> Download
+                          </a>
+                          <button onClick={() => { if (navigator.share) navigator.share({ title: `Scene ${idx + 1}`, text: img.description, url: img.url }).catch(() => {}); else navigator.clipboard.writeText(img.url).then(() => alert("Link copied!")); }} className="flex items-center gap-1.5 text-[11px] font-medium text-stone-500 hover:text-orange-600 px-2.5 py-1.5 rounded-lg hover:bg-stone-50 transition-colors">
+                            <Share2 className="w-3.5 h-3.5" /> Share
+                          </button>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -1364,24 +1371,54 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
                     ))}
                   </div>
                 )}
-                {/* Instagram scene gallery — horizontal scroll */}
+                {/* Instagram scene gallery — vertical storyline with share/download/delete */}
                 {igImgs && igImgs.length > 0 && (
-                  <div className="my-6">
-                    <p className={`text-[11px] font-semibold uppercase tracking-wider mb-3 ${themeKey === "dark" ? "text-pink-400/70" : "text-pink-600/70"}`}>
+                  <div className="my-6 space-y-5">
+                    <p className={`text-[11px] font-semibold uppercase tracking-wider ${themeKey === "dark" ? "text-pink-400/70" : "text-pink-600/70"}`}>
                       Scene Gallery
                     </p>
-                    <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-orange-300/40">
-                      {igImgs.map((img, idx) => (
-                        <div key={idx} className="snap-start shrink-0 w-[200px] sm:w-[240px] rounded-2xl overflow-hidden shadow-lg border border-pink-200/30 bg-white">
-                          <div className="aspect-[4/5] overflow-hidden">
-                            <img src={img.url} alt={`Scene ${idx + 1}`} className="w-full h-full object-cover" loading="lazy" />
-                          </div>
-                          <div className="px-3 py-2">
-                            <p className="text-[10px] text-stone-500 leading-relaxed line-clamp-2">{img.description}</p>
+                    {igImgs.map((img, idx) => (
+                      <div key={idx} className="rounded-2xl overflow-hidden shadow-lg border border-stone-200/60 bg-white">
+                        <div className="relative">
+                          <img src={img.url} alt={`Scene ${idx + 1}`} className="w-full object-cover" loading="lazy" />
+                          <div className="absolute top-3 left-3 bg-black/50 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
+                            Scene {idx + 1}
                           </div>
                         </div>
-                      ))}
-                    </div>
+                        <div className="px-4 py-3">
+                          <p className="text-sm text-stone-600 leading-relaxed">{img.description}</p>
+                          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-stone-100">
+                            <a
+                              href={img.url}
+                              download={`bhagavatam-scene-${globalNum}-${idx + 1}.jpg`}
+                              className="flex items-center gap-1.5 text-[11px] font-medium text-stone-500 hover:text-orange-600 px-2.5 py-1.5 rounded-lg hover:bg-stone-50 transition-colors"
+                            >
+                              <Download className="w-3.5 h-3.5" /> Download
+                            </a>
+                            <button
+                              onClick={() => {
+                                if (navigator.share) {
+                                  navigator.share({ title: `Srimad Bhagavatam — Scene ${idx + 1}`, text: img.description, url: img.url }).catch(() => {});
+                                } else {
+                                  navigator.clipboard.writeText(img.url).then(() => alert("Link copied!"));
+                                }
+                              }}
+                              className="flex items-center gap-1.5 text-[11px] font-medium text-stone-500 hover:text-orange-600 px-2.5 py-1.5 rounded-lg hover:bg-stone-50 transition-colors"
+                            >
+                              <Share2 className="w-3.5 h-3.5" /> Share
+                            </button>
+                            {onDeleteImage && globalNum && (
+                              <button
+                                onClick={() => onDeleteImage(globalNum!, (img as any).sceneIndex ?? idx + 100)}
+                                className="flex items-center gap-1.5 text-[11px] font-medium text-red-400 hover:text-red-600 px-2.5 py-1.5 rounded-lg hover:bg-red-50 transition-colors ml-auto"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" /> Delete
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
                 {globalNum && onRegenerateImages && (
