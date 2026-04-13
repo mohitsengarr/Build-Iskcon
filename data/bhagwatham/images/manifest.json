@@ -2284,7 +2284,21 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-13T17:50:41.671Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 353,
+      "chapterTitle": "Chapter इकतीस",
+      "imagePath": "chapter-353.jpg",
+      "prompt": "Krishna returns to his divine abode, followed by the Yadavas and deities, as Arjuna mourns his departure on the outskirts of Dwaraka.",
+      "descriptionHi": "इस अध्याय में भगवान् कृष्ण के अपने धाम के लिए प्रत्यावर्तन का वर्णन हुआ है, जिसमें यदुवंशी और देवता उनके पीछे पीछे अपने धामों को लौट गये। अर्जुन कृष्ण के वियोग से अभिभूत थे, लेकिन उन्होंने अपने को शान्त कर लिया।",
+      "personasUsed": [
+        "krishna_adult",
+        "arjuna"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T18:20:26.052Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T18:15:21.622Z"
+  "lastUpdated": "2026-04-13T18:20:26.052Z"
 }
