@@ -43,17 +43,13 @@ export async function createApp(): Promise<Express> {
 
   app.use("/api", router);
 
-  // Start Bhagwatham PDF processing cron (every 10 minutes)
-  startBhagwathamCron();
-
-  // Start Instagram posting cron (every 6 hours — reverse chapter order)
-  startInstagramCron();
-
-  // Start temple discovery cron (hourly — Firecrawl + Claude → Supabase)
-  startTempleDiscoveryCron();
-
-  // Gita OCR cron disabled for now
+  // OCR services disabled for now
+  // startBhagwathamCron();
   // startGitaCron();
+
+  // Non-OCR services still active
+  startInstagramCron();
+  startTempleDiscoveryCron();
 
   if (IS_DEV) {
     // In development, use Vite's dev server as middleware for HMR + frontend
