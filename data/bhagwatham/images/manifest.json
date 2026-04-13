@@ -1937,6 +1937,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 268,
+      "chapterTitle": "Chapter सतसठ",
+      "imagePath": "chapter-268.jpg",
+      "prompt": "Krishna stands calmly as Vishnu's Sudarshan Chakra returns to his side after engulfing the city of Varanasi.",
+      "descriptionHi": "भगवान् विष्णु का चक्र अग्नि तुल्य असुर का पीछा करते हुए वाराणसी के भीतर घुसता है और नगर को भस्म करने लगता है। इस घटना में भगवान् विष्णु और कृष्ण मुख्य पात्र हैं। यह घटना आध्यात्मिक और भावनात्मक रूप से महत्वपूर्ण है।",
+      "personasUsed": [
+        "krishna_adult",
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T22:01:21.768Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 269,
       "chapterTitle": "Chapter अड़सठ",
       "imagePath": "chapter-269.jpg",
@@ -2463,5 +2477,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T21:55:59.086Z"
+  "lastUpdated": "2026-04-13T22:01:21.769Z"
 }
