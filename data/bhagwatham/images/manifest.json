@@ -1937,6 +1937,21 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 326,
+      "chapterTitle": "Chapter चार",
+      "imagePath": "chapter-326.jpg",
+      "prompt": "Krishna, Brahma, and Vishnu discuss the importance of Harе Krishna kirtan in the palace of Brahma.",
+      "descriptionHi": "इस अध्याय में कलियुग में तप, योग और यज्ञ के महत्व को बताया गया है और हरे कृष्ण कीर्तन की आवश्यकता पर प्रकाश डाला गया है। भगवान विष्णु और ब्रह्मा की उपस्थिति में यह चर्चा होती है। इसका महत्व मानव समाज को कलियुग के प्रभाव से बचाने में है।",
+      "personasUsed": [
+        "krishna_adult",
+        "vishnu",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T10:50:24.500Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 327,
       "chapterTitle": "Chapter पाँच",
       "imagePath": "chapter-327.jpg",
@@ -2057,5 +2072,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T10:45:23.902Z"
+  "lastUpdated": "2026-04-13T10:50:24.501Z"
 }
