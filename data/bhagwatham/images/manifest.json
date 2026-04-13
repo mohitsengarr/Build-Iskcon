@@ -1937,6 +1937,15 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 329,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-329.jpg",
+      "prompt": "Sukarma's disciples, including Hiranynabh, Pausyaji, and Avantya, receive the sacred Samaveda scriptures in a serene forest setting.",
+      "descriptionHi": "जैमिनि के शिष्य सुकर्मा ने सामवेद को एक हजार संहिताओं में बाँट दिया और उनके तीन शिष्यों ने साम मंत्रों का भार सँभाला। पौष्यञ्जि और आवन्त्य के शिष्यों ने सामवेद के उदीच्य गायक के नाम से प्रसिद्ध हुए।",
+      "generatedAt": "2026-04-13T10:35:52.467Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 330,
       "chapterTitle": "Chapter आठ",
       "imagePath": "chapter-330.jpg",
@@ -2020,5 +2029,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T04:25:43.015Z"
+  "lastUpdated": "2026-04-13T10:35:52.467Z"
 }
