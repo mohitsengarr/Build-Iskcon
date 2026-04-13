@@ -1937,6 +1937,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 331,
+      "chapterTitle": "Chapter नौ",
+      "imagePath": "chapter-331.jpg",
+      "prompt": "Krishna and Brahma sit in a serene forest, surrounded by ancient trees, as Brahma attempts to comprehend Krishna's divine nature.",
+      "descriptionHi": "भगवान कृष्ण के परम स्वरूप को समझने के लिए वेदों का अध्ययन करना आवश्यक है, लेकिन यह ज्ञान भी ब्रह्मा जैसे महान विद्वानों को मोहित कर देता है। हर दार्शनिक अपने विशेष दृष्टिकोण से भगवान को समझने का प्रयास करता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T04:15:19.311Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 332,
       "chapterTitle": "Chapter दस",
       "imagePath": "chapter-332.jpg",
@@ -1990,5 +2004,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T04:10:43.393Z"
+  "lastUpdated": "2026-04-13T04:15:19.311Z"
 }
