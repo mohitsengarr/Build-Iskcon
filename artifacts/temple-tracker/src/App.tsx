@@ -11,6 +11,7 @@ import Gita from "@/pages/gita";
 import Library from "@/pages/library";
 import JapaCounter from "@/pages/japa-counter";
 import PersonaGallery from "@/pages/persona-gallery";
+import Admin from "@/pages/admin";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ function App() {
             <Route path="/bhagwatham" component={Bhagwatham} />
             <Route path="/gita" component={Gita} />
             <Route path="/library" component={Library} />
+            <Route path="/admin" component={Admin} />
             <Route path="/japa" component={JapaCounter} />
             <Route path="/personas" component={PersonaGallery} />
             <Route path="/" component={Home} />
