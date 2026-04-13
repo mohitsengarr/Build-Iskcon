@@ -2321,6 +2321,19 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 352,
+      "chapterTitle": "Chapter तीस",
+      "imagePath": "chapter-352.jpg",
+      "prompt": "Krishna sits in silence on the beach as Balarama departs, while hunter Jara mistakenly pierces Krishna's foot with an arrow.",
+      "descriptionHi": "श्रीकृष्ण ने यादवों को द्वारका छोड़कर प्रभास क्षेत्र में जाने की सलाह दी, जहां वे उत्सव मनाने में लीन हो गए और कृष्ण की मायाशक्ति से उन्मत हो उठे। इसके बाद, श्री बलदेव ने योगशक्ति से अपना शरीर त्याग दिया और श्रीकृष्ण को जरा नामक शिकारी द्वारा तीर से बेध दिया गया।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T19:31:12.809Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 353,
       "chapterTitle": "Chapter इकतीस",
       "imagePath": "chapter-353.jpg",
@@ -2335,5 +2348,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T19:10:31.141Z"
+  "lastUpdated": "2026-04-13T19:31:12.809Z"
 }
