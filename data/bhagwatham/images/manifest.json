@@ -1937,6 +1937,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 289,
+      "chapterTitle": "Chapter अट्ठासी",
+      "imagePath": "chapter-289.jpg",
+      "prompt": "Krishna and Bhishma stand on the Kurukshtera battlefield, where Krishna's divine presence reveals the true nature of the self to those who behold him.",
+      "descriptionHi": "इस अध्याय में भगवान कृष्ण की विशेष कृपा का वर्णन किया गया है, जो अपने भक्तों को बिना किसी आध्यात्मिक अभ्यास के मोक्ष प्रदान कर सकते हैं। भीष्मदेव के शब्दों में यह वर्णन किया गया है कि कुरुक्षेत्र युद्ध-स्थल में कृष्ण को देखने वाले अपना मूल स्वरूप प्राप्त कर लेते हैं। यह अध्याय हमें भक्ति की प्रक्रिया में दत्तचित्त होने के लिए प्रेरित करता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "bhishma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T11:35:56.263Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 290,
       "chapterTitle": "Chapter नवासी",
       "imagePath": "chapter-290.jpg",
@@ -2127,5 +2141,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T11:30:29.438Z"
+  "lastUpdated": "2026-04-13T11:35:56.263Z"
 }
