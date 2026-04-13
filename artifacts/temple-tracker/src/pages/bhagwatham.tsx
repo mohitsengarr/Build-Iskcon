@@ -983,15 +983,25 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
       const endsWithDanda = /।\s*\.?\s*$/.test(t);
 
       if (hasDash || hasSemicolon) {
-        // Still shabdarth — add the line
         current.lines.push(t);
-        // If this line ends with । (danda), shabdarth is complete — next line is anuvad
         if (endsWithDanda) {
           flush();
           current = { kind: "anuvad", lines: [] };
         }
         continue;
       }
+
+      // "अनुवाद" label inside shabdarth — check if next lines are still shabdarth
+      if (/^अनुवाद/u.test(t)) {
+        const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : "";
+        const nextHasDash = nextLine.includes("—") || nextLine.includes("--") || /\S-\s/.test(nextLine);
+        const nextHasSemicolon = nextLine.includes(";");
+        if (nextHasDash || nextHasSemicolon) {
+          // Next line is still shabdarth — skip the "अनुवाद" label, keep parsing as shabdarth
+          continue;
+        }
+      }
+
       // No dashes or semicolons — this is anuvad text
       flush();
       current = { kind: "anuvad", lines: [t] };
@@ -1171,11 +1181,11 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
 
   return (
     <div className="space-y-5 group/page relative">
-      {/* Edit mode toggle */}
+      {/* Edit mode toggle — bottom-right to avoid overlapping speaker buttons */}
       {pageNumber && onOverridesChange && (
         <button
           onClick={() => setEditMode(true)}
-          className="absolute -right-1 top-0 opacity-0 group-hover/page:opacity-60 hover:!opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-stone-100"
+          className="absolute -right-1 bottom-0 opacity-0 group-hover/page:opacity-60 hover:!opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-stone-100"
           title="Edit section boundaries"
         >
           <Pencil className="w-3.5 h-3.5 text-stone-400" />
@@ -1246,13 +1256,13 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             );
           }
           case "shlok":
-            // BBT style: Sanskrit verse in brown, 1.4x body size, bold, with speaker button
+            // Sanskrit verse — same color as body text, 1.35x size, bold, with speaker
             return (
               <div key={i} className="my-5">
                 <div className="flex items-start gap-2">
                   <div className="flex-1">
                     {sec.lines.map((l, j) => (
-                      <p key={j} className={`font-bold leading-[1.9] mb-0.5 ${themeKey === "dark" ? "text-amber-300" : themeKey === "sepia" ? "text-[#5a3010]" : "text-[#6b3a1a]"}`} style={{ fontSize: "1.35em", fontFamily: "var(--font-sanskrit)" }}>{l}</p>
+                      <p key={j} className={`font-bold leading-[1.9] mb-0.5 ${t.text}`} style={{ fontSize: "1.35em", fontFamily: "var(--font-sanskrit)" }}>{l}</p>
                     ))}
                   </div>
                   <ShlokSpeaker text={sec.lines.join(" ")} themeKey={themeKey} />
@@ -2346,6 +2356,9 @@ export default function Bhagwatham() {
                 ) : scrollChapter ? (
                   <>
                     <span className="truncate font-semibold">{scrollChapter?.split("—")[0].trim()}</span>
+                    {scrollChapter?.includes("—") && (
+                      <span className={`truncate ${theme.muted} hidden sm:inline`}>— {scrollChapter.split("—").slice(1).join("—").trim()}</span>
+                    )}
                     <span
                       className="whitespace-nowrap cursor-pointer hover:text-orange-600 transition-colors shrink-0"
                       onClick={() => { setPageInputValue(String(currentVisiblePage)); setEditingPageNum(true); setTimeout(() => pageInputRef.current?.select(), 50); }}
