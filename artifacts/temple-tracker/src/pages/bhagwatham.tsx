@@ -714,48 +714,70 @@ function getPageEndKind(text: string): string {
 
 function ShlokSpeaker({ text, themeKey }: { text: string; themeKey: string }) {
   const [playing, setPlaying] = useState(false);
-  const utterRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const [loading, setLoading] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const speak = useCallback(() => {
+  const speak = useCallback(async () => {
     if (playing) {
-      window.speechSynthesis.cancel();
+      audioRef.current?.pause();
+      audioRef.current = null;
       setPlaying(false);
       return;
     }
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "hi-IN";
-    utterance.rate = 0.6; // slow, deliberate Vedic recitation pace
-    utterance.pitch = 0.85; // deeper male voice tone
+    setLoading(true);
+    try {
+      // Use Sarvam Bulbul v3 for natural Indian voice
+      const res = await fetch("/api/bhagwatham/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
 
-    // Prefer a male Hindi voice for traditional shlok recitation
-    const voices = window.speechSynthesis.getVoices();
-    const maleHindi = voices.find(v => v.lang.startsWith("hi") && /male|rishi|mohit|deepak/i.test(v.name));
-    const anyHindi = voices.find(v => v.lang.startsWith("hi"));
-    const indianVoice = voices.find(v => v.lang.includes("IN"));
-    utterance.voice = maleHindi || anyHindi || indianVoice || null;
+      if (!res.ok) throw new Error("TTS API failed");
+      const data = await res.json();
 
-    utterance.onend = () => setPlaying(false);
-    utterance.onerror = () => setPlaying(false);
-    utterRef.current = utterance;
-    window.speechSynthesis.speak(utterance);
-    setPlaying(true);
+      if (data.audio) {
+        const audio = new Audio(`data:audio/wav;base64,${data.audio}`);
+        audio.onended = () => { setPlaying(false); audioRef.current = null; };
+        audio.onerror = () => { setPlaying(false); audioRef.current = null; };
+        audioRef.current = audio;
+        await audio.play();
+        setPlaying(true);
+      }
+    } catch {
+      // Fallback to browser SpeechSynthesis if API unavailable
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "hi-IN";
+      utterance.rate = 0.6;
+      utterance.pitch = 0.85;
+      const voices = window.speechSynthesis.getVoices();
+      utterance.voice = voices.find(v => v.lang.startsWith("hi")) || null;
+      utterance.onend = () => setPlaying(false);
+      window.speechSynthesis.speak(utterance);
+      setPlaying(true);
+    } finally {
+      setLoading(false);
+    }
   }, [text, playing]);
 
   // Cleanup on unmount
-  useEffect(() => () => { window.speechSynthesis.cancel(); }, []);
+  useEffect(() => () => { audioRef.current?.pause(); window.speechSynthesis.cancel(); }, []);
 
   return (
     <button
       onClick={speak}
+      disabled={loading}
       className={`inline-flex items-center justify-center w-7 h-7 rounded-full transition-all shrink-0 ${
-        playing
-          ? "bg-red-100 text-red-600 hover:bg-red-200"
-          : themeKey === "dark" ? "bg-amber-900/30 text-amber-400 hover:bg-amber-900/50" : "bg-amber-100/60 text-amber-700 hover:bg-amber-200/80"
+        loading
+          ? "bg-stone-100 text-stone-400 cursor-wait"
+          : playing
+            ? "bg-red-100 text-red-600 hover:bg-red-200"
+            : themeKey === "dark" ? "bg-stone-700/50 text-stone-300 hover:bg-stone-600/50" : "bg-stone-100 text-stone-500 hover:bg-stone-200"
       }`}
-      title={playing ? "Stop" : "Listen to shlok"}
+      title={loading ? "Loading..." : playing ? "Stop" : "Listen to shlok"}
     >
-      {playing ? <Square className="w-3 h-3" /> : <Volume2 className="w-3.5 h-3.5" />}
+      {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : playing ? <Square className="w-3 h-3" /> : <Volume2 className="w-3.5 h-3.5" />}
     </button>
   );
 }

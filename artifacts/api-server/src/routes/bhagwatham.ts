@@ -750,4 +750,55 @@ router.post("/bhagwatham/instagram/cron-trigger", async (_req, res): Promise<voi
   }
 });
 
+// POST /api/bhagwatham/tts — Sarvam Bulbul v3 text-to-speech for shlok recitation
+router.post("/bhagwatham/tts", async (req, res) => {
+  const apiKey = process.env.SARVAM_API_KEY;
+  if (!apiKey) {
+    res.status(503).json({ error: "SARVAM_API_KEY not configured" });
+    return;
+  }
+
+  const { text } = req.body;
+  if (!text || typeof text !== "string" || text.length > 2500) {
+    res.status(400).json({ error: "text required (max 2500 chars)" });
+    return;
+  }
+
+  try {
+    const ttsRes = await fetch("https://api.sarvam.ai/text-to-speech", {
+      method: "POST",
+      headers: {
+        "api-subscription-key": apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text,
+        target_language_code: "hi-IN",
+        speaker: "aditya", // deep male voice for Vedic recitation
+        model: "bulbul:v3",
+        pace: 0.8, // slow, deliberate pace
+        speech_sample_rate: 24000,
+      }),
+    });
+
+    if (!ttsRes.ok) {
+      const errText = await ttsRes.text();
+      res.status(ttsRes.status).json({ error: errText });
+      return;
+    }
+
+    const data: any = await ttsRes.json();
+    const audioBase64 = data.audios?.[0];
+    if (!audioBase64) {
+      res.status(500).json({ error: "No audio in response" });
+      return;
+    }
+
+    // Return base64 audio directly
+    res.json({ audio: audioBase64, format: "wav" });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
