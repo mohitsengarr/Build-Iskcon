@@ -1937,6 +1937,19 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 279,
+      "chapterTitle": "Chapter अठहत्तर",
+      "imagePath": "chapter-279.jpg",
+      "prompt": "Krishna faces Dantavakra on the battlefield, gada in hand, as the latter seeks revenge for his friend's demise.",
+      "descriptionHi": "इस अध्याय में भगवान् कृष्ण द्वारा शाल्व की मृत्यु के बाद दन्तवक्र का क्रोध और उसके द्वारा भगवान् पर आक्रमण का वर्णन है। मुख्य पात्र कृष्ण और दन्तवक्र हैं। इस घटना का महत्व भगवान् कृष्ण की शक्ति और दन्तवक्र के क्रोध को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T18:25:33.376Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 280,
       "chapterTitle": "Chapter उन्यासी",
       "imagePath": "chapter-280.jpg",
@@ -2300,5 +2313,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T18:20:26.052Z"
+  "lastUpdated": "2026-04-13T18:25:33.376Z"
 }
