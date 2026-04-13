@@ -1937,6 +1937,15 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 332,
+      "chapterTitle": "Chapter दस",
+      "imagePath": "chapter-332.jpg",
+      "prompt": "Shiva and Parvati appear before Markandeya Rishi in his hermitage, offering him a boon as a reward for his intense devotion and tapasya.",
+      "descriptionHi": "इस अध्याय में मार्कण्डेय ऋषि को शिव से वर मिलने का वर्णन किया गया है, जिसमें शिव और उमा उनकी तपस्या का फल देने के लिए उपस्थित हुए। मार्कण्डेय ऋषि ने समाधि से बाहर आकर शिव और पार्वती की पूजा की और उन्हें मनवांछित वर माँगने के लिए कहा।",
+      "generatedAt": "2026-04-13T04:10:43.390Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 333,
       "chapterTitle": "Chapter ग्यारह",
       "imagePath": "chapter-333.jpg",
@@ -1981,5 +1990,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T04:06:24.663Z"
+  "lastUpdated": "2026-04-13T04:10:43.393Z"
 }
