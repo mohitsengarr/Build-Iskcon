@@ -724,14 +724,16 @@ function ShlokSpeaker({ text, themeKey }: { text: string; themeKey: string }) {
     }
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "hi-IN"; // Hindi voice works well for Sanskrit Devanagari
-    utterance.rate = 0.85; // slightly slower for shlok recitation
-    utterance.pitch = 1.0;
+    utterance.lang = "hi-IN";
+    utterance.rate = 0.6; // slow, deliberate Vedic recitation pace
+    utterance.pitch = 0.85; // deeper male voice tone
 
-    // Try to find a Hindi voice
+    // Prefer a male Hindi voice for traditional shlok recitation
     const voices = window.speechSynthesis.getVoices();
-    const hindiVoice = voices.find(v => v.lang.startsWith("hi")) || voices.find(v => v.lang.includes("IN"));
-    if (hindiVoice) utterance.voice = hindiVoice;
+    const maleHindi = voices.find(v => v.lang.startsWith("hi") && /male|rishi|mohit|deepak/i.test(v.name));
+    const anyHindi = voices.find(v => v.lang.startsWith("hi"));
+    const indianVoice = voices.find(v => v.lang.includes("IN"));
+    utterance.voice = maleHindi || anyHindi || indianVoice || null;
 
     utterance.onend = () => setPlaying(false);
     utterance.onerror = () => setPlaying(false);
