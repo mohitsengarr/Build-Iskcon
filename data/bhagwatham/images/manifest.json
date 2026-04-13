@@ -1937,6 +1937,21 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 275,
+      "chapterTitle": "Chapter चौहत्तर",
+      "imagePath": "chapter-275.jpg",
+      "prompt": "Krishna receives reverence from King Yudhishthira and Arjuna in the palace during the Rajasuya Yajna ceremony.",
+      "descriptionHi": "इस अध्याय में भगवान् कृष्ण ने राजसूय यज्ञ में अग्रपूजा का सम्मान प्राप्त किया और शिशुपाल का उद्धार किया। राजा युधिष्ठिर, अर्जुन और कृष्ण मुख्य पात्र हैं। यह अध्याय कृष्ण की महानता और उनकी कृपा को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "arjuna",
+        "yudhishthira"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T19:55:33.908Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 276,
       "chapterTitle": "Chapter पचहत्तर",
       "imagePath": "chapter-276.jpg",
@@ -2361,5 +2376,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T19:50:24.197Z"
+  "lastUpdated": "2026-04-13T19:55:33.909Z"
 }
