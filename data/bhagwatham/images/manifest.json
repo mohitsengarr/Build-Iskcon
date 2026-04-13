@@ -1937,6 +1937,19 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 276,
+      "chapterTitle": "Chapter पचहत्तर",
+      "imagePath": "chapter-276.jpg",
+      "prompt": "Vishnu observes Duryodhana's growing envy in the royal palace, as he struggles to tolerate Pandu's sons' prosperity.",
+      "descriptionHi": "इस अध्याय में दुर्योधन के पापी स्वभाव और कुरुवंश के लिए उसके द्वारा लाये गये रोग का वर्णन किया गया है, जो पाण्डु-पुत्र के ऐश्वर्य को सहन नहीं कर सका। भगवान् विष्णु के कार्यकलापों को सुनने से समस्त पापों से मुक्ति मिलती है।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T19:50:24.196Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 277,
       "chapterTitle": "Chapter छिहत्तर",
       "imagePath": "chapter-277.jpg",
@@ -2348,5 +2361,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T19:31:12.809Z"
+  "lastUpdated": "2026-04-13T19:50:24.197Z"
 }
