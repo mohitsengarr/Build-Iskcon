@@ -1935,7 +1935,24 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-12T17:45:38.461Z",
       "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 335,
+      "chapterTitle": "Chapter तेरह",
+      "imagePath": "chapter-335.jpg",
+      "prompt": "Krishna shares divine knowledge with Brahma and Vyasa in a serene forest setting, as Shukadeva and Suta Goswami look on.",
+      "descriptionHi": "इस अध्याय में श्रीमद्भागवत की महिमा का वर्णन किया गया है, जिसमें श्री सूत गोस्वामी ने इसकी कथावस्तु, उद्देश्य और महिमा का वर्णन किया है। शुकदेव गोस्वामी और भगवान् श्रीकृष्ण की लीलाओं का वर्णन किया गया है।",
+      "personasUsed": [
+        "krishna_adult",
+        "vyasa",
+        "suta_goswami",
+        "shukadeva",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T03:50:26.990Z",
+      "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-12T17:45:38.461Z"
+  "lastUpdated": "2026-04-13T03:50:26.991Z"
 }
