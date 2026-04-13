@@ -228,7 +228,13 @@ function buildChapterIndex(): ChapterInfo[] {
   const sorted = chapters.sort((a, b) =>
     a.skandh !== b.skandh ? a.skandh - b.skandh : a.chapterInSkandh - b.chapterInSkandh
   );
-  sorted.forEach((ch, i) => { ch.globalNumber = i + 1; });
+  // Use offset-based global numbering (matches audit + image manifest)
+  const EXPECTED_PER_CANTO = [19, 10, 33, 31, 26, 19, 15, 24, 24, 90, 31, 13];
+  sorted.forEach((ch) => {
+    let offset = 0;
+    for (let i = 0; i < ch.skandh - 1; i++) offset += EXPECTED_PER_CANTO[i];
+    ch.globalNumber = offset + ch.chapterInSkandh;
+  });
   _chapterIndexCache = sorted;
   _chapterCacheTime = Date.now();
 
