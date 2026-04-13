@@ -151,15 +151,72 @@ function cleanupTmpImages(): void {
  * Process a single image through PaddleOCR (local Python subprocess).
  * Free, no API key needed, runs on CPU. Uses PP-OCRv5 Devanagari model.
  */
-async function ocrSinglePagePaddleOCR(imagePath: string, pageNumber: number): Promise<string> {
+// PaddleOCR server URL — model stays in memory, avoids 10-15s reload per page
+const PADDLEOCR_PORT = 8765;
+const PADDLEOCR_URL = `http://127.0.0.1:${PADDLEOCR_PORT}/ocr`;
+let paddleServerStarted = false;
+
+function ensurePaddleOCRServer(): void {
+  if (paddleServerStarted) return;
+  // Check if server is already running
+  try {
+    execSync(`curl -s http://127.0.0.1:${PADDLEOCR_PORT}/health`, { timeout: 2000 });
+    paddleServerStarted = true;
+    logger.info("PaddleOCR server already running");
+    return;
+  } catch {
+    // Not running — start it
+  }
+
   const pythonScript = path.resolve(__dirname, "..", "..", "..", "..", "services", "ocr-worker", "python", "ocr_engine.py");
-  const result = execSync(`python3 "${pythonScript}" "${imagePath}"`, {
-    encoding: "utf-8",
-    timeout: 60_000,
-    env: { ...process.env, PYTHONIOENCODING: "utf-8", PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK: "True" },
+  const { spawn } = require("child_process");
+  const proc = spawn("python3", [pythonScript, "--serve", "--port", String(PADDLEOCR_PORT)], {
+    stdio: ["ignore", "ignore", "pipe"],
+    detached: true,
+    env: {
+      ...process.env,
+      PYTHONIOENCODING: "utf-8",
+      OMP_NUM_THREADS: "2",
+      MKL_NUM_THREADS: "2",
+      FLAGS_use_cuda: "0",
+      CUDA_VISIBLE_DEVICES: "",
+    },
   });
-  const lines = JSON.parse(result.trim());
-  return lines.map((l: any) => l.text).join("\n");
+  proc.unref();
+  proc.stderr?.on("data", (data: Buffer) => logger.info({ msg: data.toString().trim() }, "PaddleOCR server"));
+  logger.info({ port: PADDLEOCR_PORT }, "Starting PaddleOCR server (model loading ~15s)...");
+
+  // Wait for server to be ready (up to 30s)
+  for (let i = 0; i < 30; i++) {
+    try {
+      execSync(`sleep 1 && curl -sf http://127.0.0.1:${PADDLEOCR_PORT}/health`, { timeout: 3000 });
+      paddleServerStarted = true;
+      logger.info("PaddleOCR server ready");
+      return;
+    } catch { /* still loading */ }
+  }
+  throw new Error("PaddleOCR server failed to start within 30s");
+}
+
+async function ocrSinglePagePaddleOCR(imagePath: string, pageNumber: number): Promise<string> {
+  ensurePaddleOCRServer();
+
+  const res = await fetch(PADDLEOCR_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ image_path: imagePath }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`PaddleOCR HTTP ${res.status}: ${errText}`);
+  }
+
+  const data: any = await res.json();
+  if (data.error) throw new Error(data.error);
+  if (!Array.isArray(data)) return "";
+
+  return data.map((l: any) => l.text).join("\n");
 }
 
 // ── Tesseract fallback ────────────────────────────────────────────────────────

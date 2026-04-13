@@ -690,7 +690,6 @@ function BookmarkPanel({ bookmarks, onJump, onDelete }: {
 function getPageEndKind(text: string): string {
   if (!text) return "text";
   const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
-  // Walk backwards to find the last section marker
   let lastKind = "text";
   for (const line of lines) {
     if (/^तात्पर्य/u.test(line)) lastKind = "tatparya";
@@ -698,6 +697,15 @@ function getPageEndKind(text: string): string {
     else if (/^शब्दार्थ/u.test(line)) lastKind = "shabdarth";
     else if (/॥/u.test(line)) lastKind = (lastKind === "tatparya") ? "ref-shlok" : "shlok";
     else if (/^(अध्याय|स्कन्ध|Chapter)/iu.test(line)) lastKind = "text";
+    // Detect implicit shabdarth→anuvad transition:
+    // shabdarth lines have "—" or "--" with ";", anuvad lines don't
+    else if (lastKind === "shabdarth" && !(line.includes("—") || line.includes("--")) && !line.includes(";")) {
+      lastKind = "anuvad";
+    }
+    // After shlok, non-verse Hindi prose = anuvad
+    else if (lastKind === "shlok" && !/॥/u.test(line)) {
+      lastKind = "anuvad";
+    }
   }
   return lastKind;
 }
@@ -1164,11 +1172,11 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             );
           }
           case "shlok":
-            // BBT style: Sanskrit verse in brown, largest text (~1.4-1.6x body), bold
+            // BBT style: Sanskrit verse in brown, 1.4x body size, bold
             return (
               <div key={i} className="my-5">
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`text-[20px] sm:text-[22px] font-bold leading-[1.9] mb-0.5 ${themeKey === "dark" ? "text-amber-300" : themeKey === "sepia" ? "text-[#5a3010]" : "text-[#6b3a1a]"}`} style={{ fontFamily: "var(--font-sanskrit)" }}>{l}</p>
+                  <p key={j} className={`font-bold leading-[1.9] mb-0.5 ${themeKey === "dark" ? "text-amber-300" : themeKey === "sepia" ? "text-[#5a3010]" : "text-[#6b3a1a]"}`} style={{ fontSize: "1.35em", fontFamily: "var(--font-sanskrit)" }}>{l}</p>
                 ))}
               </div>
             );
@@ -1177,25 +1185,24 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             return (
               <div key={i} className={`pl-4 border-l-2 my-2 ${themeKey === "dark" ? "border-amber-800/40" : themeKey === "sepia" ? "border-[#c4ad80]" : "border-[#c4956a]/40"}`}>
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`text-[14px] sm:text-[15px] leading-[1.7] italic mb-0.5 ${themeKey === "dark" ? "text-amber-400/70" : themeKey === "sepia" ? "text-[#6b4020]" : "text-[#8b5a30]"}`} style={{ fontFamily: "var(--font-sanskrit)" }}>{l}</p>
+                  <p key={j} className={`leading-[1.7] italic mb-0.5 ${themeKey === "dark" ? "text-amber-400/70" : themeKey === "sepia" ? "text-[#6b4020]" : "text-[#8b5a30]"}`} style={{ fontSize: "0.9em", fontFamily: "var(--font-sanskrit)" }}>{l}</p>
                 ))}
               </div>
             );
           case "shabdarth":
-            // BBT style: blue word-by-word meanings, smallest text, bold meanings after dashes
+            // BBT style: blue word-by-word meanings, 0.8x body size
             return (
               <div key={i} className="my-3">
-                <p className={`text-[13px] font-bold mb-2 text-center ${themeKey === "dark" ? "text-blue-400" : themeKey === "sepia" ? "text-[#1a3a6a]" : "text-[#1a4a8a]"}`} style={{ fontFamily: "var(--font-devanagari)" }}>शब्दार्थ</p>
+                <p className={`font-bold mb-2 text-center ${themeKey === "dark" ? "text-blue-400" : themeKey === "sepia" ? "text-[#1a3a6a]" : "text-[#1a4a8a]"}`} style={{ fontSize: "0.85em", fontFamily: "var(--font-devanagari)" }}>शब्दार्थ</p>
                 {sec.lines.map((l, j) => {
-                  // Highlight Hindi meanings (after —) in bold, keep Sanskrit words regular
                   const parts = l.split(/(—|--|-\s)/);
                   return (
-                    <p key={j} className={`text-[12px] sm:text-[13px] leading-[1.7] mb-0.5 ${themeKey === "dark" ? "text-blue-300/80" : themeKey === "sepia" ? "text-[#1a3a6a]" : "text-[#1a4a8a]"}`} style={{ fontFamily: "var(--font-devanagari)" }}>
+                    <p key={j} className={`leading-[1.7] mb-0.5 ${themeKey === "dark" ? "text-blue-300/80" : themeKey === "sepia" ? "text-[#1a3a6a]" : "text-[#1a4a8a]"}`} style={{ fontSize: "0.8em", fontFamily: "var(--font-devanagari)" }}>
                       {parts.map((part, k) => {
                         if (part === "—" || part === "--" || part === "- ") return <span key={k}>—</span>;
                         const isMeaning = k > 0 && (parts[k - 1] === "—" || parts[k - 1] === "--" || parts[k - 1] === "- ");
                         return isMeaning
-                          ? <strong key={k} className={themeKey === "dark" ? "text-blue-200 font-bold" : themeKey === "sepia" ? "text-[#0a2a5a] font-bold" : "text-[#0a2a5a] font-bold"}>{part}</strong>
+                          ? <strong key={k} className={themeKey === "dark" ? "text-blue-200" : themeKey === "sepia" ? "text-[#0a2a5a]" : "text-[#0a2a5a]"}>{part}</strong>
                           : <span key={k}>{part}</span>;
                       })}
                     </p>
@@ -1204,20 +1211,19 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
               </div>
             );
           case "anuvad": {
-            // BBT style: Hindi translation, medium text, bold, black with red emphasis on key terms
+            // BBT style: Hindi translation, bold, 1x body size, red keywords
             const prevKind = i > 0 ? sections[i - 1].kind : null;
             const isAnuvadContinuation = i === 0 && prevPageEndKind === "anuvad";
             const showLabel = !isAnuvadContinuation && (prevKind === "shlok" || prevKind === "shabdarth");
             return (
               <div key={i} className={isAnuvadContinuation ? "" : "mt-3"}>
-                {showLabel && <p className={`text-[14px] sm:text-[15px] font-bold mb-1 indent-8 ${themeKey === "dark" ? "text-stone-200" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-800"}`} style={{ fontFamily: "var(--font-devanagari)" }}>अनुवाद :</p>}
+                {showLabel && <p className={`font-bold mb-1 indent-8 ${themeKey === "dark" ? "text-stone-200" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-800"}`} style={{ fontSize: "1em", fontFamily: "var(--font-devanagari)" }}>अनुवाद :</p>}
                 {sec.lines.map((l, j) => {
-                  // Highlight key terms like श्रीमद्भागवत in red
                   const highlighted = l.replace(/(श्रीमद्भागवत(?:म्)?|भगवान्?|कृष्ण|विष्णु|ब्रह्मा|शिव|प्रभुपाद)/gu, "___HIGHLIGHT___$1___END___");
                   const hlParts = highlighted.split(/(___HIGHLIGHT___|___END___)/);
                   let inHighlight = false;
                   return (
-                    <p key={j} className={`text-[15px] sm:text-[16px] font-bold leading-[2] mb-1 ${j === 0 && !isAnuvadContinuation ? "indent-8" : ""} ${themeKey === "dark" ? "text-stone-100" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-900"}`} style={{ fontFamily: "var(--font-devanagari)" }}>
+                    <p key={j} className={`font-bold leading-[2] mb-1 ${j === 0 && !isAnuvadContinuation ? "indent-8" : ""} ${themeKey === "dark" ? "text-stone-100" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-900"}`} style={{ fontSize: "1em", fontFamily: "var(--font-devanagari)" }}>
                       {hlParts.map((part, k) => {
                         if (part === "___HIGHLIGHT___") { inHighlight = true; return null; }
                         if (part === "___END___") { inHighlight = false; return null; }
@@ -1232,12 +1238,12 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             );
           }
           case "tatparya": {
-            // Same style as regular text, only "तात्पर्य :" prefix is bold italic
+            // Same as body text, only "तात्पर्य :" prefix is bold
             const isContinuation = i === 0 && prevPageEndKind === "tatparya";
             return (
               <div key={i} className={isContinuation ? "" : "mt-3"}>
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`text-[14px] sm:text-[15px] leading-[2] mb-1 ${t.text}`} style={{ fontFamily: "var(--font-devanagari)" }}>
+                  <p key={j} className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>
                     {j === 0 && !isContinuation && <><span className="font-bold">तात्पर्य :</span>{" "}</>}
                     {l}
                   </p>
@@ -1249,7 +1255,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             return (
               <div key={i}>
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`leading-[1.8] ${t.text} mb-1`}>{l}</p>
+                  <p key={j} className={`leading-[1.8] ${t.text} mb-1`} style={{ fontSize: "1em" }}>{l}</p>
                 ))}
               </div>
             );
@@ -2342,60 +2348,7 @@ export default function Bhagwatham() {
             </div>
           </div>
 
-          {/* Sticky chapter context bar */}
-          {scrollChapter && !searchQuery && (
-            <div className={`sticky top-[7.5rem] z-20 ${theme.surface} backdrop-blur-sm border-b ${theme.border} px-4 py-1.5`}>
-              <div className="max-w-3xl mx-auto flex items-center gap-2 text-[10px]">
-                {/* Previous chapter */}
-                {(() => {
-                  const idx = chapters.findIndex(c => c.globalNumber === activeChapter);
-                  const prev = idx > 0 ? chapters[idx - 1] : null;
-                  return (
-                    <button
-                      onClick={() => prev && handleChapterClick(prev)}
-                      disabled={!prev}
-                      className={`p-1 rounded hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors ${!prev ? "opacity-30 cursor-not-allowed" : "cursor-pointer"}`}
-                      title={prev ? `← ${prev.title}` : "First chapter"}
-                    >
-                      <ChevronLeft className="w-3.5 h-3.5" />
-                    </button>
-                  );
-                })()}
-
-                <span className={`font-bold ${theme.accent}`}>{(() => { const ch = chapters.find(c => c.globalNumber === activeChapter); return ch ? `Canto ${ch.skandh}` : "Canto 1"; })()}</span>
-                <span className={theme.muted}>/</span>
-                <span className={`font-semibold ${theme.text}`}>{scrollChapter?.split("—")[0].trim()}</span>
-                {scrollChapter?.includes("—") && (
-                  <>
-                    <span className={theme.muted}>—</span>
-                    <span className={`${theme.muted} truncate`}>{scrollChapter.split("—").slice(1).join("—").trim()}</span>
-                  </>
-                )}
-
-                {/* Next chapter */}
-                {(() => {
-                  const idx = chapters.findIndex(c => c.globalNumber === activeChapter);
-                  const next = idx >= 0 && idx < chapters.length - 1 ? chapters[idx + 1] : null;
-                  return (
-                    <button
-                      onClick={() => next && handleChapterClick(next)}
-                      disabled={!next}
-                      className={`p-1 rounded hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors ${!next ? "opacity-30 cursor-not-allowed" : "cursor-pointer"}`}
-                      title={next ? `→ ${next.title}` : "Last chapter"}
-                    >
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
-                  );
-                })()}
-
-                <span
-                  className={`ml-auto ${theme.muted} cursor-pointer hover:text-orange-600 transition-colors`}
-                  onClick={() => { setPageInputValue(String(currentVisiblePage)); setEditingPageNum(true); setTimeout(() => pageInputRef.current?.select(), 50); }}
-                  title="Type page number"
-                >Pg. {currentVisiblePage}</span>
-              </div>
-            </div>
-          )}
+          {/* Chapter context bar removed — info shown in top toolbar */}
 
           {/* English not-available notice */}
           {lang === "en" && allPages.length > 0 && !allPages.some((p) => p.textEn) && (
