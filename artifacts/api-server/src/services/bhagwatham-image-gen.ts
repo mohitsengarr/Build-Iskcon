@@ -1198,6 +1198,67 @@ async function _generateChapterImages(
 }
 
 /**
+ * Generate one additional scene for a chapter that already has image(s).
+ * Uses a different part of the content to get a fresh scene.
+ */
+export function generateAdditionalScene(
+  chapterNumber: number,
+  chapterTitle: string,
+  contentSnippet: string,
+): Promise<string[]> {
+  return withManifestLock(async () => {
+    ensureImageDir();
+    const manifest = readManifest();
+    const existing = manifest.images.filter(img => img.chapterNumber === chapterNumber);
+    const nextSceneIdx = existing.length; // 0-based: if 1 image exists, next is index 1
+
+    // Ask Claude for a NEW scene using later content
+    const offset = Math.min(500, Math.floor(contentSnippet.length / 2));
+    const altContent = contentSnippet.substring(offset) || contentSnippet;
+    const scenes = await detectScenes(chapterTitle, altContent, 1);
+    if (scenes.length === 0) return [];
+
+    const suffix = nextSceneIdx === 0 ? "" : `-${nextSceneIdx + 1}`;
+    const filename = `chapter-${String(chapterNumber).padStart(3, "0")}${suffix}.jpg`;
+    const destPath = path.join(IMAGES_DIR, filename);
+
+    // Skip if file already exists
+    if (fs.existsSync(destPath) && fs.statSync(destPath).size > 10_000) {
+      logger.info({ chapterNumber, filename }, "Additional scene already exists");
+      return [filename];
+    }
+
+    const prompt = buildPrompt(scenes[0], altContent);
+
+    try {
+      await generateWithTogether(prompt, destPath);
+      if (!fs.existsSync(destPath) || fs.statSync(destPath).size < 10_000) return [];
+      logger.info({ chapterNumber, filename, size: fs.statSync(destPath).size }, "Additional scene generated");
+
+      // Update manifest
+      const personas = detectPersonasInScene(scenes[0]);
+      manifest.images.push({
+        chapterNumber,
+        sceneIndex: nextSceneIdx,
+        imagePath: filename,
+        prompt: scenes[0],
+        descriptionHi: "",
+        chapterTitle,
+        personasUsed: personas,
+        personaVersion: 1,
+        generatedAt: new Date().toISOString(),
+      });
+      writeManifest(manifest);
+
+      return [filename];
+    } catch (err) {
+      logger.error({ err, chapterNumber }, "Failed to generate additional scene");
+      return [];
+    }
+  });
+}
+
+/**
  * Force-regenerate images for a specific chapter.
  * Deletes existing images and manifest entries, then regenerates with content-aware scenes.
  */

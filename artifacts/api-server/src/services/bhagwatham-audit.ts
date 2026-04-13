@@ -20,6 +20,7 @@ import {
   type ChapterImage,
   type ImageManifest,
   generateChapterImages,
+  generateAdditionalScene,
   regenerateChapterImages,
   getPersonaVersions,
 } from "./bhagwatham-image-gen";
@@ -359,20 +360,31 @@ export async function runAuditPass(): Promise<{ chaptersAudited: number; issuesF
 
     const chapters = findChaptersInBatches(batches);
     const manifest = readManifest();
-    const existingImageChapters = new Set(manifest.images.map(img => img.chapterNumber));
     const sortedChapters = Array.from(chapters.keys()).sort((a, b) => b - a); // reverse order
 
-    // PRIORITY: chapters without any images first (highest global number first)
-    const chaptersWithoutImages = sortedChapters.filter(ch => !existingImageChapters.has(ch));
+    // Count images per chapter
+    const imageCountPerChapter = new Map<number, number>();
+    for (const img of manifest.images) {
+      imageCountPerChapter.set(img.chapterNumber, (imageCountPerChapter.get(img.chapterNumber) || 0) + 1);
+    }
+
+    // PRIORITY 1: chapters with 0 images (highest global number first)
+    const chaptersWithoutImages = sortedChapters.filter(ch => !imageCountPerChapter.has(ch));
+    // PRIORITY 2: chapters with only 1 image — need a second scene
+    const chaptersNeedingMore = sortedChapters.filter(ch => (imageCountPerChapter.get(ch) || 0) === 1);
 
     let targetChapter: number | null = null;
+    let needsAdditionalScene = false;
 
     if (chaptersWithoutImages.length > 0) {
-      // Pick the highest chapter without images
       targetChapter = chaptersWithoutImages[0];
       logger.info({ targetChapter, missingCount: chaptersWithoutImages.length }, "Audit: prioritizing chapter without images");
+    } else if (chaptersNeedingMore.length > 0) {
+      targetChapter = chaptersNeedingMore[0];
+      needsAdditionalScene = true;
+      logger.info({ targetChapter, needMoreCount: chaptersNeedingMore.length }, "Audit: generating additional scene for chapter with 1 image");
     } else {
-      // All chapters have images — fall back to reverse-order audit
+      // All chapters have 2+ images — fall back to reverse-order audit
       for (const ch of sortedChapters) {
         if (ch < auditProgress.lastAuditedChapter) {
           targetChapter = ch;
@@ -397,14 +409,13 @@ export async function runAuditPass(): Promise<{ chaptersAudited: number; issuesF
     const issues: string[] = [];
     const fixes: string[] = [];
 
-    logger.info({ chapter: targetChapter, title: chapterInfo.title }, "Auditing chapter");
+    logger.info({ chapter: targetChapter, title: chapterInfo.title, additionalScene: needsAdditionalScene }, "Auditing chapter");
 
     // ── Check 1: Image files exist on disk ──────────────────────────────────
     const chapterImages = manifest.images.filter((img) => img.chapterNumber === targetChapter);
 
     if (chapterImages.length === 0) {
       issues.push("No images in manifest for this chapter");
-      // Regenerate images
       try {
         const generated = await generateChapterImages(targetChapter, chapterInfo.title, chapterInfo.contentSnippet);
         if (generated.length > 0) {
@@ -412,6 +423,17 @@ export async function runAuditPass(): Promise<{ chaptersAudited: number; issuesF
         }
       } catch (err: any) {
         issues.push(`Failed to generate images: ${err?.message}`);
+      }
+    } else if (needsAdditionalScene) {
+      // Chapter has 1 image — generate an additional scene with different content
+      issues.push("Only 1 image — generating additional scene");
+      try {
+        const generated = await generateAdditionalScene(targetChapter, chapterInfo.title, chapterInfo.contentSnippet);
+        if (generated.length > 0) {
+          fixes.push(`Generated additional scene: ${generated.join(", ")}`);
+        }
+      } catch (err: any) {
+        issues.push(`Failed to generate additional scene: ${err?.message}`);
       }
     } else {
       for (const img of chapterImages) {
