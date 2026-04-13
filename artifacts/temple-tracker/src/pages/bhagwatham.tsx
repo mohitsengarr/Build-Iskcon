@@ -1405,7 +1405,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
                 <div className="flex items-start gap-2">
                   <div className="flex-1">
                     {sec.lines.map((l, j) => (
-                      <p key={j} className={`font-bold leading-[1.9] mb-0.5 ${t.text}`} style={{ fontSize: "1.35em", fontFamily: "var(--font-sanskrit)" }}>{l}</p>
+                      <p key={j} className={`font-bold leading-[1.9] mb-0.5 ${t.text}`} style={{ fontSize: "1.15em", fontFamily: "var(--font-sanskrit)" }}>{l}</p>
                     ))}
                   </div>
                   <ShlokSpeaker text={sec.lines.join(" ")} themeKey={themeKey} />
@@ -1443,15 +1443,15 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
               </div>
             );
           case "anuvad": {
-            // BBT style: Hindi translation, bold, 1x body size, no special highlighting
+            // Hindi translation — regular weight, same as body text
             const prevKind = i > 0 ? sections[i - 1].kind : null;
             const isAnuvadContinuation = i === 0 && prevPageEndKind === "anuvad";
             const showLabel = !isAnuvadContinuation && (prevKind === "shlok" || prevKind === "shabdarth");
             return (
               <div key={i} className={isAnuvadContinuation ? "" : "mt-3"}>
-                {showLabel && <p className={`font-bold mb-1 indent-8 ${themeKey === "dark" ? "text-stone-200" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-800"}`} style={{ fontSize: "1em", fontFamily: "var(--font-devanagari)" }}>अनुवाद :</p>}
+                {showLabel && <p className={`font-bold mb-1 indent-8 ${t.text}`} style={{ fontSize: "1em", fontFamily: "var(--font-devanagari)" }}>अनुवाद :</p>}
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`font-bold leading-[2] mb-1 ${j === 0 && !isAnuvadContinuation ? "indent-8" : ""} ${themeKey === "dark" ? "text-stone-100" : themeKey === "sepia" ? "text-[#2a1a08]" : "text-stone-900"}`} style={{ fontSize: "1em", fontFamily: "var(--font-devanagari)" }}>{l}</p>
+                  <p key={j} className={`leading-[2] mb-1 ${j === 0 && !isAnuvadContinuation ? "indent-8" : ""} ${t.text}`} style={{ fontSize: "1em", fontFamily: "var(--font-devanagari)" }}>{l}</p>
                 ))}
               </div>
             );
@@ -1520,15 +1520,12 @@ function Sidebar({
     activeSkandh ? new Set([activeSkandh]) : new Set()
   );
 
-  // When active chapter changes, auto-expand its canto
+  // When active chapter changes, auto-expand its canto (accordion: only this one)
   useEffect(() => {
     if (activeSkandh) {
       setExpandedCantos(prev => {
-        if (prev.has(activeSkandh)) return prev;
-        const next = new Set(prev);
-        next.add(activeSkandh);
-        return next;
-      });
+        if (prev.size === 1 && prev.has(activeSkandh)) return prev;
+        return new Set([activeSkandh]);
     }
   }, [activeSkandh]);
 
@@ -1589,22 +1586,7 @@ function Sidebar({
           </div>
         </div>
 
-        {/* Progress mini */}
-        {progress && (
-          <div className="px-4 py-3 border-b border-stone-100">
-            <div className="flex items-center justify-between text-[11px] text-stone-500 mb-1.5">
-              <span>{progress.totalPagesProcessed.toLocaleString()} / {progress.totalPagesInPdf.toLocaleString()} pages</span>
-              <span className="font-bold text-orange-600">{percent.toFixed(1)}%</span>
-            </div>
-            <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-orange-400 to-amber-500 rounded-full transition-all duration-700" style={{ width: `${percent}%` }} />
-            </div>
-            <div className="flex items-center justify-between text-[10px] text-stone-400 mt-1.5">
-              <span>{progress.batchesCompleted} batches done</span>
-              <span>{progress.status === "processing" ? "Processing..." : progress.status === "completed" ? "Complete" : "Waiting"}</span>
-            </div>
-          </div>
-        )}
+        {/* Progress bar removed — OCR complete */}
 
         {/* Tab content */}
         {sidebarTab === "bookmarks" ? (
@@ -2092,9 +2074,8 @@ export default function Bhagwatham() {
     if (pageIdx >= 0) {
       const viewPage = Math.floor(pageIdx / PAGES_PER_VIEW) + 1;
       setCurrentPage(viewPage);
-      // Find the chapter for this page using the chapter index
-      const chapterList = buildChapterIndex(allPages);
-      const ch = chapterList.slice().reverse().find(c => c.pageNumber <= b.page_number);
+      // Find the chapter for this page and expand its canto in sidebar
+      const ch = chapters.slice().reverse().find(c => c.pageNumber <= b.page_number);
       if (ch) {
         setActiveChapter(ch.globalNumber);
         setScrollChapter(ch.title);
@@ -2467,7 +2448,7 @@ export default function Bhagwatham() {
               {/* Sidebar toggle (mobile) */}
               {!focusMode && (
                 <button
-                  onClick={() => setSidebarOpen(true)}
+                  onClick={() => { setSidebarTab("chapters"); setSidebarOpen(true); }}
                   className={`lg:hidden p-2 hover:bg-stone-100 rounded-lg transition-colors`}
                   aria-label="Open contents"
                 >
