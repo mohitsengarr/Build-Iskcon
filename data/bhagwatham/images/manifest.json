@@ -1937,6 +1937,21 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 285,
+      "chapterTitle": "Chapter चौरासी",
+      "imagePath": "chapter-285.jpg",
+      "prompt": "Krishna, Arjuna, and Draupadi gather with sages at Kurukshetra during a solar eclipse, discussing spiritual significance.",
+      "descriptionHi": "इस अध्याय में कुरुक्षेत्र में सूर्यग्रहण के अवसर पर ऋषियों का आगमन और भगवान् कृष्ण की महिमा का वर्णन हुआ है, जिसमें कुन्ती, द्रौपदी और अर्जुन जैसे मुख्य पात्र शामिल हैं। यह अध्याय आध्यात्मिक महत्व और शांति की भावना को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "arjuna",
+        "draupadi"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T14:50:28.447Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 286,
       "chapterTitle": "Chapter पिचासी",
       "imagePath": "chapter-286.jpg",
@@ -2197,5 +2212,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T13:50:22.204Z"
+  "lastUpdated": "2026-04-13T14:50:28.447Z"
 }
