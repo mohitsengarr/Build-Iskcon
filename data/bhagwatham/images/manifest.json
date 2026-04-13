@@ -1937,6 +1937,21 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 291,
+      "chapterTitle": "Chapter नब्बे",
+      "imagePath": "chapter-291.jpg",
+      "prompt": "Krishna, surrounded by Arjuna and Yudhishthira, showers blessings upon his people and brahmins in the kingdom of Dwaraka.",
+      "descriptionHi": "भगवान् कृष्ण ने अपनी प्रजा और ब्राह्मणों पर इच्छित वस्तुओं की वर्षा की, जैसे इन्द्र जल की वर्षा करता है। अर्जुन और युधिष्ठिर जैसे भक्तों के माध्यम से उन्होंने धर्म के सिद्धान्तों का पालन करवाया। यह अध्याय भगवान् कृष्ण की महिमाओं का सारांश प्रस्तुत करता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "arjuna",
+        "yudhishthira"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T11:25:26.992Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 292,
       "chapterTitle": "Chapter एक",
       "imagePath": "chapter-292.jpg",
@@ -2098,5 +2113,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T11:05:33.873Z"
+  "lastUpdated": "2026-04-13T11:25:26.992Z"
 }
