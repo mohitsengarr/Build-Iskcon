@@ -976,12 +976,23 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
       continue;
     }
 
-    if (current.kind === "shabdarth" && (t.includes("—") || t.includes("--")) && t.includes(";")) {
-      current.lines.push(t);
-      continue;
-    }
+    if (current.kind === "shabdarth") {
+      // Shabdarth lines have dashes (—, --, -) and/or semicolons
+      const hasDash = t.includes("—") || t.includes("--") || /\S-\s/.test(t);
+      const hasSemicolon = t.includes(";");
+      const endsWithDanda = /।\s*\.?\s*$/.test(t);
 
-    if (current.kind === "shabdarth" && !(t.includes("—") || t.includes("--"))) {
+      if (hasDash || hasSemicolon) {
+        // Still shabdarth — add the line
+        current.lines.push(t);
+        // If this line ends with । (danda), shabdarth is complete — next line is anuvad
+        if (endsWithDanda) {
+          flush();
+          current = { kind: "anuvad", lines: [] };
+        }
+        continue;
+      }
+      // No dashes or semicolons — this is anuvad text
       flush();
       current = { kind: "anuvad", lines: [t] };
       continue;
