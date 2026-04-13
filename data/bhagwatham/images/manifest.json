@@ -1937,6 +1937,19 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 283,
+      "chapterTitle": "Chapter बयासी",
+      "imagePath": "chapter-283.jpg",
+      "prompt": "Krishna blesses a devoted brahmin in a serene forest setting, imparting divine love and liberation.",
+      "descriptionHi": "भगवान् श्रीकृष्ण ब्राह्मणों के प्रति विशेष कृपा दर्शाते हैं और जो भी उनकी दया के विवरण को सुनता है, उसमें भगवत्प्रेम उत्पन्न होता है। यह अध्याय भगवान् कृष्ण की ब्राह्मणों के प्रति दया को दर्शाता है। भगवान् कृष्ण की कृपा से मनुष्य भौतिक कर्म के बन्धन से छूट जाता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T16:30:24.823Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 284,
       "chapterTitle": "Chapter तिरासी",
       "imagePath": "chapter-284.jpg",
@@ -2225,5 +2238,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T16:28:02.411Z"
+  "lastUpdated": "2026-04-13T16:30:24.823Z"
 }
