@@ -1937,6 +1937,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 272,
+      "chapterTitle": "Chapter इकहत्तर",
+      "imagePath": "chapter-272.jpg",
+      "prompt": "Krishna arrives in Indraprastha, where Yudhishthira and his brothers warmly welcome him, seeking his guidance and blessings for the upcoming Rajasuya Yajna.",
+      "descriptionHi": "भगवान् कृष्ण ने उद्धव की सलाह मानी और इन्द्रप्रस्थ गये, जहाँ पाण्डवों ने बड़ी धूमधाम से उनकी अगवानी की। भगवान् कृष्ण की इस यात्रा का मुख्य उद्देश्य युधिष्ठिर के राजसूय यज्ञ में सहायता करना था।",
+      "personasUsed": [
+        "krishna_adult",
+        "yudhishthira"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T21:40:29.590Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 273,
       "chapterTitle": "Chapter बहत्तर",
       "imagePath": "chapter-273.jpg",
@@ -2416,5 +2430,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T21:30:29.310Z"
+  "lastUpdated": "2026-04-13T21:40:29.590Z"
 }
