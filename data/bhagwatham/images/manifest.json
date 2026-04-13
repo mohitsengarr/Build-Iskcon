@@ -1937,6 +1937,19 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 292,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-292.jpg",
+      "prompt": "Narada and young Yadavas gather near Pindaraka, where a mysterious iron club appears, foretelling the downfall of their clan.",
+      "descriptionHi": "इस अध्याय में यदुवंश के विनाश का संकेत मिलता है, जो लोहे के मूसल की उत्पत्ति के कारण हुआ। भगवान श्रीकृष्ण और नारद मुख्य पात्र हैं। यह अध्याय भौतिक जगत से विरक्त होने की प्रेरणा प्राप्त कराता है।",
+      "personasUsed": [
+        "narada"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T11:05:33.873Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 293,
       "chapterTitle": "Chapter दो",
       "imagePath": "chapter-293.jpg",
@@ -2085,5 +2098,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T10:55:21.378Z"
+  "lastUpdated": "2026-04-13T11:05:33.873Z"
 }
