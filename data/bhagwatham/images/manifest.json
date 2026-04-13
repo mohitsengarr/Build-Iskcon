@@ -1937,6 +1937,15 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 266,
+      "chapterTitle": "Chapter पैंसठ",
+      "imagePath": "chapter-266.jpg",
+      "prompt": "Balarama interacts with gopis on the serene riverbank of Yamuna in Gokul, showcasing divine connection.",
+      "descriptionHi": "इस अध्याय में भगवान् बलराम के गोकुल जाने और गोपियों के साथ रमण करने का वर्णन है, जहाँ उन्होंने यमुना नदी का कर्षण किया। भगवान् कृष्ण की उपस्थिति में यह घटना आध्यात्मिक महत्व रखती है।",
+      "generatedAt": "2026-04-13T22:10:46.844Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 267,
       "chapterTitle": "Chapter छियासठ",
       "imagePath": "chapter-267.jpg",
@@ -2490,5 +2499,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T22:05:34.962Z"
+  "lastUpdated": "2026-04-13T22:10:46.846Z"
 }
