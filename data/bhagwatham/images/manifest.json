@@ -1937,6 +1937,15 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 270,
+      "chapterTitle": "Chapter उनहत्तर",
+      "imagePath": "chapter-270.jpg",
+      "prompt": "Balarama orders the Kauravas to release Samba in the royal palace of Hastinapura, leading to a dramatic showdown.",
+      "descriptionHi": "साम्ब और लक्ष्मणा के विवाह की कहानी में बलराम ने कौरवों को साम्ब को मुक्त करने का आदेश दिया, जिससे वे अपमानित महसूस करते हैं और बलराम की शक्ति को चुनौती देते हैं। इस प्रकार, साम्ब को मुक्त किया जाता है और उसका विवाह लक्ष्मणा के साथ होता है।",
+      "generatedAt": "2026-04-13T21:50:24.066Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 271,
       "chapterTitle": "Chapter सत्तर",
       "imagePath": "chapter-271.jpg",
@@ -2445,5 +2454,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T21:45:55.495Z"
+  "lastUpdated": "2026-04-13T21:50:24.067Z"
 }
