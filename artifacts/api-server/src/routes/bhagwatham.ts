@@ -801,4 +801,55 @@ router.post("/bhagwatham/tts", async (req, res) => {
   }
 });
 
+// POST /api/bhagwatham/stt — Sarvam Saaras v3 speech-to-text for voice editing
+router.post("/bhagwatham/stt", async (req, res) => {
+  const apiKey = process.env.SARVAM_API_KEY;
+  if (!apiKey) {
+    res.status(503).json({ error: "SARVAM_API_KEY not configured" });
+    return;
+  }
+
+  try {
+    // Read raw audio from request body (sent as application/octet-stream)
+    const chunks: Buffer[] = [];
+    for await (const chunk of req) chunks.push(Buffer.from(chunk));
+    const audioBuffer = Buffer.concat(chunks);
+
+    if (audioBuffer.length < 100) {
+      res.status(400).json({ error: "No audio data received" });
+      return;
+    }
+
+    // Send to Sarvam STT API as multipart form data
+    const boundary = "----SarvamSTT" + Date.now();
+    const body = Buffer.concat([
+      Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="audio.webm"\r\nContent-Type: audio/webm\r\n\r\n`),
+      audioBuffer,
+      Buffer.from(`\r\n--${boundary}\r\nContent-Disposition: form-data; name="model"\r\n\r\nsaaras:v3\r\n`),
+      Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="language_code"\r\n\r\nhi-IN\r\n`),
+      Buffer.from(`--${boundary}--\r\n`),
+    ]);
+
+    const sttRes = await fetch("https://api.sarvam.ai/speech-to-text", {
+      method: "POST",
+      headers: {
+        "api-subscription-key": apiKey,
+        "Content-Type": `multipart/form-data; boundary=${boundary}`,
+      },
+      body,
+    });
+
+    if (!sttRes.ok) {
+      const errText = await sttRes.text();
+      res.status(sttRes.status).json({ error: errText });
+      return;
+    }
+
+    const data: any = await sttRes.json();
+    res.json({ transcript: data.transcript || "", language: data.language_code || "hi-IN" });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

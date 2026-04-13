@@ -7,7 +7,7 @@ import {
   BookOpen, ChevronLeft, ChevronRight, Loader2,
   RefreshCw, Search, BookMarked, Sparkles,
   List, X, ChevronDown, ChevronUp, Image as ImageIcon, Languages,
-  Download, Share2, Bookmark, Trash2, LogIn, Volume2, Square,
+  Download, Share2, Bookmark, Trash2, LogIn, Volume2, Square, Mic, MicOff, Check,
   Settings, Sun, Moon, Type, Minus, Plus, Maximize2, Undo2, Pencil, Wand2, Send,
 } from "lucide-react";
 
@@ -708,6 +708,122 @@ function getPageEndKind(text: string): string {
     }
   }
   return lastKind;
+}
+
+// ── Voice Edit (Speech-to-Text for selected text) ──────────────────────────
+
+function VoiceEditToolbar() {
+  const [show, setShow] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [selectedText, setSelectedText] = useState("");
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const rangeRef = useRef<Range | null>(null);
+
+  useEffect(() => {
+    const onSelectionChange = () => {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || !sel.toString().trim()) {
+        if (!recording && !processing) setShow(false);
+        return;
+      }
+      const text = sel.toString().trim();
+      if (text.length < 2) return;
+
+      const range = sel.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      setPosition({ x: rect.left + rect.width / 2, y: rect.top - 10 });
+      setSelectedText(text);
+      rangeRef.current = range.cloneRange();
+      setShow(true);
+    };
+
+    document.addEventListener("selectionchange", onSelectionChange);
+    return () => document.removeEventListener("selectionchange", onSelectionChange);
+  }, [recording, processing]);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      chunksRef.current = [];
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+      recorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        setRecording(false);
+        setProcessing(true);
+
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        try {
+          const res = await fetch("/api/bhagwatham/stt", {
+            method: "POST",
+            headers: { "Content-Type": "application/octet-stream" },
+            body: blob,
+          });
+          const data = await res.json();
+          if (data.transcript && rangeRef.current) {
+            // Replace selected text with transcription
+            const range = rangeRef.current;
+            range.deleteContents();
+            range.insertNode(document.createTextNode(data.transcript));
+            window.getSelection()?.removeAllRanges();
+          }
+        } catch { /* STT failed */ }
+        setProcessing(false);
+        setShow(false);
+      };
+      recorderRef.current = recorder;
+      recorder.start();
+      setRecording(true);
+
+      // Auto-stop after 25 seconds (API limit is 30s)
+      setTimeout(() => { if (recorder.state === "recording") recorder.stop(); }, 25000);
+    } catch {
+      setRecording(false);
+    }
+  };
+
+  const stopRecording = () => {
+    recorderRef.current?.stop();
+  };
+
+  if (!show) return null;
+
+  return (
+    <div
+      className="fixed z-50 flex items-center gap-1.5 bg-white rounded-full shadow-xl border border-stone-200 px-2 py-1.5 -translate-x-1/2 -translate-y-full"
+      style={{ left: Math.max(60, Math.min(position.x, window.innerWidth - 60)), top: Math.max(50, position.y) }}
+    >
+      {processing ? (
+        <span className="flex items-center gap-1.5 text-xs text-stone-500 px-2">
+          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Transcribing...
+        </span>
+      ) : recording ? (
+        <>
+          <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+          <span className="text-xs text-red-600 font-medium">Recording...</span>
+          <button onClick={stopRecording} className="p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200">
+            <Check className="w-3.5 h-3.5" />
+          </button>
+        </>
+      ) : (
+        <button
+          onClick={startRecording}
+          className="flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium text-stone-600 hover:text-orange-600 transition-colors"
+          title="Speak to edit selected text"
+        >
+          <Mic className="w-3.5 h-3.5" /> Voice Edit
+        </button>
+      )}
+      {!recording && !processing && (
+        <button onClick={() => setShow(false)} className="p-1 text-stone-400 hover:text-stone-600">
+          <X className="w-3 h-3" />
+        </button>
+      )}
+    </div>
+  );
 }
 
 // ── Shlok Text-to-Speech ────────────────────────────────────────────────────
@@ -2338,6 +2454,8 @@ export default function Bhagwatham() {
 
         {/* ── Main content ── */}
         <main ref={contentRef} className={`flex-1 min-w-0 ${theme.bg} transition-colors duration-300`}>
+          {/* Voice edit toolbar — appears when text is selected */}
+          <VoiceEditToolbar />
           {/* Top bar */}
           <div className={`sticky top-14 z-30 ${theme.surface} backdrop-blur-sm border-b ${theme.border} px-4 sm:px-6 py-2`}>
             <div className="max-w-3xl mx-auto flex items-center gap-2 sm:gap-3">
@@ -2377,6 +2495,7 @@ export default function Bhagwatham() {
                   </form>
                 ) : scrollChapter ? (
                   <>
+                    <span className="text-orange-600 font-bold shrink-0">{(() => { const ch = chapters.find(c => c.globalNumber === activeChapter); return ch ? `S${ch.skandh}` : ""; })()}</span>
                     <span className="truncate font-semibold">{scrollChapter?.split("—")[0].trim()}</span>
                     {scrollChapter?.includes("—") && (
                       <span className={`truncate ${theme.muted} hidden sm:inline`}>— {scrollChapter.split("—").slice(1).join("—").trim()}</span>
