@@ -1937,6 +1937,19 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 278,
+      "chapterTitle": "Chapter सतहत्तर",
+      "imagePath": "chapter-278.jpg",
+      "prompt": "Arjuna's sarakathi defends his master on the battlefield, upholding his duty with honor and loyalty.",
+      "descriptionHi": "इस अध्याय में सारथी द्वारा अपने स्वामी की रक्षा करने की बात कही जा रही है, जो कि एक महत्वपूर्ण नैतिक मूल्य है। सारथी अपने कर्तव्य को समझते हुए अपने स्वामी की रक्षा करता है। यह अध्याय हमें निष्ठा और कर्तव्य के महत्व को सिखाता है।",
+      "personasUsed": [
+        "arjuna"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T18:30:31.005Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 279,
       "chapterTitle": "Chapter अठहत्तर",
       "imagePath": "chapter-279.jpg",
@@ -2313,5 +2326,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T18:25:33.376Z"
+  "lastUpdated": "2026-04-13T18:30:31.005Z"
 }
