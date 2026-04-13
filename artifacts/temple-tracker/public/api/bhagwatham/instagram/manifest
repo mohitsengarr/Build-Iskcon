@@ -91,6 +91,22 @@
       "queuedAt": "2026-04-12T10:06:48.861Z"
     },
     {
+      "chapterNumber": 282,
+      "chapterTitle": "Chapter इक्यासी",
+      "cantoNumber": 10,
+      "sceneIndex": 0,
+      "imagePath": "ig-chapter-282-scene-1.jpg",
+      "publicUrl": "https://etfmndcrchundvgtvmot.supabase.co/storage/v1/object/public/instagram-images/ig-chapter-282-scene-1.jpg",
+      "prompt": "भगवान् पूर्ण पुरुषोत्तम भगवान् ब्रह्मा को सृष्टि करने के लिए प्रोत्साहित करते हैं, उन्हें निराश नहीं होने और अपने कार्य को सफलतापूर्वक सम्पन्न करने के लिए अपनी शक्ति का उपयोग करने के लिए कहते हैं, ब्रह्मा को विश्वास दिलाते हैं कि उन्हें पहले ही आवश्यक आशीर्वाद प्राप्त हो चुका है।",
+      "caption": "📖 Srimad Bhagavatam — Canto 10, Chapter 282\nश्री भगवान् ब्रह्मा को सृष्टि करने के लिए प्रोत्साहित करते हैं\nLord Krishna encourages Brahma to create the universe\nIn this scene, Lord Krishna is guiding Brahma to create the universe, urging him not to be discouraged. Brahma, having received the necessary blessings, is ready to fulfill his duty. With Krishna's guidance, Brahma gains confidence to complete his task. This moment showcases the divine collaboration between the creator and the supreme being.\nAs we reflect on this story, we're reminded to trust in our own abilities and the divine guidance in our lives.\n🙏 Hare Krishna",
+      "hashtags": "#SrimadBhagavatam #ISKCON #BrahmaCreation #KrishnaGuidance #DivineCollaboration",
+      "generatedAt": "2026-04-13T10:46:38.733Z",
+      "bufferId": "69dcc9929907fe3da38cda4d",
+      "bufferThreadsId": "69dcc99d9907fe3da38cdaba",
+      "bufferStatus": "sent",
+      "queuedAt": "2026-04-13T10:47:04.180Z"
+    },
+    {
       "chapterNumber": 334,
       "chapterTitle": "Chapter बारह",
       "cantoNumber": 7,
@@ -131,5 +147,5 @@
       "generatedAt": "2026-04-13T04:02:03.756Z"
     }
   ],
-  "lastUpdated": "2026-04-13T04:02:28.951Z"
+  "lastUpdated": "2026-04-13T10:47:04.180Z"
 }
