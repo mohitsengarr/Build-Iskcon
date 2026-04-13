@@ -1,9 +1,20 @@
 {
-  "lastAuditedChapter": 289,
-  "totalIssuesFixed": 15,
-  "lastRunAt": "2026-04-13T11:35:56.271Z",
+  "lastAuditedChapter": 288,
+  "totalIssuesFixed": 16,
+  "lastRunAt": "2026-04-13T11:40:27.925Z",
   "status": "idle",
   "log": [
+    {
+      "chapter": 288,
+      "timestamp": "2026-04-13T11:40:27.925Z",
+      "issues": [
+        "No images in manifest for this chapter",
+        "Low तात्पर्य count (4) vs shloks (16) — some commentaries may be missed"
+      ],
+      "fixes": [
+        "Generated 1 new image(s): chapter-288.jpg"
+      ]
+    },
     {
       "chapter": 289,
       "timestamp": "2026-04-13T11:35:56.271Z",

@@ -1937,6 +1937,22 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 288,
+      "chapterTitle": "Chapter सत्तासी",
+      "imagePath": "chapter-288.jpg",
+      "prompt": "Krishna and Arjuna sit with Parikshit and Shukadeva on a serene riverbank, discussing the Vedas' description of the Supreme Lord.",
+      "descriptionHi": "इस अध्याय में भगवान् नारायण की महिमा का वर्णन किया गया है, जहां राजा परीक्षित श्रील शुकदेव गोस्वामी से वेदों द्वारा परब्रह्म के प्रत्यक्ष रूप से उल्लेख करने के बारे में पूछते हैं। यह अध्याय वेदों की महत्ता और भगवान् के साकार तथा निर्विशेष पक्षों की महिमा को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "shukadeva",
+        "arjuna",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T11:40:27.887Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 289,
       "chapterTitle": "Chapter अट्ठासी",
       "imagePath": "chapter-289.jpg",
@@ -2141,5 +2157,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T11:35:56.263Z"
+  "lastUpdated": "2026-04-13T11:40:27.887Z"
 }
