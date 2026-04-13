@@ -881,9 +881,9 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
 
     if (/^शब्दार्थ/u.test(t)) {
       flush();
-      // If the previous section was "text", it was likely a shlok that wasn't detected
-      // (e.g. OCR missed ॥ markers). Retroactively reclassify it as shlok.
-      if (sections.length > 0 && sections[sections.length - 1].kind === "text") {
+      // If the previous section was "text", "ref-shlok", or "shlok", reclassify as main shlok.
+      // Shabdarth ALWAYS follows a main shlok — never a ref-shlok or plain text.
+      if (sections.length > 0 && (sections[sections.length - 1].kind === "text" || sections[sections.length - 1].kind === "ref-shlok")) {
         sections[sections.length - 1].kind = "shlok";
       }
       current = { kind: "shabdarth", lines: [] };
@@ -2039,30 +2039,30 @@ export default function Bhagwatham() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [currentPage, visiblePageNum, allPages, chapters]);
 
-  // Auto-resume reading position on load
+  // Auto-resume reading position on load — uses pageNumber (not view index)
   useEffect(() => {
     if (!loading && allPages.length > 0) {
       try {
         const raw = localStorage.getItem("bhagwatham_resume");
         if (raw) {
           const resume = JSON.parse(raw);
-          if (resume.page > 1 && currentPage === 1) {
-            // Auto-resume: jump directly to saved position
-            setCurrentPage(resume.page);
-            if (resume.chapterNumber) setActiveChapter(resume.chapterNumber);
-            if (resume.chapter) setScrollChapter(resume.chapter);
-            // Scroll to exact position (page element + saved offset) after render
-            setTimeout(() => {
-              if (resume.pageNumber) {
+          if (resume.pageNumber && currentPage === 1) {
+            // Find which view page contains this PDF page number
+            const pageIdx = allPages.findIndex(p => p.pageNumber >= resume.pageNumber);
+            if (pageIdx >= 0) {
+              const viewPage = Math.floor(pageIdx / PAGES_PER_VIEW) + 1;
+              setCurrentPage(viewPage);
+              if (resume.chapterNumber) setActiveChapter(resume.chapterNumber);
+              if (resume.chapter) setScrollChapter(resume.chapter);
+              setTimeout(() => {
                 const el = document.querySelector(`[data-page-num="${resume.pageNumber}"]`);
                 if (el) {
-                  const rect = el.getBoundingClientRect();
                   const scrollOffset = resume.scrollOffset || 0;
-                  // Scroll so the page element is at top, then add the saved offset
+                  const rect = el.getBoundingClientRect();
                   window.scrollTo({ top: window.scrollY + rect.top + scrollOffset, behavior: "auto" });
                 }
-              }
-            }, 300);
+              }, 300);
+            }
           }
         }
       } catch { /* ignore */ }
@@ -2074,7 +2074,12 @@ export default function Bhagwatham() {
       const raw = localStorage.getItem("bhagwatham_resume");
       if (raw) {
         const resume = JSON.parse(raw);
-        setCurrentPage(resume.page);
+        if (resume.pageNumber) {
+          const pageIdx = allPages.findIndex(p => p.pageNumber >= resume.pageNumber);
+          if (pageIdx >= 0) {
+            setCurrentPage(Math.floor(pageIdx / PAGES_PER_VIEW) + 1);
+          }
+        }
         if (resume.chapterNumber) setActiveChapter(resume.chapterNumber);
       }
     } catch { /* ignore */ }
