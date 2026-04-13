@@ -938,11 +938,23 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
       continue;
     }
 
-    // Line contains ॥ — definitely shlok (closing line of verse)
-    // Track if we were inside tatparya to mark reference shlokas differently
+    // Line contains ॥ — shlok or ref-shlok
+    // If inside tatparya: ref-shlok UNLESS it has a verse number (e.g. ॥ ३१ ॥)
+    // Numbered verses are ALWAYS main shloks — ref-shloks are unnumbered citations
     if (/॥/u.test(t) && t.length < 200) {
-      const shlokKind = (current.kind === "tatparya" || current.kind === "ref-shlok") ? "ref-shlok" : "shlok";
-      if (current.kind !== "shlok" && current.kind !== "ref-shlok") { flush(); current = { kind: shlokKind, lines: [] }; }
+      const hasVerseNumber = /॥\s*[\d१२३४५६७८९०]+\s*॥/u.test(t);
+      const shlokKind = (!hasVerseNumber && (current.kind === "tatparya" || current.kind === "ref-shlok")) ? "ref-shlok" : "shlok";
+      if (current.kind !== "shlok" && current.kind !== "ref-shlok") {
+        flush();
+        current = { kind: shlokKind, lines: [] };
+      } else if (hasVerseNumber && current.kind === "ref-shlok") {
+        // Numbered verse found — this entire block is a main shlok, not ref-shlok
+        current.kind = "shlok";
+        // Also fix any preceding ref-shlok section that's part of this verse
+        if (sections.length > 0 && sections[sections.length - 1].kind === "ref-shlok") {
+          sections[sections.length - 1].kind = "shlok";
+        }
+      }
       current.lines.push(t);
       continue;
     }
