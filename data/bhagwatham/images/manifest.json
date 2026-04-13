@@ -1937,6 +1937,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 290,
+      "chapterTitle": "Chapter नवासी",
+      "imagePath": "chapter-290.jpg",
+      "prompt": "Krishna and Arjuna revive the dead sons of a bereaved brahmin in Dwarka, showcasing their divine powers and compassion.",
+      "descriptionHi": "इस अध्याय में भगवान कृष्ण और अर्जुन द्वारा एक दुखियारे ब्राह्मण के मृत पुत्रों को फिर से वापस लाने की कहानी बताई गई है, जो उनकी दिव्य शक्तियों और दया को प्रदर्शित करती है। यह घटना द्वारका में घटित हुई और इसमें भगवान कृष्ण की महानता का प्रदर्शन हुआ।",
+      "personasUsed": [
+        "krishna_adult",
+        "arjuna"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T11:30:29.437Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 291,
       "chapterTitle": "Chapter नब्बे",
       "imagePath": "chapter-291.jpg",
@@ -2113,5 +2127,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T11:25:26.992Z"
+  "lastUpdated": "2026-04-13T11:30:29.438Z"
 }
