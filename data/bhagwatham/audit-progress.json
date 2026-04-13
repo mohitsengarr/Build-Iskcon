@@ -1,9 +1,19 @@
 {
-  "lastAuditedChapter": 274,
-  "totalIssuesFixed": 34,
-  "lastRunAt": "2026-04-13T20:15:19.828Z",
+  "lastAuditedChapter": 273,
+  "totalIssuesFixed": 35,
+  "lastRunAt": "2026-04-13T21:00:59.563Z",
   "status": "idle",
   "log": [
+    {
+      "chapter": 273,
+      "timestamp": "2026-04-13T21:00:59.563Z",
+      "issues": [
+        "No images in manifest for this chapter"
+      ],
+      "fixes": [
+        "Generated 1 new image(s): chapter-273.jpg"
+      ]
+    },
     {
       "chapter": 274,
       "timestamp": "2026-04-13T20:15:19.828Z",
@@ -467,12 +477,6 @@
     {
       "chapter": 15,
       "timestamp": "2026-04-12T17:37:01.382Z",
-      "issues": [],
-      "fixes": []
-    },
-    {
-      "chapter": 16,
-      "timestamp": "2026-04-12T17:07:00.812Z",
       "issues": [],
       "fixes": []
     }

@@ -1937,6 +1937,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 273,
+      "chapterTitle": "Chapter बहत्तर",
+      "imagePath": "chapter-273.jpg",
+      "prompt": "Krishna and Arjuna stand together as they offer the Khandava forest to Agnidev, while Mayasur looks on, in the serene surroundings of the forest.",
+      "descriptionHi": "भगवान् श्रीकृष्ण ने अर्जुन की सहायता से अग्निदेव को खाण्डव वन भेंट करके तुष्ट किया और मय दानव को बचाया, जिसने बाद में राजा युधिष्ठिर के लिए दैवी सभाभवन बनाया। यह घटना भगवान् की इन्द्रप्रस्थ यात्रा के दौरान हुई।",
+      "personasUsed": [
+        "krishna_adult",
+        "arjuna"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T21:00:59.557Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 274,
       "chapterTitle": "Chapter तिहत्तर",
       "imagePath": "chapter-274.jpg",
@@ -2389,5 +2403,5 @@
       "sceneIndex": 0
     }
   ],
-  "lastUpdated": "2026-04-13T20:15:19.795Z"
+  "lastUpdated": "2026-04-13T21:00:59.557Z"
 }
