@@ -41,7 +41,7 @@ const STRUCTURED_DATA_ORGANIZATION = {
 
 const STRUCTURED_DATA_WEBSITE = {
   "@context": "https://schema.org", "@type": "WebSite", "@id": `${CANONICAL_DOMAIN}/#website`,
-  name: "Build Iskcon", description: "Track 41 active ISKCON temple construction projects across 14 countries.",
+  name: "Build Iskcon", description: "Track 44 active ISKCON temple construction projects across 14 countries.",
   url: CANONICAL_DOMAIN, publisher: { "@id": `${CANONICAL_DOMAIN}/#organization` }, inLanguage: "en",
 };
 
@@ -73,7 +73,7 @@ const FAQ_ITEMS = [
   { q: "Where does my donation go?", a: "Build Iskcon does NOT collect, process, or handle any donations. When you click 'Donate' on any project, you are redirected to that temple's official ISKCON donation page. Your money goes directly to the temple — we are simply the map that helps you find where to give." },
   { q: "Is Build Iskcon an official ISKCON website?", a: "No. Build Iskcon is an independent, community-driven transparency platform. All data is sourced from official ISKCON project communications. All donation links direct to verified, official ISKCON temple websites." },
   { q: "How is this site funded?", a: "Build Iskcon is a volunteer-driven initiative with no commercial revenue. The site is maintained as a seva (service) project to help devotees discover and support ISKCON temple construction worldwide." },
-  { q: "How many ISKCON temples are currently under construction?", a: "As of 2026, Build Iskcon tracks 41 active ISKCON temple construction projects across 14 countries, including the flagship Temple of the Vedic Planetarium (TOVP) in Mayapur." },
+  { q: "How many ISKCON temples are currently under construction?", a: "As of 2026, Build Iskcon tracks 44 active ISKCON temple construction projects across 14 countries, including the flagship Temple of the Vedic Planetarium (TOVP) in Mayapur." },
   { q: "What is the Temple of the Vedic Planetarium (TOVP)?", a: "The TOVP is Srila Prabhupada's most cherished project — one of the largest religious structures being built globally. Located in Mayapur, West Bengal, it is 78% complete with a grand opening scheduled for November 2, 2027." },
   { q: "What is ISKCON's Vision 2051?", a: "Vision 2051 is a 25-year roadmap to establish 211 ISKCON temples across all 28 states and 8 Union Territories of India in 3 phases, starting 2025." },
   { q: "What are the seva (donation) tiers?", a: "Five tiers: Brick Donor (₹1,000), Pillar Supporter (₹11,000), Altar Patron (₹51,000), Mandala Guardian (₹1,00,000), and Temple Benefactor (₹5,00,000). All donations go directly to official ISKCON temple websites." },
@@ -117,7 +117,7 @@ function HeroSection() {
             Help Build Sacred Temples<br />Across the World
           </motion.h1>
           <motion.p variants={fadeInUp} className="text-on-surface-variant font-sans text-[15px] mb-5 leading-relaxed">
-            41 ISKCON temples are under construction in 14 countries right now. From the Temple of the Vedic Planetarium in Mayapur to new centres in Nairobi and Budapest — every donation brings Srila Prabhupada's vision closer to reality.
+            44 ISKCON temples are under construction in 14 countries right now. From the Temple of the Vedic Planetarium in Mayapur to new centres in Nairobi and Budapest — every donation brings Srila Prabhupada's vision closer to reality.
           </motion.p>
           <motion.figure variants={fadeInUp} className="mb-6 border-l-2 border-primary/40 pl-4">
             <blockquote className="font-serif text-base italic text-on-surface/80 leading-snug">
@@ -318,7 +318,7 @@ function TempleProjectsSection() {
       {/* Static HTML table for SEO */}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm border-collapse" aria-label="ISKCON Temple Construction Projects">
-          <caption className="sr-only">All 41 active ISKCON temple construction projects with status, funding progress, and lead organization</caption>
+          <caption className="sr-only">All 44 active ISKCON temple construction projects with status, funding progress, and lead organization</caption>
           <thead>
             <tr className="border-b border-outline-variant/20 text-xs uppercase tracking-widest text-on-surface-variant">
               <th className="py-3 pr-4 font-bold">Temple</th>
@@ -922,8 +922,8 @@ export default function Home() {
   return (
     <Layout>
       <SEOHead
-        title="Track 41 Active ISKCON Temple Construction Projects Worldwide"
-        description="Help build 41 ISKCON temples across 14 countries. The TOVP in Mayapur opens in 2027. Explore projects, donate directly to official ISKCON pages, and discover Vision 2051."
+        title="Track 44 Active ISKCON Temple Construction Projects Worldwide"
+        description="Help build 44 ISKCON temples across 14 countries. The TOVP in Mayapur opens in 2027. Explore projects, donate directly to official ISKCON pages, and discover Vision 2051."
         canonicalPath="/"
         structuredData={[
           STRUCTURED_DATA_ORGANIZATION,

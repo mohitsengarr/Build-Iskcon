@@ -391,6 +391,35 @@ export const TEMPLES: Temple[] = [
     coverImage: null, donateUrl: null,
     latitude: -27.470, longitude: 153.021,
   },
+
+  // ── New Discoveries (April 2026 Firecrawl) ──────────────────────────────────
+  {
+    id: 42, name: "Abhay Tirtha – ISKCON Newtown", location: "Newtown, Kolkata, West Bengal, India",
+    deity: "Sri Sri Gaur Nitai", description: "A monumental 25-acre spiritual complex in Srila Prabhupada's birthplace of Kolkata, envisioned as a 'hospital for the soul.' The Abhay Tirtha project aims to immortalize Srila Prabhupada's legacy with deity altars, meditation halls, youth guidance programs, Vedic education facilities, and community outreach.",
+    status: "construction", phase: "Foundation complete — main structure beginning", constructionProgress: 12,
+    fundraisingGoal: 4_800_000, fundraisingRaised: 500_000, startDate: "2023-06-01",
+    expectedCompletion: "2029-12-31", projectLead: "ISKCON Newtown",
+    coverImage: null, donateUrl: "https://abhaytirtha.com/",
+    latitude: 22.583, longitude: 88.468,
+  },
+  {
+    id: 43, name: "ISKCON Punjabi Bagh – Temple Expansion", location: "Punjabi Bagh, New Delhi, India",
+    deity: "Sri Sri Krishna Balaram, Sri Radha Radhika Raman", description: "Expansion of the beloved Punjabi Bagh temple (established 1984) onto an adjacent plot acquired in 2022. Serving a vibrant community of over 1,000 families with an enlarged temple hall, community spaces, and enhanced facilities for spiritual education and cultural programs.",
+    status: "construction", phase: "Expansion construction underway", constructionProgress: 25,
+    fundraisingGoal: 3_000_000, fundraisingRaised: 1_200_000, startDate: "2022-01-01",
+    expectedCompletion: "2027-09-15", projectLead: "ISKCON Punjabi Bagh",
+    coverImage: null, donateUrl: "https://www.iskconpunjabibagh.com/temple-expansion-project/",
+    latitude: 28.667, longitude: 77.130,
+  },
+  {
+    id: 44, name: "Dakshina Dwaraka Dham – ISKCON Chennai", location: "Thiruvanmiyur, Chennai, Tamil Nadu, India",
+    deity: "Sri Sri Rukmini Dwarakadhish", description: "A magnificent 40,000 sq. ft. cultural complex designed in Pallava-style architecture as a tribute to ancient South India. Currently building the third-floor temple hall — envisioned as a premier centre for spiritual education, kirtan, and darshan in the heart of Chennai.",
+    status: "construction", phase: "Third-floor temple hall construction", constructionProgress: 35,
+    fundraisingGoal: 5_000_000, fundraisingRaised: 2_800_000, startDate: "2021-01-01",
+    expectedCompletion: "2028-06-30", projectLead: "Hare Krishna Movement Chennai",
+    coverImage: null, donateUrl: "https://hkmchennai.org/dakshina-dwaraka",
+    latitude: 12.982, longitude: 80.263,
+  },
 ];
 
 // Pre-computed stats
