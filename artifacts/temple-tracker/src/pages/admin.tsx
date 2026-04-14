@@ -231,7 +231,7 @@ export default function Admin() {
         >
           <Stat label="Pages" value={`${gitaProgress?.totalPagesProcessed?.toLocaleString() || 0} / ${gitaProgress?.totalPagesInPdf?.toLocaleString() || 0}`} />
           <Stat label="Batches" value={gitaProgress?.batchesCompleted || 0} />
-          <Stat label="Engine" value="PaddleOCR" />
+          <Stat label="Engine" value="Sarvam AI" />
         </ServiceCard>
 
         {/* Instagram */}

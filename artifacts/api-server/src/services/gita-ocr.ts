@@ -525,7 +525,7 @@ export async function processNextBatch(): Promise<{
       return { success: false, message: "All pages have been processed" };
     }
 
-    logger.info({ batchNumber, startPage, endPage, ocr: "paddleocr (primary) -> tesseract (fallback)" },
+    logger.info({ batchNumber, startPage, endPage, ocr: "sarvam (primary) -> tesseract (fallback)" },
       "Starting batch processing");
 
     // Step 1: Convert PDF pages to images
@@ -538,7 +538,7 @@ export async function processNextBatch(): Promise<{
 
     logger.info({ imageCount: imagePaths.length }, "Images generated, starting OCR");
 
-    // Step 2: OCR -- PaddleOCR primary, Tesseract fallback
+    // Step 2: OCR -- Sarvam primary, Tesseract fallback
     const extractedPages = await ocrPages(imagePaths, startPage);
 
     // Step 3: Extract English text from English PDF (best-effort, non-blocking)
@@ -585,7 +585,7 @@ export async function processNextBatch(): Promise<{
     progress.status = isComplete ? "completed" : "idle";
     writeProgress(progress);
 
-    const ocrEngine = "PaddleOCR (primary)";
+    const ocrEngine = "Sarvam Vision";
     const hasEnglish = extractedPages.some((p) => p.textEn);
 
     logger.info({
@@ -677,7 +677,7 @@ export async function reprocessEmptyPages(limit = 20, reverse = false): Promise<
         continue;
       }
 
-      // OCR the page (PaddleOCR -> Tesseract)
+      // OCR the page (Sarvam -> Tesseract)
       const [page] = await ocrPages(imagePaths, ep.pageNumber);
       cleanupTmpImages();
 
