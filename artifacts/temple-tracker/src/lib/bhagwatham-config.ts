@@ -16,8 +16,12 @@ export const TEXT_CORRECTIONS: Array<{ find: string | RegExp; replace: string; d
   // Standalone कौ → की (systematic OCR error, 3476+ occurrences)
   { find: /कौ(?=[\s।,;:)\?\n])/gu, replace: "की", description: "OCR misreads की as कौ" },
 
-  // Add more corrections here as discovered:
-  // { find: "गलत", replace: "सही", description: "example fix" },
+  // Strip stray English words embedded inside Devanagari text (OCR artifacts)
+  // e.g., "FRINGE लोकं" → "लोकं", "Be लिए" → "लिए"
+  { find: /(?<=[\u0900-\u097F]\s*)[A-Z]{2,}(?=\s*[\u0900-\u097F])/g, replace: "", description: "Remove ALL-CAPS English OCR artifacts inside Devanagari" },
+
+  // Known specific OCR misreads
+  { find: "FRINGE", replace: "", description: "OCR artifact in shlok text" },
 ];
 
 // ── 2. Section Detection Rules ─────────────────────────────────────────────
