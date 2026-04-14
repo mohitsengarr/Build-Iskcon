@@ -1928,6 +1928,7 @@ function Sidebar({
 // ── Main Page ──────────────────────────────────────────────────────────────────
 
 export default function Bhagwatham() {
+  const isDevMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("dev");
   const [progress, setProgress] = useState<Progress | null>(null);
   const [allPages, setAllPages] = useState<PageContent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -2765,7 +2766,7 @@ export default function Bhagwatham() {
                       </div>
                     )}
                     {pageIdx === 0 && <p className={`text-[10px] ${theme.muted} font-medium text-right mt-0 mb-2 opacity-40`}>· {page.pageNumber} ·</p>}
-                    <RenderContent text={page.text} textEn={page.textEn} lang={lang} chapterImages={chapterImages} themeKey={settings.theme} onRegenerateImages={openPromptModal} regeneratingChapters={regeneratingChapters} onDeleteImage={handleDeleteImage} pageNumber={page.pageNumber} overrides={sectionOverrides[page.pageNumber]} onOverridesChange={handleOverridesChange} prevPageEndKind={prevEndKind} chapterNumMapper={(perSkandhNum: number) => {
+                    <RenderContent text={page.text} textEn={page.textEn} lang={lang} chapterImages={chapterImages} themeKey={settings.theme} onRegenerateImages={isDevMode ? openPromptModal : undefined} regeneratingChapters={regeneratingChapters} onDeleteImage={isDevMode ? handleDeleteImage : undefined} pageNumber={page.pageNumber} overrides={sectionOverrides[page.pageNumber]} onOverridesChange={isDevMode ? handleOverridesChange : undefined} prevPageEndKind={prevEndKind} chapterNumMapper={(perSkandhNum: number) => {
                       // Find which skandh this page belongs to based on surrounding chapters
                       const ch = chapters.find(c => c.number === perSkandhNum && c.pageNumber <= page.pageNumber);
                       // Pick the last matching chapter (closest to this page)
