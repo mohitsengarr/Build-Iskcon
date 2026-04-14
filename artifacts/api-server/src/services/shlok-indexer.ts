@@ -339,9 +339,13 @@ export async function indexNextBatch(): Promise<{
       totalShloks += shloks.length;
 
       for (const shlok of shloks) {
-        const result = await upsertShlok(shlok);
-        if (result === "inserted") totalInserted++;
-        else if (result === "updated") totalUpdated++;
+        try {
+          const result = await upsertShlok(shlok);
+          if (result === "inserted") totalInserted++;
+          else if (result === "updated") totalUpdated++;
+        } catch (shlokErr: any) {
+          logger.warn({ pageNumber: shlok.pageNumber, err: shlokErr?.message?.substring(0, 100) }, "Shlok upsert failed, skipping");
+        }
       }
     }
 
