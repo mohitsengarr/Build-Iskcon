@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
 import { fadeInUp, fadeIn } from "@/lib/animations";
+import { applyTextCorrections } from "@/lib/bhagwatham-config";
 import {
   BookOpen, ChevronLeft, ChevronRight, Loader2,
   RefreshCw, Search, BookMarked, Sparkles,
@@ -380,6 +381,8 @@ function cleanOcrText(text: string): string {
   for (const { placeholder, original } of placeholders) {
     result = result.replace(placeholder, original);
   }
+  // Apply centralized text corrections (from bhagwatham-config.ts)
+  result = applyTextCorrections(result);
   return result;
 }
 
@@ -803,55 +806,120 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     recorderRef.current?.stop();
   };
 
+  // Listen to selected word via Sarvam TTS
+  const listenToWord = useCallback(async () => {
+    if (!selectedText) return;
+    try {
+      const res = await fetch("/api/bhagwatham/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: selectedText }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.audio) {
+          const audio = new Audio(`data:audio/wav;base64,${data.audio}`);
+          audio.play();
+          return;
+        }
+      }
+    } catch { /* fallback */ }
+    // Browser fallback
+    const u = new SpeechSynthesisUtterance(selectedText);
+    u.lang = "hi-IN"; u.rate = 0.5; u.pitch = 0.7;
+    window.speechSynthesis.speak(u);
+  }, [selectedText]);
+
+  // Dictionary lookup state
+  const [dictResult, setDictResult] = useState<{ word: string; meaning: string; examples: string[] } | null>(null);
+  const [dictLoading, setDictLoading] = useState(false);
+
+  const lookupWord = useCallback(async () => {
+    if (!selectedText || selectedText.length > 50) return;
+    setDictLoading(true);
+    setDictResult(null);
+    try {
+      const res = await fetch("/api/bhagwatham/dictionary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ word: selectedText }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDictResult(data);
+      }
+    } catch { /* ignore */ }
+    setDictLoading(false);
+  }, [selectedText]);
+
   if (!show) return null;
 
   return (
-    <div
-      className="fixed z-50 flex items-center gap-1.5 bg-white rounded-full shadow-xl border border-stone-200 px-2 py-1.5 -translate-x-1/2 -translate-y-full"
-      style={{ left: Math.max(60, Math.min(position.x, window.innerWidth - 60)), top: Math.max(50, position.y) }}
-    >
-      {processing ? (
-        <span className="flex items-center gap-1.5 text-xs text-stone-500 px-2">
-          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Transcribing...
-        </span>
-      ) : recording ? (
-        <>
-          <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-          <span className="text-xs text-red-600 font-medium">Recording...</span>
-          <button onClick={stopRecording} className="p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200">
-            <Check className="w-3.5 h-3.5" />
-          </button>
-        </>
-      ) : (
-        <>
-          <input
-            type="text"
-            defaultValue={selectedText}
-            className="text-xs border border-stone-200 rounded-lg px-2 py-1 w-36 focus:outline-none focus:border-orange-400"
-            placeholder="Type correction..."
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                applyEdit(selectedText, (e.target as HTMLInputElement).value);
-                setShow(false);
-              }
-            }}
-            autoFocus
-          />
-          <button
-            onClick={startRecording}
-            className="p-1.5 rounded-full text-stone-500 hover:text-orange-600 hover:bg-orange-50 transition-colors"
-            title="Or speak to edit"
-          >
-            <Mic className="w-3.5 h-3.5" />
-          </button>
-        </>
-      )}
-      {!recording && !processing && (
-        <button onClick={() => setShow(false)} className="p-1 text-stone-400 hover:text-stone-600">
-          <X className="w-3 h-3" />
-        </button>
-      )}
-    </div>
+    <>
+      <div
+        className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-stone-200 -translate-x-1/2 -translate-y-full"
+        style={{ left: Math.max(100, Math.min(position.x, window.innerWidth - 100)), top: Math.max(60, position.y - 5), minWidth: 220 }}
+      >
+        {processing ? (
+          <div className="flex items-center gap-2 px-4 py-3 text-xs text-stone-500">
+            <Loader2 className="w-3.5 h-3.5 animate-spin" /> Transcribing...
+          </div>
+        ) : recording ? (
+          <div className="flex items-center gap-2 px-4 py-3">
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            <span className="text-xs text-red-600 font-medium flex-1">Recording...</span>
+            <button onClick={stopRecording} className="p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200">
+              <Check className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ) : (
+          <div className="p-2">
+            {/* Action buttons row */}
+            <div className="flex items-center gap-1 mb-2">
+              <button onClick={listenToWord} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors" title="Listen">
+                <Volume2 className="w-3.5 h-3.5" /> Listen
+              </button>
+              <button onClick={lookupWord} disabled={dictLoading} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Dictionary meaning">
+                {dictLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookOpen className="w-3.5 h-3.5" />} Meaning
+              </button>
+              <button onClick={startRecording} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Voice edit">
+                <Mic className="w-3.5 h-3.5" /> Voice
+              </button>
+              <button onClick={() => { setShow(false); setDictResult(null); }} className="p-1.5 text-stone-400 hover:text-stone-600 ml-auto">
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+            {/* Edit input */}
+            <input
+              type="text"
+              defaultValue={selectedText}
+              className="w-full text-xs border border-stone-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-orange-400"
+              placeholder="Type correction, press Enter..."
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  applyEdit(selectedText, (e.target as HTMLInputElement).value);
+                  setShow(false);
+                }
+              }}
+            />
+          </div>
+        )}
+        {/* Dictionary result */}
+        {dictResult && (
+          <div className="border-t border-stone-100 px-4 py-3 max-w-xs">
+            <p className="text-xs font-bold text-blue-700 mb-1">{dictResult.word}</p>
+            <p className="text-xs text-stone-600 leading-relaxed">{dictResult.meaning}</p>
+            {dictResult.examples?.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {dictResult.examples.slice(0, 3).map((ex, i) => (
+                  <p key={i} className="text-[10px] text-stone-400 italic">"{ex}"</p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 
@@ -1219,21 +1287,18 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
   flush();
 
   // ── Post-process: merge "text" sections that precede "shlok" into the shlok ──
-  // This fixes shloks split across pages where the first part is classified as "text"
+  // Fixes shloks split across pages or where first lines lack ॥ markers
   for (let si = 0; si < sections.length - 1; si++) {
     if (sections[si].kind === "text" && sections[si + 1].kind === "shlok") {
-      // Check if the text lines look like Sanskrit (no Hindi postpositions, short lines)
       const textLines = sections[si].lines;
-      const allShort = textLines.every(l => l.length < 80);
-      const noHindiPP = textLines.every(l => {
-        const pp = ["में", "से", "को", "पर", "ने", "के", "की", "का", "है", "हैं", "था", "थी"];
-        return !pp.some(p => (` ${l} `).includes(` ${p} `));
-      });
-      if (allShort && noHindiPP) {
-        // Merge into the shlok
+      // Merge if text lines have NO Hindi verbs (है, हैं, था, etc.) — they're likely Sanskrit
+      const hindiVerbRE = /(?:है|हैं|था|थी|थे|होता|करता|गया|किया|दिया|लिया|रहा)(?:\s|[।,]|$)/u;
+      const noHindiVerbs = textLines.every(l => !hindiVerbRE.test(l));
+      const allShort = textLines.every(l => l.length < 100);
+      if (allShort && noHindiVerbs) {
         sections[si + 1].lines = [...textLines, ...sections[si + 1].lines];
         sections.splice(si, 1);
-        si--; // re-check
+        si--;
       }
     }
   }
@@ -1943,15 +2008,18 @@ export default function Bhagwatham() {
       } catch { /* not available */ }
 
       if (batchCount > 0) {
-        // Lazy mode: load first 5 batches, rest in background
-        await fetchBatchRange(1, 5);
-        if (batchCount > 5) {
-          (async () => {
-            for (let start = 6; start <= batchCount; start += 20) {
-              await fetchBatchRange(start, Math.min(start + 19, batchCount));
-            }
-          })();
-        }
+        // Check if there's a saved reading position — load THAT batch first
+        let resumeBatch = 1;
+        try {
+          const saved = JSON.parse(localStorage.getItem("bhagwatham_resume") || "{}");
+          if (saved.pageNumber && saved.pageNumber > 20) {
+            resumeBatch = Math.ceil(saved.pageNumber / 20);
+          }
+        } catch { /* ignore */ }
+
+        const startBatch = Math.max(1, resumeBatch - 1);
+        const endBatch = Math.min(resumeBatch + 3, batchCount);
+        await fetchBatchRange(startBatch, endBatch);
       } else {
         // Fallback: load everything via content endpoint (dev mode or no chapter-index)
         const res = await fetch(`${API_BASE}/content?page=1&limit=100`);

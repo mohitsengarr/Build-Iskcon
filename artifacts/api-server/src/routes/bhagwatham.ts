@@ -852,4 +852,48 @@ router.post("/bhagwatham/stt", async (req, res) => {
   }
 });
 
+// POST /api/bhagwatham/dictionary — look up Hindi/Sanskrit word meaning via Claude
+router.post("/bhagwatham/dictionary", async (req, res) => {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) { res.status(503).json({ error: "ANTHROPIC_API_KEY not set" }); return; }
+
+  const { word } = req.body;
+  if (!word || typeof word !== "string" || word.length > 100) {
+    res.status(400).json({ error: "word required (max 100 chars)" });
+    return;
+  }
+
+  try {
+    const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 500,
+        messages: [{
+          role: "user",
+          content: `You are a Sanskrit/Hindi dictionary. For the word "${word}":
+1. Give the meaning in Hindi and English (2-3 lines max)
+2. If it's Sanskrit, give the root (dhatu) and grammatical form
+3. Give 2-3 example sentences showing how this word is used in Srimad Bhagavatam or Hindu scripture context
+
+Return JSON only: {"word":"${word}","meaning":"...","examples":["...","..."]}`
+        }],
+      }),
+    });
+
+    if (!claudeRes.ok) { res.status(500).json({ error: "Claude API failed" }); return; }
+    const data: any = await claudeRes.json();
+    const text = data.content?.[0]?.text || "";
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      res.json(JSON.parse(jsonMatch[0]));
+    } else {
+      res.json({ word, meaning: text.substring(0, 300), examples: [] });
+    }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
