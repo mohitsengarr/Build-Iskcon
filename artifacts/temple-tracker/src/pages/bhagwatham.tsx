@@ -1189,6 +1189,26 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
   }
   flush();
 
+  // ── Post-process: merge "text" sections that precede "shlok" into the shlok ──
+  // This fixes shloks split across pages where the first part is classified as "text"
+  for (let si = 0; si < sections.length - 1; si++) {
+    if (sections[si].kind === "text" && sections[si + 1].kind === "shlok") {
+      // Check if the text lines look like Sanskrit (no Hindi postpositions, short lines)
+      const textLines = sections[si].lines;
+      const allShort = textLines.every(l => l.length < 80);
+      const noHindiPP = textLines.every(l => {
+        const pp = ["में", "से", "को", "पर", "ने", "के", "की", "का", "है", "हैं", "था", "थी"];
+        return !pp.some(p => (` ${l} `).includes(` ${p} `));
+      });
+      if (allShort && noHindiPP) {
+        // Merge into the shlok
+        sections[si + 1].lines = [...textLines, ...sections[si + 1].lines];
+        sections.splice(si, 1);
+        si--; // re-check
+      }
+    }
+  }
+
   // ── Apply manual overrides ──────────────────────────────────────────
   // If overrides exist for this page, rebuild sections using them.
   // Override lines replace auto-detected types for the specified ranges.
@@ -2304,30 +2324,33 @@ export default function Bhagwatham() {
 
         // Load the batches around the resume point, then navigate
         fetchBatchRange(startBatch, endBatch).then(() => {
-          // After batches loaded, find the page and navigate
-          setTimeout(() => {
-            const pages = batchCacheRef.current;
-            // Find page in loaded batches
-            let foundIdx = -1;
-            const sorted = [...pages.entries()].sort((a, b) => a[0] - b[0]);
+          if (resume.chapterNumber) setActiveChapter(resume.chapterNumber);
+          if (resume.chapter) setScrollChapter(resume.chapter);
+
+          // Wait for React to re-render with loaded pages, then scroll
+          const tryScroll = (attempts: number) => {
+            const sorted = [...batchCacheRef.current.entries()].sort((a, b) => a[0] - b[0]);
             const allLoaded = sorted.flatMap(([, p]) => p);
-            foundIdx = allLoaded.findIndex(p => p.pageNumber >= resume.pageNumber);
+            const foundIdx = allLoaded.findIndex(p => p.pageNumber >= resume.pageNumber);
 
             if (foundIdx >= 0) {
               const viewPage = Math.floor(foundIdx / PAGES_PER_VIEW) + 1;
               setCurrentPage(viewPage);
-              if (resume.chapterNumber) setActiveChapter(resume.chapterNumber);
-              if (resume.chapter) setScrollChapter(resume.chapter);
               setTimeout(() => {
                 const el = document.querySelector(`[data-page-num="${resume.pageNumber}"]`);
                 if (el) {
                   const scrollOffset = resume.scrollOffset || 0;
                   const rect = el.getBoundingClientRect();
                   window.scrollTo({ top: window.scrollY + rect.top + scrollOffset, behavior: "auto" });
+                } else if (attempts > 0) {
+                  setTimeout(() => tryScroll(attempts - 1), 300);
                 }
-              }, 500);
+              }, 300);
+            } else if (attempts > 0) {
+              setTimeout(() => tryScroll(attempts - 1), 300);
             }
-          }, 100);
+          };
+          setTimeout(() => tryScroll(5), 200);
         });
       } catch { /* ignore */ }
     }
