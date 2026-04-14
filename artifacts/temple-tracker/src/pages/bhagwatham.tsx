@@ -2364,7 +2364,6 @@ export default function Bhagwatham() {
   };
 
   const handleChapterClick = async (ch: ChapterEntry) => {
-    // On mobile, close sidebar. On desktop, keep it open.
     if (window.innerWidth < 1024) setSidebarOpen(false);
     setSearchQuery("");
     setActiveChapter(ch.globalNumber);
@@ -2373,18 +2372,30 @@ export default function Bhagwatham() {
     const targetBatch = Math.ceil(ch.pageNumber / 20);
     await fetchBatchRange(Math.max(1, targetBatch - 1), Math.min(targetBatch + 2, totalBatchCount || targetBatch + 2));
 
-    // Find the page after batch is loaded
-    setTimeout(() => {
-      const pageIdx = allPages.findIndex((p) => p.pageNumber >= ch.pageNumber);
-      if (pageIdx >= 0) {
-        const viewPage = Math.floor(pageIdx / PAGES_PER_VIEW) + 1;
-        setCurrentPage(viewPage);
-        setTimeout(() => {
-          const el = document.getElementById(`chapter-${ch.globalNumber}`);
-          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 300);
-      }
-    }, 100);
+    // Use batchCacheRef directly (not allPages state which may be stale)
+    const sorted = [...batchCacheRef.current.entries()].sort((a, b) => a[0] - b[0]);
+    const allLoaded = sorted.flatMap(([, pages]) => pages);
+    const pageIdx = allLoaded.findIndex((p) => p.pageNumber >= ch.pageNumber);
+
+    if (pageIdx >= 0) {
+      const viewPage = Math.floor(pageIdx / PAGES_PER_VIEW) + 1;
+      setCurrentPage(viewPage);
+      // Wait for React to render the new pages, then scroll to chapter
+      const tryScroll = (attempts: number) => {
+        const el = document.getElementById(`chapter-${ch.globalNumber}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        } else if (attempts > 0) {
+          setTimeout(() => tryScroll(attempts - 1), 200);
+        } else {
+          // Fallback: scroll to the page element
+          const pageEl = document.querySelector(`[data-page-num="${ch.pageNumber}"]`);
+          if (pageEl) pageEl.scrollIntoView({ behavior: "smooth", block: "start" });
+          else window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      };
+      setTimeout(() => tryScroll(5), 200);
+    }
   };
 
   // ── Auto-save reading position ───────────────────────────────────────────

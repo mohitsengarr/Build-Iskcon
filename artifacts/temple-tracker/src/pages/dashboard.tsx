@@ -500,12 +500,12 @@ function HowToGive() {
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 const FALLBACK_STATS = {
-  totalTemples: 16,
-  activeProjects: 16,
-  totalFundraisingGoal: 450_000_000,
-  totalFundraisingRaised: 180_000_000,
-  averageProgress: 42,
-  templesByStatus: { construction: 8, planning: 4, finishing: 2, consecrated: 2 },
+  totalTemples: 41,
+  activeProjects: 34,
+  totalFundraisingGoal: 520_000_000,
+  totalFundraisingRaised: 220_000_000,
+  averageProgress: 38,
+  templesByStatus: { construction: 22, planning: 5, finishing: 5, consecrated: 5, operational: 4 },
   recentUpdates: [],
 };
 
@@ -566,7 +566,7 @@ export default function Dashboard() {
             </motion.h1>
 
             <motion.p variants={fadeInUp} className="text-on-surface-variant font-sans text-sm mb-5 leading-relaxed">
-              {stats.activeProjects || stats.totalTemples} ISKCON temples rising across {new Set(Object.keys(stats.templesByStatus ?? {})).size > 0 ? "11" : "multiple"} countries — track real-time progress, choose a project, and give in seconds.
+              {stats.activeProjects || stats.totalTemples} ISKCON temples rising across {new Set(Object.keys(stats.templesByStatus ?? {})).size > 0 ? "14" : "multiple"} countries — track real-time progress, choose a project, and give in seconds.
             </motion.p>
 
             <motion.figure variants={fadeInUp} className="mb-6 border-l-2 border-primary/40 pl-4">
