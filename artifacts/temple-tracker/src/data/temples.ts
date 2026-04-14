@@ -171,7 +171,7 @@ export const TEMPLES: Temple[] = [
     status: "consecrated", phase: "Completed — inaugurated January 2026", constructionProgress: 100,
     fundraisingGoal: 3_000_000, fundraisingRaised: 3_000_000, startDate: "2021-01-01",
     expectedCompletion: "2026-01-03", projectLead: "ISKCON Dumdum",
-    coverImage: null, donateUrl: "https://iskcondumdum.com",
+    coverImage: null, donateUrl: "https://iskcondumdum.com/donate",
     latitude: 22.648, longitude: 88.398,
   },
   {
@@ -225,7 +225,7 @@ export const TEMPLES: Temple[] = [
     status: "construction", phase: "Foundation & early superstructure", constructionProgress: 20,
     fundraisingGoal: 8_000_000, fundraisingRaised: 2_000_000, startDate: "2023-06-01",
     expectedCompletion: "2028-12-31", projectLead: "ISKCON Ichalkaranji",
-    coverImage: null, donateUrl: null,
+    coverImage: null, donateUrl: "https://iskconichalkaranji.com/donate",
     latitude: 16.690, longitude: 74.461,
   },
   // ── Discovered via Firecrawl April 2026 ──────────────────────────────────

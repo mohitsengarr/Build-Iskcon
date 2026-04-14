@@ -1468,7 +1468,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
   return (
     <div className="space-y-5 group/page relative">
       {/* Edit mode toggle — bottom-right to avoid overlapping speaker buttons */}
-      {pageNumber && onOverridesChange && (
+      {pageNumber && onOverridesChange && typeof window !== "undefined" && new URLSearchParams(window.location.search).has("dev") && (
         <button
           onClick={() => setEditMode(true)}
           className="absolute -right-1 bottom-0 opacity-0 group-hover/page:opacity-60 hover:!opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-stone-100"
@@ -1572,9 +1572,12 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             );
           }
           case "shlok":
-            // Sanskrit verse — same color as body text, 1.35x size, bold, with speaker
+            // Sanskrit verse — same color as body text, 1.35x size, bold, with speaker (SEN-109: stronger top divider)
             return (
-              <div key={i} className="my-5">
+              <div key={i} className="my-5 sm:my-6">
+                {i > 0 && sections[i - 1].kind !== "chapter" && (
+                  <div className={`mb-4 h-px ${themeKey === "dark" ? "bg-white/5" : themeKey === "sepia" ? "bg-amber-300/30" : "bg-orange-200/40"}`} />
+                )}
                 <div className="flex items-start gap-2">
                   <div className="flex-1">
                     {sec.lines.map((l, j) => (
@@ -1630,10 +1633,13 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             );
           }
           case "tatparya": {
-            // Same as body text, only "तात्पर्य :" prefix is bold
+            // Same as body text, only "तात्पर्य :" prefix is bold (SEN-109: visual divider)
             const isContinuation = i === 0 && prevPageEndKind === "tatparya";
             return (
-              <div key={i} className={isContinuation ? "" : "mt-3"}>
+              <div key={i} className={isContinuation ? "" : "mt-4 sm:mt-5"}>
+                {!isContinuation && (
+                  <div className={`mb-3 h-px ${themeKey === "dark" ? "bg-white/5" : themeKey === "sepia" ? "bg-amber-300/20" : "bg-green-200/50"}`} />
+                )}
                 {sec.lines.map((l, j) => (
                   <p key={j} className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>
                     {j === 0 && !isContinuation && <><span className="font-semibold">तात्पर्य :</span>{" "}</>}
@@ -1685,6 +1691,7 @@ function Sidebar({
   onBookmarkDelete: (b: BookmarkEntry) => void;
 }) {
   const [sidebarTab, setSidebarTab] = useState<"chapters" | "bookmarks">("chapters");
+  const [sidebarSearch, setSidebarSearch] = useState("");
   // Track which cantos are expanded — default: only the active chapter's canto
   const activeSkandh = activeChapter
     ? chapters.find(c => c.globalNumber === activeChapter)?.skandh ?? null
@@ -1726,9 +1733,9 @@ function Sidebar({
         )}
       </AnimatePresence>
 
-      {/* Sidebar panel */}
+      {/* Sidebar panel (SEN-112: responsive width + search) */}
       <aside className={`
-        fixed top-0 left-0 h-full w-72 bg-white border-r border-stone-200 z-50
+        fixed top-0 left-0 h-full w-[85vw] max-w-[18rem] sm:w-72 bg-white border-r border-stone-200 z-50
         transform transition-transform duration-300 ease-in-out overflow-y-auto
         lg:sticky lg:top-20 lg:h-[calc(100vh-5rem)] lg:z-0
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
@@ -1769,20 +1776,45 @@ function Sidebar({
           </div>
         ) : (
           <>
+            {/* Sidebar chapter search (SEN-112) */}
+            <div className="px-3 py-2 border-b border-stone-100">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
+                <input
+                  type="text" placeholder="Search chapters..." value={sidebarSearch}
+                  onChange={(e) => setSidebarSearch(e.target.value)}
+                  className="w-full pl-8 pr-7 py-1.5 bg-stone-50 border border-stone-200 rounded-lg text-xs text-stone-700 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-orange-200 focus:border-orange-300"
+                />
+                {sidebarSearch && (
+                  <button onClick={() => setSidebarSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2">
+                    <X className="w-3 h-3 text-stone-400" />
+                  </button>
+                )}
+              </div>
+            </div>
             {/* Chapter list grouped by skandh */}
             <nav className="py-2">
               {chapters.length === 0 ? (
                 <p className="px-4 py-3 text-xs text-stone-400">No chapters available yet</p>
               ) : (
                 (() => {
+                  // Filter chapters by search (SEN-112)
+                  const filteredChapters = sidebarSearch.trim()
+                    ? chapters.filter(ch =>
+                        ch.title.toLowerCase().includes(sidebarSearch.toLowerCase()) ||
+                        `canto ${ch.skandh}`.includes(sidebarSearch.toLowerCase()) ||
+                        `chapter ${ch.number}`.includes(sidebarSearch.toLowerCase()) ||
+                        (vedabaseTitles.get(`${ch.skandh}-${ch.number}`) || "").toLowerCase().includes(sidebarSearch.toLowerCase())
+                      )
+                    : chapters;
                   // Group chapters by skandh
                   const skandhGroups = new Map<number, ChapterEntry[]>();
-                  for (const ch of chapters) {
+                  for (const ch of filteredChapters) {
                     if (!skandhGroups.has(ch.skandh)) skandhGroups.set(ch.skandh, []);
                     skandhGroups.get(ch.skandh)!.push(ch);
                   }
                   return Array.from(skandhGroups.entries()).map(([skandh, chs]) => {
-                    const isExpanded = expandedCantos.has(skandh);
+                    const isExpanded = sidebarSearch.trim() ? true : expandedCantos.has(skandh);
                     const hasActiveChapter = chs.some(ch => ch.globalNumber === activeChapter);
                     // Get first chapter's image for canto thumbnail
                     const cantoImg = chs.map(ch => chapterImages.get(ch.globalNumber)?.[0]?.url).find(Boolean);
@@ -2005,12 +2037,11 @@ export default function Bhagwatham() {
     setLoadingMore(false);
   }, []);
 
-  // Load content: try chapter-index + lazy batches, fallback to full content load
+  // Load ALL content eagerly — no lazy loading (fixes SEN-114, SEN-103, SEN-106)
   const fetchAllContent = useCallback(async () => {
     setLoading(true);
     try {
-      // Step 1: Try pre-built chapter index (fast, ~30KB)
-      let batchCount = 0;
+      // Step 1: Load chapter index for instant sidebar (fast, ~30KB)
       try {
         const ciRes = await fetch(`${API_BASE}/chapter-index`);
         if (ciRes.ok) {
@@ -2020,36 +2051,34 @@ export default function Bhagwatham() {
               number: c.number, skandh: c.skandh, globalNumber: c.globalNumber,
               title: c.title, pageNumber: c.pageNumber,
             })));
-            batchCount = ciData.totalBatches || 0;
-            setTotalBatchCount(batchCount);
+            setTotalBatchCount(ciData.totalBatches || 0);
           }
         }
       } catch { /* not available */ }
 
-      if (batchCount > 0) {
-        // Check if there's a saved reading position — load THAT batch first
-        let resumeBatch = 1;
+      // Step 2: Load ALL pages via content endpoint (paginated, 100 batches per request)
+      const accumulated: PageContent[] = [];
+      let contentPage = 1;
+      let hasMore = true;
+      while (hasMore) {
         try {
-          const saved = JSON.parse(localStorage.getItem("bhagwatham_resume") || "{}");
-          if (saved.pageNumber && saved.pageNumber > 20) {
-            resumeBatch = Math.ceil(saved.pageNumber / 20);
-          }
-        } catch { /* ignore */ }
-
-        const startBatch = Math.max(1, resumeBatch - 1);
-        const endBatch = Math.min(resumeBatch + 3, batchCount);
-        await fetchBatchRange(startBatch, endBatch);
-      } else {
-        // Fallback: load everything via content endpoint (dev mode or no chapter-index)
-        const res = await fetch(`${API_BASE}/content?page=1&limit=100`);
-        if (res.ok) {
+          const res = await fetch(`${API_BASE}/content?page=${contentPage}&limit=100`);
+          if (!res.ok) break;
           const data: ContentResponse = await res.json();
-          const pages = data.batches.flatMap((b) => b.pages).filter((p) => !isGarbagePage(p.text));
-          if (pages.length > 0) setAllPages(pages);
-        }
+          const pages = data.batches.flatMap(b => b.pages).filter(p => !isGarbagePage(p.text));
+          accumulated.push(...pages);
+          hasMore = data.pagination.hasMore;
+          contentPage++;
+          // Show content progressively — unblock UI after first chunk
+          if (accumulated.length > 0) {
+            setAllPages([...accumulated]);
+            if (contentPage === 2) setLoading(false);
+          }
+        } catch { hasMore = false; }
       }
+      if (accumulated.length > 0) setAllPages(accumulated);
     } catch { /* empty */ } finally { setLoading(false); }
-  }, [fetchBatchRange]);
+  }, []);
 
   const fetchProgress = useCallback(async () => {
     try { const res = await fetch(`${API_BASE}/progress`); setProgress(await res.json()); } catch { /* retry */ }
@@ -2314,16 +2343,7 @@ export default function Bhagwatham() {
     [precomputedChapters, allPages],
   );
 
-  // Load more batches when user navigates to a page range not yet loaded
-  useEffect(() => {
-    if (totalBatchCount === 0) return;
-    const startIdx = (currentPage - 1) * PAGES_PER_VIEW;
-    // Estimate which batch the user needs: each batch has ~20 pages
-    const neededBatch = Math.floor(startIdx / 20) + 1;
-    const endBatch = Math.min(neededBatch + 2, totalBatchCount); // load 3 batches ahead
-    const startBatch = Math.max(1, neededBatch - 1); // 1 batch behind
-    fetchBatchRange(startBatch, endBatch);
-  }, [currentPage, totalBatchCount, fetchBatchRange]);
+  // Batch-on-demand removed — all content loaded eagerly in fetchAllContent (SEN-114)
 
   // Paginate pages for the current view
   const totalViewPages = Math.max(1, Math.ceil(allPages.length / PAGES_PER_VIEW));
@@ -2363,152 +2383,42 @@ export default function Bhagwatham() {
     }
   };
 
-  const handleChapterClick = async (ch: ChapterEntry) => {
+  const handleChapterClick = (ch: ChapterEntry) => {
     if (window.innerWidth < 1024) setSidebarOpen(false);
     setSearchQuery("");
     setActiveChapter(ch.globalNumber);
 
-    // Load the batch containing this chapter's page
-    const targetBatch = Math.ceil(ch.pageNumber / 20);
-    await fetchBatchRange(Math.max(1, targetBatch - 1), Math.min(targetBatch + 2, totalBatchCount || targetBatch + 2));
-
-    // Use batchCacheRef directly (not allPages state which may be stale)
-    const sorted = [...batchCacheRef.current.entries()].sort((a, b) => a[0] - b[0]);
-    const allLoaded = sorted.flatMap(([, pages]) => pages);
-    const pageIdx = allLoaded.findIndex((p) => p.pageNumber >= ch.pageNumber);
-
+    // All pages are loaded eagerly — find directly (SEN-103 fix)
+    const pageIdx = allPages.findIndex((p) => p.pageNumber >= ch.pageNumber);
     if (pageIdx >= 0) {
       const viewPage = Math.floor(pageIdx / PAGES_PER_VIEW) + 1;
       setCurrentPage(viewPage);
-      // Wait for React to render the new pages, then scroll to chapter
-      const tryScroll = (attempts: number) => {
-        const el = document.getElementById(`chapter-${ch.globalNumber}`);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "start" });
-        } else if (attempts > 0) {
-          setTimeout(() => tryScroll(attempts - 1), 200);
-        } else {
-          // Fallback: scroll to the page element
-          const pageEl = document.querySelector(`[data-page-num="${ch.pageNumber}"]`);
-          if (pageEl) pageEl.scrollIntoView({ behavior: "smooth", block: "start" });
-          else window.scrollTo({ top: 0, behavior: "smooth" });
-        }
-      };
-      setTimeout(() => tryScroll(5), 200);
+      // Save per-chapter position (SEN-106)
+      const positions = JSON.parse(localStorage.getItem("bhagwatham_chapter_positions") || "{}");
+      positions[ch.globalNumber] = { pageNumber: ch.pageNumber, scrollOffset: 0 };
+      localStorage.setItem("bhagwatham_chapter_positions", JSON.stringify(positions));
+      // Wait for React to render, then scroll to chapter anchor
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          const el = document.getElementById(`chapter-${ch.globalNumber}`);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          } else {
+            const pageEl = document.querySelector(`[data-page-num="${ch.pageNumber}"]`);
+            if (pageEl) pageEl.scrollIntoView({ behavior: "smooth", block: "start" });
+            else window.scrollTo({ top: 0, behavior: "smooth" });
+          }
+        }, 100);
+      });
     }
   };
 
-  // ── Auto-save reading position ───────────────────────────────────────────
-  useEffect(() => {
-    const savePosition = () => {
-      const pageNum = visiblePageNum || (allPages.length > 0 ? allPages[(currentPage - 1) * PAGES_PER_VIEW]?.pageNumber : null);
-      if (allPages.length > 0 && pageNum && (currentPage > 1 || visiblePageNum)) {
-        // Calculate scroll offset relative to the visible page element
-        let scrollOffset = 0;
-        const pageEl = document.querySelector(`[data-page-num="${pageNum}"]`);
-        if (pageEl) {
-          const rect = pageEl.getBoundingClientRect();
-          scrollOffset = -rect.top; // how far past the top of this page element we've scrolled
-        }
-        const currentChapter = chapters.slice().reverse().find(ch => ch.pageNumber <= pageNum);
-        localStorage.setItem("bhagwatham_resume", JSON.stringify({
-          page: currentPage, pageNumber: pageNum,
-          chapter: currentChapter?.title?.split("—")[0].trim() || "",
-          chapterNumber: currentChapter?.number || null,
-          scrollOffset,
-          savedAt: Date.now(),
-        }));
-      }
-    };
+  // Auto-save/resume removed — was causing scroll position issues
 
-    // Save on scroll (throttled) + on page change
-    let ticking = false;
-    const onScroll = () => {
-      if (!ticking) {
-        ticking = true;
-        requestAnimationFrame(() => {
-          savePosition();
-          ticking = false;
-        });
-      }
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    savePosition(); // also save on page/chapter change
-
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [currentPage, visiblePageNum, allPages, chapters]);
-
-  // Auto-resume reading position on load — loads the right batches first
+  // Auto-resume removed — was causing scroll/view issues. User can use bookmarks or sidebar instead.
   const resumedRef = useRef(false);
-  useEffect(() => {
-    if (resumedRef.current) return;
-    if (!loading && allPages.length > 0) {
-      try {
-        const raw = localStorage.getItem("bhagwatham_resume");
-        if (!raw) return;
-        const resume = JSON.parse(raw);
-        if (!resume.pageNumber || resume.pageNumber <= 20) return;
 
-        resumedRef.current = true;
-
-        // Calculate which batch contains this page (each batch = 20 pages)
-        const targetBatch = Math.ceil(resume.pageNumber / 20);
-        const startBatch = Math.max(1, targetBatch - 1);
-        const endBatch = Math.min(targetBatch + 2, totalBatchCount || targetBatch + 2);
-
-        // Load the batches around the resume point, then navigate
-        fetchBatchRange(startBatch, endBatch).then(() => {
-          if (resume.chapterNumber) setActiveChapter(resume.chapterNumber);
-          if (resume.chapter) setScrollChapter(resume.chapter);
-
-          // Wait for React to re-render with loaded pages, then scroll
-          const tryScroll = (attempts: number) => {
-            const sorted = [...batchCacheRef.current.entries()].sort((a, b) => a[0] - b[0]);
-            const allLoaded = sorted.flatMap(([, p]) => p);
-            const foundIdx = allLoaded.findIndex(p => p.pageNumber >= resume.pageNumber);
-
-            if (foundIdx >= 0) {
-              const viewPage = Math.floor(foundIdx / PAGES_PER_VIEW) + 1;
-              setCurrentPage(viewPage);
-              setTimeout(() => {
-                const el = document.querySelector(`[data-page-num="${resume.pageNumber}"]`);
-                if (el) {
-                  const scrollOffset = resume.scrollOffset || 0;
-                  const rect = el.getBoundingClientRect();
-                  window.scrollTo({ top: window.scrollY + rect.top + scrollOffset, behavior: "auto" });
-                } else if (attempts > 0) {
-                  setTimeout(() => tryScroll(attempts - 1), 300);
-                }
-              }, 300);
-            } else if (attempts > 0) {
-              setTimeout(() => tryScroll(attempts - 1), 300);
-            }
-          };
-          setTimeout(() => tryScroll(5), 200);
-        });
-      } catch { /* ignore */ }
-    }
-  }, [loading, allPages.length]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleResume = async () => {
-    try {
-      const raw = localStorage.getItem("bhagwatham_resume");
-      if (raw) {
-        const resume = JSON.parse(raw);
-        if (resume.pageNumber) {
-          // Load the right batches first
-          const targetBatch = Math.ceil(resume.pageNumber / 20);
-          await fetchBatchRange(Math.max(1, targetBatch - 1), targetBatch + 2);
-          setTimeout(() => {
-            const pageIdx = allPages.findIndex(p => p.pageNumber >= resume.pageNumber);
-            if (pageIdx >= 0) setCurrentPage(Math.floor(pageIdx / PAGES_PER_VIEW) + 1);
-          }, 100);
-        }
-        if (resume.chapterNumber) setActiveChapter(resume.chapterNumber);
-      }
-    } catch { /* ignore */ }
-    setShowResume(false);
-  };
+  // Resume handler removed — auto-resume was causing scroll issues
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────
   useEffect(() => {
@@ -2645,8 +2555,8 @@ export default function Bhagwatham() {
           {/* Voice edit toolbar — appears when text is selected */}
           <VoiceEditToolbar allPages={allPages} setAllPages={setAllPages} />
           {/* Top bar */}
-          <div className={`sticky top-14 z-30 ${theme.surface} backdrop-blur-sm border-b ${theme.border} px-4 sm:px-6 py-2`}>
-            <div className="max-w-3xl mx-auto flex items-center gap-2 sm:gap-3">
+          <div className={`sticky top-14 z-30 ${theme.surface} backdrop-blur-sm border-b ${theme.border} px-2 sm:px-4 md:px-6 py-1.5 sm:py-2`}>
+            <div className="max-w-3xl mx-auto flex items-center gap-1.5 sm:gap-2 md:gap-3">
               {/* Sidebar toggle (mobile) */}
               {!focusMode && (
                 <button
@@ -2658,9 +2568,9 @@ export default function Bhagwatham() {
                 </button>
               )}
 
-              {/* Page info + sticky chapter */}
-              <div className={`flex items-center gap-2 text-xs ${theme.muted} min-w-0`}>
-                <BookOpen className="w-3.5 h-3.5 shrink-0" />
+              {/* Page info + sticky chapter (SEN-110: compact on mobile) */}
+              <div className={`flex items-center gap-1 sm:gap-2 text-[11px] sm:text-xs ${theme.muted} min-w-0`}>
+                <BookOpen className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0 hidden sm:block" />
                 {editingPageNum ? (
                   <form className="flex items-center gap-1 whitespace-nowrap" onSubmit={(e) => {
                     e.preventDefault();
@@ -2709,14 +2619,14 @@ export default function Bhagwatham() {
                 )}
               </div>
 
-              {/* Search */}
-              <div className="relative flex-1 max-w-xs ml-auto">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
+              {/* Search (SEN-110: responsive width) */}
+              <div className="relative flex-1 min-w-0 max-w-[8rem] sm:max-w-xs ml-auto">
+                <Search className="absolute left-2 sm:left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 sm:w-3.5 sm:h-3.5 text-stone-400" />
                 <input
                   ref={searchRef}
-                  type="text" placeholder="Search... (/)" value={searchQuery}
+                  type="text" placeholder="Search..." value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 bg-stone-50 border border-stone-200 rounded-lg text-xs text-stone-700 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-orange-200 focus:border-orange-300 transition-all"
+                  className="w-full pl-7 sm:pl-8 pr-3 py-1 sm:py-1.5 bg-stone-50 border border-stone-200 rounded-lg text-[11px] sm:text-xs text-stone-700 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-orange-200 focus:border-orange-300 transition-all"
                 />
                 {searchQuery && (
                   <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -2728,7 +2638,7 @@ export default function Bhagwatham() {
               {/* Language toggle */}
               <button
                 onClick={() => setLang(lang === "hi" ? "en" : "hi")}
-                className="px-2 py-1.5 bg-stone-100 border border-stone-200 rounded-lg text-xs font-semibold text-stone-700 hover:bg-stone-200 transition-all active:scale-95"
+                className="px-1.5 sm:px-2 py-1 sm:py-1.5 bg-stone-100 border border-stone-200 rounded-lg text-[11px] sm:text-xs font-semibold text-stone-700 hover:bg-stone-200 transition-all active:scale-95 shrink-0"
                 title={lang === "hi" ? "Switch to English" : "हिंदी में पढ़ें"}
               >
                 {lang === "hi" ? "EN" : "हि"}
@@ -2737,43 +2647,43 @@ export default function Bhagwatham() {
               {/* Bookmark button */}
               <button
                 onClick={saveBookmark}
-                className={`relative p-1.5 rounded-lg transition-all active:scale-95 ${
+                className={`relative p-1 sm:p-1.5 rounded-lg transition-all active:scale-95 shrink-0 ${
                   bookmarkSaved ? "bg-orange-100 text-orange-600" : `hover:bg-stone-100 ${theme.muted} hover:text-orange-600`
                 }`}
                 title="Bookmark (B)"
               >
-                <Bookmark className={`w-4 h-4 ${bookmarkSaved ? "fill-orange-500" : ""}`} />
+                <Bookmark className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${bookmarkSaved ? "fill-orange-500" : ""}`} />
               </button>
-              {/* View saved bookmarks — opens sidebar to bookmarks tab */}
+              {/* View saved bookmarks — hidden on mobile to save space (SEN-110) */}
               {bookmarks.length > 0 && (
                 <button
                   onClick={() => { setSidebarOpen(true); setTimeout(() => { const el = document.querySelector('[data-tab="bookmarks"]') as HTMLElement; el?.click(); }, 100); }}
-                  className={`relative p-1.5 rounded-lg transition-all active:scale-95 hover:bg-stone-100 ${theme.muted} hover:text-orange-600`}
+                  className={`relative p-1 sm:p-1.5 rounded-lg transition-all active:scale-95 hover:bg-stone-100 ${theme.muted} hover:text-orange-600 hidden sm:block shrink-0`}
                   title="View bookmarks"
                 >
-                  <List className="w-4 h-4" />
+                  <List className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[8px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">{bookmarks.length}</span>
                 </button>
               )}
 
               {/* Settings button */}
-              <div className="relative">
+              <div className="relative shrink-0">
                 <button
                   onClick={() => setShowSettings(!showSettings)}
-                  className={`p-1.5 rounded-lg transition-all ${showSettings ? "bg-orange-100 text-orange-600" : `hover:bg-stone-100 ${theme.muted}`}`}
+                  className={`p-1 sm:p-1.5 rounded-lg transition-all ${showSettings ? "bg-orange-100 text-orange-600" : `hover:bg-stone-100 ${theme.muted}`}`}
                   title="Reading Settings"
                 >
-                  <Settings className="w-4 h-4" />
+                  <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </button>
                 <AnimatePresence>
                   {showSettings && <ReadingSettingsPanel settings={settings} onChange={setSettings} onClose={() => setShowSettings(false)} />}
                 </AnimatePresence>
               </div>
 
-              {/* Focus mode */}
+              {/* Focus mode — desktop only (SEN-110) */}
               <button
                 onClick={() => setFocusMode(!focusMode)}
-                className={`hidden sm:block p-1.5 rounded-lg transition-all ${focusMode ? "bg-orange-100 text-orange-600" : `hover:bg-stone-100 ${theme.muted}`}`}
+                className={`hidden md:block p-1.5 rounded-lg transition-all shrink-0 ${focusMode ? "bg-orange-100 text-orange-600" : `hover:bg-stone-100 ${theme.muted}`}`}
                 title="Focus Mode (F)"
               >
                 <Maximize2 className="w-4 h-4" />
@@ -2801,40 +2711,12 @@ export default function Bhagwatham() {
             </div>
           )}
 
-          {/* Resume card */}
-          <AnimatePresence>
-            {showResume && (
-              <motion.div
-                initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}
-                className="max-w-3xl mx-auto px-4 sm:px-6 pt-4"
-              >
-                <div className={`rounded-xl ${settings.theme === "dark" ? "bg-stone-800 border-stone-600" : settings.theme === "sepia" ? "bg-[#e8dcc4] border-[#c4b08a]" : "bg-orange-50 border-orange-200"} border p-4 flex items-center gap-3`}>
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${settings.theme === "dark" ? "bg-orange-900/40" : "bg-orange-100"}`}>
-                    <BookOpen className={`w-5 h-5 ${theme.accent}`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-semibold ${theme.text}`}>Continue reading?</p>
-                    <p className={`text-xs ${theme.muted} mt-0.5`}>
-                      {(() => { try { const r = JSON.parse(localStorage.getItem("bhagwatham_resume") || "{}"); return r.chapter ? `${r.chapter} — Page ${r.pageNumber}` : `Page ${r.pageNumber}`; } catch { return ""; } })()}
-                    </p>
-                  </div>
-                  <button onClick={handleResume}
-                    className="px-4 py-2 bg-orange-600 text-white rounded-lg text-xs font-bold hover:bg-orange-700 transition-all active:scale-95 shrink-0"
-                  >
-                    Resume
-                  </button>
-                  <button onClick={() => setShowResume(false)} className={`p-1.5 rounded-lg hover:bg-stone-200/50 ${theme.muted}`}>
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* Resume card removed — auto-resume was causing scroll issues */}
 
-          {/* Content area */}
+          {/* Content area (SEN-113: responsive padding + Devanagari wrapping) */}
           <div
-            className="mx-auto px-4 sm:px-6 py-6"
-            style={{ maxWidth: settings.maxWidth, fontSize: settings.fontSize, lineHeight: settings.lineHeight }}
+            className="mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 [overflow-wrap:break-word] [word-break:break-word]"
+            style={{ maxWidth: settings.maxWidth, fontSize: `clamp(13px, ${settings.fontSize}px, ${settings.fontSize}px)`, lineHeight: settings.lineHeight }}
           >
             {loading ? (
               <div className={`flex flex-col items-center justify-center py-24 ${theme.muted}`}>
@@ -2876,13 +2758,13 @@ export default function Bhagwatham() {
                   return (
                   <div key={page.pageNumber} data-page-num={page.pageNumber}>
                     {pageIdx > 0 && (
-                      <div className={`flex items-center gap-3 my-6 ${theme.muted}`}>
-                        <div className={`flex-1 h-px ${settings.theme === "dark" ? "bg-white/10" : settings.theme === "sepia" ? "bg-amber-300/40" : "bg-stone-200"}`} />
-                        <span className="text-[10px] font-medium opacity-40 shrink-0">Pg. {page.pageNumber}</span>
-                        <div className={`flex-1 h-px ${settings.theme === "dark" ? "bg-white/10" : settings.theme === "sepia" ? "bg-amber-300/40" : "bg-stone-200"}`} />
+                      <div className={`flex items-center gap-3 my-8 sm:my-10 ${theme.muted}`}>
+                        <div className={`flex-1 h-px ${settings.theme === "dark" ? "bg-white/10" : settings.theme === "sepia" ? "bg-amber-300/40" : "bg-orange-200/60"}`} />
+                        <span className="text-[10px] font-medium opacity-50 shrink-0 px-2">· {page.pageNumber} ·</span>
+                        <div className={`flex-1 h-px ${settings.theme === "dark" ? "bg-white/10" : settings.theme === "sepia" ? "bg-amber-300/40" : "bg-orange-200/60"}`} />
                       </div>
                     )}
-                    {pageIdx === 0 && <p className={`text-[10px] ${theme.muted} font-medium text-right mt-0 mb-1 opacity-40`}>Pg. {page.pageNumber}</p>}
+                    {pageIdx === 0 && <p className={`text-[10px] ${theme.muted} font-medium text-right mt-0 mb-2 opacity-40`}>· {page.pageNumber} ·</p>}
                     <RenderContent text={page.text} textEn={page.textEn} lang={lang} chapterImages={chapterImages} themeKey={settings.theme} onRegenerateImages={openPromptModal} regeneratingChapters={regeneratingChapters} onDeleteImage={handleDeleteImage} pageNumber={page.pageNumber} overrides={sectionOverrides[page.pageNumber]} onOverridesChange={handleOverridesChange} prevPageEndKind={prevEndKind} chapterNumMapper={(perSkandhNum: number) => {
                       // Find which skandh this page belongs to based on surrounding chapters
                       const ch = chapters.find(c => c.number === perSkandhNum && c.pageNumber <= page.pageNumber);

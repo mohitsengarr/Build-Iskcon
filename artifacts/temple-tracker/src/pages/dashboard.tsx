@@ -523,7 +523,7 @@ export default function Dashboard() {
     <Layout>
       <SEOHead
         title="Build Sacred Spaces Across the World"
-        description="Track ISKCON temple construction worldwide — see real-time progress, choose a project, and donate directly. 16+ temples rising across 11 countries."
+        description="Track ISKCON temple construction worldwide — see real-time progress, choose a project, and donate directly. 41 temples rising across 14 countries."
         canonicalPath="/"
         structuredData={[
           {

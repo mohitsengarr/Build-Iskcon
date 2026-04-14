@@ -41,7 +41,7 @@ const STRUCTURED_DATA_ORGANIZATION = {
 
 const STRUCTURED_DATA_WEBSITE = {
   "@context": "https://schema.org", "@type": "WebSite", "@id": `${CANONICAL_DOMAIN}/#website`,
-  name: "Build Iskcon", description: "Track 16 active ISKCON temple construction projects across 11 countries.",
+  name: "Build Iskcon", description: "Track 41 active ISKCON temple construction projects across 14 countries.",
   url: CANONICAL_DOMAIN, publisher: { "@id": `${CANONICAL_DOMAIN}/#organization` }, inLanguage: "en",
 };
 
@@ -73,7 +73,7 @@ const FAQ_ITEMS = [
   { q: "Where does my donation go?", a: "Build Iskcon does NOT collect, process, or handle any donations. When you click 'Donate' on any project, you are redirected to that temple's official ISKCON donation page. Your money goes directly to the temple — we are simply the map that helps you find where to give." },
   { q: "Is Build Iskcon an official ISKCON website?", a: "No. Build Iskcon is an independent, community-driven transparency platform. All data is sourced from official ISKCON project communications. All donation links direct to verified, official ISKCON temple websites." },
   { q: "How is this site funded?", a: "Build Iskcon is a volunteer-driven initiative with no commercial revenue. The site is maintained as a seva (service) project to help devotees discover and support ISKCON temple construction worldwide." },
-  { q: "How many ISKCON temples are currently under construction?", a: "As of 2026, Build Iskcon tracks 16 active ISKCON temple construction projects across 11 countries, including the flagship Temple of the Vedic Planetarium (TOVP) in Mayapur." },
+  { q: "How many ISKCON temples are currently under construction?", a: "As of 2026, Build Iskcon tracks 41 active ISKCON temple construction projects across 14 countries, including the flagship Temple of the Vedic Planetarium (TOVP) in Mayapur." },
   { q: "What is the Temple of the Vedic Planetarium (TOVP)?", a: "The TOVP is Srila Prabhupada's most cherished project — one of the largest religious structures being built globally. Located in Mayapur, West Bengal, it is 78% complete with a grand opening scheduled for November 2, 2027." },
   { q: "What is ISKCON's Vision 2051?", a: "Vision 2051 is a 25-year roadmap to establish 211 ISKCON temples across all 28 states and 8 Union Territories of India in 3 phases, starting 2025." },
   { q: "What are the seva (donation) tiers?", a: "Five tiers: Brick Donor (₹1,000), Pillar Supporter (₹11,000), Altar Patron (₹51,000), Mandala Guardian (₹1,00,000), and Temple Benefactor (₹5,00,000). All donations go directly to official ISKCON temple websites." },
@@ -117,7 +117,7 @@ function HeroSection() {
             Help Build Sacred Temples<br />Across the World
           </motion.h1>
           <motion.p variants={fadeInUp} className="text-on-surface-variant font-sans text-[15px] mb-5 leading-relaxed">
-            16 ISKCON temples are under construction in 11 countries right now. From the Temple of the Vedic Planetarium in Mayapur to new centres in Nairobi and Budapest — every donation brings Srila Prabhupada's vision closer to reality.
+            41 ISKCON temples are under construction in 14 countries right now. From the Temple of the Vedic Planetarium in Mayapur to new centres in Nairobi and Budapest — every donation brings Srila Prabhupada's vision closer to reality.
           </motion.p>
           <motion.figure variants={fadeInUp} className="mb-6 border-l-2 border-primary/40 pl-4">
             <blockquote className="font-serif text-base italic text-on-surface/80 leading-snug">
@@ -136,7 +136,7 @@ function HeroSection() {
             </a>
             <a href="#projects" onClick={(e) => { e.preventDefault(); document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" }); }}>
               <button className="border-2 border-primary/40 text-primary px-8 py-3.5 rounded-xl font-bold text-sm tracking-wide hover:bg-primary/5 transition-all active:scale-95 text-center w-full sm:w-auto cursor-pointer flex items-center gap-2">
-                Explore All 16 Projects <ArrowRight className="w-4 h-4" />
+                Explore All 41 Projects <ArrowRight className="w-4 h-4" />
               </button>
             </a>
           </motion.div>
@@ -318,7 +318,7 @@ function TempleProjectsSection() {
       {/* Static HTML table for SEO */}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm border-collapse" aria-label="ISKCON Temple Construction Projects">
-          <caption className="sr-only">All 16 active ISKCON temple construction projects with status, funding progress, and lead organization</caption>
+          <caption className="sr-only">All 41 active ISKCON temple construction projects with status, funding progress, and lead organization</caption>
           <thead>
             <tr className="border-b border-outline-variant/20 text-xs uppercase tracking-widest text-on-surface-variant">
               <th className="py-3 pr-4 font-bold">Temple</th>
@@ -399,7 +399,7 @@ function TempleProjectsSection() {
 
                   {/* Pre-set donation amounts */}
                   <div className="grid grid-cols-3 gap-2">
-                    {["₹1,100", "₹5,500", "₹11,000"].map((amount) => (
+                    {["₹1,000", "₹11,000", "₹51,000"].map((amount) => (
                       <a key={amount} href={donateUrl} target="_blank" rel="noopener noreferrer" className="block">
                         <button className="w-full py-2 bg-primary/8 text-primary rounded-lg text-xs font-bold hover:bg-primary/15 transition-colors">{amount}</button>
                       </a>
@@ -780,6 +780,35 @@ function PrabhupadaTribute() {
 // ── Section: Email Capture ───────────────────────────────────────────────────
 
 function EmailCapture() {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setStatus("loading");
+    try {
+      const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/rest/v1/newsletter_subscribers", {
+        method: "POST",
+        headers: {
+          apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0Zm1uZGNyY2h1bmR2Z3R2bW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2NDE1MTIsImV4cCI6MjA2MzIxNzUxMn0.7GXS820xSFcUy2TRdbspN7s-NP3sgKFFtUP-Zw0Qbrs",
+          Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0Zm1uZGNyY2h1bmR2Z3R2bW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2NDE1MTIsImV4cCI6MjA2MzIxNzUxMn0.7GXS820xSFcUy2TRdbspN7s-NP3sgKFFtUP-Zw0Qbrs",
+          "Content-Type": "application/json",
+          Prefer: "return=minimal,resolution=ignore-duplicates",
+        },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      if (res.ok || res.status === 201 || res.status === 409) {
+        setStatus("success");
+        setEmail("");
+      } else {
+        setStatus("error");
+      }
+    } catch {
+      setStatus("error");
+    }
+  };
+
   return (
     <motion.section aria-label="Newsletter signup" variants={fadeInUp} initial="hidden" whileInView="visible" viewport={viewportOnce}>
       <div className="bg-surface-container rounded-2xl p-8 sm:p-10 text-center">
@@ -790,17 +819,30 @@ function EmailCapture() {
         <p className="text-sm text-on-surface-variant max-w-lg mx-auto mb-6 leading-relaxed">
           See how temples are progressing, which projects are near completion, and where your donations are making the most impact. One email per month — no spam, ever.
         </p>
-        <form onSubmit={(e) => e.preventDefault()} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-          <input
-            type="email"
-            placeholder="your@email.com"
-            className="flex-1 px-4 py-3 rounded-xl border border-outline-variant/20 bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40"
-            required
-          />
-          <button type="submit" className="bg-primary text-on-primary px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all active:scale-95 whitespace-nowrap flex items-center gap-2 justify-center">
-            <Mail className="w-4 h-4" /> Subscribe
-          </button>
-        </form>
+        {status === "success" ? (
+          <div className="max-w-md mx-auto bg-green-50 border border-green-200 rounded-xl p-4">
+            <p className="text-sm font-semibold text-green-700">You're subscribed! Hare Krishna 🙏</p>
+            <p className="text-xs text-green-600 mt-1">You'll receive monthly temple construction updates.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+            <input
+              type="email"
+              placeholder="your@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="flex-1 px-4 py-3 rounded-xl border border-outline-variant/20 bg-surface text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40"
+              required
+              disabled={status === "loading"}
+            />
+            <button type="submit" disabled={status === "loading"} className="bg-primary text-on-primary px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all active:scale-95 whitespace-nowrap flex items-center gap-2 justify-center disabled:opacity-60">
+              <Mail className="w-4 h-4" /> {status === "loading" ? "Saving..." : "Subscribe"}
+            </button>
+          </form>
+        )}
+        {status === "error" && (
+          <p className="text-xs text-red-600 mt-2">Something went wrong. Please try again.</p>
+        )}
         <p className="text-[10px] text-on-surface-variant mt-3">Free. Unsubscribe anytime. We never share your email.</p>
       </div>
     </motion.section>
@@ -880,8 +922,8 @@ export default function Home() {
   return (
     <Layout>
       <SEOHead
-        title="Track 16 Active ISKCON Temple Construction Projects Worldwide"
-        description="Help build 16 ISKCON temples across 11 countries. The TOVP in Mayapur opens in 2027. Explore projects, donate directly to official ISKCON pages, and discover Vision 2051."
+        title="Track 41 Active ISKCON Temple Construction Projects Worldwide"
+        description="Help build 41 ISKCON temples across 14 countries. The TOVP in Mayapur opens in 2027. Explore projects, donate directly to official ISKCON pages, and discover Vision 2051."
         canonicalPath="/"
         structuredData={[
           STRUCTURED_DATA_ORGANIZATION,
