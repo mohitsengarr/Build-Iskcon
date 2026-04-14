@@ -400,6 +400,33 @@ const TEMPLES = [
     coverImage: null, donateUrl: "https://hkmchennai.org/dakshina-dwaraka",
     latitude: 12.982, longitude: 80.263,
   },
+  {
+    id: 43, name: "ISKCON Columbus – New Temple", location: "Columbus, Ohio, USA",
+    deity: "Sri Sri Radha Krishna", description: "A 30,000 sq. ft. modern temple with 400-capacity temple room, prasadam hall, yoga studio, and organic farm. Interior finishing phase — roof and electrical completed February 2025.",
+    status: "construction", phase: "Interior finishing — roof & electrical done", constructionProgress: 80,
+    fundraisingGoal: 7_000_000, fundraisingRaised: 5_200_000, startDate: "2019-06-01",
+    expectedCompletion: "2026-08-31", projectLead: "ISKCON Greater Columbus",
+    coverImage: null, donateUrl: "https://www.iskconcolumbus.com/",
+    latitude: 39.961, longitude: -82.999,
+  },
+  {
+    id: 44, name: "Temple of Unity – ISKCON Mauritius", location: "Phoenix, Mauritius",
+    deity: "Sri Sri Radha Golokananda", description: "A landmark ISKCON temple in Mauritius, ancient Indian architecture. Aluminium openings 90% installed, granite 85–90% complete. Phase 2 will add residential quarters, kindergarten, and restaurant.",
+    status: "finishing", phase: "Granite & finishing works — 85% complete", constructionProgress: 85,
+    fundraisingGoal: 3_600_000, fundraisingRaised: 2_800_000, startDate: "2021-01-01",
+    expectedCompletion: "2026-12-31", projectLead: "ISKCON Mauritius",
+    coverImage: null, donateUrl: "https://templeofunity.org/donate",
+    latitude: -20.265, longitude: 57.495,
+  },
+  {
+    id: 45, name: "ISKCON New Goloka Dham – Hillsborough", location: "Hillsborough, North Carolina, USA",
+    deity: "Sri Sri Radha Golokananda", description: "Foundation poured late 2025 for a new temple at the ISKCON New Goloka community (est. 1985). Expanding to serve the growing Carolina congregation.",
+    status: "construction", phase: "Foundation complete — structure beginning", constructionProgress: 15,
+    fundraisingGoal: 2_000_000, fundraisingRaised: 800_000, startDate: "2025-06-01",
+    expectedCompletion: "2026-08-31", projectLead: "ISKCON New Goloka",
+    coverImage: null, donateUrl: "https://newgoloka.com/",
+    latitude: 36.075, longitude: -79.100,
+  },
 ];
 
 const now = new Date().toISOString();

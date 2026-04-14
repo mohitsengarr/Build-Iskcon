@@ -420,6 +420,33 @@ export const TEMPLES: Temple[] = [
     coverImage: null, donateUrl: "https://hkmchennai.org/dakshina-dwaraka",
     latitude: 12.982, longitude: 80.263,
   },
+  {
+    id: 45, name: "ISKCON Columbus – New Temple", location: "Columbus, Ohio, USA",
+    deity: "Sri Sri Radha Krishna", description: "A 30,000 sq. ft. modern temple with a 400-capacity temple room, prasadam hall, yoga studio, farm-to-table café, and organic farm. Roof and electrical completed February 2025; now in interior finishing phase.",
+    status: "construction", phase: "Interior finishing — roof & electrical done", constructionProgress: 80,
+    fundraisingGoal: 7_000_000, fundraisingRaised: 5_200_000, startDate: "2019-06-01",
+    expectedCompletion: "2026-08-31", projectLead: "ISKCON Greater Columbus",
+    coverImage: null, donateUrl: "https://www.iskconcolumbus.com/",
+    latitude: 39.961, longitude: -82.999,
+  },
+  {
+    id: 46, name: "Temple of Unity – ISKCON Mauritius", location: "Phoenix, Mauritius",
+    deity: "Sri Sri Radha Golokananda", description: "A landmark ISKCON temple on the island nation of Mauritius, designed in ancient Indian architectural style. Aluminium openings 90% installed, granite work 85–90% complete. Will include residential quarters, kindergarten, restaurant, and hotel accommodation in Phase 2.",
+    status: "finishing", phase: "Granite & finishing works — 85% complete", constructionProgress: 85,
+    fundraisingGoal: 3_600_000, fundraisingRaised: 2_800_000, startDate: "2021-01-01",
+    expectedCompletion: "2026-12-31", projectLead: "ISKCON Mauritius",
+    coverImage: null, donateUrl: "https://templeofunity.org/donate",
+    latitude: -20.265, longitude: 57.495,
+  },
+  {
+    id: 47, name: "ISKCON New Goloka Dham – Hillsborough", location: "Hillsborough, North Carolina, USA",
+    deity: "Sri Sri Radha Golokananda", description: "Foundation concrete poured in late 2025 for a new temple building at the ISKCON New Goloka community (established 1985). The expansion will better serve the growing congregation and expand outreach in the Carolinas.",
+    status: "construction", phase: "Foundation complete — structure beginning", constructionProgress: 15,
+    fundraisingGoal: 2_000_000, fundraisingRaised: 800_000, startDate: "2025-06-01",
+    expectedCompletion: "2026-08-31", projectLead: "ISKCON New Goloka",
+    coverImage: null, donateUrl: "https://newgoloka.com/",
+    latitude: 36.075, longitude: -79.100,
+  },
 ];
 
 // Pre-computed stats
