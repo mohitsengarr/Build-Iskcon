@@ -712,7 +712,7 @@ function getPageEndKind(text: string): string {
 
 // ── Voice Edit (Speech-to-Text for selected text) ──────────────────────────
 
-function VoiceEditToolbar() {
+function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; setAllPages: (pages: PageContent[]) => void }) {
   const [show, setShow] = useState(false);
   const [recording, setRecording] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -720,7 +720,7 @@ function VoiceEditToolbar() {
   const [selectedText, setSelectedText] = useState("");
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  const rangeRef = useRef<Range | null>(null);
+  const pageNumRef = useRef<number | null>(null);
 
   useEffect(() => {
     const onSelectionChange = () => {
@@ -732,17 +732,34 @@ function VoiceEditToolbar() {
       const text = sel.toString().trim();
       if (text.length < 2) return;
 
+      // Find which page this selection is in
       const range = sel.getRangeAt(0);
+      const pageEl = range.startContainer.parentElement?.closest("[data-page-num]");
+      const pageNum = pageEl ? parseInt(pageEl.getAttribute("data-page-num") || "0", 10) : 0;
+
       const rect = range.getBoundingClientRect();
       setPosition({ x: rect.left + rect.width / 2, y: rect.top - 10 });
       setSelectedText(text);
-      rangeRef.current = range.cloneRange();
+      pageNumRef.current = pageNum;
       setShow(true);
     };
 
     document.addEventListener("selectionchange", onSelectionChange);
     return () => document.removeEventListener("selectionchange", onSelectionChange);
   }, [recording, processing]);
+
+  const applyEdit = useCallback((oldText: string, newText: string) => {
+    const pageNum = pageNumRef.current;
+    if (!pageNum || !oldText || !newText) return;
+
+    // Find the page and replace the text in it
+    const updated = allPages.map(p => {
+      if (p.pageNumber !== pageNum) return p;
+      return { ...p, text: p.text.replace(oldText, newText) };
+    });
+    setAllPages(updated);
+    window.getSelection()?.removeAllRanges();
+  }, [allPages, setAllPages]);
 
   const startRecording = async () => {
     try {
@@ -756,6 +773,7 @@ function VoiceEditToolbar() {
         setProcessing(true);
 
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        const capturedText = selectedText;
         try {
           const res = await fetch("/api/bhagwatham/stt", {
             method: "POST",
@@ -763,12 +781,8 @@ function VoiceEditToolbar() {
             body: blob,
           });
           const data = await res.json();
-          if (data.transcript && rangeRef.current) {
-            // Replace selected text with transcription
-            const range = rangeRef.current;
-            range.deleteContents();
-            range.insertNode(document.createTextNode(data.transcript));
-            window.getSelection()?.removeAllRanges();
+          if (data.transcript) {
+            applyEdit(capturedText, data.transcript);
           }
         } catch { /* STT failed */ }
         setProcessing(false);
@@ -809,13 +823,28 @@ function VoiceEditToolbar() {
           </button>
         </>
       ) : (
-        <button
-          onClick={startRecording}
-          className="flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium text-stone-600 hover:text-orange-600 transition-colors"
-          title="Speak to edit selected text"
-        >
-          <Mic className="w-3.5 h-3.5" /> Voice Edit
-        </button>
+        <>
+          <input
+            type="text"
+            defaultValue={selectedText}
+            className="text-xs border border-stone-200 rounded-lg px-2 py-1 w-36 focus:outline-none focus:border-orange-400"
+            placeholder="Type correction..."
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                applyEdit(selectedText, (e.target as HTMLInputElement).value);
+                setShow(false);
+              }
+            }}
+            autoFocus
+          />
+          <button
+            onClick={startRecording}
+            className="p-1.5 rounded-full text-stone-500 hover:text-orange-600 hover:bg-orange-50 transition-colors"
+            title="Or speak to edit"
+          >
+            <Mic className="w-3.5 h-3.5" />
+          </button>
+        </>
       )}
       {!recording && !processing && (
         <button onClick={() => setShow(false)} className="p-1 text-stone-400 hover:text-stone-600">
@@ -2509,7 +2538,7 @@ export default function Bhagwatham() {
         {/* ── Main content ── */}
         <main ref={contentRef} className={`flex-1 min-w-0 ${theme.bg} transition-colors duration-300`}>
           {/* Voice edit toolbar — appears when text is selected */}
-          <VoiceEditToolbar />
+          <VoiceEditToolbar allPages={allPages} setAllPages={setAllPages} />
           {/* Top bar */}
           <div className={`sticky top-14 z-30 ${theme.surface} backdrop-blur-sm border-b ${theme.border} px-4 sm:px-6 py-2`}>
             <div className="max-w-3xl mx-auto flex items-center gap-2 sm:gap-3">
