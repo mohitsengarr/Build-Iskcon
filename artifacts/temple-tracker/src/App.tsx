@@ -12,6 +12,7 @@ import Library from "@/pages/library";
 import JapaCounter from "@/pages/japa-counter";
 import PersonaGallery from "@/pages/persona-gallery";
 import Admin from "@/pages/admin";
+import Gallery from "@/pages/gallery";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ function App() {
             <Route path="/admin" component={Admin} />
             <Route path="/japa" component={JapaCounter} />
             <Route path="/personas" component={PersonaGallery} />
+            <Route path="/gallery" component={Gallery} />
             <Route path="/" component={Home} />
           </Switch>
           <Toaster />
