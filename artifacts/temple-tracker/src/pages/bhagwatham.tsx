@@ -1912,7 +1912,7 @@ export default function Bhagwatham() {
       return next;
     });
   }, []);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1024);
   const [activeChapter, setActiveChapter] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [lang, setLang] = useState<"hi" | "en">("hi");
@@ -2359,21 +2359,28 @@ export default function Bhagwatham() {
     }
   };
 
-  const handleChapterClick = (ch: ChapterEntry) => {
-    setSidebarOpen(false);
+  const handleChapterClick = async (ch: ChapterEntry) => {
+    // On mobile, close sidebar. On desktop, keep it open.
+    if (window.innerWidth < 1024) setSidebarOpen(false);
     setSearchQuery("");
-    // Find which view page contains this chapter
-    const pageIdx = allPages.findIndex((p) => p.pageNumber === ch.pageNumber);
-    if (pageIdx >= 0) {
-      const viewPage = Math.floor(pageIdx / PAGES_PER_VIEW) + 1;
-      setCurrentPage(viewPage);
-      setActiveChapter(ch.globalNumber);
-      // Scroll to chapter heading after render
-      setTimeout(() => {
-        const el = document.getElementById(`chapter-${ch.globalNumber}`);
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 200);
-    }
+    setActiveChapter(ch.globalNumber);
+
+    // Load the batch containing this chapter's page
+    const targetBatch = Math.ceil(ch.pageNumber / 20);
+    await fetchBatchRange(Math.max(1, targetBatch - 1), Math.min(targetBatch + 2, totalBatchCount || targetBatch + 2));
+
+    // Find the page after batch is loaded
+    setTimeout(() => {
+      const pageIdx = allPages.findIndex((p) => p.pageNumber >= ch.pageNumber);
+      if (pageIdx >= 0) {
+        const viewPage = Math.floor(pageIdx / PAGES_PER_VIEW) + 1;
+        setCurrentPage(viewPage);
+        setTimeout(() => {
+          const el = document.getElementById(`chapter-${ch.globalNumber}`);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 300);
+      }
+    }, 100);
   };
 
   // ── Auto-save reading position ───────────────────────────────────────────
