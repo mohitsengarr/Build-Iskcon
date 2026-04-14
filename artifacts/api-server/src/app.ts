@@ -53,6 +53,17 @@ export async function createApp(): Promise<Express> {
   startInstagramCron();
   startTempleDiscoveryCron();
 
+  // Shlok indexer — scans OCR pages and builds shlok dictionary in Supabase
+  (await import("node-cron")).default.schedule("4,14,24,34,44,54 * * * *", async () => {
+    try {
+      const { indexNextBatch } = await import("./services/shlok-indexer");
+      const result = await indexNextBatch();
+      if (result.inserted > 0 || result.updated > 0) {
+        logger.info(result, "Shlok indexer tick");
+      }
+    } catch (err) { logger.error({ err }, "Shlok indexer cron failed"); }
+  });
+
   if (IS_DEV) {
     // In development, use Vite's dev server as middleware for HMR + frontend
     const { createServer: createViteServer } = await import("vite");

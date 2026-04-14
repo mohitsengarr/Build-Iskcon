@@ -896,4 +896,61 @@ Return JSON only: {"word":"${word}","meaning":"...","examples":["...","..."]}`
   }
 });
 
+// ── Shlok Dictionary endpoints ──────────────────────────────────────────────
+
+// GET /api/bhagwatham/shloks?q=search&canto=1&chapter=5&limit=20
+router.get("/bhagwatham/shloks", async (req, res) => {
+  const SUPABASE_URL = process.env.SUPABASE_URL || "";
+  const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || "";
+  if (!SUPABASE_URL) { res.json({ shloks: [] }); return; }
+
+  const q = req.query.q as string;
+  const canto = req.query.canto as string;
+  const chapter = req.query.chapter as string;
+  const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+
+  let url = `${SUPABASE_URL}/rest/v1/shlok_dictionary?select=*&order=canto.asc,chapter.asc,verse_number.asc&limit=${limit}`;
+  if (q) url += `&shlok_text=ilike.*${encodeURIComponent(q)}*`;
+  if (canto) url += `&canto=eq.${canto}`;
+  if (chapter) url += `&chapter=eq.${chapter}`;
+
+  try {
+    const r = await fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
+    const data = await r.json();
+    res.json({ shloks: Array.isArray(data) ? data : [] });
+  } catch { res.json({ shloks: [] }); }
+});
+
+// GET /api/bhagwatham/shlok-stats — index progress
+router.get("/bhagwatham/shlok-stats", async (_req, res) => {
+  try {
+    const { getIndexState } = await import("../services/shlok-indexer");
+    const state = getIndexState();
+    const SUPABASE_URL = process.env.SUPABASE_URL || "";
+    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || "";
+    let totalInDb = 0;
+    if (SUPABASE_URL) {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/shlok_dictionary?select=id`, {
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, Prefer: "count=exact" },
+        method: "HEAD",
+      });
+      totalInDb = parseInt(r.headers.get("content-range")?.split("/")[1] || "0", 10);
+    }
+    res.json({ ...state, totalInDb });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/bhagwatham/shlok-index — manually trigger one indexing batch
+router.post("/bhagwatham/shlok-index", async (_req, res) => {
+  try {
+    const { indexNextBatch } = await import("../services/shlok-indexer");
+    const result = await indexNextBatch();
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
