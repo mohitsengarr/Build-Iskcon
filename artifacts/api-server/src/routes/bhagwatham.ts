@@ -776,8 +776,8 @@ router.post("/bhagwatham/tts", async (req, res) => {
         target_language_code: "hi-IN",
         speaker: "soham",
         model: "bulbul:v3",
-        pace: 1.0,
-        speech_sample_rate: 22050,
+        pace: 0.95,
+        speech_sample_rate: 48000,
         enable_preprocessing: true,
       }),
     });
