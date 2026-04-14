@@ -19,9 +19,9 @@ const __dirname = path.dirname(__filename);
 
 const FLOCK_WEBHOOK = "https://api.flock.com/hooks/sendMessage/b0159996-49f3-4f23-8d6b-bcd96dd2c316";
 
-// Every 6 hours: 9 AM, 3 PM, 9 PM, 3 AM IST
-// IST = UTC+5:30 → 9 AM IST = 3:30 UTC, 3 PM IST = 9:30 UTC, etc.
-const INSTAGRAM_CRON_INTERVAL = "30 3,9,15,21 * * *";
+// Every 3 hours: posts 1 scene per tick, 2 scenes per chapter
+// IST times: 12 AM, 3 AM, 6 AM, 9 AM, 12 PM, 3 PM, 6 PM, 9 PM
+const INSTAGRAM_CRON_INTERVAL = "30 */3 * * *";
 
 // State file to track reverse-order progress
 const STATE_FILE = path.resolve(
@@ -494,11 +494,11 @@ async function instagramCronTick() {
         return;
       }
 
-      logger.info({ currentChapter, canto: cantoNumber }, "Generating 1 Instagram scene");
+      logger.info({ currentChapter, canto: cantoNumber }, "Generating 2 Instagram scenes");
       try {
         const result = await generateInstagramForChapter(
           currentChapter, chapterData.title, chapterData.content,
-          { queueToBuffer: false, numScenes: 1, cantoNumber },
+          { queueToBuffer: false, numScenes: 2, cantoNumber },
         );
         scenes = result.images;
         if (scenes.length === 0) {
