@@ -774,10 +774,11 @@ router.post("/bhagwatham/tts", async (req, res) => {
       body: JSON.stringify({
         text,
         target_language_code: "hi-IN",
-        speaker: "aditya", // deep male voice for Vedic recitation
+        speaker: "soham",
         model: "bulbul:v3",
-        pace: 0.8, // slow, deliberate pace
-        speech_sample_rate: 24000,
+        pace: 1.0,
+        speech_sample_rate: 22050,
+        enable_preprocessing: true,
       }),
     });
 

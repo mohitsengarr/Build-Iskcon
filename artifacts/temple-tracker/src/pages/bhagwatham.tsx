@@ -806,22 +806,30 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     recorderRef.current?.stop();
   };
 
-  // Listen to selected word via Sarvam TTS
+  // Listen to selected word via Sarvam TTS (with cache)
   const listenToWord = useCallback(async () => {
     if (!selectedText) return;
     try {
-      const res = await fetch("/api/bhagwatham/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: selectedText }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.audio) {
-          const audio = new Audio(`data:audio/wav;base64,${data.audio}`);
-          audio.play();
-          return;
+      const cacheKey = `tts_${btoa(unescape(encodeURIComponent(selectedText.substring(0, 200))))}`;
+      let audioBase64 = "";
+      try { audioBase64 = sessionStorage.getItem(cacheKey) || ""; } catch { /* */ }
+
+      if (!audioBase64) {
+        const res = await fetch("/api/bhagwatham/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: selectedText }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          audioBase64 = data.audio || "";
+          if (audioBase64) try { sessionStorage.setItem(cacheKey, audioBase64); } catch { /* */ }
         }
+      }
+
+      if (audioBase64) {
+        new Audio(`data:audio/wav;base64,${audioBase64}`).play();
+        return;
       }
     } catch { /* fallback */ }
     // Browser fallback
@@ -946,18 +954,29 @@ function ShlokSpeaker({ text, themeKey }: { text: string; themeKey: string }) {
 
     setLoading(true);
     try {
-      // Use Sarvam Bulbul v3 for natural Indian voice
-      const res = await fetch("/api/bhagwatham/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
+      // Check cache first (localStorage)
+      const cacheKey = `tts_${btoa(unescape(encodeURIComponent(text.substring(0, 200))))}`;
+      let audioBase64 = "";
+      try { audioBase64 = sessionStorage.getItem(cacheKey) || ""; } catch { /* ignore */ }
 
-      if (!res.ok) throw new Error("TTS API failed");
-      const data = await res.json();
+      if (!audioBase64) {
+        // Fetch from Sarvam Bulbul v3 (soham voice)
+        const res = await fetch("/api/bhagwatham/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+        if (!res.ok) throw new Error("TTS API failed");
+        const data = await res.json();
+        audioBase64 = data.audio || "";
+        // Cache the audio in sessionStorage (survives page navigation, cleared on tab close)
+        if (audioBase64) {
+          try { sessionStorage.setItem(cacheKey, audioBase64); } catch { /* storage full */ }
+        }
+      }
 
-      if (data.audio) {
-        const audio = new Audio(`data:audio/wav;base64,${data.audio}`);
+      if (audioBase64) {
+        const audio = new Audio(`data:audio/wav;base64,${audioBase64}`);
         audio.onended = () => { setPlaying(false); audioRef.current = null; };
         audio.onerror = () => { setPlaying(false); audioRef.current = null; };
         audioRef.current = audio;
@@ -965,22 +984,17 @@ function ShlokSpeaker({ text, themeKey }: { text: string; themeKey: string }) {
         setPlaying(true);
       }
     } catch {
-      // Fallback to browser SpeechSynthesis — pick the deepest male voice available
+      // Fallback to browser SpeechSynthesis
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "hi-IN";
-      utterance.rate = 0.5; // very slow for shlok recitation
-      utterance.pitch = 0.7; // deep tone
-
+      utterance.rate = 0.7;
+      utterance.pitch = 0.8;
       const voices = window.speechSynthesis.getVoices();
-      // Prefer: Sanskrit voice > male Hindi > any Hindi > any Indian
       const pick = voices.find(v => v.lang === "sa-IN")
-        || voices.find(v => v.lang.startsWith("hi") && /male|rishi|aditya|mohit|deepak|masculine/i.test(v.name))
         || voices.find(v => v.lang.startsWith("hi") && !/female|lekha|priya|swati|woman/i.test(v.name))
-        || voices.find(v => v.lang.startsWith("hi"))
-        || voices.find(v => v.lang.includes("IN"));
+        || voices.find(v => v.lang.startsWith("hi"));
       if (pick) utterance.voice = pick;
       utterance.onend = () => setPlaying(false);
-      utterance.onerror = () => setPlaying(false);
       window.speechSynthesis.speak(utterance);
       setPlaying(true);
     } finally {
