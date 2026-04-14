@@ -868,14 +868,22 @@ function ShlokSpeaker({ text, themeKey }: { text: string; themeKey: string }) {
         setPlaying(true);
       }
     } catch {
-      // Fallback to browser SpeechSynthesis if API unavailable
+      // Fallback to browser SpeechSynthesis — pick the deepest male voice available
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "hi-IN";
-      utterance.rate = 0.6;
-      utterance.pitch = 0.85;
+      utterance.rate = 0.5; // very slow for shlok recitation
+      utterance.pitch = 0.7; // deep tone
+
       const voices = window.speechSynthesis.getVoices();
-      utterance.voice = voices.find(v => v.lang.startsWith("hi")) || null;
+      // Prefer: Sanskrit voice > male Hindi > any Hindi > any Indian
+      const pick = voices.find(v => v.lang === "sa-IN")
+        || voices.find(v => v.lang.startsWith("hi") && /male|rishi|aditya|mohit|deepak|masculine/i.test(v.name))
+        || voices.find(v => v.lang.startsWith("hi") && !/female|lekha|priya|swati|woman/i.test(v.name))
+        || voices.find(v => v.lang.startsWith("hi"))
+        || voices.find(v => v.lang.includes("IN"));
+      if (pick) utterance.voice = pick;
       utterance.onend = () => setPlaying(false);
+      utterance.onerror = () => setPlaying(false);
       window.speechSynthesis.speak(utterance);
       setPlaying(true);
     } finally {
@@ -1486,7 +1494,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             const showLabel = !isAnuvadContinuation && (prevKind === "shlok" || prevKind === "shabdarth");
             return (
               <div key={i} className={isAnuvadContinuation ? "" : "mt-3"}>
-                {showLabel && <p className={`font-bold mb-1 indent-8 ${t.text}`} style={{ fontSize: "1em", fontFamily: "var(--font-devanagari)" }}>अनुवाद :</p>}
+                {showLabel && <p className={`font-semibold mb-1 indent-8 ${t.text}`} style={{ fontSize: "1em", fontFamily: "var(--font-devanagari)" }}>अनुवाद :</p>}
                 {sec.lines.map((l, j) => (
                   <p key={j} className={`leading-[2] mb-1 ${j === 0 && !isAnuvadContinuation ? "indent-8" : ""} ${t.text}`} style={{ fontSize: "1em", fontFamily: "var(--font-devanagari)" }}>{l}</p>
                 ))}
@@ -1500,7 +1508,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
               <div key={i} className={isContinuation ? "" : "mt-3"}>
                 {sec.lines.map((l, j) => (
                   <p key={j} className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>
-                    {j === 0 && !isContinuation && <><span className="font-bold">तात्पर्य :</span>{" "}</>}
+                    {j === 0 && !isContinuation && <><span className="font-semibold">तात्पर्य :</span>{" "}</>}
                     {l}
                   </p>
                 ))}
@@ -1593,8 +1601,8 @@ function Sidebar({
       <aside className={`
         fixed top-0 left-0 h-full w-72 bg-white border-r border-stone-200 z-50
         transform transition-transform duration-300 ease-in-out overflow-y-auto
-        lg:sticky lg:top-20 lg:h-[calc(100vh-5rem)] lg:transform-none lg:z-0
-        ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+        lg:sticky lg:top-20 lg:h-[calc(100vh-5rem)] lg:z-0
+        ${isOpen ? "translate-x-0" : "-translate-x-full"}
       `}>
         {/* Header with tabs */}
         <div className="sticky top-0 bg-white border-b border-stone-100 z-10">
@@ -1617,7 +1625,7 @@ function Sidebar({
                 </span>
               </button>
             </div>
-            <button onClick={onClose} className="lg:hidden p-1 hover:bg-stone-100 rounded">
+            <button onClick={onClose} className="p-1 hover:bg-stone-100 rounded" title="Minimize sidebar">
               <X className="w-4 h-4 text-stone-500" />
             </button>
           </div>
