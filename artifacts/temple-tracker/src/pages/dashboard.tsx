@@ -500,7 +500,7 @@ function HowToGive() {
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 const FALLBACK_STATS = {
-  totalTemples: 47,
+  totalTemples: 50,
   activeProjects: 34,
   totalFundraisingGoal: 520_000_000,
   totalFundraisingRaised: 220_000_000,
@@ -523,7 +523,7 @@ export default function Dashboard() {
     <Layout>
       <SEOHead
         title="Build Sacred Spaces Across the World"
-        description="Track ISKCON temple construction worldwide — see real-time progress, choose a project, and donate directly. 47 temples rising across 15 countries."
+        description="Track ISKCON temple construction worldwide — see real-time progress, choose a project, and donate directly. 50 temples rising across 15 countries."
         canonicalPath="/"
         structuredData={[
           {

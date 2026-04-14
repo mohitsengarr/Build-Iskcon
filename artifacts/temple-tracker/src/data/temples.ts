@@ -447,6 +447,33 @@ export const TEMPLES: Temple[] = [
     coverImage: null, donateUrl: "https://newgoloka.com/",
     latitude: 36.075, longitude: -79.100,
   },
+  {
+    id: 48, name: "ISKCON Raipur – Radha Rasabihari Temple", location: "Raipur, Chhattisgarh, India",
+    deity: "Sri Sri Radha Rasabihari", description: "A majestic 6-acre temple complex with 13 shikharas crowned with gold-leafed kalash. Features 14 dioramas depicting the Lord's lilas on the first floor. Inaugurated August 17–19, 2024, on the occasion of Balaram Jayanti.",
+    status: "consecrated", phase: "Inaugurated August 2024", constructionProgress: 100,
+    fundraisingGoal: 2_500_000, fundraisingRaised: 2_500_000, startDate: "2018-01-01",
+    expectedCompletion: "2024-08-19", projectLead: "ISKCON Raipur",
+    coverImage: null, donateUrl: "https://www.iskconraipur.org/donate",
+    latitude: 21.251, longitude: 81.629,
+  },
+  {
+    id: 49, name: "ISKCON Jalgaon Bhavan", location: "Jalgaon, Maharashtra, India",
+    deity: "Sri Sri Radha Krishna", description: "A multi-story temple bhavan actively under construction in Jalgaon. First-floor slab completed early 2026, with concrete and structural work progressing rapidly. Serving the growing devotee community in North Maharashtra.",
+    status: "construction", phase: "First-floor slab complete — upper floors rising", constructionProgress: 35,
+    fundraisingGoal: 1_500_000, fundraisingRaised: 600_000, startDate: "2024-06-01",
+    expectedCompletion: "2027-12-31", projectLead: "ISKCON Jalgaon",
+    coverImage: null, donateUrl: null,
+    latitude: 21.010, longitude: 75.563,
+  },
+  {
+    id: 50, name: "ISKCON Bhopal – Kolar Temple", location: "Kolar, Bhopal, Madhya Pradesh, India",
+    deity: "Sri Sri Radha Krishna", description: "Madhya Pradesh's largest ISKCON temple project on 8 acres of land in Kolar, Bhopal. Bhumi pujan performed March 2, 2025, by ISKCON GBC Chairman Guruprasad Swami and CM Mohan Yadav. Will include temple hall, Gurukul, restaurant, cowshed, and community hall.",
+    status: "construction", phase: "Post bhumi pujan — early foundation work", constructionProgress: 5,
+    fundraisingGoal: 5_000_000, fundraisingRaised: 1_000_000, startDate: "2025-03-02",
+    expectedCompletion: "2029-12-31", projectLead: "ISKCON Bhopal",
+    coverImage: null, donateUrl: "https://iskconbhopal.com/",
+    latitude: 23.174, longitude: 77.494,
+  },
 ];
 
 // Pre-computed stats
