@@ -1699,6 +1699,7 @@ function Sidebar({
       setExpandedCantos(prev => {
         if (prev.size === 1 && prev.has(activeSkandh)) return prev;
         return new Set([activeSkandh]);
+      });
     }
   }, [activeSkandh]);
 
