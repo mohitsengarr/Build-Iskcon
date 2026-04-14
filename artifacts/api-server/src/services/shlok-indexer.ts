@@ -18,13 +18,14 @@ const DATA_DIR = path.resolve(__dirname, "..", "..", "..", "..", "data", "bhagwa
 const PAGES_DIR = path.join(DATA_DIR, "pages");
 const INDEX_STATE_FILE = path.join(DATA_DIR, "shlok-index-state.json");
 
-const SUPABASE_URL = process.env.SUPABASE_URL || "";
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || "";
+function getSbUrl() { return process.env.SUPABASE_URL || ""; }
+function getSbKey() { return process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || ""; }
 
 function sbHeaders(prefer = "return=representation") {
+  const key = getSbKey();
   return {
-    apikey: SUPABASE_KEY,
-    Authorization: `Bearer ${SUPABASE_KEY}`,
+    apikey: key,
+    Authorization: `Bearer ${key}`,
     "Content-Type": "application/json",
     Prefer: prefer,
   };
@@ -205,7 +206,7 @@ async function upsertShlok(shlok: ExtractedShlok): Promise<"inserted" | "updated
   if (normalized.length < 5) return "skipped";
 
   // Check if exists
-  const checkUrl = `${SUPABASE_URL}/rest/v1/shlok_dictionary?shlok_text_normalized=eq.${encodeURIComponent(normalized)}&book=eq.bhagavatam&select=id,occurrence_count,page_numbers`;
+  const checkUrl = `${getSbUrl()}/rest/v1/shlok_dictionary?shlok_text_normalized=eq.${encodeURIComponent(normalized)}&book=eq.bhagavatam&select=id,occurrence_count,page_numbers`;
   const checkRes = await fetch(checkUrl, { headers: sbHeaders() });
   const existing = await checkRes.json();
 
@@ -215,7 +216,7 @@ async function upsertShlok(shlok: ExtractedShlok): Promise<"inserted" | "updated
     if (!pageNums.includes(shlok.pageNumber)) {
       pageNums.push(shlok.pageNumber);
       // Update occurrence count and page list
-      await fetch(`${SUPABASE_URL}/rest/v1/shlok_dictionary?id=eq.${row.id}`, {
+      await fetch(`${getSbUrl()}/rest/v1/shlok_dictionary?id=eq.${row.id}`, {
         method: "PATCH",
         headers: sbHeaders(),
         body: JSON.stringify({
@@ -226,7 +227,7 @@ async function upsertShlok(shlok: ExtractedShlok): Promise<"inserted" | "updated
       });
 
       // Add reference
-      await fetch(`${SUPABASE_URL}/rest/v1/shlok_references`, {
+      await fetch(`${getSbUrl()}/rest/v1/shlok_references`, {
         method: "POST",
         headers: sbHeaders("return=minimal"),
         body: JSON.stringify({
@@ -244,7 +245,7 @@ async function upsertShlok(shlok: ExtractedShlok): Promise<"inserted" | "updated
   }
 
   // Insert new
-  const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/shlok_dictionary`, {
+  const insertRes = await fetch(`${getSbUrl()}/rest/v1/shlok_dictionary`, {
     method: "POST",
     headers: sbHeaders("return=representation"),
     body: JSON.stringify({
@@ -275,7 +276,7 @@ async function upsertShlok(shlok: ExtractedShlok): Promise<"inserted" | "updated
   const inserted: any = await insertRes.json();
   const shlokId = Array.isArray(inserted) ? inserted[0]?.id : inserted?.id;
   if (shlokId) {
-    await fetch(`${SUPABASE_URL}/rest/v1/shlok_references`, {
+    await fetch(`${getSbUrl()}/rest/v1/shlok_references`, {
       method: "POST",
       headers: sbHeaders("return=minimal"),
       body: JSON.stringify({
@@ -305,7 +306,7 @@ export async function indexNextBatch(): Promise<{
     return { batchNumber: 0, shloksFound: 0, inserted: 0, updated: 0, message: "Already running" };
   }
 
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
+  if (!getSbUrl() || !getSbKey()) {
     return { batchNumber: 0, shloksFound: 0, inserted: 0, updated: 0, message: "Supabase not configured" };
   }
 
