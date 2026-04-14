@@ -211,6 +211,16 @@ const PERSONA_SHORT = {
   vidura: "Vidura: wise middle-aged man, dark brown complexion, short grey beard, saffron dhoti, pilgrim's walking staff",
   bhishma: "Bhishma: majestic elderly warrior, silver-white hair and thick beard, white warrior garments, lying on bed of arrows",
   yudhishthira: "King Yudhishthira: fair-complexioned noble king, gentle features, thin dark beard, white royal garments, simple golden crown",
+  radha: "Srimati Radharani: golden-complexioned goddess, large doe eyes, blue silk sari with gold, jasmine flowers in long braid",
+  balarama: "Lord Balarama: fair muscular young man, blue garments, single earring, carrying plough and mace",
+  devaki: "Mother Devaki: beautiful noble woman, gentle maternal face, green and gold sari, folded hands",
+  vasudeva: "King Vasudeva: noble strong man, thick dark beard, royal garments, gold armlets, Yadava prince",
+  kamsa: "King Kamsa: fearsome tyrant, dark complexion, cruel eyes, black and red royal garments, golden crown",
+  uddhava: "Uddhava: devoted young man, fair, clean-shaven, yellow silk dhoti, carrying lotus, Vaishnava tilak",
+  rukmini: "Queen Rukmini: beautiful golden-fair queen, large eyes with kajal, red and gold silk sari, heavy bridal jewelry",
+  nanda: "Nanda Maharaja: jovial elderly cowherd, round face, grey beard, white dhoti, turban, sturdy farmer build",
+  shiva: "Lord Shiva: ascetic with matted jata dreadlocks, third eye, crescent moon, ash-smeared, tiger skin, trident",
+  duryodhana: "Prince Duryodhana: arrogant warrior king, broad face, dark beard, red and gold royal garments, carrying mace",
 };
 
 const PERSONA_FULL = {
@@ -234,6 +244,16 @@ const PERSONA_FULL = {
   vidura: "Vidura: a wise middle-aged man aged 55-60 with angular lean face, dark brown complexion, calm penetrating sharp dark brown eyes, neatly trimmed short grey beard, dignified humble bearing, wearing simple saffron dhoti and white uttariya cloth over left shoulder, carrying wooden pilgrim's walking staff",
   bhishma: "Bhishma: a majestic elderly warrior aged 75-80 with broad strong square face, fair complexion, silver-white long hair and thick white beard reaching chest, powerful broad-shouldered build, wise serene half-open eyes with acceptance, wearing white warrior garments, lying on bed of arrows",
   yudhishthira: "King Yudhishthira: a fair-complexioned noble king aged 35-40 with oval gentle face, calm gentle soft features, kind thoughtful eyes with a hint of sadness, thin neatly groomed dark beard, wearing white royal garments with minimal thin gold chain, simple golden band crown",
+  radha: "Srimati Radharani: the supreme goddess aged 16-18 with perfectly golden luminous complexion, extraordinarily beautiful lotus face, large doe-like dark brown eyes with divine love, delicate arched eyebrows, lustrous long black hair in elaborate braid adorned with jasmine and gold ornaments, wearing radiant blue silk sari with gold embroidery",
+  balarama: "Lord Balarama: a powerful muscular young man aged 25-28 with fair white complexion, broad strong face, intense large dark brown eyes, wearing blue garments, single gold earring, carrying a plough weapon on shoulder and mace, golden armlets on powerful arms",
+  devaki: "Mother Devaki: a beautiful noble woman aged 30-35 with fair radiant complexion, gentle maternal face with large expressive dark eyes filled with love and sorrow, wearing modest silk sari in green and gold, minimal gold jewelry, hair covered with pallu",
+  vasudeva: "King Vasudeva: a noble dignified man aged 40-45 with broad strong face, medium-dark complexion, thick dark beard and mustache, determined courageous eyes, wearing royal but simple garments, gold armlets and earrings, tall strong build",
+  kamsa: "King Kamsa: a fearsome tyrant aged 35-40 with harsh angular face, dark complexion, cruel narrow dark eyes with heavy brows, thick black beard, large hooked nose, muscular imposing build, wearing royal black and red garments with heavy gold ornaments",
+  uddhava: "Uddhava: a devoted young man aged 25-30 with gentle refined face, fair complexion, soft thoughtful dark brown eyes filled with devotion, clean-shaven smooth face, neat dark hair, wearing yellow silk dhoti, carrying lotus flower, Vaishnava tilak",
+  rukmini: "Queen Rukmini: a stunningly beautiful young queen aged 20-22 with golden-fair complexion, perfectly symmetrical lotus face, large luminous dark brown eyes with kajal, wearing rich silk sari in red and gold with heavy bridal jewelry, gold necklace, jhumka earrings",
+  nanda: "Nanda Maharaja: a prosperous elderly cowherd chief aged 55-60 with round jolly face, warm tanned complexion, kind smiling dark eyes with laugh lines, short grey beard, wearing simple white dhoti and uttariya, rudraksha mala, turban on head",
+  shiva: "Lord Shiva: an ascetic divine being with matted grey-brown jata dreadlocks piled high, third eye on forehead, crescent moon in hair, fair ashen complexion smeared with sacred ash, half-closed meditative eyes, blue throat, wearing tiger skin, serpent Vasuki around neck, sitting in meditation with trident beside him",
+  duryodhana: "Prince Duryodhana: a powerful arrogant young king aged 30-35 with broad aggressive face, fair complexion, angry intense dark eyes, strong square jaw, dark beard, wearing rich royal red and gold garments with heavy gold ornaments, golden crown, carrying a mace",
 };
 
 {

@@ -154,6 +154,17 @@ const CHARACTER_PERSONAS: Record<string, string> = {
   vidura: "Vidura: a wise middle-aged Indian man aged 55-60 with angular lean face, dark brown complexion (hex #5a3a20), calm penetrating sharp medium-sized dark brown eyes with intense focused gaze, neatly trimmed short grey beard close to face, prominent high cheekbones, straight nose, thin firm lips, dignified humble slightly bowed bearing, wearing simple saffron dhoti and white uttariya cloth over left shoulder, carrying a wooden pilgrim's walking staff",
   bhishma: "Bhishma: a majestic elderly warrior aged 75-80 with broad strong square face, fair complexion (hex #d0b890), silver-white hair flowing loose and long flowing thick white beard reaching chest, powerful broad-shouldered muscular build despite advanced age, wise serene half-open dark brown eyes with heavy eyelids showing acceptance, thick white eyebrows, large straight nose, wearing white warrior garments stained, lying on a raised bed of arrows with multiple arrows piercing his entire body",
   yudhishthira: "King Yudhishthira: a fair-complexioned noble Indian king aged 35-40 with oval gentle face (hex #d4b080), calm gentle soft features without sharp angles, kind thoughtful medium dark brown eyes with a hint of sadness, thin neatly groomed dark beard trimmed close along jawline, straight nose, wearing white royal garments with minimal thin gold chain and small gold earrings befitting a dharmic king, simple golden band crown on head",
+  // ── Additional major characters ──
+  radha: "Srimati Radharani: the supreme goddess aged 16-18 with perfectly golden luminous complexion (hex #f0d080), extraordinarily beautiful lotus face, large doe-like dark brown eyes with long curved lashes filled with divine love, delicate arched eyebrows, straight thin nose with tiny diamond nose pin, full crimson lips with gentle loving smile, lustrous long black hair in elaborate braid adorned with jasmine and gold ornaments, vermillion sindoor, wearing radiant blue silk sari with gold embroidery, gold waist chain, gold anklets, and abundant flower garlands",
+  balarama: "Lord Balarama: a powerful muscular young man aged 25-28 with fair white complexion (hex #e8d4b0), broad strong face, intense large dark brown eyes with reddish tinge, wearing blue garments, single gold earring, garland of forest flowers, hair in topknot, carrying a plough (hala) weapon on his shoulder and a mace (musala), golden armlets on powerful arms",
+  devaki: "Mother Devaki: a beautiful noble Indian woman aged 30-35 with fair radiant complexion (hex #e0c8a0), gentle maternal face with large expressive dark eyes filled with both love and sorrow, straight nose, wearing a modest silk sari in green and gold, minimal gold jewelry, hair covered with pallu, sitting gracefully with folded hands in devotion",
+  vasudeva: "King Vasudeva: a noble dignified Indian man aged 40-45 with broad strong face, medium-dark complexion (hex #9a7a50), thick dark beard and mustache, determined courageous dark brown eyes, wearing royal but simple garments, gold armlets and earrings, tall strong build befitting a Yadava prince",
+  kamsa: "King Kamsa: a fearsome tyrant aged 35-40 with harsh angular face, dark complexion (hex #5a3a20), cruel narrow dark eyes with heavy brows, thick black beard, large hooked nose, muscular imposing build, wearing royal black and red garments with heavy gold ornaments, golden crown, sneering cruel expression showing arrogance and fear",
+  uddhava: "Uddhava: a devoted young man aged 25-30 with gentle refined face, fair complexion (hex #d4b080), soft thoughtful dark brown eyes filled with devotion, clean-shaven smooth face, neat dark hair, wearing simple yellow silk dhoti and uttariya, carrying a lotus flower, Vaishnava tilak on forehead, slim graceful build",
+  rukmini: "Queen Rukmini: a stunningly beautiful young Indian queen aged 20-22 with golden-fair complexion (hex #e8c890), perfectly symmetrical lotus face, large luminous dark brown eyes with kajal, delicate nose with gold nose ring, full lips with serene regal smile, lustrous long black hair in elaborate braid with gold ornaments and flowers, wearing rich silk sari in red and gold with heavy bridal jewelry, gold necklace, jhumka earrings, bangles",
+  nanda: "Nanda Maharaja: a prosperous elderly cowherd chief aged 55-60 with round jolly face, warm tanned complexion (hex #c49060), kind smiling dark brown eyes with laugh lines, short grey beard, broad nose, wearing simple white dhoti and uttariya cloth, rudraksha mala around neck, turban on head, sturdy build of a farmer",
+  shiva: "Lord Shiva: an ascetic divine being aged ageless with matted grey-brown jata dreadlocks piled high, third eye on forehead, crescent moon in hair, fair ashen complexion (hex #c0b090) smeared with sacred ash, half-closed meditative dark brown eyes, blue throat (neelkantha), wearing tiger skin around waist, sacred rudraksha beads, serpent Vasuki around neck, sitting in meditation on tiger skin with trident (trishul) beside him",
+  duryodhana: "Prince Duryodhana: a powerful arrogant young king aged 30-35 with broad aggressive face, fair complexion (hex #d4b080), angry intense dark brown eyes with thick eyebrows, strong square jaw, neatly trimmed dark beard, wearing rich royal red and gold garments with heavy gold ornaments, golden crown, carrying a mace, muscular imposing warrior build with proud bearing",
 };
 
 // Short persona summaries for image prompts (FLUX.2-pro has ~800 char limit)
@@ -179,6 +190,16 @@ const PERSONA_SHORT: Record<string, string> = {
   vidura: "Vidura: wise dark-skinned middle-aged man, short grey beard, saffron dhoti, pilgrim's walking staff",
   bhishma: "Bhishma: majestic elderly warrior, silver-white hair, long white beard, lying on bed of arrows",
   yudhishthira: "King Yudhishthira: fair gentle-faced king, thin dark beard, white royal garments, simple golden crown",
+  radha: "Srimati Radharani: golden-complexioned goddess, large doe eyes, blue silk sari with gold, jasmine flowers in long braid",
+  balarama: "Lord Balarama: fair muscular young man, blue garments, single earring, carrying plough and mace",
+  devaki: "Mother Devaki: beautiful noble woman, gentle maternal face, green and gold sari, folded hands",
+  vasudeva: "King Vasudeva: noble strong man, thick dark beard, royal garments, gold armlets, Yadava prince",
+  kamsa: "King Kamsa: fearsome tyrant, dark complexion, cruel eyes, black and red royal garments, golden crown",
+  uddhava: "Uddhava: devoted young man, fair, clean-shaven, yellow silk dhoti, carrying lotus, Vaishnava tilak",
+  rukmini: "Queen Rukmini: beautiful golden-fair queen, large eyes with kajal, red and gold silk sari, heavy bridal jewelry",
+  nanda: "Nanda Maharaja: jovial elderly cowherd, round face, grey beard, white dhoti, turban, sturdy farmer build",
+  shiva: "Lord Shiva: ascetic with matted jata dreadlocks, third eye, crescent moon, ash-smeared, tiger skin, trident",
+  duryodhana: "Prince Duryodhana: arrogant warrior king, broad face, dark beard, red and gold royal garments, carrying mace",
 };
 
 /** Look up which persona names appear in a scene prompt */
@@ -206,6 +227,16 @@ function injectPersona(scene: string): string {
     [/\bVidura\b/i, "vidura"],
     [/\bBhishma\b/i, "bhishma"],
     [/\bYudhishthira\b/i, "yudhishthira"],
+    [/\bRadha(?:rani)?\b/i, "radha"],
+    [/\bBalarama?\b|\bBaladeva\b/i, "balarama"],
+    [/\bDevaki\b/i, "devaki"],
+    [/\bVasudeva\b(?!.*\bKrishna\b)/i, "vasudeva"],
+    [/\bKamsa\b|\bKansa\b/i, "kamsa"],
+    [/\bUddhava\b/i, "uddhava"],
+    [/\bRukmini\b/i, "rukmini"],
+    [/\bNanda\s*(?:Maharaja)?\b/i, "nanda"],
+    [/\bShiva\b|\bMahadeva\b/i, "shiva"],
+    [/\bDuryodhana\b/i, "duryodhana"],
   ];
 
   // Collect ALL matching personas (short descriptions for prompt brevity)
