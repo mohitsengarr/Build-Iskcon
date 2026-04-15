@@ -2561,6 +2561,58 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 219,
+      "chapterTitle": "Chapter अठारह",
+      "cantoNumber": 10,
+      "imagePath": "chapter-219.jpg",
+      "prompt": "In the lush, flower-filled forests of Vrindavan, the mighty Balarama rides upon the shoulders of the demon Pralamba, who had disguised himself as a cowherd boy. Balarama, radiant and powerful, raises his fist and strikes the demon's head with divine force, liberating the demon's soul as the forest glows with celestial light around them.",
+      "descriptionHi": "इस अध्याय में वृन्दावन की मनोरम लीला-भूमि में भगवान् बलराम द्वारा प्रलम्बासुर के वध का वर्णन है। प्रलम्बासुर बलराम को अपने कंधों पर उठाकर ले जा रहा था, तब बलराम ने अपनी दिव्य शक्ति से उसके मस्तक पर मुष्टिक-प्रहार करके उसका अंत कर दिया। यह लीला यह दर्शाती है कि भगवान् की शक्ति असीम है और वे अपने भक्तों की रक्षा के लिए सदा तत्पर रहते हैं।",
+      "generatedAt": "2026-04-15T14:24:31.987Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 220,
+      "chapterTitle": "Chapter उन्नीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-220.jpg",
+      "prompt": "Krishna stands at the edge of a dense forest in Vrindavan as a massive wildfire blazes through the Munja thicket. Frightened cows have taken shelter inside while cowherd boys search anxiously along the forest trail. Krishna, calm and radiant, prepares to protect his beloved cows and friends by consuming the raging forest fire himself.",
+      "descriptionHi": "एक दिन ग्वालबाल खेल में मग्न थे और गौवें घने जंगल में चरने निकल गईं, जहाँ अचानक भयंकर दावाग्नि भड़क उठी। गौवों ने मूँज के कुंज में शरण ली और ग्वालबाल उनके पदचिह्नों का अनुसरण करते हुए उन्हें ढूंढने निकले। इस अध्याय का आध्यात्मिक संदेश है कि कृष्ण अपने भक्तों और गौवों की सदा रक्षा करते हैं, चाहे संकट कितना भी बड़ा क्यों न हो।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:25:08.762Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 221,
+      "chapterTitle": "Chapter बीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-221.jpg",
+      "prompt": "In the lush forests of Vrindavana during the rainy season, the young cowherd boys gather around the village women and joyfully recount the wondrous deeds of Krishna and Balarama — how the two brothers protected everyone from a blazing forest fire and overcame the demon Pralamba — their voices filled with awe and devotion.",
+      "descriptionHi": "इस अध्याय में शुकदेव गोस्वामी परीक्षित को बताते हैं कि ग्वालबालों ने वृन्दावन की स्त्रियों को कृष्ण और बलराम के अद्भुत कार्यों का वर्णन किया — जिसमें दावाग्नि से रक्षा और प्रलम्बासुर के वध की कथा सम्मिलित थी। इसके साथ ही शुकदेव जी वर्षा और शरद ऋतु में वृन्दावन की प्राकृतिक शोभा का वर्णन करते हैं। यह अध्याय भक्ति के माध्यम से प्रकृति और परमात्मा के सौंदर्य को एक साथ प्रस्तुत करता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:25:48.937Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 222,
+      "chapterTitle": "Chapter इक्कीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-222.jpg",
+      "prompt": "Krishna stands at the edge of the Vrindavan forest on the banks of the Yamuna river, playing his enchanting flute in the golden evening light. The gopis gather nearby, listening in rapt devotion, while birds perch still on branches, deer pause in wonder, and the flowing river seems to slow, all of creation captivated by the divine melody.",
+      "descriptionHi": "इस अध्याय में गोपियाँ कृष्ण की वेणु (बांसुरी) की मधुर धुन की भावपूर्ण सराहना करती हैं। वे वर्णन करती हैं कि कृष्ण का वेणुगीत सुनकर समस्त प्रकृति — नदियाँ, पशु-पक्षी, वृक्ष — सब मंत्रमुग्ध हो जाते हैं। इस प्रसंग का आध्यात्मिक महत्व यह है कि कृष्ण की बांसुरी की ध्वनि ब्रह्मानंद का प्रतीक है जो समस्त जीवों को परमात्मा की ओर आकर्षित करती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:27:00.610Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3166,5 +3218,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T14:23:36.050Z"
+  "lastUpdated": "2026-04-15T14:27:21.225Z"
 }
