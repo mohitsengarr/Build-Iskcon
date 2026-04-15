@@ -1992,12 +1992,107 @@ export default function Bhagwatham() {
   const PAGES_PER_VIEW = 20;
   const contentRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const contentFullyLoaded = useRef(false);
+  const pendingChapterRef = useRef<ChapterEntry | null>(null);
 
   // Undo state for image operations
   const [undoToast, setUndoToast] = useState<{ message: string; trashIds: string[]; timer: ReturnType<typeof setTimeout> } | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Prompt editing modal state
+  // ── Summarize pages ──────────────────────────────────────────────────────────
+  const [summarizeModal, setSummarizeModal] = useState<{
+    fromPage: number; toPage: number; summary: string; loading: boolean;
+  } | null>(null);
+
+  const handleSummarize = useCallback(async (from: number, to: number) => {
+    if (from > to || from < 1) return;
+    setSummarizeModal({ fromPage: from, toPage: to, summary: "", loading: true });
+
+    const pageTexts = allPages
+      .filter(p => p.pageNumber >= from && p.pageNumber <= to)
+      .map(p => p.text)
+      .join("\n\n");
+
+    if (!pageTexts.trim()) {
+      setSummarizeModal(prev => prev ? { ...prev, summary: "No content found for this page range.", loading: false } : null);
+      return;
+    }
+
+    // Try server-side Claude summarization first (dev mode)
+    try {
+      const res = await fetch(`${API_BASE}/summarize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pages: pageTexts, fromPage: from, toPage: to }),
+      });
+      if (res.ok) {
+        const ct = res.headers.get("content-type") || "";
+        if (ct.includes("application/json")) {
+          const data = await res.json();
+          if (data.summary) {
+            setSummarizeModal(prev => prev ? { ...prev, summary: data.summary, loading: false } : null);
+            return;
+          }
+        }
+      }
+    } catch { /* server not available on Vercel — use client-side extraction */ }
+
+    // Client-side smart extraction fallback (works on production)
+    const lines = pageTexts.split("\n").map(l => l.trim()).filter(Boolean);
+    const bullets: string[] = [];
+    const chapterHeadings: string[] = [];
+    const tatparyaLines: string[] = [];
+    const anuvadLines: string[] = [];
+    let inTatparya = false;
+    let inAnuvad = false;
+
+    for (const line of lines) {
+      // Chapter headings
+      if (/^(अध्याय|Chapter)/iu.test(line) && line.length < 100) {
+        chapterHeadings.push(line);
+        inTatparya = false; inAnuvad = false;
+        continue;
+      }
+      // Tatparya start
+      if (/^तात्पर्य/u.test(line)) { inTatparya = true; inAnuvad = false; continue; }
+      // Anuvad start
+      if (/^अनुवाद/u.test(line)) { inAnuvad = true; inTatparya = false; continue; }
+      // Shabdarth / Shlok headers reset
+      if (/^(शब्दार्थ|श्लोक)/u.test(line)) { inTatparya = false; inAnuvad = false; continue; }
+
+      if (inTatparya && line.length > 30) {
+        tatparyaLines.push(line);
+        if (tatparyaLines.length >= 15) inTatparya = false; // cap
+      }
+      if (inAnuvad && line.length > 20) {
+        anuvadLines.push(line);
+        if (anuvadLines.length >= 10) inAnuvad = false;
+      }
+    }
+
+    if (chapterHeadings.length > 0) {
+      bullets.push(`📖 विषय: ${chapterHeadings.join(", ")}`);
+    }
+    if (anuvadLines.length > 0) {
+      bullets.push("📝 अनुवाद सार:");
+      // Take first 2-3 distinct anuvad excerpts
+      const unique = [...new Set(anuvadLines)].slice(0, 3);
+      unique.forEach(l => bullets.push(`  • ${l.length > 150 ? l.slice(0, 150) + "…" : l}`));
+    }
+    if (tatparyaLines.length > 0) {
+      bullets.push("🔑 तात्पर्य के मुख्य बिंदु:");
+      const unique = [...new Set(tatparyaLines)].slice(0, 5);
+      unique.forEach(l => bullets.push(`  • ${l.length > 150 ? l.slice(0, 150) + "…" : l}`));
+    }
+
+    if (bullets.length === 0) {
+      bullets.push("इन पृष्ठों से सारांश निकाला नहीं जा सका। कृपया पृष्ठ संख्या जाँचें।");
+    }
+
+    setSummarizeModal(prev => prev ? { ...prev, summary: bullets.join("\n"), loading: false } : null);
+  }, [allPages]);
+
   const [promptModal, setPromptModal] = useState<{
     chapterNum: number;
     chapterTitle: string;
@@ -2099,6 +2194,28 @@ export default function Bhagwatham() {
         } catch { hasMore = false; }
       }
       if (accumulated.length > 0) setAllPages(accumulated);
+      contentFullyLoaded.current = true;
+      // If a chapter click was pending while content was loading, navigate now
+      if (pendingChapterRef.current) {
+        const ch = pendingChapterRef.current;
+        pendingChapterRef.current = null;
+        const pageIdx = accumulated.findIndex((p) => p.pageNumber >= ch.pageNumber);
+        if (pageIdx >= 0) {
+          const viewPage = Math.floor(pageIdx / PAGES_PER_VIEW) + 1;
+          setCurrentPage(viewPage);
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              const el = document.getElementById(`chapter-${ch.globalNumber}`);
+              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+              else {
+                const pageEl = document.querySelector(`[data-page-num="${ch.pageNumber}"]`);
+                if (pageEl) pageEl.scrollIntoView({ behavior: "smooth", block: "start" });
+                else window.scrollTo({ top: 0, behavior: "smooth" });
+              }
+            }, 100);
+          });
+        }
+      }
     } catch { /* empty */ } finally { setLoading(false); }
   }, []);
 
@@ -2410,15 +2527,16 @@ export default function Bhagwatham() {
     setSearchQuery("");
     setActiveChapter(ch.globalNumber);
 
-    // All pages are loaded eagerly — find directly (SEN-103 fix)
+    // Save per-chapter position (SEN-106)
+    const positions = JSON.parse(localStorage.getItem("bhagwatham_chapter_positions") || "{}");
+    positions[ch.globalNumber] = { pageNumber: ch.pageNumber, scrollOffset: 0 };
+    localStorage.setItem("bhagwatham_chapter_positions", JSON.stringify(positions));
+
+    // Find target page in loaded content
     const pageIdx = allPages.findIndex((p) => p.pageNumber >= ch.pageNumber);
     if (pageIdx >= 0) {
       const viewPage = Math.floor(pageIdx / PAGES_PER_VIEW) + 1;
       setCurrentPage(viewPage);
-      // Save per-chapter position (SEN-106)
-      const positions = JSON.parse(localStorage.getItem("bhagwatham_chapter_positions") || "{}");
-      positions[ch.globalNumber] = { pageNumber: ch.pageNumber, scrollOffset: 0 };
-      localStorage.setItem("bhagwatham_chapter_positions", JSON.stringify(positions));
       // Wait for React to render, then scroll to chapter anchor
       requestAnimationFrame(() => {
         setTimeout(() => {
@@ -2432,6 +2550,10 @@ export default function Bhagwatham() {
           }
         }, 100);
       });
+    } else if (!contentFullyLoaded.current) {
+      // Content still loading — queue this chapter and navigate when loading completes
+      pendingChapterRef.current = ch;
+      setLoading(true);
     }
   };
 
@@ -2687,6 +2809,15 @@ export default function Bhagwatham() {
                   <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[8px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">{bookmarks.length}</span>
                 </button>
               )}
+
+              {/* Summarize button */}
+              <button
+                onClick={() => setSummarizeModal({ fromPage: visiblePageNum || 1, toPage: Math.min((visiblePageNum || 1) + 9, allPages.length > 0 ? allPages[allPages.length - 1].pageNumber : 999), summary: "", loading: false })}
+                className={`p-1 sm:p-1.5 rounded-lg transition-all active:scale-95 shrink-0 hover:bg-stone-100 ${theme.muted} hover:text-orange-600`}
+                title="Summarize Pages"
+              >
+                <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </button>
 
               {/* Settings button */}
               <div className="relative shrink-0">
@@ -2970,6 +3101,111 @@ export default function Bhagwatham() {
                   </div>
                 </div>
               )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Summarize modal */}
+      <AnimatePresence>
+        {summarizeModal && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            onClick={(e) => { if (e.target === e.currentTarget) setSummarizeModal(null); }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto"
+            >
+              <div className="p-5 border-b border-stone-200 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-orange-100 rounded-xl flex items-center justify-center">
+                    <Sparkles className="w-4.5 h-4.5 text-orange-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-stone-800 text-base">Summarize Pages</h3>
+                    <p className="text-[11px] text-stone-400">Get key points from a page range</p>
+                  </div>
+                </div>
+                <button onClick={() => setSummarizeModal(null)} className="p-1.5 hover:bg-stone-100 rounded-full">
+                  <X className="w-4 h-4 text-stone-400" />
+                </button>
+              </div>
+
+              <div className="p-5 space-y-4">
+                {/* Page range inputs */}
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <label className="text-[11px] font-semibold text-stone-500 mb-1 block">From Page</label>
+                    <input
+                      type="number" min={1}
+                      value={summarizeModal.fromPage}
+                      onChange={(e) => setSummarizeModal(prev => prev ? { ...prev, fromPage: Number(e.target.value) } : null)}
+                      className="w-full text-sm border border-stone-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                    />
+                  </div>
+                  <span className="text-stone-300 mt-5">→</span>
+                  <div className="flex-1">
+                    <label className="text-[11px] font-semibold text-stone-500 mb-1 block">To Page</label>
+                    <input
+                      type="number" min={1}
+                      value={summarizeModal.toPage}
+                      onChange={(e) => setSummarizeModal(prev => prev ? { ...prev, toPage: Number(e.target.value) } : null)}
+                      className="w-full text-sm border border-stone-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                    />
+                  </div>
+                </div>
+
+                {/* Generate button */}
+                {!summarizeModal.loading && !summarizeModal.summary && (
+                  <button
+                    onClick={() => handleSummarize(summarizeModal.fromPage, summarizeModal.toPage)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-semibold text-sm transition-colors active:scale-[0.98]"
+                  >
+                    <Sparkles className="w-4 h-4" /> Generate Summary
+                  </button>
+                )}
+
+                {/* Loading state */}
+                {summarizeModal.loading && (
+                  <div className="flex flex-col items-center gap-3 py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+                    <p className="text-sm text-stone-500 font-medium">Analyzing pages {summarizeModal.fromPage}–{summarizeModal.toPage}…</p>
+                  </div>
+                )}
+
+                {/* Summary result */}
+                {summarizeModal.summary && !summarizeModal.loading && (
+                  <div className="space-y-3">
+                    <div className="bg-orange-50 border border-orange-200/50 rounded-xl p-4">
+                      <p className="text-[11px] font-bold text-orange-600 mb-2 uppercase tracking-wider">
+                        Summary — Pages {summarizeModal.fromPage} to {summarizeModal.toPage}
+                      </p>
+                      <div className="text-sm text-stone-700 leading-relaxed whitespace-pre-line" style={{ fontFamily: "var(--font-devanagari)" }}>
+                        {summarizeModal.summary}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(summarizeModal.summary);
+                          alert("Summary copied!");
+                        }}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-xl text-xs font-semibold transition-colors"
+                      >
+                        Copy
+                      </button>
+                      <button
+                        onClick={() => setSummarizeModal(prev => prev ? { ...prev, summary: "", loading: false } : null)}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-xl text-xs font-semibold transition-colors"
+                      >
+                        <RefreshCw className="w-3 h-3" /> New Range
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </motion.div>
           </motion.div>
         )}

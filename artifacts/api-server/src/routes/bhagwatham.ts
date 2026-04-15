@@ -853,6 +853,53 @@ router.post("/bhagwatham/stt", async (req, res) => {
   }
 });
 
+// POST /api/bhagwatham/summarize — summarize a page range using Claude
+router.post("/bhagwatham/summarize", async (req, res) => {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) { res.status(503).json({ error: "ANTHROPIC_API_KEY not set" }); return; }
+
+  const { pages, fromPage, toPage } = req.body;
+  if (!pages || typeof pages !== "string") {
+    res.status(400).json({ error: "pages text required" }); return;
+  }
+
+  // Truncate to ~12K chars to stay within Claude context limits
+  const truncated = pages.length > 12000 ? pages.slice(0, 12000) + "\n...(truncated)" : pages;
+
+  try {
+    const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{
+          role: "user",
+          content: `You are a scholar of Srimad Bhagavatam. Summarize pages ${fromPage}–${toPage} from this text in Hindi with bullet points.
+
+Give:
+1. 📖 विषय — Which chapters/topics are covered
+2. 📝 मुख्य श्लोक अर्थ — Key verse meanings (2-3 bullets)
+3. 🔑 तात्पर्य सार — Main purport points by Srila Prabhupada (3-5 bullets)
+4. 💡 शिक्षा — Practical spiritual lessons (2-3 bullets)
+
+Use Hindi. Be concise — each bullet max 2 lines. Use Devanagari script.
+
+Text:
+${truncated}`
+        }],
+      }),
+    });
+
+    if (!claudeRes.ok) { res.status(500).json({ error: "Claude API failed" }); return; }
+    const data: any = await claudeRes.json();
+    const summary = data.content?.[0]?.text || "Summary generation failed.";
+    res.json({ summary });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/bhagwatham/dictionary — look up Hindi/Sanskrit word meaning via Claude
 router.post("/bhagwatham/dictionary", async (req, res) => {
   const apiKey = process.env.ANTHROPIC_API_KEY;
