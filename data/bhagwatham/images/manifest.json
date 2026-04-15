@@ -2458,6 +2458,35 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 212,
+      "chapterTitle": "Chapter ग्यारह",
+      "cantoNumber": 10,
+      "imagePath": "chapter-212.jpg",
+      "prompt": "Young Krishna stands between two fallen Arjuna trees in Gokul, his small wrists still tied to a wooden mortar. Nanda Maharaja rushes to him with concern and relief, gently untying the ropes, while curious village elders and wide-eyed children gather around, amazed at the mysterious wonder that has unfolded.",
+      "descriptionHi": "इस अध्याय में कृष्ण की बाल-लीलाओं का वर्णन है, जिसमें यमल-अर्जुन वृक्षों के गिरने की घटना प्रमुख है। उलूखल से बँधे कृष्ण वृक्षों के बीच खड़े थे और नन्द महाराज ने उनकी रस्सियाँ खोलीं। यह लीलाएँ नन्द और यशोदा के वात्सल्य-प्रेम को निरंतर गहरा करती रहीं।",
+      "personasUsed": [
+        "krishna_adult",
+        "arjuna"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:15:08.337Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 213,
+      "chapterTitle": "Chapter बारह",
+      "cantoNumber": 10,
+      "imagePath": "chapter-213.jpg",
+      "prompt": "In a sunlit forest of Vrindavana, Krishna stands at the entrance of a massive serpent's open mouth, while his cowherd friends and their calves have already wandered inside, mistaking it for a scenic cave. Krishna, radiant and composed, prepares to enter and protect his beloved companions, his divine presence filling the air with golden light.",
+      "descriptionHi": "एक दिन कृष्ण अपने ग्वालबाल मित्रों के साथ जंगल में विहार के लिए गए, जहाँ कंस द्वारा भेजा गया अघासुर नामक असुर अजगर का विशाल रूप धारण करके उनकी प्रतीक्षा में लेट गया। कृष्ण के सभी मित्र उस विशाल मुख को वृन्दावन का रमणीक स्थल समझकर उसमें प्रवेश कर गए, तब कृष्ण भी भीतर गए और अपने दिव्य शरीर को विस्तारित करके असुर का अंत किया। इसके बाद कृष्ण ने अपनी अमृत-दृष्टि से सभी मित्रों को पुनर्जीवित किया, जो इस लीला की आध्यात्मिक महिमा और कृष्ण की रक्षक शक्ति का प्रतीक है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:16:02.280Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3063,5 +3092,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T14:14:26.556Z"
+  "lastUpdated": "2026-04-15T14:16:27.438Z"
 }
