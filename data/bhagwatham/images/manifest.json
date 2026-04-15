@@ -3167,6 +3167,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 264,
+      "chapterTitle": "Chapter तिरसठ",
+      "cantoNumber": 10,
+      "imagePath": "chapter-264.jpg",
+      "prompt": "On a great battlefield outside Shonitapura, Krishna stands resplendent on his chariot as the defeated Banasura's mother approaches him with folded hands, pleading for her son's life. Krishna, ever compassionate, gently turns his face away in respectful modesty, while Shiva and the assembled gods watch from above in reverence.",
+      "descriptionHi": "इस अध्याय में बाणासुर और भगवान् कृष्ण के बीच महायुद्ध का वर्णन है, जिसमें शिवजी बाणासुर की सहायता के लिए आते हैं किन्तु कृष्ण उन्हें भी परास्त कर देते हैं। कृष्ण बाणासुर की भुजाएँ काट देते हैं और बाणासुर की माता अपने पुत्र की रक्षा हेतु कृष्ण के समक्ष आती है जिससे कृष्ण विनम्रतापूर्वक मुख मोड़ लेते हैं। यह अध्याय कृष्ण की अजेय शक्ति और साथ ही उनकी विनम्रता तथा करुणा का सुंदर चित्रण प्रस्तुत करता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T17:14:56.859Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3772,5 +3786,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T17:12:32.858Z"
+  "lastUpdated": "2026-04-15T17:15:16.575Z"
 }
