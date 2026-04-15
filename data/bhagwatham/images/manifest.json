@@ -2627,6 +2627,48 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 224,
+      "chapterTitle": "Chapter तेईस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-224.jpg",
+      "prompt": "In a forest clearing near a yagna site, the devoted wives of brahmanas joyfully approach Krishna, carrying four kinds of food offerings. Krishna stands graciously among the cowherd boys, welcoming the women with a warm and divine smile. The women, filled with deep devotion and reverence, offer the food with folded hands, surrendering themselves completely to Krishna.",
+      "descriptionHi": "इस अध्याय में भगवान् श्रीकृष्ण ने भूखे ग्वालबालों को यज्ञ कर रहे ब्राह्मणों के पास भोजन माँगने भेजा, किन्तु ब्राह्मणों ने उपेक्षा की। तब कृष्ण ने बालकों को ब्राह्मण-पत्नियों के पास भेजा, जो कृष्ण के प्रति अत्यधिक अनुरक्त थीं और चार प्रकार के भोजन लेकर तुरंत उनके पास आ गईं। इस प्रकार उन पतिव्रता स्त्रियों ने अपने आपको श्रीकृष्ण को समर्पित करके दिव्य कृपा प्राप्त की।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:29:04.225Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 225,
+      "chapterTitle": "Chapter चौबीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-225.jpg",
+      "prompt": "Krishna stands before Nanda and the assembled cowherds in the lush village of Vrindavan, speaking with calm authority and wisdom. He gestures toward the majestic Govardhan hill in the background, convincing the villagers to redirect their worship from Indra to the sacred mountain, as the gathered cows and villagers listen with reverence and curiosity.",
+      "descriptionHi": "इस अध्याय में श्रीकृष्ण ने इन्द्र के लिए किये जाने वाले यज्ञ को रोककर गोवर्धन पर्वत की पूजा का विधान कराया। कृष्ण ने नन्द और ग्वालों को समझाया कि जीव कर्मवश जन्म लेते हैं और इन्द्र की पूजा की बजाय गोवर्धन पूजा अधिक उचित है। इस घटना का आध्यात्मिक महत्व यह है कि कृष्ण ने इन्द्र के अहंकार को चुनौती दी और प्रकृति एवं गोपालन की महत्ता को स्थापित किया।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:29:57.847Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 226,
+      "chapterTitle": "Chapter पच्चीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-226.jpg",
+      "prompt": "Krishna stands in the lush meadows of Vrindavan, effortlessly lifting the massive Govardhan Hill on the tip of his little finger like an umbrella. Beneath the mountain, joyful villagers, cows, and calves take shelter from the torrential rain, gazing up at Krishna with wonder, gratitude, and devotion.",
+      "descriptionHi": "जब व्रजवासियों ने इन्द्र-यज्ञ बंद कर दिया तो देवराज इन्द्र क्रोधित होकर वृन्दावन पर प्रलयंकारी वर्षा बरसाने लगे। तब भगवान् श्रीकृष्ण ने गोवर्धन पर्वत को अपनी एक उंगली पर उठाकर समस्त गोकुलवासियों को उस विशाल छत्र के नीचे आश्रय दिया। यह घटना कृष्ण की अलौकिक शक्ति और भक्तों के प्रति उनके असीम प्रेम एवं संरक्षण का प्रतीक है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:30:34.235Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3232,5 +3274,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T14:28:34.025Z"
+  "lastUpdated": "2026-04-15T14:30:55.959Z"
 }
