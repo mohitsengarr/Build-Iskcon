@@ -2289,6 +2289,26 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 196,
+      "chapterTitle": "Chapter उन्नीस",
+      "cantoNumber": 9,
+      "imagePath": "chapter-196.jpg",
+      "prompt": "King Yayati sits peacefully in his royal palace, speaking gently to Devayani as he narrates the allegorical tale of a goat and a she-goat. Having realized the futility of worldly pleasures after a lifetime of indulgence, Yayati renounces his kingdom, divides his wealth among his sons, and departs as a serene renunciant to dedicate himself entirely to the service of God.",
+      "descriptionHi": "राजा ययाति ने अपनी निजी जीवन-कथा को एक बकरे-बकरी की प्रतीकात्मक कहानी के रूप में अपनी प्रियतमा देवयानी को सुनाया, जिसमें इन्द्रिय-भोग की अतृप्ति और व्यर्थता का बोध था। इस कहानी के माध्यम से उन्होंने यह समझाया कि काम-वासना अग्नि के समान है जो घी डालने से और भड़कती है, कभी शांत नहीं होती। अंततः राजा ययाति ने सांसारिक भोगों का त्याग कर संन्यास ग्रहण किया और भगवान् की भक्ति में अपना जीवन समर्पित कर दिया।",
+      "generatedAt": "2026-04-15T14:03:38.557Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 197,
+      "chapterTitle": "Chapter बीस",
+      "cantoNumber": 9,
+      "imagePath": "chapter-197.jpg",
+      "prompt": "King Dushyanta stands before Shakuntala in his royal court, where she has come holding their young son. After a divine sign appears, the king's heart opens and he gently reaches out to accept Shakuntala and the child as his own, his expression softening with recognition and remorse, as courtiers watch the emotional reunion.",
+      "descriptionHi": "इस अध्याय में पूरु के वंश का वर्णन है, जिसमें राजा दुष्मन्त और शकुन्तला की प्रेम कथा केंद्रीय घटना है। दुष्मन्त ने कण्व मुनि के आश्रम में शकुन्तला से गन्धर्व विवाह किया, किन्तु बाद में उसे और अपने पुत्र को पहचानने से मना कर दिया। अंततः एक दिव्य शकुन के बाद राजा ने उन्हें स्वीकार किया और उनका पुत्र भरत महान सम्राट बना।",
+      "generatedAt": "2026-04-15T14:04:17.964Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -2894,5 +2914,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T14:02:58.635Z"
+  "lastUpdated": "2026-04-15T14:04:38.522Z"
 }
