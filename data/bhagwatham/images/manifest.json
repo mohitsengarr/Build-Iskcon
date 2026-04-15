@@ -3066,6 +3066,34 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 256,
+      "chapterTitle": "Chapter पचपन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-256.jpg",
+      "prompt": "Pradyumna, the radiant son of Krishna and Rukmini, stands before Mayavati who raised him with devotion, as she reveals his true divine identity. In the palace of Shambarasura, the young prince awakens to his celestial origin, his face glowing with recognition and spiritual awakening, fulfilling an ancient divine purpose.",
+      "descriptionHi": "यह अध्याय प्रद्युम्न की कथा पर आधारित है, जो भगवान कृष्ण और रुक्मिणी के पुत्र थे। प्रद्युम्न को शंबरासुर ने शिशु अवस्था में हरण कर लिया था, परंतु उनका पालन-पोषण मायावती ने किया और बाद में उन्होंने अपनी दिव्य शक्ति से शंबरासुर का वध किया। यह कथा कामदेव के पुनर्जन्म, भक्ति की विजय और दैवीय संकल्प की अजेय शक्ति का प्रतीक है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:39:17.778Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 257,
+      "chapterTitle": "Chapter छप्पन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-257.jpg",
+      "prompt": "King Satrājit arrives in Dwarka wearing the dazzling Syamantaka gem on a golden chain around his neck, radiating such brilliant light that the citizens mistake him for the sun god himself. Krishna, seated among the people of Dwarka, calmly clarifies that the radiant visitor is Satrājit, not Surya, but a man adorned with a precious jewel.",
+      "descriptionHi": "इस अध्याय में राजा सत्राजित द्वारा स्यमन्तक मणि प्राप्त करने और उसके भाई प्रसेन के शिकार पर जाते समय सिंह द्वारा मारे जाने की कथा वर्णित है। सत्राजित ने लालचवश यह मणि यदुराज उग्रसेन को देने से मना कर दिया था। यह लीला भौतिक सम्पत्ति की व्यर्थता और उससे उत्पन्न होने वाली विपत्तियों को दर्शाती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:40:01.366Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3671,5 +3699,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T15:38:40.432Z"
+  "lastUpdated": "2026-04-15T15:40:22.986Z"
 }
