@@ -2184,6 +2184,26 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 185,
+      "chapterTitle": "Chapter आठ",
+      "cantoNumber": 9,
+      "imagePath": "chapter-185.jpg",
+      "prompt": "Anshuman stands humbly before the sage Kapila in a vast underground realm, where a sacrificial horse grazes peacefully nearby and a mound of sacred ash rests on the other side. Anshuman folds his hands in deep reverence, offering prayers to the luminous sage Kapila, who, pleased by his devotion, graciously returns the horse.",
+      "descriptionHi": "इस अध्याय में रोहित के वंश में उत्पन्न राजा सगर की कथा वर्णित है, जिसमें सगर के पुत्रों द्वारा अश्वमेध यज्ञ के घोड़े की खोज में पृथ्वी खोदना और महापुरुष कपिलदेव से उनकी भेंट का वर्णन है। सगर के पुत्र कपिलदेव पर आक्रमण करने के कारण भस्म हो गये, किन्तु अंशुमान ने विनम्रतापूर्वक कपिलदेव की स्तुति करके यज्ञ का घोड़ा वापस प्राप्त किया। यह कथा भक्ति, विनम्रता और दिव्य महापुरुषों के प्रति सम्मान के महत्व को दर्शाती है।",
+      "generatedAt": "2026-04-15T13:49:57.707Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 186,
+      "chapterTitle": "Chapter नौ",
+      "cantoNumber": 9,
+      "imagePath": "chapter-186.jpg",
+      "prompt": "Bhagiratha kneels in deep meditation on a Himalayan peak, his palms joined in prayer, as the celestial river Ganga descends gracefully from the heavens into the matted locks of Lord Shiva, who stands serene and majestic, containing her mighty flow. The divine moment fulfills Bhagiratha's long penance to liberate his ancestors.",
+      "descriptionHi": "इस अध्याय में अंशुमान से भगीरथ तक की वंशावली का वर्णन है, जिसमें भगीरथ की कठोर तपस्या से प्रसन्न होकर माता गंगा पृथ्वी पर अवतरित हुईं। भगीरथ ने भगवान शिव से गंगा के वेग को धारण करने की प्रार्थना की, जिससे उनके पूर्वजों को मुक्ति मिली। यह अध्याय भक्ति, तपस्या और पितृ-उद्धार की गहरी आध्यात्मिक महत्ता को दर्शाता है।",
+      "generatedAt": "2026-04-15T13:50:48.235Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -2789,5 +2809,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T13:49:17.119Z"
+  "lastUpdated": "2026-04-15T13:51:10.769Z"
 }
