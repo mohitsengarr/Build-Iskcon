@@ -2239,6 +2239,36 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 190,
+      "chapterTitle": "Chapter तेरह",
+      "cantoNumber": 9,
+      "imagePath": "chapter-190.jpg",
+      "prompt": "Ancient sages and priests gather around the preserved body of King Nimi in a sacred yagna hall, performing a solemn churning ritual. From this divine act, the sage-king Janaka emerges, newborn and radiant, as the assembled rishis look on in reverence and wonder, the sacrificial fire glowing softly in the background.",
+      "descriptionHi": "इस अध्याय में महाराज निमि के वंश का वर्णन है जिसमें महान् विद्वान जनक का जन्म हुआ। महाराज निमि और ऋषि वसिष्ठ के बीच शाप-प्रतिशाप के कारण दोनों की मृत्यु हो गई, और बाद में ऋषियों द्वारा निमि के शरीर के मंथन से जनक का प्रादुर्भाव हुआ। इस वंश में आगे चलकर शीरध्वज से सीतादेवी का जन्म हुआ, जो इस वंश की सबसे महत्त्वपूर्ण आध्यात्मिक घटना है।",
+      "generatedAt": "2026-04-15T13:57:02.488Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 191,
+      "chapterTitle": "Chapter चौदह",
+      "cantoNumber": 9,
+      "imagePath": "chapter-191.jpg",
+      "prompt": "At the sacred grounds of Kurukshetra, the noble king Pururavas reunites with the celestial apsara Urvashi beneath a moonlit sky. He kneels before her with longing and devotion, his hands folded in supplication, while Urvashi stands gracefully, her divine radiance illuminating the night, as she gently counsels him toward a higher spiritual purpose.",
+      "descriptionHi": "इस अध्याय में सोम द्वारा बृहस्पति की पत्नी तारा के अपहरण और उससे बुध के जन्म की कथा है। बुध के पुत्र पुरुरवा का अप्सरा उर्वशी के प्रति गहरा प्रेम और विरह वर्णित है। पुरुरवा वर्षों की विरह-वेदना के बाद कुरुक्षेत्र में उर्वशी से पुनः मिलता है और अंततः गन्धर्वों की कृपा तथा वैदिक अनुष्ठान द्वारा आध्यात्मिक मार्ग की ओर उन्मुख होता है।",
+      "generatedAt": "2026-04-15T13:57:33.855Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 192,
+      "chapterTitle": "Chapter पन्द्रह",
+      "cantoNumber": 9,
+      "imagePath": "chapter-192.jpg",
+      "prompt": "Sage Jamadagni stands in his forest hermitage, speaking gently but firmly to his son Parashurama, who holds a great axe and stands humbled before his father. Jamadagni, serene and wise, instructs Parashurama to embark on a pilgrimage to sacred tirthas as atonement, reminding him of the dharma of a brahmana.",
+      "descriptionHi": "इस अध्याय में पुरुरवा के वंशजों का वर्णन करते हुए गाधि की पुत्री सत्यवती और ऋचीक मुनि के विवाह की कथा बताई गई है, जिससे जमदग्नि और फिर परशुराम का जन्म हुआ। परशुराम ने कामधेनु की चोरी करने वाले राजा कार्तवीर्यार्जुन का वध कर इक्कीस बार क्षत्रिय वंश का संहार किया। आध्यात्मिक दृष्टि से यह अध्याय भगवान् के शक्त्यावेश अवतार परशुराम की शक्ति और उनके पिता जमदग्नि की धर्मनिष्ठा को दर्शाता है।",
+      "generatedAt": "2026-04-15T13:58:11.713Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -2844,5 +2874,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T13:56:24.148Z"
+  "lastUpdated": "2026-04-15T13:58:33.320Z"
 }
