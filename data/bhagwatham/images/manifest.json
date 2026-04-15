@@ -2022,6 +2022,20 @@
       "cantoNumber": 8
     },
     {
+      "chapterNumber": 171,
+      "chapterTitle": "Chapter अठारह",
+      "cantoNumber": 8,
+      "imagePath": "chapter-171.jpg",
+      "prompt": "Lord Vamana, a divine dwarf brahmin form of Vishnu, appears with dark complexion and yellow garments, holding a conch, disc, mace, and lotus, born from Aditi's womb on the auspicious day of Shravana Dvadashi. He enters the grand sacrificial hall of King Bali, who welcomes him with reverence and devotion.",
+      "descriptionHi": "इस अध्याय में भगवान् वामनदेव के प्रकट होने का वर्णन है, जो अदिति के गर्भ से श्रावण द्वादशी को शंख, चक्र, गदा और कमल धारण किये, साँवले वर्ण और पीताम्बर में प्रकट हुए। वे महाराज बलि की यज्ञशाला में गये जहाँ उनका भव्य स्वागत हुआ। यह घटना भक्ति और दिव्य लीला की दृष्टि से अत्यंत महत्त्वपूर्ण है, जिसमें भगवान् विष्णु ने वामन रूप में अवतार लेकर संसार का कल्याण किया।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T13:44:15.287Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 174,
       "chapterTitle": "Chapter पाँच",
       "imagePath": "chapter-174.jpg",
@@ -2747,5 +2761,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T13:42:53.974Z"
+  "lastUpdated": "2026-04-15T13:44:37.976Z"
 }
