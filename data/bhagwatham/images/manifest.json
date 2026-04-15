@@ -2335,6 +2335,34 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 200,
+      "chapterTitle": "Chapter तेईस",
+      "cantoNumber": 9,
+      "imagePath": "chapter-200.jpg",
+      "prompt": "On the banks of a gentle river, the kind charioteer Adhiratha discovers a newborn infant Karna, placed in a basket by Kunti, who watches from a distance with tearful eyes and a heavy heart. Adhiratha cradles the child tenderly, choosing to raise him as his own son with great love and care.",
+      "descriptionHi": "इस अध्याय में ययाति के चार पुत्रों—अनु, द्रुह्यु, तुर्वसु और यदु—के वंशों का विस्तृत वर्णन किया गया है। इसमें एक महत्वपूर्ण प्रसंग यह है कि अधिरथ ने कुन्ती द्वारा त्यागे गए पुत्र कर्ण को पाला-पोसा। यह अध्याय वंश परंपरा के साथ-साथ कर्ण के जीवन की करुण पृष्ठभूमि को भी उजागर करता है।",
+      "personasUsed": [
+        "kunti"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:07:14.717Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 201,
+      "chapterTitle": "Chapter चौबीस",
+      "cantoNumber": 9,
+      "imagePath": "chapter-201.jpg",
+      "prompt": "Kunti, as a young princess named Pritha, stands gracefully before her father Shurasena in a royal palace courtyard as he lovingly presents her to his dear friend Kunti, after whom she will forever be known as Kunti. The moment is tender and solemn, marking the beginning of her extraordinary destiny connected to the Pandava lineage.",
+      "descriptionHi": "इस अध्याय में विदर्भ, यदु और शूर वंश की विस्तृत वंशावली का वर्णन किया गया है, जिसमें भगवान श्रीकृष्ण के पूर्वजों और परिवार की पूरी वंश-परम्परा बताई गई है। वसुदेव, देवकी, कंस, अक्रूर जैसे महत्वपूर्ण पात्रों का परिचय इसी वंशावली के माध्यम से होता है। कुन्ती का विवरण भी दिया गया है कि कैसे शूर की पुत्री पृथा अपने पिता के मित्र कुन्ति को दी जाकर 'कुन्ती' कहलाई और उन्होंने पाण्डु से विवाह किया।",
+      "personasUsed": [
+        "kunti"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:08:17.049Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -2940,5 +2968,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T14:06:37.214Z"
+  "lastUpdated": "2026-04-15T14:08:38.875Z"
 }
