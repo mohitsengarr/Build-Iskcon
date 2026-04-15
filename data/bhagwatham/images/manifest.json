@@ -2363,6 +2363,36 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 206,
+      "chapterTitle": "Chapter पाँच",
+      "cantoNumber": 10,
+      "imagePath": "chapter-206.jpg",
+      "prompt": "Nanda Maharaj and Vasudeva meet warmly at the joyful birth celebration of baby Krishna in the village of Gokul. Nanda Maharaj, filled with fatherly pride, greets Vasudeva with deep affection as festive music and offerings surround them, both men united in their love for the divine newborn child.",
+      "descriptionHi": "इस अध्याय में नन्द महाराज ने नवजात शिशु कृष्ण का जन्मोत्सव बड़े धूमधाम से मनाया। इस अवसर पर नन्द महाराज और वसुदेव की भेंट हुई, जो एक भावपूर्ण और महत्वपूर्ण मिलन था। यह अध्याय दो परिवारों के प्रेम और दिव्य शिशु कृष्ण के जन्म की आनंदमय उत्सव-भावना को दर्शाता है।",
+      "personasUsed": [
+        "krishna_child",
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:09:21.352Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 207,
+      "chapterTitle": "Chapter छह",
+      "cantoNumber": 10,
+      "imagePath": "chapter-207.jpg",
+      "prompt": "The demoness Putana, disguised as a beautiful and graceful woman, enters the peaceful village of Gokul and approaches Nanda Maharaja's home. Inside, the infant Krishna lies radiantly in his cradle, surrounded by the warm glow of the household. The divine child's serene presence fills the entire space with an otherworldly calm and protection.",
+      "descriptionHi": "इस अध्याय में कंस द्वारा भेजी गई राक्षसी पूतना गोकुल में आती है और शिशुओं को हानि पहुँचाने का प्रयास करती है। पूतना योगशक्ति से सुंदर स्त्री का रूप धारण कर नन्द महाराज के घर पहुँचती है, किन्तु जहाँ साक्षात् भगवान् श्रीकृष्ण विराजमान हों, वहाँ उसे मृत्यु के अतिरिक्त कुछ नहीं मिलता। यह अध्याय यह दर्शाता है कि भगवान् की उपस्थिति में कोई भी अशुभ शक्ति टिक नहीं सकती।",
+      "personasUsed": [
+        "krishna_child",
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:10:02.565Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -2968,5 +2998,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T14:08:38.875Z"
+  "lastUpdated": "2026-04-15T14:10:24.618Z"
 }
