@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
-import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, ChevronUp, Trash2, Maximize2, Minimize2 } from "lucide-react";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -40,31 +40,37 @@ const CANTO_NAMES: Record<number, string> = {
 
 // ── Lightbox ────────────────────────────────────────────────────────────────
 
-function Lightbox({ item, items, onClose, onNavigate }: {
+function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
   item: GalleryItem;
   items: GalleryItem[];
   onClose: () => void;
   onNavigate: (item: GalleryItem) => void;
+  onDelete: (item: GalleryItem) => void;
 }) {
   const currentIndex = items.findIndex(i => i.id === item.id);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const goPrev = useCallback(() => {
     if (currentIndex > 0) onNavigate(items[currentIndex - 1]);
+    setConfirmDelete(false);
   }, [currentIndex, items, onNavigate]);
 
   const goNext = useCallback(() => {
     if (currentIndex < items.length - 1) onNavigate(items[currentIndex + 1]);
+    setConfirmDelete(false);
   }, [currentIndex, items, onNavigate]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") { if (fullscreen) setFullscreen(false); else onClose(); }
       if (e.key === "ArrowLeft") goPrev();
       if (e.key === "ArrowRight") goNext();
+      if (e.key === "f" || e.key === "F") setFullscreen(f => !f);
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [onClose, goPrev, goNext]);
+  }, [onClose, goPrev, goNext, fullscreen]);
 
   const handleDownload = async () => {
     try {
@@ -100,13 +106,21 @@ function Lightbox({ item, items, onClose, onNavigate }: {
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4"
+      className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center"
       onClick={onClose}
     >
-      {/* Close */}
-      <button onClick={onClose} className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors">
-        <X className="w-5 h-5" />
-      </button>
+      {/* Top bar */}
+      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3" onClick={(e) => e.stopPropagation()}>
+        <p className="text-white/50 text-xs">{currentIndex + 1} / {items.length}</p>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setFullscreen(f => !f)} className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors" title="Fullscreen (F)">
+            {fullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
+          <button onClick={onClose} className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
 
       {/* Arrow nav */}
       {currentIndex > 0 && (
@@ -126,27 +140,52 @@ function Lightbox({ item, items, onClose, onNavigate }: {
         initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2 }}
         src={item.url}
         alt={item.description}
-        className="max-h-[70vh] max-w-full rounded-2xl object-contain shadow-2xl"
+        className={`object-contain shadow-2xl transition-all duration-300 ${
+          fullscreen ? "max-h-screen max-w-full rounded-none" : "max-h-[70vh] max-w-[90vw] rounded-2xl"
+        }`}
         onClick={(e) => e.stopPropagation()}
       />
 
-      {/* Info bar */}
-      <div className="mt-4 max-w-xl w-full text-center" onClick={(e) => e.stopPropagation()}>
-        <p className="text-white/90 text-sm font-medium mb-1">{item.chapterTitle}</p>
-        <p className="text-white/50 text-xs mb-3">
-          {CANTO_NAMES[item.cantoNumber] || `Canto ${item.cantoNumber}`} · Chapter {item.chapterNumber}
-          {item.type === "instagram" && <span className="ml-2 px-1.5 py-0.5 bg-pink-500/30 text-pink-300 rounded text-[10px]">Instagram</span>}
-        </p>
-        <div className="flex items-center justify-center gap-3">
-          <button onClick={handleDownload} className="flex items-center gap-1.5 text-xs text-white/70 hover:text-white px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
-            <Download className="w-3.5 h-3.5" /> Download
-          </button>
-          <button onClick={handleShare} className="flex items-center gap-1.5 text-xs text-white/70 hover:text-white px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
-            <Share2 className="w-3.5 h-3.5" /> Share
-          </button>
+      {/* Bottom info bar — hidden in fullscreen */}
+      {!fullscreen && (
+        <div className="mt-4 max-w-xl w-full text-center px-4" onClick={(e) => e.stopPropagation()}>
+          <p className="text-white/90 text-sm font-medium mb-1">{item.chapterTitle}</p>
+          {item.description && (
+            <p className="text-white/60 text-xs leading-relaxed mb-2 line-clamp-2" style={{ fontFamily: "var(--font-devanagari)" }}>
+              {item.description}
+            </p>
+          )}
+          <p className="text-white/40 text-[10px] mb-3">
+            {CANTO_NAMES[item.cantoNumber] || `Canto ${item.cantoNumber}`} · Chapter {item.chapterNumber} · Scene {item.sceneIndex}
+            {item.type === "instagram" && <span className="ml-2 px-1.5 py-0.5 bg-pink-500/30 text-pink-300 rounded text-[10px]">Instagram</span>}
+          </p>
+          <div className="flex items-center justify-center gap-2">
+            <button onClick={handleDownload} className="flex items-center gap-1.5 text-xs text-white/70 hover:text-white px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
+              <Download className="w-3.5 h-3.5" /> Download
+            </button>
+            <button onClick={handleShare} className="flex items-center gap-1.5 text-xs text-white/70 hover:text-white px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
+              <Share2 className="w-3.5 h-3.5" /> Share
+            </button>
+            {!confirmDelete ? (
+              <button onClick={() => setConfirmDelete(true)} className="flex items-center gap-1.5 text-xs text-red-400/70 hover:text-red-400 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 transition-colors">
+                <Trash2 className="w-3.5 h-3.5" /> Delete
+              </button>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => { onDelete(item); setConfirmDelete(false); }}
+                  className="flex items-center gap-1 text-xs text-white px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 transition-colors font-semibold"
+                >
+                  <Trash2 className="w-3 h-3" /> Confirm
+                </button>
+                <button onClick={() => setConfirmDelete(false)} className="text-xs text-white/50 hover:text-white px-2 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-        <p className="text-white/30 text-[10px] mt-2">{currentIndex + 1} / {items.length}</p>
-      </div>
+      )}
     </motion.div>
   );
 }
@@ -255,6 +294,41 @@ export default function Gallery() {
     instagram: allItems.filter(i => i.type === "instagram").length,
     cantos: new Set(allItems.map(i => i.cantoNumber)).size,
   }), [allItems]);
+
+  // ── Delete image ─────────────────────────────────────────────────────────
+  const handleDeleteImage = useCallback(async (item: GalleryItem) => {
+    try {
+      // Call the API server delete endpoint (works in dev mode)
+      const endpoint = item.type === "instagram"
+        ? `${API_BASE}/image/${item.chapterNumber}/${(item.sceneIndex ?? 0) + 100}` // IG uses offset +100
+        : `${API_BASE}/image/${item.chapterNumber}/${item.sceneIndex ?? 0}`;
+      const res = await fetch(endpoint, { method: "DELETE" });
+
+      if (!res.ok) {
+        const ct = res.headers.get("content-type") || "";
+        if (!ct.includes("application/json")) {
+          // Vercel returned HTML — server not available
+          alert("Delete requires the API server (dev mode). On production, images can be managed via the API server.");
+          return;
+        }
+      }
+    } catch {
+      alert("Delete requires the API server. Run locally to manage images.");
+      return;
+    }
+
+    // Remove from local state immediately
+    setAllItems(prev => prev.filter(i => i.id !== item.id));
+    // Navigate to next image or close lightbox
+    const idx = filtered.findIndex(i => i.id === item.id);
+    if (filtered.length > 1) {
+      const nextItem = filtered[idx + 1] || filtered[idx - 1];
+      if (nextItem) setLightboxItem(nextItem);
+      else setLightboxItem(null);
+    } else {
+      setLightboxItem(null);
+    }
+  }, [filtered]);
 
   const toggleCanto = (canto: number) => {
     setCollapsedCantos(prev => {
@@ -460,6 +534,7 @@ export default function Gallery() {
             items={filtered}
             onClose={() => setLightboxItem(null)}
             onNavigate={setLightboxItem}
+            onDelete={handleDeleteImage}
           />
         )}
       </AnimatePresence>
