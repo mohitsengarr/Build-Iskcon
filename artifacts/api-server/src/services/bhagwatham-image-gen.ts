@@ -182,21 +182,21 @@ const PERSONA_SHORT: Record<string, string> = {
   prahlada: "Prahlada: young boy aged 6-7, warm brown skin, innocent devotional eyes, simple white kurta, tulsi mala",
   narasimha: "Lord Narasimha: fierce half-lion half-man, golden lion mane, blue-skinned muscular torso, blazing golden eyes, sharp fangs",
   parikshit: "King Parikshit: dignified middle-aged king, short dark beard, white renunciation cloth, sitting cross-legged",
-  yashoda: "Mother Yashoda: beautiful middle-aged woman, loving face, dark hair with red sindoor, maroon silk sari with gold border",
-  kunti: "Queen Kunti: dignified elderly woman, greying hair in bun, white and gold silk sari, sorrowful gentle eyes",
-  draupadi: "Draupadi: beautiful young woman, dark olive skin, thick black wavy hair with jasmine flowers, red and gold silk sari",
-  gandhari: "Queen Gandhari: elderly woman with white silk blindfold over eyes, white sari, greying hair covered with pallu",
+  yashoda: "Mother Yashoda: beautiful middle-aged FEMALE woman (NO beard NO facial hair), loving smooth feminine face, dark hair with red sindoor, maroon silk sari with gold border",
+  kunti: "Queen Kunti: dignified elderly FEMALE woman (NO beard NO facial hair), greying hair in bun, white and gold silk sari, sorrowful gentle feminine eyes",
+  draupadi: "Draupadi: beautiful young FEMALE woman (NO beard NO facial hair), dark olive skin, smooth delicate feminine face, thick black wavy hair with jasmine flowers, red and gold silk sari",
+  gandhari: "Queen Gandhari: elderly FEMALE woman (NO beard NO facial hair) with white silk blindfold over eyes, white sari, greying hair covered with pallu",
   dhritarashtra: "King Dhritarashtra: very old blind king, closed sunken eyes, long white beard, white garments, wooden walking staff",
   vidura: "Vidura: wise dark-skinned middle-aged man, short grey beard, saffron dhoti, pilgrim's walking staff",
   bhishma: "Bhishma: majestic elderly warrior, silver-white hair, long white beard, lying on bed of arrows",
   yudhishthira: "King Yudhishthira: fair gentle-faced king, thin dark beard, white royal garments, simple golden crown",
-  radha: "Srimati Radharani: golden-complexioned goddess, large doe eyes, blue silk sari with gold, jasmine flowers in long braid",
+  radha: "Srimati Radharani: golden-complexioned FEMALE goddess (NO beard NO facial hair), large doe eyes, smooth feminine face, blue silk sari with gold, jasmine flowers in long braid",
   balarama: "Lord Balarama: fair muscular young man, blue garments, single earring, carrying plough and mace",
-  devaki: "Mother Devaki: beautiful noble woman, gentle maternal face, green and gold sari, folded hands",
+  devaki: "Mother Devaki: beautiful noble FEMALE woman (NO beard NO facial hair), gentle maternal smooth feminine face, green and gold sari, folded hands",
   vasudeva: "King Vasudeva: noble strong man, thick dark beard, royal garments, gold armlets, Yadava prince",
   kamsa: "King Kamsa: fearsome tyrant, dark complexion, cruel eyes, black and red royal garments, golden crown",
   uddhava: "Uddhava: devoted young man, fair, clean-shaven, yellow silk dhoti, carrying lotus, Vaishnava tilak",
-  rukmini: "Queen Rukmini: beautiful golden-fair queen, large eyes with kajal, red and gold silk sari, heavy bridal jewelry",
+  rukmini: "Queen Rukmini: beautiful golden-fair FEMALE queen (NO beard NO facial hair), large eyes with kajal, smooth feminine face, red and gold silk sari, heavy bridal jewelry",
   nanda: "Nanda Maharaja: jovial elderly cowherd, round face, grey beard, white dhoti, turban, sturdy farmer build",
   shiva: "Lord Shiva: ascetic with matted jata dreadlocks, third eye, crescent moon, ash-smeared, tiger skin, trident",
   duryodhana: "Prince Duryodhana: arrogant warrior king, broad face, dark beard, red and gold royal garments, carrying mace",
@@ -1068,7 +1068,7 @@ async function generateWithTogether(prompt: string, destPath: string, model: str
 
   // Style suffix — concise to leave maximum room for the scene description.
   // Scene accuracy is the #1 priority; style can be shorter.
-  const styleSuffix = "\nRaja Ravi Varma style classic oil painting, soft painterly brushstrokes, NOT photorealistic. Warm golden sunlight, vibrant sky. Traditional Indian devotional art, serene atmosphere, museum quality fine art. Ancient Vedic era 5000 years ago — absolutely NO modern items, NO modern hairstyles, NO trimmed beards, NO glasses, NO modern clothing. All men have long flowing uncut beards and matted jata hair or topknots as per ancient Vedic tradition. Women have long braided hair with flowers. Smooth feminine faces for women, no facial hair on women. Ancient ashram and forest settings only.";
+  const styleSuffix = "\nRaja Ravi Varma style classic oil painting, soft painterly brushstrokes, NOT photorealistic. Warm golden sunlight, vibrant sky. Traditional Indian devotional art, serene atmosphere, museum quality fine art. Ancient Vedic era 5000 years ago — absolutely NO modern items, NO modern hairstyles, NO trimmed beards, NO glasses, NO modern clothing. Lord Krishna must be the central prominent figure in the scene whenever present. All male sages and warriors have long flowing uncut beards and matted jata hair or topknots as per ancient Vedic tradition. CRITICAL GENDER RULE: All female characters (women, queens, mothers, goddesses) MUST have smooth clean feminine faces with absolutely NO beard NO mustache NO facial hair whatsoever — soft feminine features, delicate jawline, kajal-lined eyes. Women have long braided hair with flowers. Ancient ashram and forest settings only.";
 
   // Build the full prompt: scene first (most important), then style
   let fullPrompt = prompt + styleSuffix;

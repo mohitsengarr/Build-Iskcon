@@ -6,8 +6,7 @@ import { cn } from "@/lib/utils";
 import { slideDown } from "@/lib/animations";
 
 const NAV_ITEMS: { href: string; label: string; isPage?: boolean }[] = [
-  { href: "#hero", label: "Home" },
-  { href: "#vision", label: "Vision 2051" },
+  { href: "/", label: "Home", isPage: true },
   { href: "/bhagwatham", label: "Bhagwatham", isPage: true },
   { href: "/japa", label: "Japa Counter", isPage: true },
   { href: "/gallery", label: "Gallery", isPage: true },
@@ -25,6 +24,10 @@ export function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-surface flex-col relative text-on-surface">
+      {/* Skip to content — accessibility (SEN-140) */}
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:bg-primary focus:text-on-primary focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm focus:font-bold">
+        Skip to content
+      </a>
       {/* TopNavBar */}
       <nav className="fixed top-0 z-50 w-full bg-surface/90 backdrop-blur-md shadow-[0_4px_24px_rgba(27,28,28,0.06)] border-b border-outline-variant/10">
         <div className="flex justify-between items-center w-full px-4 sm:px-8 py-4 max-w-screen-2xl mx-auto">
@@ -129,7 +132,7 @@ export function Layout({ children }: { children: ReactNode }) {
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 w-full z-10 pt-24 pb-28 sm:pb-16">
+      <main id="main-content" className="flex-1 w-full z-10 pt-24 pb-28 sm:pb-16">
         {children}
       </main>
 
@@ -159,8 +162,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
           <div className="flex flex-col gap-3">
             <span className="font-sans text-[10px] uppercase tracking-[0.15em] font-bold text-primary mb-1">Explore</span>
-            <a href="#hero" onClick={(e) => { e.preventDefault(); scrollTo("#hero"); }} className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Home</a>
-            <a href="#vision" onClick={(e) => { e.preventDefault(); scrollTo("#vision"); }} className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Vision 2051</a>
+            <a href="/" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Home</a>
             <a href="/bhagwatham" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Bhagwatham</a>
             <a href="/japa" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Japa Counter</a>
             <a href="/gallery" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Gallery</a>

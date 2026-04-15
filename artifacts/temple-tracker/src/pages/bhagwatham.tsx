@@ -2489,9 +2489,13 @@ export default function Bhagwatham() {
   const startIdx = (currentPage - 1) * PAGES_PER_VIEW;
   const visiblePages = allPages.slice(startIdx, startIdx + PAGES_PER_VIEW);
 
-  // Filter by search
+  // Filter by search — language-aware (SEN-144)
   const displayPages = searchQuery.trim()
-    ? allPages.filter((p) => p.text.toLowerCase().includes(searchQuery.toLowerCase()))
+    ? allPages.filter((p) => {
+        const q = searchQuery.toLowerCase();
+        if (lang === "en" && p.textEn) return p.textEn.toLowerCase().includes(q);
+        return p.text.toLowerCase().includes(q) || (p.textEn?.toLowerCase().includes(q));
+      })
     : visiblePages;
 
   const triggerProcess = async () => {
@@ -2653,9 +2657,9 @@ export default function Bhagwatham() {
   // Theme
   const theme = THEME_STYLES[settings.theme];
 
-  // Page range display
-  const firstPageNum = displayPages[0]?.pageNumber ?? 0;
-  const lastPageNum = displayPages[displayPages.length - 1]?.pageNumber ?? 0;
+  // Page range display — use the first page of the current view as baseline
+  const firstPageNum = visiblePages[0]?.pageNumber ?? (displayPages[0]?.pageNumber ?? 0);
+  const lastPageNum = visiblePages[visiblePages.length - 1]?.pageNumber ?? (displayPages[displayPages.length - 1]?.pageNumber ?? 0);
   const currentVisiblePage = visiblePageNum || firstPageNum;
 
   return (
@@ -2785,7 +2789,7 @@ export default function Bhagwatham() {
                 className="px-1.5 sm:px-2 py-1 sm:py-1.5 bg-stone-100 border border-stone-200 rounded-lg text-[11px] sm:text-xs font-semibold text-stone-700 hover:bg-stone-200 transition-all active:scale-95 shrink-0"
                 title={lang === "hi" ? "Switch to English" : "हिंदी में पढ़ें"}
               >
-                {lang === "hi" ? "EN" : "हि"}
+                {lang === "hi" ? "हि" : "EN"}
               </button>
 
               {/* Bookmark button */}
@@ -2935,10 +2939,15 @@ export default function Bhagwatham() {
             {/* ── Pagination ── */}
             {!searchQuery && totalViewPages > 1 && (
               <div className={`flex items-center justify-center gap-2 mt-10 mb-6 pb-4 border-t ${theme.border} pt-6`}>
+                <button onClick={() => goToPage(1)} disabled={currentPage <= 1}
+                  className={`px-2 py-1.5 ${theme.surface} border ${theme.border} rounded-lg text-[10px] font-semibold ${theme.text} hover:border-orange-300 transition-all disabled:opacity-30 hidden sm:block`}
+                >
+                  First
+                </button>
                 <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage <= 1}
                   className={`inline-flex items-center gap-1 px-3 py-1.5 ${theme.surface} border ${theme.border} rounded-lg text-xs font-semibold ${theme.text} hover:border-orange-300 transition-all disabled:opacity-30`}
                 >
-                  <ChevronLeft className="w-3 h-3" /> Previous
+                  <ChevronLeft className="w-3 h-3" /> Prev
                 </button>
 
                 {/* Page numbers */}
@@ -2970,6 +2979,11 @@ export default function Bhagwatham() {
                   className={`inline-flex items-center gap-1 px-3 py-1.5 ${theme.surface} border ${theme.border} rounded-lg text-xs font-semibold ${theme.text} hover:border-orange-300 transition-all disabled:opacity-30`}
                 >
                   Next <ChevronRight className="w-3 h-3" />
+                </button>
+                <button onClick={() => goToPage(totalViewPages)} disabled={currentPage >= totalViewPages}
+                  className={`px-2 py-1.5 ${theme.surface} border ${theme.border} rounded-lg text-[10px] font-semibold ${theme.text} hover:border-orange-300 transition-all disabled:opacity-30 hidden sm:block`}
+                >
+                  Last
                 </button>
               </div>
             )}

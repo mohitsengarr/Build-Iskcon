@@ -80,14 +80,14 @@ export default function PersonaGallery() {
                         loading="lazy"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center">
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-100">
                         <div className="text-center">
-                          <div className="w-16 h-16 mx-auto mb-2 rounded-full bg-stone-200 flex items-center justify-center">
-                            <span className="text-2xl font-bold text-stone-400">
+                          <div className="w-20 h-20 mx-auto mb-2 rounded-full bg-gradient-to-br from-orange-200 to-amber-300 flex items-center justify-center shadow-inner">
+                            <span className="text-3xl font-serif font-bold text-orange-700/70">
                               {p.name.charAt(0)}
                             </span>
                           </div>
-                          <p className="text-xs text-stone-400">No portrait yet</p>
+                          <p className="text-[10px] text-orange-600/50 font-medium italic">Portrait coming soon</p>
                         </div>
                       </div>
                     )}

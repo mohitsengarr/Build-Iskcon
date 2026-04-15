@@ -248,19 +248,20 @@ ${summaryHi ? `Hindi summary: ${summaryHi}` : ""}
 
 Write an Instagram caption for this Srimad Bhagavatam illustration. The caption must tell the ACTUAL STORY shown in the scene — not generic devotional text.
 
-1. **caption**: Write a detailed, story-driven caption (8-12 lines). Structure it as:
-   - Line 1: "📖 Srimad Bhagavatam — ${cantoChapterLine || chapterTitle}"
+1. **caption**: Write a BILINGUAL (Hindi + English) story-driven caption (12-16 lines). Structure it as:
+   - Line 1: "📖 श्रीमद्भागवतम् — ${cantoChapterLine || chapterTitle}"
    - Line 2: A relevant Sanskrit shlok from this chapter (in Devanagari script)
-   - Line 3: English translation of the shlok
-   - Line 4-10: NARRATE THE ACTUAL STORY of this scene in detail. Write as if you are a storyteller:
+   - Line 3: Hindi meaning of the shlok (1-2 lines)
+   - Line 4: English translation of the shlok (1-2 lines)
+   - Line 5-6: HINDI narration — Tell the story in simple Hindi (3-4 lines). Who are the characters? What is happening in this scene?
+   - Line 7-10: ENGLISH narration — Narrate the SAME story in English (4-5 lines):
      * Who are the characters and what are they doing?
-     * What happened before this moment? What led to this scene?
      * What is the conflict, miracle, or key event?
-     * What happens as a result?
      * What is the spiritual significance?
-   - Line 11: A brief devotional reflection connecting this story to the reader's life
-   - Line 12: "🙏 Hare Krishna"
-   Use line breaks between sections. Keep total under 2000 characters.
+   - Line 11: A devotional reflection in Hindi connecting to the reader's life
+   - Line 12: Same reflection in English
+   - Line 13: "🙏 हरे कृष्ण | Hare Krishna"
+   Use line breaks between sections. Keep total under 2200 characters.
 
 2. **hashtags**: 5 relevant hashtags. Include #SrimadBhagavatam #ISKCON and 3 scene-specific ones.
 

@@ -46,8 +46,8 @@ export async function createApp(): Promise<Express> {
   // Bhagwatham OCR + audit + image gen + re-OCR (Sarvam AI)
   startBhagwathamCron();
 
-  // Gita OCR disabled for now
-  // startGitaCron();
+  // Gita OCR (SEN-84)
+  startGitaCron();
 
   // Instagram + Temple Discovery
   startInstagramCron();
