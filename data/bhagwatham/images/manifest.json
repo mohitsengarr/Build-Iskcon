@@ -2881,6 +2881,34 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 243,
+      "chapterTitle": "Chapter बयालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-243.jpg",
+      "prompt": "Krishna gently places his lotus feet on Trivakra's toes and lifts her chin with his hand, straightening her hunched back. The hunchbacked maidservant of Kamsa is transformed into a beautiful, graceful woman on the streets of Mathura, her face radiating joy and wonder as she gazes upon Krishna with devotion.",
+      "descriptionHi": "इस अध्याय में भगवान् कृष्ण कंस की कुबड़ी दासी त्रिवक्रा से मिलते हैं और उसे लेप देने के बदले में उसका कूबड़ ठीक कर देते हैं, जिससे वह एक सुन्दर स्त्री बन जाती है। इसके बाद कृष्ण और बलराम मथुरा के धनुष-यज्ञ स्थल पर पहुँचते हैं। यह अध्याय भगवान् की करुणा और उनकी दिव्य शक्ति का प्रमाण देता है जो भक्तों के कष्ट दूर करती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:25:29.267Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 244,
+      "chapterTitle": "Chapter तैंतालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-244.jpg",
+      "prompt": "Young Krishna stands fearlessly at the grand arena gateway in Mathura, facing the mighty royal elephant Kuvalayapida sent by Kansa. With divine strength and calm resolve, Krishna subdues the enormous tusked elephant, as amazed onlookers watch in awe. The atmosphere radiates Krishna's boundless courage and celestial power.",
+      "descriptionHi": "इस अध्याय में कृष्ण ने कंस द्वारा भेजे गए विशालकाय हाथी कुवलयापीड का वध किया, जो मल्लयुद्ध के अखाड़े के द्वार पर खड़ा था। कृष्ण ने अपनी अलौकिक शक्ति और साहस से उस मदमस्त हाथी को परास्त कर दिया। यह घटना कृष्ण की दैवीय शक्ति और अधर्म के विनाश की ओर उनके अटल संकल्प को दर्शाती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:27:44.233Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3486,5 +3514,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T15:24:50.818Z"
+  "lastUpdated": "2026-04-15T15:28:06.916Z"
 }
