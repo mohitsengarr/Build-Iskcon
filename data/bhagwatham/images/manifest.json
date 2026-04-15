@@ -2546,6 +2546,21 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 218,
+      "chapterTitle": "Chapter सत्रह",
+      "cantoNumber": 10,
+      "imagePath": "chapter-218.jpg",
+      "prompt": "Krishna and Arjuna sit together on the battlefield of Kurukshetra, where Krishna explains to Arjuna the three kinds of faith — sattvic, rajasic, and tamasic — that guide all human beings in their worship, deeds, and devotion, illuminating the divine wisdom of the Gita's seventeenth chapter.",
+      "descriptionHi": "यह अध्याय रिक्त है या इसमें कोई सामग्री नहीं दी गई है, केवल अध्याय का शीर्षक 'सत्रह' (सत्रह अर्थात् सत्रहवाँ) उपलब्ध है। बिना सामग्री के इस अध्याय की घटनाओं या पात्रों का विवरण देना संभव नहीं है। यदि यह भगवद्गीता का सत्रहवाँ अध्याय है, तो इसमें श्रद्धा के तीन प्रकारों — सात्विक, राजसिक और तामसिक — का वर्णन है।",
+      "personasUsed": [
+        "krishna_adult",
+        "arjuna"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:22:18.760Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3151,5 +3166,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T14:21:25.031Z"
+  "lastUpdated": "2026-04-15T14:23:36.050Z"
 }
