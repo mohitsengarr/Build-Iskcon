@@ -2393,6 +2393,39 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 208,
+      "chapterTitle": "Chapter सात",
+      "cantoNumber": 10,
+      "imagePath": "chapter-208.jpg",
+      "prompt": "The infant Krishna, just three months old, opens his tiny mouth wide in Vrindavan, revealing the entire universe within — stars, planets, and all of creation glowing inside. His mother Yashoda and the gopas stand nearby in awe, while the sage Shukadeva narrates this divine vision to the attentive King Parikshit.",
+      "descriptionHi": "इस अध्याय में शुकदेव गोस्वामी महाराज परीक्षित को श्रीकृष्ण की बाल-लीलाओं का वर्णन करते हैं, जिसमें शकट भंजन और तृणावर्त असुर के वध का उल्लेख है। श्रीकृष्ण ने मात्र तीन मास की आयु में अपने मुख के भीतर संपूर्ण ब्रह्माण्ड का दर्शन कराया। यह लीला भगवान् की अनंत शक्ति और उनके दिव्य स्वरूप का प्रमाण है।",
+      "personasUsed": [
+        "krishna_child",
+        "krishna_adult",
+        "shukadeva",
+        "parikshit",
+        "yashoda"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:11:06.407Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 209,
+      "chapterTitle": "Chapter आठ",
+      "cantoNumber": 10,
+      "imagePath": "chapter-209.jpg",
+      "prompt": "In the peaceful courtyard of Nanda Maharaja's home in Vrindavana, the sage Gargamuni quietly performs the sacred naming ceremony for infant Krishna and baby Balarama. Nanda Maharaja stands nearby with folded hands, listening reverently as Gargamuni reveals the divine significance of each name, the moment filled with quiet spiritual grace.",
+      "descriptionHi": "इस अध्याय में गर्गमुनि द्वारा बलराम और कृष्ण के नामकरण संस्कार का गुप्त रूप से सम्पन्न होने का वर्णन है। गर्गमुनि ने नन्द महाराज को दोनों बालकों के नामों का अर्थ और महत्व समझाया। इसके साथ ही कृष्ण की बाल लीलाओं — मिट्टी खाना और माता यशोदा को मुख में विराट रूप दिखाना — का भी आध्यात्मिक महत्व प्रकट हुआ।",
+      "personasUsed": [
+        "krishna_child",
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:12:09.301Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -2998,5 +3031,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T14:10:24.618Z"
+  "lastUpdated": "2026-04-15T14:12:33.849Z"
 }
