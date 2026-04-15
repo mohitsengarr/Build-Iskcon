@@ -3975,6 +3975,37 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 349,
+      "chapterTitle": "Chapter सताईस",
+      "cantoNumber": 12,
+      "imagePath": "chapter-349.jpg",
+      "prompt": "Krishna sits serenely in a sacred assembly, instructing Vyasa, Narada, and Brahma on the divine methods of worship and devotion. He explains how the consecrated deity form may be honored through stone, wood, metal, or the heart itself, while the sages listen with deep reverence, receiving this timeless wisdom of devotional practice.",
+      "descriptionHi": "इस अध्याय में भगवान् श्रीकृष्ण ने व्यास, नारद और ब्रह्मा की उपस्थिति में देवपूजा (अर्चन) की विधि का विस्तार से वर्णन किया है। उन्होंने बताया कि अर्चाविग्रह की पूजा मन को शुद्ध करती है और समस्त वांछित फलों को प्रदान करती है। यह विधि सभी वर्णों और आश्रमों के लोगों के लिए, जिनमें स्त्रियाँ और शूद्र भी सम्मिलित हैं, समान रूप से उपयोगी और कल्याणकारी है।",
+      "personasUsed": [
+        "krishna_adult",
+        "narada",
+        "vyasa",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T17:29:24.217Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 350,
+      "chapterTitle": "Chapter अट्ठाईस",
+      "cantoNumber": 12,
+      "imagePath": "chapter-350.jpg",
+      "prompt": "Brahma sits in serene meditation in the cosmic realm, surrounded by the luminous fabric of creation. He contemplates the three gunas of Prakriti that form all matter, while the eternal Atma glows as a soft inner light within all things around him, revealing the hidden spiritual truth beneath the material world.",
+      "descriptionHi": "इस अध्याय में ज्ञान-योग का सार प्रस्तुत किया गया है — यह बताया गया है कि इस ब्रह्माण्ड की प्रत्येक वस्तु प्रकृति के तीन गुणों की उपज है और अनिवार्यतः असत्य है। हर वस्तु के भीतर आत्मा छिपा हुआ है जो कार्य-कारण दोनों का आधार है। मनुष्य को विरक्त भाव से जगत में विचरण करते हुए आत्मा के प्रकाश में सब कुछ देखना चाहिए।",
+      "personasUsed": [
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T17:30:01.272Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 351,
       "chapterTitle": "Chapter उन्तीस",
       "imagePath": "chapter-351.jpg",
@@ -4018,5 +4049,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T17:28:47.617Z"
+  "lastUpdated": "2026-04-15T17:30:22.475Z"
 }
