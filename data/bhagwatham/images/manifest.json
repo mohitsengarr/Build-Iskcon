@@ -2781,6 +2781,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 235,
+      "chapterTitle": "Chapter चौंतीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-235.jpg",
+      "prompt": "In the Ambika forest at night, Krishna gently touches a large serpent with his lotus feet while the serpent holds Nanda Maharaja. In an instant, the serpent is transformed, releasing Nanda and revealing itself as Sudarsana, a radiant celestial being, who now stands before Krishna with folded hands, freed from his ancient curse.",
+      "descriptionHi": "इस अध्याय में भगवान् श्रीकृष्ण ने अपने पिता नन्द महाराज को एक विशाल सर्प के चंगुल से बचाया, जब वे अम्बिका वन में शिव पूजा के लिए गये थे। कृष्ण के चरणकमल स्पर्श से वह सर्प अपने श्राप से मुक्त होकर सुदर्शन नामक विद्याधर के दिव्य रूप में प्रकट हो गया। यह घटना यह दर्शाती है कि भगवान् के चरण-स्पर्श मात्र से जीव के समस्त पाप और श्राप नष्ट हो जाते हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:38:58.236Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3386,5 +3400,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T14:36:50.155Z"
+  "lastUpdated": "2026-04-15T14:39:19.266Z"
 }
