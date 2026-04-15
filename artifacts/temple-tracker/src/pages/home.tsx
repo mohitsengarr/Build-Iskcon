@@ -281,14 +281,19 @@ function FeaturedProject() {
 
 // ── Section: Temple Projects ─────────────────────────────────────────────────
 
+const TABLE_PAGE_SIZE = 10;
+
 function TempleProjectsSection() {
   const [temples, setTemples] = useState<Temple[]>(TEMPLES);
+  const [tablePage, setTablePage] = useState(0);
   useEffect(() => { fetchLiveTemples().then(setTemples); }, []);
   const liveStats = computeStats(temples);
   const liveTotalNeeded = liveStats.totalFundraisingGoal - liveStats.totalFundraisingRaised;
   const countries = new Set(temples.map(t => { const parts = t.location.split(","); return parts[parts.length - 1]?.trim(); }).filter(Boolean));
+  const totalPages = Math.ceil(temples.length / TABLE_PAGE_SIZE);
+  const pagedTemples = temples.slice(tablePage * TABLE_PAGE_SIZE, (tablePage + 1) * TABLE_PAGE_SIZE);
   const urgentTemples = [...temples]
-    .filter((t) => t.id !== 1 && t.status !== "consecrated" && t.fundraisingGoal > 0) // exclude TOVP (shown as featured)
+    .filter((t) => t.id !== 1 && t.status !== "consecrated" && t.fundraisingGoal > 0)
     .sort((a, b) => (b.constructionProgress) - (a.constructionProgress))
     .slice(0, 6);
 
@@ -330,7 +335,7 @@ function TempleProjectsSection() {
             </tr>
           </thead>
           <tbody>
-            {temples.map((t) => {
+            {pagedTemples.map((t) => {
               const pct = t.fundraisingGoal > 0 ? Math.round((t.fundraisingRaised / t.fundraisingGoal) * 100) : 0;
               const gap = Math.max(0, (t.fundraisingGoal - t.fundraisingRaised) / 1_000_000).toFixed(1);
               return (
@@ -359,6 +364,39 @@ function TempleProjectsSection() {
             })}
           </tbody>
         </table>
+        {/* Pagination */}
+        <div className="flex items-center justify-between mt-4 px-1">
+          <p className="text-xs text-on-surface-variant">
+            Showing {tablePage * TABLE_PAGE_SIZE + 1}–{Math.min((tablePage + 1) * TABLE_PAGE_SIZE, temples.length)} of {temples.length} temples
+          </p>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setTablePage(p => Math.max(0, p - 1))}
+              disabled={tablePage === 0}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-outline-variant/20 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-surface-container-low transition-colors"
+            >
+              ← Previous
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => setTablePage(i)}
+                className={`w-7 h-7 text-xs font-bold rounded-lg transition-colors ${
+                  i === tablePage ? "bg-primary text-on-primary" : "hover:bg-surface-container-low text-on-surface-variant"
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button
+              onClick={() => setTablePage(p => Math.min(totalPages - 1, p + 1))}
+              disabled={tablePage >= totalPages - 1}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-outline-variant/20 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-surface-container-low transition-colors"
+            >
+              Next →
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Temple donation cards with pre-set amounts */}
