@@ -2214,6 +2214,31 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 188,
+      "chapterTitle": "Chapter ग्यारह",
+      "cantoNumber": 9,
+      "imagePath": "chapter-188.jpg",
+      "prompt": "Sita Devi, serene and dignified, stands at the edge of a sacred forest clearing near Valmiki's ashram, her twin sons Lava and Kusha beside her. With folded hands and closed eyes, she peacefully merges into the embrace of Mother Earth, as the sage Valmiki watches with reverence and the children look on in quiet wonder.",
+      "descriptionHi": "इस अध्याय में भगवान् रामचन्द्र के अयोध्या में राज्य करने, यज्ञ सम्पन्न करने और सीतादेवी को वनवास देने की लीला का वर्णन है। सीतादेवी वाल्मीकि के आश्रम में लव और कुश को जन्म देकर पृथ्वी में समा गईं। यह लीला भगवान् के मानवीय रूप में धर्म और लोकमर्यादा के पालन की गहन आध्यात्मिक महत्ता को दर्शाती है।",
+      "generatedAt": "2026-04-15T13:53:18.248Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 189,
+      "chapterTitle": "Chapter बारह",
+      "cantoNumber": 9,
+      "imagePath": "chapter-189.jpg",
+      "prompt": "Shukadeva, the serene sage, sits before the attentive King Parikshit on the banks of the Ganges, reciting the long and sacred lineage of Kusha, son of Lord Ramachandra. He speaks of Maru, the yoga-perfected king dwelling in the village of Kalapa, destined to revive the solar dynasty at the end of Kali-yuga.",
+      "descriptionHi": "शुकदेव गोस्वामी राजा परीक्षित को भगवान् रामचन्द्र के पुत्र कुश की विस्तृत वंशावली सुना रहे हैं, जिसमें कुश से लेकर सुमित्र तक के राजाओं का क्रमबद्ध वर्णन है। इस वंश में मरु नामक योगसिद्ध राजा का उल्लेख विशेष महत्त्वपूर्ण है जो कलाप ग्राम में निवास करते हुए कलियुग के अन्त में सूर्यवंश को पुनरुज्जीवित करेंगे। यह अध्याय भगवान् राम के पवित्र वंश की निरंतरता और उसके आध्यात्मिक महत्त्व को दर्शाता है।",
+      "personasUsed": [
+        "shukadeva",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T13:56:02.722Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -2819,5 +2844,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T13:52:38.912Z"
+  "lastUpdated": "2026-04-15T13:56:24.148Z"
 }
