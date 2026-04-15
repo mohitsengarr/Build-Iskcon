@@ -2996,6 +2996,48 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 251,
+      "chapterTitle": "Chapter पचास",
+      "cantoNumber": 10,
+      "imagePath": "chapter-251.jpg",
+      "prompt": "Krishna stands at the edge of the western sea, overseeing the magnificent construction of Dwarkapuri, a golden coastal city rising from the ocean. Architects, divine builders, and citizens gather around him as he envisions a new home for the Yadava clan, his serene gaze reflecting wisdom, protection, and the promise of a prosperous future.",
+      "descriptionHi": "इस अध्याय में कृष्ण ने जरासन्ध को सत्रह बार युद्ध में पराजित किया और यादवों की सुरक्षा के लिए समुद्र तट पर द्वारकापुरी की स्थापना की। कंस-वध के बाद उसकी रानियाँ अस्ति और प्राप्ति अपने पिता जरासन्ध के पास गईं और उसे यादवों के विरुद्ध भड़काया। यह अध्याय कृष्ण की दूरदर्शिता और नेतृत्व का प्रतीक है, जिसमें उन्होंने अपनी प्रजा की रक्षा हेतु एक नई नगरी का निर्माण किया।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:35:12.889Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 252,
+      "chapterTitle": "Chapter इक्यावन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-252.jpg",
+      "prompt": "Inside a dim mountain cave, Mucukunda awakens from his ancient sleep, his eyes filled with divine fire, as he gazes upon the radiant form of Krishna standing before him in golden light. Krishna, serene and unarmed, smiles gently at the awakened king, blessing him with his luminous presence after long ages of slumber.",
+      "descriptionHi": "इस अध्याय में श्रीकृष्ण ने चतुराई से कालयवन को एक पर्वतगुफा तक ले जाकर मुचुकुन्द की क्रोधाग्नि दृष्टि द्वारा उसका नाश करवाया। मुचुकुन्द, जो देवताओं की सेवा के पश्चात् दीर्घनिद्रा के वरदान के साथ गुफा में सो रहे थे, अचानक जागकर कृष्ण के दर्शन से धन्य हुए। यह घटना श्रीकृष्ण की दिव्य लीला और भक्त के प्रति उनकी अनुकम्पा का सुंदर उदाहरण है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:36:00.029Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 253,
+      "chapterTitle": "Chapter बावन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-253.jpg",
+      "prompt": "In the royal court of Dwaraka, Krishna sits with calm dignity as a humble Brahmin messenger stands before him, presenting a heartfelt letter from Princess Rukmini. Krishna reads her words of devotion and longing, his eyes reflecting deep compassion and joy, as the moment marks the beginning of their sacred union.",
+      "descriptionHi": "इस अध्याय में बताया गया है कि भगवान कृष्ण और बलराम द्वारका चले गये, जहाँ एक ब्राह्मण दूत के माध्यम से कृष्ण को राजकुमारी रुक्मिणी का प्रेम-संदेश प्राप्त हुआ। रुक्मिणी ने अपने हृदय की भावनाएँ उस ब्राह्मण के द्वारा कृष्ण तक पहुँचाईं और कृष्ण से विवाह की याचना की। अंततः भगवान कृष्ण ने रुक्मिणी को अपनी पत्नी के रूप में स्वीकार किया, जो भक्ति और प्रेम की दिव्य परिणति को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:36:34.914Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3601,5 +3643,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T15:34:36.621Z"
+  "lastUpdated": "2026-04-15T15:36:56.338Z"
 }
