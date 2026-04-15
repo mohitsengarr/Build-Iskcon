@@ -2824,6 +2824,21 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 239,
+      "chapterTitle": "Chapter अड़तीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-239.jpg",
+      "prompt": "Akrura rides his chariot through a golden sunset landscape toward Gokul, his hands folded in reverence and his eyes filled with tears of devotion. He pauses on a meadow path, overwhelmed with spiritual longing, contemplating the divine vision of Krishna and Balarama whose feet even Brahma and Shiva worship.",
+      "descriptionHi": "इस अध्याय में अक्रूर की मथुरा से वृन्दावन की यात्रा का वर्णन है, जिसमें वे कंस के आदेश पर कृष्ण और बलराम को मथुरा लाने के लिए निकले। मार्ग में वे मन ही मन कृष्ण के चरणकमलों के दर्शन की आकांक्षा और भक्तिभाव से भरे सोचते रहे कि ब्रह्मा और रुद्र जिन चरणों की पूजा करते हैं, उन्हें देखने का सौभाग्य उन्हें मिलने वाला है। सूर्यास्त के समय वे गोकुल पहुँचे और भाव-विभोर होकर रथ से उतर पड़े।",
+      "personasUsed": [
+        "krishna_adult",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:21:36.606Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3429,5 +3444,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T15:14:49.929Z"
+  "lastUpdated": "2026-04-15T15:21:57.979Z"
 }
