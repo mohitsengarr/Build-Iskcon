@@ -508,14 +508,9 @@ const FALLBACK_STATS = {
 };
 
 export default function Dashboard() {
-  const { data: apiStats } = useGetDashboardStats({
-    query: {
-      retry: 0,
-      placeholderData: FALLBACK_STATS as any,
-    },
-  });
-
-  const stats = apiStats ?? FALLBACK_STATS;
+  // Use static TEMPLE_STATS directly — the API server doesn't run on Vercel,
+  // so useGetDashboardStats would return stale/wrong data from the HTML fallback
+  const stats = FALLBACK_STATS as any;
 
   return (
     <Layout>
@@ -564,7 +559,7 @@ export default function Dashboard() {
             </motion.h1>
 
             <motion.p variants={fadeInUp} className="text-on-surface-variant font-sans text-sm mb-5 leading-relaxed">
-              {stats.activeProjects || stats.totalTemples} ISKCON temples rising across {new Set(Object.keys(stats.templesByStatus ?? {})).size > 0 ? "14" : "multiple"} countries — track real-time progress, choose a project, and give in seconds.
+              {stats.activeProjects || stats.totalTemples} ISKCON temples rising across 15 countries — track real-time progress, choose a project, and give in seconds.
             </motion.p>
 
             <motion.figure variants={fadeInUp} className="mb-6 border-l-2 border-primary/40 pl-4">
