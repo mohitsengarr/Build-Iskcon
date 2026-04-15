@@ -3038,6 +3038,34 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 254,
+      "chapterTitle": "Chapter तिरपन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-254.jpg",
+      "prompt": "Krishna rides swiftly in his magnificent chariot driven by Daruka through the night toward Kundina, the capital of Vidarbha. His face is radiant with divine resolve as he journeys to honor Rukmini's heartfelt letter. In the royal city, Rukmini awaits with hope, while kings like Jarasandha and Shishupala have gathered for the grand wedding ceremony.",
+      "descriptionHi": "इस अध्याय में भगवान् श्रीकृष्ण रुक्मिणी का पत्र पाकर तुरन्त विदर्भ की राजधानी कुण्डिन की ओर प्रस्थान करते हैं और शत्रु राजाओं की उपस्थिति के बावजूद रुक्मिणी का अपहरण करने का संकल्प लेते हैं। रुक्मिणी का भाई रुक्मी उनके विवाह का विरोध करता था और शिशुपाल से उसका विवाह तीन दिनों में होने को था। यह घटना भक्ति और प्रेम की शक्ति को दर्शाती है, जहाँ रुक्मिणी की पूर्ण शरण और श्रीकृष्ण की कृपा का सुंदर संगम होता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:37:27.263Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 255,
+      "chapterTitle": "Chapter चौवन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-255.jpg",
+      "prompt": "Krishna rides a grand chariot swiftly across an open plain, with Princess Rukmini seated beside him, her eyes glancing toward him with a mixture of wonder and trust. Krishna turns to her with a calm, reassuring smile, dispelling her fears as his loyal army led by Balarama confidently faces the pursuing kings in the distance.",
+      "descriptionHi": "इस अध्याय में श्रीकृष्ण रुक्मिणी को लेकर द्वारका की ओर जा रहे हैं, जब शत्रु राजा उनका पीछा करते हैं। बलराम और यादव सेना ने विपक्षी सेनाओं को पराजित किया और जरासन्ध आदि राजा पीछे हट गए। अंत में श्रीकृष्ण ने रुक्मिणी से द्वारका में विवाह किया, और यह प्रसंग दैवी प्रेम और भगवान की सुरक्षा शक्ति का प्रतीक है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:38:19.345Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3643,5 +3671,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T15:36:56.338Z"
+  "lastUpdated": "2026-04-15T15:38:40.432Z"
 }
