@@ -559,7 +559,7 @@ export default function Dashboard() {
             </motion.h1>
 
             <motion.p variants={fadeInUp} className="text-on-surface-variant font-sans text-sm mb-5 leading-relaxed">
-              {stats.activeProjects || stats.totalTemples} ISKCON temples rising across 15 countries — track real-time progress, choose a project, and give in seconds.
+              {stats.totalTemples} ISKCON temples rising across 15 countries — track real-time progress, choose a project, and give in seconds.
             </motion.p>
 
             <motion.figure variants={fadeInUp} className="mb-6 border-l-2 border-primary/40 pl-4">
@@ -602,7 +602,7 @@ export default function Dashboard() {
               <span className="text-xs font-semibold text-primary uppercase tracking-widest">Active</span>
             </div>
             <h3 className="text-on-surface-variant text-sm font-medium uppercase tracking-wide mb-1">Active Projects</h3>
-            <div className="text-3xl font-black text-on-surface font-serif">{stats.activeProjects || stats.totalTemples}</div>
+            <div className="text-3xl font-black text-on-surface font-serif">{stats.totalTemples}</div>
           </motion.div>
 
           <motion.div variants={fadeInUp} className="bg-surface-container p-6 rounded-xl transition-all hover:bg-surface-container-high">
