@@ -3841,6 +3841,34 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 338,
+      "chapterTitle": "Chapter सोलह",
+      "cantoNumber": 12,
+      "imagePath": "chapter-338.jpg",
+      "prompt": "Uddhava stands humbly before Krishna at a sacred site, hands folded in deep reverence, describing the Lord's infinite glories. Krishna listens serenely, radiant with divine light, as Uddhava speaks of His beginningless and endless nature as the soul dwelling within all living beings.",
+      "descriptionHi": "इस अध्याय में भगवान् कृष्ण अपनी दिव्य विभूतियों का वर्णन करते हैं, जिनमें ज्ञान, बल और प्रभाव जैसी विशेष शक्तियाँ सम्मिलित हैं। उद्धव भगवान् की महिमा का गान करते हुए बताते हैं कि कृष्ण का न आदि है न अन्त, और वे समस्त जीवों की आत्मा हैं। यह अध्याय आत्मिक दृष्टि से अत्यंत महत्त्वपूर्ण है क्योंकि यह ईश्वर की सर्वव्यापकता और सर्वशक्तिमत्ता को प्रकट करता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T17:23:01.436Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 339,
+      "chapterTitle": "Chapter सत्रह",
+      "cantoNumber": 12,
+      "imagePath": "chapter-339.jpg",
+      "prompt": "Krishna sits peacefully with Uddhava in a serene setting, speaking with gentle wisdom and divine authority. Krishna explains the sacred origins of the four varnas and four ashramas, gesturing gracefully as he describes how the cosmic social order emerged from the Lord's own form across the ages of time.",
+      "descriptionHi": "भगवान् श्रीकृष्ण उद्धव को वर्णाश्रम प्रणाली का विस्तृत वर्णन करते हैं, जिसमें सत्ययुग से त्रेतायुग तक के सामाजिक एवं धार्मिक विकास की व्याख्या की गई है। वे बताते हैं कि कैसे चार वर्ण और चार आश्रम भगवान् के शरीर के विभिन्न अंगों से उत्पन्न हुए और समाज को धर्म का मार्ग दिखाते हैं। यह अध्याय आत्मिक एवं सामाजिक व्यवस्था के दिव्य स्रोत को उजागर करता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T17:23:33.994Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 340,
       "chapterTitle": "अध्याय अठारह",
       "imagePath": "chapter-340.jpg",
@@ -3853,6 +3881,16 @@
       "generatedAt": "2026-04-13T17:50:41.671Z",
       "sceneIndex": 0,
       "cantoNumber": 12
+    },
+    {
+      "chapterNumber": 341,
+      "chapterTitle": "Chapter उन्नीस",
+      "cantoNumber": 12,
+      "imagePath": "chapter-341.jpg",
+      "prompt": "A devoted spiritual seeker sits in deep meditation beneath a ancient tree, surrounded by the peaceful glow of dawn. A wise guru gently guides the student, illuminating the difference between illusory knowledge and true self-realization. The student's face reflects a moment of profound inner awakening and clarity.",
+      "descriptionHi": "इस अध्याय में आध्यात्मिक ज्ञान की सिद्धि का वर्णन किया गया है, जिसमें बताया गया है कि काल्पनिक ज्ञान के अभ्यासकर्ता किस प्रकार अपनी साधना में आगे बढ़ते हैं। सच्चे आत्म-ज्ञान और परमात्मा की अनुभूति के मार्ग पर चलने वाले साधक को किन अवस्थाओं से गुजरना पड़ता है, यह स्पष्ट किया गया है। यह अध्याय आध्यात्मिक जिज्ञासुओं को सत्य और असत्य ज्ञान के भेद को समझने की प्रेरणा देता है।",
+      "generatedAt": "2026-04-15T17:24:01.134Z",
+      "sceneIndex": 0
     },
     {
       "chapterNumber": 351,
@@ -3898,5 +3936,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T17:22:29.507Z"
+  "lastUpdated": "2026-04-15T17:24:23.499Z"
 }
