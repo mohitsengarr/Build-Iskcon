@@ -2613,6 +2613,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 223,
+      "chapterTitle": "Chapter बाईस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-223.jpg",
+      "prompt": "On the banks of the Yamuna river, young unmarried gopis who had been observing a devout vow to Goddess Katyayani stand in the water, their hands folded in reverence. Krishna sits gracefully on a kadamba tree above, holding their garments, smiling gently as the gopis earnestly beseech him, surrendering completely to his divine will.",
+      "descriptionHi": "इस अध्याय में ब्रज की कुमारी गोपियों ने श्रीकृष्ण को पति रूप में पाने की कामना से देवी कात्यायनी की व्रत-पूजा की। श्रीकृष्ण ने यमुना नदी के तट पर स्नान करती इन कुमारियों के वस्त्र हरण कर उन्हें कदम्ब वृक्ष पर रख दिए और उन्हें अपने निकट आने पर लौटाए। यह लीला आध्यात्मिक दृष्टि से जीव की निःशर्त समर्पण और भगवान के प्रति पूर्ण शरणागति का प्रतीक मानी जाती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:28:08.682Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3218,5 +3232,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T14:27:21.225Z"
+  "lastUpdated": "2026-04-15T14:28:34.025Z"
 }
