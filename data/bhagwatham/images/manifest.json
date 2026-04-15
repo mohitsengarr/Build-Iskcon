@@ -2309,6 +2309,32 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 198,
+      "chapterTitle": "Chapter इक्कीस",
+      "cantoNumber": 9,
+      "imagePath": "chapter-198.jpg",
+      "prompt": "Rantideva, a noble and emaciated king, sits humbly on the floor of his simple dwelling after forty-eight days of fasting. A thirsty guest arrives at his doorstep, and Rantideva, with a serene smile, gently offers his last cup of water with folded hands, completely at peace, as divine light seems to bless the moment.",
+      "descriptionHi": "इस अध्याय में महाराज भरत के वंश का वर्णन है, जिसमें महान् भक्त रन्तिदेव की असाधारण उदारता और सहिष्णुता की कथा प्रमुख है। रन्तिदेव ने अड़तालीस दिनों के निर्जल उपवास के बाद भी अपना भोजन और जल एक-एक करके आए अतिथियों को दान कर दिया। भगवान् इस परम भक्त की सेवा-निष्ठा से अत्यंत प्रसन्न हुए और उन्हें अत्यंत गोपनीय सेवा का भार सौंपा।",
+      "generatedAt": "2026-04-15T14:05:15.346Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 199,
+      "chapterTitle": "Chapter बाईस",
+      "cantoNumber": 9,
+      "imagePath": "chapter-199.jpg",
+      "prompt": "On the sacred banks of the Ganga, the noble Bhishma stands tall and serene, as the divine river goddess Ganga blesses her son. Nearby, Draupadi and Arjuna listen with reverence as the great lineage of the Kuru dynasty — from Pratipa to Shantanu to Bhishma — is solemnly recounted, connecting mortal heroes to celestial origins.",
+      "descriptionHi": "इस अध्याय में चंद्रवंश के अजमीढ के वंशजों का विस्तृत वर्णन है, जिसमें द्रुपद, द्रौपदी, जरासंध, तथा कुरुवंश के राजाओं की वंशावली दी गई है। प्रतीप के पुत्र शांतनु के राज्यकाल की कथा विशेष महत्त्वपूर्ण है, जिसमें देवापि के वनगमन और बारह वर्षों के अनावृष्टि का प्रसंग है। भीष्म का जन्म गंगा से शांतनु द्वारा हुआ और वे बारह महाजनों में गिने जाते हैं, जो इस वंश की आध्यात्मिक महिमा को दर्शाता है।",
+      "personasUsed": [
+        "arjuna",
+        "draupadi",
+        "bhishma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:06:08.590Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -2914,5 +2940,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T14:04:38.522Z"
+  "lastUpdated": "2026-04-15T14:06:37.214Z"
 }
