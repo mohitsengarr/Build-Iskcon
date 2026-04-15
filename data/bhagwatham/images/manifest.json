@@ -2795,6 +2795,35 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 236,
+      "chapterTitle": "Chapter पैंतीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-236.jpg",
+      "prompt": "Krishna stands in a lush forest, dressed in simple woodland attire, playing his flute in the tribhanga pose. Cows and bulls stand still in the meadow with grass held gently in their mouths, enchanted by the melody. Celestial women pause in the sky above, and nearby rivers cease flowing, as all of nature listens in blissful stillness.",
+      "descriptionHi": "इस अध्याय में गोपियाँ दिन के समय जब कृष्ण वन में चले जाते हैं तो विरह-भाव में उनका गुणगान करती हैं। वे गाती हैं कि कृष्ण की बाँसुरी की धुन सुनकर सिद्धों की पत्नियाँ, पशु-पक्षी, वृक्ष-लताएँ और नदियाँ तक मंत्रमुग्ध हो जाती हैं। यह अध्याय कृष्ण की दिव्य बाँसुरी के प्रभाव और गोपियों के गहरे प्रेम व विरह की आध्यात्मिक अभिव्यक्ति है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:39:55.352Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 237,
+      "chapterTitle": "Chapter छत्तीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-237.jpg",
+      "prompt": "Krishna stands calm and radiant before a massive bull demon named Arishtasura near a cowherd village, fearlessly protecting the terrified villagers gathered behind him. With divine composure, Krishna confronts the charging beast, his form luminous and serene. Nearby, sage Narada later sits before King Kamsa, revealing the divine secret of Krishna and Balarama's true identity.",
+      "descriptionHi": "इस अध्याय में भगवान कृष्ण ने विशाल बैल का रूप धारण किए अरिष्टासुर का वध किया, जो ग्वालों के गाँव में भय फैला रहा था। कृष्ण ने ग्रामवासियों को अभय देकर उस असुर का अंत किया। बाद में नारद मुनि ने कंस को यह रहस्य बताया कि कृष्ण और बलराम वास्तव में वसुदेव के पुत्र हैं।",
+      "personasUsed": [
+        "krishna_adult",
+        "narada"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:40:35.682Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3400,5 +3429,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T14:39:19.266Z"
+  "lastUpdated": "2026-04-15T14:40:58.159Z"
 }
