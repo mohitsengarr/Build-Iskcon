@@ -3181,6 +3181,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 265,
+      "chapterTitle": "Chapter चौंसठ",
+      "cantoNumber": 10,
+      "imagePath": "chapter-265.jpg",
+      "prompt": "Krishna gently reaches out and touches a large lizard trapped in a dry well, transforming it back into King Nriga, who emerges in a radiant divine form with folded hands, gratitude and relief on his face. Surrounding him are astonished onlookers as he ascends heavenward, liberated from his long curse.",
+      "descriptionHi": "इस अध्याय में श्रीकृष्ण ने राजा नृग को उनके शाप से मुक्त किया, जो एक दान में गलती के कारण गिरगिट बन गए थे। श्रीकृष्ण ने उन्हें स्पर्श करके उनका उद्धार किया और वे पुनः दिव्य रूप प्राप्त कर स्वर्ग को गए। यह कथा दान की शुद्धता और भगवान की कृपा का महत्व दर्शाती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T17:15:45.554Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3570,6 +3584,16 @@
       "cantoNumber": 11
     },
     {
+      "chapterNumber": 294,
+      "chapterTitle": "Chapter तीन",
+      "cantoNumber": 11,
+      "imagePath": "chapter-294.jpg",
+      "prompt": "King Nimi sits in a serene royal court, humbly posing deep spiritual questions to a gathering of enlightened sages. The sages, in meditative composure, explain the nature of Maya and the path to liberation, while the Paramatma as the inner witness silently pervades all beings, guiding souls beyond the cycle of birth and bondage.",
+      "descriptionHi": "इस अध्याय में महाराज निमि के चार प्रश्नों के उत्तर दिये गये हैं जिनमें माया का स्वभाव, उससे मुक्ति की विधि, भगवान् नारायण की दिव्य स्थिति और कर्म-योग का वर्णन है। भगवान् परमात्मा रूप में जीवों के शरीरों में प्रवेश करते हैं और उनकी इन्द्रियों को सक्रिय बनाते हैं, जिससे बद्धजीव माया के बंधन में फँसकर बारम्बार जन्म-मृत्यु के चक्र में भटकता रहता है। इस अध्याय का आध्यात्मिक महत्त्व यह है कि माया के दुर्लघ्य पाश से मुक्ति केवल भगवान् की शरण लेने और कर्म-योग के अनुशीलन से ही संभव है।",
+      "generatedAt": "2026-04-15T17:16:28.335Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 325,
       "chapterTitle": "Chapter तीन",
       "imagePath": "chapter-325.jpg",
@@ -3786,5 +3810,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T17:15:16.575Z"
+  "lastUpdated": "2026-04-15T17:16:48.567Z"
 }
