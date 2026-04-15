@@ -587,6 +587,30 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 33,
+      "chapterTitle": "Chapter चार",
+      "cantoNumber": 3,
+      "imagePath": "chapter-033.jpg",
+      "prompt": "Vidura approaches Maitreya as the Yadava clan, having obtained permission from the brahmanas, consumes leftover prasad and intoxicating drinks, leading to a loss of wisdom and harsh words among them.",
+      "descriptionHi": "विदुर के मैत्रेय के पास जाने के इस अध्याय में यादवगण के ब्राह्मणों से अनुमति लेकर प्रसाद का उच्छिष्ट खाने और मदिरा पीने के बाद उनके ज्ञान से विहीन होकर एक दूसरे को मर्मभेदी वचन कहने का वर्णन है। इस घटना का महत्व यह है कि मदिरापान कितना हानिकारक हो सकता है।",
+      "personasUsed": [
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T07:02:48.975Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 34,
+      "chapterTitle": "Chapter पाँच",
+      "cantoNumber": 3,
+      "imagePath": "chapter-034.jpg",
+      "prompt": "Vidur approaches Maitreya by the Ganges River, seeking spiritual knowledge from the wise sage.",
+      "descriptionHi": "इस अध्याय में विदुर और मैत्रेय की मुलाकात का वर्णन है, जहाँ विदुर भगवान् की शुद्ध भक्ति में परिपूर्ण होकर मैत्रेय से ज्ञान प्राप्त करने के लिए आते हैं। यहाँ विदुर की अच्युत भगवान् की भक्ति और मैत्रेय के अगाध ज्ञान का महत्व बताया गया है।",
+      "generatedAt": "2026-04-15T07:04:06.169Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 36,
       "chapterTitle": "Chapter 36",
       "imagePath": "chapter-036.jpg",
@@ -2601,5 +2625,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T06:59:26.454Z"
+  "lastUpdated": "2026-04-15T07:04:06.170Z"
 }
