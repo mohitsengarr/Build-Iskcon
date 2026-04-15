@@ -2156,6 +2156,34 @@
       "cantoNumber": 9
     },
     {
+      "chapterNumber": 183,
+      "chapterTitle": "Chapter छह",
+      "cantoNumber": 9,
+      "imagePath": "chapter-183.jpg",
+      "prompt": "The sage Shukadeva sits serenely in a forest ashram, narrating the great lineage of King Ikshvaku to the attentive assembly. He speaks of noble kings like Puranjaya and Dhundhumara who performed grand yajnas and served the gods faithfully, their stories unfolding like a sacred river of devotion and royal duty through countless generations.",
+      "descriptionHi": "शुकदेव गोस्वामी ने महाराज अम्बरीष के वंशजों से लेकर इक्ष्वाकु वंश के राजाओं तक का विस्तृत वर्णन किया, जिसमें विकुक्षि, पुरञ्जय, धुन्धुमार आदि महान राजाओं की कथाएँ सम्मिलित हैं। इस वंश के राजाओं ने यज्ञ, भक्ति और वीरता के माध्यम से भगवान को प्रसन्न किया। यह वर्णन इस बात का आध्यात्मिक संदेश देता है कि धर्मपूर्वक शासन करने और भगवान की सेवा करने से राजा भी मोक्ष को प्राप्त कर सकते हैं।",
+      "personasUsed": [
+        "shukadeva"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T13:45:51.290Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 184,
+      "chapterTitle": "Chapter सात",
+      "cantoNumber": 9,
+      "imagePath": "chapter-184.jpg",
+      "prompt": "King Harishchandra kneels in humble devotion before the river deity Varuna at the sacred riverbank, his hands joined in prayer, as the sage Narada stands nearby guiding him. The king's earnest supplication to receive a son reflects both his longing and his solemn vow, while the calm waters of the river shimmer in the golden light.",
+      "descriptionHi": "इस अध्याय में मान्धाता के वंशजों का वर्णन है, जिसमें हरिश्चन्द्र की कथा केन्द्रीय है। हरिश्चन्द्र ने नारद के परामर्श से वरुण की उपासना कर पुत्र रोहित को प्राप्त किया, किन्तु वचन के अनुसार उसकी बलि देने में विलम्ब के कारण अनेक कष्ट भोगे। अंततः रोहित ने शुन:शेफ को लाकर यज्ञ पूर्ण कराया और हरिश्चन्द्र को रोग तथा संकट से मुक्ति मिली — यह कथा वचन-पालन, पितृ-प्रेम और भक्ति की महत्ता को दर्शाती है।",
+      "personasUsed": [
+        "narada"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T13:48:54.001Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -2761,5 +2789,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T13:44:37.976Z"
+  "lastUpdated": "2026-04-15T13:49:17.119Z"
 }
