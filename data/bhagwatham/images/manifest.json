@@ -2853,6 +2853,34 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 241,
+      "chapterTitle": "Chapter चालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-241.jpg",
+      "prompt": "Akrura kneels with folded hands in reverence at the banks of the Yamuna river, his eyes filled with tears of devotion. Before him appear the radiant divine forms of Krishna and Balarama glowing with celestial light. Akrura, overwhelmed with spiritual bliss, offers a heartfelt prayer, surrendering completely to the Supreme Lord.",
+      "descriptionHi": "इस अध्याय में अक्रूर भगवान श्रीकृष्ण की स्तुति करते हैं। अक्रूर, जो कृष्ण को मथुरा ले जाने आए थे, यमुना नदी में स्नान के समय कृष्ण और बलराम का दिव्य दर्शन पाते हैं और भाव-विभोर होकर परमात्मा की महिमा का गुणगान करते हैं। यह स्तुति भक्ति और आत्मसमर्पण का अत्यंत मार्मिक एवं आध्यात्मिक क्षण है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:23:48.071Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 242,
+      "chapterTitle": "Chapter इकतालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-242.jpg",
+      "prompt": "Krishna and his companions walk along a serene riverbank, engaged in a peaceful conversation under the warm sunlight.",
+      "descriptionHi": "इस अध्याय में कोई विशिष्ट कथा या घटना नहीं दी गई है, इसलिए मैं क्षमा चाहता हूँ कि मैं इस अध्याय के बारे में विस्तार से नहीं बता सकता। अध्याय की अनुपस्थिति में कोई विशिष्ट घटना या पात्रों का वर्णन नहीं किया जा सकता।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:24:28.444Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3458,5 +3486,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T15:23:05.294Z"
+  "lastUpdated": "2026-04-15T15:24:50.818Z"
 }
