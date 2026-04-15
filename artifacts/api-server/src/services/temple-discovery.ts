@@ -35,6 +35,16 @@ const SEARCH_QUERIES = [
   "ISKCON temple construction worldwide international 2025 2026",
   "Hare Krishna temple new building project India donate",
   "ISKCON temple opening ceremony India 2025 2026",
+  "ISKCON temple construction progress update 2026",
+  "ISKCON mandir nirman bharat naya under construction",
+  "ISKCON temple foundation stone laying ceremony",
+  "ISKCON temple expansion renovation project",
+  "ISKCON temple proposed new site land acquisition",
+  "ISKCON temple Africa Europe America under construction 2025",
+  "ISKCON mega temple project India crores donation",
+  "ISKCON temple bhumi pujan inauguration 2025 2026",
+  "Hare Krishna mandir construction fundraising campaign",
+  "ISKCON temple upcoming opening 2025 2026 2027 new",
 ];
 
 let queryIndex = 0;

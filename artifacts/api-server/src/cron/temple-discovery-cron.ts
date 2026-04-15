@@ -13,8 +13,8 @@ import { discoverTemples, seedExistingTemples, getTempleCount } from "../service
 
 const FLOCK_WEBHOOK = "https://api.flock.com/hooks/sendMessage/b0159996-49f3-4f23-8d6b-bcd96dd2c316";
 
-// Every hour at :07 (offset to avoid overlap with Bhagwatham crons)
-const DISCOVERY_INTERVAL = "7 * * * *";
+// Every 10 minutes (offset to avoid overlap with Bhagwatham crons)
+const DISCOVERY_INTERVAL = "2,12,22,32,42,52 * * * *";
 
 let isRunning = false;
 let hasSeeded = false;
@@ -123,7 +123,7 @@ async function discoveryTick() {
 export function startTempleDiscoveryCron(): void {
   logger.info(
     { interval: DISCOVERY_INTERVAL },
-    "Temple discovery cron started (hourly at :07)",
+    "Temple discovery cron started (every 10 minutes)",
   );
 
   cron.schedule(DISCOVERY_INTERVAL, discoveryTick);

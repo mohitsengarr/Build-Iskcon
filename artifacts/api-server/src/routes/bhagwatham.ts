@@ -108,6 +108,157 @@ import path from "path";
 const FACES_DIR = path.resolve(getImagesDir(), "..", "faces");
 router.use("/bhagwatham/faces", express.static(FACES_DIR, { maxAge: "7d", etag: true }));
 
+// ── Chapter index — precomputed for instant sidebar ────────────────────────
+
+const SKANDH_PAGE_RANGES: Array<{ skandh: number; startPage: number }> = [
+  { skandh: 1,  startPage: 1 },
+  { skandh: 2,  startPage: 874 },
+  { skandh: 3,  startPage: 1399 },
+  { skandh: 4,  startPage: 2617 },
+  { skandh: 5,  startPage: 3900 },
+  { skandh: 6,  startPage: 4540 },
+  { skandh: 7,  startPage: 5204 },
+  { skandh: 8,  startPage: 5849 },
+  { skandh: 9,  startPage: 6373 },
+  { skandh: 10, startPage: 7080 },
+  { skandh: 11, startPage: 9059 },
+  { skandh: 12, startPage: 9500 },
+];
+
+const EXPECTED_PER_CANTO = [19, 10, 33, 31, 26, 19, 15, 24, 24, 90, 31, 13];
+
+const CI_HINDI_NUMS: Record<string, number> = {
+  एक: 1, दो: 2, तीन: 3, चार: 4, पाँच: 5, पांच: 5, छः: 6, छह: 6,
+  सात: 7, आठ: 8, नौ: 9, दस: 10, ग्यारह: 11, बारह: 12,
+  तेरह: 13, चौदह: 14, पन्द्रह: 15, पंद्रह: 15, सोलह: 16, सत्रह: 17,
+  अठारह: 18, उन्नीस: 19, बीस: 20, इक्कीस: 21, बाईस: 22,
+  तेईस: 23, चौबीस: 24, पच्चीस: 25, छब्बीस: 26, सत्ताईस: 27,
+  अट्ठाईस: 28, उनतीस: 29, तीस: 30, इकतीस: 31, बत्तीस: 32,
+  तैंतीस: 33,
+  // OCR variants
+  इक्तीस: 21,
+};
+
+const CI_OCR_FIXES: Record<string, { num: number; title: string }> = {
+  "Chapter 278 अध्याय": { num: 8, title: "अध्याय आठ" },
+  "Chapter it": { num: 9, title: "अध्याय नौ" },
+  "(शुषा दो": { num: 2, title: "अध्याय दो" },
+  "Chapter 3:": { num: 6, title: "अध्याय छह" },
+  "(नौ": { num: 9, title: "अध्याय नौ" },
+  "Chapter 36": { num: 8, title: "अध्याय आठ" },
+  "Chapter छ:": { num: 6, title: "अध्याय छह" },
+  "छल्नीस": { num: 26, title: "अध्याय छब्बीस" },
+  "अदुईस": { num: 28, title: "अध्याय अट्ठाईस" },
+  "Chapter इक्तीस": { num: 21, title: "अध्याय इक्कीस" },
+};
+
+function ciGetSkandh(pageNumber: number): number {
+  for (let i = SKANDH_PAGE_RANGES.length - 1; i >= 0; i--) {
+    if (pageNumber >= SKANDH_PAGE_RANGES[i].startPage) return SKANDH_PAGE_RANGES[i].skandh;
+  }
+  return 1;
+}
+
+let _ciCache: Array<{ number: number; skandh: number; globalNumber: number; title: string; pageNumber: number }> | null = null;
+let _ciCacheTime = 0;
+const CI_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+function buildServerChapterIndex() {
+  if (_ciCache && Date.now() - _ciCacheTime < CI_CACHE_TTL) return _ciCache;
+
+  const allBatches = getAllBatches();
+  const allPages = allBatches.flatMap((b) => b.pages);
+  const chapterPattern = /^(?:\d+\s+)?(?:Chapter|अध्याय)\s+(.+)/imu;
+
+  const chapters: Array<{ number: number; skandh: number; globalNumber: number; title: string; pageNumber: number }> = [];
+  const lastChapterPerSkandh = new Map<number, number>();
+
+  for (const page of allPages) {
+    const skandh = ciGetSkandh(page.pageNumber);
+    const lines = page.text.split("\n");
+
+    // ToC detection: skip pages with 2+ chapter headings
+    const headingCount = lines.filter((l) => chapterPattern.test(l.trim()) && !l.includes("पूर्ण हुए")).length;
+    if (headingCount >= 2) continue;
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.includes("पूर्ण हुए") || trimmed.includes("पूर्ण हुआ")) continue;
+      if (trimmed.length > 60) continue;
+
+      const match = trimmed.match(chapterPattern);
+      if (!match) continue;
+
+      let title = match[0].replace(/^\d+\s+/, "").trim();
+      let chNum = 0;
+
+      for (const [key, fix] of Object.entries(CI_OCR_FIXES)) {
+        if (title.includes(key) || trimmed.includes(key)) {
+          chNum = fix.num;
+          title = fix.title;
+          break;
+        }
+      }
+
+      if (!chNum) {
+        for (const [word, num] of Object.entries(CI_HINDI_NUMS)) {
+          if (title.includes(word)) { chNum = num; break; }
+        }
+      }
+
+      if (!chNum) {
+        const numMatch = title.match(/\d+/);
+        if (numMatch) {
+          const n = parseInt(numMatch[0], 10);
+          if (n > 0 && n <= 500) chNum = n;
+        }
+      }
+
+      if (!chNum) continue;
+
+      const lastNum = lastChapterPerSkandh.get(skandh) ?? 0;
+      if (chNum < lastNum && lastNum > 2) continue;
+      if (chapters.find((c) => c.number === chNum && c.skandh === skandh)) continue;
+
+      lastChapterPerSkandh.set(skandh, chNum);
+
+      // Get subtitle from next 1-2 lines
+      const idx = lines.indexOf(line);
+      const subtitle = lines.slice(idx + 1, idx + 3).map((l) => l.trim()).filter(Boolean).join(" ");
+
+      chapters.push({
+        number: chNum,
+        skandh,
+        globalNumber: 0,
+        title: title + (subtitle ? ` — ${subtitle}` : ""),
+        pageNumber: page.pageNumber,
+      });
+    }
+  }
+
+  const sorted = chapters.sort((a, b) => a.skandh !== b.skandh ? a.skandh - b.skandh : a.number - b.number);
+  sorted.forEach((ch) => {
+    let offset = 0;
+    for (let i = 0; i < ch.skandh - 1; i++) offset += EXPECTED_PER_CANTO[i];
+    ch.globalNumber = offset + ch.number;
+  });
+
+  _ciCache = sorted;
+  _ciCacheTime = Date.now();
+  return sorted;
+}
+
+// GET /api/bhagwatham/chapter-index — precomputed chapter list for instant sidebar
+router.get("/bhagwatham/chapter-index", (_req, res) => {
+  try {
+    const chapters = buildServerChapterIndex();
+    const totalBatches = getAllBatches().length;
+    res.json({ chapters, totalBatches });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to build chapter index" });
+  }
+});
+
 // GET /api/bhagwatham/progress — processing status
 router.get("/bhagwatham/progress", (_req, res) => {
   try {
