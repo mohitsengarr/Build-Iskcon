@@ -2426,6 +2426,38 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 210,
+      "chapterTitle": "Chapter नौ",
+      "cantoNumber": 10,
+      "imagePath": "chapter-210.jpg",
+      "prompt": "In a warm village home in Vrindavan, little Krishna stands beside an overturned butter pot, his eyes wide with mischief and defiance. Mother Yashoda, having rushed back from the hearth, looks at her beloved child with a mixture of tender exasperation and deep love, holding a rope, ready to gently bind him as an act of devoted discipline.",
+      "descriptionHi": "इस अध्याय में माता यशोदा और बालकृष्ण के बीच की एक मनोरम लीला का वर्णन है। माता यशोदा दही मथ रही थीं, तभी कृष्ण ने स्तन-पान का आग्रह किया, किन्तु दूध उफनने पर माता उन्हें बीच में छोड़कर चली गईं। इस पर क्रुद्ध बालकृष्ण ने दही की मटकी तोड़ दी, जिससे माता यशोदा ने उन्हें बाँधने का निश्चय किया — यह लीला भक्ति और प्रेम का अद्भुत प्रतीक है।",
+      "personasUsed": [
+        "krishna_adult",
+        "yashoda"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:13:14.477Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 211,
+      "chapterTitle": "Chapter दस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-211.jpg",
+      "prompt": "Sage Narada stands with calm authority beside a tranquil lake, encountering the proud sons of Kubera, Nalkuvara and Manigriva, who remain indifferent to his presence. Narada, compassionate yet firm, pronounces a transformative curse upon them, turning them into twin Arjuna trees, setting the stage for their eventual liberation by the divine child Krishna.",
+      "descriptionHi": "इस अध्याय में नलकूवर और मणिग्रीव, कुबेर के दो पुत्र, अपने ऐश्वर्य और मद के कारण एक सरोवर में अशोभनीय आचरण कर रहे थे। नारद मुनि के वहाँ पहुँचने पर भी उन्होंने कोई लज्जा नहीं दिखाई, जिससे नारद ने उन्हें यमलार्जुन वृक्ष बनने का शाप दिया। अंततः बाल कृष्ण ने उन वृक्षों को गिराकर उन दोनों का उद्धार किया और उन्हें मुक्ति प्रदान की।",
+      "personasUsed": [
+        "krishna_child",
+        "krishna_adult",
+        "narada",
+        "arjuna"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:14:02.906Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3031,5 +3063,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T14:12:33.849Z"
+  "lastUpdated": "2026-04-15T14:14:26.556Z"
 }
