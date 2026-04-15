@@ -1970,6 +1970,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 162,
+      "chapterTitle": "Chapter नौ",
+      "cantoNumber": 8,
+      "imagePath": "chapter-162.jpg",
+      "prompt": "The divine enchantress Mohini, an avatar of Lord Vishnu, stands gracefully before the assembled asuras and devas in a celestial realm. She holds the golden pot of amrita and directs the gods and demons to sit in separate rows, her radiant beauty having captivated the asuras into willing agreement, as she prepares to distribute the nectar of immortality.",
+      "descriptionHi": "इस अध्याय में भगवान् विष्णु मोहिनी-मूर्ति के रूप में एक अद्वितीय सुन्दरी के रूप में प्रकट होते हैं और असुरों को अपने सौन्दर्य से मोहित कर लेते हैं। असुर आपस के झगड़े को सुलझाने के लिए मोहिनी को मध्यस्थ मान लेते हैं और उनसे वचनबद्ध हो जाते हैं। मोहिनी इस चातुरी का उपयोग करके देवताओं और असुरों को अलग-अलग पंक्तियों में बैठाती हैं और अमृत केवल देवताओं को वितरित करने की योजना बनाती हैं।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T13:42:30.243Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 167,
       "chapterTitle": "Chapter चौबीस",
       "imagePath": "chapter-167.jpg",
@@ -2733,5 +2747,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T13:40:55.045Z"
+  "lastUpdated": "2026-04-15T13:42:53.974Z"
 }
