@@ -2269,6 +2269,26 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 194,
+      "chapterTitle": "Chapter सत्रह",
+      "cantoNumber": 9,
+      "imagePath": "chapter-194.jpg",
+      "prompt": "The divine physician Dhanvantari, an empowered incarnation of Lord Vasudeva, stands in a sacred forest grove holding a golden vessel filled with divine herbs and medicinal knowledge. Ancient sages and seekers gather around him with reverence as he reveals the foundational wisdom of Ayurveda, the science of life, blessing humanity with healing.",
+      "descriptionHi": "इस अध्याय में पुरूरवा के पुत्र आयु के वंश का विस्तृत वर्णन किया गया है, जिसमें क्षत्रवृद्ध, राभ, अनेना और रजी के वंशजों का उल्लेख है। धन्वन्तरि को भगवान वासुदेव का शक्त्यावेश अवतार बताया गया है जिन्होंने आयुर्वेद विज्ञान का सूत्रपात किया। रजी के पाँच सौ पुत्रों की कथा आती है जिन्हें बृहस्पति की योजना से मूर्ख बनाकर इन्द्र ने स्वर्ग का साम्राज्य वापस प्राप्त किया।",
+      "generatedAt": "2026-04-15T14:01:55.907Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 195,
+      "chapterTitle": "Chapter अठारह",
+      "cantoNumber": 9,
+      "imagePath": "chapter-195.jpg",
+      "prompt": "King Yayati reaches a well in a forest and discovers Devayani, daughter of the sage Shukracharya, trapped inside. He gently extends his hand and helps her out of the well. Devayani, grateful and moved, looks up at the noble king and accepts him as her husband in her heart, as sunlight filters through the surrounding trees.",
+      "descriptionHi": "इस अध्याय में राजा ययाति की कथा वर्णित है, जिसमें देवयानी और शर्मिष्ठा के बीच के विवाद के कारण शुक्राचार्य ने ययाति को वृद्धावस्था का शाप दिया। ययाति ने शुक्राचार्य की पुत्री देवयानी से विवाह किया, किन्तु दासी शर्मिष्ठा से भी गुप्त संबंध रखने पर देवयानी के क्रोध से यह शाप मिला। इस कथा का आध्यात्मिक संदेश यह है कि लोभ और वासना के कारण मनुष्य को अपने कर्मों का फल भोगना पड़ता है।",
+      "generatedAt": "2026-04-15T14:02:34.282Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -2874,5 +2894,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T14:01:17.352Z"
+  "lastUpdated": "2026-04-15T14:02:58.635Z"
 }
