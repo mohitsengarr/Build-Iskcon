@@ -505,7 +505,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-10T23:25:56.817Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 2
     },
     {
       "chapterNumber": 28,
@@ -544,7 +545,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-10T22:34:55.531Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 3
     },
     {
       "chapterNumber": 30,
@@ -555,6 +557,34 @@
       "generatedAt": "2026-04-11T05:37:06.269Z",
       "sceneIndex": 0,
       "cantoNumber": 3
+    },
+    {
+      "chapterNumber": 31,
+      "chapterTitle": "(शुषा दो",
+      "cantoNumber": 3,
+      "imagePath": "chapter-031.jpg",
+      "prompt": "Krishna plays with mud as a child, lost in divine joy, while his mother calls him for breakfast, in a serene village setting.",
+      "descriptionHi": "श्रीशुकदेव गोस्वामी ने बताया कि जब विदुर ने उद्धव से भगवान्‌ कृष्ण का सन्देश पूछा तो उद्धव अत्यधिक उत्सुकता के कारण तुरन्त उत्तर नहीं दे पाये। भगवान्‌ कृष्ण की स्मृति में उद्धव इतने लीन हो जाते थे कि उनकी माता के बुलाने पर भी वे कलेवा करना नहीं चाहते थे।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T06:58:24.911Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 32,
+      "chapterTitle": "Chapter तीन",
+      "cantoNumber": 3,
+      "imagePath": "chapter-032.jpg",
+      "prompt": "Krishna and Baldev confront Kans in the palace of Mathura, resolving the fate of their imprisoned parents.",
+      "descriptionHi": "भगवान्‌ कृष्ण ने अपने माता पिता को प्रसन्न करने के लिए जनता के शत्रुओं के अगुवा कंस को मार डाला। यह घटना मथुरा नगरी में हुई और इसमें भगवान्‌ कृष्ण के भाई बलदेव भी शामिल थे। इस घटना का महत्व भगवान्‌ कृष्ण की शक्ति और उनके माता पिता के प्रति उनके प्रेम को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T06:59:26.454Z",
+      "sceneIndex": 0
     },
     {
       "chapterNumber": 36,
@@ -570,7 +600,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-10T23:29:02.153Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 3
     },
     {
       "chapterNumber": 37,
@@ -593,7 +624,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-10T20:30:17.407Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 3
     },
     {
       "chapterNumber": 41,
@@ -606,7 +638,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-10T21:09:09.859Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 3
     },
     {
       "chapterNumber": 43,
@@ -619,7 +652,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-10T21:18:08.080Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 3
     },
     {
       "chapterNumber": 44,
@@ -634,7 +668,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-10T21:25:17.524Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 3
     },
     {
       "chapterNumber": 49,
@@ -671,7 +706,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-11T00:27:47.984Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 3
     },
     {
       "chapterNumber": 54,
@@ -680,7 +716,8 @@
       "prompt": "Kubera meets Dhruva, praising him for abandoning vengeance against the Yakshas, in a serene forest setting.",
       "descriptionHi": "महाराज ध्रुव का क्रोध शान्त हो गया और उन्होने यक्षो का वध करना पूरी तरह बन्द कर दिया, जिसे जानकर धनपति कुबेर प्रसन्न हुए और ध्रुव से मिले। इस अध्याय में ध्रुव और कुबेर के बीच एक महत्वपूर्ण मुलाकात होती है।",
       "generatedAt": "2026-04-11T00:30:54.914Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 3
     },
     {
       "chapterNumber": 55,
@@ -693,7 +730,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-11T02:53:41.355Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 3
     },
     {
       "chapterNumber": 56,
@@ -706,7 +744,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-11T02:57:47.961Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 3
     },
     {
       "chapterNumber": 57,
@@ -720,7 +759,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-11T03:01:54.533Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 3
     },
     {
       "chapterNumber": 58,
@@ -729,7 +769,8 @@
       "prompt": "Maitreya watches as singers praise King Prithu in a grand palace setting.",
       "descriptionHi": "महाराज पृथु की विनम्रता से भरी बातें सुनकर गायक अत्यधिक प्रसन्न हुए और उन्होंने ऋषियों द्वारा दिये गये आदेशों के अनुसार राजा की भूरि-भूरि प्रशंसा करने लगे। राजा पृथु को भगवान् के अवतार के रूप में समझने के लिए सूत, मागध तथा बन्दीजनों ने ऋषियों तथा विद्वान् ब्राह्मणों के द्वारा दिये आदेशों का पालन किया।",
       "generatedAt": "2026-04-11T03:04:50.048Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 3
     },
     {
       "chapterNumber": 59,
@@ -742,7 +783,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-11T03:15:17.655Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 3
     },
     {
       "chapterNumber": 60,
@@ -751,7 +793,8 @@
       "prompt": "King Prithu and the Earth engage in a serene dialogue, as the Earth attempts to calm the king's anger.",
       "descriptionHi": "इस अध्याय में राजा पृथु और पृथ्वी के बीच का संवाद वर्णित है, जहां पृथ्वी राजा पृथु को समझाने का प्रयास करती है और उन्हें अपना क्रोध शांत करने के लिए कहती है। मैत्रेय यह संवाद विदुर को सुना रहे हैं।",
       "generatedAt": "2026-04-11T03:27:09.904Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 3
     },
     {
       "chapterNumber": 61,
@@ -760,7 +803,8 @@
       "prompt": "King Prithu performs a hundred ashvamedha yajnas in Brahmavarta, while Indra looks on with envy",
       "descriptionHi": "राजा पृथु ने ब्रह्मावर्त में एक सौ अश्वमेध यज्ञ किए, जिससे इन्द्र ईर्ष्या से भर गया। यह अध्याय ईर्ष्या और आत्म-संतुष्टि के विषय में बताता है। राजा पृथु के यज्ञ ने इन्द्र को चुनौती दी",
       "generatedAt": "2026-04-11T03:33:57.727Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 3
     },
     {
       "chapterNumber": 62,
@@ -773,7 +817,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-11T03:42:25.028Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 3
     },
     {
       "chapterNumber": 63,
@@ -782,7 +827,8 @@
       "prompt": "Vijitashva, son of Maharaj Prithu, distributes kingdom territories to his younger brothers in a palace ceremony.",
       "descriptionHi": "मैत्रेय ऋषि ने महाराज पृथु के पुत्र विजिताश्व का वर्णन किया, जो अपने पिता की तरह एक महान राजा बना। विजिताश्व ने अपने छोटे भाइयों को पृथ्वी की विभिन्न दिशाओं पर राज्य करने का अधिकार सौंप दिया, क्योंकि वह अपने भाइयों को अत्यधिक चाहता था।",
       "generatedAt": "2026-04-11T04:17:37.177Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 4
     },
     {
       "chapterNumber": 63,
@@ -806,7 +852,8 @@
       "prompt": "King Puranjana goes for hunting, while the Queen becomes upset in the palace.",
       "descriptionHi": "राजा पुरञ्जन आखेट के लिए जाते हैं और रानी क्रुद्ध हो जाती है, इस प्रकार एक महत्वपूर्ण घटना का वर्णन किया जाता है। राजा पुरञ्जन और रानी इस अध्याय के मुख्य पात्र हैं।",
       "generatedAt": "2026-04-11T04:41:23.558Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 4
     },
     {
       "chapterNumber": 64,
@@ -1801,7 +1848,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-12T09:00:52.527Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 8
     },
     {
       "chapterNumber": 168,
@@ -1814,7 +1862,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-12T09:05:30.550Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 8
     },
     {
       "chapterNumber": 170,
@@ -1823,7 +1872,8 @@
       "prompt": "Varuna apologizes for his servant's mistake in his palace, highlighting the importance of knowledge and ignorance.",
       "descriptionHi": "वरुण अपने अज्ञानी नौकर की गलती के लिए माफी मांगते हैं और इस अध्याय में अज्ञान और ज्ञान के महत्व पर प्रकाश डाला जाता है। मुख्य पात्र वरुण हैं और यह घटना उनके दरबार में घटित होती है।",
       "generatedAt": "2026-04-12T09:08:54.728Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 8
     },
     {
       "chapterNumber": 174,
@@ -1837,7 +1887,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-12T17:03:12.792Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 8
     },
     {
       "chapterNumber": 175,
@@ -1851,7 +1902,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-12T17:03:35.430Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 8
     },
     {
       "chapterNumber": 176,
@@ -1864,7 +1916,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-12T17:07:39.724Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 8
     },
     {
       "chapterNumber": 177,
@@ -1873,7 +1926,8 @@
       "prompt": "Markandeya Rishi offers prayers to Nar-Narayana Rishi in a serene forest setting, seeking their divine blessings and wisdom.",
       "descriptionHi": "मार्कण्डेय ऋषि नर-नारायण ऋषि की स्तुति करते हैं और उनकी महानता का वर्णन करते हैं। इस अध्याय में नर-नारायण ऋषि की भक्ति और ज्ञान का महत्व दर्शाया गया है। मार्कण्डेय ऋषि की स्तुति से नर-नारायण ऋषि की दिव्य महानता का पता चलता है।",
       "generatedAt": "2026-04-12T17:11:25.696Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 8
     },
     {
       "chapterNumber": 178,
@@ -1882,7 +1936,8 @@
       "prompt": "Markandeya Rishi requests Lord Hari to reveal His divine maya power at Badarikashram.",
       "descriptionHi": "इस अध्याय में मार्कण्डेय ऋषि भगवान् की मायाशक्ति का दर्शन करते हुए वर्णित है। भगवान् मार्कण्डेय ऋषि को वर माँगने के लिए कहते हैं और ऋषि उनकी मायाशक्ति का दर्शन करना चाहते हैं।",
       "generatedAt": "2026-04-12T17:11:46.347Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 9
     },
     {
       "chapterNumber": 179,
@@ -1891,7 +1946,8 @@
       "prompt": "Shivji and Parvati appear before Markandeya Rishi in a serene forest, granting him a boon and praising his devotion.",
       "descriptionHi": "इस अध्याय में शिवजी और पार्वती द्वारा मार्कण्डेय ऋषि का गुणगान किया जाता है, जो शिवजी से वर प्राप्त करते हैं। मार्कण्डेय ऋषि की भक्ति और शिवजी की कृपा का वर्णन किया गया है।",
       "generatedAt": "2026-04-12T17:15:39.921Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 9
     },
     {
       "chapterNumber": 180,
@@ -1904,7 +1960,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-12T17:37:19.104Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 9
     },
     {
       "chapterNumber": 181,
@@ -1919,7 +1976,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-12T17:41:08.991Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 9
     },
     {
       "chapterNumber": 182,
@@ -1934,7 +1992,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-12T17:45:38.461Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 9
     },
     {
       "chapterNumber": 266,
@@ -1943,7 +2002,8 @@
       "prompt": "Balarama interacts with gopis on the serene riverbank of Yamuna in Gokul, showcasing divine connection.",
       "descriptionHi": "इस अध्याय में भगवान् बलराम के गोकुल जाने और गोपियों के साथ रमण करने का वर्णन है, जहाँ उन्होंने यमुना नदी का कर्षण किया। भगवान् कृष्ण की उपस्थिति में यह घटना आध्यात्मिक महत्व रखती है।",
       "generatedAt": "2026-04-13T22:10:46.844Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 267,
@@ -1956,7 +2016,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T22:05:34.961Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 268,
@@ -1970,7 +2031,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T22:01:21.768Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 269,
@@ -1979,7 +2041,8 @@
       "prompt": "Balarama pulls the city of Hastinapura to rescue Samba, son of Jambavati, from the Kauravas.",
       "descriptionHi": "इस अध्याय में साम्ब का विवाह और कौरवों द्वारा उसे छुड़ाने के लिए बलदेव के प्रयासों का वर्णन है, जिसमें बलदेव हस्तिनापुर नगरी को खींच डालते हैं। साम्ब दुर्योधन की पुत्री लक्ष्मणा को स्वयंवर सभा से बलपूर्वक भगा ले जाता है।",
       "generatedAt": "2026-04-13T21:55:59.083Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 270,
@@ -1988,7 +2051,8 @@
       "prompt": "Balarama orders the Kauravas to release Samba in the royal palace of Hastinapura, leading to a dramatic showdown.",
       "descriptionHi": "साम्ब और लक्ष्मणा के विवाह की कहानी में बलराम ने कौरवों को साम्ब को मुक्त करने का आदेश दिया, जिससे वे अपमानित महसूस करते हैं और बलराम की शक्ति को चुनौती देते हैं। इस प्रकार, साम्ब को मुक्त किया जाता है और उसका विवाह लक्ष्मणा के साथ होता है।",
       "generatedAt": "2026-04-13T21:50:24.066Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 271,
@@ -2003,7 +2067,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T21:45:55.493Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 272,
@@ -2017,7 +2082,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T21:40:29.590Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 273,
@@ -2031,7 +2097,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T21:00:59.557Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 274,
@@ -2044,7 +2111,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T20:15:19.795Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 275,
@@ -2059,7 +2127,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T19:55:33.908Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 276,
@@ -2072,7 +2141,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T19:50:24.196Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 277,
@@ -2081,7 +2151,8 @@
       "prompt": "Pradyumna confronts Shalva in the skies above Dwaraka, dispelling the asura's illusions with his divine weapons.",
       "descriptionHi": "इस अध्याय में शाल्व नामक असुर द्वारा द्वारका पर आक्रमण का वर्णन है, जिसमें प्रद्युम्न और अन्य यदुवीरों ने शाल्व की सेना से लड़ाई लड़ी और उसके विमान को नष्ट करने का प्रयास किया। यह अध्याय शाल्व की प्रतिज्ञा और उसके परिणामों को दर्शाता है।",
       "generatedAt": "2026-04-13T19:10:31.140Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 278,
@@ -2094,7 +2165,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T18:30:31.005Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 279,
@@ -2107,7 +2179,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T18:25:33.376Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 280,
@@ -2116,7 +2189,8 @@
       "prompt": "Lord Balaram subdues the demon Balval in Naimisharanya forest, saving the sages.",
       "descriptionHi": "इस अध्याय में भगवान् बलराम की तीर्थयात्रा का वर्णन है, जहाँ वे बल्वल असुर को पराजित करते हैं और फिर विविध पवित्र तीर्थस्थानों में स्नान करते हैं। भगवान् बलराम भीमसेन और दुर्योधन के बीच युद्ध को रोकने का प्रयास करते हैं।",
       "generatedAt": "2026-04-13T18:15:21.622Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 281,
@@ -2129,7 +2203,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T17:45:37.233Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 282,
@@ -2142,7 +2217,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T17:10:21.552Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 283,
@@ -2155,7 +2231,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T16:30:24.823Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 284,
@@ -2168,7 +2245,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T16:28:02.410Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 285,
@@ -2183,7 +2261,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T14:50:28.447Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 286,
@@ -2196,7 +2275,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T13:50:22.204Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 287,
@@ -2210,7 +2290,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T11:45:25.982Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 288,
@@ -2226,7 +2307,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T11:40:27.887Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 289,
@@ -2240,7 +2322,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T11:35:56.263Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 290,
@@ -2254,7 +2337,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T11:30:29.437Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 291,
@@ -2269,7 +2353,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T11:25:26.992Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 10
     },
     {
       "chapterNumber": 292,
@@ -2282,7 +2367,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T11:05:33.873Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 11
     },
     {
       "chapterNumber": 293,
@@ -2295,7 +2381,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T10:55:21.378Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 11
     },
     {
       "chapterNumber": 325,
@@ -2308,7 +2395,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T13:49:22.057Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 12
     },
     {
       "chapterNumber": 326,
@@ -2323,7 +2411,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T10:50:24.500Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 12
     },
     {
       "chapterNumber": 327,
@@ -2337,7 +2426,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T10:45:23.902Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 12
     },
     {
       "chapterNumber": 328,
@@ -2351,7 +2441,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T10:40:30.492Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 12
     },
     {
       "chapterNumber": 329,
@@ -2360,7 +2451,8 @@
       "prompt": "Sukarma's disciples, including Hiranynabh, Pausyaji, and Avantya, receive the sacred Samaveda scriptures in a serene forest setting.",
       "descriptionHi": "जैमिनि के शिष्य सुकर्मा ने सामवेद को एक हजार संहिताओं में बाँट दिया और उनके तीन शिष्यों ने साम मंत्रों का भार सँभाला। पौष्यञ्जि और आवन्त्य के शिष्यों ने सामवेद के उदीच्य गायक के नाम से प्रसिद्ध हुए।",
       "generatedAt": "2026-04-13T10:35:52.467Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 12
     },
     {
       "chapterNumber": 330,
@@ -2376,7 +2468,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T04:25:43.014Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 12
     },
     {
       "chapterNumber": 331,
@@ -2390,7 +2483,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T04:15:19.311Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 12
     },
     {
       "chapterNumber": 332,
@@ -2399,7 +2493,8 @@
       "prompt": "Shiva and Parvati appear before Markandeya Rishi in his hermitage, offering him a boon as a reward for his intense devotion and tapasya.",
       "descriptionHi": "इस अध्याय में मार्कण्डेय ऋषि को शिव से वर मिलने का वर्णन किया गया है, जिसमें शिव और उमा उनकी तपस्या का फल देने के लिए उपस्थित हुए। मार्कण्डेय ऋषि ने समाधि से बाहर आकर शिव और पार्वती की पूजा की और उन्हें मनवांछित वर माँगने के लिए कहा।",
       "generatedAt": "2026-04-13T04:10:43.390Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 12
     },
     {
       "chapterNumber": 333,
@@ -2412,7 +2507,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T04:06:24.661Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 12
     },
     {
       "chapterNumber": 334,
@@ -2426,7 +2522,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T03:55:24.116Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 12
     },
     {
       "chapterNumber": 335,
@@ -2443,7 +2540,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T03:50:26.990Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 12
     },
     {
       "chapterNumber": 340,
@@ -2456,7 +2554,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T17:50:41.671Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 12
     },
     {
       "chapterNumber": 351,
@@ -2469,7 +2568,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T21:30:29.310Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 12
     },
     {
       "chapterNumber": 352,
@@ -2482,7 +2582,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T19:31:12.809Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 12
     },
     {
       "chapterNumber": 353,
@@ -2496,8 +2597,9 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T18:20:26.052Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-13T22:10:46.846Z"
+  "lastUpdated": "2026-04-15T06:59:26.454Z"
 }
