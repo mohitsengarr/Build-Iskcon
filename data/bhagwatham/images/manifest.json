@@ -3108,6 +3108,23 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 259,
+      "chapterTitle": "Chapter अट्ठावन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-259.jpg",
+      "prompt": "Inside the royal palace of Indraprastha, Krishna stands with folded hands before the elderly Kunti, offering his respects. Kunti, with tears of devotion in her eyes, speaks to Krishna of her sorrows and hardships, acknowledging him as her sole protector and refuge. Yudhishthira and Draupadi stand nearby in reverence, the atmosphere filled with warmth and spiritual tenderness.",
+      "descriptionHi": "इस अध्याय में भगवान् कृष्ण ने कालिन्दी आदि पाँच राजकुमारियों से विवाह किया और फिर अज्ञातवास पूरा कर चुके पाण्डवों से मिलने इन्द्रप्रस्थ पहुँचे। वहाँ द्रौपदी ने लजाते हुए कृष्ण को प्रणाम किया और माता कुन्ती ने कृष्ण से अपनी विपत्तियाँ साझा करते हुए उन्हें अपना एकमात्र रक्षक बताया। यह अध्याय कृष्ण की भक्तवत्सलता और उनके सर्वव्यापी प्रेम का भावपूर्ण चित्रण प्रस्तुत करता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "kunti",
+        "draupadi",
+        "yudhishthira"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:45:39.375Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3713,5 +3730,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T15:43:06.381Z"
+  "lastUpdated": "2026-04-15T15:45:59.973Z"
 }
