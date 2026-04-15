@@ -3941,6 +3941,40 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 346,
+      "chapterTitle": "Chapter चौबीस",
+      "cantoNumber": 12,
+      "imagePath": "chapter-346.jpg",
+      "prompt": "Krishna sits in a serene, luminous space with Uddhava, explaining the sacred Sankhya philosophy. With a gentle gesture, Krishna illustrates the cosmic unfolding — how the one Supreme Being divides into Purusha and Prakriti, giving rise to the entire creation. Uddhava listens with deep reverence and wonder, absorbing this profound spiritual teaching.",
+      "descriptionHi": "इस अध्याय में कृष्ण उद्धव को सांख्य दर्शन का उपदेश देते हैं, जिसमें वे प्रकृति और पुरुष के विभाजन से लेकर सृष्टि की उत्पत्ति तक की पूरी प्रक्रिया समझाते हैं। परब्रह्म से प्रकृति और चेतना का द्वैत उत्पन्न होता है, जिससे महत् तत्त्व, अहंकार, इन्द्रियाँ और अंततः सम्पूर्ण ब्रह्माण्ड की रचना होती है। इस ज्ञान का उद्देश्य आत्मा को मिथ्या द्वैत के भ्रम से मुक्त करना है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T17:27:20.335Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 347,
+      "chapterTitle": "Chapter पच्चीस",
+      "cantoNumber": 12,
+      "imagePath": "chapter-347.jpg",
+      "prompt": "A devoted sage sits in serene meditation before Lord Hari in a peaceful ashram, offering flowers with complete surrender and no desire for reward. Around him, the three qualities of nature — purity, passion, and ignorance — are symbolically represented by three other figures in varying states of awareness, while the Lord radiates a transcendent light beyond all material qualities.",
+      "descriptionHi": "इस अध्याय में प्रकृति के तीन गुणों—सतोगुण, रजोगुण और तमोगुण—के विविध स्वरूपों का वर्णन किया गया है, जो मनुष्य के आचरण, पूजा-भाव और गन्तव्य को निर्धारित करते हैं। सतोगुणी व्यक्ति निःस्वार्थ भाव से भगवान् हरि की पूजा करता है, जबकि रजोगुणी फल की कामना से और तमोगुणी हिंसा की प्रवृत्ति से युक्त होता है। भगवान् स्वयं इन तीनों गुणों से परे हैं और उनसे सम्बन्धित सभी वस्तुएँ, स्थान तथा कर्म भी भौतिक गुणों की सीमा से परे हैं।",
+      "generatedAt": "2026-04-15T17:27:58.613Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 348,
+      "chapterTitle": "Chapter छब्बीस",
+      "cantoNumber": 12,
+      "imagePath": "chapter-348.jpg",
+      "prompt": "King Pururavas stands alone in an open forest clearing, his royal robes disheveled, his expression transformed from longing to serene renunciation. Having parted from the celestial nymph Urvashi, he gazes upward with a reflective and awakened look, singing a song of detachment, realizing the futility of sensory attachment and the supreme value of spiritual wisdom.",
+      "descriptionHi": "इस अध्याय में बताया गया है कि अनुपयुक्त संगति भक्ति के मार्ग में कितनी बाधक है। सम्राट पुरूरवा, जो अप्सरा उर्वशी के मोह में बंधा था, उससे वियोग होने पर विरक्त हो गया और उसने स्त्री-संगति की व्यर्थता पर एक गीत गाया। यह प्रसंग यह स्पष्ट करता है कि इन्द्रिय-सुख में लिप्त रहने से ज्ञान, तपस्या और भक्ति सब निरर्थक हो जाते हैं।",
+      "generatedAt": "2026-04-15T17:28:27.067Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 351,
       "chapterTitle": "Chapter उन्तीस",
       "imagePath": "chapter-351.jpg",
@@ -3984,5 +4018,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T17:26:46.060Z"
+  "lastUpdated": "2026-04-15T17:28:47.617Z"
 }
