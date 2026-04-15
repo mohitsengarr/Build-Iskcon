@@ -2204,6 +2204,16 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 187,
+      "chapterTitle": "Chapter दस",
+      "cantoNumber": 9,
+      "imagePath": "chapter-187.jpg",
+      "prompt": "Lord Ramachandra stands at the ocean shore with Lakshmana and the vast vanara army, gazing across the sea toward Lanka. The ocean god emerges from the waters with folded hands, offering his reverence and guidance. Hanuman and Sugriva stand nearby as the great bridge construction across the sea is about to begin.",
+      "descriptionHi": "इस अध्याय में भगवान् श्रीरामचन्द्र के वंश और उनकी दिव्य लीलाओं का संक्षिप्त वर्णन है, जिसमें सीताहरण, वानर सेना का निर्माण, समुद्र पर सेतु निर्माण और लंका पर आक्रमण सम्मिलित हैं। शुकदेव गोस्वामी ने बताया कि कैसे भगवान् राम ने रावण का वध कर सीता को मुक्त कराया और अयोध्या लौटे। यह अध्याय भगवान् की लीलाओं की आध्यात्मिक महत्ता और उनके भक्तों के प्रति अनुराग को दर्शाता है।",
+      "generatedAt": "2026-04-15T13:52:17.401Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -2809,5 +2819,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T13:51:10.769Z"
+  "lastUpdated": "2026-04-15T13:52:38.912Z"
 }
