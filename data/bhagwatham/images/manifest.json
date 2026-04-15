@@ -681,6 +681,16 @@
       "cantoNumber": 3
     },
     {
+      "chapterNumber": 40,
+      "chapterTitle": "Chapter ग्यारह",
+      "cantoNumber": 3,
+      "imagePath": "chapter-040.jpg",
+      "prompt": "Maitreya explains the concept of paramanu to others in a serene forest setting.",
+      "descriptionHi": "मैत्रेय इस अध्याय में परमाणु की अवधारणा को समझाते हैं, जो कि अविभाज्य और अमिश्रित है। यह भौतिक अभिव्यक्ति का अनन्तिम कण है जो सदैव अविभाज्य सत्ता के रूप में विद्यमान रहता है।",
+      "generatedAt": "2026-04-15T07:08:27.324Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 41,
       "chapterTitle": "Chapter सत्रह",
       "imagePath": "chapter-041.jpg",
@@ -693,6 +703,20 @@
       "generatedAt": "2026-04-10T21:09:09.859Z",
       "sceneIndex": 0,
       "cantoNumber": 3
+    },
+    {
+      "chapterNumber": 42,
+      "chapterTitle": "Chapter तेरह",
+      "cantoNumber": 3,
+      "imagePath": "chapter-042.jpg",
+      "prompt": "Vidura asks Maitreya Muni about Lord Varaha's appearance on the banks of a serene river, seeking more stories of Lord Vasudeva.",
+      "descriptionHi": "श्री शुकदेव गोस्वामी ने विदुर को वराह भगवान् के प्राकट्य की कथा सुनाई, जिसमें स्वायम्भुव मनु और उनकी पत्नी की कहानी शामिल है। विदुर ने मुनि से भगवान् वासुदेव की कथाओं के बारे में और अधिक पूछताछ की। इस अध्याय में विदुर की श्रद्धा और भगवान् की महिमा का वर्णन है।",
+      "personasUsed": [
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T07:09:03.715Z",
+      "sceneIndex": 0
     },
     {
       "chapterNumber": 43,
@@ -2654,5 +2678,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T07:07:04.812Z"
+  "lastUpdated": "2026-04-15T07:09:03.715Z"
 }
