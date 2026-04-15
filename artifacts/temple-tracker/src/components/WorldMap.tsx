@@ -30,6 +30,7 @@ interface Temple {
   fundraisingRaised: number;
   latitude: number | null;
   longitude: number | null;
+  donateUrl?: string | null;
 }
 
 interface Props {
@@ -165,7 +166,14 @@ export function WorldMap({ temples }: Props) {
                   onMouseEnter={(e) => handleMouseMove(e as unknown as React.MouseEvent<SVGCircleElement>, temple)}
                   onMouseMove={(e) => handleMouseMove(e as unknown as React.MouseEvent<SVGCircleElement>, temple)}
                   onMouseLeave={() => setTooltip(null)}
-                  onClick={() => { setTooltip(null); navigate(`/temples/${temple.id}`); }}
+                  onClick={() => {
+                    setTooltip(null);
+                    if (temple.donateUrl) {
+                      window.open(temple.donateUrl, "_blank", "noopener");
+                    } else {
+                      navigate(`/temples/${temple.id}`);
+                    }
+                  }}
                 />
               </Marker>
             );
@@ -219,7 +227,7 @@ export function WorldMap({ temples }: Props) {
                 </div>
               </div>
               <p className="mt-2 text-[10px] text-amber-400/70 font-medium">
-                Click pin to view details →
+                {tooltip.temple.donateUrl ? "Click pin to visit temple website →" : "Click pin to view details →"}
               </p>
             </div>
           </motion.div>

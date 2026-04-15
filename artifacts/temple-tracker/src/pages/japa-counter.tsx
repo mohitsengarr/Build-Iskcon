@@ -488,10 +488,30 @@ export default function JapaCounter() {
             </div>
           )}
 
-          {/* Divider */}
-          <div className="w-24 h-px bg-white/10 mx-auto my-3" />
+        </div>
 
-          {/* Lifetime stats */}
+        {/* Tap buttons */}
+        <div className="flex flex-col items-center gap-4 pb-4">
+          {/* Small bead — decrement */}
+          <motion.button
+            whileTap={{ scale: 0.90 }}
+            onClick={handleDecrement}
+            className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-b from-amber-700 to-amber-900 shadow-lg shadow-amber-900/40 active:shadow-inner touch-manipulation"
+            style={{ WebkitTapHighlightColor: "transparent" }}
+          />
+
+          {/* Large bead — increment (bigger) */}
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={handleTap}
+            className="w-64 h-64 sm:w-80 sm:h-80 rounded-full bg-gradient-to-b from-amber-600 to-amber-800 shadow-xl shadow-amber-900/50 active:shadow-inner touch-manipulation"
+            style={{ WebkitTapHighlightColor: "transparent" }}
+          />
+        </div>
+
+        {/* Lifetime stats — below the beads */}
+        <div className="text-center px-4 mt-2">
+          <div className="w-24 h-px bg-white/10 mx-auto mb-3" />
           <p className="text-white/40 text-sm">Lifetime</p>
           <p className="text-white text-lg font-bold tabular-nums">{lifetimeTotal.toLocaleString("en-IN")}</p>
           <p className="text-white/50 text-sm">
@@ -500,7 +520,7 @@ export default function JapaCounter() {
         </div>
 
         {/* Bottom controls */}
-        <div className="flex items-center justify-center gap-6 mt-4 mb-4">
+        <div className="flex items-center justify-center gap-6 mt-4 mb-6">
           <button
             onClick={handleResetToday}
             className="flex items-center gap-1.5 text-amber-400/80 text-sm px-4 py-2 rounded-xl bg-white/5 active:bg-white/10 transition-colors"
@@ -514,25 +534,6 @@ export default function JapaCounter() {
             {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             {soundOn ? "Sound" : "Mute"}
           </button>
-        </div>
-
-        {/* Tap buttons */}
-        <div className="flex flex-col items-center gap-4 pb-8">
-          {/* Small bead — decrement */}
-          <motion.button
-            whileTap={{ scale: 0.90 }}
-            onClick={handleDecrement}
-            className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-b from-amber-700 to-amber-900 shadow-lg shadow-amber-900/40 active:shadow-inner touch-manipulation"
-            style={{ WebkitTapHighlightColor: "transparent" }}
-          />
-
-          {/* Large bead — increment */}
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={handleTap}
-            className="w-52 h-52 sm:w-64 sm:h-64 rounded-full bg-gradient-to-b from-amber-600 to-amber-800 shadow-xl shadow-amber-900/50 active:shadow-inner touch-manipulation"
-            style={{ WebkitTapHighlightColor: "transparent" }}
-          />
         </div>
 
         {/* Sync indicator */}

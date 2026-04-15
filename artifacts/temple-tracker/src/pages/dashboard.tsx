@@ -11,6 +11,7 @@ import {
   Users, Shield,
 } from "lucide-react";
 import { Link } from "wouter";
+import { TEMPLE_STATS } from "@/data/temples";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -499,14 +500,11 @@ function HowToGive() {
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
+// Use live-computed stats from the static TEMPLES array — always in sync
 const FALLBACK_STATS = {
-  totalTemples: 50,
-  activeProjects: 34,
-  totalFundraisingGoal: 520_000_000,
-  totalFundraisingRaised: 220_000_000,
-  averageProgress: 38,
-  templesByStatus: { construction: 22, planning: 5, finishing: 5, consecrated: 5, operational: 4 },
-  recentUpdates: [],
+  ...TEMPLE_STATS,
+  completedMilestones: 24,
+  upcomingMilestones: 18,
 };
 
 export default function Dashboard() {
