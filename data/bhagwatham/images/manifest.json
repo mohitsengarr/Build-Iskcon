@@ -1939,6 +1939,37 @@
       "cantoNumber": 7
     },
     {
+      "chapterNumber": 151,
+      "chapterTitle": "Chapter तेरह",
+      "cantoNumber": 7,
+      "imagePath": "chapter-151.jpg",
+      "prompt": "Narada Muni sits peacefully in a serene forest clearing, speaking to Krishna about the way of the enlightened renunciant. A lone wandering sannyasi, clothed minimally and carrying nothing, walks barefoot through the woodland path in the background, symbolizing complete detachment from worldly life and inner absorption in divine consciousness.",
+      "descriptionHi": "इस अध्याय में नारद मुनि संन्यासियों के आचरण और अनुष्ठानों का विस्तृत वर्णन करते हैं, जिसमें वे बताते हैं कि संन्यासी को नग्न, एकाकी और निर्भरता से मुक्त होकर विचरण करना चाहिए। अवधूत के इतिहास के माध्यम से यह स्पष्ट किया गया है कि सिद्ध पुरुष सांसारिक आसक्तियों से परे होकर कृष्णभावनामृत में स्थित रहता है। इस अध्याय की आध्यात्मिक महत्ता यह है कि यह एक विद्यार्थी की पूर्ण आत्मिक उन्नति की यात्रा को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "narada"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T13:39:54.665Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 152,
+      "chapterTitle": "Chapter चौदह",
+      "cantoNumber": 7,
+      "imagePath": "chapter-152.jpg",
+      "prompt": "In a serene palace hall, the sage Narada sits before Yudhishthira, speaking with gentle wisdom about the duties of a householder. Between them, a radiant image of Krishna presides as the spiritual center of their conversation, while Narada gestures gracefully, guiding Yudhishthira toward devotion and detachment in family life.",
+      "descriptionHi": "युधिष्ठिर महाराज ने गृहस्थ के कर्तव्यों के विषय में जिज्ञासा प्रकट की, तब नारद मुनि ने उन्हें उपदेश दिया कि गृहस्थ का सर्वोपरि कर्तव्य वासुदेव कृष्ण पर पूर्णाश्रित रहना तथा भक्ति द्वारा उन्हें प्रसन्न करना है। नारद मुनि ने बताया कि गृहस्थ को परिवार के पालन हेतु आवश्यकतानुसार ही अर्जन करना चाहिए और भौतिक लाभ से अनासक्त रहना चाहिए। इस अध्याय का आध्यात्मिक सार यह है कि गृहस्थ जीवन में भी भगवद्भक्ति और गुरु के उपदेशों का पालन करते हुए स्वरूपसिद्ध जीवन जीया जा सकता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "narada",
+        "yudhishthira"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T13:40:34.102Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 167,
       "chapterTitle": "Chapter चौबीस",
       "imagePath": "chapter-167.jpg",
@@ -2702,5 +2733,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T13:38:27.135Z"
+  "lastUpdated": "2026-04-15T13:40:55.045Z"
 }
