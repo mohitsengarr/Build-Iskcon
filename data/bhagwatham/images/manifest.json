@@ -3812,6 +3812,35 @@
       "cantoNumber": 12
     },
     {
+      "chapterNumber": 336,
+      "chapterTitle": "Chapter चौदह",
+      "cantoNumber": 12,
+      "imagePath": "chapter-336.jpg",
+      "prompt": "Krishna sits serenely with Uddhava in a peaceful garden, lovingly imparting divine wisdom about spiritual devotion. In a vision, the primordial creator Brahma receives this same sacred knowledge from the Lord at the dawn of creation, seated in reverence upon a lotus, as eternal dharma flows from the Supreme to all beings.",
+      "descriptionHi": "इस अध्याय में भगवान कृष्ण उद्धव को बताते हैं कि भगवद्भक्ति सर्वश्रेष्ठ आध्यात्मिक विधि है। वे बताते हैं कि सृष्टि के आरंभ में ब्रह्मा को यह ज्ञान दिया गया, जो मनु और ऋषियों के माध्यम से आगे प्रसारित हुआ। माया से मोहित जीव तपस्या को सर्वोच्च मानता है, किन्तु परमेश्वर को सर्वस्व अर्पित करना ही सच्चा मार्ग है।",
+      "personasUsed": [
+        "krishna_adult",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T17:21:35.652Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 337,
+      "chapterTitle": "Chapter पन्द्रह",
+      "cantoNumber": 12,
+      "imagePath": "chapter-337.jpg",
+      "prompt": "Krishna sits serenely in a tranquil forest setting, speaking to his devoted disciple Uddhava. With a gentle and instructive gesture, Krishna explains the eighteen mystical yoga perfections, while Uddhava listens with folded hands and deep reverence, absorbing the wisdom that true devotion to the Lord surpasses all supernatural attainments.",
+      "descriptionHi": "इस अध्याय में भगवान् कृष्ण उद्धव को अठारह योग-सिद्धियों का वर्णन करते हैं और बताते हैं कि इन्द्रियों पर विजय, मन की स्थिरता और प्राणायाम के द्वारा ये सिद्धियाँ प्राप्त होती हैं। किन्तु कृष्ण यह भी स्पष्ट करते हैं कि जो शुद्ध भक्ति का मार्ग अपनाना चाहता है, उसके लिए ये सिद्धियाँ विपथ करने वाली हैं। शुद्ध भक्त इन सिद्धियों को अस्वीकार करता है और भगवान् को सर्वत्र देखते हुए पूर्णतः उन्हीं पर निर्भर रहता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T17:22:08.565Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 340,
       "chapterTitle": "अध्याय अठारह",
       "imagePath": "chapter-340.jpg",
@@ -3869,5 +3898,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T17:20:54.060Z"
+  "lastUpdated": "2026-04-15T17:22:29.507Z"
 }
