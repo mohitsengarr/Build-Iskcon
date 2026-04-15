@@ -2739,6 +2739,48 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 232,
+      "chapterTitle": "Chapter इकतीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-232.jpg",
+      "prompt": "The gopis of Vrindavan gather near the Yamuna riverbank, their hearts aching with longing for Krishna. With tearful eyes and folded hands, they sing sorrowful songs of separation, gazing into the distance hoping to catch a glimpse of their beloved Krishna, pouring their deepest devotion into their heartfelt laments.",
+      "descriptionHi": "इस अध्याय में गोपियाँ कृष्ण के विरह में व्याकुल होकर विलाप करती हैं और अपने प्रेम की पीड़ा को गीतों के माध्यम से व्यक्त करती हैं। वे कृष्ण की यादों में डूबी हुई उनके दर्शन के लिए तरसती हैं और प्रकृति के विभिन्न तत्वों से कृष्ण का संदेश माँगती हैं। यह अध्याय भक्ति और विरह की गहन भावनात्मक अभिव्यक्ति है जो आत्मा की परमात्मा के प्रति तड़प को दर्शाती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:35:23.314Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 233,
+      "chapterTitle": "Chapter बत्तीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-233.jpg",
+      "prompt": "Krishna reappears before the longing gopis in a forest grove, dressed in golden yellow silk robes and adorned with a garland of beautiful flowers. The gopis, overwhelmed with joy after their painful separation, gather around him with tears of happiness, some reaching out to hold his hands in a tender moment of divine reunion.",
+      "descriptionHi": "इस अध्याय में श्रीकृष्ण विरह से व्याकुल गोपियों के बीच पुनः प्रकट होते हैं, पीताम्बर और पुष्पमाला धारण किए हुए। गोपियाँ उन्हें देखकर अत्यंत आनंदित हो जाती हैं और कुछ तो प्रेम-विभोर होकर उनका हाथ थाम लेती हैं। यह पुनर्मिलन आत्मा और परमात्मा के मिलन का प्रतीक है, जो गहन आध्यात्मिक आनंद से परिपूर्ण है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:35:56.325Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 234,
+      "chapterTitle": "Chapter तैंतीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-234.jpg",
+      "prompt": "Krishna stands on the moonlit banks of the Yamuna river, surrounded by the devoted gopis in a sacred circle of divine dance. He has multiplied himself so that each gopi feels his presence beside her alone, resting her arm gently on his shoulder. The forest glows with celestial light as music, song, and pure devotion fill every direction.",
+      "descriptionHi": "इस अध्याय में भगवान् श्रीकृष्ण ने यमुना नदी के तट पर वन में गोपियों के साथ दिव्य रासनृत्य का आयोजन किया। कृष्ण ने अनेक रूप धारण किए जिससे प्रत्येक गोपी को यह अनुभव हुआ कि कृष्ण केवल उसी के साथ हैं। यह रासलीला भगवान् के परम भोक्ता स्वरूप और गोपियों की निःस्वार्थ प्रेमभक्ति का अद्वितीय आध्यात्मिक उत्सव है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:36:27.994Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3344,5 +3386,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T14:34:52.931Z"
+  "lastUpdated": "2026-04-15T14:36:50.155Z"
 }
