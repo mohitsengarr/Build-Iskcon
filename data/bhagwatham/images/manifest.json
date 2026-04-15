@@ -2487,6 +2487,37 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 214,
+      "chapterTitle": "Chapter तेरह",
+      "cantoNumber": 10,
+      "imagePath": "chapter-214.jpg",
+      "prompt": "In a sunlit forest clearing, young Krishna stands alone, having discovered that Brahma has secretly taken away all the cowherd boys and calves. Krishna, serene and all-knowing, begins to expand his divine presence, transforming himself into every missing child and calf, so their mothers and companions may continue to feel their beloved ones near.",
+      "descriptionHi": "इस अध्याय में ब्रह्माजी ने कृष्ण की शक्ति की परीक्षा लेने के लिए सभी ग्वालबालों और बछड़ों को चुराकर एकान्त स्थान में छिपा दिया। कृष्ण ने ब्रह्माजी की इस चाल को समझकर अपनी दिव्य शक्ति से स्वयं ही उन सभी बालकों और बछड़ों का रूप धारण कर लिया। इस लीला का आध्यात्मिक महत्व यह है कि भगवान् कृष्ण समस्त कारणों के परम कारण हैं और ब्रह्माजी का मोह अंततः दूर हो गया।",
+      "personasUsed": [
+        "krishna_adult",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:17:08.891Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 215,
+      "chapterTitle": "Chapter चौदह",
+      "cantoNumber": 10,
+      "imagePath": "chapter-215.jpg",
+      "prompt": "Brahma, the four-headed creator, kneels with folded hands before the radiant child Krishna in the sacred forests of Vrindavan. With eyes filled with tears of devotion and realization, Brahma bows his crowned heads to the ground, humbly seeking forgiveness and offering heartfelt praise to Krishna, whom he now recognizes as the Supreme Lord and his own eternal father.",
+      "descriptionHi": "इस अध्याय में ब्रह्मा भगवान् कृष्ण के समक्ष नतमस्तक होकर उनकी दिव्य माधुरी और अचिन्त्य ऐश्वर्य की स्तुति करते हैं। ब्रह्मा अपनी भूल को स्वीकार करते हुए कृष्ण को ही आदि नारायण और अपना परम पिता मानते हैं तथा क्षमा-याचना करते हैं। यह अध्याय भक्ति की सर्वोच्चता, भगवत्कृपा की अनिवार्यता और कृष्ण के साकार स्वरूप की महिमा का उद्घोष करता है।",
+      "personasUsed": [
+        "krishna_child",
+        "krishna_adult",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:18:17.041Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3092,5 +3123,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T14:16:27.438Z"
+  "lastUpdated": "2026-04-15T14:19:08.022Z"
 }
