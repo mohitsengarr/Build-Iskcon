@@ -220,6 +220,40 @@ const SKANDH_NAMES: Record<number, { hi: string; en: string }> = {
 
 const API_BASE = "/api/bhagwatham";
 
+// ── Sarvam TTS (direct browser → Sarvam WebSocket, no server proxy needed) ──
+const SARVAM_TTS_WS = "wss://api.sarvam.ai/texttospeech/streaming";
+const SARVAM_KEY = "sk_c81tz6ss_p9kDbB6SEeYB7s9V7yQHbUl8";
+
+function sarvamStreamTTS(text: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => { ws.close(); reject(new Error("TTS timeout")); }, 15000);
+    const ws = new WebSocket(`${SARVAM_TTS_WS}?api_subscription_key=${SARVAM_KEY}`);
+    const chunks: string[] = [];
+
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ config: { target_language_code: "hi-IN", speaker: "soham", model: "bulbul:v3", speech_sample_rate: 22050 } }));
+      ws.send(JSON.stringify({ text }));
+      ws.send(JSON.stringify({ flush: true }));
+    };
+
+    ws.onmessage = (evt) => {
+      try {
+        const msg = typeof evt.data === "string" ? JSON.parse(evt.data) : null;
+        const audio = msg?.data?.audio || msg?.audio;
+        if (audio) chunks.push(audio);
+      } catch { /* non-JSON frame */ }
+    };
+
+    ws.onclose = () => {
+      clearTimeout(timeout);
+      if (chunks.length > 0) resolve(chunks.join(""));
+      else reject(new Error("No audio received"));
+    };
+
+    ws.onerror = () => { clearTimeout(timeout); reject(new Error("WebSocket error")); };
+  });
+}
+
 // ── Supabase direct access (for bookmarks — works on both Replit & Vercel) ──
 const SUPABASE_URL = "https://etfmndcrchundvgtvmot.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0Zm1uZGNyY2h1bmR2Z3R2bW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2NDE1MTIsImV4cCI6MjA2MzIxNzUxMn0.7GXS820xSFcUy2TRdbspN7s-NP3sgKFFtUP-Zw0Qbrs";
@@ -815,20 +849,12 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       try { audioBase64 = sessionStorage.getItem(cacheKey) || ""; } catch { /* */ }
 
       if (!audioBase64) {
-        const res = await fetch("/api/bhagwatham/tts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: selectedText }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          audioBase64 = data.audio || "";
-          if (audioBase64) try { sessionStorage.setItem(cacheKey, audioBase64); } catch { /* */ }
-        }
+        audioBase64 = await sarvamStreamTTS(selectedText);
+        if (audioBase64) try { sessionStorage.setItem(cacheKey, audioBase64); } catch { /* */ }
       }
 
       if (audioBase64) {
-        new Audio(`data:audio/wav;base64,${audioBase64}`).play();
+        new Audio(`data:audio/mp3;base64,${audioBase64}`).play();
         return;
       }
     } catch { /* fallback */ }
@@ -960,23 +986,15 @@ function ShlokSpeaker({ text, themeKey }: { text: string; themeKey: string }) {
       try { audioBase64 = sessionStorage.getItem(cacheKey) || ""; } catch { /* ignore */ }
 
       if (!audioBase64) {
-        // Fetch from Sarvam Bulbul v3 (soham voice)
-        const res = await fetch("/api/bhagwatham/tts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text }),
-        });
-        if (!res.ok) throw new Error("TTS API failed");
-        const data = await res.json();
-        audioBase64 = data.audio || "";
-        // Cache the audio in sessionStorage (survives page navigation, cleared on tab close)
+        // Stream from Sarvam Bulbul v3 via WebSocket (works on Vercel — no server proxy needed)
+        audioBase64 = await sarvamStreamTTS(text);
         if (audioBase64) {
           try { sessionStorage.setItem(cacheKey, audioBase64); } catch { /* storage full */ }
         }
       }
 
       if (audioBase64) {
-        const audio = new Audio(`data:audio/wav;base64,${audioBase64}`);
+        const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
         audio.onended = () => { setPlaying(false); audioRef.current = null; };
         audio.onerror = () => { setPlaying(false); audioRef.current = null; };
         audioRef.current = audio;
@@ -1619,15 +1637,12 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
               </div>
             );
           case "anuvad": {
-            // Hindi translation — regular weight, same as body text
-            const prevKind = i > 0 ? sections[i - 1].kind : null;
+            // Hindi translation — same style as tatparya/body text, no separate label
             const isAnuvadContinuation = i === 0 && prevPageEndKind === "anuvad";
-            const showLabel = !isAnuvadContinuation && (prevKind === "shlok" || prevKind === "shabdarth");
             return (
               <div key={i} className={isAnuvadContinuation ? "" : "mt-3"}>
-                {showLabel && <p className={`font-semibold mb-1 indent-8 ${t.text}`} style={{ fontSize: "1em", fontFamily: "var(--font-devanagari)" }}>अनुवाद :</p>}
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`leading-[2] mb-1 ${j === 0 && !isAnuvadContinuation ? "indent-8" : ""} ${t.text}`} style={{ fontSize: "1em", fontFamily: "var(--font-devanagari)" }}>{l}</p>
+                  <p key={j} className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>{l}</p>
                 ))}
               </div>
             );
