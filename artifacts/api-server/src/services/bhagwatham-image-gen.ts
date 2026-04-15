@@ -134,73 +134,151 @@ const ART_STYLE = [
 // ── Character Personas — consistent appearance across all images ─────────────
 // Each character has a fixed description so they look the same everywhere.
 const CHARACTER_PERSONAS: Record<string, string> = {
-  krishna_adult: "Lord Krishna: a handsome young man aged 20-25 with luminous deep blue skin tone (hex #1a3a6b), oval face shape, high cheekbones, large almond-shaped dark brown eyes set wide apart with thick dark eyelashes, thin arched eyebrows, straight narrow nose with slightly flared nostrils, full lips with gentle serene closed-mouth smile, clean-shaven smooth face, curly jet-black shoulder-length hair adorned with a single iridescent peacock feather tucked into a golden mukut crown, wearing yellow silk pitambara dhoti, Kaustubha gem pendant on chest, golden armlets and bracelets, fresh tulsi and rose garland around neck",
+  krishna_adult: "Lord Krishna: a handsome MALE young man aged 20-25 with luminous deep blue skin like a dark rain cloud (hex #1a3a6b), oval face shape, high cheekbones, large lotus-like almond-shaped dark brown eyes set wide apart with thick dark eyelashes and attractively moving eyebrows, straight narrow nose, full lips with enchanting gentle serene smile, clean-shaven smooth masculine face with strong jawline, curly jet-black shoulder-length hair adorned with a single iridescent peacock feather and blue karnikara flowers tucked into a golden mukut crown, wearing brilliant yellow silk pitambara dhoti as golden as the sun, Kaustubha gem pendant glowing on broad bare masculine chest, Vaijayanti garland of five-colored ever-fresh forest flowers reaching to his knees, golden armlets and bracelets, bamboo flute (murali) in hand, reddish-soled feet with auspicious marks, broad masculine shoulders and muscular arms",
   krishna_child: "Baby Krishna: an adorable divine infant aged 1-2 with soft round chubby blue-tinted cheeks (hex #4a7ab5), perfectly round face, large sparkling doe-like dark brown eyes taking up one-third of face with thick baby lashes, tiny upturned button nose, small full lips with playful mischievous open smile showing no teeth, curly black wispy hair with a small peacock feather, wearing miniature golden crown, tiny gold anklets and waistband, pearl necklace",
-  narada: "Sage Narada: a male sage aged 45-50 with rectangular face shape, strong square jawline, light brown wheat-toned skin (hex #c4956a), completely clean-shaven smooth face, warm radiant open-mouth smile showing teeth, bright alert medium-sized almond-shaped hazel-brown eyes set at slight upward angle, thin straight eyebrows, straight medium nose with narrow bridge, prominent vertical white U-shaped Vaishnava tilak mark on forehead, grey-streaked dark hair tied neatly in a high topknot bun, slender athletic male build with visible collarbones, wearing simple white cotton dhoti with golden border, bare male chest with sacred thread crossing diagonally, carrying his signature wooden tanpura veena instrument in left hand",
-  vyasa: "Sage Vyasa (Vedavyasa): a majestic elderly rishi aged 70-80 with broad square face, very dark brown complexion (hex #4a3220), long flowing silver-white beard reaching mid-chest thick and slightly wavy, deep-set wise penetrating dark brown eyes under heavy hooded eyelids with bushy white eyebrows, very broad high forehead with three horizontal ash-white tilak lines, thick matted grey-white hair in tall jata dreadlocks piled upward, large aquiline nose with prominent bridge, thin firm lips, strong dignified upright bearing with broad shoulders, wearing rough bark-cloth garment draped over left shoulder and deerskin on right, large rudraksha mala with 108 beads around neck",
+  narada: "Sage Narada: a MALE sage aged 45-50 with rectangular face shape, strong square masculine jawline, fair wheat-toned skin (hex #c4956a), completely clean-shaven smooth face, happy chanting countenance with warm radiant open-mouth smile always chanting Narayana-Narayana, bright alert hazel-brown eyes, prominent vertical white U-shaped Vaishnava tilak mark on forehead with Vaishnava symbols on body, grey-streaked dark hair tied neatly in a high topknot bun, slender athletic MALE build with bare masculine chest, wearing simple white cotton dhoti with golden border, sacred thread (yajnopavita) crossing diagonally over chest, bead garland around neck, carrying his signature tanpura veena (mahathi) instrument in left hand and khartal (hand cymbals), celestial cosmic messenger of the gods",
+  vyasa: "Sage Vyasa (Krishna Dvaipayana Vedavyasa): a majestic elderly rishi aged 70-80 with broad square face, very dark brown complexion like night (hex #4a3220) — named Krishna Dvaipayana for his dark skin, long flowing silver-white beard with yellowish-brown tinge reaching mid-chest, deep-set wise penetrating bright dark brown eyes under heavy hooded eyelids with bushy white eyebrows, very broad high forehead with three horizontal ash-white tilak lines, thick brown-grey matted hair in tall jata dreadlocks piled upward, large aquiline nose with prominent bridge, thin firm lips, strong dignified upright bearing with broad shoulders, wearing rough bark-cloth garment draped over left shoulder and deerskin on right, large rudraksha mala with 108 beads around neck, palm-leaf manuscripts and reed stylus nearby",
   suta_goswami: "Suta Goswami: an elderly sage aged 65-70 with round soft face, fair pinkish-white complexion (hex #e8c9a0), neatly trimmed short white beard close to face, calm serene medium almond-shaped light brown eyes with gentle crow's feet wrinkles, thin white eyebrows, gentle knowing closed-mouth smile with slightly upturned corners, prominent vertical white tilak on forehead, bald shiny crown with neat white hair remaining on sides and back, small rounded nose, wearing saffron silk robes with gold border draped over both shoulders, rudraksha mala around neck",
   shukadeva: "Shukadeva Goswami: a very young sage aged 16-17 with oval delicate face, radiant golden-fair luminous complexion (hex #f0d4a0), completely clean-shaven bald head with smooth scalp, very large luminous innocent wide-open dark brown eyes with long lashes giving childlike appearance, thin light eyebrows, small straight nose, slight knowing half-smile with closed lips, slender youthful build with narrow shoulders, wearing only a simple undyed white cotton cloth loosely wrapped around waist, no ornaments at all, barefoot, emanating a natural divine glow around head",
-  arjuna: "Arjuna: a tall muscular warrior prince aged 30-35 with chiseled diamond-shaped face, fair wheatish complexion (hex #d4a574), sharp handsome angular features, determined focused narrow intense dark brown eyes with thick straight eyebrows, strong prominent square jaw, high straight nose with defined bridge, thin firm lips, neatly tied long dark black hair in a tight warrior topknot secured with golden diadem band across forehead, clean-shaven face, tall athletic muscular build, wearing gleaming golden chest armor with engraved patterns and silver arm-guards, carrying the mighty Gandiva bow",
+  arjuna: "Arjuna (Kiriti — the diadem-wearer): a tall muscular MALE warrior prince aged 30-35 with chiseled diamond-shaped face, fair wheatish radiant complexion (hex #d4a574), sharp handsome angular features, determined focused intense dark brown eyes with thick straight eyebrows, strong prominent square masculine jaw, high straight nose with defined bridge, thin firm lips, neatly tied long dark black hair in a tight warrior topknot secured with celestial golden diadem (kiriti-mukut) bestowed by Indra across forehead, clean-shaven face, tall athletic muscular build with sinewy broad shoulders and strong bow-bending arms, wearing gleaming golden chest armor with engraved patterns and silver arm-guards, twin inexhaustible quivers on back, carrying the mighty celestial Gandiva bow, golden chariot with Hanuman (vanara) banner emblem nearby",
   vishnu: "Lord Vishnu: a supreme divine being aged 25-30 with perfectly symmetrical oval face, deep royal blue skin (hex #1a2d6b), serene majestic face with perfectly proportioned large symmetrical almond eyes with golden irises, high arched eyebrows, straight perfect nose, gentle compassionate closed-mouth smile with full lips, wearing magnificent tall golden crown studded with rubies and emeralds, yellow silk garments, four arms holding conch Panchajanya in upper right, discus Sudarshana in upper left, mace Kaumodaki in lower left, and lotus in lower right",
   brahma: "Lord Brahma: the creator god with four faces visible in three-quarter view, aged appearance around 60, reddish-golden warm complexion (hex #c49040), long white flowing beard on each face reaching chest, wise contemplative half-closed medium eyes with golden-brown irises, bushy white eyebrows, broad nose, wearing elaborate red-golden silk robes, tall golden crown on each head, four arms holding Vedas book, a brass water pot (kamandalu), crystal prayer beads, and white lotus",
   prahlada: "Prahlada: a young boy aged 6-7 with soft round childish face, warm brown skin (hex #8b6940), innocent round face with chubby cheeks, very large devotional wide-open dark brown eyes with long lashes full of faith and wonder, small rounded nose, slight gentle closed-mouth smile, short black hair neatly combed, small build, wearing simple white prince kurta with minimal thin gold necklace and small armlets, a small tulsi mala around his neck",
-  narasimha: "Lord Narasimha: a fierce half-lion half-man divine form with massive golden-brown flowing lion mane framing the face, powerful muscular blue-skinned (hex #2a4a7b) human torso and arms, fearsome lion face with wide-open blazing golden-yellow fiery eyes with slit pupils, broad flat lion nose, open mouth showing sharp white fangs, wearing golden ornaments on arms and yellow silk garment around waist, divine golden effulgence radiating outward",
+  narasimha: "Lord Narasimha: a fierce half-lion half-man divine avatar — lion head and forearms with clawed paws fused with muscular MALE blue-skinned (hex #2a4a7b) human torso and lower body, massive golden-brown flowing lion mane framing the fierce face, fearsome lion visage with wide-open blazing golden-yellow fiery eyes with slit pupils, broad flat lion nose, open roaring mouth showing sharp white fangs and bared teeth, terrifying ugra-raudra expression yet protective toward devotees, wearing golden ornaments on powerful arms and yellow silk garment around waist, divine golden effulgence radiating outward",
   parikshit: "King Parikshit: a dignified middle-aged king aged 50-55 with rectangular noble face, fair complexion (hex #d4b896), well-groomed short dark brown beard trimmed close to jawline, serious contemplative deep-set dark brown eyes with slight dark circles showing renunciation, high forehead with vertical sandalwood tilak, greying dark hair tied back, medium build, wearing simple unadorned white cotton cloth having renounced his kingdom, sitting cross-legged",
   yashoda: "Mother Yashoda: a beautiful middle-aged woman aged 35-40 with round full face, warm fair pinkish complexion (hex #e0b88a), loving maternal soft features, large expressive almond-shaped dark brown eyes with kajal liner, rounded nose with small gold nose stud on left, gentle affectionate warm smile showing slight dimples, dark black hair parted in center with red sindoor in parting and tied in a low bun, wearing a rich maroon silk sari with gold zari border, gold nose ring, matching gold bangles on both wrists, and gold jhumka earrings",
   kunti: "Queen Kunti: a dignified elderly Indian woman aged 60-65 with oval thin face showing graceful aging, fair complexion (hex #d4b896), gentle sorrowful slightly downcast dark brown eyes with fine wrinkles, thin greying dark hair in a tight bun at nape covered with a white silk pallu, straight thin nose, thin lips with dignified composed expression, graceful noble upright bearing despite age, wearing a white and gold silk sari draped modestly, small gold earrings and thin gold bangles, vermillion circular tilak on forehead",
-  draupadi: "Draupadi: a strikingly beautiful young Indian woman aged 25-28 with heart-shaped face, dark olive-brown complexion (hex #7a5a3a), large fierce expressive almond-shaped dark eyes with thick kajal and bold arched eyebrows, proud noble bearing with chin slightly raised, long thick dark black wavy hair reaching waist adorned with jasmine flowers, straight nose with gold nose pin, full lips, wearing a rich red and gold silk sari with heavy gold zari, gold choker necklace with ruby, large gold jhumka earrings, and stacked gold bangles, vermillion sindoor in her hair parting",
+  draupadi: "Draupadi (Krishnaa — the dark-skinned one): a strikingly beautiful young FEMALE woman aged 25-28 (NO beard NO facial hair) with heart-shaped face, dark olive-brown complexion like night (hex #7a5a3a) — called Krishnaa for her dark beauty, large fierce expressive lotus-petal almond-shaped dark eyes with thick kajal and bold arched eyebrows, proud noble bearing with chin slightly raised, long thick dark black wavy-curly hair reaching waist adorned with jasmine flowers and blue curly locks, straight nose with gold nose pin, full lips, natural intoxicating fragrance (Yojanagandhi), nails beautifully convex and bright, wearing a rich red and gold silk sari with heavy gold zari, gold choker necklace with ruby, large gold jhumka earrings, stacked gold bangles, vermillion sindoor in hair parting",
   gandhari: "Queen Gandhari: a dignified elderly Indian woman aged 65-70 with thin oval face, fair pale complexion (hex #e0c8a8), a wide white silk blindfold covering her eyes completely as a lifelong vow tied at back of head, serene composed straight-lipped expression, greying white hair fully covered with a white silk pallu draped over head, wearing a simple white silk sari with thin gold border, thin gold bangles on wrists",
   dhritarashtra: "King Dhritarashtra: a very old blind Indian king aged 80+ with long narrow gaunt face, pale sallow complexion (hex #c8a878), permanently closed sunken sightless eyes with deep dark hollows, long thin white beard reaching mid-chest, deeply wrinkled face showing years of inner conflict and grief, tall but stooped hunched bearing, bony hands, wearing simple white royal cotton garments, gripping a wooden walking staff in right hand",
   vidura: "Vidura: a wise middle-aged Indian man aged 55-60 with angular lean face, dark brown complexion (hex #5a3a20), calm penetrating sharp medium-sized dark brown eyes with intense focused gaze, neatly trimmed short grey beard close to face, prominent high cheekbones, straight nose, thin firm lips, dignified humble slightly bowed bearing, wearing simple saffron dhoti and white uttariya cloth over left shoulder, carrying a wooden pilgrim's walking staff",
-  bhishma: "Bhishma: a majestic elderly warrior aged 75-80 with broad strong square face, fair complexion (hex #d0b890), silver-white hair flowing loose and long flowing thick white beard reaching chest, powerful broad-shouldered muscular build despite advanced age, wise serene half-open dark brown eyes with heavy eyelids showing acceptance, thick white eyebrows, large straight nose, wearing white warrior garments stained, lying on a raised bed of arrows with multiple arrows piercing his entire body",
+  bhishma: "Bhishma Pitamah (Gauranga — the fair-bodied, Shvetaveera — the white warrior): a majestic elderly MALE warrior aged 75-80 with broad strong square face, fair luminous complexion (hex #d0b890), silver-white hair flowing loose and long flowing thick white beard reaching chest, powerful broad-shouldered muscular build despite advanced age — invincible warrior son of sacred Ganga and greatest warrior of his time, wise serene half-open dark brown eyes with heavy eyelids showing acceptance, thick white eyebrows, large straight nose, wearing white warrior garments with silver armor elements, lying on a raised bed of arrows with multiple arrows piercing his entire body supporting him above the ground",
   yudhishthira: "King Yudhishthira: a fair-complexioned noble Indian king aged 35-40 with oval gentle face (hex #d4b080), calm gentle soft features without sharp angles, kind thoughtful medium dark brown eyes with a hint of sadness, thin neatly groomed dark beard trimmed close along jawline, straight nose, wearing white royal garments with minimal thin gold chain and small gold earrings befitting a dharmic king, simple golden band crown on head",
   // ── Additional major characters ──
-  radha: "Srimati Radharani: the supreme goddess aged 16-18 with perfectly golden luminous complexion (hex #f0d080), extraordinarily beautiful lotus face, large doe-like dark brown eyes with long curved lashes filled with divine love, delicate arched eyebrows, straight thin nose with tiny diamond nose pin, full crimson lips with gentle loving smile, lustrous long black hair in elaborate braid adorned with jasmine and gold ornaments, vermillion sindoor, wearing radiant blue silk sari with gold embroidery, gold waist chain, gold anklets, and abundant flower garlands",
-  balarama: "Lord Balarama: a powerful muscular young man aged 25-28 with fair white complexion (hex #e8d4b0), broad strong face, intense large dark brown eyes with reddish tinge, wearing blue garments, single gold earring, garland of forest flowers, hair in topknot, carrying a plough (hala) weapon on his shoulder and a mace (musala), golden armlets on powerful arms",
+  radha: "Srimati Radharani: the supreme FEMALE goddess aged 16-18 (NO beard NO facial hair) with perfectly golden molten-gold luminous complexion like stationary lightning (hex #f0d080), extraordinarily beautiful lotus face, large doe-like dark brown eyes lined with black mascara with long curved lashes filled with divine love, long bow-shaped delicate arched eyebrows, exquisitely shaped straight thin nose with tiny diamond nose pin, nectar-like full crimson lips with enchanting smile, teeth like shining white pearls, delicately sculptured chin with droplet of musk, lustrous luxuriant long black hair past her waist beautifully braided decorated with forest flowers jasmine garlands and gold ornaments, red kunkum on forehead, vermillion sindoor, wearing radiant blue silk sari with gold embroidery and intricate Gota Patti work, shimmering bodice, necklace of finest pearls, glittering earrings, gem-encrusted armlets, jeweled bracelets, golden ankle-bells, gold waist chain (kamarband), slender waist with three exquisite folds",
+  balarama: "Lord Balarama (Haladhara — plough bearer, Sankarshana): a powerful muscular MALE young man aged 25-28 with fair white complexion (hex #e8d4b0) — Vishnu's white hair became Balarama while black became Krishna, broad strong masculine face, intense large dark brown eyes with reddish tinge, wearing blue garments, single gold earring, garland of forest flowers, dark hair in topknot with earrings bracelets and armlets, carrying his plough weapon (Balachita/Hala) on powerful right shoulder and heavy mace (musala) in left, golden armlets on immensely powerful arms, greatest mace fighter of his era who trained Duryodhana, incarnation of Shesha-naga serpent",
   devaki: "Mother Devaki: a beautiful noble Indian woman aged 30-35 with fair radiant complexion (hex #e0c8a0), gentle maternal face with large expressive dark eyes filled with both love and sorrow, straight nose, wearing a modest silk sari in green and gold, minimal gold jewelry, hair covered with pallu, sitting gracefully with folded hands in devotion",
   vasudeva: "King Vasudeva: a noble dignified Indian man aged 40-45 with broad strong face, medium-dark complexion (hex #9a7a50), thick dark beard and mustache, determined courageous dark brown eyes, wearing royal but simple garments, gold armlets and earrings, tall strong build befitting a Yadava prince",
   kamsa: "King Kamsa: a fearsome tyrant aged 35-40 with harsh angular face, dark complexion (hex #5a3a20), cruel narrow dark eyes with heavy brows, thick black beard, large hooked nose, muscular imposing build, wearing royal black and red garments with heavy gold ornaments, golden crown, sneering cruel expression showing arrogance and fear",
   uddhava: "Uddhava: a devoted young man aged 25-30 with gentle refined face, fair complexion (hex #d4b080), soft thoughtful dark brown eyes filled with devotion, clean-shaven smooth face, neat dark hair, wearing simple yellow silk dhoti and uttariya, carrying a lotus flower, Vaishnava tilak on forehead, slim graceful build",
   rukmini: "Queen Rukmini: a stunningly beautiful young Indian queen aged 20-22 with golden-fair complexion (hex #e8c890), perfectly symmetrical lotus face, large luminous dark brown eyes with kajal, delicate nose with gold nose ring, full lips with serene regal smile, lustrous long black hair in elaborate braid with gold ornaments and flowers, wearing rich silk sari in red and gold with heavy bridal jewelry, gold necklace, jhumka earrings, bangles",
   nanda: "Nanda Maharaja: a prosperous elderly cowherd chief aged 55-60 with round jolly face, warm tanned complexion (hex #c49060), kind smiling dark brown eyes with laugh lines, short grey beard, broad nose, wearing simple white dhoti and uttariya cloth, rudraksha mala around neck, turban on head, sturdy build of a farmer",
-  shiva: "Lord Shiva: an ascetic divine being aged ageless with matted grey-brown jata dreadlocks piled high, third eye on forehead, crescent moon in hair, fair ashen complexion (hex #c0b090) smeared with sacred ash, half-closed meditative dark brown eyes, blue throat (neelkantha), wearing tiger skin around waist, sacred rudraksha beads, serpent Vasuki around neck, sitting in meditation on tiger skin with trident (trishul) beside him",
+  shiva: "Lord Shiva (Mahadeva): an ascetic MALE divine being aged ageless with three matted grey-brown jata dreadlocks piled high with Goddess Ganga flowing from the locks, third eye on forehead capable of burning destruction, crescent moon tucked in hair, fair ashen-white complexion (hex #c0b090) smeared all over with sacred vibhuti ash from cremation grounds, half-closed deep meditative dark brown eyes, blue throat (neelkantha) from holding halahala poison, wearing tiger skin around waist symbolizing victory over ego, sacred rudraksha beads, serpent Vasuki coiled around neck, small damaru hand-drum, carrying mighty trident (trishul) representing creator-preserver-destroyer, sitting in meditation on tiger skin, Nandi bull companion nearby",
   duryodhana: "Prince Duryodhana: a powerful arrogant young king aged 30-35 with broad aggressive face, fair complexion (hex #d4b080), angry intense dark brown eyes with thick eyebrows, strong square jaw, neatly trimmed dark beard, wearing rich royal red and gold garments with heavy gold ornaments, golden crown, carrying a mace, muscular imposing warrior build with proud bearing",
 };
 
 // Short persona summaries for image prompts (FLUX.2-pro has ~800 char limit)
 // Full descriptions in CHARACTER_PERSONAS are kept for reference and face bank
 const PERSONA_SHORT: Record<string, string> = {
-  krishna_adult: "Lord Krishna: MALE deity young man (strong masculine jawline, broad shoulders, bare masculine chest, NO feminine features, NOT a woman), deep blue-skinned, peacock feather in curly black hair, golden crown, yellow silk dhoti, Kaustubha gem necklace",
+  krishna_adult: "Lord Krishna: MALE deity young man (strong masculine jawline, broad shoulders, bare masculine chest, muscular arms, NO feminine features, NOT a woman), deep blue skin like rain cloud, peacock feather and blue karnikara flowers in curly black hair, golden mukut crown, brilliant yellow silk pitambara dhoti, Kaustubha gem on chest, Vaijayanti garland of five-colored flowers reaching knees, bamboo flute in hand",
   krishna_child: "Baby Krishna: MALE divine infant boy, chubby blue-tinted, tiny peacock feather, gold anklets, playful smile",
-  narada: "Sage Narada: MALE sage man (masculine face, strong jawline, NO feminine features, NOT a woman), clean-shaven, white U-shaped tilak on forehead, grey-streaked topknot, bare male chest with sacred thread, white dhoti, carrying tanpura veena",
+  narada: "Sage Narada: MALE sage man (masculine face, strong jawline, NO feminine features, NOT a woman), fair wheat-toned skin, clean-shaven, happy chanting countenance, white U-shaped Vaishnava tilak, grey-streaked topknot, bare male chest with sacred thread and bead garland, white dhoti, carrying tanpura veena (mahathi) and khartal cymbals, always chanting Narayana",
   vyasa: "Sage Vyasa: majestic dark-skinned elderly rishi, long silver-white beard, matted grey dreadlocks, bark-cloth garment, rudraksha mala",
   suta_goswami: "Suta Goswami: elderly fair sage, short white beard, bald crown, saffron silk robes, rudraksha mala",
   shukadeva: "Shukadeva Goswami: radiant young bald sage aged 16, luminous fair skin, large innocent eyes, simple white cloth, no ornaments",
-  arjuna: "Arjuna: tall muscular warrior prince, dark hair in tight topknot, golden armor, carrying Gandiva bow",
-  vishnu: "Lord Vishnu: royal blue-skinned divine being, four arms holding conch discus mace lotus, tall golden crown, yellow silk",
+  arjuna: "Arjuna (Kiriti): tall muscular MALE warrior prince, sinewy broad shoulders, dark hair in tight topknot, celestial golden diadem from Indra, golden armor, twin quivers, carrying mighty Gandiva bow, chariot with Hanuman banner",
+  vishnu: "Lord Vishnu: royal blue-skinned MALE divine being, four arms holding conch Panchajanya discus Sudarshana mace Kaumodaki lotus, tall golden kirita-mukut crown, yellow silk pitambara, Kaustubha gem, Vaijayanti tulsi garland, Srivatsa mark on chest",
   brahma: "Lord Brahma: four-faced creator god, white beard, red-golden robes, holding Vedas and water pot",
   prahlada: "Prahlada: young boy aged 6-7, warm brown skin, innocent devotional eyes, simple white kurta, tulsi mala",
   narasimha: "Lord Narasimha: fierce half-lion half-man, golden lion mane, blue-skinned muscular torso, blazing golden eyes, sharp fangs",
   parikshit: "King Parikshit: dignified middle-aged king, short dark beard, white renunciation cloth, sitting cross-legged",
   yashoda: "Mother Yashoda: beautiful middle-aged FEMALE woman (NO beard NO facial hair), loving smooth feminine face, dark hair with red sindoor, maroon silk sari with gold border",
   kunti: "Queen Kunti: dignified elderly FEMALE woman (NO beard NO facial hair), greying hair in bun, white and gold silk sari, sorrowful gentle feminine eyes",
-  draupadi: "Draupadi: beautiful young FEMALE woman (NO beard NO facial hair), dark olive skin, smooth delicate feminine face, thick black wavy hair with jasmine flowers, red and gold silk sari",
+  draupadi: "Draupadi (Krishnaa): beautiful young FEMALE woman (NO beard NO facial hair), dark olive-brown skin like night (called Krishnaa for dark beauty), lotus-petal eyes with kajal, smooth feminine face, thick black wavy-curly hair with jasmine and blue locks, red and gold silk sari, gold choker with ruby",
   gandhari: "Queen Gandhari: elderly FEMALE woman (NO beard NO facial hair) with white silk blindfold over eyes, white sari, greying hair covered with pallu",
   dhritarashtra: "King Dhritarashtra: very old blind king, closed sunken eyes, long white beard, white garments, wooden walking staff",
   vidura: "Vidura: wise dark-skinned middle-aged man, short grey beard, saffron dhoti, pilgrim's walking staff",
-  bhishma: "Bhishma: majestic elderly warrior, silver-white hair, long white beard, lying on bed of arrows",
+  bhishma: "Bhishma Pitamah (Gauranga): majestic fair-bodied elderly MALE warrior, silver-white hair, long white beard, invincible son of Ganga, silver armor, lying on raised bed of arrows piercing entire body",
   yudhishthira: "King Yudhishthira: fair gentle-faced king, thin dark beard, white royal garments, simple golden crown",
-  radha: "Srimati Radharani: golden-complexioned FEMALE goddess (NO beard NO facial hair), large doe eyes, smooth feminine face, blue silk sari with gold, jasmine flowers in long braid",
-  balarama: "Lord Balarama: fair muscular young man, blue garments, single earring, carrying plough and mace",
+  radha: "Srimati Radharani: molten-gold luminous complexioned FEMALE goddess (NO beard NO facial hair), large doe eyes with black mascara, bow-shaped brows, smooth feminine face, teeth like pearls, luxuriant black hair past waist with forest flowers, blue silk sari with gold Gota Patti work, pearl necklace, golden ankle-bells, red kunkum on forehead",
+  balarama: "Lord Balarama (Haladhara): fair white muscular MALE young man, blue garments, single earring, forest flower garland, topknot, carrying plough (Balachita) on shoulder and heavy mace, Shesha-naga incarnation, greatest mace fighter",
   devaki: "Mother Devaki: beautiful noble FEMALE woman (NO beard NO facial hair), gentle maternal smooth feminine face, green and gold sari, folded hands",
   vasudeva: "King Vasudeva: noble strong man, thick dark beard, royal garments, gold armlets, Yadava prince",
   kamsa: "King Kamsa: fearsome tyrant, dark complexion, cruel eyes, black and red royal garments, golden crown",
   uddhava: "Uddhava: devoted young man, fair, clean-shaven, yellow silk dhoti, carrying lotus, Vaishnava tilak",
   rukmini: "Queen Rukmini: beautiful golden-fair FEMALE queen (NO beard NO facial hair), large eyes with kajal, smooth feminine face, red and gold silk sari, heavy bridal jewelry",
   nanda: "Nanda Maharaja: jovial elderly cowherd, round face, grey beard, white dhoti, turban, sturdy farmer build",
-  shiva: "Lord Shiva: ascetic with matted jata dreadlocks, third eye, crescent moon, ash-smeared, tiger skin, trident",
-  duryodhana: "Prince Duryodhana: arrogant warrior king, broad face, dark beard, red and gold royal garments, carrying mace",
+  shiva: "Lord Shiva (Mahadeva): ascetic MALE with three matted jata dreadlocks with Ganga flowing from locks, third eye, crescent moon, ash-smeared white body (vibhuti), blue throat (neelkantha), tiger skin, damaru drum, serpent Vasuki, trident (trishul), Nandi bull nearby",
+  duryodhana: "Prince Duryodhana: arrogant MALE warrior king, broad aggressive face, dark beard, 'lightning made flesh' body, red and gold royal garments, golden crown, carrying heavy mace (gada), greatest mace fighter trained by Balarama",
 };
+
+// ── Custom Personas — user-defined characters loaded from JSON file ────────
+// Users can add new characters here without modifying code.
+// File: data/bhagwatham/custom-personas.json
+const CUSTOM_PERSONAS_FILE = path.join(DATA_DIR, "custom-personas.json");
+
+interface CustomPersona {
+  key: string;              // e.g. "indra", "garuda"
+  name: string;             // Display name: "Lord Indra"
+  fullDescription: string;  // Full CHARACTER_PERSONAS-style description
+  shortDescription: string; // PERSONA_SHORT-style description for image prompts
+  patterns: string[];       // Regex patterns to detect in scene text: ["\\bIndra\\b"]
+  gender: "male" | "female";
+  source?: string;          // Where the visual reference came from
+  addedAt?: string;
+}
+
+function readCustomPersonas(): CustomPersona[] {
+  if (!fs.existsSync(CUSTOM_PERSONAS_FILE)) return [];
+  try { return JSON.parse(fs.readFileSync(CUSTOM_PERSONAS_FILE, "utf-8")); }
+  catch { return []; }
+}
+
+function writeCustomPersonas(personas: CustomPersona[]): void {
+  fs.writeFileSync(CUSTOM_PERSONAS_FILE, JSON.stringify(personas, null, 2) + "\n");
+}
+
+/** Add or update a custom persona */
+export function upsertCustomPersona(persona: CustomPersona): { success: boolean; isNew: boolean } {
+  const personas = readCustomPersonas();
+  const idx = personas.findIndex(p => p.key === persona.key);
+  persona.addedAt = persona.addedAt || new Date().toISOString();
+
+  if (idx >= 0) {
+    personas[idx] = persona;
+    writeCustomPersonas(personas);
+    CHARACTER_PERSONAS[persona.key] = persona.fullDescription;
+    PERSONA_SHORT[persona.key] = persona.shortDescription;
+    logger.info({ key: persona.key, name: persona.name }, "Custom persona updated");
+    return { success: true, isNew: false };
+  }
+
+  personas.push(persona);
+  writeCustomPersonas(personas);
+  CHARACTER_PERSONAS[persona.key] = persona.fullDescription;
+  PERSONA_SHORT[persona.key] = persona.shortDescription;
+  logger.info({ key: persona.key, name: persona.name }, "Custom persona added");
+  return { success: true, isNew: true };
+}
+
+/** Remove a custom persona */
+export function deleteCustomPersona(key: string): boolean {
+  const personas = readCustomPersonas();
+  const filtered = personas.filter(p => p.key !== key);
+  if (filtered.length === personas.length) return false;
+  writeCustomPersonas(filtered);
+  delete CHARACTER_PERSONAS[key];
+  delete PERSONA_SHORT[key];
+  logger.info({ key }, "Custom persona deleted");
+  return true;
+}
+
+/** Get all personas — built-in + custom */
+export function getAllPersonas(): { builtIn: Record<string, string>; custom: CustomPersona[] } {
+  return { builtIn: { ...CHARACTER_PERSONAS }, custom: readCustomPersonas() };
+}
+
+// Load custom personas into memory on module init
+(function loadCustomPersonasOnInit() {
+  const customs = readCustomPersonas();
+  for (const p of customs) {
+    CHARACTER_PERSONAS[p.key] = p.fullDescription;
+    PERSONA_SHORT[p.key] = p.shortDescription;
+  }
+  if (customs.length > 0) {
+    logger.info({ count: customs.length }, "Custom personas loaded into memory");
+  }
+})();
 
 /** Look up which persona names appear in a scene prompt */
 function injectPersona(scene: string): string {
@@ -238,6 +316,15 @@ function injectPersona(scene: string): string {
     [/\bShiva\b|\bMahadeva\b/i, "shiva"],
     [/\bDuryodhana\b/i, "duryodhana"],
   ];
+
+  // Also add custom persona patterns dynamically
+  const customs = readCustomPersonas();
+  for (const cp of customs) {
+    for (const pat of cp.patterns) {
+      try { checks.push([new RegExp(pat, "i"), cp.key]); }
+      catch { /* skip invalid regex */ }
+    }
+  }
 
   // Collect ALL matching personas (short descriptions for prompt brevity)
   const matchedPersonas: string[] = [];

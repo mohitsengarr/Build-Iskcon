@@ -21,6 +21,9 @@ import {
   extractTatparyaStory,
   backfillMissingImages,
   getPersonaGallery,
+  getAllPersonas,
+  upsertCustomPersona,
+  deleteCustomPersona,
 } from "../services/bhagwatham-image-gen";
 import {
   runAuditPass,
@@ -708,6 +711,47 @@ router.post("/bhagwatham/persona/enhance", (req, res) => {
   }
 });
 
+// ── Custom Persona endpoints ──────────────────────────────────────────────
+
+// GET /api/bhagwatham/personas — list all personas (built-in + custom)
+router.get("/bhagwatham/personas", (_req, res) => {
+  try {
+    const all = getAllPersonas();
+    res.json(all);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to read personas" });
+  }
+});
+
+// POST /api/bhagwatham/personas/custom — add or update a custom persona
+router.post("/bhagwatham/personas/custom", (req, res) => {
+  try {
+    const { key, name, fullDescription, shortDescription, patterns, gender, source } = req.body;
+    if (!key || !name || !fullDescription || !shortDescription || !patterns || !gender) {
+      res.status(400).json({ error: "Missing required fields: key, name, fullDescription, shortDescription, patterns, gender" });
+      return;
+    }
+    const result = upsertCustomPersona({ key, name, fullDescription, shortDescription, patterns, gender, source });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to save custom persona" });
+  }
+});
+
+// DELETE /api/bhagwatham/personas/custom/:key — remove a custom persona
+router.delete("/bhagwatham/personas/custom/:key", (req, res) => {
+  try {
+    const deleted = deleteCustomPersona(req.params.key);
+    if (!deleted) {
+      res.status(404).json({ error: `Custom persona not found: ${req.params.key}` });
+      return;
+    }
+    res.json({ success: true, deleted: req.params.key });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete custom persona" });
+  }
+});
+
 // ── Audit endpoints ─────────────────────────────────────────────────────────
 
 // GET /api/bhagwatham/audit — audit progress and recent log
@@ -916,7 +960,6 @@ router.get("/bhagwatham/instagram/channels", async (_req, res) => {
 
 import { instagramCronTick } from "../cron/instagram-cron";
 import fs from "fs";
-import path from "path";
 
 const IG_CRON_STATE_FILE = path.resolve(
   new URL(".", import.meta.url).pathname, "..", "..", "..", "..", "data", "bhagwatham", "instagram", "ig-cron-state.json",

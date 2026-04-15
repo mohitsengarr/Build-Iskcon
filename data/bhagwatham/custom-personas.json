@@ -1,0 +1,62 @@
+[
+  {
+    "key": "indra",
+    "name": "Lord Indra",
+    "fullDescription": "Lord Indra: the king of gods (Devas) and ruler of Svargaloka (heaven), a powerful MALE deity aged 30-35 with fair golden radiant complexion, handsome regal face with sharp commanding features, large bright determined eyes, wearing magnificent golden crown studded with diamonds and emeralds, elaborate golden armor with celestial engravings, rich golden-yellow silk garments, heavy gold jewelry and armlets, carrying his mighty thunderbolt weapon Vajra in right hand, seated on his divine white elephant Airavata with four tusks, or on his golden celestial throne in Indra Sabha (court of heaven)",
+    "shortDescription": "Lord Indra: MALE king of gods, fair golden complexion, golden crown with diamonds, golden armor, carrying thunderbolt Vajra weapon, riding white four-tusked elephant Airavata, rich golden garments",
+    "patterns": ["\\bIndra\\b", "\\bDevendra\\b", "\\bSakra\\b"],
+    "gender": "male",
+    "source": "Hindu iconography and Bhagavatam descriptions",
+    "addedAt": "2026-04-15T12:00:00.000Z"
+  },
+  {
+    "key": "garuda",
+    "name": "Garuda",
+    "fullDescription": "Garuda: the divine eagle mount (vahana) of Lord Vishnu, a powerful MALE half-eagle half-human being with the head beak and wings of a giant golden eagle, fierce determined golden eyes, curved sharp beak, massive golden-feathered wings spread wide, muscular human-like golden torso and arms, taloned feet, wearing golden ornaments and a crown, radiating divine golden light, son of Vinata, enemy of serpents (nagas), carrier of Lord Vishnu across the universe",
+    "shortDescription": "Garuda: divine MALE eagle-man, golden eagle head with sharp beak, massive golden wings spread wide, muscular golden torso, fierce golden eyes, crown, mount of Lord Vishnu",
+    "patterns": ["\\bGaruda\\b", "\\bGarutman\\b"],
+    "gender": "male",
+    "source": "Hindu iconography — Vishnu's divine vahana",
+    "addedAt": "2026-04-15T12:00:00.000Z"
+  },
+  {
+    "key": "hiranyakashipu",
+    "name": "Hiranyakashipu",
+    "fullDescription": "Hiranyakashipu: a powerful demon (asura) king, father of devotee Prahlada, a fearsome MALE warrior aged 40-45 with dark reddish-brown complexion, fierce angry bulging red eyes, thick dark beard and mustache, large muscular imposing build, wearing opulent dark red and black royal garments with heavy gold ornaments and crown, arrogant powerful expression showing contempt for the gods, believed himself to be invincible due to Brahma's boon, eventually killed by Lord Narasimha",
+    "shortDescription": "Hiranyakashipu: fearsome MALE demon king, dark reddish-brown skin, fierce bulging red eyes, thick black beard, massive muscular build, dark red and black royal garments with heavy gold, arrogant powerful expression",
+    "patterns": ["\\bHiranyakashipu\\b", "\\bHiranyakashyap\\b"],
+    "gender": "male",
+    "source": "Bhagavatam Canto 7 descriptions",
+    "addedAt": "2026-04-15T12:00:00.000Z"
+  },
+  {
+    "key": "sudama",
+    "name": "Sudama (Kuchela)",
+    "fullDescription": "Sudama (Kuchela): a humble poor brahmin devotee of Lord Krishna, a thin MALE man aged 35-40 with gentle kind face, dark brown complexion, emaciated thin body from poverty, simple tattered worn white dhoti, bare feet, carrying a small cloth bundle of beaten rice (poha/chida) as humble gift for Krishna, sacred thread across thin chest, small tulsi mala, disheveled hair, humble grateful expression, childhood friend of Krishna from Guru Sandipani's ashram",
+    "shortDescription": "Sudama (Kuchela): thin humble MALE brahmin, dark brown skin, emaciated from poverty, tattered white dhoti, sacred thread on thin chest, carrying cloth bundle of beaten rice, barefoot, humble devoted expression",
+    "patterns": ["\\bSudama\\b", "\\bKuchela\\b"],
+    "gender": "male",
+    "source": "Bhagavatam Canto 10 — Krishna and Sudama story",
+    "addedAt": "2026-04-15T12:00:00.000Z"
+  },
+  {
+    "key": "lakshmi",
+    "name": "Goddess Lakshmi",
+    "fullDescription": "Goddess Lakshmi (Sri Devi): the supreme FEMALE goddess of wealth fortune and prosperity, consort of Lord Vishnu, aged 20-25 with radiant golden luminous complexion, extraordinarily beautiful serene lotus face (NO beard NO facial hair), large gentle compassionate dark brown eyes with kajal, delicate nose, full lips with gracious loving smile, lustrous long black hair adorned with gold ornaments and lotus flowers, wearing radiant red silk sari with heavy gold embroidery, abundant gold jewelry — heavy necklaces, armlets, bangles, golden crown, seated on a fully bloomed pink lotus flower, gold coins flowing from her open palm (Abhaya mudra), flanked by two white elephants showering water, divine golden aura",
+    "shortDescription": "Goddess Lakshmi: radiant golden FEMALE goddess (NO beard NO facial hair), beautiful serene lotus face, red silk sari with heavy gold, abundant gold jewelry, golden crown, seated on pink lotus, gold coins flowing from open palm, white elephants nearby",
+    "patterns": ["\\bLakshmi\\b", "\\bLaksmi\\b", "\\bSri\\s*Devi\\b"],
+    "gender": "female",
+    "source": "Hindu iconography — Vishnu's consort",
+    "addedAt": "2026-04-15T12:00:00.000Z"
+  },
+  {
+    "key": "hanuman",
+    "name": "Lord Hanuman",
+    "fullDescription": "Lord Hanuman (Bajrangbali): a powerful MALE divine monkey-god, devoted servant of Lord Rama, aged ageless with reddish-golden (sindoor-covered) complexion, strong masculine monkey face with prominent snout and expressive intelligent eyes, muscular powerful athletic build of immense strength, long curling tail, wearing a simple loincloth (langoti), sacred thread, and gold armlets, sometimes carrying a mace (gada) or mountain, hands often folded in devoted pranam, Rama's name written on his heart, embodiment of devotion strength and selfless service",
+    "shortDescription": "Lord Hanuman: powerful MALE monkey-god, reddish-golden (sindoor) complexion, muscular monkey face with intelligent eyes, immensely powerful athletic build, curling tail, simple loincloth, gold armlets, carrying mace, hands in pranam devotion",
+    "patterns": ["\\bHanuman\\b", "\\bBajrang\\b", "\\bMaruti\\b", "\\bPavansut\\b"],
+    "gender": "male",
+    "source": "Hindu iconography — Rama's devotee",
+    "addedAt": "2026-04-15T12:00:00.000Z"
+  }
+]
