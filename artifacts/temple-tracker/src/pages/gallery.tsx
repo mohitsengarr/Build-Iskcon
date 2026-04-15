@@ -416,13 +416,20 @@ export default function Gallery() {
                               loading="lazy"
                             />
 
-                            {/* Hover overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
+                            {/* Hover overlay with story description */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
                               <p className="text-white text-[11px] font-semibold leading-snug line-clamp-2">{item.chapterTitle}</p>
-                              <div className="flex items-center gap-1.5 mt-1">
-                                <span className="text-white/60 text-[10px]">Ch. {item.chapterNumber}</span>
+                              {item.description && (
+                                <p className="text-white/80 text-[10px] leading-relaxed mt-1.5 line-clamp-3" style={{ fontFamily: "var(--font-devanagari)" }}>
+                                  {item.description}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-1.5 mt-1.5">
+                                <span className="text-white/50 text-[9px]">Ch. {item.chapterNumber}</span>
+                                <span className="text-white/30">·</span>
+                                <span className="text-white/50 text-[9px]">{CANTO_NAMES[item.cantoNumber]?.split("—")[0]?.trim() || `Canto ${item.cantoNumber}`}</span>
                                 {item.type === "instagram" && (
-                                  <span className="px-1.5 py-0.5 bg-pink-500/40 text-pink-200 rounded text-[9px] font-bold">IG</span>
+                                  <span className="px-1.5 py-0.5 bg-pink-500/40 text-pink-200 rounded text-[9px] font-bold ml-auto">IG</span>
                                 )}
                               </div>
                             </div>
