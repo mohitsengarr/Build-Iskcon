@@ -499,7 +499,7 @@ export const TEMPLE_STATS = {
 const SUPABASE_URL = "https://etfmndcrchundvgtvmot.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0Zm1uZGNyY2h1bmR2Z3R2bW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2NDE1MTIsImV4cCI6MjA2MzIxNzUxMn0.7GXS820xSFcUy2TRdbspN7s-NP3sgKFFtUP-Zw0Qbrs";
 
-/** Fetch temples from Supabase (live data). Falls back to static TEMPLES on error. */
+/** Fetch temples from Supabase (live data). Falls back to static TEMPLES on error or stale data. */
 export async function fetchLiveTemples(): Promise<Temple[]> {
   try {
     const res = await fetch(
@@ -513,7 +513,8 @@ export async function fetchLiveTemples(): Promise<Temple[]> {
     );
     if (!res.ok) return TEMPLES;
     const rows = await res.json();
-    if (!Array.isArray(rows) || rows.length === 0) return TEMPLES;
+    // Only use Supabase if it has MORE temples than the static array (i.e. it's been kept up to date)
+    if (!Array.isArray(rows) || rows.length <= TEMPLES.length) return TEMPLES;
 
     return rows.map((r: any, i: number) => ({
       id: r.id || i + 1,
