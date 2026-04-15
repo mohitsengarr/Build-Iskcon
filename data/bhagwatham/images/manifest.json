@@ -3094,6 +3094,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 258,
+      "chapterTitle": "Chapter सत्तावन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-258.jpg",
+      "prompt": "Satyabhama, grief-stricken and tearful, rushes to meet Krishna in Hastinapur to deliver the sorrowful news of her father Satrajit's death. Krishna listens with calm compassion, his hand gently raised in reassurance, as Balarama stands nearby. The setting is a royal courtyard, the atmosphere heavy with sorrow and divine solace.",
+      "descriptionHi": "इस अध्याय में शतधन्वा द्वारा सत्राजित की हत्या और स्यमन्तक मणि की चोरी का वर्णन है। सत्यभामा के शोक-संदेश पर श्रीकृष्ण और बलराम द्वारका लौटे और शतधन्वा का वध कर न्याय स्थापित किया। अंततः मणि अक्रूर के पास पाई गई और सत्राजित का अंतिम संस्कार सम्पन्न हुआ।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:42:47.149Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3699,5 +3713,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T15:40:22.986Z"
+  "lastUpdated": "2026-04-15T15:43:06.381Z"
 }
