@@ -2952,6 +2952,50 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 248,
+      "chapterTitle": "Chapter सैंतालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-248.jpg",
+      "prompt": "In a quiet, secluded grove in Vrindavan, the gopis surround Uddhava, who arrives as Krishna's messenger dressed in yellow robes with lotus-like eyes. One grieving gopi, lost in deep longing for Krishna, turns to a passing bumblebee and pours out her heart, addressing it as Krishna's emissary, while tears flow freely among the assembled gopis.",
+      "descriptionHi": "इस अध्याय में उद्धव कृष्ण के दूत बनकर व्रज की गोपियों के पास जाते हैं और उन्हें भगवान् का सन्देश सुनाते हैं। गोपियाँ उद्धव को देखकर कृष्ण की याद में व्याकुल हो जाती हैं और विरह-वेदना में रोने लगती हैं। एक गोपी भौंरे को कृष्ण का दूत मानकर अपनी व्यथा सुनाती है, जो भ्रमर गीत की आत्मा है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:32:58.714Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 249,
+      "chapterTitle": "Chapter अड़तालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-249.jpg",
+      "prompt": "Trivakra, beautifully adorned, welcomes Krishna with deep reverence into her elegantly decorated home, offering him a place of honor. Krishna, gracious and radiant, accepts her devoted hospitality as she and her companions perform a heartfelt worship, her lifelong longing finally fulfilled through this rare and blessed moment of divine closeness.",
+      "descriptionHi": "इस अध्याय में श्रीकृष्ण त्रिवक्रा (कुब्जा) के घर जाते हैं, जहाँ वह उनका भव्य स्वागत करती है और कृष्ण उसके साथ रमण करके उसकी काम-पीड़ा से मुक्ति करते हैं। त्रिवक्रा ने केवल एक बार चन्दन-लेप अर्पित करने के पुण्य से श्रीकृष्ण की दुर्लभ संगति प्राप्त की। इसके बाद भगवान् अक्रूर के घर जाते हैं और पाण्डवों की सहायता के लिए अक्रूर को हस्तिनापुर भेजते हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:33:35.396Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 250,
+      "chapterTitle": "Chapter उनचास",
+      "cantoNumber": 10,
+      "imagePath": "chapter-250.jpg",
+      "prompt": "Inside the royal palace of Hastinapura, Kunti sits with tear-filled eyes before Akrura, her hands folded in devotion as she speaks of her longing for Krishna and her sons' hardships. Akrura listens with compassion and offers her reassurance, while Vidura stands nearby in quiet solidarity, the atmosphere heavy with hope and grief.",
+      "descriptionHi": "भगवान कृष्ण के आदेश पर अक्रूर हस्तिनापुर गए, जहाँ उन्होंने धृतराष्ट्र द्वारा पाण्डवों के प्रति हो रहे दुर्व्यवहार को जाना। कुन्तीदेवी ने अश्रुपूर्ण नेत्रों से अक्रूर से कृष्ण का स्मरण और सहायता की आशा व्यक्त की, जिस पर अक्रूर ने उन्हें आश्वस्त किया कि पाण्डवों का शीघ्र ही उत्तम भाग्य होगा। यह अध्याय भक्ति, विश्वास और कृष्ण की सुरक्षात्मक कृपा का भावपूर्ण चित्रण प्रस्तुत करता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "kunti",
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:34:12.877Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3557,5 +3601,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T15:32:23.222Z"
+  "lastUpdated": "2026-04-15T15:34:36.621Z"
 }
