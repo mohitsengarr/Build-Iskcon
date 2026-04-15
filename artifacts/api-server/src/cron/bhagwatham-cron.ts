@@ -1,12 +1,13 @@
 import cron from "node-cron";
 import { processNextBatch, getProgress, backfillEnglishTranslations, recoverStaleProgress, reprocessEmptyPages } from "../services/bhagwatham-sarvam";
-import { runAuditPass } from "../services/bhagwatham-audit";
+import { runAuditPass, fastImageBackfill } from "../services/bhagwatham-audit";
 import { checkAllCredits } from "../services/ai-credit-monitor";
 import { logger } from "../lib/logger";
 
 const CRON_INTERVAL = "*/5 * * * *"; // Every 5 minutes
 const BACKFILL_INTERVAL = "3,13,23,33,43,53 * * * *"; // Offset by 3 min to avoid overlap
 const AUDIT_INTERVAL = "*/5 * * * *"; // Every 5 min — prioritizes chapters without images
+const FAST_BACKFILL_INTERVAL = "*/2 * * * *"; // Every 2 min — parallel image generation (3 at a time)
 const CREDIT_CHECK_INTERVAL = "0 */2 * * *"; // Every 2 hours
 
 export function startBhagwathamCron(): void {
@@ -131,6 +132,26 @@ export function startBhagwathamCron(): void {
       }
     } catch (err) {
       logger.error({ err }, "Credit check cron failed");
+    }
+  });
+
+  // ── Fast image backfill — 3 images in parallel every 2 min ───────────
+  // Generates images for chapters that don't have any. Auto-stops when all covered.
+  logger.info({ interval: FAST_BACKFILL_INTERVAL, parallelCount: 3 }, "Fast image backfill cron started");
+
+  cron.schedule(FAST_BACKFILL_INTERVAL, async () => {
+    try {
+      const result = await fastImageBackfill(3);
+      if (result.generated > 0) {
+        logger.info(
+          { generated: result.generated, remaining: result.remaining },
+          "Fast backfill: images generated",
+        );
+      } else if (result.remaining === 0) {
+        // All chapters covered — this will log once then be silent
+      }
+    } catch (err) {
+      logger.error({ err }, "Fast backfill cron failed");
     }
   });
 

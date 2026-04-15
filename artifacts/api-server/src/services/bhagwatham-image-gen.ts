@@ -170,9 +170,9 @@ const CHARACTER_PERSONAS: Record<string, string> = {
 // Short persona summaries for image prompts (FLUX.2-pro has ~800 char limit)
 // Full descriptions in CHARACTER_PERSONAS are kept for reference and face bank
 const PERSONA_SHORT: Record<string, string> = {
-  krishna_adult: "Lord Krishna: deep blue-skinned young man, peacock feather in curly black hair, golden crown, yellow silk dhoti, Kaustubha gem necklace",
-  krishna_child: "Baby Krishna: chubby blue-tinted infant, tiny peacock feather, gold anklets, playful smile",
-  narada: "Sage Narada: clean-shaven male sage, white U-shaped tilak on forehead, grey-streaked topknot, white dhoti, carrying tanpura veena",
+  krishna_adult: "Lord Krishna: MALE deity young man (strong masculine jawline, broad shoulders, bare masculine chest, NO feminine features, NOT a woman), deep blue-skinned, peacock feather in curly black hair, golden crown, yellow silk dhoti, Kaustubha gem necklace",
+  krishna_child: "Baby Krishna: MALE divine infant boy, chubby blue-tinted, tiny peacock feather, gold anklets, playful smile",
+  narada: "Sage Narada: MALE sage man (masculine face, strong jawline, NO feminine features, NOT a woman), clean-shaven, white U-shaped tilak on forehead, grey-streaked topknot, bare male chest with sacred thread, white dhoti, carrying tanpura veena",
   vyasa: "Sage Vyasa: majestic dark-skinned elderly rishi, long silver-white beard, matted grey dreadlocks, bark-cloth garment, rudraksha mala",
   suta_goswami: "Suta Goswami: elderly fair sage, short white beard, bald crown, saffron silk robes, rudraksha mala",
   shukadeva: "Shukadeva Goswami: radiant young bald sage aged 16, luminous fair skin, large innocent eyes, simple white cloth, no ornaments",
@@ -495,6 +495,7 @@ const GENERIC_SCENES = [
 export interface ChapterImage {
   chapterNumber: number;
   chapterTitle: string;
+  cantoNumber?: number;        // skandh/canto (1-12) for gallery grouping
   imagePath: string;
   prompt: string;
   descriptionHi?: string;
@@ -1068,7 +1069,7 @@ async function generateWithTogether(prompt: string, destPath: string, model: str
 
   // Style suffix — concise to leave maximum room for the scene description.
   // Scene accuracy is the #1 priority; style can be shorter.
-  const styleSuffix = "\nRaja Ravi Varma style classic oil painting, soft painterly brushstrokes, NOT photorealistic. Warm golden sunlight, vibrant sky. Traditional Indian devotional art, serene atmosphere, museum quality fine art. Ancient Vedic era 5000 years ago — absolutely NO modern items, NO modern hairstyles, NO trimmed beards, NO glasses, NO modern clothing. Lord Krishna must be the central prominent figure in the scene whenever present. All male sages and warriors have long flowing uncut beards and matted jata hair or topknots as per ancient Vedic tradition. CRITICAL GENDER RULE: All female characters (women, queens, mothers, goddesses) MUST have smooth clean feminine faces with absolutely NO beard NO mustache NO facial hair whatsoever — soft feminine features, delicate jawline, kajal-lined eyes. Women have long braided hair with flowers. Ancient ashram and forest settings only.";
+  const styleSuffix = "\nRaja Ravi Varma style classic oil painting, soft painterly brushstrokes, NOT photorealistic. Warm golden sunlight, vibrant sky. Traditional Indian devotional art, serene atmosphere, museum quality fine art. Ancient Vedic era 5000 years ago — absolutely NO modern items, NO modern hairstyles, NO trimmed beards, NO glasses, NO modern clothing. CRITICAL MALE RULE: Lord Krishna is ALWAYS a MALE young man with masculine face, strong jawline, broad bare chest, muscular arms — NEVER feminine NEVER a woman. Sage Narada is ALWAYS a MALE man with masculine features. All male characters (gods, sages, warriors, kings) MUST have clearly masculine faces with strong jawlines and masculine builds. CRITICAL FEMALE RULE: All female characters (women, queens, mothers, goddesses) MUST have smooth clean feminine faces with absolutely NO beard NO mustache NO facial hair — soft feminine features, delicate jawline, kajal-lined eyes, long braided hair with flowers. Ancient ashram and forest settings only.";
 
   // Build the full prompt: scene first (most important), then style
   let fullPrompt = prompt + styleSuffix;
@@ -1202,6 +1203,7 @@ async function _generateChapterImages(
       manifest.images.push({
         chapterNumber,
         chapterTitle,
+        cantoNumber: getCantoForGlobalChapter(chapterNumber),
         imagePath: filename,
         prompt: scenes[sceneIdx],  // Store the clean scene description, not the full enriched prompt
         descriptionHi: descHi,
@@ -1767,4 +1769,35 @@ export async function backfillMissingImages(
   }
 
   return { generated, skipped, errors };
+}
+
+// ── Canto number lookup for chapter images ─────────────────────────────────
+
+const CANTO_EXPECTED = [19, 10, 33, 31, 26, 19, 15, 24, 24, 90, 31, 13];
+
+/** Map a global chapter number → canto (skandh) 1-12 */
+export function getCantoForGlobalChapter(globalChapter: number): number {
+  let offset = 0;
+  for (let i = 0; i < CANTO_EXPECTED.length; i++) {
+    if (globalChapter <= offset + CANTO_EXPECTED[i]) return i + 1;
+    offset += CANTO_EXPECTED[i];
+  }
+  return 12;
+}
+
+/** Backfill cantoNumber for all manifest images missing it */
+export function backfillManifestCantoNumbers(): number {
+  const manifest = readManifest();
+  let fixed = 0;
+  for (const img of manifest.images) {
+    if (!img.cantoNumber || img.cantoNumber === 0) {
+      img.cantoNumber = getCantoForGlobalChapter(img.chapterNumber);
+      fixed++;
+    }
+  }
+  if (fixed > 0) {
+    writeManifest(manifest);
+    logger.info({ fixed }, "Backfilled cantoNumber for manifest images");
+  }
+  return fixed;
 }

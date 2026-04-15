@@ -465,19 +465,29 @@ async function instagramCronTick() {
       return;
     }
 
-    const currentChapter = state.nextChapter;
-    const cantoNumber = getCantoNumber(currentChapter);
+    let currentChapter = state.nextChapter;
 
-    // Skip chapters that don't exist in detected chapters
+    // Skip chapters that don't exist in detected chapters — jump straight to
+    // the next valid one instead of decrementing one at a time (avoids days of
+    // empty skips over large gaps like 280→231).
     if (!chapters.includes(currentChapter)) {
-      logger.info({ currentChapter }, "Chapter not detected, skipping backward");
-      state.nextChapter = currentChapter - 1;
+      const nextValid = chapters.filter((c) => c < currentChapter).sort((a, b) => b - a)[0];
+      if (!nextValid || nextValid < 1) {
+        logger.info({ currentChapter }, "No valid chapters remaining — pausing cron");
+        state.paused = true;
+        writeState(state);
+        isRunning = false;
+        return;
+      }
+      logger.info({ from: currentChapter, to: nextValid, skipped: currentChapter - nextValid }, "Batch-skipping missing chapters");
+      state.nextChapter = nextValid;
+      currentChapter = nextValid;
       writeState(state);
-      isRunning = false;
-      return;
     }
 
-    logger.info({ chapter: currentChapter, canto: cantoNumber }, "Instagram cron tick — processing");
+    const cantoNumber = getCantoNumber(currentChapter);
+    const chapterInCanto = getChapterInCanto(currentChapter);
+    logger.info({ chapter: currentChapter, canto: cantoNumber, chapterInCanto }, "Instagram cron tick — processing");
 
     // Step 1: Check if we have IG images for this chapter
     const igManifest = getInstagramManifest();
@@ -498,7 +508,7 @@ async function instagramCronTick() {
       try {
         const result = await generateInstagramForChapter(
           currentChapter, chapterData.title, chapterData.content,
-          { queueToBuffer: false, numScenes: 2, cantoNumber },
+          { queueToBuffer: false, numScenes: 2, cantoNumber, chapterInCanto },
         );
         scenes = result.images;
         if (scenes.length === 0) {

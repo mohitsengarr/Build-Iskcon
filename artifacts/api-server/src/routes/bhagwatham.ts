@@ -362,6 +362,27 @@ router.delete("/bhagwatham/image/:chapter/:scene", (req, res) => {
   }
 });
 
+// DELETE /api/bhagwatham/image/delete/:chapter/:scene — permanently delete image (no regeneration)
+router.delete("/bhagwatham/image/delete/:chapter/:scene", async (req, res) => {
+  try {
+    const chapterNumber = parseInt(req.params.chapter, 10);
+    const sceneIndex = parseInt(req.params.scene, 10);
+    if (isNaN(chapterNumber) || isNaN(sceneIndex)) {
+      res.status(400).json({ error: "Invalid chapter or scene number" });
+      return;
+    }
+    // Delete regular chapter image
+    const deleteResult = deleteChapterImage(chapterNumber, sceneIndex);
+    // Delete IG image (from manifest + Supabase Storage + Buffer — NO regeneration)
+    const { deleteIGImage } = await import("../services/bhagwatham-instagram");
+    const igResult = await deleteIGImage(chapterNumber, sceneIndex);
+
+    res.json({ success: true, chapterImage: deleteResult, instagram: igResult });
+  } catch (err) {
+    res.status(500).json({ error: String(err) });
+  }
+});
+
 // POST /api/bhagwatham/image/delete-and-regenerate/:chapter/:scene — delete image + Buffer posts, regenerate + requeue
 router.post("/bhagwatham/image/delete-and-regenerate/:chapter/:scene", async (req, res) => {
   try {
@@ -734,7 +755,7 @@ router.get("/bhagwatham/credits", async (_req, res) => {
 // ── Instagram image pipeline ─────────────────────────────────────────────────
 
 // Serve Instagram images
-router.use("/bhagwatham/instagram/images", express.static(getInstagramDir(), { maxAge: "7d" }));
+router.use("/bhagwatham/instagram/images", express.static(getInstagramDir(), { maxAge: 0, etag: true, lastModified: true }));
 
 // GET /api/bhagwatham/instagram/manifest — list all generated Instagram images
 router.get("/bhagwatham/instagram/manifest", (_req, res) => {

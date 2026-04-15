@@ -73,6 +73,23 @@ async function uploadToSupabaseStorage(filePath: string, destName: string): Prom
   return `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/${destName}`;
 }
 
+/** Delete an image from Supabase Storage bucket */
+async function deleteFromSupabaseStorage(filename: string): Promise<boolean> {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) return false;
+  try {
+    const deleteUrl = `${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}/${filename}`;
+    const res = await fetch(deleteUrl, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${SUPABASE_SERVICE_KEY}` },
+    });
+    logger.info({ filename, status: res.status }, "Supabase Storage delete");
+    return res.ok;
+  } catch (err) {
+    logger.warn({ err, filename }, "Supabase Storage delete failed");
+    return false;
+  }
+}
+
 // ── Manifest helpers ─────────────────────────────────────────────────────────
 
 function ensureInstagramDir() {
@@ -653,62 +670,78 @@ async function deleteBufferPost(postId: string): Promise<boolean> {
  * Delete old IG/Threads posts via Buffer, remove from manifest, regenerate new image, requeue.
  * Returns the new manifest entry.
  */
-export async function deleteAndRegenerateIG(
+/**
+ * Delete an IG image permanently — removes from manifest, Buffer, Supabase Storage, and local disk.
+ * Does NOT regenerate. Use this for removing bad images.
+ */
+export async function deleteIGImage(
   chapterNumber: number,
   sceneIndex: number,
-): Promise<{ success: boolean; deleted: string[]; newEntry?: InstagramImage }> {
+): Promise<{ success: boolean; deleted: string[] }> {
   const manifest = readIGManifest();
   const deleted: string[] = [];
 
-  // Find existing entries for this chapter+scene
   const existingIdx = manifest.images.findIndex(
     (img) => img.chapterNumber === chapterNumber && img.sceneIndex === sceneIndex,
   );
   const existing = existingIdx >= 0 ? manifest.images[existingIdx] : null;
 
-  // Step 1: Delete old Buffer posts
-  if (existing) {
-    if (existing.bufferId) {
-      const ok = await deleteBufferPost(existing.bufferId);
-      if (ok) deleted.push(`instagram:${existing.bufferId}`);
-    }
-    if (existing.bufferThreadsId) {
-      const ok = await deleteBufferPost(existing.bufferThreadsId);
-      if (ok) deleted.push(`threads:${existing.bufferThreadsId}`);
-    }
+  if (!existing) return { success: false, deleted };
 
-    // Remove from manifest
-    manifest.images.splice(existingIdx, 1);
-    writeIGManifest(manifest);
-    logger.info({ chapterNumber, sceneIndex, deleted }, "Deleted old IG entries and Buffer posts");
+  // 1. Delete Buffer posts (Instagram + Threads)
+  if (existing.bufferId) {
+    const ok = await deleteBufferPost(existing.bufferId);
+    if (ok) deleted.push(`instagram:${existing.bufferId}`);
+  }
+  if (existing.bufferThreadsId) {
+    const ok = await deleteBufferPost(existing.bufferThreadsId);
+    if (ok) deleted.push(`threads:${existing.bufferThreadsId}`);
   }
 
-  // Step 2: Regenerate — find chapter content for generation
-  // We need the chapter title and content. Pull from existing or use a placeholder.
-  const chapterTitle = existing?.chapterTitle || `Chapter ${chapterNumber}`;
-  const caption = existing?.caption || "";
-  const hashtags = existing?.hashtags || "";
+  // 2. Delete from Supabase Storage
+  if (existing.imagePath) {
+    await deleteFromSupabaseStorage(existing.imagePath);
+    deleted.push(`supabase:${existing.imagePath}`);
+  }
 
-  // Step 3: Generate new image using the existing scene prompt approach
+  // 3. Delete local file
+  const localPath = path.join(INSTAGRAM_DIR, existing.imagePath);
+  if (fs.existsSync(localPath)) {
+    fs.unlinkSync(localPath);
+    deleted.push(`local:${existing.imagePath}`);
+  }
+
+  // 4. Remove from manifest
+  manifest.images.splice(existingIdx, 1);
+  writeIGManifest(manifest);
+
+  logger.info({ chapterNumber, sceneIndex, deleted }, "IG image permanently deleted (no regeneration)");
+  return { success: true, deleted };
+}
+
+export async function deleteAndRegenerateIG(
+  chapterNumber: number,
+  sceneIndex: number,
+): Promise<{ success: boolean; deleted: string[]; newEntry?: InstagramImage }> {
+  // Step 1: Delete fully (including Supabase Storage)
+  const { deleted } = await deleteIGImage(chapterNumber, sceneIndex);
+
+  // Step 2: Regenerate
+  const manifest = readIGManifest();
+  const existing = manifest.images.find(
+    (img) => img.chapterNumber === chapterNumber,
+  );
+  const chapterTitle = existing?.chapterTitle || `Chapter ${chapterNumber}`;
+
   try {
     const result = await generateInstagramForChapter(
-      chapterNumber,
-      chapterTitle,
-      caption || "Regenerated scene",
-      {
-        numScenes: 1,
-        cantoNumber: existing?.cantoNumber,
-        queueToBuffer: true, // auto-publish to Buffer
-        forceRegenerate: false, // we already removed the old entry
-      },
+      chapterNumber, chapterTitle, existing?.caption || "Regenerated scene",
+      { numScenes: 1, cantoNumber: existing?.cantoNumber, queueToBuffer: true, forceRegenerate: false },
     );
-
-    // Find the newly created entry
     const updatedManifest = readIGManifest();
     const newEntry = updatedManifest.images.find(
-      (img) => img.chapterNumber === chapterNumber && img.generatedAt > (existing?.generatedAt || ""),
+      (img) => img.chapterNumber === chapterNumber && img.sceneIndex === sceneIndex,
     );
-
     return { success: true, deleted, newEntry: newEntry || undefined };
   } catch (err) {
     logger.error({ err, chapterNumber, sceneIndex }, "Failed to regenerate IG image");
@@ -725,7 +758,7 @@ export async function generateInstagramForChapter(
   chapterNumber: number,
   chapterTitle: string,
   contentSnippet: string,
-  options: { queueToBuffer?: boolean; numScenes?: number; cantoNumber?: number; forceRegenerate?: boolean } = {},
+  options: { queueToBuffer?: boolean; numScenes?: number; cantoNumber?: number; chapterInCanto?: number; forceRegenerate?: boolean } = {},
 ): Promise<{
   generated: number;
   queued: number;
@@ -733,6 +766,7 @@ export async function generateInstagramForChapter(
 }> {
   const numScenes = options.numScenes || 4;
   const cantoNumber = options.cantoNumber;
+  const chapterInCanto = options.chapterInCanto; // chapter number within the canto (e.g. 79 in canto 10), NOT global 280
   ensureInstagramDir();
 
   const manifest = readIGManifest();
@@ -786,9 +820,11 @@ export async function generateInstagramForChapter(
         continue;
       }
 
-      // Generate caption with canto/chapter info
+      // Generate caption with canto/chapter info — use chapterInCanto for display
+      // (e.g. "Canto 10, Chapter 79") not the global number (280)
+      const displayChapterNum = chapterInCanto || chapterNumber;
       const { caption, hashtags } = await generateCaption(
-        chapterTitle, scene.scene, scene.summaryHi, cantoNumber, chapterNumber,
+        chapterTitle, scene.scene, scene.summaryHi, cantoNumber, displayChapterNum,
       );
 
       // Upload to Supabase Storage for public URL

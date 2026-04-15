@@ -43,11 +43,18 @@ export async function createApp(): Promise<Express> {
 
   app.use("/api", router);
 
+  // One-time: fix "Canto 0" images in manifest (assign correct canto numbers)
+  try {
+    const { backfillManifestCantoNumbers } = await import("./services/bhagwatham-image-gen");
+    const fixed = backfillManifestCantoNumbers();
+    if (fixed > 0) logger.info({ fixed }, "Backfilled canto numbers on startup");
+  } catch (err) { logger.warn({ err }, "Canto backfill failed"); }
+
   // Bhagwatham OCR + audit + image gen + re-OCR (Sarvam AI)
   startBhagwathamCron();
 
-  // Gita OCR (SEN-84)
-  startGitaCron();
+  // Gita OCR (SEN-84) — ON HOLD, disabled by user request
+  // startGitaCron();
 
   // Instagram + Temple Discovery
   startInstagramCron();

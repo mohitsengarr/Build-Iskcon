@@ -617,6 +617,71 @@ export function getAuditProgress(): AuditProgress {
   return readAuditProgress();
 }
 
+// ── Fast parallel image backfill ───────────────────────────────────────────
+// Generates images for multiple chapters in parallel to quickly fill gaps.
+// Called by a dedicated cron every 2 minutes.
+
+let _fastBackfillRunning = false;
+
+export async function fastImageBackfill(parallelCount = 3): Promise<{ generated: number; remaining: number }> {
+  if (_fastBackfillRunning) return { generated: 0, remaining: -1 };
+  _fastBackfillRunning = true;
+
+  try {
+    const batches = loadAllBatches();
+    if (batches.length === 0) return { generated: 0, remaining: 0 };
+
+    const chapters = findChaptersInBatches(batches);
+    const manifest = readManifest();
+    const hasImage = new Set(manifest.images.map(img => img.chapterNumber));
+
+    // Find chapters without images, sorted by global number ascending (fill from beginning)
+    const missing = Array.from(chapters.entries())
+      .filter(([globalNum]) => !hasImage.has(globalNum))
+      .sort((a, b) => a[0] - b[0]);
+
+    if (missing.length === 0) return { generated: 0, remaining: 0 };
+
+    // Take up to parallelCount chapters and generate in parallel
+    const batch = missing.slice(0, parallelCount);
+    const results = await Promise.allSettled(
+      batch.map(async ([globalNum, info]) => {
+        try {
+          const files = await generateChapterImages(globalNum, info.title, info.contentSnippet);
+          if (files.length > 0) {
+            logger.info({ chapter: globalNum, files: files.length, title: info.title }, "Fast backfill: generated image");
+            return true;
+          }
+        } catch (err) {
+          logger.warn({ err, chapter: globalNum }, "Fast backfill: generation failed");
+        }
+        return false;
+      })
+    );
+
+    const generated = results.filter(r => r.status === "fulfilled" && r.value).length;
+
+    // Git commit + push if any generated
+    if (generated > 0) {
+      try {
+        const REPO_ROOT = path.resolve(__dirname, "..", "..", "..", "..");
+        const { execSync } = await import("child_process");
+        execSync("git add data/bhagwatham/images/", { cwd: REPO_ROOT, stdio: "pipe" });
+        const diff = execSync("git diff --cached --stat", { cwd: REPO_ROOT, encoding: "utf-8" }).trim();
+        if (diff) {
+          const chNums = batch.map(([n]) => n).join(",");
+          execSync(`git commit -m "feat(bhagwatham): fast backfill images for chapters ${chNums}"`, { cwd: REPO_ROOT, stdio: "pipe" });
+          execSync("git push", { cwd: REPO_ROOT, stdio: "pipe" });
+        }
+      } catch { /* git errors non-fatal */ }
+    }
+
+    return { generated, remaining: missing.length - generated };
+  } finally {
+    _fastBackfillRunning = false;
+  }
+}
+
 /** Reset audit to re-check all chapters from the beginning (highest chapter first) */
 export function resetAudit(): void {
   const progress = readAuditProgress();
