@@ -299,12 +299,14 @@ export default function Gallery() {
   const [regenerating, setRegenerating] = useState<Set<number>>(new Set()); // chapter numbers currently regenerating
 
   const handleDeleteImage = useCallback(async (item: GalleryItem) => {
-    // Step 1: Delete the bad image
+    // Step 1: Call the combined delete-and-regenerate endpoint
+    // This deletes the image, removes old Buffer posts (IG + Threads), regenerates, and requeues
+    const sceneIdx = item.type === "instagram" ? (item.sceneIndex ?? 0) : (item.sceneIndex ?? 0);
     try {
-      const endpoint = item.type === "instagram"
-        ? `${API_BASE}/image/${item.chapterNumber}/${(item.sceneIndex ?? 0) + 100}`
-        : `${API_BASE}/image/${item.chapterNumber}/${item.sceneIndex ?? 0}`;
-      const res = await fetch(endpoint, { method: "DELETE" });
+      const res = await fetch(`${API_BASE}/image/delete-and-regenerate/${item.chapterNumber}/${sceneIdx}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
 
       if (!res.ok) {
         const ct = res.headers.get("content-type") || "";
@@ -333,18 +335,17 @@ export default function Gallery() {
       setLightboxItem(null);
     }
 
-    // Step 2: Trigger regeneration in background
+    // Step 2: Trigger chapter image regeneration in background
     setRegenerating(prev => new Set(prev).add(deletedChapter));
     try {
       const regenRes = await fetch(`${API_BASE}/regenerate-chapter/${deletedChapter}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}), // auto-generate prompt
+        body: JSON.stringify({}),
       });
 
       if (regenRes.ok) {
         const data = await regenRes.json();
-        // Add the newly generated images back to the gallery
         if (data.images?.length > 0) {
           const newItems: GalleryItem[] = data.images.map((img: any) => ({
             id: `ch-${img.chapterNumber}-${img.sceneIndex ?? 0}-${Date.now()}`,

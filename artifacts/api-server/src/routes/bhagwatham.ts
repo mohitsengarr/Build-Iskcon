@@ -34,6 +34,7 @@ import {
   getInstagramManifest,
   getInstagramDir,
   getBufferChannels,
+  deleteAndRegenerateIG,
 } from "../services/bhagwatham-instagram";
 
 const router = Router();
@@ -358,6 +359,32 @@ router.delete("/bhagwatham/image/:chapter/:scene", (req, res) => {
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: "Failed to delete image" });
+  }
+});
+
+// POST /api/bhagwatham/image/delete-and-regenerate/:chapter/:scene — delete image + Buffer posts, regenerate + requeue
+router.post("/bhagwatham/image/delete-and-regenerate/:chapter/:scene", async (req, res) => {
+  try {
+    const chapterNumber = parseInt(req.params.chapter, 10);
+    const sceneIndex = parseInt(req.params.scene, 10);
+    if (isNaN(chapterNumber) || isNaN(sceneIndex)) {
+      res.status(400).json({ error: "Invalid chapter or scene number" });
+      return;
+    }
+
+    // Also delete the regular chapter image from manifest
+    const deleteResult = deleteChapterImage(chapterNumber, sceneIndex);
+
+    // Delete IG/Threads posts from Buffer and regenerate
+    const igResult = await deleteAndRegenerateIG(chapterNumber, sceneIndex);
+
+    res.json({
+      success: true,
+      chapterImage: deleteResult,
+      instagram: igResult,
+    });
+  } catch (err) {
+    res.status(500).json({ error: String(err) });
   }
 });
 

@@ -622,6 +622,100 @@ async function publishToAllChannels(
   return results;
 }
 
+/**
+ * Delete a Buffer post by its ID (works for both Instagram and Threads).
+ */
+async function deleteBufferPost(postId: string): Promise<boolean> {
+  try {
+    const mutation = `
+      mutation DeletePost($postId: ID!) {
+        deletePost(input: { postId: $postId }) {
+          ... on PostActionSuccess {
+            post { id status }
+          }
+          ... on MutationError {
+            message
+          }
+        }
+      }
+    `;
+    const result = await bufferGraphQL(mutation, { postId });
+    const success = !!result?.data?.deletePost?.post;
+    logger.info({ postId, success }, "Buffer deletePost result");
+    return success;
+  } catch (err) {
+    logger.warn({ err, postId }, "Buffer deletePost failed");
+    return false;
+  }
+}
+
+/**
+ * Delete old IG/Threads posts via Buffer, remove from manifest, regenerate new image, requeue.
+ * Returns the new manifest entry.
+ */
+export async function deleteAndRegenerateIG(
+  chapterNumber: number,
+  sceneIndex: number,
+): Promise<{ success: boolean; deleted: string[]; newEntry?: InstagramImage }> {
+  const manifest = readIGManifest();
+  const deleted: string[] = [];
+
+  // Find existing entries for this chapter+scene
+  const existingIdx = manifest.images.findIndex(
+    (img) => img.chapterNumber === chapterNumber && img.sceneIndex === sceneIndex,
+  );
+  const existing = existingIdx >= 0 ? manifest.images[existingIdx] : null;
+
+  // Step 1: Delete old Buffer posts
+  if (existing) {
+    if (existing.bufferId) {
+      const ok = await deleteBufferPost(existing.bufferId);
+      if (ok) deleted.push(`instagram:${existing.bufferId}`);
+    }
+    if (existing.bufferThreadsId) {
+      const ok = await deleteBufferPost(existing.bufferThreadsId);
+      if (ok) deleted.push(`threads:${existing.bufferThreadsId}`);
+    }
+
+    // Remove from manifest
+    manifest.images.splice(existingIdx, 1);
+    writeIGManifest(manifest);
+    logger.info({ chapterNumber, sceneIndex, deleted }, "Deleted old IG entries and Buffer posts");
+  }
+
+  // Step 2: Regenerate — find chapter content for generation
+  // We need the chapter title and content. Pull from existing or use a placeholder.
+  const chapterTitle = existing?.chapterTitle || `Chapter ${chapterNumber}`;
+  const caption = existing?.caption || "";
+  const hashtags = existing?.hashtags || "";
+
+  // Step 3: Generate new image using the existing scene prompt approach
+  try {
+    const result = await generateInstagramForChapter(
+      chapterNumber,
+      chapterTitle,
+      caption || "Regenerated scene",
+      {
+        numScenes: 1,
+        cantoNumber: existing?.cantoNumber,
+        queueToBuffer: true, // auto-publish to Buffer
+        forceRegenerate: false, // we already removed the old entry
+      },
+    );
+
+    // Find the newly created entry
+    const updatedManifest = readIGManifest();
+    const newEntry = updatedManifest.images.find(
+      (img) => img.chapterNumber === chapterNumber && img.generatedAt > (existing?.generatedAt || ""),
+    );
+
+    return { success: true, deleted, newEntry: newEntry || undefined };
+  } catch (err) {
+    logger.error({ err, chapterNumber, sceneIndex }, "Failed to regenerate IG image");
+    return { success: false, deleted };
+  }
+}
+
 // ── Main public API ──────────────────────────────────────────────────────────
 
 /**
