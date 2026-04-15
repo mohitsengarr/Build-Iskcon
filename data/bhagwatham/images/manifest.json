@@ -3125,6 +3125,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 261,
+      "chapterTitle": "Chapter साठ",
+      "cantoNumber": 10,
+      "imagePath": "chapter-261.jpg",
+      "prompt": "In the royal bedchamber of Dwaraka, Krishna sits comfortably on a regal couch while Rukmini and her attendants serve him devotedly. Krishna gazes at Rukmini's unmatched beauty and begins to tease her with playful yet piercing words, questioning her choice of him as a husband. Rukmini, overwhelmed with emotion, stands tearfully before him, her eyes filled with sorrow and love.",
+      "descriptionHi": "इस अध्याय में भगवान कृष्ण अपनी पत्नी रुक्मिणी के साथ परिहास करते हैं और उन्हें यह कहकर रुठाते हैं कि उन्होंने मुझ जैसे अनुपयुक्त, निर्धन-प्रिय पति को क्यों चुना। कृष्ण के इन व्यंग्यपूर्ण वचनों से रुक्मिणी का आत्मविश्वास टूट जाता है और वे फूट-फूटकर रोने लगती हैं। यह प्रसंग प्रेमियों के मधुर कलह का प्रतीक है जो दिव्य प्रेम की गहराई और कृष्ण की लीला का सुंदर प्रदर्शन करता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T16:38:28.726Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3730,5 +3744,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T16:20:50.897Z"
+  "lastUpdated": "2026-04-15T16:54:38.771Z"
 }
