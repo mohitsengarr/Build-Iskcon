@@ -2518,6 +2518,34 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 216,
+      "chapterTitle": "Chapter पन्द्रह",
+      "cantoNumber": 10,
+      "imagePath": "chapter-216.jpg",
+      "prompt": "Krishna and Balarama rest in a beautiful forest grove near Govardhan hill, surrounded by their young cowherd friends Shridama, Subal, and Stokakrishna. The friends gather closely and earnestly describe the Talavana forest, filled with sweet fruits, where no one dares venture due to the fearsome Dhenukasura. Krishna listens with calm, compassionate attention.",
+      "descriptionHi": "इस अध्याय में बलराम और कृष्ण अपने ग्वाल मित्रों के साथ वन में गौवें चराते हुए विविध लीलाओं का आनंद लेते हैं। श्रीदामा, सुबल और स्तोककृष्ण जैसे सखाओं ने उन्हें धेनुकासुर के भय से तालवन के फलों से वंचित व्रजवासियों की व्यथा सुनाई। यह लीला दर्शाती है कि भगवान अपने भक्तों के कष्ट हरने हेतु सदा तत्पर रहते हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:19:56.076Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 217,
+      "chapterTitle": "Chapter सोलह",
+      "cantoNumber": 10,
+      "imagePath": "chapter-217.jpg",
+      "prompt": "Krishna stands gracefully atop the many hoods of the great serpent Kaliya in the waters of the Yamuna river, performing a radiant divine dance. The river glows with reflected light as the awed Brajwasis watch from the riverbank. Kaliya's wives clasp their hands in reverence, while Balarama calmly reassures the gathered devotees nearby.",
+      "descriptionHi": "इस अध्याय में भगवान् कृष्ण यमुना नदी के सरोवर में कालिय नाग का दमन करते हैं। कालिय द्वारा डसे जाने पर ब्रजवासी व्याकुल हो उठते हैं, किन्तु कृष्ण अपने शरीर का विस्तार कर कालिय की कुण्डली से मुक्त हो जाते हैं और उसके फनों पर दिव्य नृत्य करते हैं। यह लीला भगवान् की अनन्त शक्ति और भक्तों की रक्षा करने की उनकी सहज प्रवृत्ति को दर्शाती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:20:35.870Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3123,5 +3151,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T14:19:08.022Z"
+  "lastUpdated": "2026-04-15T14:21:25.031Z"
 }
