@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
-import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, ChevronUp, Trash2, Maximize2, Minimize2, RefreshCw } from "lucide-react";
+import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, ChevronUp, Trash2, Maximize2, Minimize2, RefreshCw, Users, Crown, Sparkles, Shield } from "lucide-react";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -16,6 +16,16 @@ interface GalleryItem {
   description: string;
   generatedAt: string;
   type: "chapter" | "instagram";
+}
+
+interface PersonaItem {
+  key: string;
+  name: string;
+  shortDescription: string;
+  fullDescription: string;
+  gender: "male" | "female";
+  type: "built-in" | "custom";
+  source?: string;
 }
 
 // ── Constants ───────────────────────────────────────────────────────────────
@@ -140,10 +150,10 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
         initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2 }}
         src={item.url}
         alt={item.description}
-        className={`object-contain shadow-2xl transition-all duration-300 ${
-          fullscreen ? "max-h-screen max-w-full rounded-none" : "max-h-[70vh] max-w-[90vw] rounded-2xl"
+        className={`object-contain shadow-2xl transition-all duration-300 cursor-zoom-in ${
+          fullscreen ? "max-h-screen max-w-full rounded-none" : "max-h-[85vh] max-w-[95vw] rounded-2xl"
         }`}
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => { e.stopPropagation(); setFullscreen(f => !f); }}
       />
 
       {/* Bottom info bar — hidden in fullscreen */}
@@ -196,10 +206,13 @@ export default function Gallery() {
   const [allItems, setAllItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterCanto, setFilterCanto] = useState<number | "all">("all");
-  const [filterType, setFilterType] = useState<"all" | "chapter" | "instagram">("all");
+  const [filterType, setFilterType] = useState<"all" | "chapter" | "instagram" | "characters">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [lightboxItem, setLightboxItem] = useState<GalleryItem | null>(null);
   const [collapsedCantos, setCollapsedCantos] = useState<Set<number>>(new Set());
+  const [personas, setPersonas] = useState<PersonaItem[]>([]);
+  const [personasLoading, setPersonasLoading] = useState(false);
+  const [expandedPersona, setExpandedPersona] = useState<string | null>(null);
 
   // ── Fetch manifests ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -255,11 +268,69 @@ export default function Gallery() {
     fetchAll();
   }, []);
 
+  // ── Fetch personas when Characters tab is selected ──────────────────────
+  useEffect(() => {
+    if (filterType !== "characters" || personas.length > 0) return;
+    setPersonasLoading(true);
+    fetch(`${API_BASE}/personas`)
+      .then(r => r.json())
+      .then((data: { builtIn: Record<string, string>; custom: Array<{ key: string; name: string; fullDescription: string; shortDescription: string; gender: "male" | "female"; source?: string }> }) => {
+        const items: PersonaItem[] = [];
+        // Built-in personas
+        for (const [key, fullDesc] of Object.entries(data.builtIn)) {
+          // Skip if this key also appears in custom (custom overrides)
+          if (data.custom.some(c => c.key === key)) continue;
+          const name = fullDesc.split(":")[0]?.trim() || key.replace(/_/g, " ");
+          const shortDesc = fullDesc.split(":").slice(1).join(":").trim();
+          const isFemale = /\bFEMALE\b/i.test(fullDesc);
+          items.push({
+            key,
+            name,
+            shortDescription: shortDesc.length > 200 ? shortDesc.slice(0, 200) + "…" : shortDesc,
+            fullDescription: fullDesc,
+            gender: isFemale ? "female" : "male",
+            type: "built-in",
+          });
+        }
+        // Custom personas
+        for (const cp of data.custom) {
+          items.push({
+            key: cp.key,
+            name: cp.name,
+            shortDescription: cp.shortDescription.split(":").slice(1).join(":").trim() || cp.shortDescription,
+            fullDescription: cp.fullDescription,
+            gender: cp.gender,
+            type: "custom",
+            source: cp.source,
+          });
+        }
+        // Sort: custom first, then alphabetically
+        items.sort((a, b) => {
+          if (a.type !== b.type) return a.type === "custom" ? -1 : 1;
+          return a.name.localeCompare(b.name);
+        });
+        setPersonas(items);
+        setPersonasLoading(false);
+      })
+      .catch(() => setPersonasLoading(false));
+  }, [filterType, personas.length]);
+
+  // Filtered personas by search query
+  const filteredPersonas = useMemo(() => {
+    if (!searchQuery.trim()) return personas;
+    const q = searchQuery.toLowerCase();
+    return personas.filter(p =>
+      p.name.toLowerCase().includes(q) ||
+      p.shortDescription.toLowerCase().includes(q) ||
+      p.key.toLowerCase().includes(q)
+    );
+  }, [personas, searchQuery]);
+
   // ── Filtering ─────────────────────────────────────────────────────────────
   const filtered = useMemo(() => {
     let result = allItems;
     if (filterCanto !== "all") result = result.filter(i => i.cantoNumber === filterCanto);
-    if (filterType !== "all") result = result.filter(i => i.type === filterType);
+    if (filterType !== "all" && filterType !== "characters") result = result.filter(i => i.type === filterType);
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(i =>
@@ -306,15 +377,19 @@ export default function Gallery() {
       const res = await fetch(`${API_BASE}/image/delete/${item.chapterNumber}/${sceneIdx}`, {
         method: "DELETE",
       });
-      if (!res.ok) {
-        const ct = res.headers.get("content-type") || "";
-        if (!ct.includes("application/json")) {
-          alert("Delete requires the API server (dev mode).");
-          return;
-        }
+      const ct = res.headers.get("content-type") || "";
+      if (!ct.includes("application/json")) {
+        // On deployed (Vercel), static hosting returns HTML for unknown routes
+        alert("Delete requires the local API server. Start the dev server and try again.");
+        return;
+      }
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        alert(data.error || "Failed to delete image");
+        return;
       }
     } catch {
-      alert("Delete requires the API server. Run locally.");
+      alert("Delete requires the local API server. Start the dev server and try again.");
       return;
     }
 
@@ -393,31 +468,34 @@ export default function Gallery() {
             <div className="sticky top-[72px] z-30 bg-white/90 backdrop-blur-md border border-stone-200/60 rounded-2xl shadow-sm px-4 py-3 mb-6 flex flex-wrap items-center gap-3">
               <Filter className="w-4 h-4 text-stone-400 hidden sm:block" />
 
-              {/* Canto dropdown */}
-              <select
-                value={filterCanto === "all" ? "all" : String(filterCanto)}
-                onChange={(e) => setFilterCanto(e.target.value === "all" ? "all" : Number(e.target.value))}
-                className="text-xs font-medium bg-stone-100 border-0 rounded-lg px-3 py-2 text-stone-600 focus:ring-2 focus:ring-orange-300 outline-none cursor-pointer"
-              >
-                <option value="all">All Cantos</option>
-                {availableCantos.map(c => (
-                  <option key={c} value={c}>{CANTO_NAMES[c] || `Canto ${c}`}</option>
-                ))}
-              </select>
+              {/* Canto dropdown — hidden for characters tab */}
+              {filterType !== "characters" && (
+                <select
+                  value={filterCanto === "all" ? "all" : String(filterCanto)}
+                  onChange={(e) => setFilterCanto(e.target.value === "all" ? "all" : Number(e.target.value))}
+                  className="text-xs font-medium bg-stone-100 border-0 rounded-lg px-3 py-2 text-stone-600 focus:ring-2 focus:ring-orange-300 outline-none cursor-pointer"
+                >
+                  <option value="all">All Cantos</option>
+                  {availableCantos.map(c => (
+                    <option key={c} value={c}>{CANTO_NAMES[c] || `Canto ${c}`}</option>
+                  ))}
+                </select>
+              )}
 
               {/* Type toggle */}
               <div className="flex items-center gap-1 bg-stone-100 rounded-lg p-0.5">
-                {(["all", "chapter", "instagram"] as const).map(t => (
+                {(["all", "chapter", "instagram", "characters"] as const).map(t => (
                   <button
                     key={t}
                     onClick={() => setFilterType(t)}
-                    className={`text-[11px] font-semibold px-3 py-1.5 rounded-md transition-colors ${
+                    className={`text-[11px] font-semibold px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5 ${
                       filterType === t
                         ? "bg-white shadow-sm text-orange-700"
                         : "text-stone-500 hover:text-stone-700"
                     }`}
                   >
-                    {t === "all" ? "All" : t === "chapter" ? "Chapter Art" : "Instagram"}
+                    {t === "characters" && <Users className="w-3 h-3" />}
+                    {t === "all" ? "All" : t === "chapter" ? "Chapter Art" : t === "instagram" ? "Instagram" : "Characters"}
                   </button>
                 ))}
               </div>
@@ -436,104 +514,304 @@ export default function Gallery() {
 
               {/* Count badge */}
               <span className="text-[10px] font-bold text-stone-400 bg-stone-100 px-2.5 py-1.5 rounded-lg shrink-0">
-                {filtered.length} / {allItems.length}
+                {filterType === "characters"
+                  ? `${filteredPersonas.length} characters`
+                  : `${filtered.length} / ${allItems.length}`}
               </span>
             </div>
 
-            {/* Empty state */}
-            {filtered.length === 0 && (
-              <div className="text-center py-20">
-                <ImageIcon className="w-10 h-10 text-stone-300 mx-auto mb-3" />
-                <p className="text-stone-500 font-medium">No images match your filters</p>
-                <p className="text-stone-400 text-sm mt-1">Try adjusting the canto or type filter</p>
+            {/* ── Characters / Personas View ─────────────────────────────── */}
+            {filterType === "characters" && (
+              <div className="pb-12">
+                {personasLoading ? (
+                  <div className="flex flex-col items-center justify-center py-24 gap-3">
+                    <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+                    <p className="text-sm text-stone-400 font-medium">Loading characters…</p>
+                  </div>
+                ) : filteredPersonas.length === 0 ? (
+                  <div className="text-center py-20">
+                    <Users className="w-10 h-10 text-stone-300 mx-auto mb-3" />
+                    <p className="text-stone-500 font-medium">No characters found</p>
+                    <p className="text-stone-400 text-sm mt-1">Try adjusting your search</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Stats bar */}
+                    <div className="flex flex-wrap items-center gap-3 mb-6">
+                      <div className="flex items-center gap-2 text-[11px] text-stone-500">
+                        <Crown className="w-3.5 h-3.5 text-amber-500" />
+                        <span><strong className="text-stone-700">{personas.filter(p => p.type === "built-in").length}</strong> Built-in</span>
+                      </div>
+                      <span className="w-1 h-1 rounded-full bg-stone-300" />
+                      <div className="flex items-center gap-2 text-[11px] text-stone-500">
+                        <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+                        <span><strong className="text-stone-700">{personas.filter(p => p.type === "custom").length}</strong> Custom (researched)</span>
+                      </div>
+                      <span className="w-1 h-1 rounded-full bg-stone-300" />
+                      <div className="flex items-center gap-2 text-[11px] text-stone-500">
+                        <Shield className="w-3.5 h-3.5 text-blue-500" />
+                        <span><strong className="text-stone-700">{personas.filter(p => p.gender === "male").length}</strong> Male</span>
+                        <span className="text-stone-300">·</span>
+                        <span><strong className="text-stone-700">{personas.filter(p => p.gender === "female").length}</strong> Female</span>
+                      </div>
+                    </div>
+
+                    {/* Custom personas section */}
+                    {filteredPersonas.some(p => p.type === "custom") && (
+                      <div className="mb-8">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Sparkles className="w-4 h-4 text-purple-500" />
+                          <h2 className="font-serif text-lg font-bold text-stone-800">Researched Characters</h2>
+                          <span className="text-[10px] font-semibold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
+                            {filteredPersonas.filter(p => p.type === "custom").length}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                          {filteredPersonas.filter(p => p.type === "custom").map((persona, idx) => (
+                            <motion.div
+                              key={persona.key}
+                              initial={{ opacity: 0, y: 12 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: Math.min(idx * 0.03, 0.3) }}
+                              className={`group relative rounded-2xl border transition-all duration-200 cursor-pointer overflow-hidden ${
+                                expandedPersona === persona.key
+                                  ? "border-purple-300 bg-purple-50/50 shadow-md"
+                                  : "border-stone-200/80 bg-white hover:border-purple-200 hover:shadow-md"
+                              }`}
+                              onClick={() => setExpandedPersona(expandedPersona === persona.key ? null : persona.key)}
+                            >
+                              <div className="p-4">
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-sm font-bold ${
+                                      persona.gender === "female"
+                                        ? "bg-pink-100 text-pink-600"
+                                        : "bg-blue-100 text-blue-600"
+                                    }`}>
+                                      {persona.name.charAt(0)}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <h3 className="font-semibold text-sm text-stone-800 truncate">{persona.name}</h3>
+                                      <p className="text-[10px] text-stone-400 font-mono">{persona.key}</p>
+                                    </div>
+                                  </div>
+                                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
+                                    persona.gender === "female"
+                                      ? "bg-pink-100 text-pink-600"
+                                      : "bg-blue-100 text-blue-600"
+                                  }`}>
+                                    {persona.gender.toUpperCase()}
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-stone-600 leading-relaxed line-clamp-3">
+                                  {persona.shortDescription}
+                                </p>
+                                {persona.source && (
+                                  <p className="text-[9px] text-stone-400 mt-2 truncate">
+                                    📚 {persona.source}
+                                  </p>
+                                )}
+                              </div>
+                              {/* Expanded view */}
+                              <AnimatePresence>
+                                {expandedPersona === persona.key && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: "auto", opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="border-t border-stone-200/60 bg-stone-50/50"
+                                  >
+                                    <div className="p-4">
+                                      <p className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider mb-1.5">Full Description</p>
+                                      <p className="text-[11px] text-stone-600 leading-relaxed">{persona.fullDescription}</p>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Built-in personas section */}
+                    {filteredPersonas.some(p => p.type === "built-in") && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-4">
+                          <Crown className="w-4 h-4 text-amber-500" />
+                          <h2 className="font-serif text-lg font-bold text-stone-800">Built-in Characters</h2>
+                          <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                            {filteredPersonas.filter(p => p.type === "built-in").length}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                          {filteredPersonas.filter(p => p.type === "built-in").map((persona, idx) => (
+                            <motion.div
+                              key={persona.key}
+                              initial={{ opacity: 0, y: 12 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: Math.min(idx * 0.03, 0.3) }}
+                              className={`group relative rounded-2xl border transition-all duration-200 cursor-pointer overflow-hidden ${
+                                expandedPersona === persona.key
+                                  ? "border-amber-300 bg-amber-50/50 shadow-md"
+                                  : "border-stone-200/80 bg-white hover:border-amber-200 hover:shadow-md"
+                              }`}
+                              onClick={() => setExpandedPersona(expandedPersona === persona.key ? null : persona.key)}
+                            >
+                              <div className="p-4">
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-sm font-bold ${
+                                      persona.gender === "female"
+                                        ? "bg-pink-100 text-pink-600"
+                                        : "bg-blue-100 text-blue-600"
+                                    }`}>
+                                      {persona.name.charAt(0)}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <h3 className="font-semibold text-sm text-stone-800 truncate">{persona.name}</h3>
+                                      <p className="text-[10px] text-stone-400 font-mono">{persona.key}</p>
+                                    </div>
+                                  </div>
+                                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
+                                    persona.gender === "female"
+                                      ? "bg-pink-100 text-pink-600"
+                                      : "bg-blue-100 text-blue-600"
+                                  }`}>
+                                    {persona.gender.toUpperCase()}
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-stone-600 leading-relaxed line-clamp-3">
+                                  {persona.shortDescription}
+                                </p>
+                              </div>
+                              {/* Expanded view */}
+                              <AnimatePresence>
+                                {expandedPersona === persona.key && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: "auto", opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="border-t border-stone-200/60 bg-stone-50/50"
+                                  >
+                                    <div className="p-4">
+                                      <p className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider mb-1.5">Full Description</p>
+                                      <p className="text-[11px] text-stone-600 leading-relaxed">{persona.fullDescription}</p>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
 
-            {/* Canto Sections */}
-            <div className="space-y-8 pb-12">
-              {groupedByCanto.map(([canto, cantoItems]) => (
-                <motion.div key={canto} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.05, margin: "80px" }} variants={staggerContainer}>
-                  {/* Canto header */}
-                  <button
-                    onClick={() => toggleCanto(canto)}
-                    className="w-full flex items-center gap-3 mb-4 group cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <div className="w-8 h-8 rounded-xl bg-orange-100 flex items-center justify-center shrink-0">
-                        <span className="text-sm font-bold text-orange-600">{canto || "–"}</span>
-                      </div>
-                      <h2 className="font-serif text-lg sm:text-xl font-bold text-stone-800 truncate">
-                        {CANTO_NAMES[canto] || `Canto ${canto}`}
-                      </h2>
-                      <span className="text-[10px] font-semibold text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full shrink-0">
-                        {cantoItems.length}
-                      </span>
-                    </div>
-                    {collapsedCantos.has(canto) ? (
-                      <ChevronDown className="w-4 h-4 text-stone-400 group-hover:text-stone-600 transition-colors shrink-0" />
-                    ) : (
-                      <ChevronUp className="w-4 h-4 text-stone-400 group-hover:text-stone-600 transition-colors shrink-0" />
-                    )}
-                  </button>
+            {/* ── Image Gallery View ─────────────────────────────────────── */}
+            {filterType !== "characters" && (
+              <>
+                {/* Empty state */}
+                {filtered.length === 0 && (
+                  <div className="text-center py-20">
+                    <ImageIcon className="w-10 h-10 text-stone-300 mx-auto mb-3" />
+                    <p className="text-stone-500 font-medium">No images match your filters</p>
+                    <p className="text-stone-400 text-sm mt-1">Try adjusting the canto or type filter</p>
+                  </div>
+                )}
 
-                  {/* Image grid */}
-                  <AnimatePresence>
-                    {!collapsedCantos.has(canto) && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.25 }}
-                        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4"
+                {/* Canto Sections */}
+                <div className="space-y-8 pb-12">
+                  {groupedByCanto.map(([canto, cantoItems]) => (
+                    <motion.div key={canto} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.05, margin: "80px" }} variants={staggerContainer}>
+                      {/* Canto header */}
+                      <button
+                        onClick={() => toggleCanto(canto)}
+                        className="w-full flex items-center gap-3 mb-4 group cursor-pointer"
                       >
-                        {cantoItems.map((item, idx) => (
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <div className="w-8 h-8 rounded-xl bg-orange-100 flex items-center justify-center shrink-0">
+                            <span className="text-sm font-bold text-orange-600">{canto || "–"}</span>
+                          </div>
+                          <h2 className="font-serif text-lg sm:text-xl font-bold text-stone-800 truncate">
+                            {CANTO_NAMES[canto] || `Canto ${canto}`}
+                          </h2>
+                          <span className="text-[10px] font-semibold text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full shrink-0">
+                            {cantoItems.length}
+                          </span>
+                        </div>
+                        {collapsedCantos.has(canto) ? (
+                          <ChevronDown className="w-4 h-4 text-stone-400 group-hover:text-stone-600 transition-colors shrink-0" />
+                        ) : (
+                          <ChevronUp className="w-4 h-4 text-stone-400 group-hover:text-stone-600 transition-colors shrink-0" />
+                        )}
+                      </button>
+
+                      {/* Image grid */}
+                      <AnimatePresence>
+                        {!collapsedCantos.has(canto) && (
                           <motion.div
-                            key={item.id}
-                            variants={fadeInUp}
-                            initial="hidden"
-                            whileInView="visible"
-                            viewport={{ once: true, amount: 0.1 }}
-                            transition={{ delay: Math.min(idx * 0.02, 0.3) }}
-                            className="group relative rounded-2xl overflow-hidden bg-stone-100 shadow-sm hover:shadow-lg transition-shadow cursor-pointer aspect-[3/4]"
-                            onClick={() => setLightboxItem(item)}
+                            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.25 }}
+                            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4"
                           >
-                            <img
-                              src={item.url}
-                              alt={item.description}
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                              loading="lazy"
-                            />
+                            {cantoItems.map((item, idx) => (
+                              <motion.div
+                                key={item.id}
+                                variants={fadeInUp}
+                                initial="hidden"
+                                whileInView="visible"
+                                viewport={{ once: true, amount: 0.1 }}
+                                transition={{ delay: Math.min(idx * 0.02, 0.3) }}
+                                className="group relative rounded-2xl overflow-hidden bg-stone-100 shadow-sm hover:shadow-lg transition-shadow cursor-pointer aspect-[3/4]"
+                                onClick={() => setLightboxItem(item)}
+                              >
+                                <img
+                                  src={item.url}
+                                  alt={item.description}
+                                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                  loading="lazy"
+                                />
 
-                            {/* Hover overlay with story description */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
-                              <p className="text-white text-[11px] font-semibold leading-snug line-clamp-2">{item.chapterTitle}</p>
-                              {item.description && (
-                                <p className="text-white/80 text-[10px] leading-relaxed mt-1.5 line-clamp-3" style={{ fontFamily: "var(--font-devanagari)" }}>
-                                  {item.description}
-                                </p>
-                              )}
-                              <div className="flex items-center gap-1.5 mt-1.5">
-                                <span className="text-white/50 text-[9px]">Ch. {item.chapterNumber}</span>
-                                <span className="text-white/30">·</span>
-                                <span className="text-white/50 text-[9px]">{CANTO_NAMES[item.cantoNumber]?.split("—")[0]?.trim() || `Canto ${item.cantoNumber}`}</span>
+                                {/* Hover overlay with story description */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
+                                  <p className="text-white text-[11px] font-semibold leading-snug line-clamp-2">{item.chapterTitle}</p>
+                                  {item.description && (
+                                    <p className="text-white/80 text-[10px] leading-relaxed mt-1.5 line-clamp-3" style={{ fontFamily: "var(--font-devanagari)" }}>
+                                      {item.description}
+                                    </p>
+                                  )}
+                                  <div className="flex items-center gap-1.5 mt-1.5">
+                                    <span className="text-white/50 text-[9px]">Ch. {item.chapterNumber}</span>
+                                    <span className="text-white/30">·</span>
+                                    <span className="text-white/50 text-[9px]">{CANTO_NAMES[item.cantoNumber]?.split("—")[0]?.trim() || `Canto ${item.cantoNumber}`}</span>
+                                    {item.type === "instagram" && (
+                                      <span className="px-1.5 py-0.5 bg-pink-500/40 text-pink-200 rounded text-[9px] font-bold ml-auto">IG</span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Always-visible type badge (mobile) */}
                                 {item.type === "instagram" && (
-                                  <span className="px-1.5 py-0.5 bg-pink-500/40 text-pink-200 rounded text-[9px] font-bold ml-auto">IG</span>
+                                  <div className="absolute top-2 right-2 sm:hidden px-1.5 py-0.5 bg-pink-500/70 text-white rounded text-[9px] font-bold">
+                                    IG
+                                  </div>
                                 )}
-                              </div>
-                            </div>
-
-                            {/* Always-visible type badge (mobile) */}
-                            {item.type === "instagram" && (
-                              <div className="absolute top-2 right-2 sm:hidden px-1.5 py-0.5 bg-pink-500/70 text-white rounded text-[9px] font-bold">
-                                IG
-                              </div>
-                            )}
+                              </motion.div>
+                            ))}
                           </motion.div>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              ))}
-            </div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  ))}
+                </div>
+              </>
+            )}
           </>
         )}
       </div>

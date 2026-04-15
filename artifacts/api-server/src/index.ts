@@ -1,3 +1,12 @@
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// Load .env BEFORE anything else — override: true ensures .env values win
+// even if the parent process sets empty env vars (e.g. ANTHROPIC_API_KEY="")
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(__dirname, "..", "..", "..", ".env"), override: true });
+
 import { createApp } from "./app";
 import { logger } from "./lib/logger";
 

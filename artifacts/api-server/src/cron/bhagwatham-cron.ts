@@ -155,6 +155,24 @@ export function startBhagwathamCron(): void {
     }
   });
 
+  // ── Persona Discovery — auto-discover Bhagavatam characters ────────────
+  // Scans OCR'd pages for character names, validates via Claude,
+  // researches appearance via Firecrawl, auto-populates persona system.
+  const PERSONA_DISCOVERY_INTERVAL = "6,16,26,36,46,56 * * * *"; // Every 10 min, offset by +6
+  logger.info({ interval: PERSONA_DISCOVERY_INTERVAL }, "Persona discovery cron started");
+
+  cron.schedule(PERSONA_DISCOVERY_INTERVAL, async () => {
+    try {
+      const { personaDiscoveryTick } = await import("../services/persona-discovery");
+      const result = await personaDiscoveryTick();
+      if (result.phase !== "idle" && result.phase !== "completed") {
+        logger.info({ phase: result.phase, details: result.details }, "Persona discovery tick");
+      }
+    } catch (err) {
+      logger.error({ err }, "Persona discovery cron failed");
+    }
+  });
+
   // Run initial credit check on startup
   checkAllCredits().catch(() => {});
 }

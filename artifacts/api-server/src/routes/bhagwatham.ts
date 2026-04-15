@@ -752,6 +752,40 @@ router.delete("/bhagwatham/personas/custom/:key", (req, res) => {
   }
 });
 
+// ── Persona Discovery endpoints ───────────────────────────────────────────
+
+// GET /api/bhagwatham/persona-discovery/status — check auto-discovery progress
+router.get("/bhagwatham/persona-discovery/status", async (_req, res) => {
+  try {
+    const { getDiscoveryStatus } = await import("../services/persona-discovery");
+    res.json(getDiscoveryStatus());
+  } catch (err) {
+    res.status(500).json({ error: "Failed to get discovery status" });
+  }
+});
+
+// POST /api/bhagwatham/persona-discovery/trigger — manually trigger one discovery tick
+router.post("/bhagwatham/persona-discovery/trigger", async (_req, res) => {
+  try {
+    const { personaDiscoveryTick } = await import("../services/persona-discovery");
+    const result = await personaDiscoveryTick();
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Discovery tick failed" });
+  }
+});
+
+// POST /api/bhagwatham/persona-discovery/reset — reset discovery state to re-run
+router.post("/bhagwatham/persona-discovery/reset", async (_req, res) => {
+  try {
+    const { resetDiscovery } = await import("../services/persona-discovery");
+    resetDiscovery();
+    res.json({ success: true, message: "Discovery state reset. Next cron tick will start fresh." });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to reset discovery" });
+  }
+});
+
 // ── Audit endpoints ─────────────────────────────────────────────────────────
 
 // GET /api/bhagwatham/audit — audit progress and recent log
