@@ -3139,6 +3139,34 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 262,
+      "chapterTitle": "Chapter इकसठ",
+      "cantoNumber": 10,
+      "imagePath": "chapter-262.jpg",
+      "prompt": "At the festive wedding celebration of Aniruddha in a grand palace courtyard adorned with flowers and lamps, Balarama stands resolute and commanding before Rukmi, as a heated dispute over a dice game reaches its dramatic conclusion. Nearby, Krishna watches with a calm, sorrowful expression, witnessing the inevitable consequences of pride and bitter words.",
+      "descriptionHi": "इस अध्याय में भगवान् श्रीकृष्ण के पुत्रों, पौत्रों और अन्य संतानों की विस्तृत सूची प्रस्तुत की गई है। अनिरुद्ध के विवाहोत्सव के अवसर पर बलराम और रुक्मी के बीच द्यूत क्रीड़ा में विवाद उत्पन्न हुआ, जिसके परिणामस्वरूप बलराम ने रुक्मी का वध किया। यह घटना यह दर्शाती है कि अहंकार और वाणी की कटुता किस प्रकार विनाश का कारण बन सकती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T16:55:26.672Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 263,
+      "chapterTitle": "Chapter बासठ",
+      "cantoNumber": 10,
+      "imagePath": "chapter-263.jpg",
+      "prompt": "In a beautifully adorned palace chamber, Usha, the daughter of Banasura, joyfully meets the young prince Aniruddha, grandson of Krishna. The two sit together in a moment of tender, divine love, surrounded by flowers and soft lamplight, their union blessed by destiny, while the grand city of Banasura lies peacefully outside.",
+      "descriptionHi": "इस अध्याय में बाणासुर की पुत्री उषा और अनिरुद्ध के प्रेम-मिलन का वर्णन है। बाणासुर राजा बलि का सबसे बड़ा पुत्र था और शिवजी का परम भक्त था, जिन्होंने प्रसन्न होकर उसकी नगरी की रक्षा का वचन दिया था। उषा और अनिरुद्ध का गुप्त मिलन और फिर बाणासुर द्वारा अनिरुद्ध को बंदी बनाए जाने की घटना इस अध्याय की मुख्य कथा है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T17:12:11.609Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3744,5 +3772,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T16:54:38.771Z"
+  "lastUpdated": "2026-04-15T17:12:32.858Z"
 }
