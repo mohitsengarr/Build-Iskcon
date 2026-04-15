@@ -3594,6 +3594,21 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 295,
+      "chapterTitle": "Chapter चार",
+      "cantoNumber": 11,
+      "imagePath": "chapter-295.jpg",
+      "prompt": "The sage Drumila sits before King Nimi in a serene ashram, reverently describing the divine avatars of Lord Narayana. Above them, a luminous cosmic vision unfolds — Brahma engaged in creation, Vishnu sustaining the universe with grace, and Rudra completing the eternal cycle, all emanating from the one infinite Supreme Being.",
+      "descriptionHi": "इस अध्याय में द्रुमिल ऋषि राजा निमि को भगवान् श्री हरि के भूत, वर्तमान और भावी अवतारों का विस्तृत वर्णन करते हैं। भगवान् नारायण ने पंचतत्त्वों से ब्रह्माण्ड की सृष्टि की और पुरुष-अवतार के रूप में उसमें प्रवेश किया, तथा ब्रह्मा, विष्णु और रुद्र के रूप में सृष्टि, पालन और संहार के कार्य सम्पन्न किए। यह अध्याय भगवान् के असीम दिव्य गुणों और उनकी अनंत महिमा का आध्यात्मिक उद्घाटन करता है।",
+      "personasUsed": [
+        "vishnu",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T17:18:07.013Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 325,
       "chapterTitle": "Chapter तीन",
       "imagePath": "chapter-325.jpg",
@@ -3810,5 +3825,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T17:16:48.567Z"
+  "lastUpdated": "2026-04-15T17:18:29.305Z"
 }
