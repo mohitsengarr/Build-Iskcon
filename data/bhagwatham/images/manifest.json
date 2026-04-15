@@ -1010,6 +1010,20 @@
       "cantoNumber": 4
     },
     {
+      "chapterNumber": 67,
+      "chapterTitle": "Chapter पाँच",
+      "cantoNumber": 4,
+      "imagePath": "chapter-067.jpg",
+      "prompt": "Narada, the divine sage carrying his veena, stands before Lord Shiva in a serene mountain setting, delivering the sorrowful news of Sati's passing. Shiva, seated in meditative stillness with matted hair and a trident beside him, absorbs the grief with an expression of profound sorrow and rising intensity, tears forming in his eyes.",
+      "descriptionHi": "जब भगवान शिव को नारद मुनि से यह समाचार मिला कि उनकी पत्नी सती प्रजापति दक्ष के अपमान के कारण अपना शरीर त्याग चुकी हैं और उनके सैनिकों को ऋभुओं ने खदेड़ दिया है, तो वे अत्यंत क्रोधित हो उठे। सती, जो साक्षात् भौतिक शक्ति की स्वरूपा थीं, ने पुत्री धर्म का पालन करते हुए अपने पिता को दंडित करने के बजाय अपना शरीर त्याग करना उचित समझा। यह घटना भक्ति, त्याग और दैवीय शक्ति के भगवान के आदेश के अधीन रहने की गहन आध्यात्मिक शिक्षा देती है।",
+      "personasUsed": [
+        "narada"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T13:33:32.047Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 69,
       "chapterTitle": "Chapter सात",
       "imagePath": "chapter-090.jpg",
@@ -1507,6 +1521,16 @@
       "generatedAt": "2026-04-12T02:44:29.614Z",
       "sceneIndex": 0,
       "cantoNumber": 5
+    },
+    {
+      "chapterNumber": 112,
+      "chapterTitle": "Chapter उन्नीस",
+      "cantoNumber": 5,
+      "imagePath": "chapter-112.jpg",
+      "prompt": "In the blessed land of Kimpurusha Varsha, devoted residents gather to worship Lord Ramachandra, who sits majestically upon a divine throne radiating serene golden light. Hanuman kneels humbly before Lord Rama with folded hands, his eyes filled with pure devotion, while the assembled worshippers offer prayers and flowers in an atmosphere of deep spiritual surrender.",
+      "descriptionHi": "इस अध्याय में किम्पुरुष वर्ष के निवासियों द्वारा भगवान् रामचन्द्र की आराधना का वर्णन है, जहाँ हनुमान उनके आज्ञाकारी सेवक के रूप में उपस्थित हैं। भगवान् राम साधुओं की रक्षा और दुष्टों के विनाश के लिए अवतरित होते हैं। इस अध्याय का मूल संदेश यह है कि मनुष्य को सांसारिक सुख-ऐश्वर्य छोड़कर पूर्ण आत्मसमर्पण से ही भगवान् को प्रसन्न किया जा सकता है।",
+      "generatedAt": "2026-04-15T13:34:31.982Z",
+      "sceneIndex": 0
     },
     {
       "chapterNumber": 113,
@@ -2678,5 +2702,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T13:32:23.311Z"
+  "lastUpdated": "2026-04-15T13:35:00.828Z"
 }
