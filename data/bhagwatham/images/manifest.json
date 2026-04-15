@@ -3609,6 +3609,50 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 296,
+      "chapterTitle": "Chapter पाँच",
+      "cantoNumber": 11,
+      "imagePath": "chapter-296.jpg",
+      "prompt": "Narada, the divine sage, sits serenely before Vasudeva in a peaceful ashram setting, imparting sacred wisdom about devotion to Lord Vishnu. With hands folded reverently, Vasudeva listens as Narada describes the different names, forms, and worship methods of Vishnu across the four cosmic ages, the golden light of spiritual knowledge illuminating the moment.",
+      "descriptionHi": "इस अध्याय में नारद मुनि वसुदेव को यह शिक्षा देते हैं कि जो लोग भगवान् हरि की भक्ति से विमुख हैं और इन्द्रियों को वश में नहीं कर पाते, उनकी दुर्गति होती है। साथ ही प्रत्येक युग में भगवान् विष्णु के विभिन्न नाम, रूप और पूजा-पद्धतियों का वर्णन किया गया है। चार वर्णों और चार आश्रमों की उत्पत्ति आदि पुरुष विष्णु के अंगों से मानी गई है, और उनके धर्म का पालन ही मुक्ति का मार्ग है।",
+      "personasUsed": [
+        "narada",
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T17:19:18.164Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 297,
+      "chapterTitle": "Chapter छह",
+      "cantoNumber": 11,
+      "imagePath": "chapter-297.jpg",
+      "prompt": "Brahma and a host of celestial beings hover reverently in the golden sky above the sacred pilgrimage site of Prabhasa, their hands folded in deep devotion as they lovingly implore Krishna to return to his divine abode. Krishna stands serenely on the earth below, radiant and composed, as the moment carries an atmosphere of tender farewell and spiritual transcendence.",
+      "descriptionHi": "इस अध्याय में ब्रह्मा और अन्य देवताओं ने श्रीकृष्ण की स्तुति करते हुए उनसे अपने दिव्य धाम वापस लौट जाने का विनम्र अनुरोध किया। यदुवंशियों का प्रभास क्षेत्र में गमन इस अध्याय की केंद्रीय घटना है। भगवान् से वियोग की भावना इस अध्याय को आध्यात्मिक दृष्टि से अत्यंत भावपूर्ण और महत्वपूर्ण बनाती है।",
+      "personasUsed": [
+        "krishna_adult",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T17:19:56.803Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 298,
+      "chapterTitle": "Chapter सात",
+      "cantoNumber": 11,
+      "imagePath": "chapter-298.jpg",
+      "prompt": "Krishna sits serenely with Uddhava in a peaceful garden, speaking words of deep spiritual wisdom. Uddhava, with folded hands and tearful eyes, earnestly pleads to accompany Krishna to Vaikuntha. Krishna gently guides him toward the path of renunciation and sankhya yoga, as the golden light of dusk surrounds them.",
+      "descriptionHi": "इस अध्याय में भगवान् कृष्ण अपने प्रिय भक्त उद्धव को वैकुण्ठ साथ न ले जाने का कारण समझाते हैं और उन्हें संन्यास ग्रहण करने तथा सांख्य योग में स्थित होने का उपदेश देते हैं। कृष्ण बताते हैं कि कलियुग का आगमन निकट है और उनके अवतार का प्रयोजन पूर्ण हो चुका है। उद्धव भगवान् से और गहन उपदेश की याचना करते हैं, जिस पर कृष्ण उन्हें अवधूत के अट्ठाईस गुरुओं का दिव्य वृत्तान्त सुनाने का संकल्प करते हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T17:20:33.710Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 325,
       "chapterTitle": "Chapter तीन",
       "imagePath": "chapter-325.jpg",
@@ -3825,5 +3869,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T17:18:29.305Z"
+  "lastUpdated": "2026-04-15T17:20:54.060Z"
 }
