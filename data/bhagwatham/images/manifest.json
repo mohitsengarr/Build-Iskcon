@@ -2909,6 +2909,49 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 245,
+      "chapterTitle": "Chapter चवालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-245.jpg",
+      "prompt": "In the royal wrestling arena of Mathura, the young Krishna stands victorious after overcoming the mighty wrestler Chanura, as the assembled crowd cheers with joy. Nearby, Balrama stands equally triumphant. The atmosphere shifts as Krishna then confronts the tyrant king Kamsa upon his throne, bringing the reign of injustice to its decisive end.",
+      "descriptionHi": "इस अध्याय में कृष्ण और बलराम ने कंस के पहलवानों चाणूर और मुष्टिक को पराजित किया और अंततः कृष्ण ने कंस का वध किया। अखाड़े में उपस्थित स्त्रियाँ इस असमान युद्ध को देखकर व्यथित थीं, परन्तु कृष्ण की दिव्य शक्ति ने सत्य की विजय सुनिश्चित की। यह अध्याय अधर्म पर धर्म की और अत्याचार पर न्याय की विजय का प्रतीक है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:28:39.585Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 246,
+      "chapterTitle": "Chapter पैंतालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-246.jpg",
+      "prompt": "Krishna and Balarama stand humbly before their parents Devaki and Vasudeva in a royal chamber in Mathura. Krishna speaks with folded hands, asking forgiveness for years of separation caused by Kamsa's tyranny. Overwhelmed with love and joy, Devaki and Vasudeva embrace both sons, their eyes filled with tears of reunion and happiness.",
+      "descriptionHi": "इस अध्याय में कृष्ण ने अपने माता-पिता देवकी और वसुदेव से क्षमा माँगी और उन्हें पुत्र-प्रेम से आश्वस्त किया। फिर उन्होंने उग्रसेन को राजा के रूप में स्थापित किया और नन्द महाराज का आभार व्यक्त किया। इस अध्याय का आध्यात्मिक सार यह है कि कृष्ण, परमेश्वर होते हुए भी, माता-पिता के प्रति पुत्र के कर्तव्य और कृतज्ञता का आदर्श प्रस्तुत करते हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:29:39.106Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 247,
+      "chapterTitle": "Chapter छियालिस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-247.jpg",
+      "prompt": "Uddhava arrives at Vrindavana in his chariot at sunset, sent by Krishna with a loving message for Nanda, Yashoda, and the gopis. The village glows warmly as cows return home with calves playfully leaping around them, while cowherd men and gopis sing devotional songs praising Krishna and Balarama, filling the air with incense and devotion.",
+      "descriptionHi": "श्रीकृष्ण ने अपने प्रिय मित्र उद्धव को व्रज भेजा ताकि वे नन्द, यशोदा और गोपियों के वियोग-जनित दुख को कृष्ण का संदेश सुनाकर दूर कर सकें। उद्धव सूर्यास्त के समय व्रज पहुँचे और उन्होंने गौवों, बछड़ों तथा कृष्ण-बलराम की महिमा गाते ग्वालों और गोपियों का मनोरम दृश्य देखा। यह अध्याय प्रेम और भक्ति की गहराई को दर्शाता है, जहाँ कृष्ण अपने भक्तों के दुख को दूर करने के लिए सदैव तत्पर रहते हैं।",
+      "personasUsed": [
+        "krishna_adult",
+        "yashoda"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:32:03.258Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3514,5 +3557,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T15:28:06.916Z"
+  "lastUpdated": "2026-04-15T15:32:23.222Z"
 }
