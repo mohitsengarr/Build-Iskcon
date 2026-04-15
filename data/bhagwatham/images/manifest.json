@@ -3893,6 +3893,54 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 342,
+      "chapterTitle": "Chapter बीस",
+      "cantoNumber": 12,
+      "imagePath": "chapter-342.jpg",
+      "prompt": "Krishna sits serenely beneath a tree on the banks of a peaceful river, speaking with his devoted friend Uddhava. Krishna gestures gently with his hand, illuminating the paths of karma-yoga, jnana-yoga, and bhakti-yoga, while Uddhava listens with folded hands, his eyes filled with deep reverence and spiritual longing.",
+      "descriptionHi": "इस अध्याय में भगवान् कृष्ण उद्धव को कर्म-योग, ज्ञान-योग और भक्ति-योग की विधियों का वर्णन करते हैं और बताते हैं कि ये मार्ग व्यक्ति की आध्यात्मिक स्थिति के अनुसार हैं। वेदों में द्वैत और अद्वैत के विरोधाभासी विचारों का समाधान करते हुए कृष्ण स्पष्ट करते हैं कि शुद्ध भक्ति ज्ञान और वैराग्य दोनों से श्रेष्ठ है। यह संवाद आध्यात्मिक जिज्ञासु को उचित मार्ग चुनने की प्रेरणा देता है और मानव जीवन की दुर्लभता व महत्ता को रेखांकित करता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T17:24:52.927Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 343,
+      "chapterTitle": "Chapter इक्कीस",
+      "cantoNumber": 12,
+      "imagePath": "chapter-343.jpg",
+      "prompt": "Krishna stands in a serene setting, speaking with calm authority as he explains the Vedic path to an attentive gathering of seekers. His expression is gentle yet wise, illuminating the distinctions between those devoted to spiritual knowledge and those bound by material desires, guiding souls toward the higher path of devotion and understanding.",
+      "descriptionHi": "इस अध्याय में भगवान् कृष्ण वैदिक पथ की व्याख्या करते हैं और उन लोगों के दोषों का वर्णन करते हैं जो कर्म, ज्ञान और भक्ति के लिए अनुपयुक्त हैं तथा इन्द्रियतृप्ति और सकाम कर्मों में लिप्त रहते हैं। भगवान् कृष्ण स्थान, काल, वस्तु और पात्र की दृष्टि से इन दोषों को समझाते हैं। यह अध्याय आध्यात्मिक दृष्टि से महत्वपूर्ण है क्योंकि यह बताता है कि भगवान् के ज्ञान और भक्ति में पूर्ण व्यक्ति सांसारिक गुण-दोष से परे होता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T17:25:22.174Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 344,
+      "chapterTitle": "Chapter बाईस",
+      "cantoNumber": 12,
+      "imagePath": "chapter-344.jpg",
+      "prompt": "The supreme Purusha, radiant and eternal, gazes upon Prakriti — the primordial nature — with a single transcendent glance. From this divine moment of awareness, the material creation stirs into existence. A sage contemplates this cosmic truth in serene meditation, surrounded by the five great elements manifesting gently around him in a forest of stillness.",
+      "descriptionHi": "इस अध्याय में भौतिक सृष्टि के पच्चीस तत्त्वों की गणना की गई है, जिसमें भगवान्, प्रकृति, महत्-तत्त्व, अहंकार तथा पंच महाभूत आदि सम्मिलित हैं। परम पुरुष का प्रकृति पर दृष्टिपात ही सृष्टि का मूल कारण है और तीनों गुणों के माध्यम से ज्ञान, क्रिया और अज्ञान की उत्पत्ति होती है। जो जीव माया से मोहित हैं वे जन्म-मृत्यु के चक्र में भटकते रहते हैं, जबकि आत्मज्ञानी इस रहस्य को समझकर मुक्ति प्राप्त करते हैं।",
+      "generatedAt": "2026-04-15T17:25:53.723Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 345,
+      "chapterTitle": "Chapter तेईस",
+      "cantoNumber": 12,
+      "imagePath": "chapter-345.jpg",
+      "prompt": "A serene and dignified brahmin sage from the city of Avanti sits in calm meditation, while harsh and unkind words are directed at him by surrounding wrongdoers. The sage remains composed and peaceful, accepting his suffering as the fruit of past karma, his expression reflecting deep spiritual wisdom and inner tranquility.",
+      "descriptionHi": "इस अध्याय में अवन्ती देश के एक साधु ब्राह्मण की कथा है जो पूर्वजन्म में किसान और व्यापारी था। दुष्ट लोगों द्वारा सताये जाने पर भी वह ब्राह्मण इस कष्ट को अपने पूर्वकर्मों का फल मानकर शांतिपूर्वक सहन करता रहा। यह कथा यह आध्यात्मिक शिक्षा देती है कि दूसरों के दुर्व्यवहार को धैर्य और विवेक से सहना ही सच्चे साधु का लक्षण है।",
+      "generatedAt": "2026-04-15T17:26:24.751Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 351,
       "chapterTitle": "Chapter उन्तीस",
       "imagePath": "chapter-351.jpg",
@@ -3936,5 +3984,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T17:24:23.499Z"
+  "lastUpdated": "2026-04-15T17:26:46.060Z"
 }
