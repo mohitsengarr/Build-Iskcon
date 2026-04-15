@@ -168,7 +168,7 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
             </button>
             {!confirmDelete ? (
               <button onClick={() => setConfirmDelete(true)} className="flex items-center gap-1.5 text-xs text-red-400/70 hover:text-red-400 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 transition-colors">
-                <Trash2 className="w-3.5 h-3.5" /> Delete & Regenerate
+                <Trash2 className="w-3.5 h-3.5" /> Delete
               </button>
             ) : (
               <div className="flex items-center gap-1.5">
@@ -176,7 +176,7 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
                   onClick={() => { onDelete(item); setConfirmDelete(false); }}
                   className="flex items-center gap-1 text-xs text-white px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 transition-colors font-semibold"
                 >
-                  <RefreshCw className="w-3 h-3" /> Delete & Regenerate
+                  <RefreshCw className="w-3 h-3" /> Delete
                 </button>
                 <button onClick={() => setConfirmDelete(false)} className="text-xs text-white/50 hover:text-white px-2 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
                   Cancel
@@ -295,34 +295,30 @@ export default function Gallery() {
     cantos: new Set(allItems.map(i => i.cantoNumber)).size,
   }), [allItems]);
 
-  // ── Delete + Regenerate image ────────────────────────────────────────────
-  const [regenerating, setRegenerating] = useState<Set<number>>(new Set()); // chapter numbers currently regenerating
+  // ── Delete image (permanent, no auto-regeneration) ───────────────────────
+  const [regenerating, setRegenerating] = useState<Set<number>>(new Set());
 
   const handleDeleteImage = useCallback(async (item: GalleryItem) => {
-    // Step 1: Call the combined delete-and-regenerate endpoint
-    // This deletes the image, removes old Buffer posts (IG + Threads), regenerates, and requeues
-    const sceneIdx = item.type === "instagram" ? (item.sceneIndex ?? 0) : (item.sceneIndex ?? 0);
+    const sceneIdx = item.sceneIndex ?? 0;
     try {
-      const res = await fetch(`${API_BASE}/image/delete-and-regenerate/${item.chapterNumber}/${sceneIdx}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      // Pure delete — removes from manifest, Supabase Storage, Buffer, and local disk
+      // Does NOT regenerate. The audit cron will regenerate later with fixed prompts.
+      const res = await fetch(`${API_BASE}/image/delete/${item.chapterNumber}/${sceneIdx}`, {
+        method: "DELETE",
       });
-
       if (!res.ok) {
         const ct = res.headers.get("content-type") || "";
         if (!ct.includes("application/json")) {
-          alert("Delete & regenerate requires the API server (dev mode).");
+          alert("Delete requires the API server (dev mode).");
           return;
         }
       }
     } catch {
-      alert("Delete & regenerate requires the API server. Run locally.");
+      alert("Delete requires the API server. Run locally.");
       return;
     }
 
     // Remove from local state immediately
-    const deletedChapter = item.chapterNumber;
-    const deletedType = item.type;
     setAllItems(prev => prev.filter(i => i.id !== item.id));
 
     // Navigate to next image in lightbox
@@ -334,37 +330,6 @@ export default function Gallery() {
     } else {
       setLightboxItem(null);
     }
-
-    // Step 2: Trigger chapter image regeneration in background
-    setRegenerating(prev => new Set(prev).add(deletedChapter));
-    try {
-      const regenRes = await fetch(`${API_BASE}/regenerate-chapter/${deletedChapter}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-
-      if (regenRes.ok) {
-        const data = await regenRes.json();
-        if (data.images?.length > 0) {
-          const newItems: GalleryItem[] = data.images.map((img: any) => ({
-            id: `ch-${img.chapterNumber}-${img.sceneIndex ?? 0}-${Date.now()}`,
-            chapterNumber: img.chapterNumber,
-            chapterTitle: img.chapterTitle || `Chapter ${img.chapterNumber}`,
-            cantoNumber: img.cantoNumber ?? 0,
-            sceneIndex: img.sceneIndex ?? 0,
-            url: `${API_BASE}/images/${img.imagePath}?v=${Date.now()}`,
-            description: img.descriptionHi || img.chapterTitle || "",
-            generatedAt: img.generatedAt || new Date().toISOString(),
-            type: deletedType,
-          }));
-          setAllItems(prev => [...prev, ...newItems].sort((a, b) =>
-            a.cantoNumber - b.cantoNumber || a.chapterNumber - b.chapterNumber || a.sceneIndex - b.sceneIndex
-          ));
-        }
-      }
-    } catch { /* regeneration failed silently */ }
-    setRegenerating(prev => { const next = new Set(prev); next.delete(deletedChapter); return next; });
   }, [filtered]);
 
   const toggleCanto = (canto: number) => {
