@@ -65,7 +65,16 @@ export function WorldMap({ temples }: Props) {
   };
 
   return (
-    <div className="relative w-full rounded-2xl overflow-hidden bg-[#0d1117] shadow-[0_8px_40px_rgba(0,0,0,0.4)]">
+    <div
+      className="relative w-full rounded-2xl overflow-hidden bg-[#0d1117] shadow-[0_8px_40px_rgba(0,0,0,0.4)]"
+      style={{ touchAction: "pan-y" }}
+      onWheel={(e) => {
+        // Only zoom map when Ctrl/Cmd is held — otherwise let page scroll
+        if (!e.ctrlKey && !e.metaKey) return;
+        e.preventDefault();
+        setZoom(z => e.deltaY < 0 ? Math.min(z + 0.5, 8) : Math.max(z - 0.5, 1));
+      }}
+    >
       <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
         <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md border border-white/10 rounded-full px-3 py-1.5">
           <MapPin className="w-3.5 h-3.5 text-amber-400" />
@@ -100,7 +109,7 @@ export function WorldMap({ temples }: Props) {
       <ComposableMap
         projection="geoMercator"
         projectionConfig={{ scale: 140 }}
-        style={{ width: "100%", height: "100%" }}
+        style={{ width: "100%", height: "100%", pointerEvents: "auto" }}
         height={440}
       >
         <ZoomableGroup
@@ -109,6 +118,11 @@ export function WorldMap({ temples }: Props) {
           onMoveEnd={({ coordinates, zoom: z }: MoveEndArg) => {
             setCenter(coordinates);
             setZoom(z);
+          }}
+          filterZoomEvent={(evt: any) => {
+            // Block scroll-wheel zoom — only allow pinch or Ctrl+wheel (handled in container onWheel)
+            if (evt?.type === "wheel") return false;
+            return true;
           }}
         >
           <Geographies geography={GEO_URL}>
