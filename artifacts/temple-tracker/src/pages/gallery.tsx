@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
-import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, ChevronUp, Trash2, Maximize2, Minimize2 } from "lucide-react";
+import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, ChevronUp, Trash2, Maximize2, Minimize2, RefreshCw } from "lucide-react";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -168,7 +168,7 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
             </button>
             {!confirmDelete ? (
               <button onClick={() => setConfirmDelete(true)} className="flex items-center gap-1.5 text-xs text-red-400/70 hover:text-red-400 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 transition-colors">
-                <Trash2 className="w-3.5 h-3.5" /> Delete
+                <Trash2 className="w-3.5 h-3.5" /> Delete & Regenerate
               </button>
             ) : (
               <div className="flex items-center gap-1.5">
@@ -176,7 +176,7 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
                   onClick={() => { onDelete(item); setConfirmDelete(false); }}
                   className="flex items-center gap-1 text-xs text-white px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 transition-colors font-semibold"
                 >
-                  <Trash2 className="w-3 h-3" /> Confirm
+                  <RefreshCw className="w-3 h-3" /> Delete & Regenerate
                 </button>
                 <button onClick={() => setConfirmDelete(false)} className="text-xs text-white/50 hover:text-white px-2 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
                   Cancel
@@ -295,31 +295,35 @@ export default function Gallery() {
     cantos: new Set(allItems.map(i => i.cantoNumber)).size,
   }), [allItems]);
 
-  // ── Delete image ─────────────────────────────────────────────────────────
+  // ── Delete + Regenerate image ────────────────────────────────────────────
+  const [regenerating, setRegenerating] = useState<Set<number>>(new Set()); // chapter numbers currently regenerating
+
   const handleDeleteImage = useCallback(async (item: GalleryItem) => {
+    // Step 1: Delete the bad image
     try {
-      // Call the API server delete endpoint (works in dev mode)
       const endpoint = item.type === "instagram"
-        ? `${API_BASE}/image/${item.chapterNumber}/${(item.sceneIndex ?? 0) + 100}` // IG uses offset +100
+        ? `${API_BASE}/image/${item.chapterNumber}/${(item.sceneIndex ?? 0) + 100}`
         : `${API_BASE}/image/${item.chapterNumber}/${item.sceneIndex ?? 0}`;
       const res = await fetch(endpoint, { method: "DELETE" });
 
       if (!res.ok) {
         const ct = res.headers.get("content-type") || "";
         if (!ct.includes("application/json")) {
-          // Vercel returned HTML — server not available
-          alert("Delete requires the API server (dev mode). On production, images can be managed via the API server.");
+          alert("Delete & regenerate requires the API server (dev mode).");
           return;
         }
       }
     } catch {
-      alert("Delete requires the API server. Run locally to manage images.");
+      alert("Delete & regenerate requires the API server. Run locally.");
       return;
     }
 
     // Remove from local state immediately
+    const deletedChapter = item.chapterNumber;
+    const deletedType = item.type;
     setAllItems(prev => prev.filter(i => i.id !== item.id));
-    // Navigate to next image or close lightbox
+
+    // Navigate to next image in lightbox
     const idx = filtered.findIndex(i => i.id === item.id);
     if (filtered.length > 1) {
       const nextItem = filtered[idx + 1] || filtered[idx - 1];
@@ -328,6 +332,38 @@ export default function Gallery() {
     } else {
       setLightboxItem(null);
     }
+
+    // Step 2: Trigger regeneration in background
+    setRegenerating(prev => new Set(prev).add(deletedChapter));
+    try {
+      const regenRes = await fetch(`${API_BASE}/regenerate-chapter/${deletedChapter}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}), // auto-generate prompt
+      });
+
+      if (regenRes.ok) {
+        const data = await regenRes.json();
+        // Add the newly generated images back to the gallery
+        if (data.images?.length > 0) {
+          const newItems: GalleryItem[] = data.images.map((img: any) => ({
+            id: `ch-${img.chapterNumber}-${img.sceneIndex ?? 0}-${Date.now()}`,
+            chapterNumber: img.chapterNumber,
+            chapterTitle: img.chapterTitle || `Chapter ${img.chapterNumber}`,
+            cantoNumber: img.cantoNumber ?? 0,
+            sceneIndex: img.sceneIndex ?? 0,
+            url: `${API_BASE}/images/${img.imagePath}?v=${Date.now()}`,
+            description: img.descriptionHi || img.chapterTitle || "",
+            generatedAt: img.generatedAt || new Date().toISOString(),
+            type: deletedType,
+          }));
+          setAllItems(prev => [...prev, ...newItems].sort((a, b) =>
+            a.cantoNumber - b.cantoNumber || a.chapterNumber - b.chapterNumber || a.sceneIndex - b.sceneIndex
+          ));
+        }
+      }
+    } catch { /* regeneration failed silently */ }
+    setRegenerating(prev => { const next = new Set(prev); next.delete(deletedChapter); return next; });
   }, [filtered]);
 
   const toggleCanto = (canto: number) => {
@@ -377,6 +413,16 @@ export default function Gallery() {
 
         {!loading && (
           <>
+            {/* Regenerating banner */}
+            {regenerating.size > 0 && (
+              <div className="bg-orange-50 border border-orange-200/60 rounded-2xl px-4 py-3 mb-4 flex items-center gap-3">
+                <Loader2 className="w-4 h-4 animate-spin text-orange-500 shrink-0" />
+                <p className="text-xs text-orange-700 font-medium">
+                  Regenerating {regenerating.size} chapter{regenerating.size > 1 ? "s" : ""}: Ch. {[...regenerating].join(", ")} — new images will appear automatically
+                </p>
+              </div>
+            )}
+
             {/* Filter Bar */}
             <div className="sticky top-[72px] z-30 bg-white/90 backdrop-blur-md border border-stone-200/60 rounded-2xl shadow-sm px-4 py-3 mb-6 flex flex-wrap items-center gap-3">
               <Filter className="w-4 h-4 text-stone-400 hidden sm:block" />
