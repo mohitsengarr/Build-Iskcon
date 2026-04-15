@@ -2839,6 +2839,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 240,
+      "chapterTitle": "Chapter उनतालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-240.jpg",
+      "prompt": "Akrura is submerged to his waist in the sacred Yamuna river, his hands joined in reverence, his eyes wide with divine wonder. Before him in the luminous waters appears a radiant vision of Lord Vishnu reclining on Shesha, surrounded by celestial light. Akrura gazes upon this transcendent sight with tears of devotion streaming down his face.",
+      "descriptionHi": "इस अध्याय में अक्रूर वृन्दावन पहुँचकर कृष्ण और बलराम से मिलते हैं तथा उन्हें कंस की दुष्ट योजनाओं की सूचना देते हैं। कृष्ण के मथुरा जाने की बात सुनकर गोपियाँ अत्यंत व्यथित होकर विलाप करने लगती हैं। यात्रा के दौरान अक्रूर यमुना के जल में विष्णु-धाम का दिव्य दर्शन प्राप्त करते हैं, जो इस अध्याय का परम आध्यात्मिक क्षण है।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:22:44.721Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 266,
       "chapterTitle": "Chapter पैंसठ",
       "imagePath": "chapter-266.jpg",
@@ -3444,5 +3458,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T15:21:57.979Z"
+  "lastUpdated": "2026-04-15T15:23:05.294Z"
 }
