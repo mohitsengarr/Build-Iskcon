@@ -611,6 +611,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 35,
+      "chapterTitle": "Chapter छह",
+      "cantoNumber": 3,
+      "imagePath": "chapter-035.jpg",
+      "prompt": "Lord Krishna enters the twenty-three elements with his external energy, Devi Kali, to revive the creative activities of the universe.",
+      "descriptionHi": "मैत्रेय ऋषि भगवान् की सृष्टि की कहानी सुना रहे हैं, जिसमें भगवान् ने अपनी शक्तियों के संयोग से विश्च के प्रगतिशील सृजनात्मक कार्यकलापों को पुनरुल्जीवित किया। भगवान् ने अपनी बहिरंगा शक्ति, देवी काली सहित तेईस तत्त्वों के भीतर प्रवेश किया।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T07:06:29.416Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 36,
       "chapterTitle": "Chapter 36",
       "imagePath": "chapter-036.jpg",
@@ -636,6 +650,21 @@
       "generatedAt": "2026-04-11T05:39:13.644Z",
       "sceneIndex": 0,
       "cantoNumber": 3
+    },
+    {
+      "chapterNumber": 38,
+      "chapterTitle": "(नौ",
+      "cantoNumber": 3,
+      "imagePath": "chapter-038.jpg",
+      "prompt": "Brahma bows to Vishnu, acknowledging his supreme knowledge after eons of meditation in a serene celestial setting.",
+      "descriptionHi": "ब्रह्मा जी भगवान विष्णु की स्तुति करते हैं और कहते हैं कि उन्हें आपके विषय में जानने में दीर्घकाल लग गया। वे कहते हैं कि आप एकमात्र ज्ञेय तत्व हैं और आपके स्वरूप को जान पाना भौतिक देह वालों के लिए कठिन है।",
+      "personasUsed": [
+        "vishnu",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T07:07:04.812Z",
+      "sceneIndex": 0
     },
     {
       "chapterNumber": 39,
@@ -2625,5 +2654,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-15T07:04:06.170Z"
+  "lastUpdated": "2026-04-15T07:07:04.812Z"
 }
