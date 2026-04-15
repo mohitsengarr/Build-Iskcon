@@ -873,16 +873,22 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     setDictLoading(true);
     setDictResult(null);
     try {
+      // Try server-side Claude dictionary first (works in dev mode)
       const res = await fetch("/api/bhagwatham/dictionary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ word: selectedText }),
       });
       if (res.ok) {
-        const data = await res.json();
-        setDictResult(data);
+        const ct = res.headers.get("content-type") || "";
+        if (ct.includes("application/json")) {
+          const data = await res.json();
+          if (data.meaning) { setDictResult(data); setDictLoading(false); return; }
+        }
       }
-    } catch { /* ignore */ }
+    } catch { /* server not available — expected on Vercel */ }
+    // Fallback: open Shabdkosh dictionary in new tab
+    window.open(`https://www.shabdkosh.com/dictionary/hindi-english/${encodeURIComponent(selectedText)}`, "_blank", "noopener");
     setDictLoading(false);
   }, [selectedText]);
 
