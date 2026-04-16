@@ -516,12 +516,46 @@ export async function fetchLiveTemples(): Promise<Temple[]> {
     // Only use Supabase if it has MORE temples than the static array (i.e. it's been kept up to date)
     if (!Array.isArray(rows) || rows.length <= TEMPLES.length) return TEMPLES;
 
-    // Build lookup from static temples for coordinate fallback
-    const staticByName = new Map(TEMPLES.map(t => [t.name.toLowerCase().trim(), t]));
+    // Build lookup from static temples for coordinate fallback (fuzzy name matching)
+    const normalize = (s: string) => s.toLowerCase().replace(/iskcon\s*/gi, "").replace(/[–—\-()]/g, " ").replace(/\b(temple|new|sri|expansion|phase\s*\d)\b/gi, "").replace(/\s+/g, " ").trim();
+    const staticByExact = new Map(TEMPLES.map(t => [t.name.toLowerCase().trim(), t]));
+    const staticByNorm = new Map(TEMPLES.map(t => [normalize(t.name), t]));
+    // Extract key location words for fallback matching
+    const staticByLocation = new Map(TEMPLES.filter(t => t.latitude).map(t => {
+      const city = t.location.split(",")[0]?.trim().toLowerCase() || "";
+      return [city, t] as const;
+    }));
+
+    const findStaticMatch = (name: string, location: string): Temple | undefined => {
+      // 1. Exact name match
+      const exact = staticByExact.get(name.toLowerCase().trim());
+      if (exact) return exact;
+      // 2. Normalized name match
+      const norm = normalize(name);
+      const normMatch = staticByNorm.get(norm);
+      if (normMatch) return normMatch;
+      // 3. Check if either name contains the other's normalized form
+      for (const [sNorm, t] of staticByNorm) {
+        if (norm.includes(sNorm) || sNorm.includes(norm)) return t;
+      }
+      // 4. Match by key location words (city name in first part of name)
+      const nameWords = norm.split(" ").filter(w => w.length > 3);
+      for (const [sNorm, t] of staticByNorm) {
+        const overlap = nameWords.filter(w => sNorm.includes(w));
+        if (overlap.length >= 2) return t;
+      }
+      // 5. Match by location city
+      const city = location.split(",")[0]?.trim().toLowerCase();
+      if (city) {
+        const locMatch = staticByLocation.get(city);
+        if (locMatch) return locMatch;
+      }
+      return undefined;
+    };
 
     return rows.map((r: any, i: number) => {
-      // If Supabase row has no coordinates, try matching static temple by name
-      const staticMatch = staticByName.get((r.name || "").toLowerCase().trim());
+      // If Supabase row has no coordinates, try matching static temple
+      const staticMatch = (r.latitude && r.longitude) ? undefined : findStaticMatch(r.name || "", r.location || "");
       return {
         id: r.id || i + 1,
         name: r.name,
