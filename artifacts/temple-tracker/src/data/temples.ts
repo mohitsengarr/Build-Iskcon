@@ -516,25 +516,32 @@ export async function fetchLiveTemples(): Promise<Temple[]> {
     // Only use Supabase if it has MORE temples than the static array (i.e. it's been kept up to date)
     if (!Array.isArray(rows) || rows.length <= TEMPLES.length) return TEMPLES;
 
-    return rows.map((r: any, i: number) => ({
-      id: r.id || i + 1,
-      name: r.name,
-      location: r.location,
-      deity: r.deity || "Sri Sri Radha Krishna",
-      description: r.description || "",
-      status: r.status || "construction",
-      phase: r.phase || "",
-      constructionProgress: Number(r.construction_progress) || 0,
-      fundraisingGoal: Number(r.fundraising_goal) || 0,
-      fundraisingRaised: Number(r.fundraising_raised) || 0,
-      startDate: r.start_date || "",
-      expectedCompletion: r.expected_completion || "",
-      projectLead: r.project_lead || "",
-      coverImage: r.cover_image || null,
-      donateUrl: r.donate_url || null,
-      latitude: r.latitude ? Number(r.latitude) : null,
-      longitude: r.longitude ? Number(r.longitude) : null,
-    }));
+    // Build lookup from static temples for coordinate fallback
+    const staticByName = new Map(TEMPLES.map(t => [t.name.toLowerCase().trim(), t]));
+
+    return rows.map((r: any, i: number) => {
+      // If Supabase row has no coordinates, try matching static temple by name
+      const staticMatch = staticByName.get((r.name || "").toLowerCase().trim());
+      return {
+        id: r.id || i + 1,
+        name: r.name,
+        location: r.location,
+        deity: r.deity || "Sri Sri Radha Krishna",
+        description: r.description || "",
+        status: r.status || "construction",
+        phase: r.phase || "",
+        constructionProgress: Number(r.construction_progress) || 0,
+        fundraisingGoal: Number(r.fundraising_goal) || 0,
+        fundraisingRaised: Number(r.fundraising_raised) || 0,
+        startDate: r.start_date || "",
+        expectedCompletion: r.expected_completion || "",
+        projectLead: r.project_lead || "",
+        coverImage: r.cover_image || null,
+        donateUrl: r.donate_url || null,
+        latitude: r.latitude ? Number(r.latitude) : (staticMatch?.latitude ?? null),
+        longitude: r.longitude ? Number(r.longitude) : (staticMatch?.longitude ?? null),
+      };
+    });
   } catch {
     return TEMPLES;
   }
