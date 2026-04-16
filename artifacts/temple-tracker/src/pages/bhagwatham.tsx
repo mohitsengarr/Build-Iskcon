@@ -1755,7 +1755,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
 
 type SectionMarker = { type: string; el: HTMLElement };
 
-function StepScrollIndicator({ themeKey, contentMaxWidth }: { themeKey: Theme; contentMaxWidth: number }) {
+function StepScrollIndicator({ themeKey }: { themeKey: Theme }) {
   const [markers, setMarkers] = useState<SectionMarker[]>([]);
   const [activeIdx, setActiveIdx] = useState<number>(-1);
 
@@ -1770,9 +1770,8 @@ function StepScrollIndicator({ themeKey, contentMaxWidth }: { themeKey: Theme; c
       });
       setMarkers(items);
     };
-    // Delay initial gather to let content render
-    const timer = setTimeout(refresh, 500);
-    const ro = new ResizeObserver(refresh);
+    const timer = setTimeout(refresh, 800);
+    const ro = new ResizeObserver(() => setTimeout(refresh, 100));
     ro.observe(document.body);
     return () => { clearTimeout(timer); ro.disconnect(); };
   }, []);
@@ -1803,103 +1802,59 @@ function StepScrollIndicator({ themeKey, contentMaxWidth }: { themeKey: Theme; c
 
   // Theme-aware colors
   const palette = {
-    light: { rail: "#e7e5e4", inactive: "#a8a29e", active: "#ea580c", dot: "#d6d3d1" },
-    dark: { rail: "#44403c", inactive: "#78716c", active: "#fb923c", dot: "#57534e" },
-    sepia: { rail: "#d4c5a9", inactive: "#a89678", active: "#c2410c", dot: "#b8a88a" },
+    light: { rail: "#e7e5e4", inactive: "#a8a29e", active: "#ea580c" },
+    dark: { rail: "#44403c", inactive: "#78716c", active: "#fb923c" },
+    sepia: { rail: "#d4c5a9", inactive: "#a89678", active: "#c2410c" },
   }[themeKey];
 
-  // Marker config per section type: shape, size
+  // Marker config per section type
   const getMarker = (type: string, isActive: boolean) => {
     switch (type) {
-      case "chapter":
-        return { shape: "circle" as const, size: isActive ? 10 : 8 };
-      case "shlok":
-        return { shape: "circle" as const, size: isActive ? 8 : 6 };
-      case "tatparya":
-        return { shape: "dash" as const, size: isActive ? 20 : 12 };
-      case "shabdarth":
-        return { shape: "dash" as const, size: isActive ? 14 : 8 };
-      case "anuvad":
-        return { shape: "dash" as const, size: isActive ? 16 : 10 };
-      default: // text, ref-shlok
-        return { shape: "dash" as const, size: isActive ? 14 : 8 };
+      case "chapter":  return { shape: "circle" as const, size: isActive ? 10 : 7 };
+      case "shlok":    return { shape: "circle" as const, size: isActive ? 8 : 5 };
+      case "tatparya": return { shape: "dash" as const, size: isActive ? 20 : 12 };
+      case "shabdarth":return { shape: "dash" as const, size: isActive ? 14 : 8 };
+      case "anuvad":   return { shape: "dash" as const, size: isActive ? 16 : 10 };
+      default:         return { shape: "dash" as const, size: isActive ? 14 : 8 };
     }
   };
 
   return (
-    <div
-      className="hidden lg:flex fixed z-20 flex-col items-center"
-      style={{
-        left: `max(calc((100vw - ${contentMaxWidth}px) / 2 - 32px), 20px)`,
-        top: "50%",
-        transform: "translateY(-50%)",
-        gap: 6,
-      }}
-    >
-      {/* Vertical rail line */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          width: 1.5,
-          top: 0,
-          bottom: 0,
-          left: "50%",
-          transform: "translateX(-50%)",
-          background: `linear-gradient(to bottom, transparent, ${palette.rail} 10%, ${palette.rail} 90%, transparent)`,
-        }}
-      />
+    <div className="hidden lg:block sticky top-1/2 -translate-y-1/2 shrink-0 z-20 self-start" style={{ width: 28, marginLeft: -36 }}>
+      <div className="flex flex-col items-center" style={{ gap: 5 }}>
+        {/* Vertical rail */}
+        <div className="absolute pointer-events-none" style={{ width: 1.5, top: 0, bottom: 0, left: "50%", transform: "translateX(-50%)", background: `linear-gradient(to bottom, transparent, ${palette.rail} 10%, ${palette.rail} 90%, transparent)` }} />
 
-      {markers.map((m, i) => {
-        const isActive = i === activeIdx;
-        const dist = Math.abs(i - activeIdx);
-        const isNear = dist <= 3;
-        const { shape, size } = getMarker(m.type, isActive);
-        const opacity = isActive ? 1 : isNear ? 0.7 : 0.35;
-        const color = isActive ? palette.active : palette.inactive;
+        {markers.map((m, i) => {
+          const isActive = i === activeIdx;
+          const dist = Math.abs(i - activeIdx);
+          const isNear = dist <= 3;
+          const { shape, size } = getMarker(m.type, isActive);
+          const opacity = isActive ? 1 : isNear ? 0.7 : 0.3;
+          const color = isActive ? palette.active : palette.inactive;
 
-        return (
-          <button
-            key={i}
-            onClick={() => handleClick(m)}
-            className="relative shrink-0 cursor-pointer group"
-            style={{
-              width: 24,
-              height: shape === "circle" ? size + 4 : 6,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: 0,
-              border: "none",
-              background: "transparent",
-            }}
-            title={m.type}
-          >
-            {shape === "circle" ? (
+          return (
+            <button
+              key={i}
+              onClick={() => handleClick(m)}
+              className="relative shrink-0 cursor-pointer group flex items-center justify-center"
+              style={{ width: 24, height: shape === "circle" ? Math.max(size + 3, 8) : 5, padding: 0, border: "none", background: "transparent" }}
+              title={m.type}
+            >
               <span
-                className="block rounded-full transition-all duration-300 group-hover:scale-150"
+                className={`block transition-all duration-300 group-hover:scale-150 ${shape === "circle" ? "rounded-full" : "rounded-full"}`}
                 style={{
                   width: size,
-                  height: size,
+                  height: shape === "circle" ? size : 2.5,
                   backgroundColor: color,
                   opacity,
-                  boxShadow: isActive ? `0 0 8px ${palette.active}60` : "none",
+                  boxShadow: isActive ? `0 0 8px ${palette.active}50` : "none",
                 }}
               />
-            ) : (
-              <span
-                className="block rounded-full transition-all duration-300 group-hover:scale-x-150"
-                style={{
-                  width: size,
-                  height: 2.5,
-                  backgroundColor: color,
-                  opacity,
-                  boxShadow: isActive ? `0 0 6px ${palette.active}50` : "none",
-                }}
-              />
-            )}
-          </button>
-        );
-      })}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -2918,9 +2873,6 @@ export default function Bhagwatham() {
           vedabaseTitles={vedabaseTitles}
         />
 
-        {/* ── Step scroll indicator (desktop only) ── */}
-        <StepScrollIndicator themeKey={settings.theme} contentMaxWidth={settings.maxWidth} />
-
         {/* ── Main content ── */}
         <main ref={contentRef} className={`flex-1 min-w-0 ${theme.bg} transition-colors duration-300`}>
           {/* Voice edit toolbar — appears when text is selected */}
@@ -3095,7 +3047,7 @@ export default function Bhagwatham() {
 
           {/* Content area (SEN-113: responsive padding + Devanagari wrapping) */}
           <div
-            className="mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 [overflow-wrap:break-word] [word-break:break-word]"
+            className="mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 [overflow-wrap:break-word] [word-break:break-word] overflow-x-clip"
             style={{ maxWidth: settings.maxWidth, fontSize: `clamp(13px, ${settings.fontSize}px, ${settings.fontSize}px)`, lineHeight: settings.lineHeight }}
           >
             {loading ? (
@@ -3125,7 +3077,10 @@ export default function Bhagwatham() {
                 )}
               </div>
             ) : (
-              <div>
+              <div className="flex items-start">
+                {/* Step scroll indicator — sticky rail on the left */}
+                <StepScrollIndicator themeKey={settings.theme} />
+                <div className="flex-1 min-w-0">
                 {displayPages.map((page, pageIdx) => {
                   // Determine the previous page's ending section kind for cross-page continuity
                   let prevPage = pageIdx > 0 ? displayPages[pageIdx - 1] : null;
@@ -3156,6 +3111,7 @@ export default function Bhagwatham() {
                   </div>
                   );
                 })}
+                </div>
               </div>
             )}
 
