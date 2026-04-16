@@ -443,5 +443,212 @@
     "gender": "male",
     "source": "Auto-discovered from Bhagavatam text. Generated from mythology knowledge.",
     "addedAt": "2026-04-15T08:30:53.687Z"
+  },
+  {
+    "key": "lord_krishna",
+    "name": "Lord Krishna",
+    "fullDescription": "Lord Krishna: eternally youthful male deity appearing 16-18 years old, luminous blue-black complexion (hex #1a237e to #283593), perfectly symmetrical oval face with strong masculine jawline, high cheekbones, wide forehead bearing a golden tilaka mark of sandalwood paste. Large lotus-shaped eyes with dark irises, heavy kohl-lined lids, gently arched thick brows conveying divine playfulness and cosmic authority. Long wavy black hair adorned with a single peacock feather tucked into an elaborate jeweled crown (mukuta) of gold and emeralds. Slim yet muscular physique radiating divine grace. Dressed in bright golden-yellow silk dhoti (pitambara) with intricate brocade border. Adorned with Vaijayanti garland of five-colored forest flowers reaching to knees, Kaustubha gem jewel glowing on chest, golden necklaces with pearl strands, armlets (keyura), conch-shell earrings (kundala), and golden anklets. Holds sacred Panchajanya conch shell in one hand, Sudarshana chakra (spinning luminous discus) symbolically present, and a lotus flower or flute (bansuri) depending on scene. Triple-bent contrapposto stance (tribhanga). Nimbus of golden divine light surrounds head. Skin shimmers with supernatural radiance suggesting omnipotent divine presence.",
+    "shortDescription": "Lord Krishna: eternally youthful 16-18 year old male deity, luminous blue-black complexion (#1a237e), peacock feather in jeweled crown, yellow silk dhoti, Kaustubha gem, Vaijayanti garland, flute or Panchajanya conch, tribhanga stance, golden divine nimbus.",
+    "patterns": [
+      "\\bLord Krishna\\b",
+      "\\bKrishna\\b",
+      "\\bKrsna\\b",
+      "\\bGovinda\\b",
+      "\\bMadhava\\b",
+      "\\bKeshava\\b",
+      "\\bVasudeva\\b",
+      "\\bMurari\\b",
+      "\\bMurlidhar\\b",
+      "\\bDamodara\\b",
+      "\\bJanardana\\b",
+      "\\bHari\\b",
+      "\\bGopala\\b",
+      "\\bNandanandana\\b",
+      "\\bYadavendra\\b"
+    ],
+    "gender": "male",
+    "source": "Auto-discovered from Bhagavatam text. Generated from mythology knowledge.",
+    "addedAt": "2026-04-15T13:56:14.488Z"
+  },
+  {
+    "key": "vidur",
+    "name": "Vidur",
+    "fullDescription": "Vidur: A noble elder statesman of approximately 55-65 years, lean and dignified with the austere bearing of a devoted sage-counselor. Complexion is dark brown (#3B1F0E), deep and lustrous. Face is long and angular with pronounced cheekbones, a strong square jaw, and a broad forehead marked with three horizontal white ash lines (tripundra). Eyes are large, dark brown, deeply set and luminous with serene wisdom and spiritual intensity, framed by thick grey-streaked brows. Hair is iron-grey, close-cropped and slightly wavy, receding at the temples; short grey beard and mustache, neatly trimmed, conveying ascetic dignity. He wears a simple unstitched dhoti of white or pale saffron cotton, sometimes with a coarse shawl draped over one shoulder, befitting his renounced disposition. Sacred thread (yajnopavita) crosses his chest. Minimal ornaments: plain copper or rudraksha bead wrist bracelet, no elaborate jewelry reflecting his detachment from royal splendor. He carries a plain danda (walking staff) of dark wood, and sometimes holds a vessel of water or a palm-leaf manuscript symbolizing his role as transmitter of divine wisdom. His posture is upright yet gentle, radiating calm moral authority. His expression conveys deep compassion, righteous gravity, and unwavering devotion — the visage of a man who chose dharma over dynasty.",
+    "shortDescription": "Vidur: Elderly lean dark-complexioned sage-counselor, grey cropped hair, short grey beard, tripundra marks, simple white dhoti, sacred thread, rudraksha bracelet, wooden staff, serene wise eyes, austere renounced bearing.",
+    "patterns": [
+      "\\bVidur\\b",
+      "\\bVidura\\b",
+      "\\bKshattri\\b",
+      "\\bKshatri\\b",
+      "\\bMahatma Vidur\\b",
+      "\\bMahatma Vidura\\b"
+    ],
+    "gender": "male",
+    "source": "Auto-discovered from Bhagavatam text. Generated from mythology knowledge.",
+    "addedAt": "2026-04-15T15:16:11.946Z"
+  },
+  {
+    "key": "maitreya",
+    "name": "Maitreya",
+    "fullDescription": "Maitreya: An ancient brahmin sage of profound wisdom, appearing elderly with a lean yet dignified ascetic frame, approximately 70-80 years in appearance. Complexion is a warm dusky brown (#6B4226), deeply weathered by years of forest austerity and tapas. Face is long and angular with a strong jawline, prominent cheekbones, and a high noble forehead marked with three horizontal lines of sacred white ash (vibhuti). Eyes are large, deep-set, and luminous amber-brown, radiating serene omniscience and compassion. Long flowing white beard reaching the chest, and thick white hair swept back and gathered into a high matted jata topknot secured without flowers. Sparse white eyebrows arched with contemplative intensity. Draped in a simple saffron-ochre uttariya and dhoti of unbleached cotton, seated in padmasana or vyakhyana mudra pose. Sacred thread (yajnopavita) crosses the bare chest. Holds a tall bamboo danda staff in one hand and a string of rudraksha mala beads in the other. Forehead bears a vertical Vaishnava tilaka mark in white clay. Expression is calm, authoritative, and deeply compassionate, that of a realized teacher imparting cosmic secrets. Background suggests a forest hermitage or river bank setting befitting a classical Bhagavatam narrative scene.",
+    "shortDescription": "Maitreya: Elderly brahmin sage with dusky brown complexion (#6B4226), white matted jata topknot, long white beard, vibhuti ash lines on forehead, Vaishnava tilaka, saffron ochre robes, sacred thread, rudraksha mala, bamboo danda staff, luminous amber-brown eyes, serene authoritative expression.",
+    "patterns": [
+      "\\bMaitreya\\b",
+      "\\bMaitreyа\\b",
+      "\\bMaitreya Muni\\b",
+      "\\bMuni Maitreya\\b",
+      "\\bSage Maitreya\\b",
+      "\\bRishi Maitreya\\b",
+      "\\bMaitreya Rishi\\b"
+    ],
+    "gender": "male",
+    "source": "Auto-discovered from Bhagavatam text. Generated from mythology knowledge.",
+    "addedAt": "2026-04-15T17:36:12.538Z"
+  },
+  {
+    "key": "chaitanya",
+    "name": "Chaitanya",
+    "fullDescription": "Chaitanya: A tall, luminously golden-complexioned male saint aged 25-35, complexion radiant saffron-gold (#E8A830), embodying divine ecstasy and devotional fervor. Broad, noble forehead marked with vertical Vaishnava tilaka in white clay with a tulasi leaf mark. Large, elongated lotus-shaped eyes, dark brown irises glistening with tears of divine love, heavy-lidded with devotional rapture. Strong, well-defined jawline, straight nose, lips slightly parted in ecstatic kirtan or prayer. Head shaved with a small sikha tuft at the crown, as befitting a renunciant sannyasi. Tall and broad-shouldered, with long arms reaching to the knees, a divine bodily mark. Dressed in simple saffron-orange kaupin and uttariya cloth, the garb of a Vaishnava sannyasi. No ornaments except a tulasi-bead mala around the neck and wrists. Carries no weapons; hands raised in ecstatic dance or pressed together in anjali mudra, or holding a karatalas cymbal. Expression radiates overwhelming bhakti, tears streaming freely, body trembling in divine love. A subtle golden aura surrounds his form. Classical Pahari or Deccan devotional oil painting style, rich jewel tones, detailed textile rendering.",
+    "shortDescription": "Chaitanya: Golden-complexioned male Vaishnava saint, saffron robes, shaved head with sikha, Vaishnava tilaka, tulasi mala, ecstatic devotional expression, tears of divine love, arms raised in kirtan, tall and radiant.",
+    "patterns": [
+      "\\bChaitanya\\b",
+      "\\bChaitanya Mahaprabhu\\b",
+      "\\bSri Chaitanya\\b",
+      "\\bGauranga\\b",
+      "\\bGaura\\b",
+      "\\bNimái\\b",
+      "\\bNimai\\b",
+      "\\bVisvambhara\\b",
+      "\\bMahaprabhu\\b",
+      "\\bGaurahari\\b"
+    ],
+    "gender": "male",
+    "source": "Auto-discovered from Bhagavatam text. Generated from mythology knowledge.",
+    "addedAt": "2026-04-15T17:56:16.585Z"
+  },
+  {
+    "key": "manu",
+    "name": "Manu",
+    "fullDescription": "Manu: A venerable yet powerfully built patriarch of advanced age, appearing as a wise elder in his sixties to seventies, with a tall commanding frame and broad shoulders conveying primordial authority. Complexion a warm golden-brown (#8B5E3C), weathered with dignity. Strong square jaw, high prominent forehead marked with vertical Vaishnava tilaka in white and saffron. Deep-set, luminous brown eyes radiating ancient wisdom and composed authority. Long white hair swept back and bound in an austere ascetic knot at the crown, with a flowing white beard of medium length, neatly kept. Wearing a simple but regal cream-white dhoti of fine cloth, draped in Vedic fashion. Draped across his upper body is a saffron-gold uttariya shawl. Adorned with a single strand of rudraksha mala around the neck. Carries a danda, the sacred staff of a lawgiver and progenitor, tall and dark-wooded, symbolizing dharmic authority. A sacred thread (yajnopavita) crosses his bare chest. Occasionally depicted holding a manuscript or palm-leaf scripture representing Manu-smriti and Vedic law. Expression serene and grave, bearing the weight of cosmic responsibility as father of humanity and upholder of dharma across time cycles.",
+    "shortDescription": "Manu: Elderly patriarchal lawgiver, warm golden-brown complexion, strong jaw, white hair in ascetic knot, white beard, Vaishnava tilaka, saffron shawl, cream dhoti, rudraksha mala, sacred thread, carries tall danda staff, dignified and commanding.",
+    "patterns": [
+      "\\bManu\\b",
+      "\\bSvayambhuva Manu\\b",
+      "\\bVaivasvata Manu\\b",
+      "\\bManus\\b",
+      "\\bManava\\b"
+    ],
+    "gender": "male",
+    "source": "Auto-discovered from Bhagavatam text. Generated from mythology knowledge.",
+    "addedAt": "2026-04-15T18:48:04.427Z"
+  },
+  {
+    "key": "yudhishthir",
+    "name": "Yudhishthir",
+    "fullDescription": "Yudhishthir: A noble king in his mid-thirties to early forties, radiating dharmic dignity and serene authority. Complexion warm golden-brown (#8B5E3C), smooth and luminous. Face broad and oval with a strong, well-defined jawline, high cheekbones, and a calm, meditative expression reflecting inner righteousness. Eyes large and steady, dark brown with a composed, deeply thoughtful gaze, slightly heavy-lidded denoting wisdom and sorrow borne with grace. Hair dark black, neatly tied or crowned beneath a royal diadem, no flowers. A short, well-groomed beard frames his dignified face. Dressed in fine silk dhoti of deep saffron or ivory with gold-bordered embroidery, royal uttariya draped across broad shoulders. Wears a jeweled crown or mukuta of classical Kshatriya style, layered gold necklaces, armlets, and gem-set earrings. Carries the royal scepter symbolizing just governance, sometimes holding prayer beads or seated with palms joined in reverent inquiry. His posture is upright yet humble, befitting a king who kneels before dharma. A subtle aura of golden light emanates from his form. Classical Pahari or Rajput oil painting style with rich jewel-toned backgrounds, intricate gold detailing, and devotional warmth.",
+    "shortDescription": "Yudhishthir: Noble Kshatriya king, mid-thirties, warm golden-brown complexion, strong jaw, short beard, steady dark eyes, royal saffron silk dhoti, jeweled crown, gold ornaments, scepter or prayer beads, serene righteous bearing.",
+    "patterns": [
+      "\\bYudhishthir\\b",
+      "\\bYudhishtira\\b",
+      "\\bYudhisthira\\b",
+      "\\bYudhisthir\\b",
+      "\\bDharmaraj\\b",
+      "\\bDharmaraja\\b",
+      "\\bAjatashatru\\b",
+      "\\bPandava king\\b"
+    ],
+    "gender": "male",
+    "source": "Auto-discovered from Bhagavatam text. Generated from mythology knowledge.",
+    "addedAt": "2026-04-15T22:16:11.932Z"
+  },
+  {
+    "key": "shri_krishna",
+    "name": "Shri Krishna",
+    "fullDescription": "Shri Krishna: eternally youthful divine male, appearing 16 years old, luminous blue-black complexion (#1a237e to #283593), transcendently beautiful yet masculine face with strong jaw and high cheekbones, large lotus-shaped eyes with dark irises and long lashes, gentle knowing smile revealing divine bliss, thick wavy black hair adorned with single peacock feather and fresh forest flowers, crowned with Pitambara golden crown, wearing vibrant yellow silk dhoti (pitambara), elegant vanamala garland of forest flowers reaching knees, Kaustubha gem jewel at chest, intricate gold necklaces and armlets, pearl earrings (Kundala), golden anklets with bells, Vaijayanti garland of five flowers around neck, holds flute (Murali/Venu) in both hands raised to lips or tucked at waist, Sri Vatsa mark on chest, graceful three-curved standing posture (Tribhanga), divine aura of golden light surrounding figure, expression of supreme bliss and cosmic playfulness (Lila), bare feet, classical Mathura-Vrindavan iconographic style, rich jewel-toned devotional oil painting aesthetic",
+    "shortDescription": "Shri Krishna: eternally youthful blue-complexioned Supreme deity, peacock feather crown, yellow silk dhoti, Kaustubha gem, Vaijayanti garland, holding Murali flute, tribhanga posture, divine blissful expression, classical devotional iconography",
+    "patterns": [
+      "\\bShri Krishna\\b",
+      "\\bSri Krishna\\b",
+      "\\bKrishna\\b",
+      "\\bGovinda\\b",
+      "\\bMadhava\\b",
+      "\\bKeshava\\b",
+      "\\bVasudeva\\b",
+      "\\bMurari\\b",
+      "\\bGopala\\b",
+      "\\bDamodara\\b",
+      "\\bJanardana\\b",
+      "\\bHari\\b",
+      "\\bMurlidhar\\b",
+      "\\bNandakumara\\b",
+      "\\bYadava\\b"
+    ],
+    "gender": "male",
+    "source": "Auto-discovered from Bhagavatam text. Generated from mythology knowledge.",
+    "addedAt": "2026-04-16T02:26:12.964Z"
+  },
+  {
+    "key": "kardam",
+    "name": "Kardam",
+    "fullDescription": "Kardam: A venerable Prajapati sage appearing in his mid-fifties, with a lean yet dignified ascetic frame. Complexion is warm golden-brown (hex #8B5E3C), weathered by years of tapasya in the forest ashrama. Long face with high cheekbones, a strong square jaw, and deep-set, luminous eyes of dark amber-brown conveying profound wisdom and serene detachment. His long silver-streaked black hair is coiled into a high jata mukuta, bound with bark fiber, adorned with no flowers. A full flowing beard and mustache of silver-black, neatly tapered, mark his maturity and ascetic dignity. He wears a simple saffron-orange uttariya draped over one shoulder, paired with a white dhoti of woven cloth, symbolizing his householder-renunciate balance. Sacred thread (yajnopavita) rests across his bare chest. Ornaments are minimal: simple rudrakshamala around the neck and wrist. He carries a long danda staff of dark wood, a kamandalu water vessel, and a bundle of sacred kusha grass tucked at his waist. His expression is one of composed benevolence, the bearing of a sage who fulfilled his dharmic duty of progeny before taking to sannyasa. Set within a forest hermitage by the Bindu Sarovara lake, golden light filtering through ancient trees.",
+    "shortDescription": "Kardam: Prajapati sage, mid-fifties, golden-brown complexion, silver-streaked jata mukuta, long silver-black beard, saffron uttariya, sacred thread, rudrakshamala, carrying danda staff and kamandalu, serene ascetic bearing.",
+    "patterns": [
+      "\\bKardam\\b",
+      "\\bKardama\\b",
+      "\\bKardama Muni\\b",
+      "\\bKardam Prajapati\\b",
+      "\\bKardama Prajapati\\b"
+    ],
+    "gender": "male",
+    "source": "Auto-discovered from Bhagavatam text. Generated from mythology knowledge.",
+    "addedAt": "2026-04-16T08:36:13.509Z"
+  },
+  {
+    "key": "daksha",
+    "name": "Daksha",
+    "fullDescription": "Daksha: A powerful, regal patriarch appearing in his late fifties, exuding imperious authority and Vedic nobility. Complexion is warm golden-brown (#8B5E3C), with a broad, commanding face, high prominent cheekbones, and a strong square jawline conveying pride and dominance. Eyes are sharp, dark brown, wide-set, beneath thick arched brows, often carrying a stern or wrathful expression. Long white-silver hair tied back in a high brahminical knot, with a sacred thread (yajnopavita) across his broad bare chest. Wears rich silk dhoti in deep crimson or saffron with gold zari borders. Adorned with heavy gold armlets, broad chest ornaments, ornate gold earrings, and a jeweled crown or golden headband befitting a great progenitor king. Bears no weapons, but frequently gestures with authoritative raised hand or holds a sacrificial ladle (sruk) or sacred kusha grass, referencing his role as yajna performer and Prajapati. His posture is upright, commanding, sometimes arrogant. A sacred fire altar or yajna kund may appear nearby. Muscular, broad-shouldered build suggesting both physical and spiritual power. His expression ranges from imperious disdain to fierce wrath, reflecting his famous conflict with Lord Shiva and the tragic destruction of his great sacrifice.",
+    "shortDescription": "Daksha: Imperious golden-brown patriarch, late fifties, strong square jaw, stern dark eyes, silver-white hair in brahminical knot, crimson silk dhoti, heavy gold ornaments, sacred thread, holding sacrificial ladle or kusha grass, commanding wrathful bearing.",
+    "patterns": [
+      "\\bDaksha\\b",
+      "\\bDaksha Prajapati\\b",
+      "\\bPrajapati Daksha\\b",
+      "\\bDaksha's\\b"
+    ],
+    "gender": "male",
+    "source": "Auto-discovered from Bhagavatam text. Generated from mythology knowledge.",
+    "addedAt": "2026-04-16T12:16:13.110Z"
+  },
+  {
+    "key": "sati",
+    "name": "Sati",
+    "fullDescription": "Sati: A celestial young woman of divine grace, appearing 18–25 years of age, with a luminous warm golden-bronze complexion (#C68B3A), oval face with refined aristocratic features, high cheekbones, and a serene yet resolute expression. NO beard NO facial hair. Her large almond-shaped eyes are deep dark brown, heavily lined with thick kajal, conveying both devotion and inner determination. Her long lustrous black hair is elaborately arranged in an ornate braided updo adorned with fresh white jasmine garlands and golden hairpins studded with rubies. She wears a rich crimson and gold silk sari with intricate brocade borders, draped in classical style befitting a princess of Daksha's royal lineage. Her ornaments include an elaborate gold necklace set with emeralds and rubies, matching chandelier earrings, stacked gold bangles on both wrists, armlets, a maang tikka of pearls and gold upon her forehead, and delicate gold anklets. A prominent red bindi graces her forehead. Her expression carries dignified resolve and tender devotion, reflecting her unwavering love for Shiva. She holds a small lotus bloom in one hand, symbolizing purity. Her posture is upright and noble, radiating divine feminine grace and the quiet courage of a devoted wife who chose honor over her father's humiliation of her beloved lord.",
+    "shortDescription": "Sati: Divine young woman, golden-bronze complexion (#C68B3A), kajal-lined dark eyes, NO beard NO facial hair, ornate black braided updo with jasmine, crimson gold silk sari, elaborate royal jewelry, lotus in hand, serene yet resolute expression of devoted grace.",
+    "patterns": [
+      "\\bSati\\b",
+      "\\bDakshayani\\b",
+      "\\bUma\\b",
+      "\\bDaksha-putri\\b",
+      "\\bShiva-patni\\b"
+    ],
+    "gender": "female",
+    "source": "Auto-discovered from Bhagavatam text. Generated from mythology knowledge.",
+    "addedAt": "2026-04-16T12:26:11.692Z"
+  },
+  {
+    "key": "kapil",
+    "name": "Kapil",
+    "fullDescription": "Kapil: A luminous divine sage appearing in his mid-twenties, with a calm, transcendent countenance radiating profound wisdom. His complexion is a warm golden-brown (#8B5E3C), smooth and radiant with an inner divine glow. He has a strong, oval face with a broad forehead marked with three horizontal lines of sacred ash (vibhuti) or Vaishnava tilak of sandalwood paste. His eyes are large, dark brown, heavy-lidded and serene, like deep lotus pools, conveying infinite cosmic knowledge. His hair is dark black, long, matted into thick jata dreadlocks coiled atop his head or flowing down his back, adorned with a simple strand of rudraksha beads. He has a strong, defined jaw with a short, neat dark beard. His physique is lean yet strong, ascetic but divine. He wears a simple saffron or white dhoti of silk, wrapped at the waist. Across his bare chest hangs a long strand of rudraksha mala. A sacred thread (yagnopavita) crosses his chest diagonally. He carries in one hand a kamandalu (water pot) and in the other a danda (staff) or a palm-leaf manuscript representing Sankhya philosophy. His expression is one of absolute equanimity and compassion, befitting an avatara of Lord Vishnu teaching his mother Devahuti the path of liberation.",
+    "shortDescription": "Kapil: Divine sage-avatara in his mid-twenties, warm golden-brown complexion (#8B5E3C), matted black jata, serene lotus eyes, neat beard, saffron dhoti, rudraksha mala, sacred thread, carrying kamandalu and manuscript, radiating transcendent wisdom.",
+    "patterns": [
+      "\\bKapil\\b",
+      "\\bKapila\\b",
+      "\\bKapila Muni\\b",
+      "\\bKapiladeva\\b",
+      "\\bKapil Muni\\b",
+      "\\bSage Kapila\\b"
+    ],
+    "gender": "male",
+    "source": "Auto-discovered from Bhagavatam text. Generated from mythology knowledge.",
+    "addedAt": "2026-04-16T13:06:12.763Z"
   }
 ]

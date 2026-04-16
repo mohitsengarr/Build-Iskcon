@@ -758,12 +758,32 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const pageNumRef = useRef<number | null>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+
+  // TTS state — matches ShlokSpeaker pattern (loading → playing → stop)
+  const [ttsLoading, setTtsLoading] = useState(false);
+  const [ttsPlaying, setTtsPlaying] = useState(false);
+  const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Cleanup TTS on unmount or when toolbar hides
+  useEffect(() => {
+    if (!show) {
+      if (ttsAudioRef.current) { ttsAudioRef.current.pause(); ttsAudioRef.current = null; }
+      window.speechSynthesis.cancel();
+      setTtsPlaying(false);
+      setTtsLoading(false);
+    }
+  }, [show]);
+  useEffect(() => () => { ttsAudioRef.current?.pause(); window.speechSynthesis.cancel(); }, []);
 
   useEffect(() => {
     const onSelectionChange = () => {
       const sel = window.getSelection();
       if (!sel || sel.isCollapsed || !sel.toString().trim()) {
-        if (!recording && !processing) setShow(false);
+        // Don't hide if user is interacting with the toolbar or TTS is playing
+        if (!recording && !processing && !ttsPlaying && !ttsLoading && !toolbarRef.current?.contains(document.activeElement)) {
+          setShow(false);
+        }
         return;
       }
       const text = sel.toString().trim();
@@ -783,7 +803,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
 
     document.addEventListener("selectionchange", onSelectionChange);
     return () => document.removeEventListener("selectionchange", onSelectionChange);
-  }, [recording, processing]);
+  }, [recording, processing, ttsPlaying, ttsLoading]);
 
   const applyEdit = useCallback((oldText: string, newText: string) => {
     const pageNum = pageNumRef.current;
@@ -840,29 +860,64 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     recorderRef.current?.stop();
   };
 
-  // Listen to selected word via Sarvam TTS (with cache)
+  // Listen to selected word via Sarvam TTS — same model as ShlokSpeaker
   const listenToWord = useCallback(async () => {
     if (!selectedText) return;
+
+    // Stop if already playing or loading (toggle behaviour)
+    if (ttsPlaying || ttsAudioRef.current) {
+      if (ttsAudioRef.current) {
+        ttsAudioRef.current.pause();
+        ttsAudioRef.current.currentTime = 0;
+        ttsAudioRef.current = null;
+      }
+      window.speechSynthesis.cancel();
+      setTtsPlaying(false);
+      setTtsLoading(false);
+      return;
+    }
+
+    setTtsLoading(true);
     try {
+      // Check sessionStorage cache first
       const cacheKey = `tts_${btoa(unescape(encodeURIComponent(selectedText.substring(0, 200))))}`;
       let audioBase64 = "";
       try { audioBase64 = sessionStorage.getItem(cacheKey) || ""; } catch { /* */ }
 
       if (!audioBase64) {
+        // Stream from Sarvam Bulbul v3 via WebSocket (same as ShlokSpeaker)
         audioBase64 = await sarvamStreamTTS(selectedText);
-        if (audioBase64) try { sessionStorage.setItem(cacheKey, audioBase64); } catch { /* */ }
+        if (audioBase64) {
+          try { sessionStorage.setItem(cacheKey, audioBase64); } catch { /* storage full */ }
+        }
       }
 
       if (audioBase64) {
-        new Audio(`data:audio/mp3;base64,${audioBase64}`).play();
-        return;
+        const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
+        audio.onended = () => { setTtsPlaying(false); ttsAudioRef.current = null; };
+        audio.onerror = () => { setTtsPlaying(false); ttsAudioRef.current = null; };
+        ttsAudioRef.current = audio;
+        await audio.play();
+        setTtsPlaying(true);
       }
-    } catch { /* fallback */ }
-    // Browser fallback
-    const u = new SpeechSynthesisUtterance(selectedText);
-    u.lang = "hi-IN"; u.rate = 0.5; u.pitch = 0.7;
-    window.speechSynthesis.speak(u);
-  }, [selectedText]);
+    } catch {
+      // Fallback to browser SpeechSynthesis (same voice selection as ShlokSpeaker)
+      const utterance = new SpeechSynthesisUtterance(selectedText);
+      utterance.lang = "hi-IN";
+      utterance.rate = 0.7;
+      utterance.pitch = 0.8;
+      const voices = window.speechSynthesis.getVoices();
+      const pick = voices.find(v => v.lang === "sa-IN")
+        || voices.find(v => v.lang.startsWith("hi") && !/female|lekha|priya|swati|woman/i.test(v.name))
+        || voices.find(v => v.lang.startsWith("hi"));
+      if (pick) utterance.voice = pick;
+      utterance.onend = () => setTtsPlaying(false);
+      window.speechSynthesis.speak(utterance);
+      setTtsPlaying(true);
+    } finally {
+      setTtsLoading(false);
+    }
+  }, [selectedText, ttsPlaying]);
 
   // Dictionary lookup state
   const [dictResult, setDictResult] = useState<{ word: string; meaning: string; examples: string[] } | null>(null);
@@ -897,6 +952,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
   return (
     <>
       <div
+        ref={toolbarRef}
         className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-stone-200 -translate-x-1/2 -translate-y-full"
         style={{ left: Math.max(100, Math.min(position.x, window.innerWidth - 100)), top: Math.max(60, position.y - 5), minWidth: 220 }}
       >
@@ -914,10 +970,21 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
           </div>
         ) : (
           <div className="p-2">
-            {/* Action buttons row */}
-            <div className="flex items-center gap-1 mb-2">
-              <button onClick={listenToWord} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors" title="Listen">
-                <Volume2 className="w-3.5 h-3.5" /> Listen
+            {/* Action buttons row — preventDefault stops clicks from collapsing text selection */}
+            <div className="flex items-center gap-1 mb-2" onMouseDown={e => e.preventDefault()}>
+              <button
+                onClick={listenToWord}
+                className={`flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium rounded-lg transition-colors ${
+                  ttsLoading
+                    ? "text-stone-400 cursor-wait"
+                    : ttsPlaying
+                      ? "text-red-600 bg-red-50 hover:bg-red-100"
+                      : "text-stone-600 hover:text-orange-600 hover:bg-orange-50"
+                }`}
+                title={ttsLoading ? "Loading..." : ttsPlaying ? "Stop" : "Listen"}
+              >
+                {ttsLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : ttsPlaying ? <Square className="w-3 h-3" /> : <Volume2 className="w-3.5 h-3.5" />}
+                {ttsLoading ? "Loading..." : ttsPlaying ? "Stop" : "Listen"}
               </button>
               <button onClick={lookupWord} disabled={dictLoading} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Dictionary meaning">
                 {dictLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookOpen className="w-3.5 h-3.5" />} Meaning
@@ -1509,7 +1576,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             const regularImgs = allImgs?.filter(img => !img.isInstagram);
             const igImgs = allImgs?.filter(img => img.isInstagram);
             return (
-              <div key={i} id={`chapter-${globalNum}`} className="mt-6 mb-4 scroll-mt-20">
+              <div key={i} id={`chapter-${globalNum}`} data-section-type="chapter" className="mt-6 mb-4 scroll-mt-20">
                 <h3 className={`text-xl sm:text-2xl font-bold ${t.text} mb-3 pb-2 border-b-2 border-orange-300/50`} style={{ fontFamily: "var(--font-devanagari)" }}>
                   {sec.lines.join(" ")}
                 </h3>
@@ -1598,7 +1665,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
           case "shlok":
             // Sanskrit verse — same color as body text, 1.35x size, bold, with speaker (SEN-109: stronger top divider)
             return (
-              <div key={i} className="my-5 sm:my-6">
+              <div key={i} data-section-type="shlok" className="my-5 sm:my-6">
                 {i > 0 && sections[i - 1].kind !== "chapter" && (
                   <div className={`mb-4 h-px ${themeKey === "dark" ? "bg-white/5" : themeKey === "sepia" ? "bg-amber-300/30" : "bg-orange-200/40"}`} />
                 )}
@@ -1615,7 +1682,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
           case "ref-shlok":
             // Referenced shlok inside tatparya — smaller, indented, brown-tinted
             return (
-              <div key={i} className={`pl-4 border-l-2 my-2 ${themeKey === "dark" ? "border-amber-800/40" : themeKey === "sepia" ? "border-[#c4ad80]" : "border-[#c4956a]/40"}`}>
+              <div key={i} data-section-type="ref-shlok" className={`pl-4 border-l-2 my-2 ${themeKey === "dark" ? "border-amber-800/40" : themeKey === "sepia" ? "border-[#c4ad80]" : "border-[#c4956a]/40"}`}>
                 {sec.lines.map((l, j) => (
                   <p key={j} className={`leading-[1.7] italic mb-0.5 ${themeKey === "dark" ? "text-amber-400/70" : themeKey === "sepia" ? "text-[#6b4020]" : "text-[#8b5a30]"}`} style={{ fontSize: "0.9em", fontFamily: "var(--font-sanskrit)" }}>{l}</p>
                 ))}
@@ -1624,7 +1691,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
           case "shabdarth":
             // BBT style: blue word-by-word meanings, 0.8x body size
             return (
-              <div key={i} className="my-3">
+              <div key={i} data-section-type="shabdarth" className="my-3">
                 <p className={`font-bold mb-2 text-center ${themeKey === "dark" ? "text-blue-400" : themeKey === "sepia" ? "text-[#1a3a6a]" : "text-[#1a4a8a]"}`} style={{ fontSize: "0.85em", fontFamily: "var(--font-devanagari)" }}>शब्दार्थ</p>
                 {sec.lines.map((l, j) => {
                   const parts = l.split(/(—|--|-\s)/);
@@ -1646,7 +1713,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             // Hindi translation — same style as tatparya/body text, no separate label
             const isAnuvadContinuation = i === 0 && prevPageEndKind === "anuvad";
             return (
-              <div key={i} className={isAnuvadContinuation ? "" : "mt-3"}>
+              <div key={i} data-section-type="anuvad" className={isAnuvadContinuation ? "" : "mt-3"}>
                 {sec.lines.map((l, j) => (
                   <p key={j} className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>{l}</p>
                 ))}
@@ -1657,7 +1724,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             // Same as body text, only "तात्पर्य :" prefix is bold (SEN-109: visual divider)
             const isContinuation = i === 0 && prevPageEndKind === "tatparya";
             return (
-              <div key={i} className={isContinuation ? "" : "mt-4 sm:mt-5"}>
+              <div key={i} data-section-type="tatparya" className={isContinuation ? "" : "mt-4 sm:mt-5"}>
                 {!isContinuation && (
                   <div className={`mb-3 h-px ${themeKey === "dark" ? "bg-white/5" : themeKey === "sepia" ? "bg-amber-300/20" : "bg-green-200/50"}`} />
                 )}
@@ -1672,13 +1739,166 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
           }
           default:
             return (
-              <div key={i}>
+              <div key={i} data-section-type="text">
                 {sec.lines.map((l, j) => (
                   <p key={j} className={`leading-[1.8] ${t.text} mb-1`} style={{ fontSize: "1em" }}>{l}</p>
                 ))}
               </div>
             );
         }
+      })}
+    </div>
+  );
+}
+
+// ── Step Scroll Progress Indicator ────────────────────────────────────────────
+
+type SectionMarker = { type: string; el: HTMLElement };
+
+function StepScrollIndicator({ themeKey, contentMaxWidth }: { themeKey: Theme; contentMaxWidth: number }) {
+  const [markers, setMarkers] = useState<SectionMarker[]>([]);
+  const [activeIdx, setActiveIdx] = useState<number>(-1);
+
+  // Gather all section elements
+  useEffect(() => {
+    const refresh = () => {
+      const els = document.querySelectorAll<HTMLElement>("[data-section-type]");
+      const items: SectionMarker[] = [];
+      els.forEach(el => {
+        const type = el.getAttribute("data-section-type") || "text";
+        items.push({ type, el });
+      });
+      setMarkers(items);
+    };
+    // Delay initial gather to let content render
+    const timer = setTimeout(refresh, 500);
+    const ro = new ResizeObserver(refresh);
+    ro.observe(document.body);
+    return () => { clearTimeout(timer); ro.disconnect(); };
+  }, []);
+
+  // Track which section is in view
+  useEffect(() => {
+    if (markers.length === 0) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const idx = markers.findIndex(m => m.el === entry.target);
+            if (idx >= 0) setActiveIdx(idx);
+          }
+        }
+      },
+      { rootMargin: "-20% 0px -60% 0px" }
+    );
+    markers.forEach(m => observer.observe(m.el));
+    return () => observer.disconnect();
+  }, [markers]);
+
+  const handleClick = (m: SectionMarker) => {
+    m.el.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  if (markers.length < 3) return null;
+
+  // Theme-aware colors
+  const palette = {
+    light: { rail: "#e7e5e4", inactive: "#a8a29e", active: "#ea580c", dot: "#d6d3d1" },
+    dark: { rail: "#44403c", inactive: "#78716c", active: "#fb923c", dot: "#57534e" },
+    sepia: { rail: "#d4c5a9", inactive: "#a89678", active: "#c2410c", dot: "#b8a88a" },
+  }[themeKey];
+
+  // Marker config per section type: shape, size
+  const getMarker = (type: string, isActive: boolean) => {
+    switch (type) {
+      case "chapter":
+        return { shape: "circle" as const, size: isActive ? 10 : 8 };
+      case "shlok":
+        return { shape: "circle" as const, size: isActive ? 8 : 6 };
+      case "tatparya":
+        return { shape: "dash" as const, size: isActive ? 20 : 12 };
+      case "shabdarth":
+        return { shape: "dash" as const, size: isActive ? 14 : 8 };
+      case "anuvad":
+        return { shape: "dash" as const, size: isActive ? 16 : 10 };
+      default: // text, ref-shlok
+        return { shape: "dash" as const, size: isActive ? 14 : 8 };
+    }
+  };
+
+  return (
+    <div
+      className="hidden lg:flex fixed z-20 flex-col items-center"
+      style={{
+        left: `max(calc((100vw - ${contentMaxWidth}px) / 2 - 32px), 20px)`,
+        top: "50%",
+        transform: "translateY(-50%)",
+        gap: 6,
+      }}
+    >
+      {/* Vertical rail line */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          width: 1.5,
+          top: 0,
+          bottom: 0,
+          left: "50%",
+          transform: "translateX(-50%)",
+          background: `linear-gradient(to bottom, transparent, ${palette.rail} 10%, ${palette.rail} 90%, transparent)`,
+        }}
+      />
+
+      {markers.map((m, i) => {
+        const isActive = i === activeIdx;
+        const dist = Math.abs(i - activeIdx);
+        const isNear = dist <= 3;
+        const { shape, size } = getMarker(m.type, isActive);
+        const opacity = isActive ? 1 : isNear ? 0.7 : 0.35;
+        const color = isActive ? palette.active : palette.inactive;
+
+        return (
+          <button
+            key={i}
+            onClick={() => handleClick(m)}
+            className="relative shrink-0 cursor-pointer group"
+            style={{
+              width: 24,
+              height: shape === "circle" ? size + 4 : 6,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 0,
+              border: "none",
+              background: "transparent",
+            }}
+            title={m.type}
+          >
+            {shape === "circle" ? (
+              <span
+                className="block rounded-full transition-all duration-300 group-hover:scale-150"
+                style={{
+                  width: size,
+                  height: size,
+                  backgroundColor: color,
+                  opacity,
+                  boxShadow: isActive ? `0 0 8px ${palette.active}60` : "none",
+                }}
+              />
+            ) : (
+              <span
+                className="block rounded-full transition-all duration-300 group-hover:scale-x-150"
+                style={{
+                  width: size,
+                  height: 2.5,
+                  backgroundColor: color,
+                  opacity,
+                  boxShadow: isActive ? `0 0 6px ${palette.active}50` : "none",
+                }}
+              />
+            )}
+          </button>
+        );
       })}
     </div>
   );
@@ -2698,6 +2918,9 @@ export default function Bhagwatham() {
           vedabaseTitles={vedabaseTitles}
         />
 
+        {/* ── Step scroll indicator (desktop only) ── */}
+        <StepScrollIndicator themeKey={settings.theme} contentMaxWidth={settings.maxWidth} />
+
         {/* ── Main content ── */}
         <main ref={contentRef} className={`flex-1 min-w-0 ${theme.bg} transition-colors duration-300`}>
           {/* Voice edit toolbar — appears when text is selected */}
@@ -2708,7 +2931,7 @@ export default function Bhagwatham() {
               {/* Sidebar toggle (mobile) */}
               {!focusMode && (
                 <button
-                  onClick={() => { setSidebarTab("chapters"); setSidebarOpen(true); }}
+                  onClick={() => { setSidebarOpen(true); }}
                   className={`lg:hidden p-2 hover:bg-stone-100 rounded-lg transition-colors`}
                   aria-label="Open contents"
                 >

@@ -56,8 +56,11 @@ export async function createApp(): Promise<Express> {
   // Gita OCR (SEN-84) — ON HOLD, disabled by user request
   // startGitaCron();
 
-  // Instagram + Temple Discovery
-  startInstagramCron();
+  // Instagram — DISABLED locally, now runs on Supabase Edge Function (pg_cron every 3h)
+  // 1 post per chapter, posted to Buffer (Instagram + Threads)
+  // startInstagramCron();
+
+  // Temple Discovery
   startTempleDiscoveryCron();
 
   // Shlok indexer — scans OCR pages and builds shlok dictionary in Supabase
