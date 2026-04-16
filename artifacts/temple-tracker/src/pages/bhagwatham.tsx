@@ -220,38 +220,93 @@ const SKANDH_NAMES: Record<number, { hi: string; en: string }> = {
 
 const API_BASE = "/api/bhagwatham";
 
-// ── Sarvam TTS (direct browser → Sarvam WebSocket, no server proxy needed) ──
-const SARVAM_TTS_WS = "wss://api.sarvam.ai/texttospeech/streaming";
+// ── Sarvam TTS (HTTP streaming — real-time playback via MediaSource) ──────────
+const SARVAM_TTS_URL = "https://api.sarvam.ai/text-to-speech/stream";
 const SARVAM_KEY = "sk_c81tz6ss_p9kDbB6SEeYB7s9V7yQHbUl8";
 
-function sarvamStreamTTS(text: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => { ws.close(); reject(new Error("TTS timeout")); }, 15000);
-    const ws = new WebSocket(`${SARVAM_TTS_WS}?api_subscription_key=${SARVAM_KEY}`);
-    const chunks: string[] = [];
-
-    ws.onopen = () => {
-      ws.send(JSON.stringify({ config: { target_language_code: "hi-IN", speaker: "soham", model: "bulbul:v3", speech_sample_rate: 22050 } }));
-      ws.send(JSON.stringify({ text }));
-      ws.send(JSON.stringify({ flush: true }));
-    };
-
-    ws.onmessage = (evt) => {
-      try {
-        const msg = typeof evt.data === "string" ? JSON.parse(evt.data) : null;
-        const audio = msg?.data?.audio || msg?.audio;
-        if (audio) chunks.push(audio);
-      } catch { /* non-JSON frame */ }
-    };
-
-    ws.onclose = () => {
-      clearTimeout(timeout);
-      if (chunks.length > 0) resolve(chunks.join(""));
-      else reject(new Error("No audio received"));
-    };
-
-    ws.onerror = () => { clearTimeout(timeout); reject(new Error("WebSocket error")); };
+/**
+ * Stream TTS audio from Sarvam HTTP API and play in real-time.
+ * Uses MediaSource API for instant playback as chunks arrive.
+ * Falls back to collecting all chunks then playing if MediaSource unavailable.
+ * Returns the Audio element (already playing) so callers can track/stop it.
+ */
+async function sarvamStreamPlay(text: string): Promise<HTMLAudioElement> {
+  const response = await fetch(SARVAM_TTS_URL, {
+    method: "POST",
+    headers: {
+      "api-subscription-key": SARVAM_KEY,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      text,
+      target_language_code: "hi-IN",
+      speaker: "soham",
+      model: "bulbul:v3",
+      pace: 0.8,
+      speech_sample_rate: 48000,
+      output_audio_codec: "mp3",
+      enable_preprocessing: true,
+    }),
   });
+
+  if (!response.ok || !response.body) {
+    throw new Error(`TTS HTTP error: ${response.status}`);
+  }
+
+  // Option 1: Real-time streaming via MediaSource API
+  if (typeof MediaSource !== "undefined" && MediaSource.isTypeSupported("audio/mpeg")) {
+    const audio = new Audio();
+    const mediaSource = new MediaSource();
+    audio.src = URL.createObjectURL(mediaSource);
+
+    await new Promise<void>((resolve, reject) => {
+      mediaSource.addEventListener("sourceopen", async () => {
+        try {
+          const sourceBuffer = mediaSource.addSourceBuffer("audio/mpeg");
+          const reader = response.body!.getReader();
+
+          // Start playback immediately (audio will buffer as chunks arrive)
+          audio.play().catch(() => {});
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              // Wait for pending appends before ending stream
+              if (sourceBuffer.updating) {
+                await new Promise<void>(r => sourceBuffer.addEventListener("updateend", () => r(), { once: true }));
+              }
+              if (mediaSource.readyState === "open") mediaSource.endOfStream();
+              break;
+            }
+
+            // Wait for previous append to complete
+            if (sourceBuffer.updating) {
+              await new Promise<void>(r => sourceBuffer.addEventListener("updateend", () => r(), { once: true }));
+            }
+            sourceBuffer.appendBuffer(value);
+          }
+          resolve();
+        } catch (err) {
+          reject(err);
+        }
+      }, { once: true });
+    });
+
+    return audio;
+  }
+
+  // Option 2: Fallback — collect all chunks then play
+  const chunks: Uint8Array[] = [];
+  const reader = response.body.getReader();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+  }
+  const blob = new Blob(chunks, { type: "audio/mpeg" });
+  const audio = new Audio(URL.createObjectURL(blob));
+  await audio.play();
+  return audio;
 }
 
 // ── Supabase direct access (for bookmarks — works on both Replit & Vercel) ──
@@ -860,7 +915,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     recorderRef.current?.stop();
   };
 
-  // Listen to selected word via Sarvam TTS — same model as ShlokSpeaker
+  // Listen to selected word via Sarvam HTTP streaming TTS — real-time playback
   const listenToWord = useCallback(async () => {
     if (!selectedText) return;
 
@@ -869,6 +924,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       if (ttsAudioRef.current) {
         ttsAudioRef.current.pause();
         ttsAudioRef.current.currentTime = 0;
+        if (ttsAudioRef.current.src) URL.revokeObjectURL(ttsAudioRef.current.src);
         ttsAudioRef.current = null;
       }
       window.speechSynthesis.cancel();
@@ -879,29 +935,25 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
 
     setTtsLoading(true);
     try {
-      // Check sessionStorage cache first
-      const cacheKey = `tts_${btoa(unescape(encodeURIComponent(selectedText.substring(0, 200))))}`;
-      let audioBase64 = "";
-      try { audioBase64 = sessionStorage.getItem(cacheKey) || ""; } catch { /* */ }
+      // Stream from Sarvam Bulbul v3 via HTTP streaming (real-time playback)
+      const audio = await sarvamStreamPlay(selectedText);
+      ttsAudioRef.current = audio;
+      setTtsPlaying(true);
+      setTtsLoading(false);
 
-      if (!audioBase64) {
-        // Stream from Sarvam Bulbul v3 via WebSocket (same as ShlokSpeaker)
-        audioBase64 = await sarvamStreamTTS(selectedText);
-        if (audioBase64) {
-          try { sessionStorage.setItem(cacheKey, audioBase64); } catch { /* storage full */ }
-        }
-      }
-
-      if (audioBase64) {
-        const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
-        audio.onended = () => { setTtsPlaying(false); ttsAudioRef.current = null; };
-        audio.onerror = () => { setTtsPlaying(false); ttsAudioRef.current = null; };
-        ttsAudioRef.current = audio;
-        await audio.play();
-        setTtsPlaying(true);
-      }
+      audio.onended = () => {
+        setTtsPlaying(false);
+        if (audio.src) URL.revokeObjectURL(audio.src);
+        ttsAudioRef.current = null;
+      };
+      audio.onerror = () => {
+        setTtsPlaying(false);
+        if (audio.src) URL.revokeObjectURL(audio.src);
+        ttsAudioRef.current = null;
+      };
     } catch {
-      // Fallback to browser SpeechSynthesis (same voice selection as ShlokSpeaker)
+      // Fallback to browser SpeechSynthesis
+      setTtsLoading(false);
       const utterance = new SpeechSynthesisUtterance(selectedText);
       utterance.lang = "hi-IN";
       utterance.rate = 0.7;
@@ -914,8 +966,6 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       utterance.onend = () => setTtsPlaying(false);
       window.speechSynthesis.speak(utterance);
       setTtsPlaying(true);
-    } finally {
-      setTtsLoading(false);
     }
   }, [selectedText, ttsPlaying]);
 
@@ -1043,6 +1093,7 @@ function ShlokSpeaker({ text, themeKey }: { text: string; themeKey: string }) {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
+        if (audioRef.current.src) URL.revokeObjectURL(audioRef.current.src);
         audioRef.current = null;
       }
       window.speechSynthesis.cancel();
@@ -1053,29 +1104,25 @@ function ShlokSpeaker({ text, themeKey }: { text: string; themeKey: string }) {
 
     setLoading(true);
     try {
-      // Check cache first (localStorage)
-      const cacheKey = `tts_${btoa(unescape(encodeURIComponent(text.substring(0, 200))))}`;
-      let audioBase64 = "";
-      try { audioBase64 = sessionStorage.getItem(cacheKey) || ""; } catch { /* ignore */ }
+      // Stream from Sarvam Bulbul v3 via HTTP streaming (real-time playback)
+      const audio = await sarvamStreamPlay(text);
+      audioRef.current = audio;
+      setPlaying(true);
+      setLoading(false);
 
-      if (!audioBase64) {
-        // Stream from Sarvam Bulbul v3 via WebSocket (works on Vercel — no server proxy needed)
-        audioBase64 = await sarvamStreamTTS(text);
-        if (audioBase64) {
-          try { sessionStorage.setItem(cacheKey, audioBase64); } catch { /* storage full */ }
-        }
-      }
-
-      if (audioBase64) {
-        const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
-        audio.onended = () => { setPlaying(false); audioRef.current = null; };
-        audio.onerror = () => { setPlaying(false); audioRef.current = null; };
-        audioRef.current = audio;
-        await audio.play();
-        setPlaying(true);
-      }
+      audio.onended = () => {
+        setPlaying(false);
+        if (audio.src) URL.revokeObjectURL(audio.src);
+        audioRef.current = null;
+      };
+      audio.onerror = () => {
+        setPlaying(false);
+        if (audio.src) URL.revokeObjectURL(audio.src);
+        audioRef.current = null;
+      };
     } catch {
       // Fallback to browser SpeechSynthesis
+      setLoading(false);
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "hi-IN";
       utterance.rate = 0.7;
@@ -1088,8 +1135,6 @@ function ShlokSpeaker({ text, themeKey }: { text: string; themeKey: string }) {
       utterance.onend = () => setPlaying(false);
       window.speechSynthesis.speak(utterance);
       setPlaying(true);
-    } finally {
-      setLoading(false);
     }
   }, [text, playing]);
 
