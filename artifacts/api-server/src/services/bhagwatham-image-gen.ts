@@ -1465,15 +1465,13 @@ export function regenerateWithCustomPrompt(
       });
       writeManifest(updatedManifest);
 
-      // Auto commit + push to trigger deploy
+      // Stage only — daily commit cron handles commit + push
       try {
         const repoRoot = path.resolve(DATA_DIR, "..", "..");
         execSync("git add data/bhagwatham/", { cwd: repoRoot, stdio: "pipe" });
-        execSync(`git commit -m "feat(bhagwatham): regenerate chapter ${chapterNumber} image"`, { cwd: repoRoot, stdio: "pipe" });
-        execSync("git push", { cwd: repoRoot, stdio: "pipe" });
-        logger.info({ chapterNumber }, "Regenerated image committed and pushed");
+        logger.info({ chapterNumber }, "Regenerated image staged (daily commit will push)");
       } catch (gitErr) {
-        logger.warn({ gitErr }, "Git commit/push failed after regeneration");
+        logger.warn({ gitErr }, "Git stage failed after regeneration");
       }
 
       return { file: filename, trashId };

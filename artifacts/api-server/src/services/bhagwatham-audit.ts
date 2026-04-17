@@ -578,21 +578,14 @@ export async function runAuditPass(): Promise<{ chaptersAudited: number; issuesF
 
     logger.info({ chapter: targetChapter, issues: issues.length, fixes: fixes.length }, msg);
 
-    // Git commit + push if any fixes were made (images generated, descriptions added, etc.)
+    // Stage only — daily commit cron handles commit + push
     if (fixes.length > 0) {
       try {
         const REPO_ROOT = path.resolve(__dirname, "..", "..", "..", "..");
         execSync("git add data/bhagwatham/images/ data/bhagwatham/audit-progress.json", { cwd: REPO_ROOT, stdio: "pipe" });
-        const diff = execSync("git diff --cached --stat", { cwd: REPO_ROOT, encoding: "utf-8" }).trim();
-        if (diff) {
-          const skandh = chapterInfo.skandh || "?";
-          const commitMsg = `feat(bhagwatham): audit ch ${targetChapter} (canto ${skandh}) — ${fixes.length} fix(es)`;
-          execSync(`git commit -m "${commitMsg}"`, { cwd: REPO_ROOT, stdio: "pipe" });
-          execSync("git push", { cwd: REPO_ROOT, stdio: "pipe" });
-          logger.info({ chapter: targetChapter, fixes: fixes.length }, "Audit: git commit + push done");
-        }
+        logger.info({ chapter: targetChapter, fixes: fixes.length }, "Audit: changes staged (daily commit will push)");
       } catch (err) {
-        logger.warn({ err }, "Audit: git commit/push failed — continuing");
+        logger.warn({ err }, "Audit: git stage failed — continuing");
       }
     }
 
@@ -661,18 +654,13 @@ export async function fastImageBackfill(parallelCount = 3): Promise<{ generated:
 
     const generated = results.filter(r => r.status === "fulfilled" && r.value).length;
 
-    // Git commit + push if any generated
+    // Stage only — daily commit cron handles commit + push
     if (generated > 0) {
       try {
         const REPO_ROOT = path.resolve(__dirname, "..", "..", "..", "..");
         const { execSync } = await import("child_process");
         execSync("git add data/bhagwatham/images/", { cwd: REPO_ROOT, stdio: "pipe" });
-        const diff = execSync("git diff --cached --stat", { cwd: REPO_ROOT, encoding: "utf-8" }).trim();
-        if (diff) {
-          const chNums = batch.map(([n]) => n).join(",");
-          execSync(`git commit -m "feat(bhagwatham): fast backfill images for chapters ${chNums}"`, { cwd: REPO_ROOT, stdio: "pipe" });
-          execSync("git push", { cwd: REPO_ROOT, stdio: "pipe" });
-        }
+        logger.info({ generated, chapters: batch.map(([n]) => n) }, "Fast backfill: changes staged (daily commit will push)");
       } catch { /* git errors non-fatal */ }
     }
 

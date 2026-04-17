@@ -9,6 +9,7 @@ import { startBhagwathamCron } from "./cron/bhagwatham-cron";
 import { startInstagramCron } from "./cron/instagram-cron";
 import { startTempleDiscoveryCron } from "./cron/temple-discovery-cron";
 import { startGitaCron } from "./cron/gita-cron";
+import { startDailyCommitCron } from "./cron/daily-commit-cron";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -62,6 +63,10 @@ export async function createApp(): Promise<Express> {
 
   // Temple Discovery
   startTempleDiscoveryCron();
+
+  // Daily commit — stages all data/ changes and pushes once per day (midnight IST)
+  // Individual services only git-add (stage), this cron does the actual commit + push
+  startDailyCommitCron();
 
   // Shlok indexer — scans OCR pages and builds shlok dictionary in Supabase
   (await import("node-cron")).default.schedule("4,14,24,34,44,54 * * * *", async () => {

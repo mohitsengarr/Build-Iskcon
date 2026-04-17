@@ -499,27 +499,12 @@ function gitCommitAndPush(batchNumber: number, startPage: number, endPage: numbe
     // Sync batch data to public dir for Vercel static hosting
     syncToPublicDir();
 
-    // Stage all bhagwatham data: pages, progress, images, manifest + public API
+    // Stage only — daily commit cron handles commit + push once per day
     execSync("git add data/bhagwatham/", { cwd: REPO_ROOT, stdio: "pipe" });
     execSync("git add artifacts/temple-tracker/public/api/bhagwatham/", { cwd: REPO_ROOT, stdio: "pipe" });
-
-    // Check if there are staged changes
-    const diff = execSync("git diff --cached --stat", { cwd: REPO_ROOT, encoding: "utf-8" }).trim();
-    if (!diff) {
-      logger.info("No changes to commit — skipping");
-      return;
-    }
-
-    const imgNote = hasImages ? " with images" : "";
-    const commitMsg = `feat(bhagwatham): process pages ${startPage}-${endPage} (batch ${batchNumber})${imgNote}`;
-    execSync(`git commit -m "${commitMsg}"`, { cwd: REPO_ROOT, stdio: "pipe" });
-    execSync("git push", { cwd: REPO_ROOT, stdio: "pipe" });
-    logger.info({ batchNumber, startPage, endPage, hasImages }, "Git commit and push successful");
-
-    // Trigger Vercel deploy (Vercel auto-deploys on push, but log confirmation)
-    logger.info("Vercel deploy triggered via git push");
+    logger.info({ batchNumber, startPage, endPage, hasImages }, "Changes staged (daily commit will push)");
   } catch (err) {
-    logger.warn({ err }, "Git commit/push failed — continuing without push");
+    logger.warn({ err }, "Git stage failed — continuing");
   }
 }
 
@@ -598,18 +583,12 @@ export async function backfillEnglishTranslations(): Promise<{
       fs.writeFileSync(batchFile, JSON.stringify(batch, null, 2) + "\n");
       logger.info({ batchNumber: batch.batchNumber, translatedCount }, "Backfill: batch file updated with translations");
 
-      // Git commit + push the updated batch
+      // Stage only — daily commit cron handles commit + push
       try {
         execSync("git add data/bhagwatham/pages/", { cwd: REPO_ROOT, stdio: "pipe" });
-        const diff = execSync("git diff --cached --stat", { cwd: REPO_ROOT, encoding: "utf-8" }).trim();
-        if (diff) {
-          const msg = `feat(bhagwatham): backfill English translations for batch ${batch.batchNumber} (${translatedCount} pages)`;
-          execSync(`git commit -m "${msg}"`, { cwd: REPO_ROOT, stdio: "pipe" });
-          execSync("git push", { cwd: REPO_ROOT, stdio: "pipe" });
-          logger.info({ batchNumber: batch.batchNumber }, "Backfill: git commit + push done");
-        }
+        logger.info({ batchNumber: batch.batchNumber }, "Backfill: changes staged (daily commit will push)");
       } catch (err) {
-        logger.warn({ err }, "Backfill: git commit/push failed");
+        logger.warn({ err }, "Backfill: git stage failed");
       }
     }
 
