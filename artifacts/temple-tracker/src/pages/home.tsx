@@ -26,8 +26,9 @@ const STATUS_CFG: Record<string, { color: string; bg: string; label: string }> =
   consecrated:  { color: "#6B8F3C", bg: "rgba(107,143,60,0.12)", label: "Consecrated" },
 };
 
-const stats = TEMPLE_STATS;
-const totalNeeded = stats.totalFundraisingGoal - stats.totalFundraisingRaised;
+// Static fallback — overridden by live Supabase data once fetched
+const staticStats = TEMPLE_STATS;
+const staticTotalNeeded = staticStats.totalFundraisingGoal - staticStats.totalFundraisingRaised;
 
 // ── Structured Data (JSON-LD) ───────────────────────────────────────────────
 
@@ -41,7 +42,7 @@ const STRUCTURED_DATA_ORGANIZATION = {
 
 const STRUCTURED_DATA_WEBSITE = {
   "@context": "https://schema.org", "@type": "WebSite", "@id": `${CANONICAL_DOMAIN}/#website`,
-  name: "Build Iskcon", description: `Track ${stats.activeProjects} active ISKCON temple construction projects across 15+ countries.`,
+  name: "Build Iskcon", description: `Track ${staticStats.activeProjects} active ISKCON temple construction projects across 15+ countries.`,
   url: CANONICAL_DOMAIN, publisher: { "@id": `${CANONICAL_DOMAIN}/#organization` }, inLanguage: "en",
 };
 
@@ -73,7 +74,7 @@ const FAQ_ITEMS = [
   { q: "Where does my donation go?", a: "Build Iskcon does NOT collect, process, or handle any donations. When you click 'Donate' on any project, you are redirected to that temple's official ISKCON donation page. Your money goes directly to the temple — we are simply the map that helps you find where to give." },
   { q: "Is Build Iskcon an official ISKCON website?", a: "No. Build Iskcon is an independent, community-driven transparency platform. All data is sourced from official ISKCON project communications. All donation links direct to verified, official ISKCON temple websites." },
   { q: "How is this site funded?", a: "Build Iskcon is a volunteer-driven initiative with no commercial revenue. The site is maintained as a seva (service) project to help devotees discover and support ISKCON temple construction worldwide." },
-  { q: "How many ISKCON temples are currently under construction?", a: `As of 2026, Build Iskcon tracks ${stats.activeProjects}+ active ISKCON temple construction projects across 15+ countries, including the flagship Temple of the Vedic Planetarium (TOVP) in Mayapur.` },
+  { q: "How many ISKCON temples are currently under construction?", a: `As of 2026, Build Iskcon tracks ${staticStats.activeProjects}+ active ISKCON temple construction projects across 15+ countries, including the flagship Temple of the Vedic Planetarium (TOVP) in Mayapur.` },
   { q: "What is the Temple of the Vedic Planetarium (TOVP)?", a: "The TOVP is Srila Prabhupada's most cherished project — one of the largest religious structures being built globally. Located in Mayapur, West Bengal, it is 78% complete with a grand opening scheduled for November 2, 2027." },
   { q: "What is ISKCON's Vision 2051?", a: "Vision 2051 is a 25-year roadmap to establish 211 ISKCON temples across all 28 states and 8 Union Territories of India in 3 phases, starting 2025." },
   { q: "What are the seva (donation) tiers?", a: "Five tiers: Brick Donor (₹1,000), Pillar Supporter (₹11,000), Altar Patron (₹51,000), Mandala Guardian (₹1,00,000), and Temple Benefactor (₹5,00,000). All donations go directly to official ISKCON temple websites." },
@@ -103,7 +104,7 @@ const TOVP_NEEDED = Math.max(0, (TOVP.fundraisingGoal - TOVP.fundraisingRaised) 
 
 // ── Section: Hero + TOVP Countdown (merged) ─────────────────────────────────
 
-function HeroSection() {
+function HeroSection({ stats }: { stats: typeof TEMPLE_STATS }) {
   return (
     <section id="hero" className="space-y-0">
       {/* Hero banner */}
@@ -170,7 +171,8 @@ function HeroSection() {
 
 // ── Section: Key Metrics ─────────────────────────────────────────────────────
 
-function KeyMetrics() {
+function KeyMetrics({ stats }: { stats: typeof TEMPLE_STATS }) {
+  const totalNeeded = stats.totalFundraisingGoal - stats.totalFundraisingRaised;
   return (
     <motion.section aria-label="Key Statistics" className="key-stats grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={viewportOnce}>
       {[
@@ -961,11 +963,15 @@ function CTASection() {
 // ── Main Home Page ───────────────────────────────────────────────────────────
 
 export default function Home() {
+  const [temples, setTemples] = useState<Temple[]>(TEMPLES);
+  useEffect(() => { fetchLiveTemples().then(setTemples); }, []);
+  const liveStats = computeStats(temples);
+
   return (
     <Layout>
       <SEOHead
-        title="Track 50 Active ISKCON Temple Construction Projects Worldwide"
-        description={`Help build ${stats.activeProjects}+ ISKCON temples across 15+ countries. The TOVP in Mayapur opens in 2027. Explore projects, donate directly to official ISKCON pages.`}
+        title={`Track ${liveStats.activeProjects} Active ISKCON Temple Construction Projects Worldwide`}
+        description={`Help build ${liveStats.activeProjects}+ ISKCON temples across 15+ countries. The TOVP in Mayapur opens in 2027. Explore projects, donate directly to official ISKCON pages.`}
         canonicalPath="/"
         structuredData={[
           STRUCTURED_DATA_ORGANIZATION,
@@ -979,8 +985,8 @@ export default function Home() {
       />
 
       <div className="px-4 md:px-8 max-w-screen-2xl mx-auto space-y-16 sm:space-y-20">
-        <HeroSection />
-        <KeyMetrics />
+        <HeroSection stats={liveStats} />
+        <KeyMetrics stats={liveStats} />
         <TrustSection />
         <FeaturedProject />
         <TempleProjectsSection />

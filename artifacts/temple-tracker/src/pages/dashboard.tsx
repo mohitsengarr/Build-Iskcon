@@ -11,7 +11,7 @@ import {
   Users, Shield,
 } from "lucide-react";
 import { Link } from "wouter";
-import { TEMPLE_STATS } from "@/data/temples";
+import { TEMPLE_STATS, TEMPLES, fetchLiveTemples, computeStats, type Temple } from "@/data/temples";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -500,23 +500,17 @@ function HowToGive() {
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
-// Use live-computed stats from the static TEMPLES array — always in sync
-const FALLBACK_STATS = {
-  ...TEMPLE_STATS,
-  completedMilestones: 24,
-  upcomingMilestones: 18,
-};
-
 export default function Dashboard() {
-  // Use static TEMPLE_STATS directly — the API server doesn't run on Vercel,
-  // so useGetDashboardStats would return stale/wrong data from the HTML fallback
-  const stats = FALLBACK_STATS as any;
+  const [temples, setTemples] = useState<Temple[]>(TEMPLES);
+  useEffect(() => { fetchLiveTemples().then(setTemples); }, []);
+  const liveStats = computeStats(temples);
+  const stats = { ...liveStats, completedMilestones: 24, upcomingMilestones: 18 } as any;
 
   return (
     <Layout>
       <SEOHead
         title="Build Sacred Spaces Across the World"
-        description="Track ISKCON temple construction worldwide — see real-time progress, choose a project, and donate directly. 50 temples rising across 15 countries."
+        description={`Track ISKCON temple construction worldwide — see real-time progress, choose a project, and donate directly. ${stats.totalTemples} temples rising across 15 countries.`}
         canonicalPath="/"
         structuredData={[
           {

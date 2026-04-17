@@ -3,7 +3,7 @@ import { Helmet } from "react-helmet-async";
 const SITE_NAME = "Build Iskcon";
 const SITE_TAGLINE = "Global Temple Construction Intelligence";
 const DEFAULT_DESCRIPTION =
-  "Build Iskcon tracks 16 active ISKCON temple construction projects across 11 countries with $338M in fundraising goals. Explore 84 centres in 10 regions, donate directly, and discover the Vision 2051 roadmap for 211 temples across India.";
+  "Build Iskcon tracks 50+ active ISKCON temple construction projects across 15+ countries. Explore progress, donate directly to official pages, and discover the Vision 2051 roadmap.";
 const CANONICAL_DOMAIN = "https://buildiskcon.com";
 const OG_IMAGE = `${CANONICAL_DOMAIN}/opengraph.jpg`;
 
