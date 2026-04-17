@@ -1847,68 +1847,46 @@ function StepScrollIndicator({ themeKey }: { themeKey: Theme }) {
 
   // Theme-aware colors
   const palette = {
-    light: { rail: "#e7e5e4", inactive: "#a8a29e", active: "#ea580c" },
-    dark: { rail: "#44403c", inactive: "#78716c", active: "#fb923c" },
-    sepia: { rail: "#d4c5a9", inactive: "#a89678", active: "#c2410c" },
+    light: { inactive: "#d6d3d1", active: "#292524" },
+    dark: { inactive: "#57534e", active: "#e7e5e4" },
+    sepia: { inactive: "#c4b5a0", active: "#5b4636" },
   }[themeKey];
 
-  // Marker config per section type
-  const getMarker = (type: string, isActive: boolean) => {
+  // Marker width per section type — all dashes, just varying width
+  const getWidth = (type: string, isActive: boolean) => {
     switch (type) {
-      case "chapter":  return { shape: "circle" as const, size: isActive ? 10 : 7 };
-      case "shlok":    return { shape: "circle" as const, size: isActive ? 8 : 5 };
-      case "tatparya": return { shape: "dash" as const, size: isActive ? 20 : 12 };
-      case "shabdarth":return { shape: "dash" as const, size: isActive ? 14 : 8 };
-      case "anuvad":   return { shape: "dash" as const, size: isActive ? 16 : 10 };
-      default:         return { shape: "dash" as const, size: isActive ? 14 : 8 };
+      case "chapter":  return isActive ? 20 : 14;
+      case "shlok":    return isActive ? 16 : 10;
+      case "tatparya": return isActive ? 18 : 12;
+      case "shabdarth":return isActive ? 12 : 7;
+      case "anuvad":   return isActive ? 14 : 9;
+      default:         return isActive ? 12 : 7;
     }
   };
 
-  // Progress percentage for the filled portion of the rail
-  const progressPct = markers.length > 1 ? Math.round((activeIdx / (markers.length - 1)) * 100) : 0;
-
   return (
     <div className="hidden lg:block sticky top-1/2 -translate-y-1/2 shrink-0 z-20 self-start" style={{ width: 28, marginLeft: -36 }}>
-      <div className="relative flex flex-col items-center" style={{ gap: 5 }}>
-        {/* Vertical rail — base track line */}
-        <div
-          className="absolute pointer-events-none rounded-full"
-          style={{ width: 2, top: 4, bottom: 4, left: "50%", transform: "translateX(-50%)", backgroundColor: palette.rail, opacity: 0.6 }}
-        />
-        {/* Vertical rail — active progress fill */}
-        <div
-          className="absolute pointer-events-none rounded-full transition-all duration-500"
-          style={{ width: 2, top: 4, height: `${progressPct}%`, left: "50%", transform: "translateX(-50%)", backgroundColor: palette.active, opacity: 0.5 }}
-        />
-
+      <div className="flex flex-col items-end" style={{ gap: 4 }}>
         {markers.map((m, i) => {
           const isActive = i === activeIdx;
-          const isPassed = i <= activeIdx;
-          const dist = Math.abs(i - activeIdx);
-          const isNear = dist <= 3;
-          const { shape, size } = getMarker(m.type, isActive);
-          const opacity = isActive ? 1 : isPassed ? 0.65 : isNear ? 0.55 : 0.25;
-          const color = isActive ? palette.active : isPassed ? palette.active : palette.inactive;
+          const w = getWidth(m.type, isActive);
+          const opacity = isActive ? 1 : 0.35;
 
           return (
             <button
               key={i}
               onClick={() => handleClick(m)}
-              className="relative shrink-0 cursor-pointer group flex items-center justify-center"
-              style={{ width: 24, height: shape === "circle" ? Math.max(size + 3, 8) : 6, padding: 0, border: "none", background: "transparent" }}
+              className="shrink-0 cursor-pointer transition-all duration-200 hover:opacity-80 rounded-full"
+              style={{
+                width: w,
+                height: isActive ? 2.5 : 1.5,
+                backgroundColor: isActive ? palette.active : palette.inactive,
+                opacity,
+                padding: 0,
+                border: "none",
+              }}
               title={m.type}
-            >
-              <span
-                className="block rounded-full transition-all duration-300 group-hover:scale-150"
-                style={{
-                  width: size,
-                  height: shape === "circle" ? size : 2.5,
-                  backgroundColor: color,
-                  opacity,
-                  boxShadow: isActive ? `0 0 10px ${palette.active}60` : "none",
-                }}
-              />
-            </button>
+            />
           );
         })}
       </div>
