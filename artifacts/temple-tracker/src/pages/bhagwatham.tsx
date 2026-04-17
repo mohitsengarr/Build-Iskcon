@@ -243,7 +243,7 @@ async function sarvamStreamPlay(text: string): Promise<HTMLAudioElement> {
       speaker: "soham",
       model: "bulbul:v3",
       pace: 0.8,
-      speech_sample_rate: 48000,
+      speech_sample_rate: 24000,
       output_audio_codec: "mp3",
       enable_preprocessing: true,
     }),
@@ -832,32 +832,41 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
   useEffect(() => () => { ttsAudioRef.current?.pause(); window.speechSynthesis.cancel(); }, []);
 
   useEffect(() => {
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
     const onSelectionChange = () => {
-      const sel = window.getSelection();
-      if (!sel || sel.isCollapsed || !sel.toString().trim()) {
-        // Don't hide if user is interacting with the toolbar or TTS is playing
-        if (!recording && !processing && !ttsPlaying && !ttsLoading && !toolbarRef.current?.contains(document.activeElement)) {
-          setShow(false);
+      // Debounce: wait for selection to stabilise (user stops dragging)
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        const sel = window.getSelection();
+        if (!sel || sel.isCollapsed || !sel.toString().trim()) {
+          // Don't hide if user is interacting with the toolbar or TTS is playing
+          if (!recording && !processing && !ttsPlaying && !ttsLoading && !toolbarRef.current?.contains(document.activeElement)) {
+            setShow(false);
+          }
+          return;
         }
-        return;
-      }
-      const text = sel.toString().trim();
-      if (text.length < 2) return;
+        const text = sel.toString().trim();
+        if (text.length < 2) return;
 
-      // Find which page this selection is in
-      const range = sel.getRangeAt(0);
-      const pageEl = range.startContainer.parentElement?.closest("[data-page-num]");
-      const pageNum = pageEl ? parseInt(pageEl.getAttribute("data-page-num") || "0", 10) : 0;
+        // Find which page this selection is in
+        const range = sel.getRangeAt(0);
+        const pageEl = range.startContainer.parentElement?.closest("[data-page-num]");
+        const pageNum = pageEl ? parseInt(pageEl.getAttribute("data-page-num") || "0", 10) : 0;
 
-      const rect = range.getBoundingClientRect();
-      setPosition({ x: rect.left + rect.width / 2, y: rect.top - 10 });
-      setSelectedText(text);
-      pageNumRef.current = pageNum;
-      setShow(true);
+        const rect = range.getBoundingClientRect();
+        setPosition({ x: rect.left + rect.width / 2, y: rect.top - 10 });
+        setSelectedText(text);
+        pageNumRef.current = pageNum;
+        setShow(true);
+      }, 250);
     };
 
     document.addEventListener("selectionchange", onSelectionChange);
-    return () => document.removeEventListener("selectionchange", onSelectionChange);
+    return () => {
+      document.removeEventListener("selectionchange", onSelectionChange);
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
   }, [recording, processing, ttsPlaying, ttsLoading]);
 
   const applyEdit = useCallback((oldText: string, newText: string) => {
