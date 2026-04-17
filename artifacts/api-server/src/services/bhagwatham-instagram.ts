@@ -139,11 +139,24 @@ const PERSONA_SHORT: Record<string, string> = {
   yudhishthira: "King Yudhishthira: fair gentle-faced king, thin dark beard, white royal garments, simple golden crown",
 };
 
+function isChildKrishnaContext(scene: string): boolean {
+  // Detect scenes where Krishna is a child/baby — check the FULL text for context clues
+  const childPatterns = [
+    /\b(?:child|infant|baby|toddler|little|young|boy)\b.*\bKrishna\b/i,
+    /\bKrishna\b.*\b(?:child|infant|baby|toddler|little|boy|crawl|lap|cradle|lullaby|butter|ball)\b/i,
+    /\b(?:mother|Yashoda|gopi|maiya)\b.*\b(?:embrace|lap|hold|nurse|feed|bathe)\b.*\bKrishna\b/i,
+    /\bKrishna\b.*\b(?:embrace|lap|hold|nurse|feed|bathe)\b.*\b(?:mother|Yashoda|gopi|maiya)\b/i,
+    /\bBaby\s*Krishna\b/i,
+    /\bBal\s*Krishna\b|\bBala?\s*Gopal\b|\bGopal\b/i,
+    /\b(?:Gokul|Vrindavan|Nandgaon)\b.*\bKrishna\b.*\b(?:play|steal|mischief|prank)\b/i,
+    /\bmother.*placed.*(?:Him|Krishna).*lap/i,
+    /\b(?:mothers|gopis)\s+(?:embraced|bathed|nursed)\b/i,
+  ];
+  return childPatterns.some(p => p.test(scene));
+}
+
 function injectPersona(scene: string): string {
   const checks: Array<[RegExp, string]> = [
-    [/\bBaby\b.*\bKrishna\b/i, "krishna_child"],
-    [/\b(?:child|infant|baby)\b.*\bKrishna\b/i, "krishna_child"],
-    [/\bKrishna\b(?!.*\b(?:child|infant|baby)\b)/i, "krishna_adult"],
     [/\bNarada\b/i, "narada"],
     [/\bVyasa(?:deva)?\b/i, "vyasa"],
     [/\bSuta\s*Goswami\b/i, "suta_goswami"],
@@ -165,6 +178,13 @@ function injectPersona(scene: string): string {
   ];
 
   const matched: string[] = [];
+
+  // Handle Krishna persona separately — context-aware child vs adult detection
+  if (/\bKrishna\b|\bGopal\b/i.test(scene)) {
+    const key = isChildKrishnaContext(scene) ? "krishna_child" : "krishna_adult";
+    matched.push(PERSONA_SHORT[key]);
+  }
+
   for (const [pattern, key] of checks) {
     if (pattern.test(scene) && PERSONA_SHORT[key] && !matched.includes(PERSONA_SHORT[key])) {
       matched.push(PERSONA_SHORT[key]);
@@ -380,14 +400,16 @@ For EACH scene:
 
 1. **scene_prompt**: A SPECIFIC scene description (50-80 words) showing EXACTLY what is happening in the story.
    - Name ALL characters involved (Krishna, Arjuna, Narada, etc.)
+   - CRITICAL: Always specify each character's AGE/FORM explicitly. Is Krishna a baby, a child (age 5-7), a young boy (age 10-12), or an adult? Say "Baby Krishna", "child Krishna", "young boy Krishna", or "Lord Krishna" accordingly. Same for other characters — "young prince Parikshit" vs "King Parikshit".
    - Describe the SPECIFIC ACTION: What is each character doing? What is the conflict or event?
    - Describe the SPECIFIC SETTING: Where exactly does this take place? (forest, river bank, battlefield, palace, etc.)
    - Include VISUAL DETAILS from the story: objects, weapons, animals, elements (fire, water, etc.)
-   - Example of GOOD prompt: "Krishna stands at the edge of the blazing Munjavaranya forest, arms raised, swallowing the massive fire into his mouth as terrified cowherds and Balarama watch from behind, their cattle huddled together, flames reflecting off Krishna's blue skin"
-   - Example of BAD prompt: "Krishna protects inhabitants with divine intervention" (too vague, no story)
+   - Example of GOOD prompt: "Baby Krishna lies on mother Yashoda's lap in the courtyard of Nanda's house in Gokul, while elderly gopi women surround them, pouring blessings, tears of joy streaming down their faces, oil lamps glowing in the evening light"
+   - Example of BAD prompt: "Krishna protects inhabitants with divine intervention" (too vague, no story, no age specified)
 
    IMPORTANT: No violent/graphic language. Describe conflicts in a dignified way.
    IMPORTANT: Each scene MUST show a DIFFERENT moment in the chapter's storyline, in chronological order.
+   IMPORTANT: The scene prompt will be used DIRECTLY to generate an image. The image MUST match the story text. If the story describes a child, the prompt MUST say "child". If the story describes a king, say "king".
 
 2. **summary_hi**: 2-3 sentence Hindi summary of this specific story event, describing what happens.
 
