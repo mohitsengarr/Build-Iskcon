@@ -1874,8 +1874,8 @@ function StepScrollIndicator({ themeKey }: { themeKey: Theme }) {
   };
 
   return (
-    <div className="hidden lg:block sticky top-1/2 -translate-y-1/2 shrink-0 z-20 self-start" style={{ width: 28, marginLeft: -36 }}>
-      <div className="flex flex-col items-end" style={{ gap: 4 }}>
+    <div className="hidden lg:block sticky top-1/2 -translate-y-1/2 shrink-0 z-20 self-start" style={{ width: 28, marginLeft: -52 }}>
+      <div className="flex flex-col items-end" style={{ gap: 8 }}>
         {markers.map((m, i) => {
           const isActive = i === activeIdx;
           const w = getWidth(m.type, isActive);
