@@ -783,16 +783,28 @@ function getPageEndKind(text: string): string {
   if (!text) return "text";
   const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
   let lastKind = "text";
+  let insideTatparya = false; // track whether we're inside a tatparya block
   for (const line of lines) {
-    if (/^तात्पर्य/u.test(line)) lastKind = "tatparya";
-    else if (/^अनुवाद/u.test(line)) lastKind = "anuvad";
-    else if (/^शब्दार्थ/u.test(line)) lastKind = "shabdarth";
-    else if (/॥/u.test(line)) lastKind = (lastKind === "tatparya") ? "ref-shlok" : "shlok";
-    else if (/^(अध्याय|स्कन्ध|Chapter)/iu.test(line)) lastKind = "text";
+    if (/^तात्पर्य/u.test(line)) { lastKind = "tatparya"; insideTatparya = true; }
+    else if (/^अनुवाद/u.test(line)) { lastKind = "anuvad"; insideTatparya = false; }
+    else if (/^शब्दार्थ/u.test(line)) { lastKind = "shabdarth"; insideTatparya = false; }
+    else if (/॥/u.test(line)) {
+      if (insideTatparya) {
+        lastKind = "ref-shlok"; // ref-shlok inside tatparya
+      } else {
+        lastKind = "shlok";
+        insideTatparya = false;
+      }
+    }
+    else if (/^(अध्याय|स्कन्ध|Chapter)/iu.test(line)) { lastKind = "text"; insideTatparya = false; }
     // Detect implicit shabdarth→anuvad transition:
     // shabdarth lines have "—" or "--" with ";", anuvad lines don't
     else if (lastKind === "shabdarth" && !(line.includes("—") || line.includes("--")) && !line.includes(";")) {
-      lastKind = "anuvad";
+      lastKind = "anuvad"; insideTatparya = false;
+    }
+    // After ref-shlok (inside tatparya), non-verse prose = back to tatparya
+    else if (lastKind === "ref-shlok" && insideTatparya) {
+      lastKind = "tatparya";
     }
     // After shlok, non-verse Hindi prose = anuvad
     else if (lastKind === "shlok" && !/॥/u.test(line)) {
@@ -1776,7 +1788,8 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
           }
           case "tatparya": {
             // Same as body text, only "तात्पर्य :" prefix is bold (SEN-109: visual divider)
-            const isContinuation = i === 0 && prevPageEndKind === "tatparya";
+            // Continuation if prev page ended in tatparya OR ref-shlok (ref-shlok is always inside tatparya)
+            const isContinuation = i === 0 && (prevPageEndKind === "tatparya" || prevPageEndKind === "ref-shlok");
             return (
               <div key={i} data-section-type="tatparya" className={isContinuation ? "" : "mt-4 sm:mt-5"}>
                 {!isContinuation && (
