@@ -240,10 +240,10 @@ async function sarvamStreamPlay(text: string): Promise<HTMLAudioElement> {
     body: JSON.stringify({
       text,
       target_language_code: "hi-IN",
-      speaker: "soham",
+      speaker: "gokul",
       model: "bulbul:v3",
-      pace: 0.8,
-      speech_sample_rate: 24000,
+      pace: 1,
+      speech_sample_rate: 48000,
       output_audio_codec: "mp3",
       enable_preprocessing: true,
     }),
