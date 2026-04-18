@@ -283,22 +283,30 @@ ${cantoChapterLine ? `Reference: Srimad Bhagavatam — ${cantoChapterLine}` : ""
 Scene: ${scenePrompt}
 ${summaryHi ? `Hindi summary: ${summaryHi}` : ""}
 
-Write an Instagram caption for this Srimad Bhagavatam illustration. The caption must tell the ACTUAL STORY shown in the scene — not generic devotional text.
+Write an Instagram caption for this Srimad Bhagavatam illustration. The caption MUST tell the ACTUAL STORY in BOTH Hindi AND English — not generic devotional text.
 
-1. **caption**: Write a BILINGUAL (Hindi + English) story-driven caption (12-16 lines). Structure it as:
-   - Line 1: "📖 श्रीमद्भागवतम् — ${cantoChapterLine || chapterTitle}"
-   - Line 2: A relevant Sanskrit shlok from this chapter (in Devanagari script)
-   - Line 3: Hindi meaning of the shlok (1-2 lines)
-   - Line 4: English translation of the shlok (1-2 lines)
-   - Line 5-6: HINDI narration — Tell the story in simple Hindi (3-4 lines). Who are the characters? What is happening in this scene?
-   - Line 7-10: ENGLISH narration — Narrate the SAME story in English (4-5 lines):
-     * Who are the characters and what are they doing?
-     * What is the conflict, miracle, or key event?
-     * What is the spiritual significance?
-   - Line 11: A devotional reflection in Hindi connecting to the reader's life
-   - Line 12: Same reflection in English
-   - Line 13: "🙏 हरे कृष्ण | Hare Krishna"
-   Use line breaks between sections. Keep total under 2200 characters.
+1. **caption**: Write a BILINGUAL caption with this EXACT structure (use \\n for line breaks):
+
+📖 श्रीमद्भागवतम् — ${cantoChapterLine || chapterTitle}
+अध्याय — [chapter title in Hindi]
+
+[HINDI STORY — MANDATORY, 4-6 lines in simple Hindi]:
+Tell the complete story of this scene in Hindi. पात्र कौन हैं? क्या हो रहा है? संघर्ष या चमत्कार क्या है? आध्यात्मिक संदेश क्या है? This section MUST be present and substantial.
+
+[ENGLISH STORY — 4-6 lines]:
+Tell the SAME story in English. Who are the characters? What is the conflict, miracle, or key event? What is the spiritual significance?
+
+[One-line devotional reflection in Hindi]
+[Same reflection in English]
+
+🙏 हरे कृष्ण हरे कृष्ण कृष्ण कृष्ण हरे हरे
+हरे राम हरे राम राम राम हरे हरे
+
+CRITICAL RULES:
+- The Hindi story section is MANDATORY. Do NOT skip it. It must be 4-6 lines minimum.
+- Both Hindi and English sections must tell the SPECIFIC story from this chapter, not generic text.
+- Keep total under 2200 characters.
+- Use \\n for line breaks in the JSON string.
 
 2. **hashtags**: 5 relevant hashtags. Include #SrimadBhagavatam #ISKCON and 3 scene-specific ones.
 
