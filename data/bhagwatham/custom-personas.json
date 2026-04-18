@@ -650,5 +650,187 @@
     "gender": "male",
     "source": "Auto-discovered from Bhagavatam text. Generated from mythology knowledge.",
     "addedAt": "2026-04-16T13:06:12.763Z"
+  },
+  {
+    "key": "prithu",
+    "name": "Prithu",
+    "fullDescription": "Prithu: A powerful sovereign king in his prime, approximately 35-45 years old, with a broad commanding presence befitting the first anointed king of the earth. Complexion is rich golden-brown (#8B5E3C), radiant with divine luster. Face is strong and square-jawed with high cheekbones, a noble aquiline nose, and deep-set amber-brown eyes conveying both authority and compassion. Thick arched eyebrows project regal determination. Hair is jet black, long and lustrous, tied in a warrior's top-knot secured with a golden clasp, adorned with peacock feathers as his divine emblem. A full neatly trimmed black beard frames his powerful face. He wears a resplendent royal dhoti in deep gold and crimson silk with elaborate brocade borders. His broad muscular chest is adorned with multiple strands of pearl and gold necklaces, a prominent Kaustubha-like gem pendant, and sacred thread across the chest. Heavy golden armlets, ornate kirtimukha wristbands, and gem-studded crown complete his regalia. He carries his legendary bow Ajagava and a quiver of arrows, with a jeweled sword at his hip. His primary symbolic attribute is a golden milking vessel, referencing his act of milking Bhumi Devi in the form of a cow to nourish all living beings. The overall bearing is of an emperor who embodies dharmic kingship and divine appointment.",
+    "shortDescription": "Prithu: Majestic golden-brown skinned sovereign king, 35-45 years old, strong square jaw, trimmed black beard, black topknot with peacock feathers, crimson-gold royal dhoti, pearl and gem ornaments, carrying the great bow Ajagava and a golden milking vessel, commanding dharmic presence.",
+    "patterns": [
+      "\\bPrithu\\b",
+      "\\bPrthu\\b",
+      "\\bKing Prithu\\b",
+      "\\bMaharaja Prithu\\b",
+      "\\bPrithu Maharaja\\b",
+      "\\bVainya\\b",
+      "\\bPrithvi\\b"
+    ],
+    "gender": "male",
+    "source": "Auto-discovered from Bhagavatam text. Generated from mythology knowledge.",
+    "addedAt": "2026-04-16T16:46:13.471Z"
+  },
+  {
+    "key": "bhagavan",
+    "name": "Bhagavan",
+    "fullDescription": "Bhagavan: The Supreme Lord depicted in his universal, transcendent form, appearing as an eternally youthful divine sovereign of approximately 16-25 years, with luminous dark blue-black complexion resembling a rain-laden cloud (#1a237e to #283593). His face radiates supreme serenity and omniscient majesty with a broad, strong jawline, high cheekbones, and a gently smiling expression conveying infinite compassion. Large lotus-shaped eyes, dark as fresh rainwater, with golden irises flecked with crimson, framed by long dark lashes. He wears the Kaustubha gem blazing at his chest like a captured sun, and the Shrivatsa mark on his broad, muscular chest. Adorned with a towering golden Kirita crown encrusted with rubies, emeralds, and pearls, with a peacock feather (as Krishna-Bhagavan). His four arms bear the Panchajanya conch, Sudarshana chakra of spinning fire, Kaumodaki mace, and lotus flower. Draped in lustrous golden-yellow Pitambara silk, cascading from a jeweled waist belt. A fragrant Vaijayanti garland of five-colored forest flowers hangs to his knees. Makara-kundala golden earrings, Nupura anklets, Keyura armlets, and Paduka golden sandals complete his divine adornments. Rendered in classical Pahari or Tanjore oil painting style with rich jewel tones, gold leaf highlights, and devotional precision.",
+    "shortDescription": "Bhagavan: The Supreme Lord with dark blue luminous complexion, four arms bearing conch, chakra, mace, and lotus, crowned with gold and peacock feather, draped in golden Pitambara silk, radiating eternal sovereignty and infinite compassion in classical Indian devotional style.",
+    "patterns": [
+      "\\bBhagavan\\b",
+      "\\bBhagavān\\b",
+      "\\bSupreme Lord\\b",
+      "\\bParameshvara\\b",
+      "\\bParamatma\\b",
+      "\\bBhagwaan\\b",
+      "\\bBhagwán\\b"
+    ],
+    "gender": "male",
+    "source": "Auto-discovered from Bhagavatam text. Generated from mythology knowledge.",
+    "addedAt": "2026-04-17T00:26:14.788Z"
+  },
+  {
+    "key": "shivji",
+    "name": "Shivji",
+    "fullDescription": "Shivji: Ageless ascetic deity appearing as a powerfully built man in his prime, with ash-white complexion (hex #D4C5B0) smeared with vibramani sacred ash (vibhuti) across his broad forehead and muscular body. Strong angular jaw with a short dark beard, deep-set piercing eyes of intense cobalt blue with a vertical third eye (trinetra) on the forehead, glowing ember-red when open. Matted dark brown jata (dreadlocked hair) coiled and piled high atop the head, with the sacred river Ganga flowing as a luminous stream from the crown and a crescent moon (Chandrakala) nestled within the locks. Draped in a tiger skin (vyaghracharmambara) around the waist, a serpent (Vasuki Naga) coiled as sacred thread across the bare muscular chest. Adorned with rudraksha mala beads at throat and wrists, bone ornaments, and ash-smeared limbs. Holds the trishula (trident) in the right hand, a small damaru drum in the left. Nandi the bull may be visible nearby. Sacred Ganga flows from hair. Bull emblem marks his presence. Deep ochre, ivory, and midnight blue tones dominate. Majestic, serene yet fearsome expression of divine transcendence.",
+    "shortDescription": "Shivji: Ash-smeared ascetic deity, ageless and powerfully built, with cobalt-blue third eye, crescent moon in matted jata locks, Ganga flowing from hair, Vasuki serpent across chest, tiger skin draped at waist, holding trishula and damaru, adorned with rudraksha beads.",
+    "patterns": [
+      "\\bShivji\\b",
+      "\\bShiva\\b",
+      "\\bMahadeva\\b",
+      "\\bMaheshvara\\b",
+      "\\bMaheshwara\\b",
+      "\\bShankar\\b",
+      "\\bShankarji\\b",
+      "\\bBholenath\\b",
+      "\\bNeelkantha\\b",
+      "\\bNilakantha\\b",
+      "\\bRudra\\b",
+      "\\bTripurari\\b",
+      "\\bNataraja\\b",
+      "\\bPashupati\\b",
+      "\\bSadashiva\\b",
+      "\\bUmapati\\b",
+      "\\bGangadhara\\b",
+      "\\bHara\\b"
+    ],
+    "gender": "male",
+    "source": "Auto-discovered from Bhagavatam text. Generated from mythology knowledge.",
+    "addedAt": "2026-04-17T00:36:15.138Z"
+  },
+  {
+    "key": "lord_vishnu",
+    "name": "Lord Vishnu",
+    "fullDescription": "Lord Vishnu: eternal divine sovereign appearing ageless (25–35 years), luminous blue-black complexion (#1a237e to #283593), broad serene face with high cheekbones and strong square jaw, large lotus-shaped eyes with dark irises radiating calm omniscience, heavy arched brows, straight noble nose, composed full lips bearing a faint benevolent smile. Hair dark and lustrous, crown-like with the distinctive Kaustubha jewel resting at chest. Wears brilliant yellow silk Pitambara dhoti, ornate Vaijayanti garland of five-colored forest flowers cascading to knees, sacred Srivatsa mark on chest, Brahma-sutra thread. Bears four arms: upper-right holds Sudarshana chakra (flaming luminous disc), upper-left holds Panchajanya conch shell, lower-right in Abhaya mudra, lower-left holds Kaumodaki gada (golden mace). Crown (Kirita-mukuta) tall and golden set with gems, elaborate gold ear ornaments (Kundala), Nupura anklets, Keyura upper-arm bands, gem-studded necklaces layered at throat. Seated or standing upon Shesha-naga or Garuda, surrounded by warm divine radiance. Painted in rich Pahari or Tanjore classical oil style with deep jewel tones, fine gold linework, and devotional luminosity.",
+    "shortDescription": "Lord Vishnu: ageless blue-black complexioned Supreme deity, four-armed bearing Sudarshana chakra, Panchajanya conch, mace and Abhaya mudra, yellow silk Pitambara, tall golden crown, Kaustubha jewel, Vaijayanti garland, serene lotus eyes, strong jaw, classical Tanjore oil painting style.",
+    "patterns": [
+      "\\bLord Vishnu\\b",
+      "\\bVishnu\\b",
+      "\\bNarayana\\b",
+      "\\bHari\\b",
+      "\\bMadhava\\b",
+      "\\bKeshava\\b",
+      "\\bVaikuntha\\b",
+      "\\bJagannatha\\b",
+      "\\bPadmanabha\\b",
+      "\\bChaturvyuha\\b",
+      "\\bSupreme Personality of Godhead\\b",
+      "\\bVishnu Bhagavan\\b"
+    ],
+    "gender": "male",
+    "source": "Auto-discovered from Bhagavatam text. Generated from mythology knowledge.",
+    "addedAt": "2026-04-17T00:46:14.383Z"
+  },
+  {
+    "key": "dhruva_maharaj",
+    "name": "Dhruva Maharaj",
+    "fullDescription": "Dhruva Maharaj: A determined young prince boy aged 5 to 7 years, with a luminous golden-brown complexion (hex #8B5E3C), round youthful face with a resolute strong jaw for his age, large dark lotus-shaped eyes radiating fierce devotion and unwavering spiritual resolve, thick black hair tied back simply or matted from forest austerities, adorned with a simple crown or none during penance scenes. Dressed in a single plain dhoti of ochre or white cloth tied simply at the waist, barefoot and austere in appearance reflecting his forest tapasya. Wears minimal ornaments befitting a royal child in renunciation: simple gold earrings and sacred thread across his chest. His small hands are folded in anjali mudra or hold a lotus flower offered to Lord Vishnu. His body is lean and upright despite his youth, posture absolutely erect showing immense inner strength. A divine golden aura or subtle celestial light surrounds him symbolizing his extraordinary spiritual merit. His expression combines childlike innocence with fierce tapasic determination and pure devotion. Background elements may include the forest of Madhuvana, the sacred Yamuna river, or a blazing dhuni fire. His form glows with sattvik radiance befitting the prince destined to become Dhruva, the Pole Star, eternal and immovable in the northern sky.",
+    "shortDescription": "Dhruva Maharaj: Young royal prince boy aged 5-7, golden-brown complexion, large devoted dark eyes, simple ochre dhoti, matted or tied black hair, anjali mudra or lotus offering, austere forest ascetic appearance radiating fierce devotion and celestial golden aura, lean upright posture of immense inner resolve.",
+    "patterns": [
+      "\\bDhruva Maharaj\\b",
+      "\\bDhruva\\b",
+      "\\bDhruba\\b",
+      "\\bDhruva Maharaja\\b",
+      "\\bDhruva Kumar\\b",
+      "\\bPole Star prince\\b",
+      "\\bDhruvaloka\\b"
+    ],
+    "gender": "male",
+    "source": "Auto-discovered from Bhagavatam text. Generated from mythology knowledge.",
+    "addedAt": "2026-04-17T00:56:12.599Z"
+  },
+  {
+    "key": "prahlad",
+    "name": "Prahlad",
+    "fullDescription": "Prahlad: A young boy of approximately 8 to 12 years, radiating divine serenity and unwavering devotion. Warm golden-brown complexion, hex approximately #8B5E3C. Soft oval face with a strong jaw emerging in youth, large luminous dark brown eyes filled with transcendent peace and fearless devotion, slightly upturned lips curved in a gentle beatific smile. Black hair neatly combed and tied back or worn short, adorned with no flowers, perhaps a simple gold crown or tilak band befitting a prince. Wears a dhoti of royal saffron or white silk with golden border, a short angavastram draped over one shoulder. Ornaments include a gold necklace with Vishnu medallion, gold armlets, wrist bangles, and earrings of royal Asura nobility. Janeu sacred thread worn across chest. His most iconic attribute is clasped hands in anjali mudra or arms outstretched in surrender toward Lord Vishnu, eyes half-closed in devotional ecstasy. Occasionally depicted with a pillar nearby referencing Nrisimha's emergence. Skin unmarked despite persecution, conveying divine protection. Posture humble yet fearless, embodying pure bhakti. Background suggests royal palace interiors or fire pits from which he emerges unharmed. Rich jewel-toned classical Pahari or Rajput oil painting style with deep lapis lazuli backgrounds.",
+    "shortDescription": "Prahlad: Young royal boy aged 8-12, warm golden-brown complexion #8B5E3C, serene fearless face, dark luminous eyes, black hair, saffron silk dhoti, gold Vishnu medallion, hands in anjali mudra, embodying pure devotion and divine protection.",
+    "patterns": [
+      "\\bPrahlad\\b",
+      "\\bPrahlaad\\b",
+      "\\bPrahladha\\b",
+      "\\bPrahlada\\b",
+      "\\bVishnu-bhakta Prahlad\\b",
+      "\\bPrahlad maharaj\\b",
+      "\\bPrahrada\\b"
+    ],
+    "gender": "male",
+    "source": "Auto-discovered from Bhagavatam text. Generated from mythology knowledge.",
+    "addedAt": "2026-04-17T09:06:14.137Z"
+  },
+  {
+    "key": "bharat",
+    "name": "Bharat",
+    "fullDescription": "Bharat: A noble male figure in his mid-forties to early fifties, depicted in two aspects across his story — first as a majestic forest ascetic, later as a humble renunciant. Warm golden-brown complexion, hex approximately #8B5E3C. Strong, broad face with a square jaw and high cheekbones reflecting royal lineage. Deep-set, dark brown eyes carrying profound spiritual sorrow and detachment, heavy-lidded with introspection. Long, matted dark hair with streaks of grey, coiled or loosely bound with bark fiber, NO flowers in hair. Muscular but lean physique, bearing the dignified posture of a former emperor. Wears a simple bark-cloth or deerskin lower garment (varaksa), bare-chested with a sacred thread (yajnopavita) across the chest. Minimal ornaments — only rudrasksha beads at the wrist. Bare feet. His most iconic symbolic attribute is a small spotted deer fawn held tenderly in his arms or nearby, representing his fatal attachment. Forest surroundings with river, hermitage setting. Expression oscillates between tender affection toward the deer and deep remorse or meditative withdrawal. Skin bears subtle marks of forest austerities. No weapons — carries only a water pot (kamandalu) and a walking staff of wood, symbolizing his ascetic vows.",
+    "shortDescription": "Bharat: Noble male former emperor turned forest ascetic, mid-forties, warm golden-brown complexion, strong jaw, introspective dark eyes, matted coiled hair, deerskin garment, rudrasksha beads, holding a spotted deer fawn, carrying kamandalu and wooden staff, no weapons.",
+    "patterns": [
+      "\\bBharat\\b",
+      "\\bBharata\\b",
+      "\\bJada Bharat\\b",
+      "\\bJadabharata\\b",
+      "\\bRishabhdev.*son\\b",
+      "\\bMaharaja Bharat\\b"
+    ],
+    "gender": "male",
+    "source": "Auto-discovered from Bhagavatam text. Generated from mythology knowledge.",
+    "addedAt": "2026-04-17T09:16:12.613Z"
+  },
+  {
+    "key": "kansa",
+    "name": "Kansa",
+    "fullDescription": "Kansa: A powerfully built tyrannical king, appearing 40-50 years old, with a dark and menacing complexion (hex #3B2314), broad square jaw, high prominent cheekbones, and deep-set fierce black eyes burning with cruelty and arrogance. Thick black eyebrows sharply angled in a perpetual scowl. Heavy mustache and short dark beard framing a cruel, thin-lipped mouth. Black hair pulled back tightly into a high warrior's knot secured with a dark iron band. Wears a heavily ornamented royal crown of dark gold studded with rubies and dark gems befitting a feared usurper king. Draped in dark crimson and black silk royal garments with gold border embroidery. Broad muscular chest adorned with thick gold chains, a large ruby-encrusted pectoral medallion, and heavy armlets. Wears a dark metal breastplate suggesting perpetual readiness for battle. Carries a gleaming broad sword at his hip and sometimes a mace or iron club, symbols of his brutal authority. His powerful hands bear thick gold rings. Dark kohl-rimmed eyes radiate menace. Overall demeanor projects ruthless sovereignty, physical dominance, and deep-seated fear masked by cruelty, consistent with his role as the oppressive demon-king of Mathura destined to fall before Krishna.",
+    "shortDescription": "Kansa: Fearsome tyrannical king of Mathura, dark complexion (#3B2314), powerfully built, cruel black eyes, heavy mustache and beard, dark gold crown with rubies, crimson and black royal silks, thick gold chains, armed with sword and mace, projecting brutal menace.",
+    "patterns": [
+      "\\bKansa\\b",
+      "\\bKamsa\\b",
+      "\\bKansa's\\b",
+      "\\bKamsa's\\b",
+      "\\bUgrasena's son\\b",
+      "\\bKrishna's uncle\\b",
+      "\\bking of Mathura\\b",
+      "\\btyrannical king\\b"
+    ],
+    "gender": "male",
+    "source": "Auto-discovered from Bhagavatam text. Generated from mythology knowledge.",
+    "addedAt": "2026-04-17T22:56:11.892Z"
+  },
+  {
+    "key": "gopis",
+    "name": "Gopis",
+    "fullDescription": "Gopis: A group of young cowherd women of Vrindavana, ages 16 to 25, radiantly beautiful with varying complexions ranging from warm golden-wheat (#C8A96E) to rich dusky brown (#8B5E3C), reflecting the pastoral village beauties of Vraja. Each gopi has a soft oval face, large expressive lotus-petal eyes heavily lined with black kajal, delicate arched brows, full lips tinted rose-red, small straight nose, and rosy cheeks with a luminous devotional glow. NO beard NO facial hair. Hair is long, thick, and dark black, worn in elaborate braids or buns adorned with jasmine garlands, marigold strings, peacock feathers, and forest flowers. They wear vibrant silk saris in colors of saffron, sky blue, deep rose, emerald green, and turmeric yellow with golden zari borders, draped gracefully in traditional Braj style with mirrored blouse cholis. Ornaments include gold necklaces with floral pendants, stacked glass and gold bangles, anklets with tiny bells (nupur), nose rings, forehead tikka, and toe rings. They carry brass water pots on their hips, lotus flowers, or butter churning rods. Their postures are graceful and devotional — hands folded in anjali mudra, arms raised in longing, or outstretched toward Krishna. Expressions convey ecstatic divine love, longing, bliss, and surrender. Set against lush Vrindavana forest, Yamuna riverbanks, and moonlit groves.",
+    "shortDescription": "Gopis: Beautiful young Vraja cowherd women, ages 16-25, lotus eyes lined with kajal, NO beard NO facial hair, vibrant silk saris with gold ornaments, jasmine-adorned dark braided hair, carrying water pots or lotuses, expressions of ecstatic divine love and devotional longing for Krishna.",
+    "patterns": [
+      "\\bGopis\\b",
+      "\\bGopi\\b",
+      "\\bGopikas\\b",
+      "\\bGopika\\b",
+      "\\bVraja Gopis\\b",
+      "\\bGopies\\b",
+      "\\bCowherd women\\b",
+      "\\bVrajanganas\\b",
+      "\\bVrajabala\\b",
+      "\\bMilkmaids of Vrindavana\\b",
+      "\\bBraj Gopis\\b"
+    ],
+    "gender": "female",
+    "source": "Auto-discovered from Bhagavatam text. Generated from mythology knowledge.",
+    "addedAt": "2026-04-18T04:56:14.028Z"
   }
 ]

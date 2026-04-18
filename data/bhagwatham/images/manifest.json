@@ -89,37 +89,35 @@
     {
       "chapterNumber": 7,
       "chapterTitle": "Chapter सात",
+      "cantoNumber": 1,
       "imagePath": "chapter-007.jpg",
-      "prompt": "Vyasa sits in deep meditation beside the Sarasvati river at the Shamyaprasa ashram, surrounded by berry trees on the peaceful western bank. In the background, Arjuna stands solemnly before Ashwatthama, confronting him with calm authority for his wrongful deeds, while Draupadi and Parikshit are seen in the distance under divine protection.",
-      "descriptionHi": "इस अध्याय में नारद मुनि के प्रस्थान के बाद व्यासदेव सरस्वती नदी के पश्चिमी तट पर शम्याप्रास आश्रम में ध्यान में बैठते हैं। अश्वत्थामा द्वारा द्रौपदी के पाँच पुत्रों को सोते में मार डालने और अर्जुन द्वारा उसे दंडित करने की घटना का उल्लेख किया गया है, जो परीक्षित के जन्म की पृष्ठभूमि बनती है। व्यासदेव समाधि द्वारा परम सत्य की अनुभूति करके श्रीमद्भागवत के रचना की तैयारी करते हैं।",
+      "prompt": "On the western bank of the sacred Saraswati river at the Shamyaprasa ashram, the sage Vyasa sits in deep meditative trance, having just received the wisdom shared by Narada Muni. Meanwhile, Arjuna stands before Ashwatthama in a solemn confrontation, delivering righteous justice for the harm caused to Draupadi and her lineage.",
+      "descriptionHi": "इस अध्याय में अश्वत्थामा द्वारा द्रौपदी के पाँच पुत्रों को सोते में मारने की घटना का उल्लेख है, जिसके लिए अर्जुन ने उसे दंडित किया। महाराज परीक्षित को उनकी माता के गर्भ में चमत्कारिक रूप से बचाया गया था। व्यासदेव ने नारद मुनि के जाने के पश्चात सरस्वती नदी के पश्चिमी तट पर शम्याप्रास आश्रम में समाधि द्वारा सारे सत्य की अनुभूति प्राप्त की।",
       "personasUsed": [
+        "narada",
         "vyasa",
         "arjuna",
-        "parikshit",
         "draupadi"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T15:44:55.121Z",
-      "sceneIndex": 0,
-      "cantoNumber": 1
+      "generatedAt": "2026-04-18T12:00:31.788Z",
+      "sceneIndex": 0
     },
     {
       "chapterNumber": 8,
-      "chapterTitle": "अध्याय आठ",
+      "chapterTitle": "Chapter 278 अध्याय",
+      "cantoNumber": 1,
       "imagePath": "chapter-008.jpg",
-      "prompt": "On the sacred banks of the Ganga river, Krishna stands gently beside the grieving Pandavas — Yudhishthira, Kunti, Draupadi, and the elder Dhritarashtra — as they offer water to their departed loved ones. Krishna, surrounded by sages, speaks words of spiritual consolation, bringing calm to the sorrow-filled gathering under the open sky.",
-      "descriptionHi": "कुरुक्षेत्र युद्ध में मारे गए परिजनों को जल-दान देने के लिए पाण्डव, द्रौपदी, कुन्ती, धृतराष्ट्र, गांधारी सहित गंगा तट पर एकत्रित हुए और शोक में डूबे रहे। सभी ने गंगा में स्नान किया और अपने प्रियजनों के लिए विलाप किया। भगवान श्रीकृष्ण ने वहाँ उपस्थित मुनियों के साथ मिलकर सभी शोकाकुल परिजनों को सान्त्वना दी और काल की अपरिहार्य गति का बोध कराया।",
+      "prompt": "On the sacred banks of the Ganga river, Draupadi, Kunti, and the Pandava women walk forward in a solemn procession, with Krishna accompanying them as a beloved family member. They offer handfuls of holy water to the departed souls, weeping softly, and then immerse themselves in the river, whose waters are sanctified by the dust of Lord Krishna's lotus feet.",
+      "descriptionHi": "युद्ध में मारे गए अपने परिजनों को जलदान देने के लिए पांडव, द्रौपदी और कुंती सहित भगवान कृष्ण के साथ गंगा तट पर गए। स्त्रियों को आगे करके सभी ने विलाप करते हुए मृतकों को जलांजलि अर्पित की और तत्पश्चात् हरि-चरण-धूलि से पवित्र गंगाजल में स्नान किया। यह दृश्य हिंदू परंपरा में पूर्वजों के प्रति श्रद्धा और भगवान कृष्ण की उपस्थिति में शोक को आध्यात्मिक शांति में परिवर्तित करने की भावना को दर्शाता है।",
       "personasUsed": [
         "krishna_adult",
         "kunti",
-        "draupadi",
-        "dhritarashtra",
-        "yudhishthira"
+        "draupadi"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T15:50:16.931Z",
-      "sceneIndex": 0,
-      "cantoNumber": 1
+      "generatedAt": "2026-04-18T12:03:08.115Z",
+      "sceneIndex": 0
     },
     {
       "chapterNumber": 9,
@@ -188,22 +186,6 @@
       "prompt": "A divine newborn baby glowing with golden light in a grand palace chamber, royal family gathered around with joy, priests performing blessing rituals with sacred fire, wide cinematic composition",
       "descriptionHi": "सम्राट परीक्षित का जन्म",
       "generatedAt": "2026-04-10T09:43:08.237Z",
-      "sceneIndex": 0,
-      "cantoNumber": 1
-    },
-    {
-      "chapterNumber": 13,
-      "chapterTitle": "Chapter तेरह",
-      "imagePath": "chapter-013.jpg",
-      "prompt": "Blind old king Dhritarashtra and queen Gandhari in simple white renunciation robes walking away from the grand Hastinapura palace toward the forest at dawn, Vidura guiding them with a gentle hand, wide cinematic landscape",
-      "descriptionHi": "धृतराष्ट्र द्वारा गृह -त्याग",
-      "personasUsed": [
-        "gandhari",
-        "dhritarashtra",
-        "vidura"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T09:50:44.536Z",
       "sceneIndex": 0,
       "cantoNumber": 1
     },
@@ -285,18 +267,18 @@
     {
       "chapterNumber": 18,
       "chapterTitle": "Chapter अठारह",
+      "cantoNumber": 1,
       "imagePath": "chapter-018.jpg",
-      "prompt": "In the serene forest of Naimisharanya, Suta Goswami sits before an assembly of sages and begins narrating the miraculous birth of King Parikshit. He describes how the divine grace of Krishna protected the unborn Parikshit within his mother's womb from the powerful weapon of Ashvatthama, revealing Krishna's extraordinary and boundless mercy.",
-      "descriptionHi": "सूत गोस्वामी नैमिषारण्य के ऋषियों को महाराज परीक्षित के अद्भुत जन्म की कथा सुनाते हैं। द्रोणपुत्र अश्वत्थामा के अस्त्र से माता के गर्भ में ही आक्रांत होने पर भी भगवान श्रीकृष्ण की दिव्य कृपा से परीक्षित की रक्षा हुई। यह प्रसंग भगवान कृष्ण के अद्भुत कार्यों और उनकी असीम कृपाशक्ति का प्रमाण है।",
+      "prompt": "Suta Goswami sits serenely among the sages of Naimisharanya forest, speaking with reverence about the miraculous protection of the unborn Parikshit. In a divine vision, Krishna appears radiantly in the womb's darkness, shielding the infant Parikshit from the powerful celestial weapon, his four-armed form glowing with golden light as he extends his grace.",
+      "descriptionHi": "इस अध्याय में सूत गोस्वामी नैमिषारण्य के ऋषियों को महाराज परीक्षित के अद्भुत जन्म की कथा सुनाते हैं, जब भगवान श्रीकृष्ण की कृपा से वे द्रोणपुत्र अश्वत्थामा के ब्रह्मास्त्र से अपनी माता के गर्भ में भी सुरक्षित रहे। यह प्रसंग भगवान कृष्ण की असीम करुणा और उनके अद्भुत कार्यों का प्रमाण है। ऋषिगण महाराज परीक्षित के इस दिव्य जन्म और उनके धर्मपरायण शासन से अत्यंत प्रभावित और विस्मित हैं।",
       "personasUsed": [
         "krishna_adult",
         "suta_goswami",
         "parikshit"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T13:54:51.876Z",
-      "sceneIndex": 0,
-      "cantoNumber": 1
+      "generatedAt": "2026-04-18T12:03:58.636Z",
+      "sceneIndex": 0
     },
     {
       "chapterNumber": 19,
@@ -563,13 +545,16 @@
       "chapterTitle": "(शुषा दो",
       "cantoNumber": 3,
       "imagePath": "chapter-031.jpg",
-      "prompt": "Krishna plays with mud as a child, lost in divine joy, while his mother calls him for breakfast, in a serene village setting.",
-      "descriptionHi": "श्रीशुकदेव गोस्वामी ने बताया कि जब विदुर ने उद्धव से भगवान्‌ कृष्ण का सन्देश पूछा तो उद्धव अत्यधिक उत्सुकता के कारण तुरन्त उत्तर नहीं दे पाये। भगवान्‌ कृष्ण की स्मृति में उद्धव इतने लीन हो जाते थे कि उनकी माता के बुलाने पर भी वे कलेवा करना नहीं चाहते थे।",
+      "prompt": "Uddhava stands before Vidura on a quiet riverbank, his eyes filled with tears and his voice silent, overcome with deep longing as memories of Krishna flood his heart. Shukadeva narrates the scene gently. As a young child of five, Uddhava had lovingly dressed and offered food to a clay image of Krishna, lost in divine play, ignoring his mother's call for breakfast.",
+      "descriptionHi": "जब विदुर ने महान भक्त उद्धव से भगवान कृष्ण का संदेश पूछा, तो कृष्ण की स्मृति में अत्यधिक विह्वल होने के कारण उद्धव तुरंत उत्तर नहीं दे पाए। शुकदेव गोस्वामी बताते हैं कि उद्धव बचपन से ही नित्य-सिद्ध भक्त थे और पाँच वर्ष की आयु में भी कृष्ण की सेवा में इतने लीन रहते थे कि माता के बुलाने पर भी कलेवा छोड़ना नहीं चाहते थे। यह प्रसंग उद्धव की अनन्य भक्ति और कृष्ण के प्रति उनके गहरे आत्मिक प्रेम को दर्शाता है।",
       "personasUsed": [
-        "krishna_adult"
+        "krishna_child",
+        "krishna_adult",
+        "shukadeva",
+        "vidura"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-15T06:58:24.911Z",
+      "generatedAt": "2026-04-18T12:04:56.826Z",
       "sceneIndex": 0
     },
     {
@@ -924,16 +909,6 @@
     },
     {
       "chapterNumber": 64,
-      "chapterTitle": "Chapter छब्बीस",
-      "imagePath": "chapter-064.jpg",
-      "prompt": "King Puranjana goes for hunting, while the Queen becomes upset in the palace.",
-      "descriptionHi": "राजा पुरञ्जन आखेट के लिए जाते हैं और रानी क्रुद्ध हो जाती है, इस प्रकार एक महत्वपूर्ण घटना का वर्णन किया जाता है। राजा पुरञ्जन और रानी इस अध्याय के मुख्य पात्र हैं।",
-      "generatedAt": "2026-04-11T04:41:23.558Z",
-      "sceneIndex": 0,
-      "cantoNumber": 4
-    },
-    {
-      "chapterNumber": 64,
       "chapterTitle": "Chapter दो",
       "imagePath": "chapter-071.jpg",
       "prompt": "King Agnidhra meets Purvachitti, a heavenly maiden, in a cave on Mount Mandara, and they exchange gentle, loving glances.",
@@ -963,20 +938,6 @@
       "prompt": "Hiranyakashyapu consoles his grieving nephews in a serene palace setting, sharing a historical lesson to alleviate their sorrow.",
       "descriptionHi": "हिरण्यकशिपु अपने पुत्र तथा भाई हिरण्याक्ष के विनाश से दुखी हुआ और उसने धार्मिक कार्यकलापों को कम करने का प्रयास किया। उसने अपने भतीजों को इतिहास का उपदेश दिया जिससे उनके शोक कम हो सकें। हिरण्यकशिपु के कार्यों में एक आध्यात्मिक संघर्ष दिखाई देता है।",
       "generatedAt": "2026-04-11T19:44:49.195Z",
-      "sceneIndex": 0,
-      "cantoNumber": 4
-    },
-    {
-      "chapterNumber": 65,
-      "chapterTitle": "Chapter तीन",
-      "imagePath": "chapter-072.jpg",
-      "prompt": "Lord Vishnu appears before King Nabhii in his four-armed form, granting his wish for a son in the presence of his wife Merudevi.",
-      "descriptionHi": "महाराज नाभि ने पुत्रेच्छा से भगवान् विष्णु की आराधना की और भगवान् ने राजा नाभि की पत्नी मेरुदेवी के गर्भ से ऋषभदेव के अवतार के रूप में जन्म लेना स्वीकार किया। इस अध्याय में भगवान् विष्णु की कृपा और महाराज नाभि की भक्ति का वर्णन किया गया है।",
-      "personasUsed": [
-        "vishnu"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-11T06:00:30.495Z",
       "sceneIndex": 0,
       "cantoNumber": 4
     },
@@ -1074,20 +1035,6 @@
       "prompt": "Jada Bharata compassionately explains to King Rahugana the illusion of worldly life in a dense forest.",
       "descriptionHi": "ब्राह्मण जड़ भरत राजा रहूगण को संसार रूपी जंगल का अलंकारिक वर्णन करते हैं, जिसमें मनुष्य उलझ जाता है। उन्होंने बताया कि यह जंगल लुटेरों और हिंस्र पशुओं से भरा है, जो मनुष्य की शक्ति का शोषण करना चाहते हैं।",
       "generatedAt": "2026-04-11T06:30:16.345Z",
-      "sceneIndex": 0,
-      "cantoNumber": 4
-    },
-    {
-      "chapterNumber": 75,
-      "chapterTitle": "Chapter तेरह",
-      "imagePath": "chapter-096.jpg",
-      "prompt": "Indra, filled with regret, flees to the mystical lake, seeking refuge under the protection of Goddess Lakshmi, with Lord Vishnu's guidance.",
-      "descriptionHi": "इस अध्याय में राजा इन्द्र द्वारा वृत्रासुर के वध के बाद उत्पन्न भय और पश्चाताप का वर्णन किया गया है, जिसमें भगवान् विष्णु की कृपा से उसकी रक्षा होती है। यह अध्याय ब्राह्मण-हत्या जैसे पाप के परिणामों और महान् पुरुषों के स्वभाव को दर्शाता है।",
-      "personasUsed": [
-        "vishnu"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-11T18:29:13.522Z",
       "sceneIndex": 0,
       "cantoNumber": 4
     },
@@ -1485,16 +1432,6 @@
       "cantoNumber": 5
     },
     {
-      "chapterNumber": 109,
-      "chapterTitle": "Chapter सोलह",
-      "imagePath": "chapter-130.jpg",
-      "prompt": "Kashyapamuni advises his wife Aditi to observe a vow in their ashram to alleviate her sorrow.",
-      "descriptionHi": "इस अध्याय में देवताओं की माता अदिति के दुख का वर्णन किया गया है, जो अपने पुत्रों के लाभ के लिए तपस्या करने के लिए प्रेरित होती है। कश्यपमुनि अपनी पत्नी को व्रत रखने की सलाह देते हैं। अदिति का दुख और कश्यपमुनि की सलाह इस अध्याय का मुख्य विषय है।",
-      "generatedAt": "2026-04-12T02:34:29.171Z",
-      "sceneIndex": 0,
-      "cantoNumber": 5
-    },
-    {
       "chapterNumber": 110,
       "chapterTitle": "Chapter सत्रह",
       "imagePath": "chapter-131.jpg",
@@ -1559,16 +1496,6 @@
       "generatedAt": "2026-04-12T04:01:22.385Z",
       "sceneIndex": 0,
       "cantoNumber": 5
-    },
-    {
-      "chapterNumber": 120,
-      "chapterTitle": "Chapter एक",
-      "imagePath": "chapter-136.jpg",
-      "prompt": "Sudyumna transforms into a woman in Sumeru's forest, surrounded by his ministers, marking a pivotal moment in his journey.",
-      "descriptionHi": "इस अध्याय में राजा सुद्युम्न के जीवन की कथा वर्णित है, जो एक पुरुष से स्त्री बन जाते हैं और फिर शिवजी की कृपा से अपना राज्य पुनः प्राप्त करते हैं। मुख्य पात्र सुद्युम्न, शुकदेव और ब्रह्मा हैं।",
-      "generatedAt": "2026-04-12T04:05:44.673Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
     },
     {
       "chapterNumber": 121,
@@ -1713,21 +1640,6 @@
       "prompt": "Bhagirath stands on the riverbank as Ganga descends to Earth, with Lord Shiva calming her waves in the background.",
       "descriptionHi": "भगीरथ ने गंगा को पृथ्वी पर लाने के लिए कठोर तपस्या की और माता गंगा ने उनकी तपस्या से प्रसन्न होकर उन्हें दर्शन दिया। भगीरथ ने अपने पितरों का उद्धार करने की प्रार्थना की और माता गंगा ने भगवान शिव के माध्यम से उनकी तरंगों को वश में करने का वरदान दिया।",
       "generatedAt": "2026-04-12T04:36:37.546Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
-    },
-    {
-      "chapterNumber": 128,
-      "chapterTitle": "Chapter नौ",
-      "imagePath": "chapter-158.jpg",
-      "prompt": "Krishna becomes upset as Mother Yashoda stops feeding him to attend to overflowing milk, leading to a moment of tender conflict in their humble home.",
-      "descriptionHi": "माता यशोदा कृष्ण को स्तन-पान करा रहीं थीं लेकिन जब उन्होंने दूध उबलते हुए देखा तो वे तुरन्त वहाँ गईं और कृष्ण को दूध पिलाना बन्द कर दिया, जिससे कृष्ण क्रुद्ध हो गये। इस अध्याय में कृष्ण की माता यशोदा द्वारा बाँधने की कोशिश का वर्णन किया गया है।",
-      "personasUsed": [
-        "krishna_adult",
-        "yashoda"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-12T07:46:16.954Z",
       "sceneIndex": 0,
       "cantoNumber": 6
     },
@@ -2214,16 +2126,6 @@
       "sceneIndex": 0
     },
     {
-      "chapterNumber": 188,
-      "chapterTitle": "Chapter ग्यारह",
-      "cantoNumber": 9,
-      "imagePath": "chapter-188.jpg",
-      "prompt": "Sita Devi, serene and dignified, stands at the edge of a sacred forest clearing near Valmiki's ashram, her twin sons Lava and Kusha beside her. With folded hands and closed eyes, she peacefully merges into the embrace of Mother Earth, as the sage Valmiki watches with reverence and the children look on in quiet wonder.",
-      "descriptionHi": "इस अध्याय में भगवान् रामचन्द्र के अयोध्या में राज्य करने, यज्ञ सम्पन्न करने और सीतादेवी को वनवास देने की लीला का वर्णन है। सीतादेवी वाल्मीकि के आश्रम में लव और कुश को जन्म देकर पृथ्वी में समा गईं। यह लीला भगवान् के मानवीय रूप में धर्म और लोकमर्यादा के पालन की गहन आध्यात्मिक महत्ता को दर्शाती है।",
-      "generatedAt": "2026-04-15T13:53:18.248Z",
-      "sceneIndex": 0
-    },
-    {
       "chapterNumber": 189,
       "chapterTitle": "Chapter बारह",
       "cantoNumber": 9,
@@ -2329,50 +2231,6 @@
       "sceneIndex": 0
     },
     {
-      "chapterNumber": 199,
-      "chapterTitle": "Chapter बाईस",
-      "cantoNumber": 9,
-      "imagePath": "chapter-199.jpg",
-      "prompt": "On the sacred banks of the Ganga, the noble Bhishma stands tall and serene, as the divine river goddess Ganga blesses her son. Nearby, Draupadi and Arjuna listen with reverence as the great lineage of the Kuru dynasty — from Pratipa to Shantanu to Bhishma — is solemnly recounted, connecting mortal heroes to celestial origins.",
-      "descriptionHi": "इस अध्याय में चंद्रवंश के अजमीढ के वंशजों का विस्तृत वर्णन है, जिसमें द्रुपद, द्रौपदी, जरासंध, तथा कुरुवंश के राजाओं की वंशावली दी गई है। प्रतीप के पुत्र शांतनु के राज्यकाल की कथा विशेष महत्त्वपूर्ण है, जिसमें देवापि के वनगमन और बारह वर्षों के अनावृष्टि का प्रसंग है। भीष्म का जन्म गंगा से शांतनु द्वारा हुआ और वे बारह महाजनों में गिने जाते हैं, जो इस वंश की आध्यात्मिक महिमा को दर्शाता है।",
-      "personasUsed": [
-        "arjuna",
-        "draupadi",
-        "bhishma"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T14:06:08.590Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 200,
-      "chapterTitle": "Chapter तेईस",
-      "cantoNumber": 9,
-      "imagePath": "chapter-200.jpg",
-      "prompt": "On the banks of a gentle river, the kind charioteer Adhiratha discovers a newborn infant Karna, placed in a basket by Kunti, who watches from a distance with tearful eyes and a heavy heart. Adhiratha cradles the child tenderly, choosing to raise him as his own son with great love and care.",
-      "descriptionHi": "इस अध्याय में ययाति के चार पुत्रों—अनु, द्रुह्यु, तुर्वसु और यदु—के वंशों का विस्तृत वर्णन किया गया है। इसमें एक महत्वपूर्ण प्रसंग यह है कि अधिरथ ने कुन्ती द्वारा त्यागे गए पुत्र कर्ण को पाला-पोसा। यह अध्याय वंश परंपरा के साथ-साथ कर्ण के जीवन की करुण पृष्ठभूमि को भी उजागर करता है।",
-      "personasUsed": [
-        "kunti"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T14:07:14.717Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 201,
-      "chapterTitle": "Chapter चौबीस",
-      "cantoNumber": 9,
-      "imagePath": "chapter-201.jpg",
-      "prompt": "Kunti, as a young princess named Pritha, stands gracefully before her father Shurasena in a royal palace courtyard as he lovingly presents her to his dear friend Kunti, after whom she will forever be known as Kunti. The moment is tender and solemn, marking the beginning of her extraordinary destiny connected to the Pandava lineage.",
-      "descriptionHi": "इस अध्याय में विदर्भ, यदु और शूर वंश की विस्तृत वंशावली का वर्णन किया गया है, जिसमें भगवान श्रीकृष्ण के पूर्वजों और परिवार की पूरी वंश-परम्परा बताई गई है। वसुदेव, देवकी, कंस, अक्रूर जैसे महत्वपूर्ण पात्रों का परिचय इसी वंशावली के माध्यम से होता है। कुन्ती का विवरण भी दिया गया है कि कैसे शूर की पुत्री पृथा अपने पिता के मित्र कुन्ति को दी जाकर 'कुन्ती' कहलाई और उन्होंने पाण्डु से विवाह किया।",
-      "personasUsed": [
-        "kunti"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T14:08:17.049Z",
-      "sceneIndex": 0
-    },
-    {
       "chapterNumber": 206,
       "chapterTitle": "Chapter पाँच",
       "cantoNumber": 10,
@@ -2388,39 +2246,6 @@
       "sceneIndex": 0
     },
     {
-      "chapterNumber": 207,
-      "chapterTitle": "Chapter छह",
-      "cantoNumber": 10,
-      "imagePath": "chapter-207.jpg",
-      "prompt": "The demoness Putana, disguised as a beautiful and graceful woman, enters the peaceful village of Gokul and approaches Nanda Maharaja's home. Inside, the infant Krishna lies radiantly in his cradle, surrounded by the warm glow of the household. The divine child's serene presence fills the entire space with an otherworldly calm and protection.",
-      "descriptionHi": "इस अध्याय में कंस द्वारा भेजी गई राक्षसी पूतना गोकुल में आती है और शिशुओं को हानि पहुँचाने का प्रयास करती है। पूतना योगशक्ति से सुंदर स्त्री का रूप धारण कर नन्द महाराज के घर पहुँचती है, किन्तु जहाँ साक्षात् भगवान् श्रीकृष्ण विराजमान हों, वहाँ उसे मृत्यु के अतिरिक्त कुछ नहीं मिलता। यह अध्याय यह दर्शाता है कि भगवान् की उपस्थिति में कोई भी अशुभ शक्ति टिक नहीं सकती।",
-      "personasUsed": [
-        "krishna_child",
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T14:10:02.565Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 208,
-      "chapterTitle": "Chapter सात",
-      "cantoNumber": 10,
-      "imagePath": "chapter-208.jpg",
-      "prompt": "The infant Krishna, just three months old, opens his tiny mouth wide in Vrindavan, revealing the entire universe within — stars, planets, and all of creation glowing inside. His mother Yashoda and the gopas stand nearby in awe, while the sage Shukadeva narrates this divine vision to the attentive King Parikshit.",
-      "descriptionHi": "इस अध्याय में शुकदेव गोस्वामी महाराज परीक्षित को श्रीकृष्ण की बाल-लीलाओं का वर्णन करते हैं, जिसमें शकट भंजन और तृणावर्त असुर के वध का उल्लेख है। श्रीकृष्ण ने मात्र तीन मास की आयु में अपने मुख के भीतर संपूर्ण ब्रह्माण्ड का दर्शन कराया। यह लीला भगवान् की अनंत शक्ति और उनके दिव्य स्वरूप का प्रमाण है।",
-      "personasUsed": [
-        "krishna_child",
-        "krishna_adult",
-        "shukadeva",
-        "parikshit",
-        "yashoda"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T14:11:06.407Z",
-      "sceneIndex": 0
-    },
-    {
       "chapterNumber": 209,
       "chapterTitle": "Chapter आठ",
       "cantoNumber": 10,
@@ -2433,21 +2258,6 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-15T14:12:09.301Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 210,
-      "chapterTitle": "Chapter नौ",
-      "cantoNumber": 10,
-      "imagePath": "chapter-210.jpg",
-      "prompt": "In a warm village home in Vrindavan, little Krishna stands beside an overturned butter pot, his eyes wide with mischief and defiance. Mother Yashoda, having rushed back from the hearth, looks at her beloved child with a mixture of tender exasperation and deep love, holding a rope, ready to gently bind him as an act of devoted discipline.",
-      "descriptionHi": "इस अध्याय में माता यशोदा और बालकृष्ण के बीच की एक मनोरम लीला का वर्णन है। माता यशोदा दही मथ रही थीं, तभी कृष्ण ने स्तन-पान का आग्रह किया, किन्तु दूध उफनने पर माता उन्हें बीच में छोड़कर चली गईं। इस पर क्रुद्ध बालकृष्ण ने दही की मटकी तोड़ दी, जिससे माता यशोदा ने उन्हें बाँधने का निश्चय किया — यह लीला भक्ति और प्रेम का अद्भुत प्रतीक है।",
-      "personasUsed": [
-        "krishna_adult",
-        "yashoda"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T14:13:14.477Z",
       "sceneIndex": 0
     },
     {
@@ -2494,21 +2304,6 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-15T14:16:02.280Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 214,
-      "chapterTitle": "Chapter तेरह",
-      "cantoNumber": 10,
-      "imagePath": "chapter-214.jpg",
-      "prompt": "In a sunlit forest clearing, young Krishna stands alone, having discovered that Brahma has secretly taken away all the cowherd boys and calves. Krishna, serene and all-knowing, begins to expand his divine presence, transforming himself into every missing child and calf, so their mothers and companions may continue to feel their beloved ones near.",
-      "descriptionHi": "इस अध्याय में ब्रह्माजी ने कृष्ण की शक्ति की परीक्षा लेने के लिए सभी ग्वालबालों और बछड़ों को चुराकर एकान्त स्थान में छिपा दिया। कृष्ण ने ब्रह्माजी की इस चाल को समझकर अपनी दिव्य शक्ति से स्वयं ही उन सभी बालकों और बछड़ों का रूप धारण कर लिया। इस लीला का आध्यात्मिक महत्व यह है कि भगवान् कृष्ण समस्त कारणों के परम कारण हैं और ब्रह्माजी का मोह अंततः दूर हो गया।",
-      "personasUsed": [
-        "krishna_adult",
-        "brahma"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T14:17:08.891Z",
       "sceneIndex": 0
     },
     {
@@ -2595,62 +2390,6 @@
       "sceneIndex": 0
     },
     {
-      "chapterNumber": 221,
-      "chapterTitle": "Chapter बीस",
-      "cantoNumber": 10,
-      "imagePath": "chapter-221.jpg",
-      "prompt": "In the lush forests of Vrindavana during the rainy season, the young cowherd boys gather around the village women and joyfully recount the wondrous deeds of Krishna and Balarama — how the two brothers protected everyone from a blazing forest fire and overcame the demon Pralamba — their voices filled with awe and devotion.",
-      "descriptionHi": "इस अध्याय में शुकदेव गोस्वामी परीक्षित को बताते हैं कि ग्वालबालों ने वृन्दावन की स्त्रियों को कृष्ण और बलराम के अद्भुत कार्यों का वर्णन किया — जिसमें दावाग्नि से रक्षा और प्रलम्बासुर के वध की कथा सम्मिलित थी। इसके साथ ही शुकदेव जी वर्षा और शरद ऋतु में वृन्दावन की प्राकृतिक शोभा का वर्णन करते हैं। यह अध्याय भक्ति के माध्यम से प्रकृति और परमात्मा के सौंदर्य को एक साथ प्रस्तुत करता है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T14:25:48.937Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 222,
-      "chapterTitle": "Chapter इक्कीस",
-      "cantoNumber": 10,
-      "imagePath": "chapter-222.jpg",
-      "prompt": "Krishna stands at the edge of the Vrindavan forest on the banks of the Yamuna river, playing his enchanting flute in the golden evening light. The gopis gather nearby, listening in rapt devotion, while birds perch still on branches, deer pause in wonder, and the flowing river seems to slow, all of creation captivated by the divine melody.",
-      "descriptionHi": "इस अध्याय में गोपियाँ कृष्ण की वेणु (बांसुरी) की मधुर धुन की भावपूर्ण सराहना करती हैं। वे वर्णन करती हैं कि कृष्ण का वेणुगीत सुनकर समस्त प्रकृति — नदियाँ, पशु-पक्षी, वृक्ष — सब मंत्रमुग्ध हो जाते हैं। इस प्रसंग का आध्यात्मिक महत्व यह है कि कृष्ण की बांसुरी की ध्वनि ब्रह्मानंद का प्रतीक है जो समस्त जीवों को परमात्मा की ओर आकर्षित करती है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T14:27:00.610Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 223,
-      "chapterTitle": "Chapter बाईस",
-      "cantoNumber": 10,
-      "imagePath": "chapter-223.jpg",
-      "prompt": "On the banks of the Yamuna river, young unmarried gopis who had been observing a devout vow to Goddess Katyayani stand in the water, their hands folded in reverence. Krishna sits gracefully on a kadamba tree above, holding their garments, smiling gently as the gopis earnestly beseech him, surrendering completely to his divine will.",
-      "descriptionHi": "इस अध्याय में ब्रज की कुमारी गोपियों ने श्रीकृष्ण को पति रूप में पाने की कामना से देवी कात्यायनी की व्रत-पूजा की। श्रीकृष्ण ने यमुना नदी के तट पर स्नान करती इन कुमारियों के वस्त्र हरण कर उन्हें कदम्ब वृक्ष पर रख दिए और उन्हें अपने निकट आने पर लौटाए। यह लीला आध्यात्मिक दृष्टि से जीव की निःशर्त समर्पण और भगवान के प्रति पूर्ण शरणागति का प्रतीक मानी जाती है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T14:28:08.682Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 224,
-      "chapterTitle": "Chapter तेईस",
-      "cantoNumber": 10,
-      "imagePath": "chapter-224.jpg",
-      "prompt": "In a forest clearing near a yagna site, the devoted wives of brahmanas joyfully approach Krishna, carrying four kinds of food offerings. Krishna stands graciously among the cowherd boys, welcoming the women with a warm and divine smile. The women, filled with deep devotion and reverence, offer the food with folded hands, surrendering themselves completely to Krishna.",
-      "descriptionHi": "इस अध्याय में भगवान् श्रीकृष्ण ने भूखे ग्वालबालों को यज्ञ कर रहे ब्राह्मणों के पास भोजन माँगने भेजा, किन्तु ब्राह्मणों ने उपेक्षा की। तब कृष्ण ने बालकों को ब्राह्मण-पत्नियों के पास भेजा, जो कृष्ण के प्रति अत्यधिक अनुरक्त थीं और चार प्रकार के भोजन लेकर तुरंत उनके पास आ गईं। इस प्रकार उन पतिव्रता स्त्रियों ने अपने आपको श्रीकृष्ण को समर्पित करके दिव्य कृपा प्राप्त की।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T14:29:04.225Z",
-      "sceneIndex": 0
-    },
-    {
       "chapterNumber": 225,
       "chapterTitle": "Chapter चौबीस",
       "cantoNumber": 10,
@@ -2721,76 +2460,6 @@
       "sceneIndex": 0
     },
     {
-      "chapterNumber": 230,
-      "chapterTitle": "Chapter उन्तीस",
-      "cantoNumber": 10,
-      "imagePath": "chapter-230.jpg",
-      "prompt": "Krishna stands in a moonlit forest clearing on the banks of the Yamuna river, gently speaking and reasoning with the devoted gopis who have gathered around him with longing and devotion. The gopis listen with folded hands and tearful eyes as Krishna prepares to begin the divine Rasa dance, the air filled with the fragrance of flowers and soft moonlight.",
-      "descriptionHi": "इस अध्याय में भगवान् श्रीकृष्ण रासनृत्य का आनन्द लेने की इच्छा से गोपियों से तर्क-वितर्क करते हैं और उन्हें समझाते हैं। गोपियाँ अपने घर-परिवार को छोड़कर कृष्ण के प्रेम में खिंची चली आती हैं और उनसे मिलन की आकांक्षा रखती हैं। यह प्रसंग दिव्य प्रेम और भक्ति की पराकाष्ठा को दर्शाता है, जहाँ जीवात्मा परमात्मा के साथ एकाकार होने की तड़प अनुभव करती है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T14:33:50.702Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 231,
-      "chapterTitle": "Chapter तीस",
-      "cantoNumber": 10,
-      "imagePath": "chapter-231.jpg",
-      "prompt": "The gopis wander through a moonlit forest in deep longing, searching desperately for Krishna who has vanished from the rasa dance. They discover Krishna's footprints intertwined with Radharani's footprints on the forest floor, and gather around them with tear-filled eyes, overwhelmed by love and separation, whispering among themselves about Radharani's blessed companionship with Krishna.",
-      "descriptionHi": "रासनृत्य के मध्य श्रीकृष्ण के अचानक अंतर्धान हो जाने पर गोपियाँ उन्हें पागलों की तरह जंगल-जंगल खोजती रहीं। उन्हें जंगल में कृष्ण के साथ श्रीमती राधारानी के पदचिह्न मिले, जिससे वे समझ गईं कि राधारानी को कृष्ण की विशेष कृपा प्राप्त हुई थी। यह अध्याय कृष्ण के प्रति गोपियों की तीव्र प्रेमभक्ति और विरह-व्याकुलता को दर्शाता है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T14:34:31.591Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 232,
-      "chapterTitle": "Chapter इकतीस",
-      "cantoNumber": 10,
-      "imagePath": "chapter-232.jpg",
-      "prompt": "The gopis of Vrindavan gather near the Yamuna riverbank, their hearts aching with longing for Krishna. With tearful eyes and folded hands, they sing sorrowful songs of separation, gazing into the distance hoping to catch a glimpse of their beloved Krishna, pouring their deepest devotion into their heartfelt laments.",
-      "descriptionHi": "इस अध्याय में गोपियाँ कृष्ण के विरह में व्याकुल होकर विलाप करती हैं और अपने प्रेम की पीड़ा को गीतों के माध्यम से व्यक्त करती हैं। वे कृष्ण की यादों में डूबी हुई उनके दर्शन के लिए तरसती हैं और प्रकृति के विभिन्न तत्वों से कृष्ण का संदेश माँगती हैं। यह अध्याय भक्ति और विरह की गहन भावनात्मक अभिव्यक्ति है जो आत्मा की परमात्मा के प्रति तड़प को दर्शाती है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T14:35:23.314Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 233,
-      "chapterTitle": "Chapter बत्तीस",
-      "cantoNumber": 10,
-      "imagePath": "chapter-233.jpg",
-      "prompt": "Krishna reappears before the longing gopis in a forest grove, dressed in golden yellow silk robes and adorned with a garland of beautiful flowers. The gopis, overwhelmed with joy after their painful separation, gather around him with tears of happiness, some reaching out to hold his hands in a tender moment of divine reunion.",
-      "descriptionHi": "इस अध्याय में श्रीकृष्ण विरह से व्याकुल गोपियों के बीच पुनः प्रकट होते हैं, पीताम्बर और पुष्पमाला धारण किए हुए। गोपियाँ उन्हें देखकर अत्यंत आनंदित हो जाती हैं और कुछ तो प्रेम-विभोर होकर उनका हाथ थाम लेती हैं। यह पुनर्मिलन आत्मा और परमात्मा के मिलन का प्रतीक है, जो गहन आध्यात्मिक आनंद से परिपूर्ण है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T14:35:56.325Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 234,
-      "chapterTitle": "Chapter तैंतीस",
-      "cantoNumber": 10,
-      "imagePath": "chapter-234.jpg",
-      "prompt": "Krishna stands on the moonlit banks of the Yamuna river, surrounded by the devoted gopis in a sacred circle of divine dance. He has multiplied himself so that each gopi feels his presence beside her alone, resting her arm gently on his shoulder. The forest glows with celestial light as music, song, and pure devotion fill every direction.",
-      "descriptionHi": "इस अध्याय में भगवान् श्रीकृष्ण ने यमुना नदी के तट पर वन में गोपियों के साथ दिव्य रासनृत्य का आयोजन किया। कृष्ण ने अनेक रूप धारण किए जिससे प्रत्येक गोपी को यह अनुभव हुआ कि कृष्ण केवल उसी के साथ हैं। यह रासलीला भगवान् के परम भोक्ता स्वरूप और गोपियों की निःस्वार्थ प्रेमभक्ति का अद्वितीय आध्यात्मिक उत्सव है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T14:36:27.994Z",
-      "sceneIndex": 0
-    },
-    {
       "chapterNumber": 235,
       "chapterTitle": "Chapter चौंतीस",
       "cantoNumber": 10,
@@ -2802,20 +2471,6 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-15T14:38:58.236Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 236,
-      "chapterTitle": "Chapter पैंतीस",
-      "cantoNumber": 10,
-      "imagePath": "chapter-236.jpg",
-      "prompt": "Krishna stands in a lush forest, dressed in simple woodland attire, playing his flute in the tribhanga pose. Cows and bulls stand still in the meadow with grass held gently in their mouths, enchanted by the melody. Celestial women pause in the sky above, and nearby rivers cease flowing, as all of nature listens in blissful stillness.",
-      "descriptionHi": "इस अध्याय में गोपियाँ दिन के समय जब कृष्ण वन में चले जाते हैं तो विरह-भाव में उनका गुणगान करती हैं। वे गाती हैं कि कृष्ण की बाँसुरी की धुन सुनकर सिद्धों की पत्नियाँ, पशु-पक्षी, वृक्ष-लताएँ और नदियाँ तक मंत्रमुग्ध हो जाती हैं। यह अध्याय कृष्ण की दिव्य बाँसुरी के प्रभाव और गोपियों के गहरे प्रेम व विरह की आध्यात्मिक अभिव्यक्ति है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T14:39:55.352Z",
       "sceneIndex": 0
     },
     {
@@ -2906,20 +2561,6 @@
       "sceneIndex": 0
     },
     {
-      "chapterNumber": 243,
-      "chapterTitle": "Chapter बयालीस",
-      "cantoNumber": 10,
-      "imagePath": "chapter-243.jpg",
-      "prompt": "Krishna gently places his lotus feet on Trivakra's toes and lifts her chin with his hand, straightening her hunched back. The hunchbacked maidservant of Kamsa is transformed into a beautiful, graceful woman on the streets of Mathura, her face radiating joy and wonder as she gazes upon Krishna with devotion.",
-      "descriptionHi": "इस अध्याय में भगवान् कृष्ण कंस की कुबड़ी दासी त्रिवक्रा से मिलते हैं और उसे लेप देने के बदले में उसका कूबड़ ठीक कर देते हैं, जिससे वह एक सुन्दर स्त्री बन जाती है। इसके बाद कृष्ण और बलराम मथुरा के धनुष-यज्ञ स्थल पर पहुँचते हैं। यह अध्याय भगवान् की करुणा और उनकी दिव्य शक्ति का प्रमाण देता है जो भक्तों के कष्ट दूर करती है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T15:25:29.267Z",
-      "sceneIndex": 0
-    },
-    {
       "chapterNumber": 244,
       "chapterTitle": "Chapter तैंतालीस",
       "cantoNumber": 10,
@@ -2948,49 +2589,6 @@
       "sceneIndex": 0
     },
     {
-      "chapterNumber": 246,
-      "chapterTitle": "Chapter पैंतालीस",
-      "cantoNumber": 10,
-      "imagePath": "chapter-246.jpg",
-      "prompt": "Krishna and Balarama stand humbly before their parents Devaki and Vasudeva in a royal chamber in Mathura. Krishna speaks with folded hands, asking forgiveness for years of separation caused by Kamsa's tyranny. Overwhelmed with love and joy, Devaki and Vasudeva embrace both sons, their eyes filled with tears of reunion and happiness.",
-      "descriptionHi": "इस अध्याय में कृष्ण ने अपने माता-पिता देवकी और वसुदेव से क्षमा माँगी और उन्हें पुत्र-प्रेम से आश्वस्त किया। फिर उन्होंने उग्रसेन को राजा के रूप में स्थापित किया और नन्द महाराज का आभार व्यक्त किया। इस अध्याय का आध्यात्मिक सार यह है कि कृष्ण, परमेश्वर होते हुए भी, माता-पिता के प्रति पुत्र के कर्तव्य और कृतज्ञता का आदर्श प्रस्तुत करते हैं।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T15:29:39.106Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 247,
-      "chapterTitle": "Chapter छियालिस",
-      "cantoNumber": 10,
-      "imagePath": "chapter-247.jpg",
-      "prompt": "Uddhava arrives at Vrindavana in his chariot at sunset, sent by Krishna with a loving message for Nanda, Yashoda, and the gopis. The village glows warmly as cows return home with calves playfully leaping around them, while cowherd men and gopis sing devotional songs praising Krishna and Balarama, filling the air with incense and devotion.",
-      "descriptionHi": "श्रीकृष्ण ने अपने प्रिय मित्र उद्धव को व्रज भेजा ताकि वे नन्द, यशोदा और गोपियों के वियोग-जनित दुख को कृष्ण का संदेश सुनाकर दूर कर सकें। उद्धव सूर्यास्त के समय व्रज पहुँचे और उन्होंने गौवों, बछड़ों तथा कृष्ण-बलराम की महिमा गाते ग्वालों और गोपियों का मनोरम दृश्य देखा। यह अध्याय प्रेम और भक्ति की गहराई को दर्शाता है, जहाँ कृष्ण अपने भक्तों के दुख को दूर करने के लिए सदैव तत्पर रहते हैं।",
-      "personasUsed": [
-        "krishna_adult",
-        "yashoda"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T15:32:03.258Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 248,
-      "chapterTitle": "Chapter सैंतालीस",
-      "cantoNumber": 10,
-      "imagePath": "chapter-248.jpg",
-      "prompt": "In a quiet, secluded grove in Vrindavan, the gopis surround Uddhava, who arrives as Krishna's messenger dressed in yellow robes with lotus-like eyes. One grieving gopi, lost in deep longing for Krishna, turns to a passing bumblebee and pours out her heart, addressing it as Krishna's emissary, while tears flow freely among the assembled gopis.",
-      "descriptionHi": "इस अध्याय में उद्धव कृष्ण के दूत बनकर व्रज की गोपियों के पास जाते हैं और उन्हें भगवान् का सन्देश सुनाते हैं। गोपियाँ उद्धव को देखकर कृष्ण की याद में व्याकुल हो जाती हैं और विरह-वेदना में रोने लगती हैं। एक गोपी भौंरे को कृष्ण का दूत मानकर अपनी व्यथा सुनाती है, जो भ्रमर गीत की आत्मा है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T15:32:58.714Z",
-      "sceneIndex": 0
-    },
-    {
       "chapterNumber": 249,
       "chapterTitle": "Chapter अड़तालीस",
       "cantoNumber": 10,
@@ -3002,22 +2600,6 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-15T15:33:35.396Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 250,
-      "chapterTitle": "Chapter उनचास",
-      "cantoNumber": 10,
-      "imagePath": "chapter-250.jpg",
-      "prompt": "Inside the royal palace of Hastinapura, Kunti sits with tear-filled eyes before Akrura, her hands folded in devotion as she speaks of her longing for Krishna and her sons' hardships. Akrura listens with compassion and offers her reassurance, while Vidura stands nearby in quiet solidarity, the atmosphere heavy with hope and grief.",
-      "descriptionHi": "भगवान कृष्ण के आदेश पर अक्रूर हस्तिनापुर गए, जहाँ उन्होंने धृतराष्ट्र द्वारा पाण्डवों के प्रति हो रहे दुर्व्यवहार को जाना। कुन्तीदेवी ने अश्रुपूर्ण नेत्रों से अक्रूर से कृष्ण का स्मरण और सहायता की आशा व्यक्त की, जिस पर अक्रूर ने उन्हें आश्वस्त किया कि पाण्डवों का शीघ्र ही उत्तम भाग्य होगा। यह अध्याय भक्ति, विश्वास और कृष्ण की सुरक्षात्मक कृपा का भावपूर्ण चित्रण प्रस्तुत करता है।",
-      "personasUsed": [
-        "krishna_adult",
-        "kunti",
-        "vidura"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T15:34:12.877Z",
       "sceneIndex": 0
     },
     {
@@ -3049,62 +2631,6 @@
       "sceneIndex": 0
     },
     {
-      "chapterNumber": 253,
-      "chapterTitle": "Chapter बावन",
-      "cantoNumber": 10,
-      "imagePath": "chapter-253.jpg",
-      "prompt": "In the royal court of Dwaraka, Krishna sits with calm dignity as a humble Brahmin messenger stands before him, presenting a heartfelt letter from Princess Rukmini. Krishna reads her words of devotion and longing, his eyes reflecting deep compassion and joy, as the moment marks the beginning of their sacred union.",
-      "descriptionHi": "इस अध्याय में बताया गया है कि भगवान कृष्ण और बलराम द्वारका चले गये, जहाँ एक ब्राह्मण दूत के माध्यम से कृष्ण को राजकुमारी रुक्मिणी का प्रेम-संदेश प्राप्त हुआ। रुक्मिणी ने अपने हृदय की भावनाएँ उस ब्राह्मण के द्वारा कृष्ण तक पहुँचाईं और कृष्ण से विवाह की याचना की। अंततः भगवान कृष्ण ने रुक्मिणी को अपनी पत्नी के रूप में स्वीकार किया, जो भक्ति और प्रेम की दिव्य परिणति को दर्शाता है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T15:36:34.914Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 254,
-      "chapterTitle": "Chapter तिरपन",
-      "cantoNumber": 10,
-      "imagePath": "chapter-254.jpg",
-      "prompt": "Krishna rides swiftly in his magnificent chariot driven by Daruka through the night toward Kundina, the capital of Vidarbha. His face is radiant with divine resolve as he journeys to honor Rukmini's heartfelt letter. In the royal city, Rukmini awaits with hope, while kings like Jarasandha and Shishupala have gathered for the grand wedding ceremony.",
-      "descriptionHi": "इस अध्याय में भगवान् श्रीकृष्ण रुक्मिणी का पत्र पाकर तुरन्त विदर्भ की राजधानी कुण्डिन की ओर प्रस्थान करते हैं और शत्रु राजाओं की उपस्थिति के बावजूद रुक्मिणी का अपहरण करने का संकल्प लेते हैं। रुक्मिणी का भाई रुक्मी उनके विवाह का विरोध करता था और शिशुपाल से उसका विवाह तीन दिनों में होने को था। यह घटना भक्ति और प्रेम की शक्ति को दर्शाती है, जहाँ रुक्मिणी की पूर्ण शरण और श्रीकृष्ण की कृपा का सुंदर संगम होता है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T15:37:27.263Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 255,
-      "chapterTitle": "Chapter चौवन",
-      "cantoNumber": 10,
-      "imagePath": "chapter-255.jpg",
-      "prompt": "Krishna rides a grand chariot swiftly across an open plain, with Princess Rukmini seated beside him, her eyes glancing toward him with a mixture of wonder and trust. Krishna turns to her with a calm, reassuring smile, dispelling her fears as his loyal army led by Balarama confidently faces the pursuing kings in the distance.",
-      "descriptionHi": "इस अध्याय में श्रीकृष्ण रुक्मिणी को लेकर द्वारका की ओर जा रहे हैं, जब शत्रु राजा उनका पीछा करते हैं। बलराम और यादव सेना ने विपक्षी सेनाओं को पराजित किया और जरासन्ध आदि राजा पीछे हट गए। अंत में श्रीकृष्ण ने रुक्मिणी से द्वारका में विवाह किया, और यह प्रसंग दैवी प्रेम और भगवान की सुरक्षा शक्ति का प्रतीक है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T15:38:19.345Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 256,
-      "chapterTitle": "Chapter पचपन",
-      "cantoNumber": 10,
-      "imagePath": "chapter-256.jpg",
-      "prompt": "Pradyumna, the radiant son of Krishna and Rukmini, stands before Mayavati who raised him with devotion, as she reveals his true divine identity. In the palace of Shambarasura, the young prince awakens to his celestial origin, his face glowing with recognition and spiritual awakening, fulfilling an ancient divine purpose.",
-      "descriptionHi": "यह अध्याय प्रद्युम्न की कथा पर आधारित है, जो भगवान कृष्ण और रुक्मिणी के पुत्र थे। प्रद्युम्न को शंबरासुर ने शिशु अवस्था में हरण कर लिया था, परंतु उनका पालन-पोषण मायावती ने किया और बाद में उन्होंने अपनी दिव्य शक्ति से शंबरासुर का वध किया। यह कथा कामदेव के पुनर्जन्म, भक्ति की विजय और दैवीय संकल्प की अजेय शक्ति का प्रतीक है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T15:39:17.778Z",
-      "sceneIndex": 0
-    },
-    {
       "chapterNumber": 257,
       "chapterTitle": "Chapter छप्पन",
       "cantoNumber": 10,
@@ -3130,51 +2656,6 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-15T15:42:47.149Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 259,
-      "chapterTitle": "Chapter अट्ठावन",
-      "cantoNumber": 10,
-      "imagePath": "chapter-259.jpg",
-      "prompt": "Inside the royal palace of Indraprastha, Krishna stands with folded hands before the elderly Kunti, offering his respects. Kunti, with tears of devotion in her eyes, speaks to Krishna of her sorrows and hardships, acknowledging him as her sole protector and refuge. Yudhishthira and Draupadi stand nearby in reverence, the atmosphere filled with warmth and spiritual tenderness.",
-      "descriptionHi": "इस अध्याय में भगवान् कृष्ण ने कालिन्दी आदि पाँच राजकुमारियों से विवाह किया और फिर अज्ञातवास पूरा कर चुके पाण्डवों से मिलने इन्द्रप्रस्थ पहुँचे। वहाँ द्रौपदी ने लजाते हुए कृष्ण को प्रणाम किया और माता कुन्ती ने कृष्ण से अपनी विपत्तियाँ साझा करते हुए उन्हें अपना एकमात्र रक्षक बताया। यह अध्याय कृष्ण की भक्तवत्सलता और उनके सर्वव्यापी प्रेम का भावपूर्ण चित्रण प्रस्तुत करता है।",
-      "personasUsed": [
-        "krishna_adult",
-        "kunti",
-        "draupadi",
-        "yudhishthira"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T15:45:39.375Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 260,
-      "chapterTitle": "Chapter उनसठ",
-      "cantoNumber": 10,
-      "imagePath": "chapter-260.jpg",
-      "prompt": "Krishna and Satyabhama ride together on the mighty eagle Garuda through the skies toward the fortified capital of Narakasura. Krishna stands resplendent, his Sudarshana Chakra gleaming at his side, as Satyabhama holds close beside him. The celestial battlefield stretches below, and divine light surrounds them as Krishna confronts the demon king Narakasura to liberate thousands of captive women.",
-      "descriptionHi": "भगवान् कृष्ण सत्यभामा सहित गरुड़ पर सवार होकर नरकासुर की राजधानी पहुँचे और उस दुष्ट असुर का वध कर उसके द्वारा अपहृत हजारों युवतियों को मुक्त कराया। भगवान् ने मुर असुर और उसके सात पुत्रों को भी परास्त किया। यह लीला भगवान् की शक्ति, करुणा और शरणागत-रक्षक स्वरूप को प्रकट करती है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-18T11:52:31.798Z",
-      "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 261,
-      "chapterTitle": "Chapter साठ",
-      "cantoNumber": 10,
-      "imagePath": "chapter-261.jpg",
-      "prompt": "In the royal bedchamber of Dwaraka, Krishna sits comfortably on a regal couch while Rukmini and her attendants serve him devotedly. Krishna gazes at Rukmini's unmatched beauty and begins to tease her with playful yet piercing words, questioning her choice of him as a husband. Rukmini, overwhelmed with emotion, stands tearfully before him, her eyes filled with sorrow and love.",
-      "descriptionHi": "इस अध्याय में भगवान कृष्ण अपनी पत्नी रुक्मिणी के साथ परिहास करते हैं और उन्हें यह कहकर रुठाते हैं कि उन्होंने मुझ जैसे अनुपयुक्त, निर्धन-प्रिय पति को क्यों चुना। कृष्ण के इन व्यंग्यपूर्ण वचनों से रुक्मिणी का आत्मविश्वास टूट जाता है और वे फूट-फूटकर रोने लगती हैं। यह प्रसंग प्रेमियों के मधुर कलह का प्रतीक है जो दिव्य प्रेम की गहराई और कृष्ण की लीला का सुंदर प्रदर्शन करता है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T16:38:28.726Z",
       "sceneIndex": 0
     },
     {
@@ -3206,20 +2687,6 @@
       "sceneIndex": 0
     },
     {
-      "chapterNumber": 264,
-      "chapterTitle": "Chapter तिरसठ",
-      "cantoNumber": 10,
-      "imagePath": "chapter-264.jpg",
-      "prompt": "On a great battlefield outside Shonitapura, Krishna stands resplendent on his chariot as the defeated Banasura's mother approaches him with folded hands, pleading for her son's life. Krishna, ever compassionate, gently turns his face away in respectful modesty, while Shiva and the assembled gods watch from above in reverence.",
-      "descriptionHi": "इस अध्याय में बाणासुर और भगवान् कृष्ण के बीच महायुद्ध का वर्णन है, जिसमें शिवजी बाणासुर की सहायता के लिए आते हैं किन्तु कृष्ण उन्हें भी परास्त कर देते हैं। कृष्ण बाणासुर की भुजाएँ काट देते हैं और बाणासुर की माता अपने पुत्र की रक्षा हेतु कृष्ण के समक्ष आती है जिससे कृष्ण विनम्रतापूर्वक मुख मोड़ लेते हैं। यह अध्याय कृष्ण की अजेय शक्ति और साथ ही उनकी विनम्रता तथा करुणा का सुंदर चित्रण प्रस्तुत करता है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T17:14:56.859Z",
-      "sceneIndex": 0
-    },
-    {
       "chapterNumber": 265,
       "chapterTitle": "Chapter चौंसठ",
       "cantoNumber": 10,
@@ -3232,16 +2699,6 @@
       "personaVersion": 1,
       "generatedAt": "2026-04-15T17:15:45.554Z",
       "sceneIndex": 0
-    },
-    {
-      "chapterNumber": 266,
-      "chapterTitle": "Chapter पैंसठ",
-      "imagePath": "chapter-266.jpg",
-      "prompt": "Balarama interacts with gopis on the serene riverbank of Yamuna in Gokul, showcasing divine connection.",
-      "descriptionHi": "इस अध्याय में भगवान् बलराम के गोकुल जाने और गोपियों के साथ रमण करने का वर्णन है, जहाँ उन्होंने यमुना नदी का कर्षण किया। भगवान् कृष्ण की उपस्थिति में यह घटना आध्यात्मिक महत्व रखती है।",
-      "generatedAt": "2026-04-13T22:10:46.844Z",
-      "sceneIndex": 0,
-      "cantoNumber": 10
     },
     {
       "chapterNumber": 267,
@@ -3383,44 +2840,6 @@
       "cantoNumber": 10
     },
     {
-      "chapterNumber": 277,
-      "chapterTitle": "Chapter छिहत्तर",
-      "imagePath": "chapter-277.jpg",
-      "prompt": "Pradyumna confronts Shalva in the skies above Dwaraka, dispelling the asura's illusions with his divine weapons.",
-      "descriptionHi": "इस अध्याय में शाल्व नामक असुर द्वारा द्वारका पर आक्रमण का वर्णन है, जिसमें प्रद्युम्न और अन्य यदुवीरों ने शाल्व की सेना से लड़ाई लड़ी और उसके विमान को नष्ट करने का प्रयास किया। यह अध्याय शाल्व की प्रतिज्ञा और उसके परिणामों को दर्शाता है।",
-      "generatedAt": "2026-04-13T19:10:31.140Z",
-      "sceneIndex": 0,
-      "cantoNumber": 10
-    },
-    {
-      "chapterNumber": 278,
-      "chapterTitle": "Chapter सतहत्तर",
-      "imagePath": "chapter-278.jpg",
-      "prompt": "Arjuna's sarakathi defends his master on the battlefield, upholding his duty with honor and loyalty.",
-      "descriptionHi": "इस अध्याय में सारथी द्वारा अपने स्वामी की रक्षा करने की बात कही जा रही है, जो कि एक महत्वपूर्ण नैतिक मूल्य है। सारथी अपने कर्तव्य को समझते हुए अपने स्वामी की रक्षा करता है। यह अध्याय हमें निष्ठा और कर्तव्य के महत्व को सिखाता है।",
-      "personasUsed": [
-        "arjuna"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-13T18:30:31.005Z",
-      "sceneIndex": 0,
-      "cantoNumber": 10
-    },
-    {
-      "chapterNumber": 279,
-      "chapterTitle": "Chapter अठहत्तर",
-      "imagePath": "chapter-279.jpg",
-      "prompt": "Krishna faces Dantavakra on the battlefield, gada in hand, as the latter seeks revenge for his friend's demise.",
-      "descriptionHi": "इस अध्याय में भगवान् कृष्ण द्वारा शाल्व की मृत्यु के बाद दन्तवक्र का क्रोध और उसके द्वारा भगवान् पर आक्रमण का वर्णन है। मुख्य पात्र कृष्ण और दन्तवक्र हैं। इस घटना का महत्व भगवान् कृष्ण की शक्ति और दन्तवक्र के क्रोध को दर्शाता है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-13T18:25:33.376Z",
-      "sceneIndex": 0,
-      "cantoNumber": 10
-    },
-    {
       "chapterNumber": 280,
       "chapterTitle": "Chapter उन्यासी",
       "imagePath": "chapter-280.jpg",
@@ -3469,36 +2888,6 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-13T16:30:24.823Z",
-      "sceneIndex": 0,
-      "cantoNumber": 10
-    },
-    {
-      "chapterNumber": 284,
-      "chapterTitle": "Chapter तिरासी",
-      "imagePath": "chapter-284.jpg",
-      "prompt": "Krishna meets his queens, including Rukmini and Satyabhama, in the palace, where they share stories of their divine weddings.",
-      "descriptionHi": "इस अध्याय में द्रौपदी और भगवान् कृष्ण की पत्नियों के बीच एक वार्ता होती है, जिसमें वे भगवान् कृष्ण के साथ अपने विवाह की कहानियाँ सुनाती हैं। यह अध्याय कृष्ण की प्रेम और भक्ति की कहानियों को उजागर करता है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-13T16:28:02.410Z",
-      "sceneIndex": 0,
-      "cantoNumber": 10
-    },
-    {
-      "chapterNumber": 285,
-      "chapterTitle": "Chapter चौरासी",
-      "imagePath": "chapter-285.jpg",
-      "prompt": "Krishna, Arjuna, and Draupadi gather with sages at Kurukshetra during a solar eclipse, discussing spiritual significance.",
-      "descriptionHi": "इस अध्याय में कुरुक्षेत्र में सूर्यग्रहण के अवसर पर ऋषियों का आगमन और भगवान् कृष्ण की महिमा का वर्णन हुआ है, जिसमें कुन्ती, द्रौपदी और अर्जुन जैसे मुख्य पात्र शामिल हैं। यह अध्याय आध्यात्मिक महत्व और शांति की भावना को दर्शाता है।",
-      "personasUsed": [
-        "krishna_adult",
-        "arjuna",
-        "draupadi"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-13T14:50:28.447Z",
       "sceneIndex": 0,
       "cantoNumber": 10
     },
@@ -4088,5 +3477,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-18T11:58:31.804Z"
+  "lastUpdated": "2026-04-18T12:58:39.464Z"
 }
