@@ -243,7 +243,7 @@ async function sarvamStreamPlay(text: string): Promise<HTMLAudioElement> {
       speaker: "gokul",
       model: "bulbul:v3",
       pace: 1,
-      speech_sample_rate: 48000,
+      speech_sample_rate: 24000, // streaming endpoint max: 8000/16000/22050/24000
       output_audio_codec: "mp3",
       enable_preprocessing: true,
     }),
