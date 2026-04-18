@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
 import { Route, Switch } from "wouter";
+import { Analytics } from "@vercel/analytics/react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Home from "@/pages/home";
@@ -34,6 +35,7 @@ function App() {
             <Route path="/" component={Home} />
           </Switch>
           <Toaster />
+          <Analytics />
         </TooltipProvider>
       </QueryClientProvider>
     </HelmetProvider>
