@@ -2834,6 +2834,21 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 238,
+      "chapterTitle": "Chapter सैंतीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-238.jpg",
+      "prompt": "In the verdant pastures of Vraja, the young Krishna stands calm and radiant as the mighty demon Keshi, who has taken the form of a great horse, approaches. Krishna faces the enormous creature with serene composure and divine strength, subduing it effortlessly. Nearby, the sage Narada watches in reverent awe, ready to sing praises of Krishna's celestial deeds.",
+      "descriptionHi": "इस अध्याय में कंस के आदेश पर केशी असुर विशाल घोड़े का रूप धारण कर व्रज में आता है, किंतु भगवान् कृष्ण उसका वध करते हैं। तत्पश्चात् नारदमुनि कृष्ण की भावी लीलाओं का महिमा-गायन करते हैं और व्योमासुर का भी अंत होता है। यह अध्याय कृष्ण की अलौकिक शक्ति और उनके भक्त-रक्षक स्वरूप की आध्यात्मिक महिमा को प्रकट करता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "narada"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-18T11:51:57.802Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 239,
       "chapterTitle": "Chapter अड़तीस",
       "cantoNumber": 10,
@@ -3132,6 +3147,20 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-15T15:45:39.375Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 260,
+      "chapterTitle": "Chapter उनसठ",
+      "cantoNumber": 10,
+      "imagePath": "chapter-260.jpg",
+      "prompt": "Krishna and Satyabhama ride together on the mighty eagle Garuda through the skies toward the fortified capital of Narakasura. Krishna stands resplendent, his Sudarshana Chakra gleaming at his side, as Satyabhama holds close beside him. The celestial battlefield stretches below, and divine light surrounds them as Krishna confronts the demon king Narakasura to liberate thousands of captive women.",
+      "descriptionHi": "भगवान् कृष्ण सत्यभामा सहित गरुड़ पर सवार होकर नरकासुर की राजधानी पहुँचे और उस दुष्ट असुर का वध कर उसके द्वारा अपहृत हजारों युवतियों को मुक्त कराया। भगवान् ने मुर असुर और उसके सात पुत्रों को भी परास्त किया। यह लीला भगवान् की शक्ति, करुणा और शरणागत-रक्षक स्वरूप को प्रकट करती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-18T11:52:31.798Z",
       "sceneIndex": 0
     },
     {
@@ -4059,5 +4088,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-18T11:51:18.601Z"
+  "lastUpdated": "2026-04-18T11:52:53.341Z"
 }
