@@ -2269,6 +2269,16 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 193,
+      "chapterTitle": "Chapter सोलह",
+      "cantoNumber": 9,
+      "imagePath": "chapter-193.jpg",
+      "prompt": "Parashurama, the sage-warrior son of Jamadagni, kneels in grief beside his father's lifeless body in a forest hermitage. He raises his hands in solemn resolve, while his brothers stand watch nearby. The sacred fire of the ashram glows softly, bearing witness to his vow to restore dharma upon the earth.",
+      "descriptionHi": "इस अध्याय में भगवान् परशुराम की कथा वर्णित है — जब कार्तवीर्यार्जुन के पुत्रों ने जमदग्नि मुनि का वध किया, तो परशुराम ने इक्कीस बार पृथ्वी को क्षत्रियों से विहीन किया। बाद में उन्होंने यज्ञ द्वारा अपने पिता को पुनर्जीवित किया, और जमदग्नि सप्तर्षि मंडल को प्राप्त हुए। इस अध्याय में विश्वामित्र के गाधिवंश और उनके तपस्या द्वारा ब्राह्मणत्व प्राप्त करने का भी उल्लेख है।",
+      "generatedAt": "2026-04-18T11:50:55.399Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 194,
       "chapterTitle": "Chapter सत्रह",
       "cantoNumber": 9,
@@ -4049,5 +4059,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-18T11:48:27.849Z"
+  "lastUpdated": "2026-04-18T11:51:18.601Z"
 }
