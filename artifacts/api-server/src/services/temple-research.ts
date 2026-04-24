@@ -280,7 +280,7 @@ Return ONLY a valid JSON object (no markdown, no explanation) matching this sche
 
   try {
     const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-haiku-4-5",
       max_tokens: 1024,
       messages: [{ role: "user", content: prompt }],
     });
@@ -352,7 +352,7 @@ Include 3-5 milestones per temple. Make data realistic and geographically divers
 
   try {
     const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-haiku-4-5",
       max_tokens: 4096,
       messages: [{ role: "user", content: prompt }],
     });
@@ -539,7 +539,7 @@ Only include videos related to ISKCON temple construction, fundraising, or inaug
 
   try {
     const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-haiku-4-5",
       max_tokens: 1024,
       messages: [{ role: "user", content: prompt }],
     });

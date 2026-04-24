@@ -498,27 +498,9 @@ IMPORTANT: The scene_prompt must be ENGLISH ONLY. No Hindi/Sanskrit text.
 Respond in this exact JSON format only:
 {"summary_hi": "...", "scene_prompt": "..."}`;
 
+  // COST OPTIMIZATION: Together Llama first (cheap), Claude Haiku fallback
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const togetherKey = process.env.TOGETHER_API_KEY;
-
-  if (anthropicKey) {
-    try {
-      const client = new Anthropic();
-      const response = await client.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 600,
-        messages: [{ role: "user", content: userPrompt }],
-      });
-      const text = response.content[0].type === "text" ? response.content[0].text : "";
-      const result = parseSceneJSON(text);
-      if (result) {
-        logger.info({ chapterTitle, engine: "anthropic" }, "Gita AI scene prompt generated");
-        return result;
-      }
-    } catch (err) {
-      logger.warn({ err, chapterTitle }, "Anthropic scene generation failed for Gita");
-    }
-  }
 
   if (togetherKey) {
     try {
@@ -546,7 +528,26 @@ Respond in this exact JSON format only:
         return result;
       }
     } catch (err) {
-      logger.warn({ err, chapterTitle }, "Together AI scene generation failed for Gita");
+      logger.warn({ err, chapterTitle }, "Together AI scene generation failed for Gita, trying Haiku fallback");
+    }
+  }
+
+  if (anthropicKey) {
+    try {
+      const client = new Anthropic();
+      const response = await client.messages.create({
+        model: "claude-haiku-4-5", // cheap fallback (was sonnet)
+        max_tokens: 600,
+        messages: [{ role: "user", content: userPrompt }],
+      });
+      const text = response.content[0].type === "text" ? response.content[0].text : "";
+      const result = parseSceneJSON(text);
+      if (result) {
+        logger.info({ chapterTitle, engine: "anthropic-haiku" }, "Gita AI scene prompt generated (fallback)");
+        return result;
+      }
+    } catch (err) {
+      logger.warn({ err, chapterTitle }, "Anthropic Haiku scene generation failed for Gita");
     }
   }
 
@@ -568,7 +569,22 @@ function parseSceneJSON(text: string): { scene: string; descriptionHi: string } 
 
 // ── Scene detection ─────────────────────────────────────────────────────────
 
-async function detectScenes(chapterTitle: string, contentSnippet: string, maxScenes: number = 3): Promise<string[]> {
+async function detectScenes(chapterTitle: string, contentSnippet: string, maxScenes: number = 3, chapterNumber?: number): Promise<string[]> {
+  // COST: Check manifest for cached prompt from a prior generation
+  if (chapterNumber !== undefined) {
+    try {
+      const manifest = readManifest();
+      const existing = manifest.images
+        .filter((img) => img.chapterNumber === chapterNumber && img.prompt)
+        .sort((a, b) => (a.sceneIndex ?? 0) - (b.sceneIndex ?? 0));
+      if (existing.length > 0) {
+        (detectScenes as any)._lastDescriptions = existing.map((e) => e.descriptionHi || "");
+        logger.info({ chapterNumber, cachedScenes: existing.length }, "Gita scene prompt cache HIT — skipping Claude");
+        return existing.map((e) => e.prompt!).slice(0, maxScenes);
+      }
+    } catch { /* cache miss */ }
+  }
+
   // FIRST: try AI-powered scene generation
   const aiScene = await buildAIScenePrompt(chapterTitle, contentSnippet);
   if (aiScene) {
@@ -605,7 +621,7 @@ async function generateWithTogether(prompt: string, destPath: string, model: str
   const apiKey = process.env.TOGETHER_API_KEY;
   if (!apiKey) throw new Error("TOGETHER_API_KEY not set");
 
-  const styleSuffix = "\nRaja Ravi Varma style classic oil painting, soft painterly brushstrokes, NOT photorealistic. Warm golden sunlight, vibrant sky. Traditional Indian devotional art, serene atmosphere, museum quality fine art. Ancient Vedic era 5000 years ago — absolutely NO modern items, NO modern hairstyles, NO trimmed beards, NO glasses, NO modern clothing. All men have long flowing uncut beards and matted jata hair or topknots as per ancient Vedic tradition. Women have long braided hair with flowers. Smooth feminine faces for women, no facial hair on women. Ancient battlefield and palace settings only.";
+  const styleSuffix = "\nRaja Ravi Varma style classic oil painting, soft painterly brushstrokes, NOT photorealistic. Warm golden sunlight, vibrant sky. Traditional Indian devotional art, serene atmosphere, museum quality fine art. Ancient Vedic era 5000 years ago — absolutely NO modern items, NO modern hairstyles, NO trimmed beards, NO glasses, NO modern clothing. ABSOLUTE GENDER RULES (NEVER VIOLATE): 1) WOMEN: Every single female character MUST have a completely smooth clean-shaven feminine face — absolutely ZERO facial hair, ZERO beard, ZERO mustache, ZERO stubble. Women have soft round cheeks, delicate jawline, kajal-lined eyes, long braided black hair decorated with flowers. 2) MEN: Every male character MUST have a clearly masculine face with strong angular jawline and broad shoulders. Men must NEVER have flowers in their hair — men wear topknots, crowns, turbans, or matted jata locks ONLY. 3) Make male and female characters visually DISTINCT. Ancient battlefield and palace settings only.";
 
   let fullPrompt = prompt + styleSuffix;
 
@@ -688,7 +704,7 @@ async function _generateChapterImages(
 ): Promise<string[]> {
   ensureImageDir();
 
-  const scenes = await detectScenes(chapterTitle, contentSnippet, 1);
+  const scenes = await detectScenes(chapterTitle, contentSnippet, 1, chapterNumber);
   const generatedFiles: string[] = [];
   const manifest = readManifest();
 

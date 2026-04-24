@@ -20,12 +20,30 @@ export function startDailyCommitCron(): void {
 }
 
 /**
+ * Sync data/ → public/api/ so the static files Vercel serves are up to date.
+ * Vercel skips builds for data-only commits (vercel.json ignoreCommand), so
+ * without this step, newly generated images never reach the deployed site.
+ */
+function syncDataToPublic(): void {
+  const scriptPath = path.join(REPO_ROOT, "artifacts", "temple-tracker", "scripts", "generate-static-api.mjs");
+  try {
+    execSync(`node "${scriptPath}"`, { cwd: REPO_ROOT, stdio: "pipe" });
+    logger.info("Daily commit: synced data → public/api/");
+  } catch (err) {
+    logger.warn({ err }, "Daily commit: sync script failed (continuing with whatever is in public/api/)");
+  }
+}
+
+/**
  * Stage all data/ changes, commit with a summary, and push.
  * Called once daily by cron, or manually via API.
  */
 export function commitAndPush(): { committed: boolean; message: string } {
   try {
-    // Stage all data directories
+    // First sync data → public/api/ so Vercel serves the latest images/manifests
+    syncDataToPublic();
+
+    // Stage all data directories AND the synced public/api/
     execSync("git add data/", { cwd: REPO_ROOT, stdio: "pipe" });
     execSync("git add artifacts/temple-tracker/public/api/", { cwd: REPO_ROOT, stdio: "pipe" });
 

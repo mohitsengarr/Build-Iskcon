@@ -219,6 +219,11 @@ const SKANDH_NAMES: Record<number, { hi: string; en: string }> = {
 };
 
 const API_BASE = "/api/bhagwatham";
+// For mutations (DELETE/POST/PATCH) — falls back to local API in dev. On Vercel,
+// set VITE_PUBLIC_API_URL to an ngrok/Cloudflare tunnel pointing at the live server.
+const MUTATION_API_BASE = `${import.meta.env.VITE_PUBLIC_API_URL || ""}/api/bhagwatham`;
+const isMutationApiConfigured = () =>
+  Boolean(import.meta.env.VITE_PUBLIC_API_URL) || (typeof window !== "undefined" && window.location.hostname === "localhost");
 
 // ── Sarvam TTS (HTTP streaming — real-time playback via MediaSource) ──────────
 const SARVAM_TTS_URL = "https://api.sarvam.ai/text-to-speech/stream";
@@ -2528,7 +2533,7 @@ export default function Bhagwatham() {
     setUndoToast(null);
     try {
       for (const tid of trashIds) {
-        await fetch(`${API_BASE}/image/restore/${tid}`, { method: "POST" });
+        await fetch(`${MUTATION_API_BASE}/image/restore/${tid}`, { method: "POST" });
       }
       await fetchImageManifest();
     } catch { /* ignore */ }
@@ -2559,13 +2564,21 @@ export default function Bhagwatham() {
 
   const handleRegenerateImages = useCallback(async (chapterNum: number, customPrompt?: string, summaryHi?: string) => {
     if (regeneratingChapters.has(chapterNum)) return;
+    if (!isMutationApiConfigured()) {
+      alert(
+        "Regeneration not configured for the live site.\n\n" +
+        "To enable: start an ngrok tunnel to the local API server, then set VITE_PUBLIC_API_URL " +
+        "in Vercel project settings to the tunnel URL and redeploy.",
+      );
+      return;
+    }
     setRegeneratingChapters((prev) => new Set(prev).add(chapterNum));
     setPromptModal(null);
     try {
       const bodyObj: Record<string, string> = {};
       if (customPrompt) bodyObj.customPrompt = customPrompt;
       if (summaryHi) bodyObj.summaryHi = summaryHi;
-      const res = await fetch(`${API_BASE}/regenerate-chapter/${chapterNum}`, {
+      const res = await fetch(`${MUTATION_API_BASE}/regenerate-chapter/${chapterNum}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bodyObj),
@@ -2587,16 +2600,28 @@ export default function Bhagwatham() {
   }, [regeneratingChapters, fetchImageManifest, showUndo]);
 
   const handleDeleteImage = useCallback(async (chapterNum: number, sceneIndex: number) => {
+    if (!isMutationApiConfigured()) {
+      alert(
+        "Delete not configured for the live site.\n\n" +
+        "To enable: start an ngrok tunnel to the local API server, then set VITE_PUBLIC_API_URL " +
+        "in Vercel project settings to the tunnel URL and redeploy.",
+      );
+      return;
+    }
     try {
-      const res = await fetch(`${API_BASE}/image/${chapterNum}/${sceneIndex}`, { method: "DELETE" });
+      const res = await fetch(`${MUTATION_API_BASE}/image/${chapterNum}/${sceneIndex}`, { method: "DELETE" });
       if (res.ok) {
         const data = await res.json();
         await fetchImageManifest();
         if (data.trashId) {
           showUndo(`Chapter ${chapterNum} image deleted`, [data.trashId]);
         }
+      } else {
+        alert(`Delete failed — HTTP ${res.status}. Check the tunnel is running.`);
       }
-    } catch { /* ignore */ }
+    } catch (err) {
+      alert("Delete failed — could not reach the API server.\n\n" + String(err));
+    }
   }, [fetchImageManifest, showUndo]);
 
   // ── Bookmark functions ──────────────────────────────────────────────────────

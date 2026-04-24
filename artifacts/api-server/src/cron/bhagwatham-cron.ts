@@ -4,11 +4,13 @@ import { runAuditPass, fastImageBackfill } from "../services/bhagwatham-audit";
 import { checkAllCredits } from "../services/ai-credit-monitor";
 import { logger } from "../lib/logger";
 
-const CRON_INTERVAL = "*/5 * * * *"; // Every 5 minutes
-const BACKFILL_INTERVAL = "3,13,23,33,43,53 * * * *"; // Offset by 3 min to avoid overlap
-const AUDIT_INTERVAL = "*/5 * * * *"; // Every 5 min — prioritizes chapters without images
-const FAST_BACKFILL_INTERVAL = "*/2 * * * *"; // Every 2 min — parallel image generation (3 at a time)
-const CREDIT_CHECK_INTERVAL = "0 */2 * * *"; // Every 2 hours
+// COST OPTIMIZATION: all crons reduced to ONCE DAILY
+// Staggered throughout the day — all complete well before daily-commit at 18:30 UTC
+const CRON_INTERVAL = "0 2 * * *";            // 02:00 UTC = 07:30 IST — OCR batch
+const BACKFILL_INTERVAL = "0 3 * * *";        // 03:00 UTC = 08:30 IST — English backfill
+const AUDIT_INTERVAL = "0 5 * * *";           // 05:00 UTC = 10:30 IST — chapter audit
+const FAST_BACKFILL_INTERVAL = "0 6 * * *";   // 06:00 UTC = 11:30 IST — image backfill
+const CREDIT_CHECK_INTERVAL = "0 8 * * *";    // 08:00 UTC = 13:30 IST — credit monitor
 
 export function startBhagwathamCron(): void {
   // Recover from stale "processing" state left by previous server crash
@@ -95,9 +97,8 @@ export function startBhagwathamCron(): void {
   });
 
   // ── Re-OCR empty pages cron — fills gaps from failed OCR passes ──────
-  // High throughput: 50 pages every 5 min (reverse order = Canto 11-12 first)
-  // This processes ~600 pages/hour to fill the 1,000+ empty Canto 11-12 pages quickly.
-  const REOCR_INTERVAL = "*/5 * * * *"; // Every 5 min
+  // COST: reduced to 1/4 frequency. Every 20 min, 50 pages per run.
+  const REOCR_INTERVAL = "0 4 * * *"; // 04:00 UTC = 09:30 IST — re-OCR empty pages once daily
   const REOCR_BATCH_SIZE = 50;
   logger.info({ interval: REOCR_INTERVAL, batchSize: REOCR_BATCH_SIZE }, "Bhagwatham re-OCR empty pages cron started (reverse priority)");
 
@@ -135,13 +136,14 @@ export function startBhagwathamCron(): void {
     }
   });
 
-  // ── Fast image backfill — 3 images in parallel every 2 min ───────────
-  // Generates images for chapters that don't have any. Auto-stops when all covered.
-  logger.info({ interval: FAST_BACKFILL_INTERVAL, parallelCount: 3 }, "Fast image backfill cron started");
+  // ── Fast image backfill — 1 image every 30 min ───────────
+  // COST: reduced from 5 parallel @ 2 min → 1 per tick @ 30 min (75× fewer calls)
+  //   Previously: 150 images/hr. Now: 2/hr → 48/day max.
+  logger.info({ interval: FAST_BACKFILL_INTERVAL, parallelCount: 1 }, "Fast image backfill cron started");
 
   cron.schedule(FAST_BACKFILL_INTERVAL, async () => {
     try {
-      const result = await fastImageBackfill(3);
+      const result = await fastImageBackfill(1);
       if (result.generated > 0) {
         logger.info(
           { generated: result.generated, remaining: result.remaining },
@@ -158,7 +160,7 @@ export function startBhagwathamCron(): void {
   // ── Persona Discovery — auto-discover Bhagavatam characters ────────────
   // Scans OCR'd pages for character names, validates via Claude,
   // researches appearance via Firecrawl, auto-populates persona system.
-  const PERSONA_DISCOVERY_INTERVAL = "6,16,26,36,46,56 * * * *"; // Every 10 min, offset by +6
+  const PERSONA_DISCOVERY_INTERVAL = "0 7 * * *"; // 07:00 UTC = 12:30 IST — persona discovery once daily
   logger.info({ interval: PERSONA_DISCOVERY_INTERVAL }, "Persona discovery cron started");
 
   cron.schedule(PERSONA_DISCOVERY_INTERVAL, async () => {

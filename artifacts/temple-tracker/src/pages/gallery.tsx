@@ -30,7 +30,16 @@ interface PersonaItem {
 
 // ── Constants ───────────────────────────────────────────────────────────────
 
-const API_BASE = "/api/bhagwatham";
+// Read-only endpoints (manifests, images) are served as static files from the
+// same origin on Vercel. Mutations (DELETE, POST) need to reach the live API
+// server — set VITE_PUBLIC_API_URL in Vercel to the ngrok/Cloudflare tunnel URL.
+const READ_API_BASE = "/api/bhagwatham";
+const MUTATION_API_BASE = `${import.meta.env.VITE_PUBLIC_API_URL || ""}/api/bhagwatham`;
+const API_BASE = READ_API_BASE; // keep backward compat for read calls
+
+function isMutationApiConfigured(): boolean {
+  return Boolean(import.meta.env.VITE_PUBLIC_API_URL);
+}
 
 const CANTO_NAMES: Record<number, string> = {
   0: "General",
@@ -371,16 +380,25 @@ export default function Gallery() {
 
   const handleDeleteImage = useCallback(async (item: GalleryItem) => {
     const sceneIdx = item.sceneIndex ?? 0;
+    const deployed = typeof window !== "undefined" && window.location.hostname !== "localhost";
+    if (deployed && !isMutationApiConfigured()) {
+      alert(
+        "Delete not configured for the live site.\n\n" +
+        "To enable: start an ngrok tunnel to the local API server, then set VITE_PUBLIC_API_URL " +
+        "in Vercel project settings to the tunnel URL (e.g. https://xxxxx.ngrok-free.app) and redeploy.",
+      );
+      return;
+    }
     try {
       // Pure delete — removes from manifest, Supabase Storage, Buffer, and local disk
       // Does NOT regenerate. The audit cron will regenerate later with fixed prompts.
-      const res = await fetch(`${API_BASE}/image/delete/${item.chapterNumber}/${sceneIdx}`, {
+      const res = await fetch(`${MUTATION_API_BASE}/image/delete/${item.chapterNumber}/${sceneIdx}`, {
         method: "DELETE",
       });
       const ct = res.headers.get("content-type") || "";
       if (!ct.includes("application/json")) {
         // On deployed (Vercel), static hosting returns HTML for unknown routes
-        alert("Delete requires the local API server. Start the dev server and try again.");
+        alert("Delete failed — API server did not respond with JSON. Check that the tunnel is running and VITE_PUBLIC_API_URL is correct.");
         return;
       }
       const data = await res.json();
@@ -388,8 +406,8 @@ export default function Gallery() {
         alert(data.error || "Failed to delete image");
         return;
       }
-    } catch {
-      alert("Delete requires the local API server. Start the dev server and try again.");
+    } catch (err) {
+      alert("Delete failed — could not reach the API server. Check that the tunnel is running.\n\n" + String(err));
       return;
     }
 

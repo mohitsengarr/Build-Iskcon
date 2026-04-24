@@ -21,7 +21,7 @@ const FLOCK_WEBHOOK = "https://api.flock.com/hooks/sendMessage/b0159996-49f3-4f2
 
 // Every 2 hours: posts 1 scene per tick, 2 scenes per chapter
 // IST times: 12:30 AM, 2:30 AM, 4:30 AM, 6:30 AM, 8:30 AM, 10:30 AM, 12:30 PM, 2:30 PM, 4:30 PM, 6:30 PM, 8:30 PM, 10:30 PM
-const INSTAGRAM_CRON_INTERVAL = "30 */2 * * *";
+const INSTAGRAM_CRON_INTERVAL = "30 13 * * *"; // Once daily at 7:00 PM IST (13:30 UTC) — peak evening engagement
 
 // State file to track reverse-order progress
 const STATE_FILE = path.resolve(
@@ -591,7 +591,7 @@ async function instagramCronTick() {
 export function startInstagramCron(): void {
   logger.info(
     { interval: INSTAGRAM_CRON_INTERVAL },
-    "Instagram posting cron started (every 2h)",
+    "Instagram posting cron started (once daily at 6:30 PM IST)",
   );
 
   cron.schedule(INSTAGRAM_CRON_INTERVAL, async () => {

@@ -370,18 +370,18 @@ export async function runAuditPass(): Promise<{ chaptersAudited: number; issuesF
 
     // PRIORITY 1: chapters with 0 images (highest global number first)
     const chaptersWithoutImages = sortedChapters.filter(ch => !imageCountPerChapter.has(ch));
-    // PRIORITY 2: chapters with only 1 image — need a second scene
-    const chaptersNeedingMore = sortedChapters.filter(ch => (imageCountPerChapter.get(ch) || 0) === 1);
+    // COST: PRIORITY 2 (generating 2nd scene for chapters with 1 image) disabled —
+    // one image per chapter is sufficient. Saved ~300+ Claude+FLUX calls.
+    const chaptersNeedingMore: number[] = [];
 
     let targetChapter: number | null = null;
-    let needsAdditionalScene = false;
+    const needsAdditionalScene = false;
 
     if (chaptersWithoutImages.length > 0) {
       targetChapter = chaptersWithoutImages[0];
       logger.info({ targetChapter, missingCount: chaptersWithoutImages.length }, "Audit: prioritizing chapter without images");
     } else if (chaptersNeedingMore.length > 0) {
       targetChapter = chaptersNeedingMore[0];
-      needsAdditionalScene = true;
       logger.info({ targetChapter, needMoreCount: chaptersNeedingMore.length }, "Audit: generating additional scene for chapter with 1 image");
     } else {
       // All chapters have 2+ images — fall back to reverse-order audit

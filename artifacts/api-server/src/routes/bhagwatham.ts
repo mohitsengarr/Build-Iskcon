@@ -1147,7 +1147,7 @@ router.post("/bhagwatham/summarize", async (req, res) => {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-haiku-4-5",
         max_tokens: 1000,
         messages: [{
           role: "user",
@@ -1192,7 +1192,7 @@ router.post("/bhagwatham/dictionary", async (req, res) => {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-haiku-4-5",
         max_tokens: 500,
         messages: [{
           role: "user",

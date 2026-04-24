@@ -16,11 +16,12 @@ import { processNextBatch, getProgress, backfillEnglishTranslations, recoverStal
 import { runGitaAuditPass } from "../services/gita-audit";
 import { logger } from "../lib/logger";
 
-// All intervals offset by +2 min from Bhagwatham to avoid overlap
-const CRON_INTERVAL = "2,7,12,17,22,27,32,37,42,47,52,57 * * * *";       // Every 5 min, offset +2
-const BACKFILL_INTERVAL = "4,14,24,34,44,54 * * * *";                      // Every 10 min, offset +4
-const AUDIT_INTERVAL = "2,7,12,17,22,27,32,37,42,47,52,57 * * * *";       // Every 5 min, offset +2
-const REOCR_INTERVAL = "2,7,12,17,22,27,32,37,42,47,52,57 * * * *";       // Every 5 min, offset +2
+// COST OPTIMIZATION: all Gita crons reduced to ONCE DAILY.
+// Staggered after Bhagwatham crons, before daily commit at 18:30 UTC.
+const CRON_INTERVAL = "0 9 * * *";         // 09:00 UTC = 14:30 IST — Gita OCR batch
+const BACKFILL_INTERVAL = "0 10 * * *";    // 10:00 UTC = 15:30 IST — English backfill
+const AUDIT_INTERVAL = "0 11 * * *";       // 11:00 UTC = 16:30 IST — Gita audit
+const REOCR_INTERVAL = "0 12 * * *";       // 12:00 UTC = 17:30 IST — re-OCR empty pages
 const REOCR_BATCH_SIZE = 50;
 
 export function startGitaCron(): void {

@@ -20,6 +20,19 @@ type Mode = "onscreen" | "focused";
 
 const BEADS_PER_ROUND = 108;
 
+// ── IST (Asia/Kolkata) date helpers ──────────────────────────────────────────
+// Daily reset must happen at midnight IST, not UTC midnight. Without this,
+// users in India see today_rounds reset at 5:30 AM local time.
+function getTodayIST(): string {
+  // en-CA locale returns YYYY-MM-DD format, which matches ISO date strings.
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
 // ── Supabase direct access (works on both Replit & Vercel static) ───────────
 const SUPABASE_URL = "https://etfmndcrchundvgtvmot.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0Zm1uZGNyY2h1bmR2Z3R2bW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2NDE1MTIsImV4cCI6MjA2MzIxNzUxMn0.7GXS820xSFcUy2TRdbspN7s-NP3sgKFFtUP-Zw0Qbrs";
@@ -62,17 +75,62 @@ function playClick() {
 function playRoundComplete() {
   try {
     if (!clickAudioCtx) clickAudioCtx = new AudioContext();
-    const osc = clickAudioCtx.createOscillator();
-    const gain = clickAudioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(clickAudioCtx.destination);
-    osc.type = "sine";
-    osc.frequency.value = 523.25; // C5
-    gain.gain.value = 0.15;
-    osc.start();
-    osc.frequency.exponentialRampToValueAtTime(783.99, clickAudioCtx.currentTime + 0.15); // G5
-    gain.gain.exponentialRampToValueAtTime(0.001, clickAudioCtx.currentTime + 0.4);
-    osc.stop(clickAudioCtx.currentTime + 0.4);
+    if (clickAudioCtx.state === "suspended") clickAudioCtx.resume();
+    const ctx = clickAudioCtx;
+    const now = ctx.currentTime;
+
+    // Master gain — loud temple bell. Goes up to near-clipping then rings out.
+    const master = ctx.createGain();
+    master.gain.value = 1.0;
+    master.connect(ctx.destination);
+
+    // A real bell has inharmonic partials — below are classic bell ratios
+    // (fundamental + minor third + fifth + octave + higher shimmer) with
+    // each partial having its own amplitude and decay rate so the timbre
+    // evolves over time like a struck metal bell.
+    const partials: Array<{ freq: number; amp: number; decay: number }> = [
+      { freq: 523.25, amp: 0.55, decay: 1.8 },  // C5 — fundamental, longest ring
+      { freq: 1046.5, amp: 0.40, decay: 1.4 },  // C6 — octave, strong
+      { freq: 1318.5, amp: 0.28, decay: 0.9 },  // E6 — third
+      { freq: 1760.0, amp: 0.22, decay: 0.7 },  // A6 — shimmer
+      { freq: 2637.0, amp: 0.15, decay: 0.35 }, // E7 — strike brilliance
+      { freq: 3520.0, amp: 0.10, decay: 0.20 }, // A7 — initial metallic ping
+    ];
+
+    for (const p of partials) {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = p.freq;
+      // Fast attack (5ms) then long exponential decay — classic bell envelope
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(p.amp, now + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + p.decay);
+      osc.connect(g);
+      g.connect(master);
+      osc.start(now);
+      osc.stop(now + p.decay + 0.05);
+    }
+
+    // Add a short noise-like strike transient for the initial "clang"
+    const bufferSize = Math.floor(ctx.sampleRate * 0.08);
+    const noiseBuf = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = noiseBuf.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 3);
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = noiseBuf;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.value = 0.25;
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.value = 2200;
+    bp.Q.value = 2;
+    noise.connect(bp);
+    bp.connect(noiseGain);
+    noiseGain.connect(master);
+    noise.start(now);
   } catch { /* silent */ }
 }
 
@@ -112,7 +170,7 @@ export default function JapaCounter() {
       const saved = localStorage.getItem("japa_local");
       if (saved) {
         const d = JSON.parse(saved);
-        const today = new Date().toISOString().slice(0, 10);
+        const today = getTodayIST();
         if (d.today_date === today) {
           setTodayRounds(d.today_rounds || 0);
           setCount(d.current_count || 0);
@@ -135,7 +193,7 @@ export default function JapaCounter() {
 
   // ── Save to localStorage whenever state changes ────────────────────────────
   useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getTodayIST();
     localStorage.setItem("japa_local", JSON.stringify({
       today_rounds: todayRounds,
       lifetime_rounds: lifetimeRounds,
@@ -152,7 +210,7 @@ export default function JapaCounter() {
     syncTimeout.current = setTimeout(async () => {
       if (lastSyncedRef.current.today === todayRounds && lastSyncedRef.current.lifetime === lifetimeRounds) return;
       try {
-        const today = new Date().toISOString().slice(0, 10);
+        const today = getTodayIST();
         await sbFetch(`japa_counter?phone=eq.${encodeURIComponent(phone)}`, {
           method: "PATCH",
           body: JSON.stringify({
@@ -176,7 +234,7 @@ export default function JapaCounter() {
       const rows = await r.json();
       if (Array.isArray(rows) && rows.length > 0) {
         const data = rows[0];
-        const today = new Date().toISOString().slice(0, 10);
+        const today = getTodayIST();
         const todayR = data.today_date === today ? (data.today_rounds || 0) : 0;
         setTodayRounds(todayR);
         setLifetimeRounds(data.lifetime_rounds || 0);
@@ -194,7 +252,7 @@ export default function JapaCounter() {
     try {
       const ph = loginPhone.trim().toLowerCase();
       const nm = loginName.trim() || null;
-      const today = new Date().toISOString().slice(0, 10);
+      const today = getTodayIST();
 
       // Check if user exists
       const checkR = await sbFetch(`japa_counter?phone=eq.${encodeURIComponent(ph)}`);
@@ -260,9 +318,11 @@ export default function JapaCounter() {
     setCount(prev => {
       const next = prev + 1;
       if (next >= BEADS_PER_ROUND) {
-        // Round complete
+        // Round complete — loud bell + strong triple-pulse vibration
         setTimeout(() => {
-          vibrate(100);
+          if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+            navigator.vibrate([120, 60, 120, 60, 200]);
+          }
           if (soundOn) playRoundComplete();
         }, 50);
         setTodayRounds(t => t + 1);
@@ -301,7 +361,7 @@ export default function JapaCounter() {
     setEditing(false);
     if (loggedIn && phone) {
       try {
-        const today = new Date().toISOString().slice(0, 10);
+        const today = getTodayIST();
         await sbFetch(`japa_counter?phone=eq.${encodeURIComponent(phone)}`, {
           method: "PATCH",
           body: JSON.stringify({
@@ -326,7 +386,7 @@ export default function JapaCounter() {
   const todayTotal = todayRounds * BEADS_PER_ROUND + count;
   const lifetimeTotal = lifetimeRounds * BEADS_PER_ROUND;
   const progress = targetRounds > 0 ? Math.min((todayRounds / targetRounds) * 100, 100) : 0;
-  const todayStr = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  const todayStr = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
 
   // ── Focused mode: full screen tap ──────────────────────────────────────────
   if (mode === "focused") {

@@ -112,24 +112,8 @@ export function restoreImage(trashId: string): { success: boolean; restored?: Ch
   return { success: true, restored: entry.manifestEntry };
 }
 
-// ── Art style suffix — appended to every prompt ──────────────────────────────
-const ART_STYLE = [
-  "classical Indian devotional oil painting style",
-  "traditional hand-painted look with visible soft brushstrokes and painterly texture",
-  "NOT photo-realistic NOT photographic NOT 3D render — must look like a fine art painting",
-  "rich warm golden and earthy color palette with deep saffron ochre amber and forest green tones",
-  "soft diffused warm lighting with a dreamy golden glow throughout the scene like early morning or late afternoon",
-  "lush detailed natural backgrounds with ancient trees flowers and foliage painted in a classical romantic landscape style",
-  "traditional Indian Vedic clothing in saffron or warm colors with fine painted fabric texture ornate gold borders rudraksha malas and traditional jewelry",
-  "ancient setting with manuscripts scrolls palm-leaf books clay or brass vessels thatched huts wooden furniture — no modern elements whatsoever",
-  "characters have gentle idealized painted faces with warm skin tones soft expressive eyes and serene devotional expressions",
-  "wide scene composition showing the full environment and setting — NOT a portrait or close-up of a face looking at the camera",
-  "characters should be engaged in the story action within the scene — interacting with each other or the environment — never posing for or looking directly at the viewer",
-  "camera angle: wide or medium-wide establishing shot showing landscape architecture or nature as a significant part of the frame",
-  "balanced harmonious composition with main characters clearly in focus and background softly blended in painterly depth",
-  "overall mood: peaceful devotional serene and sacred — like a classical Indian temple painting or calendar art brought to life as a fine oil painting",
-  "4K resolution highly detailed brushwork rich color depth warm atmospheric perspective",
-].join(", ");
+// NOTE: Art style is now inline in generateWithTogether() to keep it next to the prompt composition logic.
+// The inline styleSuffix includes strict gender differentiation rules.
 
 // ── Character Personas — consistent appearance across all images ─────────────
 // Each character has a fixed description so they look the same everywhere.
@@ -829,28 +813,10 @@ IMPORTANT: The scene_prompt must be ENGLISH ONLY. No Hindi/Sanskrit text.
 Respond in this exact JSON format only:
 {"summary_hi": "...", "scene_prompt": "..."}`;
 
-  // Try Anthropic first, then Together AI chat models
+  // COST OPTIMIZATION: Try Together AI first (Llama 3.3 ~10× cheaper than Claude Sonnet).
+  // Fall back to Claude Haiku (12× cheaper than Sonnet) if Together fails.
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const togetherKey = process.env.TOGETHER_API_KEY;
-
-  if (anthropicKey) {
-    try {
-      const client = new Anthropic();
-      const response = await client.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 600,
-        messages: [{ role: "user", content: userPrompt }],
-      });
-      const text = response.content[0].type === "text" ? response.content[0].text : "";
-      const result = parseSceneJSON(text);
-      if (result) {
-        logger.info({ chapterTitle, engine: "anthropic" }, "AI scene prompt generated");
-        return result;
-      }
-    } catch (err) {
-      logger.warn({ err, chapterTitle }, "Anthropic scene generation failed");
-    }
-  }
 
   if (togetherKey) {
     try {
@@ -878,7 +844,26 @@ Respond in this exact JSON format only:
         return result;
       }
     } catch (err) {
-      logger.warn({ err, chapterTitle }, "Together AI scene generation failed");
+      logger.warn({ err, chapterTitle }, "Together AI scene generation failed, trying Claude Haiku fallback");
+    }
+  }
+
+  if (anthropicKey) {
+    try {
+      const client = new Anthropic();
+      const response = await client.messages.create({
+        model: "claude-haiku-4-5", // ← cheap fallback (was claude-sonnet-4-6)
+        max_tokens: 600,
+        messages: [{ role: "user", content: userPrompt }],
+      });
+      const text = response.content[0].type === "text" ? response.content[0].text : "";
+      const result = parseSceneJSON(text);
+      if (result) {
+        logger.info({ chapterTitle, engine: "anthropic-haiku" }, "AI scene prompt generated (fallback)");
+        return result;
+      }
+    } catch (err) {
+      logger.warn({ err, chapterTitle }, "Anthropic Haiku scene generation failed");
     }
   }
 
@@ -1109,7 +1094,24 @@ function buildStoryScene(story: string, characters: string[], contentSnippet: st
   return `${charStr} in a peaceful forest ashram by a flowing river, golden sunlight through trees, sacred fire nearby, wide cinematic landscape`;
 }
 
-async function detectScenes(chapterTitle: string, contentSnippet: string, maxScenes: number = 3): Promise<string[]> {
+async function detectScenes(chapterTitle: string, contentSnippet: string, maxScenes: number = 3, chapterNumber?: number): Promise<string[]> {
+  // COST: Check manifest for cached prompt from a prior generation — if the chapter
+  // was processed before, reuse its scene prompt + Hindi description instead of
+  // spending another Claude call.
+  if (chapterNumber !== undefined) {
+    try {
+      const manifest = readManifest();
+      const existing = manifest.images
+        .filter((img) => img.chapterNumber === chapterNumber && img.prompt)
+        .sort((a, b) => (a.sceneIndex ?? 0) - (b.sceneIndex ?? 0));
+      if (existing.length > 0) {
+        (detectScenes as any)._lastDescriptions = existing.map((e) => e.descriptionHi || "");
+        logger.info({ chapterNumber, cachedScenes: existing.length }, "Scene prompt cache HIT — skipping Claude");
+        return existing.map((e) => e.prompt!).slice(0, maxScenes);
+      }
+    } catch { /* cache miss — fall through */ }
+  }
+
   // FIRST: try AI-powered scene generation for rich, detailed prompts
   const aiScene = await buildAIScenePrompt(chapterTitle, contentSnippet);
   if (aiScene) {
@@ -1156,7 +1158,7 @@ async function generateWithTogether(prompt: string, destPath: string, model: str
 
   // Style suffix — concise to leave maximum room for the scene description.
   // Scene accuracy is the #1 priority; style can be shorter.
-  const styleSuffix = "\nRaja Ravi Varma style classic oil painting, soft painterly brushstrokes, NOT photorealistic. Warm golden sunlight, vibrant sky. Traditional Indian devotional art, serene atmosphere, museum quality fine art. CRITICAL: absolutely NO text NO letters NO words NO writing NO captions NO watermarks NO signatures anywhere in the image — pure artwork only. Ancient Vedic era 5000 years ago — absolutely NO modern items NO modern hairstyles NO trimmed beards NO glasses NO modern clothing. CRITICAL EYE RULE: All characters MUST have normal natural properly aligned eyes — NO crossed eyes NO squinting NO lazy eye NO misaligned pupils. CRITICAL MALE RULE: All male characters MUST have clearly masculine faces with strong jawlines and masculine builds. Male characters must have NO flowers in their hair — only Krishna may have a peacock feather. CRITICAL FEMALE RULE: All female characters MUST have smooth clean feminine faces with NO beard NO mustache NO facial hair — soft feminine features, kajal-lined eyes, long braided hair with flowers. Ancient ashram and forest settings only.";
+  const styleSuffix = "\nRaja Ravi Varma style classic oil painting, soft painterly brushstrokes, NOT photorealistic. Warm golden sunlight, vibrant sky. Traditional Indian devotional art, serene atmosphere, museum quality fine art. CRITICAL: absolutely NO text NO letters NO words NO writing NO captions NO watermarks NO signatures anywhere in the image — pure artwork only. Ancient Vedic era 5000 years ago — absolutely NO modern items NO modern hairstyles NO trimmed beards NO glasses NO modern clothing. CRITICAL EYE RULE: All characters MUST have normal natural properly aligned eyes — NO crossed eyes NO squinting NO lazy eye NO misaligned pupils. ABSOLUTE GENDER RULES (NEVER VIOLATE): 1) WOMEN: Every single female character MUST have a completely smooth clean-shaven feminine face — absolutely ZERO facial hair, ZERO beard, ZERO mustache, ZERO stubble, ZERO shadow on chin or jaw. Women have soft round cheeks, delicate jawline, kajal-lined eyes, long braided black hair decorated with flowers and gold ornaments. 2) MEN: Every male character MUST have a clearly masculine face with strong angular jawline and broad shoulders. Men must NEVER have flowers in their hair — men wear topknots, crowns, turbans, or matted jata locks ONLY. Only Lord Krishna may wear a single peacock feather. 3) Make male and female characters visually DISTINCT — different body builds, different facial structures, different hair styles. Ancient ashram and forest settings only.";
 
   // Build the full prompt: scene first (most important), then style
   let fullPrompt = prompt + styleSuffix;
@@ -1247,7 +1249,7 @@ async function _generateChapterImages(
 ): Promise<string[]> {
   ensureImageDir();
 
-  const scenes = await detectScenes(chapterTitle, contentSnippet, 1);
+  const scenes = await detectScenes(chapterTitle, contentSnippet, 1, chapterNumber);
   const generatedFiles: string[] = [];
   const manifest = readManifest();
 

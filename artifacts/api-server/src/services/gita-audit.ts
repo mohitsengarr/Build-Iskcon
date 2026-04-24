@@ -284,18 +284,17 @@ export async function runGitaAuditPass(): Promise<{ chaptersAudited: number; iss
 
     // PRIORITY 1: chapters with 0 images
     const chaptersWithoutImages = sortedChapters.filter(ch => !imageCountPerChapter.has(ch));
-    // PRIORITY 2: chapters with only 1 image
-    const chaptersNeedingMore = sortedChapters.filter(ch => (imageCountPerChapter.get(ch) || 0) === 1);
+    // COST: PRIORITY 2 disabled — one image per chapter is enough
+    const chaptersNeedingMore: number[] = [];
 
     let targetChapter: number | null = null;
-    let needsAdditionalScene = false;
+    const needsAdditionalScene = false;
 
     if (chaptersWithoutImages.length > 0) {
       targetChapter = chaptersWithoutImages[0];
       logger.info({ targetChapter, missingCount: chaptersWithoutImages.length }, "Gita audit: prioritizing chapter without images");
     } else if (chaptersNeedingMore.length > 0) {
       targetChapter = chaptersNeedingMore[0];
-      needsAdditionalScene = true;
       logger.info({ targetChapter, needMoreCount: chaptersNeedingMore.length }, "Gita audit: generating additional scene");
     } else {
       for (const ch of sortedChapters) {

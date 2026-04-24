@@ -42,7 +42,7 @@ const STRUCTURED_DATA_ORGANIZATION = {
 
 const STRUCTURED_DATA_WEBSITE = {
   "@context": "https://schema.org", "@type": "WebSite", "@id": `${CANONICAL_DOMAIN}/#website`,
-  name: "Build Iskcon", description: `Track ${staticStats.activeProjects} active ISKCON temple construction projects across 15+ countries.`,
+  name: "Build Iskcon", description: `Track ${staticStats.totalTemples}+ ISKCON temple construction projects across 15+ countries.`,
   url: CANONICAL_DOMAIN, publisher: { "@id": `${CANONICAL_DOMAIN}/#organization` }, inLanguage: "en",
 };
 
@@ -74,7 +74,7 @@ const FAQ_ITEMS = [
   { q: "Where does my donation go?", a: "Build Iskcon does NOT collect, process, or handle any donations. When you click 'Donate' on any project, you are redirected to that temple's official ISKCON donation page. Your money goes directly to the temple — we are simply the map that helps you find where to give." },
   { q: "Is Build Iskcon an official ISKCON website?", a: "No. Build Iskcon is an independent, community-driven transparency platform. All data is sourced from official ISKCON project communications. All donation links direct to verified, official ISKCON temple websites." },
   { q: "How is this site funded?", a: "Build Iskcon is a volunteer-driven initiative with no commercial revenue. The site is maintained as a seva (service) project to help devotees discover and support ISKCON temple construction worldwide." },
-  { q: "How many ISKCON temples are currently under construction?", a: `As of 2026, Build Iskcon tracks ${staticStats.activeProjects}+ active ISKCON temple construction projects across 15+ countries, including the flagship Temple of the Vedic Planetarium (TOVP) in Mayapur.` },
+  { q: "How many ISKCON temples are currently under construction?", a: `As of 2026, Build Iskcon tracks ${staticStats.totalTemples}+ ISKCON temple construction projects across 15+ countries, including the flagship Temple of the Vedic Planetarium (TOVP) in Mayapur.` },
   { q: "What is the Temple of the Vedic Planetarium (TOVP)?", a: "The TOVP is Srila Prabhupada's most cherished project — one of the largest religious structures being built globally. Located in Mayapur, West Bengal, it is 78% complete with a grand opening scheduled for November 2, 2027." },
   { q: "What is ISKCON's Vision 2051?", a: "Vision 2051 is a 25-year roadmap to establish 211 ISKCON temples across all 28 states and 8 Union Territories of India in 3 phases, starting 2025." },
   { q: "What are the seva (donation) tiers?", a: "Five tiers: Brick Donor (₹1,000), Pillar Supporter (₹11,000), Altar Patron (₹51,000), Mandala Guardian (₹1,00,000), and Temple Benefactor (₹5,00,000). All donations go directly to official ISKCON temple websites." },
@@ -118,7 +118,7 @@ function HeroSection({ stats }: { stats: typeof TEMPLE_STATS }) {
             Help Build Sacred Temples<br />Across the World
           </motion.h1>
           <motion.p variants={fadeInUp} className="text-on-surface-variant font-sans text-[15px] mb-5 leading-relaxed">
-            {stats.activeProjects} ISKCON temples are under construction in 15+ countries right now. From the Temple of the Vedic Planetarium in Mayapur to new centres in Nairobi and Budapest — every donation brings Srila Prabhupada's vision closer to reality.
+            {stats.totalTemples} ISKCON temples are under construction in 15+ countries right now. From the Temple of the Vedic Planetarium in Mayapur to new centres in Nairobi and Budapest — every donation brings Srila Prabhupada's vision closer to reality.
           </motion.p>
           <motion.figure variants={fadeInUp} className="mb-6 border-l-2 border-primary/40 pl-4">
             <blockquote className="font-serif text-base italic text-on-surface/80 leading-snug">
@@ -176,7 +176,7 @@ function KeyMetrics({ stats }: { stats: typeof TEMPLE_STATS }) {
   return (
     <motion.section aria-label="Key Statistics" className="key-stats grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={viewportOnce}>
       {[
-        { icon: <Building2 className="w-5 h-5" />, label: "Temples Under Construction", value: stats.activeProjects, tag: "Active", tagColor: "text-primary" },
+        { icon: <Building2 className="w-5 h-5" />, label: "Temples Under Construction", value: stats.totalTemples, tag: "Active", tagColor: "text-primary" },
         { icon: <IndianRupee className="w-5 h-5" />, label: "Still Needed to Finish All", value: `$${(totalNeeded / 1_000_000).toFixed(0)}M`, tag: "Urgent", tagColor: "text-red-600" },
         { icon: <ChartBar className="w-5 h-5" />, label: "Average Progress", value: `${stats.averageProgress}%`, tag: "Growing", tagColor: "text-tertiary" },
         { icon: <CheckCircle2 className="w-5 h-5" />, label: "Nearly Complete", value: stats.templesByStatus?.finishing || 0, tag: "Almost There", tagColor: "text-green-700" },
@@ -970,8 +970,8 @@ export default function Home() {
   return (
     <Layout>
       <SEOHead
-        title={`Track ${liveStats.activeProjects} Active ISKCON Temple Construction Projects Worldwide`}
-        description={`Help build ${liveStats.activeProjects}+ ISKCON temples across 15+ countries. The TOVP in Mayapur opens in 2027. Explore projects, donate directly to official ISKCON pages.`}
+        title={`Track ${liveStats.totalTemples} Active ISKCON Temple Construction Projects Worldwide`}
+        description={`Help build ${liveStats.totalTemples}+ ISKCON temples across 15+ countries. The TOVP in Mayapur opens in 2027. Explore projects, donate directly to official ISKCON pages.`}
         canonicalPath="/"
         structuredData={[
           STRUCTURED_DATA_ORGANIZATION,

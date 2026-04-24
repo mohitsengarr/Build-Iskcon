@@ -292,7 +292,7 @@ async function validateNames(state: DiscoveryState): Promise<void> {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5",
         max_tokens: 4096,
         messages: [{
           role: "user",
@@ -404,7 +404,7 @@ async function researchCharacter(name: string, role: string, gender: "male" | "f
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5",
         max_tokens: 2048,
         messages: [{
           role: "user",
@@ -487,6 +487,21 @@ export async function personaDiscoveryTick(): Promise<{
   details: string;
 }> {
   const state = readState();
+
+  // COST: Skip entirely if all scanning is done AND research queue is empty AND we ran recently.
+  // When there's genuinely nothing to do, the tick would still waste a Claude call to check.
+  // Only run when there's queued research or the scanner has more batches to process.
+  const scanComplete = state.lastProcessedBatch >= state.totalBatchesAvailable;
+  const queueEmpty = state.researchQueue.length === 0;
+  const lastRunMs = state.lastRunAt ? new Date(state.lastRunAt).getTime() : 0;
+  const hoursSinceLastRun = (Date.now() - lastRunMs) / (1000 * 60 * 60);
+  if (scanComplete && queueEmpty && hoursSinceLastRun < 6) {
+    return {
+      phase: "idle",
+      details: `All scanning complete, no research queued. Skipping (last ran ${hoursSinceLastRun.toFixed(1)}h ago).`,
+    };
+  }
+
   state.lastRunAt = new Date().toISOString();
 
   // Phase 3: Research (priority — process queue first if non-empty)

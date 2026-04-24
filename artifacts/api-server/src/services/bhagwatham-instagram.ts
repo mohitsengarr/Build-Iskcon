@@ -113,30 +113,30 @@ function writeIGManifest(manifest: InstagramManifest) {
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 5000;
 
-const INSTAGRAM_STYLE_SUFFIX = "\nRaja Ravi Varma style classic oil painting, soft painterly brushstrokes, NOT photorealistic. Warm golden sunlight, vibrant sky. Traditional Indian devotional art, serene atmosphere, museum quality fine art. Ancient Vedic era 5000 years ago — absolutely NO modern items, NO modern hairstyles, NO trimmed beards, NO glasses, NO modern clothing. All men have long flowing uncut beards and matted jata hair or topknots as per ancient Vedic tradition. Women have long braided hair with flowers. Smooth feminine faces for women, no facial hair on women. Ancient ashram and forest settings only. Vertical portrait composition, centered subject.";
+const INSTAGRAM_STYLE_SUFFIX = "\nRaja Ravi Varma style classic oil painting, soft painterly brushstrokes, NOT photorealistic. Warm golden sunlight, vibrant sky. Traditional Indian devotional art, serene atmosphere, museum quality fine art. Ancient Vedic era 5000 years ago — absolutely NO modern items, NO modern hairstyles, NO trimmed beards, NO glasses, NO modern clothing. ABSOLUTE GENDER RULES (NEVER VIOLATE): 1) WOMEN: Every single female character MUST have a completely smooth clean-shaven feminine face — absolutely ZERO facial hair, ZERO beard, ZERO mustache, ZERO stubble, ZERO shadow on chin or jaw. Women have soft round cheeks, delicate jawline, kajal-lined eyes, long braided black hair decorated with flowers and gold ornaments. 2) MEN: Every male character MUST have a clearly masculine face with strong angular jawline and broad shoulders. Men must NEVER have flowers in their hair — men wear topknots, crowns, turbans, or matted jata locks ONLY. Only Lord Krishna may wear a single peacock feather. 3) Make male and female characters visually DISTINCT — different body builds, different facial structures, different hair styles. Ancient ashram and forest settings only. Vertical portrait composition, centered subject.";
 
 // Persona injection — reuse the same logic from image-gen
 const PERSONA_SHORT: Record<string, string> = {
-  krishna_adult: "Lord Krishna: deep blue-skinned young man, peacock feather in curly black hair, golden crown, yellow silk dhoti, Kaustubha gem necklace",
-  krishna_child: "Baby Krishna: chubby blue-tinted infant, tiny peacock feather, gold anklets, playful smile",
-  narada: "Sage Narada: clean-shaven male sage, white U-shaped tilak on forehead, grey-streaked topknot, white dhoti, carrying tanpura veena",
-  vyasa: "Sage Vyasa: majestic dark-skinned elderly rishi, long silver-white beard, matted grey dreadlocks, bark-cloth garment, rudraksha mala",
-  suta_goswami: "Suta Goswami: elderly fair sage, short white beard, bald crown, saffron silk robes, rudraksha mala",
-  shukadeva: "Shukadeva Goswami: radiant young bald sage aged 16, luminous fair skin, large innocent eyes, simple white cloth, no ornaments",
-  arjuna: "Arjuna: tall muscular warrior prince, dark hair in tight topknot, golden armor, carrying Gandiva bow",
-  vishnu: "Lord Vishnu: royal blue-skinned divine being, four arms holding conch discus mace lotus, tall golden crown, yellow silk",
-  brahma: "Lord Brahma: four-faced creator god, white beard, red-golden robes, holding Vedas and water pot",
-  prahlada: "Prahlada: young boy aged 6-7, warm brown skin, innocent devotional eyes, simple white kurta, tulsi mala",
-  narasimha: "Lord Narasimha: fierce half-lion half-man, golden lion mane, blue-skinned muscular torso, blazing golden eyes, sharp fangs",
-  parikshit: "King Parikshit: dignified middle-aged king, short dark beard, white renunciation cloth, sitting cross-legged",
-  yashoda: "Mother Yashoda: beautiful middle-aged woman, loving face, dark hair with red sindoor, maroon silk sari with gold border",
-  kunti: "Queen Kunti: dignified elderly woman, greying hair in bun, white and gold silk sari, sorrowful gentle eyes",
-  draupadi: "Draupadi: beautiful young woman, dark olive skin, thick black wavy hair with jasmine flowers, red and gold silk sari",
-  gandhari: "Queen Gandhari: elderly woman with white silk blindfold over eyes, white sari, greying hair covered with pallu",
-  dhritarashtra: "King Dhritarashtra: very old blind king, closed sunken eyes, long white beard, white garments, wooden walking staff",
-  vidura: "Vidura: wise dark-skinned middle-aged man, short grey beard, saffron dhoti, pilgrim's walking staff",
-  bhishma: "Bhishma: majestic elderly warrior, silver-white hair, long white beard, lying on bed of arrows",
-  yudhishthira: "King Yudhishthira: fair gentle-faced king, thin dark beard, white royal garments, simple golden crown",
+  krishna_adult: "Lord Krishna: MALE deity young man (strong masculine jawline, broad shoulders, bare masculine chest, NO feminine features), deep blue skin, peacock feather in curly black hair, golden crown, yellow silk dhoti, Kaustubha gem necklace, bamboo flute",
+  krishna_child: "Baby Krishna: MALE divine infant boy, chubby blue-tinted, tiny peacock feather, gold anklets, playful smile",
+  narada: "Sage Narada: MALE sage man (masculine face, strong jawline, NO feminine features), fair wheat-toned skin, clean-shaven, white U-shaped tilak, grey-streaked topknot, bare male chest, white dhoti, carrying tanpura veena",
+  vyasa: "Sage Vyasa: MALE majestic dark-skinned elderly rishi, long silver-white beard, matted grey dreadlocks, bark-cloth garment, rudraksha mala",
+  suta_goswami: "Suta Goswami: MALE elderly fair sage, short white beard, bald crown, saffron silk robes, rudraksha mala",
+  shukadeva: "Shukadeva Goswami: MALE radiant young bald sage aged 16, luminous fair skin, large innocent eyes, simple white cloth, no ornaments",
+  arjuna: "Arjuna: MALE tall muscular warrior prince, dark hair in tight topknot (NO flowers in hair), golden armor, carrying Gandiva bow",
+  vishnu: "Lord Vishnu: MALE royal blue-skinned divine being, four arms holding conch discus mace lotus, tall golden crown, yellow silk",
+  brahma: "Lord Brahma: MALE four-faced creator god, white beard, red-golden robes, holding Vedas and water pot",
+  prahlada: "Prahlada: MALE young boy aged 6-7, warm brown skin, innocent devotional eyes, simple white kurta, tulsi mala",
+  narasimha: "Lord Narasimha: fierce half-lion half-man, golden lion mane, blue-skinned muscular MALE torso, blazing golden eyes, sharp fangs",
+  parikshit: "King Parikshit: MALE dignified middle-aged king, short dark beard, white renunciation cloth, sitting cross-legged",
+  yashoda: "Mother Yashoda: FEMALE woman (smooth feminine face, absolutely NO beard NO facial hair NO mustache), beautiful middle-aged, loving face, dark hair with red sindoor and flowers, maroon silk sari with gold border",
+  kunti: "Queen Kunti: FEMALE woman (smooth feminine face, absolutely NO beard NO facial hair NO mustache), dignified elderly, greying hair in bun, white and gold silk sari, sorrowful gentle eyes",
+  draupadi: "Draupadi: FEMALE woman (smooth feminine face, absolutely NO beard NO facial hair NO mustache), beautiful young, dark olive skin, thick black wavy hair with jasmine flowers, red and gold silk sari",
+  gandhari: "Queen Gandhari: FEMALE woman (smooth feminine face, absolutely NO beard NO facial hair NO mustache), elderly with white silk blindfold over eyes, white sari, greying hair covered with pallu",
+  dhritarashtra: "King Dhritarashtra: MALE very old blind king, closed sunken eyes, long white beard, white garments, wooden walking staff",
+  vidura: "Vidura: MALE wise dark-skinned middle-aged man, short grey beard, saffron dhoti, pilgrim's walking staff",
+  bhishma: "Bhishma: MALE majestic elderly warrior, silver-white hair, long white beard, lying on bed of arrows",
+  yudhishthira: "King Yudhishthira: MALE fair gentle-faced king, thin dark beard, white royal garments, simple golden crown",
 };
 
 function isChildKrishnaContext(scene: string): boolean {
@@ -276,70 +276,116 @@ async function generateCaption(
       ? `Chapter ${chapterNumber}`
       : "";
 
-  const systemPrompt = `You write Instagram captions for devotional art from Srimad Bhagavatam. Respond ONLY with valid JSON.`;
+  const systemPrompt = `You write devotional story narratives for Srimad Bhagavatam Instagram posts. You are fluent in both Hindi (Devanagari) and English. Respond ONLY with valid JSON.`;
 
   const userPrompt = `Chapter: ${chapterTitle}
 ${cantoChapterLine ? `Reference: Srimad Bhagavatam — ${cantoChapterLine}` : ""}
 Scene: ${scenePrompt}
-${summaryHi ? `Hindi summary: ${summaryHi}` : ""}
+${summaryHi ? `Hindi summary (existing): ${summaryHi}` : ""}
 
-Write an Instagram caption for this Srimad Bhagavatam illustration. The caption MUST tell the ACTUAL STORY in BOTH Hindi AND English — not generic devotional text.
+Generate FIVE separate text fields for this scene. Every field is REQUIRED — do not skip any.
 
-1. **caption**: Write a BILINGUAL caption with this EXACT structure (use \\n for line breaks):
+1. **chapter_title_hi**: Translate the chapter title "${chapterTitle}" into Hindi Devanagari (e.g. "अध्याय दो — हृदय में भगवान्"). One line only.
 
-📖 श्रीमद्भागवतम् — ${cantoChapterLine || chapterTitle}
-अध्याय — [chapter title in Hindi]
+2. **story_hi**: Tell the SPECIFIC story of this scene in simple Hindi Devanagari. 4-6 sentences. Describe the characters (पात्र), what is happening (क्या हो रहा है), and the spiritual significance (आध्यात्मिक संदेश). Write natural flowing Hindi — not a translation of the English. DO NOT write English words in this field. USE ONLY Devanagari script.
 
-[HINDI STORY — MANDATORY, 4-6 lines in simple Hindi]:
-Tell the complete story of this scene in Hindi. पात्र कौन हैं? क्या हो रहा है? संघर्ष या चमत्कार क्या है? आध्यात्मिक संदेश क्या है? This section MUST be present and substantial.
+3. **story_en**: Tell the SAME story in English. 4-6 sentences. Describe who the characters are, what happens, and the spiritual meaning. This should narrate the specific event from this chapter, not a generic devotional line.
 
-[ENGLISH STORY — 4-6 lines]:
-Tell the SAME story in English. Who are the characters? What is the conflict, miracle, or key event? What is the spiritual significance?
+4. **reflection_hi**: One-line devotional reflection in Hindi Devanagari (single sentence, Hindi script only).
 
-[One-line devotional reflection in Hindi]
-[Same reflection in English]
+5. **reflection_en**: The same reflection in English (single sentence).
 
-🙏 हरे कृष्ण हरे कृष्ण कृष्ण कृष्ण हरे हरे
-हरे राम हरे राम राम राम हरे हरे
+6. **hashtags**: Five relevant hashtags separated by spaces. Always include #SrimadBhagavatam and #ISKCON. Add 3 scene-specific ones.
 
-CRITICAL RULES:
-- The Hindi story section is MANDATORY. Do NOT skip it. It must be 4-6 lines minimum.
-- Both Hindi and English sections must tell the SPECIFIC story from this chapter, not generic text.
-- Keep total under 2200 characters.
-- Use \\n for line breaks in the JSON string.
+STRICT RULES:
+- story_hi and reflection_hi MUST be in Hindi Devanagari script (देवनागरी) — no English words, no Roman transliteration.
+- story_en and reflection_en MUST be in English.
+- All text fields must contain actual narrative content — no placeholders, no brackets, no "TODO".
+- story_hi and story_en must tell the SAME story but written independently in each language.
 
-2. **hashtags**: 5 relevant hashtags. Include #SrimadBhagavatam #ISKCON and 3 scene-specific ones.
+Return JSON with EXACTLY these keys:
+{"chapter_title_hi": "...", "story_hi": "...", "story_en": "...", "reflection_hi": "...", "reflection_en": "...", "hashtags": "#tag1 #tag2 #tag3 #tag4 #tag5"}`;
 
-JSON format: {"caption": "...", "hashtags": "#tag1 #tag2 #tag3 #tag4 #tag5"}`;
+  // Detect Devanagari script to verify the Hindi fields really are in Hindi
+  const hasDevanagari = (s: string): boolean => /[\u0900-\u097F]/.test(s);
+
+  const DEFAULT_HASHTAGS = "#SrimadBhagavatam #ISKCON #BhagavatamArt #Devotion #Krishna";
+
+  // Assemble the final caption deterministically from AI-generated fields.
+  // This way the Hindi section CANNOT be missed — the code composes it, not the AI.
+  const assembleCaption = (fields: {
+    chapter_title_hi?: string;
+    story_hi?: string;
+    story_en?: string;
+    reflection_hi?: string;
+    reflection_en?: string;
+  }): string => {
+    const parts: string[] = [];
+    const header = cantoChapterLine
+      ? `📖 Srimad Bhagavatam — ${cantoChapterLine}`
+      : `📖 ${chapterTitle}`;
+    parts.push(header);
+    if (fields.chapter_title_hi?.trim()) parts.push(fields.chapter_title_hi.trim());
+    parts.push(""); // blank line
+
+    if (fields.story_hi?.trim()) {
+      parts.push(fields.story_hi.trim());
+      parts.push(""); // blank line
+    }
+    if (fields.story_en?.trim()) {
+      parts.push(fields.story_en.trim());
+      parts.push(""); // blank line
+    }
+
+    if (fields.reflection_hi?.trim()) parts.push(fields.reflection_hi.trim());
+    if (fields.reflection_en?.trim()) parts.push(fields.reflection_en.trim());
+    parts.push(""); // blank line
+
+    parts.push("🙏 हरे कृष्ण हरे कृष्ण कृष्ण कृष्ण हरे हरे");
+    parts.push("हरे राम हरे राम राम राम हरे हरे");
+
+    return parts.join("\n").replace(/\n{3,}/g, "\n\n");
+  };
 
   const tryParseCaption = (text: string) => {
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return null;
     try {
       const parsed = JSON.parse(jsonMatch[0]);
-      if (parsed.caption) return {
-        caption: parsed.caption as string,
-        hashtags: (parsed.hashtags as string) || "#SrimadBhagavatam #ISKCON #BhagavatamArt #Devotion #Krishna",
+      // Validate: story_hi must contain Devanagari
+      if (!parsed.story_hi || !hasDevanagari(String(parsed.story_hi))) {
+        logger.warn({ sample: String(parsed.story_hi || "").substring(0, 80) }, "Caption missing Hindi story — will retry");
+        return null;
+      }
+      if (!parsed.story_en || parsed.story_en.length < 30) {
+        logger.warn("Caption missing English story — will retry");
+        return null;
+      }
+      const caption = assembleCaption(parsed);
+      return {
+        caption,
+        hashtags: (parsed.hashtags as string) || DEFAULT_HASHTAGS,
       };
     } catch { /* invalid */ }
     return null;
   };
 
-  // Try Anthropic first — produces better detailed storyline captions
+  // COST: Claude Haiku (12× cheaper than Sonnet) handles Hindi + English fine.
+  // Keep Claude as primary here because Hindi Devanagari output is its strength.
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   if (anthropicKey) {
     try {
       const Anthropic = (await import("@anthropic-ai/sdk")).default;
       const client = new Anthropic();
       const response = await client.messages.create({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5", // was claude-sonnet-4-6
         max_tokens: 1000,
         messages: [{ role: "user", content: `${systemPrompt}\n\n${userPrompt}` }],
       });
       const text = response.content[0].type === "text" ? response.content[0].text : "";
       const result = tryParseCaption(text);
       if (result) {
-        logger.info("Caption generated via Anthropic");
+        logger.info("Caption generated via Anthropic Haiku");
         return result;
       }
     } catch (err) {
@@ -375,13 +421,20 @@ JSON format: {"caption": "...", "hashtags": "#tag1 #tag2 #tag3 #tag4 #tag5"}`;
     }
   }
 
-  // Fallback caption
-  const headerLine = cantoNumber && chapterNumber
-    ? `📖 Srimad Bhagavatam — Canto ${cantoNumber}, Chapter ${chapterNumber}\n${chapterTitle}`
-    : `📖 ${chapterTitle}`;
+  // Fallback caption — always bilingual. Uses summaryHi if present, otherwise a generic Hindi line.
+  const fallbackStoryHi = summaryHi && hasDevanagari(summaryHi)
+    ? summaryHi
+    : "यह दृश्य श्रीमद्भागवत् से है — भगवान् की लीलाओं का दिव्य वर्णन। भक्त इन कथाओं के श्रवण से मुक्ति पाते हैं।";
+  const fallbackStoryEn = "A scene from Srimad Bhagavatam — the timeless wisdom of the Supreme Lord, narrated for the upliftment of all souls.";
+  const fallbackCaption = assembleCaption({
+    story_hi: fallbackStoryHi,
+    story_en: fallbackStoryEn,
+    reflection_hi: "हरि ॐ तत् सत्।",
+    reflection_en: "Glory to Lord Krishna.",
+  });
   return {
-    caption: `${headerLine}\n\nA scene from Srimad Bhagavatam — the timeless wisdom of the Supreme Lord, narrated for the upliftment of all souls.\n\n🙏 Hare Krishna`,
-    hashtags: "#SrimadBhagavatam #ISKCON #BhagavatamArt #Devotion #Krishna",
+    caption: fallbackCaption,
+    hashtags: DEFAULT_HASHTAGS,
   };
 }
 
@@ -435,28 +488,7 @@ Return JSON array: [{"scene_prompt": "...", "summary_hi": "..."}, ...]`;
     return null;
   };
 
-  // Try Anthropic first
-  if (anthropicKey) {
-    try {
-      const Anthropic = (await import("@anthropic-ai/sdk")).default;
-      const client = new Anthropic();
-      const response = await client.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1200,
-        messages: [{ role: "user", content: userPrompt }],
-      });
-      const text = response.content[0].type === "text" ? response.content[0].text : "";
-      const result = tryParse(text);
-      if (result) {
-        logger.info({ chapterTitle, count: result.length, engine: "anthropic" }, "Multi-scene prompts generated");
-        return result.slice(0, numScenes);
-      }
-    } catch (err) {
-      logger.warn({ err }, "Anthropic multi-scene failed");
-    }
-  }
-
-  // Fallback: Together AI
+  // COST: Together Llama first (10× cheaper), Claude Haiku fallback
   if (togetherKey) {
     try {
       const res = await fetch("https://api.together.xyz/v1/chat/completions", {
@@ -483,7 +515,28 @@ Return JSON array: [{"scene_prompt": "...", "summary_hi": "..."}, ...]`;
         return result.slice(0, numScenes);
       }
     } catch (err) {
-      logger.warn({ err }, "Together multi-scene failed");
+      logger.warn({ err }, "Together multi-scene failed, trying Haiku fallback");
+    }
+  }
+
+  // Claude Haiku fallback (cheaper than Sonnet)
+  if (anthropicKey) {
+    try {
+      const Anthropic = (await import("@anthropic-ai/sdk")).default;
+      const client = new Anthropic();
+      const response = await client.messages.create({
+        model: "claude-haiku-4-5", // was claude-sonnet-4-6
+        max_tokens: 1200,
+        messages: [{ role: "user", content: userPrompt }],
+      });
+      const text = response.content[0].type === "text" ? response.content[0].text : "";
+      const result = tryParse(text);
+      if (result) {
+        logger.info({ chapterTitle, count: result.length, engine: "anthropic-haiku" }, "Multi-scene prompts generated (fallback)");
+        return result.slice(0, numScenes);
+      }
+    } catch (err) {
+      logger.warn({ err }, "Anthropic Haiku multi-scene failed");
     }
   }
 
@@ -577,19 +630,50 @@ async function queueToBuffer(
 ): Promise<{ postId: string; status: string }> {
   let fullCaption = `${caption}\n\n${hashtags}`;
 
-  // Threads has a 500 character limit — truncate caption smartly for Threads
+  // Threads has a 500 character limit — shrink each section proportionally
+  // so BOTH Hindi and English story sections survive.
   if (service === "threads" && fullCaption.length > 500) {
-    // Keep the first line (canto/chapter header) + hashtags, truncate the middle
-    const lines = caption.split("\n").filter((l) => l.trim());
-    const headerLine = lines[0] || "";
-    const lastLine = lines[lines.length - 1] || "";
-    // Build a short version: header + truncated story + hashtags
-    const availableChars = 500 - headerLine.length - hashtags.length - 10; // 10 for newlines
-    const storyLines = lines.slice(1, -1).join("\n");
-    const truncatedStory = storyLines.length > availableChars
-      ? storyLines.substring(0, availableChars - 3) + "..."
-      : storyLines;
-    fullCaption = `${headerLine}\n${truncatedStory}\n${lastLine}\n\n${hashtags}`;
+    const lines = caption.split("\n");
+    // Script-based classification: a line with Devanagari is Hindi, otherwise English.
+    const hasDevanagari = (s: string) => /[\u0900-\u097F]/.test(s);
+    // Find the header (first line starting with 📖) and mantra (🙏) to preserve
+    const headerIdx = lines.findIndex((l) => l.includes("📖"));
+    const mantraIdx = lines.findIndex((l) => l.includes("🙏"));
+    const header = headerIdx >= 0 ? lines[headerIdx] : (lines[0] || "");
+    // Find the chapter title Hindi line (line right after header with Devanagari)
+    const chapterTitleHi = headerIdx >= 0 && lines[headerIdx + 1] && hasDevanagari(lines[headerIdx + 1])
+      ? lines[headerIdx + 1]
+      : "";
+    // Collect story content between chapter title and mantra
+    const storyStart = chapterTitleHi ? headerIdx + 2 : headerIdx + 1;
+    const storyEnd = mantraIdx >= 0 ? mantraIdx : lines.length;
+    const storyLines = lines.slice(storyStart, storyEnd).filter((l) => l.trim());
+    const hindiStoryLines = storyLines.filter((l) => hasDevanagari(l));
+    const englishStoryLines = storyLines.filter((l) => !hasDevanagari(l));
+
+    const fixedChars = header.length + chapterTitleHi.length + hashtags.length + 20; // 20 for newlines/mantra
+    const mantraShort = "🙏 हरे कृष्ण"; // short form to save chars
+    const availableForStory = 500 - fixedChars - mantraShort.length;
+
+    // Split available budget 50/50 between Hindi and English
+    const perSide = Math.floor(availableForStory / 2) - 4;
+    const truncate = (s: string, max: number) =>
+      s.length > max ? s.substring(0, max - 1).trim() + "…" : s;
+
+    const hindiText = truncate(hindiStoryLines.join(" ").trim(), Math.max(60, perSide));
+    const englishText = truncate(englishStoryLines.join(" ").trim(), Math.max(60, perSide));
+
+    const parts = [header];
+    if (chapterTitleHi) parts.push(chapterTitleHi);
+    parts.push("");
+    if (hindiText) parts.push(hindiText);
+    if (englishText) parts.push(englishText);
+    parts.push("");
+    parts.push(mantraShort);
+    parts.push("");
+    parts.push(hashtags);
+    fullCaption = parts.join("\n").replace(/\n{3,}/g, "\n\n");
+
     if (fullCaption.length > 500) {
       // Hard truncate as last resort
       fullCaption = fullCaption.substring(0, 497) + "...";
