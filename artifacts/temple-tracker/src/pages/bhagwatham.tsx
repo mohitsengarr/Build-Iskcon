@@ -783,6 +783,38 @@ function BookmarkPanel({ bookmarks, onJump, onDelete }: {
   );
 }
 
+// Detect half-shloka: a Sanskrit verse line ending in single danda (।) but no double (॥).
+// Used to bridge shlokas split across page boundaries (e.g. first half ends page 1523,
+// second half starts page 1524).
+function isHalfShlokaLine(line: string): boolean {
+  // Must end in single danda (with optional trailing whitespace)
+  if (!/।\s*$/.test(line)) return false;
+  // Must NOT contain double danda (that would be a full shloka)
+  if (/॥/.test(line)) return false;
+  // Strip the trailing danda for content analysis
+  const body = line.replace(/।\s*$/, "").trim();
+  if (body.length < 5 || body.length > 120) return false;
+  // Must be predominantly Devanagari
+  const dev = (body.match(/[\u0900-\u097F]/gu) || []).length;
+  const total = body.replace(/\s/g, "").length;
+  if (total === 0 || dev / total < 0.7) return false;
+  // Must NOT start with section markers
+  if (/^(तात्पर्य|शब्दार्थ|अनुवाद|अध्याय|स्कन्ध|Chapter)/iu.test(body)) return false;
+  // Must NOT be shabdarth (has dash + semicolon)
+  if ((body.includes("—") || body.includes("--")) && body.includes(";")) return false;
+  // Must have Sanskrit signals: visarga (ः) or Sanskrit case endings
+  const visarga = (body.match(/ः/gu) || []).length;
+  const sanskritEndings = (body.match(/(?:स्य|ेन|ाय|ात्|ेषु|ानाम्|ेभ्यः|ाभिः|म्\s|म्$)/gu) || []).length;
+  const sanskritParticles = (body.match(/(?:^|\s)(?:च|एव|हि|तु|अपि|वै|यः|सः|यदा|तदा|तथा|इति|एषः)(?:\s|$)/gu) || []).length;
+  // Hindi-prose disqualifiers
+  const hindiPP = (body.match(/(?:^|\s)(?:का|की|के|को|में|पर|से|ने|तक|और|कि|जब|तब|नहीं|प्रति|बिना|साथ|लिए|बारे|जैसे|क्योंकि|इसलिए)(?:\s|$)/gu) || []).length;
+  const hindiVerb = /(?:है[ँं]?|हैं|था|थे|थी|गया|गयी|किया|करें|रहा|सकता|चाहिए|होता|होती)(?:\s|।|$)/u.test(body);
+  if (hindiPP >= 2) return false;
+  if (hindiVerb && (visarga + sanskritEndings) < 2) return false;
+  // Strong Sanskrit signal (one or more Sanskrit-only markers)
+  return (visarga + sanskritEndings + sanskritParticles) >= 1;
+}
+
 // ── Determine what section kind a page ends with (for cross-page continuity) ──
 function getPageEndKind(text: string): string {
   if (!text) return "text";
@@ -800,6 +832,11 @@ function getPageEndKind(text: string): string {
         lastKind = "shlok";
         insideTatparya = false;
       }
+    }
+    // Half-shloka: verse-like Sanskrit line ending in । only — start of a 2-line shloka
+    // that continues on the next page. Treat the page as ending in shlok/ref-shlok.
+    else if (isHalfShlokaLine(line)) {
+      lastKind = insideTatparya ? "ref-shlok" : "shlok";
     }
     else if (/^(अध्याय|स्कन्ध|Chapter)/iu.test(line)) { lastKind = "text"; insideTatparya = false; }
     // Detect implicit shabdarth→anuvad transition:
@@ -1407,6 +1444,16 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
       continue;
     }
 
+    // Half-shloka at end of page — verse-like line ending in single ।, no ॥ ahead
+    // (because the closing half is on the next page). Open a shlok section so
+    // prevPageEndKind="shlok" carries the continuation forward.
+    if (current.kind !== "shlok" && current.kind !== "ref-shlok" && isHalfShlokaLine(t)) {
+      const shlokKind = (current.kind === "tatparya") ? "ref-shlok" : "shlok";
+      flush();
+      current = { kind: shlokKind, lines: [t] };
+      continue;
+    }
+
     if (current.kind === "shabdarth") {
       // Shabdarth lines have dashes (—, --, -) and/or semicolons
       const hasDash = t.includes("—") || t.includes("--") || /\S-\s/.test(t);
@@ -1733,11 +1780,13 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
               </div>
             );
           }
-          case "shlok":
-            // Sanskrit verse — same color as body text, 1.35x size, bold, with speaker (SEN-109: stronger top divider)
+          case "shlok": {
+            // Sanskrit verse — continuation across pages: no top divider/margin so the half-shloka
+            // from the previous page flows directly into the closing half on this page.
+            const isShlokContinuation = i === 0 && prevPageEndKind === "shlok";
             return (
-              <div key={i} data-section-type="shlok" className="my-5 sm:my-6">
-                {i > 0 && sections[i - 1].kind !== "chapter" && (
+              <div key={i} data-section-type="shlok" className={isShlokContinuation ? "" : "my-5 sm:my-6"}>
+                {!isShlokContinuation && i > 0 && sections[i - 1].kind !== "chapter" && (
                   <div className={`mb-4 h-px ${themeKey === "dark" ? "bg-white/5" : themeKey === "sepia" ? "bg-amber-300/30" : "bg-orange-200/40"}`} />
                 )}
                 <div className="flex items-start gap-2">
@@ -1746,19 +1795,23 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
                       <p key={j} className={`font-bold leading-[1.9] mb-0.5 ${t.text}`} style={{ fontSize: "1.15em", fontFamily: "var(--font-sanskrit)" }}>{l}</p>
                     ))}
                   </div>
-                  <ShlokSpeaker text={sec.lines.join(" ")} themeKey={themeKey} />
+                  {!isShlokContinuation && <ShlokSpeaker text={sec.lines.join(" ")} themeKey={themeKey} />}
                 </div>
               </div>
             );
-          case "ref-shlok":
+          }
+          case "ref-shlok": {
             // Referenced shlok inside tatparya — smaller, indented, brown-tinted
+            // Continuation across pages: drop the left border and top margin
+            const isRefShlokContinuation = i === 0 && prevPageEndKind === "ref-shlok";
             return (
-              <div key={i} data-section-type="ref-shlok" className={`pl-4 border-l-2 my-2 ${themeKey === "dark" ? "border-amber-800/40" : themeKey === "sepia" ? "border-[#c4ad80]" : "border-[#c4956a]/40"}`}>
+              <div key={i} data-section-type="ref-shlok" className={isRefShlokContinuation ? "" : `pl-4 border-l-2 my-2 ${themeKey === "dark" ? "border-amber-800/40" : themeKey === "sepia" ? "border-[#c4ad80]" : "border-[#c4956a]/40"}`}>
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`leading-[1.7] italic mb-0.5 ${themeKey === "dark" ? "text-amber-400/70" : themeKey === "sepia" ? "text-[#6b4020]" : "text-[#8b5a30]"}`} style={{ fontSize: "0.9em", fontFamily: "var(--font-sanskrit)" }}>{l}</p>
+                  <p key={j} className={`leading-[1.7] italic mb-0.5 ${isRefShlokContinuation ? "pl-4" : ""} ${themeKey === "dark" ? "text-amber-400/70" : themeKey === "sepia" ? "text-[#6b4020]" : "text-[#8b5a30]"}`} style={{ fontSize: "0.9em", fontFamily: "var(--font-sanskrit)" }}>{l}</p>
                 ))}
               </div>
             );
+          }
           case "shabdarth":
             // BBT style: blue word-by-word meanings, 0.8x body size
             return (
@@ -3172,14 +3225,21 @@ export default function Bhagwatham() {
                     if (allIdx > 0) prevPage = allPages[allIdx - 1];
                   }
                   const prevEndKind = prevPage ? getPageEndKind(prevPage.text) : undefined;
+                  // Hide the page number divider when a shloka or ref-shloka spans the page boundary —
+                  // the verse should read as one continuous unit, not get visually broken.
+                  const hidePageDivider = prevEndKind === "shlok" || prevEndKind === "ref-shlok";
                   return (
                   <div key={page.pageNumber} data-page-num={page.pageNumber}>
-                    {pageIdx > 0 && (
+                    {pageIdx > 0 && !hidePageDivider && (
                       <div className={`flex items-center gap-3 my-8 sm:my-10 ${theme.muted}`}>
                         <div className={`flex-1 h-px ${settings.theme === "dark" ? "bg-white/10" : settings.theme === "sepia" ? "bg-amber-300/40" : "bg-orange-200/60"}`} />
                         <span className="text-[10px] font-medium opacity-50 shrink-0 px-2">· {page.pageNumber} ·</span>
                         <div className={`flex-1 h-px ${settings.theme === "dark" ? "bg-white/10" : settings.theme === "sepia" ? "bg-amber-300/40" : "bg-orange-200/60"}`} />
                       </div>
+                    )}
+                    {pageIdx > 0 && hidePageDivider && (
+                      // Inline page-number marker keeps the page reference but doesn't break the verse
+                      <p className={`text-[10px] ${theme.muted} font-medium text-right mt-1 mb-1 opacity-40`}>· {page.pageNumber} ·</p>
                     )}
                     {pageIdx === 0 && <p className={`text-[10px] ${theme.muted} font-medium text-right mt-0 mb-2 opacity-40`}>· {page.pageNumber} ·</p>}
                     <RenderContent text={page.text} textEn={page.textEn} lang={lang} chapterImages={chapterImages} themeKey={settings.theme} onRegenerateImages={isDevMode ? openPromptModal : undefined} regeneratingChapters={regeneratingChapters} onDeleteImage={isDevMode ? handleDeleteImage : undefined} pageNumber={page.pageNumber} overrides={sectionOverrides[page.pageNumber]} onOverridesChange={isDevMode ? handleOverridesChange : undefined} prevPageEndKind={prevEndKind} chapterNumMapper={(perSkandhNum: number) => {
