@@ -923,17 +923,44 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     };
   }, [recording, processing, ttsPlaying, ttsLoading]);
 
-  const applyEdit = useCallback((oldText: string, newText: string) => {
+  const applyEdit = useCallback(async (oldText: string, newText: string) => {
     const pageNum = pageNumRef.current;
     if (!pageNum || !oldText || !newText) return;
 
-    // Find the page and replace the text in it
-    const updated = allPages.map(p => {
-      if (p.pageNumber !== pageNum) return p;
-      return { ...p, text: p.text.replace(oldText, newText) };
-    });
+    // Update React state optimistically so the user sees the change instantly
+    const targetPage = allPages.find(p => p.pageNumber === pageNum);
+    if (!targetPage) return;
+    const fullNewText = targetPage.text.replace(oldText, newText);
+    const updated = allPages.map(p =>
+      p.pageNumber !== pageNum ? p : { ...p, text: fullNewText },
+    );
     setAllPages(updated);
     window.getSelection()?.removeAllRanges();
+
+    // Persist to the API server so the edit survives reload + reaches live deployment
+    if (!isMutationApiConfigured()) {
+      const deployed = typeof window !== "undefined" && window.location.hostname !== "localhost";
+      if (deployed) {
+        alert(
+          "Edit saved locally only — to persist to the live site:\n" +
+          "Start ngrok, then set VITE_PUBLIC_API_URL in Vercel and redeploy.",
+        );
+      }
+      return;
+    }
+    try {
+      const res = await fetch(`${MUTATION_API_BASE}/page/${pageNum}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: fullNewText }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(`Save failed: ${data.error || res.statusText}`);
+      }
+    } catch (err) {
+      alert(`Save failed — could not reach API server.\n${String(err)}`);
+    }
   }, [allPages, setAllPages]);
 
   const startRecording = async () => {

@@ -427,6 +427,71 @@ router.post("/bhagwatham/image/restore/:trashId", (req, res) => {
   }
 });
 
+// PATCH /api/bhagwatham/page/:pageNumber — save edited page text
+// Updates the batch JSON file on disk, then refreshes the public/api copy
+// so the change is visible on the live site after the next deploy.
+router.patch("/bhagwatham/page/:pageNumber", async (req, res) => {
+  try {
+    const pageNumber = parseInt(req.params.pageNumber, 10);
+    if (isNaN(pageNumber) || pageNumber < 1) {
+      res.status(400).json({ error: "Invalid page number" });
+      return;
+    }
+    const newText = typeof req.body?.text === "string" ? req.body.text : null;
+    const newTextEn = typeof req.body?.textEn === "string" ? req.body.textEn : null;
+    if (newText === null && newTextEn === null) {
+      res.status(400).json({ error: "Body must include 'text' and/or 'textEn'" });
+      return;
+    }
+
+    const fs = await import("fs");
+    const path = await import("path");
+    const { fileURLToPath } = await import("url");
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    const REPO_ROOT = path.resolve(here, "..", "..", "..", "..");
+    const PAGES_DIR = path.resolve(REPO_ROOT, "data", "bhagwatham", "pages");
+
+    // Find the batch file containing this page (pages are 20 per batch — batch N covers
+    // pages (N-1)*20+1 .. N*20). Confirm by reading the batch and matching pageNumber.
+    const candidateBatch = Math.ceil(pageNumber / 20);
+    const batchFile = path.join(PAGES_DIR, `batch-${String(candidateBatch).padStart(4, "0")}.json`);
+    if (!fs.existsSync(batchFile)) {
+      res.status(404).json({ error: `Batch file for page ${pageNumber} not found` });
+      return;
+    }
+
+    const batch = JSON.parse(fs.readFileSync(batchFile, "utf-8"));
+    const pageIdx = (batch.pages || []).findIndex((p: { pageNumber: number }) => p.pageNumber === pageNumber);
+    if (pageIdx < 0) {
+      res.status(404).json({ error: `Page ${pageNumber} not found in batch ${candidateBatch}` });
+      return;
+    }
+
+    if (newText !== null) batch.pages[pageIdx].text = newText;
+    if (newTextEn !== null) batch.pages[pageIdx].textEn = newTextEn;
+    batch.pages[pageIdx].editedAt = new Date().toISOString();
+
+    fs.writeFileSync(batchFile, JSON.stringify(batch, null, 2) + "\n");
+
+    // Refresh public/api/bhagwatham/batch/:n + content + batches so the live site
+    // sees the edit on the next Vercel deploy (or immediately if served from this server)
+    const PUBLIC_API_DIR = path.resolve(REPO_ROOT, "artifacts", "temple-tracker", "public", "api", "bhagwatham");
+    const publicBatchPath = path.join(PUBLIC_API_DIR, "batch", String(candidateBatch));
+    fs.mkdirSync(path.dirname(publicBatchPath), { recursive: true });
+    fs.writeFileSync(publicBatchPath, JSON.stringify(batch));
+
+    // Stage for the daily commit
+    try {
+      const { execSync } = await import("child_process");
+      execSync(`git add "${batchFile}" "${publicBatchPath}"`, { cwd: REPO_ROOT, stdio: "pipe" });
+    } catch { /* git staging best-effort */ }
+
+    res.json({ success: true, pageNumber, batchNumber: candidateBatch });
+  } catch (err) {
+    res.status(500).json({ error: String(err) });
+  }
+});
+
 // POST /api/bhagwatham/generate-images — generate images for existing chapters
 router.post("/bhagwatham/generate-images", async (req, res) => {
   try {
