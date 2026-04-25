@@ -874,6 +874,15 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
   const [ttsPlaying, setTtsPlaying] = useState(false);
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
 
+  // AI correction suggestion
+  const [suggestLoading, setSuggestLoading] = useState(false);
+  const [suggestion, setSuggestion] = useState<{
+    suggested_text: string;
+    explanation: string;
+    changes: Array<{ from: string; to: string; reason: string }>;
+    confidence: "high" | "medium" | "low";
+  } | null>(null);
+
   // Cleanup TTS on unmount or when toolbar hides
   useEffect(() => {
     if (!show) {
@@ -881,6 +890,8 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       window.speechSynthesis.cancel();
       setTtsPlaying(false);
       setTtsLoading(false);
+      setSuggestion(null);
+      setSuggestLoading(false);
     }
   }, [show]);
   useEffect(() => () => { ttsAudioRef.current?.pause(); window.speechSynthesis.cancel(); }, []);
@@ -1056,6 +1067,55 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     }
   }, [selectedText, ttsPlaying]);
 
+  // AI Correction — calls Supabase Edge Function (laptop-independent).
+  // Pulls 200 chars of context before & after the selection from the page text
+  // so Claude can spot missing words and OCR errors using surrounding meaning.
+  const requestSuggestion = useCallback(async () => {
+    if (!selectedText || suggestLoading) return;
+    const pageNum = pageNumRef.current;
+    setSuggestLoading(true);
+    setSuggestion(null);
+    let contextBefore = "";
+    let contextAfter = "";
+    if (pageNum) {
+      const page = allPages.find(p => p.pageNumber === pageNum);
+      if (page?.text) {
+        const idx = page.text.indexOf(selectedText);
+        if (idx >= 0) {
+          contextBefore = page.text.substring(Math.max(0, idx - 400), idx);
+          contextAfter = page.text.substring(idx + selectedText.length, idx + selectedText.length + 400);
+        }
+      }
+    }
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/bhagavatam-correct-text`, {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          selected_text: selectedText,
+          context_before: contextBefore,
+          context_after: contextAfter,
+          page_number: pageNum,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(`AI suggest failed: ${err.error || res.statusText}`);
+        return;
+      }
+      const data = await res.json();
+      setSuggestion(data);
+    } catch (err) {
+      alert(`AI suggest failed: ${String(err)}`);
+    } finally {
+      setSuggestLoading(false);
+    }
+  }, [selectedText, allPages, suggestLoading]);
+
   // Dictionary lookup state
   const [dictResult, setDictResult] = useState<{ word: string; meaning: string; examples: string[] } | null>(null);
   const [dictLoading, setDictLoading] = useState(false);
@@ -1129,10 +1189,69 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
               <button onClick={startRecording} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Voice edit">
                 <Mic className="w-3.5 h-3.5" /> Voice
               </button>
-              <button onClick={() => { setShow(false); setDictResult(null); }} className="p-1.5 text-stone-400 hover:text-stone-600 ml-auto">
+              <button
+                onClick={requestSuggestion}
+                disabled={suggestLoading}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                title="AI correction suggestion"
+              >
+                {suggestLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                AI fix
+              </button>
+              <button onClick={() => { setShow(false); setDictResult(null); setSuggestion(null); }} className="p-1.5 text-stone-400 hover:text-stone-600 ml-auto">
                 <X className="w-3 h-3" />
               </button>
             </div>
+            {/* AI suggestion panel — appears when Claude has returned a correction */}
+            {suggestion && (
+              <div className="mb-2 p-2.5 rounded-lg bg-purple-50 border border-purple-200 max-w-md">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <Sparkles className="w-3 h-3 text-purple-600" />
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-purple-700">AI Suggestion</span>
+                  <span className={`text-[9px] uppercase font-medium px-1.5 py-0.5 rounded ${
+                    suggestion.confidence === "high" ? "bg-green-100 text-green-700" :
+                    suggestion.confidence === "low" ? "bg-amber-100 text-amber-700" :
+                    "bg-stone-100 text-stone-600"
+                  }`}>{suggestion.confidence}</span>
+                </div>
+                <p className="text-sm text-stone-900 mb-1.5 break-words" style={{ fontFamily: "var(--font-devanagari)" }}>
+                  {suggestion.suggested_text}
+                </p>
+                {suggestion.changes.length > 0 && (
+                  <div className="text-[10px] text-stone-600 mb-1.5">
+                    {suggestion.changes.map((c, ci) => (
+                      <div key={ci} className="flex flex-wrap items-center gap-1 mb-0.5">
+                        <span className="line-through text-red-500" style={{ fontFamily: "var(--font-devanagari)" }}>{c.from}</span>
+                        <span>→</span>
+                        <span className="text-green-700 font-medium" style={{ fontFamily: "var(--font-devanagari)" }}>{c.to}</span>
+                        <span className="text-stone-500 italic">({c.reason})</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {suggestion.explanation && (
+                  <p className="text-[10px] text-stone-500 italic mb-2">{suggestion.explanation}</p>
+                )}
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={() => {
+                      applyEdit(selectedText, suggestion.suggested_text);
+                      setSuggestion(null);
+                      setShow(false);
+                    }}
+                    className="flex-1 px-2 py-1 text-[10px] font-semibold bg-purple-600 text-white rounded hover:bg-purple-700"
+                  >
+                    Accept
+                  </button>
+                  <button
+                    onClick={() => setSuggestion(null)}
+                    className="px-2 py-1 text-[10px] font-medium text-stone-600 hover:bg-stone-100 rounded"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            )}
             {/* Edit input */}
             <input
               type="text"
