@@ -1160,15 +1160,26 @@ async function generateWithTogether(prompt: string, destPath: string, model: str
   // Scene accuracy is the #1 priority; style can be shorter.
   const styleSuffix = "\nRaja Ravi Varma style classic oil painting, soft painterly brushstrokes, NOT photorealistic. Warm golden sunlight, vibrant sky. Traditional Indian devotional art, serene atmosphere, museum quality fine art. CRITICAL: absolutely NO text NO letters NO words NO writing NO captions NO watermarks NO signatures anywhere in the image — pure artwork only. Ancient Vedic era 5000 years ago — absolutely NO modern items NO modern hairstyles NO trimmed beards NO glasses NO modern clothing. CRITICAL EYE RULE: All characters MUST have normal natural properly aligned eyes — NO crossed eyes NO squinting NO lazy eye NO misaligned pupils. ABSOLUTE GENDER RULES (NEVER VIOLATE): 1) WOMEN: Every single female character MUST have a completely smooth clean-shaven feminine face — absolutely ZERO facial hair, ZERO beard, ZERO mustache, ZERO stubble, ZERO shadow on chin or jaw. Women have soft round cheeks, delicate jawline, kajal-lined eyes, long braided black hair decorated with flowers and gold ornaments. 2) MEN: Every male character MUST have a clearly masculine face with strong angular jawline and broad shoulders. Men must NEVER have flowers in their hair — men wear topknots, crowns, turbans, or matted jata locks ONLY. Only Lord Krishna may wear a single peacock feather. 3) Make male and female characters visually DISTINCT — different body builds, different facial structures, different hair styles. Ancient ashram and forest settings only.";
 
-  // Build the full prompt: scene first (most important), then style
-  let fullPrompt = prompt + styleSuffix;
+  // If a regeneration reason is set on globalThis (by regenerateChapterImages),
+  // append it to the style suffix as a strong corrective instruction. The
+  // previous image had this issue — the new image MUST avoid it.
+  let correctiveInstruction = "";
+  const regenCtx = (globalThis as any).__nextRegenReason as { reason?: string } | undefined;
+  if (regenCtx?.reason) {
+    correctiveInstruction = `\nCRITICAL CORRECTION REQUIRED — the previous image of this scene had this specific problem reported by reviewers: "${regenCtx.reason}". The new image MUST fully resolve this issue. Pay extra attention to fix exactly this problem.`;
+  }
+
+  // Build the full prompt: scene first (most important), then style + correction
+  let fullPrompt = prompt + styleSuffix + correctiveInstruction;
 
   // FLUX.2-pro prompt limit ~2000 chars. Log a warning if we're truncating.
+  // Always preserve the corrective instruction (it's the whole point of regeneration).
   const PROMPT_LIMIT = 2000;
   if (fullPrompt.length > PROMPT_LIMIT) {
-    const maxPromptLen = PROMPT_LIMIT - styleSuffix.length;
-    logger.warn({ originalLen: fullPrompt.length, truncatedTo: PROMPT_LIMIT }, "Truncating prompt for FLUX");
-    fullPrompt = prompt.substring(0, maxPromptLen) + styleSuffix;
+    const reservedTail = styleSuffix.length + correctiveInstruction.length;
+    const maxPromptLen = PROMPT_LIMIT - reservedTail;
+    logger.warn({ originalLen: fullPrompt.length, truncatedTo: PROMPT_LIMIT, hasCorrection: !!correctiveInstruction }, "Truncating prompt for FLUX");
+    fullPrompt = prompt.substring(0, maxPromptLen) + styleSuffix + correctiveInstruction;
   }
 
   logger.info({ promptLen: fullPrompt.length, sceneLen: prompt.length }, "FLUX prompt composed");
@@ -1383,11 +1394,17 @@ export function generateAdditionalScene(
 /**
  * Force-regenerate images for a specific chapter.
  * Deletes existing images and manifest entries, then regenerates with content-aware scenes.
+ *
+ * `reason` is the user-supplied explanation of what was wrong with the previous
+ * image (e.g. "woman has beard", "Krishna shown as adult instead of child").
+ * It's converted into a corrective instruction that's appended to the FLUX
+ * prompt so the new generation actively avoids the issue.
  */
 export function regenerateChapterImages(
   chapterNumber: number,
   chapterTitle: string,
   contentSnippet: string,
+  reason?: string,
 ): Promise<{ files: string[]; trashIds: string[] }> {
   return withManifestLock(async () => {
     ensureImageDir();
@@ -1400,13 +1417,23 @@ export function regenerateChapterImages(
       const tid = trashImage(img, "regenerate");
       trashIds.push(tid);
     }
-    // Remove from manifest
+    // Remove from manifest entirely (also clears the cached scene prompt so
+    // detectScenes will call AI fresh with the new reason context)
     manifest.images = manifest.images.filter((img) => img.chapterNumber !== chapterNumber);
     writeManifest(manifest);
 
-    // Generate fresh (call internal directly since we already hold the lock)
-    const files = await _generateChapterImages(chapterNumber, chapterTitle, contentSnippet);
-    return { files, trashIds };
+    // Stash reason on the runtime so generateWithTogether can append it to the
+    // style suffix as an explicit AVOID instruction.
+    if (reason && reason.trim()) {
+      (globalThis as any).__nextRegenReason = { chapter: chapterNumber, reason: reason.trim() };
+    }
+
+    try {
+      const files = await _generateChapterImages(chapterNumber, chapterTitle, contentSnippet);
+      return { files, trashIds };
+    } finally {
+      delete (globalThis as any).__nextRegenReason;
+    }
   });
 }
 

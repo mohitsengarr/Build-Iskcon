@@ -1366,7 +1366,7 @@ function ShlokSpeaker({ text, themeKey }: { text: string; themeKey: string }) {
 
 // ── Content Renderer ───────────────────────────────────────────────────────────
 
-function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", onRegenerateImages, regeneratingChapters, onDeleteImage, chapterNumMapper, pageNumber, overrides, onOverridesChange, prevPageEndKind }: { text: string; textEn?: string; lang: "hi" | "en"; chapterImages?: Map<number, Array<{ url: string; description: string; sceneIndex?: number; isInstagram?: boolean }>>; themeKey?: Theme; onRegenerateImages?: (chapterNum: number) => void; regeneratingChapters?: Set<number>; onDeleteImage?: (chapterNum: number, sceneIndex: number) => void; chapterNumMapper?: (perSkandhNum: number) => number; pageNumber?: number; overrides?: SectionOverride[]; onOverridesChange?: (pageNum: number, overrides: SectionOverride[]) => void; prevPageEndKind?: string }) {
+function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", onRegenerateImages, regeneratingChapters, queuedRegens, onDeleteImage, chapterNumMapper, pageNumber, overrides, onOverridesChange, prevPageEndKind }: { text: string; textEn?: string; lang: "hi" | "en"; chapterImages?: Map<number, Array<{ url: string; description: string; sceneIndex?: number; isInstagram?: boolean }>>; themeKey?: Theme; onRegenerateImages?: (chapterNum: number) => void; regeneratingChapters?: Set<number>; queuedRegens?: Set<number>; onDeleteImage?: (chapterNum: number, sceneIndex: number) => void; chapterNumMapper?: (perSkandhNum: number) => number; pageNumber?: number; overrides?: SectionOverride[]; onOverridesChange?: (pageNum: number, overrides: SectionOverride[]) => void; prevPageEndKind?: string }) {
   const t = THEME_STYLES[themeKey];
   // If English selected and translation available, show English as plain text
   if (lang === "en" && textEn) {
@@ -1909,17 +1909,27 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
                     ))}
                   </div>
                 )}
-                {globalNum && onRegenerateImages && (
-                  <button
-                    onClick={() => onRegenerateImages(globalNum!)}
-                    disabled={regeneratingChapters?.has(globalNum!) ?? false}
-                    className={`flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-lg transition-colors ${regeneratingChapters?.has(globalNum!) ? "opacity-60 cursor-wait" : ""} ${themeKey === "dark" ? "text-orange-400 hover:bg-orange-900/30" : "text-orange-500 hover:bg-orange-100"}`}
-                    title="Regenerate images"
-                  >
-                    <RefreshCw className={`w-3 h-3 ${regeneratingChapters?.has(globalNum!) ? "animate-spin" : ""}`} />
-                    {regeneratingChapters?.has(globalNum!) ? "Generating…" : "Regenerate images"}
-                  </button>
-                )}
+                {globalNum && onRegenerateImages && (() => {
+                  const isQueued = queuedRegens?.has(globalNum!) ?? false;
+                  const isProcessing = regeneratingChapters?.has(globalNum!) ?? false;
+                  return (
+                    <button
+                      onClick={() => onRegenerateImages(globalNum!)}
+                      disabled={isProcessing || isQueued}
+                      className={`flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-lg transition-colors ${
+                        isProcessing || isQueued ? "opacity-60 cursor-not-allowed" : ""
+                      } ${
+                        isQueued
+                          ? (themeKey === "dark" ? "text-amber-400 bg-amber-900/30" : "text-amber-700 bg-amber-100")
+                          : (themeKey === "dark" ? "text-orange-400 hover:bg-orange-900/30" : "text-orange-500 hover:bg-orange-100")
+                      }`}
+                      title={isQueued ? "Already queued for regeneration — picks up in next cron run" : "Suggest a fix and queue regeneration"}
+                    >
+                      <RefreshCw className={`w-3 h-3 ${isProcessing ? "animate-spin" : ""}`} />
+                      {isProcessing ? "Submitting…" : isQueued ? "Queued for regeneration" : "Regenerate this image"}
+                    </button>
+                  );
+                })()}
               </div>
             );
           }
@@ -2785,42 +2795,74 @@ export default function Bhagwatham() {
     }
   }, [regeneratingChapters]);
 
-  const handleRegenerateImages = useCallback(async (chapterNum: number, customPrompt?: string, summaryHi?: string) => {
+  // Reason modal — collects "what was wrong" before queueing regeneration
+  const [regenReasonModal, setRegenReasonModal] = useState<{ chapterNum: number; sceneIndex: number } | null>(null);
+  // Track chapters that have a pending regen request so we can show "Queued" badge
+  const [queuedRegens, setQueuedRegens] = useState<Set<number>>(new Set());
+
+  // Load currently-pending regen requests on mount so the UI shows queued state
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await sbFetch(
+          "bhagavatam_image_regen_requests?status=in.(pending,processing)&select=chapter_number",
+        );
+        if (res.ok) {
+          const rows: Array<{ chapter_number: number }> = await res.json();
+          setQueuedRegens(new Set(rows.map(r => r.chapter_number)));
+        }
+      } catch { /* offline — fine */ }
+    })();
+  }, []);
+
+  // Open reason modal — actual queueing happens on modal submit.
+  const handleRegenerateImages = useCallback((chapterNum: number, sceneIndex: number = 0) => {
     if (regeneratingChapters.has(chapterNum)) return;
-    if (!isMutationApiConfigured()) {
-      alert(
-        "Regeneration not configured for the live site.\n\n" +
-        "To enable: start an ngrok tunnel to the local API server, then set VITE_PUBLIC_API_URL " +
-        "in Vercel project settings to the tunnel URL and redeploy.",
-      );
+    setRegenReasonModal({ chapterNum, sceneIndex });
+  }, [regeneratingChapters]);
+
+  // Submit a regen request to Supabase queue (laptop-independent).
+  // The local cron picks pending rows, regenerates with the reason injected
+  // into the FLUX prompt as a corrective instruction, and marks them complete.
+  const submitRegenRequest = useCallback(async (chapterNum: number, sceneIndex: number, reason: string) => {
+    if (!reason.trim()) {
+      alert("Please describe what's wrong with the current image so the next generation can fix it.");
       return;
     }
+    setRegenReasonModal(null);
     setRegeneratingChapters((prev) => new Set(prev).add(chapterNum));
-    setPromptModal(null);
     try {
-      const bodyObj: Record<string, string> = {};
-      if (customPrompt) bodyObj.customPrompt = customPrompt;
-      if (summaryHi) bodyObj.summaryHi = summaryHi;
-      const res = await fetch(`${MUTATION_API_BASE}/regenerate-chapter/${chapterNum}`, {
+      const res = await sbFetch("bhagavatam_image_regen_requests", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bodyObj),
+        body: JSON.stringify({
+          chapter_number: chapterNum,
+          scene_index: sceneIndex,
+          reason: reason.trim(),
+          requested_at: new Date().toISOString(),
+          status: "pending",
+        }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        await fetchImageManifest();
-        if (data.trashIds?.length > 0) {
-          showUndo(`Chapter ${chapterNum} images regenerated`, data.trashIds);
-        }
+      if (!res.ok) {
+        const err = await res.text();
+        alert(`Failed to queue regeneration: ${err}`);
+        return;
       }
-    } catch { /* ignore */ } finally {
+      setQueuedRegens(prev => new Set(prev).add(chapterNum));
+      alert(
+        `Regeneration queued for Chapter ${chapterNum}.\n\n` +
+        `It'll be regenerated next time the local generator runs (typically within 24h),` +
+        ` with this issue specifically called out in the prompt:\n\n"${reason.trim()}"`,
+      );
+    } catch (err) {
+      alert(`Could not queue regeneration: ${String(err)}`);
+    } finally {
       setRegeneratingChapters((prev) => {
         const next = new Set(prev);
         next.delete(chapterNum);
         return next;
       });
     }
-  }, [regeneratingChapters, fetchImageManifest, showUndo]);
+  }, []);
 
   const handleDeleteImage = useCallback(async (chapterNum: number, sceneIndex: number) => {
     if (!isMutationApiConfigured()) {
@@ -3412,7 +3454,7 @@ export default function Bhagwatham() {
                       <p className={`text-[10px] ${theme.muted} font-medium text-right mt-1 mb-1 opacity-40`}>· {page.pageNumber} ·</p>
                     )}
                     {pageIdx === 0 && <p className={`text-[10px] ${theme.muted} font-medium text-right mt-0 mb-2 opacity-40`}>· {page.pageNumber} ·</p>}
-                    <RenderContent text={page.text} textEn={page.textEn} lang={lang} chapterImages={chapterImages} themeKey={settings.theme} onRegenerateImages={isDevMode ? openPromptModal : undefined} regeneratingChapters={regeneratingChapters} onDeleteImage={isDevMode ? handleDeleteImage : undefined} pageNumber={page.pageNumber} overrides={sectionOverrides[page.pageNumber]} onOverridesChange={isDevMode ? handleOverridesChange : undefined} prevPageEndKind={prevEndKind} chapterNumMapper={(perSkandhNum: number) => {
+                    <RenderContent text={page.text} textEn={page.textEn} lang={lang} chapterImages={chapterImages} themeKey={settings.theme} onRegenerateImages={(num: number) => handleRegenerateImages(num, 0)} regeneratingChapters={regeneratingChapters} queuedRegens={queuedRegens} onDeleteImage={isDevMode ? handleDeleteImage : undefined} pageNumber={page.pageNumber} overrides={sectionOverrides[page.pageNumber]} onOverridesChange={isDevMode ? handleOverridesChange : undefined} prevPageEndKind={prevEndKind} chapterNumMapper={(perSkandhNum: number) => {
                       // Find which skandh this page belongs to based on surrounding chapters
                       const ch = chapters.find(c => c.number === perSkandhNum && c.pageNumber <= page.pageNumber);
                       // Pick the last matching chapter (closest to this page)
@@ -3589,23 +3631,114 @@ export default function Bhagwatham() {
                   {/* Action buttons */}
                   <div className="flex gap-2 pt-2">
                     <button
-                      onClick={() => handleRegenerateImages(promptModal.chapterNum, promptModal.prompt, promptModal.summaryHi)}
-                      disabled={!promptModal.prompt.trim()}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white rounded-xl font-semibold text-sm transition-colors"
+                      onClick={() => { setPromptModal(null); handleRegenerateImages(promptModal.chapterNum, 0); }}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold text-sm transition-colors"
                     >
                       <Send className="w-3.5 h-3.5" />
-                      Generate with this prompt
-                    </button>
-                    <button
-                      onClick={() => handleRegenerateImages(promptModal.chapterNum)}
-                      className="flex items-center gap-1.5 px-4 py-2.5 bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 rounded-xl font-medium text-sm transition-colors"
-                    >
-                      <Wand2 className="w-3.5 h-3.5" />
-                      Auto
+                      Queue regeneration
                     </button>
                   </div>
                 </div>
               )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Image regeneration reason modal — captures "what's wrong" before queueing */}
+      <AnimatePresence>
+        {regenReasonModal && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            onClick={(e) => { if (e.target === e.currentTarget) setRegenReasonModal(null); }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full"
+            >
+              <div className="p-5 border-b border-stone-200 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-orange-100 rounded-xl flex items-center justify-center">
+                    <RefreshCw className="w-4.5 h-4.5 text-orange-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-stone-900">Regenerate image</h3>
+                    <p className="text-xs text-stone-500">Chapter {regenReasonModal.chapterNum}</p>
+                  </div>
+                </div>
+                <button onClick={() => setRegenReasonModal(null)} className="p-1.5 text-stone-400 hover:text-stone-600">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="p-5 space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-stone-700 mb-1">
+                    What's wrong with the current image?
+                  </label>
+                  <p className="text-[11px] text-stone-500 mb-2">
+                    Be specific — this will be added to the prompt for the next generation so the AI corrects this exact issue.
+                  </p>
+                  <textarea
+                    autoFocus
+                    placeholder="e.g. Woman has a beard / Krishna shown as adult instead of a child / Wrong scene — should be on the battlefield, not in a forest"
+                    className="w-full text-sm border border-stone-300 rounded-lg px-3 py-2 focus:outline-none focus:border-orange-400 min-h-[100px]"
+                    id="regen-reason-input"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                        const val = (e.currentTarget as HTMLTextAreaElement).value;
+                        if (regenReasonModal) submitRegenRequest(regenReasonModal.chapterNum, regenReasonModal.sceneIndex, val);
+                      }
+                    }}
+                  />
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    "Woman has a beard",
+                    "Man has flowers in hair",
+                    "Wrong character age",
+                    "Wrong setting/location",
+                    "Doesn't match the story",
+                    "Has text/captions",
+                  ].map(preset => (
+                    <button
+                      key={preset}
+                      onClick={() => {
+                        const el = document.getElementById("regen-reason-input") as HTMLTextAreaElement | null;
+                        if (el) {
+                          el.value = el.value ? `${el.value}; ${preset}` : preset;
+                          el.focus();
+                        }
+                      }}
+                      className="text-[10px] px-2 py-1 rounded-full bg-stone-100 hover:bg-orange-100 text-stone-600 hover:text-orange-700 transition-colors"
+                    >
+                      + {preset}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={() => {
+                      const el = document.getElementById("regen-reason-input") as HTMLTextAreaElement | null;
+                      const val = el?.value || "";
+                      if (regenReasonModal) submitRegenRequest(regenReasonModal.chapterNum, regenReasonModal.sceneIndex, val);
+                    }}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold text-sm"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    Queue regeneration
+                  </button>
+                  <button
+                    onClick={() => setRegenReasonModal(null)}
+                    className="px-4 py-2.5 text-stone-600 hover:bg-stone-100 rounded-xl font-medium text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <p className="text-[10px] text-stone-400 text-center">
+                  Tip: Cmd/Ctrl + Enter to submit
+                </p>
+              </div>
             </motion.div>
           </motion.div>
         )}

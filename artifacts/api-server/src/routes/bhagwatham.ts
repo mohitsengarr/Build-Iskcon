@@ -427,6 +427,17 @@ router.post("/bhagwatham/image/restore/:trashId", (req, res) => {
   }
 });
 
+// POST /api/bhagwatham/regen-queue/process — manually process pending regens
+router.post("/bhagwatham/regen-queue/process", async (_req, res) => {
+  try {
+    const { processImageRegenQueue } = await import("../services/bhagwatham-regen-queue");
+    const result = await processImageRegenQueue();
+    res.json({ success: true, ...result });
+  } catch (err) {
+    res.status(500).json({ error: String(err) });
+  }
+});
+
 // PATCH /api/bhagwatham/page/:pageNumber — save edited page text
 // Updates the batch JSON file on disk, then refreshes the public/api copy
 // so the change is visible on the live site after the next deploy.

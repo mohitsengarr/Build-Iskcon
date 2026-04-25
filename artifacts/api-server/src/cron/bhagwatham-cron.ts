@@ -175,6 +175,25 @@ export function startBhagwathamCron(): void {
     }
   });
 
+  // ── Image regeneration queue processor ─────────────────────────────────
+  // Polls bhagavatam_image_regen_requests for pending rows and regenerates the
+  // image with the user-supplied reason injected into the FLUX prompt. Runs
+  // alongside the fast image backfill so requests are picked up the same day.
+  const REGEN_QUEUE_INTERVAL = "30 6 * * *"; // 06:30 UTC = 12:00 IST — after fast backfill
+  logger.info({ interval: REGEN_QUEUE_INTERVAL }, "Image regen-queue cron started");
+
+  cron.schedule(REGEN_QUEUE_INTERVAL, async () => {
+    try {
+      const { processImageRegenQueue } = await import("../services/bhagwatham-regen-queue");
+      const res = await processImageRegenQueue();
+      if (res.processed > 0) {
+        logger.info({ processed: res.processed, failed: res.failed }, "Regen queue processed");
+      }
+    } catch (err) {
+      logger.error({ err }, "Image regen-queue cron failed");
+    }
+  });
+
   // Run initial credit check on startup
   checkAllCredits().catch(() => {});
 }
