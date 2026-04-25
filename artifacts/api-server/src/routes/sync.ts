@@ -27,9 +27,9 @@ router.post("/discover-temples", async (_req, res) => {
 });
 
 // POST /api/deploy — manually trigger git commit + push (daily commit on demand)
-router.post("/deploy", (_req, res) => {
+router.post("/deploy", async (_req, res) => {
   try {
-    const result = commitAndPush();
+    const result = await commitAndPush();
     res.json({ success: true, ...result });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err?.message || "Deploy failed" });

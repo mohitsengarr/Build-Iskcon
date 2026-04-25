@@ -937,29 +937,26 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     setAllPages(updated);
     window.getSelection()?.removeAllRanges();
 
-    // Persist to the API server so the edit survives reload + reaches live deployment
-    if (!isMutationApiConfigured()) {
-      const deployed = typeof window !== "undefined" && window.location.hostname !== "localhost";
-      if (deployed) {
-        alert(
-          "Edit saved locally only — to persist to the live site:\n" +
-          "Start ngrok, then set VITE_PUBLIC_API_URL in Vercel and redeploy.",
-        );
-      }
-      return;
-    }
+    // Persist directly to Supabase — works from the live site without any
+    // tunnel or local API server. Local cron picks these up and merges back to
+    // the batch JSON files for permanent storage.
     try {
-      const res = await fetch(`${MUTATION_API_BASE}/page/${pageNum}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: fullNewText }),
+      const res = await sbFetch("bhagavatam_page_edits", {
+        method: "POST",
+        headers: { Prefer: "return=representation,resolution=merge-duplicates" },
+        body: JSON.stringify({
+          page_number: pageNum,
+          text: fullNewText,
+          edited_at: new Date().toISOString(),
+          applied_to_git: false,
+        }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        alert(`Save failed: ${data.error || res.statusText}`);
+        const data = await res.text().catch(() => "");
+        alert(`Save failed: ${data || res.statusText}`);
       }
     } catch (err) {
-      alert(`Save failed — could not reach API server.\n${String(err)}`);
+      alert(`Save failed — could not reach Supabase.\n${String(err)}`);
     }
   }, [allPages, setAllPages]);
 
@@ -2490,6 +2487,33 @@ export default function Bhagwatham() {
         }
       } catch { /* not available */ }
 
+      // Step 1b: Load all live page edits from Supabase in parallel.
+      // These are crowd-sourced corrections persisted via the voice-edit toolbar
+      // and override whatever the static batch JSON contains.
+      const editsByPage = new Map<number, { text?: string; textEn?: string }>();
+      try {
+        const editRes = await sbFetch("bhagavatam_page_edits?select=page_number,text,text_en");
+        if (editRes.ok) {
+          const rows: Array<{ page_number: number; text?: string; text_en?: string }> = await editRes.json();
+          for (const r of rows) {
+            editsByPage.set(r.page_number, { text: r.text || undefined, textEn: r.text_en || undefined });
+          }
+        }
+      } catch { /* edits unavailable — fall through with original text */ }
+
+      const applyEdits = (pages: PageContent[]): PageContent[] =>
+        editsByPage.size === 0
+          ? pages
+          : pages.map(p => {
+              const e = editsByPage.get(p.pageNumber);
+              if (!e) return p;
+              return {
+                ...p,
+                text: e.text ?? p.text,
+                textEn: e.textEn ?? p.textEn,
+              };
+            });
+
       // Step 2: Load ALL pages via content endpoint (paginated, 100 batches per request)
       const accumulated: PageContent[] = [];
       let contentPage = 1;
@@ -2505,12 +2529,12 @@ export default function Bhagwatham() {
           contentPage++;
           // Show content progressively — unblock UI after first chunk
           if (accumulated.length > 0) {
-            setAllPages([...accumulated]);
+            setAllPages(applyEdits([...accumulated]));
             if (contentPage === 2) setLoading(false);
           }
         } catch { hasMore = false; }
       }
-      if (accumulated.length > 0) setAllPages(accumulated);
+      if (accumulated.length > 0) setAllPages(applyEdits(accumulated));
       contentFullyLoaded.current = true;
       // If a chapter click was pending while content was loading, navigate now
       if (pendingChapterRef.current) {
