@@ -946,23 +946,67 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       const targetPage = prev.find(p => p.pageNumber === pageNum);
       if (!targetPage) return prev;
 
-      // Replace logic — try exact first, then whitespace-normalised regex.
-      // The selection from getSelection() can collapse newlines/spaces that
-      // exist in the source text (DOM rendering vs raw OCR), so a strict
-      // .replace() often fails silently.
-      let fullNewText = targetPage.text.replace(oldText, newText);
+      const sourceText = targetPage.text;
+      const escapeForRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-      if (fullNewText === targetPage.text) {
-        // Build a regex that allows flexible whitespace inside the old text
-        const escapeForRegex = (s: string) =>
-          s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+      // STRATEGY 1: Exact replace
+      let fullNewText = sourceText.replace(oldText, newText);
+
+      // STRATEGY 2: Per-character flexible regex.
+      // Each whitespace run → \s+; any dash variant matches any other dash variant
+      // (— vs - vs – vs ―); danda variants (। ॥) cross-match. This handles the
+      // common case where the DOM renders an em-dash but the OCR source has a hyphen.
+      if (fullNewText === sourceText) {
         try {
-          const flexibleRe = new RegExp(escapeForRegex(oldText.trim()));
-          fullNewText = targetPage.text.replace(flexibleRe, newText);
-        } catch { /* invalid regex — give up gracefully */ }
+          const flexible = oldText
+            .normalize("NFC")
+            .split("")
+            .map((ch) => {
+              if (/\s/.test(ch)) return "\\s+";
+              if (/[-‐-―−]/.test(ch)) return "[\\u002D\\u2010-\\u2015\\u2212]";
+              if (ch === "।" || ch === "॥") return "[\\u0964\\u0965]";
+              return escapeForRegex(ch);
+            })
+            .join("");
+          const re = new RegExp(flexible);
+          fullNewText = sourceText.replace(re, newText);
+        } catch { /* malformed — fall through */ }
       }
 
-      if (fullNewText === targetPage.text) {
+      // STRATEGY 3: Anchor on first/last 12 stripped chars. The middle of the
+      // selection can have characters that differ from the source — but the
+      // boundaries usually match. Strip whitespace and normalise dashes when
+      // searching, then map cleaned indices back to original positions.
+      if (fullNewText === sourceText && oldText.trim().length > 24) {
+        const cleanedChars: number[] = []; // cleaned-index → original-index
+        let cleaned = "";
+        for (let i = 0; i < sourceText.length; i++) {
+          const ch = sourceText[i];
+          if (/\s/.test(ch)) continue;
+          let mapped = ch.normalize("NFC");
+          if (/[-‐-―−]/.test(mapped)) mapped = "-";
+          cleaned += mapped;
+          cleanedChars.push(i);
+        }
+        const stripSel = (s: string) =>
+          s.normalize("NFC").replace(/[‐-―−]/g, "-").replace(/\s+/g, "");
+        const head = stripSel(oldText.slice(0, 12));
+        const tail = stripSel(oldText.slice(-12));
+        const startInClean = cleaned.indexOf(head);
+        if (startInClean >= 0) {
+          const tailIdx = cleaned.indexOf(tail, startInClean + head.length);
+          if (tailIdx >= 0) {
+            const realStart = cleanedChars[startInClean];
+            const cleanedEndIdx = tailIdx + tail.length;
+            const realEnd = cleanedEndIdx < cleanedChars.length
+              ? cleanedChars[cleanedEndIdx]
+              : cleanedChars[cleanedChars.length - 1] + 1;
+            fullNewText = sourceText.slice(0, realStart) + newText + sourceText.slice(realEnd);
+          }
+        }
+      }
+
+      if (fullNewText === sourceText) {
         // Couldn't find — defer the alert so React doesn't double-fire it
         setTimeout(() => alert(
           "Couldn't locate the highlighted text in the page source — the selection " +
