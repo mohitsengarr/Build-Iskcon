@@ -2939,7 +2939,7 @@ export default function Bhagwatham() {
   }, [readerId]);
 
   const handleBookmarkJump = useCallback((b: BookmarkEntry) => {
-    setSidebarOpen(false);
+    // Sidebar stays open — user must close manually via X or Escape
     setSearchQuery("");
     const pageIdx = allPages.findIndex(p => p.pageNumber === b.page_number);
     if (pageIdx >= 0) {
@@ -3049,7 +3049,7 @@ export default function Bhagwatham() {
   };
 
   const handleChapterClick = (ch: ChapterEntry) => {
-    if (window.innerWidth < 1024) setSidebarOpen(false);
+    // Sidebar stays open — user must close manually via X or Escape
     setSearchQuery("");
     setActiveChapter(ch.globalNumber);
 
