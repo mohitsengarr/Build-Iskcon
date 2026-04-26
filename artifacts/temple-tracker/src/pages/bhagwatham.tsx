@@ -8,7 +8,7 @@ import {
   BookOpen, ChevronLeft, ChevronRight, Loader2,
   RefreshCw, Search, BookMarked, Sparkles,
   List, X, ChevronDown, ChevronUp, Image as ImageIcon, Languages,
-  Download, Share2, Bookmark, Trash2, LogIn, Volume2, Square, Mic, MicOff, Check,
+  Download, Share2, Bookmark, Trash2, LogIn, Volume2, Square, Check,
   Settings, Sun, Moon, Type, Minus, Plus, Maximize2, Undo2, Pencil, Wand2, Send,
 } from "lucide-react";
 
@@ -856,16 +856,13 @@ function getPageEndKind(text: string): string {
   return lastKind;
 }
 
-// ── Voice Edit (Speech-to-Text for selected text) ──────────────────────────
+// ── Selection Toolbar (Listen / Meaning / AI fix for highlighted text) ────
 
-function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; setAllPages: (pages: PageContent[]) => void }) {
+function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; setAllPages: React.Dispatch<React.SetStateAction<PageContent[]>> }) {
   const [show, setShow] = useState(false);
-  const [recording, setRecording] = useState(false);
-  const [processing, setProcessing] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [selectedText, setSelectedText] = useState("");
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
+  const [appliedFlash, setAppliedFlash] = useState(false);
   const pageNumRef = useRef<number | null>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
 
@@ -906,7 +903,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
         const sel = window.getSelection();
         if (!sel || sel.isCollapsed || !sel.toString().trim()) {
           // Don't hide if user is interacting with the toolbar or TTS is playing
-          if (!recording && !processing && !ttsPlaying && !ttsLoading && !toolbarRef.current?.contains(document.activeElement)) {
+          if (!ttsPlaying && !ttsLoading && !toolbarRef.current?.contains(document.activeElement)) {
             setShow(false);
           }
           return;
@@ -932,7 +929,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       document.removeEventListener("selectionchange", onSelectionChange);
       if (debounceTimer) clearTimeout(debounceTimer);
     };
-  }, [recording, processing, ttsPlaying, ttsLoading]);
+  }, [ttsPlaying, ttsLoading]);
 
   const applyEdit = useCallback(async (oldText: string, newText: string) => {
     const pageNum = pageNumRef.current;
@@ -941,39 +938,47 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       return;
     }
 
-    const targetPage = allPages.find(p => p.pageNumber === pageNum);
-    if (!targetPage) return;
+    // Use functional setState to ALWAYS read the freshest text, even when
+    // multiple AI fixes are applied back-to-back (avoids stale closure where
+    // the second fix reads pre-first-fix text and silently no-ops).
+    let savedText: string | null = null;
+    setAllPages(prev => {
+      const targetPage = prev.find(p => p.pageNumber === pageNum);
+      if (!targetPage) return prev;
 
-    // Replace logic — try exact first, then whitespace-normalised regex.
-    // The selection from getSelection() can collapse newlines/spaces that
-    // exist in the source text (DOM rendering vs raw OCR), so a strict
-    // .replace() often fails silently.
-    let fullNewText = targetPage.text.replace(oldText, newText);
+      // Replace logic — try exact first, then whitespace-normalised regex.
+      // The selection from getSelection() can collapse newlines/spaces that
+      // exist in the source text (DOM rendering vs raw OCR), so a strict
+      // .replace() often fails silently.
+      let fullNewText = targetPage.text.replace(oldText, newText);
 
-    if (fullNewText === targetPage.text) {
-      // Build a regex that allows flexible whitespace inside the old text
-      const escapeForRegex = (s: string) =>
-        s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
-      try {
-        const flexibleRe = new RegExp(escapeForRegex(oldText.trim()));
-        fullNewText = targetPage.text.replace(flexibleRe, newText);
-      } catch { /* invalid regex — give up gracefully */ }
-    }
+      if (fullNewText === targetPage.text) {
+        // Build a regex that allows flexible whitespace inside the old text
+        const escapeForRegex = (s: string) =>
+          s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+        try {
+          const flexibleRe = new RegExp(escapeForRegex(oldText.trim()));
+          fullNewText = targetPage.text.replace(flexibleRe, newText);
+        } catch { /* invalid regex — give up gracefully */ }
+      }
 
-    if (fullNewText === targetPage.text) {
-      alert(
-        "Couldn't locate the highlighted text in the page source — the selection " +
-        "may include text from multiple sections. Try selecting a smaller piece.",
-      );
-      return;
-    }
+      if (fullNewText === targetPage.text) {
+        // Couldn't find — defer the alert so React doesn't double-fire it
+        setTimeout(() => alert(
+          "Couldn't locate the highlighted text in the page source — the selection " +
+          "may include text from multiple sections. Try selecting a smaller piece.",
+        ), 0);
+        return prev;
+      }
 
-    // Update React state optimistically so the user sees the change instantly
-    const updated = allPages.map(p =>
-      p.pageNumber !== pageNum ? p : { ...p, text: fullNewText },
-    );
-    setAllPages(updated);
+      savedText = fullNewText;
+      return prev.map(p => p.pageNumber !== pageNum ? p : { ...p, text: fullNewText });
+    });
+
+    if (!savedText) return; // replace failed — nothing to persist
     window.getSelection()?.removeAllRanges();
+    setAppliedFlash(true);
+    setTimeout(() => setAppliedFlash(false), 1500);
 
     // Persist directly to Supabase — works from the live site without any
     // tunnel or local API server. Local cron picks these up and merges back to
@@ -984,7 +989,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
         headers: { Prefer: "return=representation,resolution=merge-duplicates" },
         body: JSON.stringify({
           page_number: pageNum,
-          text: fullNewText,
+          text: savedText,
           edited_at: new Date().toISOString(),
           applied_to_git: false,
         }),
@@ -996,49 +1001,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     } catch (err) {
       alert(`Save failed — could not reach Supabase.\n${String(err)}`);
     }
-  }, [allPages, setAllPages]);
-
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
-      chunksRef.current = [];
-      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
-      recorder.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop());
-        setRecording(false);
-        setProcessing(true);
-
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        const capturedText = selectedText;
-        try {
-          const res = await fetch("/api/bhagwatham/stt", {
-            method: "POST",
-            headers: { "Content-Type": "application/octet-stream" },
-            body: blob,
-          });
-          const data = await res.json();
-          if (data.transcript) {
-            applyEdit(capturedText, data.transcript);
-          }
-        } catch { /* STT failed */ }
-        setProcessing(false);
-        setShow(false);
-      };
-      recorderRef.current = recorder;
-      recorder.start();
-      setRecording(true);
-
-      // Auto-stop after 25 seconds (API limit is 30s)
-      setTimeout(() => { if (recorder.state === "recording") recorder.stop(); }, 25000);
-    } catch {
-      setRecording(false);
-    }
-  };
-
-  const stopRecording = () => {
-    recorderRef.current?.stop();
-  };
+  }, [setAllPages]);
 
   // Listen to selected word via Sarvam HTTP streaming TTS — real-time playback
   const listenToWord = useCallback(async () => {
@@ -1192,19 +1155,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
           maxWidth: "min(420px, 92vw)",
         }}
       >
-        {processing ? (
-          <div className="flex items-center gap-2 px-4 py-3 text-xs text-stone-500">
-            <Loader2 className="w-3.5 h-3.5 animate-spin" /> Transcribing...
-          </div>
-        ) : recording ? (
-          <div className="flex items-center gap-2 px-4 py-3">
-            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-xs text-red-600 font-medium flex-1">Recording...</span>
-            <button onClick={stopRecording} className="p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200">
-              <Check className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        ) : (
+        {(
           <div className="p-2">
             {/* Action buttons row — preventDefault stops clicks from collapsing text selection */}
             <div className="flex items-center gap-1 mb-2" onMouseDown={e => e.preventDefault()}>
@@ -1225,9 +1176,6 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
               <button onClick={lookupWord} disabled={dictLoading} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Dictionary meaning">
                 {dictLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookOpen className="w-3.5 h-3.5" />} Meaning
               </button>
-              <button onClick={startRecording} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Voice edit">
-                <Mic className="w-3.5 h-3.5" /> Voice
-              </button>
               <button
                 onClick={requestSuggestion}
                 disabled={suggestLoading}
@@ -1237,6 +1185,11 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
                 {suggestLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
                 AI fix
               </button>
+              {appliedFlash && (
+                <span className="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold text-green-700 bg-green-50 rounded">
+                  <Check className="w-3 h-3" /> Applied
+                </span>
+              )}
               <button onClick={() => { setShow(false); setDictResult(null); setSuggestion(null); }} className="p-1.5 text-stone-400 hover:text-stone-600 ml-auto">
                 <X className="w-3 h-3" />
               </button>
@@ -1291,9 +1244,12 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
                         setSuggestion(null);
                         return;
                       }
-                      applyEdit(selectedText, suggestion.suggested_text);
+                      // Snapshot values before clearing — applyEdit is async
+                      const oldText = selectedText;
+                      const newText = suggestion.suggested_text;
                       setSuggestion(null);
-                      setShow(false);
+                      // Keep toolbar open so user can immediately fix more text
+                      void applyEdit(oldText, newText);
                     }}
                     className="flex-1 px-3 py-1.5 text-xs font-semibold bg-purple-600 text-white rounded-lg hover:bg-purple-700"
                   >
