@@ -2056,12 +2056,10 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
           case "tatparya": {
             // Same as body text, only "तात्पर्य :" prefix is bold (SEN-109: visual divider)
             // Continuation if prev page ended in tatparya OR ref-shlok (ref-shlok is always inside tatparya)
+            // Only the page-number divider is shown — no inline divider before tatparya
             const isContinuation = i === 0 && (prevPageEndKind === "tatparya" || prevPageEndKind === "ref-shlok");
             return (
               <div key={i} data-section-type="tatparya" className={isContinuation ? "" : "mt-4 sm:mt-5"}>
-                {!isContinuation && (
-                  <div className={`mb-3 h-px ${themeKey === "dark" ? "bg-white/5" : themeKey === "sepia" ? "bg-amber-300/20" : "bg-green-200/50"}`} />
-                )}
                 {sec.lines.map((l, j) => (
                   <p key={j} className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>
                     {j === 0 && !isContinuation && <><span className="font-semibold">तात्पर्य :</span>{" "}</>}
