@@ -2004,7 +2004,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
                       <p key={j} className={`font-bold leading-[1.9] mb-0.5 ${t.text}`} style={{ fontSize: "1.15em", fontFamily: "var(--font-sanskrit)" }}>{l}</p>
                     ))}
                   </div>
-                  {!isShlokContinuation && <ShlokSpeaker text={sec.lines.join(" ")} themeKey={themeKey} />}
+                  {/* ShlokSpeaker removed — TTS still available via the selection toolbar (highlight any text → 🔊 Listen). */}
                 </div>
               </div>
             );
