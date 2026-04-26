@@ -1,27 +1,5 @@
 [
   {
-    "trashId": "1-0-1775822951017",
-    "originalFile": "chapter-001.jpg",
-    "trashedFile": "1-0-1775822951017.jpg",
-    "manifestEntry": {
-      "chapterNumber": 1,
-      "chapterTitle": "Chapter एक",
-      "imagePath": "chapter-001.jpg",
-      "prompt": "Vyasa, the great sage, sits in deep meditation at his forest hermitage, his hands folded in reverence, composing the opening verse of the Bhagavatam. He envisions Krishna as the supreme eternal truth — the original source of all creation — while Brahma, Narada, and the cosmic order emanate from that single divine light of Vasudeva.",
-      "personasUsed": [
-        "krishna_adult",
-        "narada",
-        "vyasa",
-        "brahma"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:08:23.741Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T12:09:11.020Z",
-    "operation": "regenerate"
-  },
-  {
     "trashId": "4-0-1775823063100",
     "originalFile": "chapter-004.jpg",
     "trashedFile": "4-0-1775823063100.jpg",
@@ -1028,6 +1006,23 @@
       "sceneIndex": 0
     },
     "trashedAt": "2026-04-10T23:28:49.210Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "34-0-1777165201320",
+    "originalFile": "chapter-034.jpg",
+    "trashedFile": "34-0-1777165201320.jpg",
+    "manifestEntry": {
+      "chapterNumber": 34,
+      "chapterTitle": "Chapter पाँच",
+      "cantoNumber": 3,
+      "imagePath": "chapter-034.jpg",
+      "prompt": "Vidur approaches Maitreya by the Ganges River, seeking spiritual knowledge from the wise sage.",
+      "descriptionHi": "इस अध्याय में विदुर और मैत्रेय की मुलाकात का वर्णन है, जहाँ विदुर भगवान् की शुद्ध भक्ति में परिपूर्ण होकर मैत्रेय से ज्ञान प्राप्त करने के लिए आते हैं। यहाँ विदुर की अच्युत भगवान् की भक्ति और मैत्रेय के अगाध ज्ञान का महत्व बताया गया है।",
+      "generatedAt": "2026-04-15T07:04:06.169Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-04-26T01:00:01.322Z",
     "operation": "regenerate"
   }
 ]

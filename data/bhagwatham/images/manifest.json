@@ -587,12 +587,18 @@
     },
     {
       "chapterNumber": 34,
-      "chapterTitle": "Chapter पाँच",
+      "chapterTitle": "अध्याय चार",
       "cantoNumber": 3,
       "imagePath": "chapter-034.jpg",
-      "prompt": "Vidur approaches Maitreya by the Ganges River, seeking spiritual knowledge from the wise sage.",
-      "descriptionHi": "इस अध्याय में विदुर और मैत्रेय की मुलाकात का वर्णन है, जहाँ विदुर भगवान् की शुद्ध भक्ति में परिपूर्ण होकर मैत्रेय से ज्ञान प्राप्त करने के लिए आते हैं। यहाँ विदुर की अच्युत भगवान् की भक्ति और मैत्रेय के अगाध ज्ञान का महत्व बताया गया है।",
-      "generatedAt": "2026-04-15T07:04:06.169Z",
+      "prompt": "Krishna, Parikshit, and Shukadeva sit together in a serene forest, discussing the secrets of creation and Krishna's divine powers.",
+      "descriptionHi": "महाराज परीक्षित ने शुकदेव गोस्वामी से सृष्टि प्रक्रम और कृष्ण की शक्तियों के बारे में पूछताछ की, जिसमें उन्हें भगवान के कार्यों की अद्भुतता और उनके अनन्त स्वरूप के बारे में जानकारी मिली। यह अध्याय आध्यात्मिक ज्ञान और त्याग की महत्ता पर प्रकाश डालता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "shukadeva",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-26T01:00:26.911Z",
       "sceneIndex": 0
     },
     {
@@ -3477,5 +3483,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-04-26T00:30:06.770Z"
+  "lastUpdated": "2026-04-26T01:00:26.911Z"
 }
