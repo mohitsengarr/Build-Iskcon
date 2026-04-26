@@ -936,12 +936,39 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
 
   const applyEdit = useCallback(async (oldText: string, newText: string) => {
     const pageNum = pageNumRef.current;
-    if (!pageNum || !oldText || !newText) return;
+    if (!pageNum || !oldText || !newText || oldText === newText) {
+      window.getSelection()?.removeAllRanges();
+      return;
+    }
 
-    // Update React state optimistically so the user sees the change instantly
     const targetPage = allPages.find(p => p.pageNumber === pageNum);
     if (!targetPage) return;
-    const fullNewText = targetPage.text.replace(oldText, newText);
+
+    // Replace logic — try exact first, then whitespace-normalised regex.
+    // The selection from getSelection() can collapse newlines/spaces that
+    // exist in the source text (DOM rendering vs raw OCR), so a strict
+    // .replace() often fails silently.
+    let fullNewText = targetPage.text.replace(oldText, newText);
+
+    if (fullNewText === targetPage.text) {
+      // Build a regex that allows flexible whitespace inside the old text
+      const escapeForRegex = (s: string) =>
+        s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+      try {
+        const flexibleRe = new RegExp(escapeForRegex(oldText.trim()));
+        fullNewText = targetPage.text.replace(flexibleRe, newText);
+      } catch { /* invalid regex — give up gracefully */ }
+    }
+
+    if (fullNewText === targetPage.text) {
+      alert(
+        "Couldn't locate the highlighted text in the page source — the selection " +
+        "may include text from multiple sections. Try selecting a smaller piece.",
+      );
+      return;
+    }
+
+    // Update React state optimistically so the user sees the change instantly
     const updated = allPages.map(p =>
       p.pageNumber !== pageNum ? p : { ...p, text: fullNewText },
     );
@@ -1146,12 +1173,24 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
 
   if (!show) return null;
 
+  // Decide whether the toolbar should pop ABOVE or BELOW the selection.
+  // When showing the AI suggestion panel it can be tall, so flip below if the
+  // top of the viewport is too close (no room above). Default = above.
+  const flipBelow = suggestion ? position.y < 320 : position.y < 120;
+
   return (
     <>
       <div
         ref={toolbarRef}
-        className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-stone-200 -translate-x-1/2 -translate-y-full"
-        style={{ left: Math.max(100, Math.min(position.x, window.innerWidth - 100)), top: Math.max(60, position.y - 5), minWidth: 220 }}
+        className={`fixed z-50 bg-white rounded-2xl shadow-2xl border border-stone-200 -translate-x-1/2 ${
+          flipBelow ? "translate-y-2" : "-translate-y-full"
+        } max-h-[80vh] overflow-y-auto`}
+        style={{
+          left: Math.max(100, Math.min(position.x, window.innerWidth - 100)),
+          top: flipBelow ? position.y + 30 : Math.max(60, position.y - 5),
+          minWidth: 220,
+          maxWidth: "min(420px, 92vw)",
+        }}
       >
         {processing ? (
           <div className="flex items-center gap-2 px-4 py-3 text-xs text-stone-500">
@@ -1204,48 +1243,65 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
             </div>
             {/* AI suggestion panel — appears when Claude has returned a correction */}
             {suggestion && (
-              <div className="mb-2 p-2.5 rounded-lg bg-purple-50 border border-purple-200 max-w-md">
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <Sparkles className="w-3 h-3 text-purple-600" />
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-purple-700">AI Suggestion</span>
+              <div className="mb-2 p-3 rounded-lg bg-purple-50 border-2 border-purple-300">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-purple-700">AI Suggestion</span>
                   <span className={`text-[9px] uppercase font-medium px-1.5 py-0.5 rounded ${
                     suggestion.confidence === "high" ? "bg-green-100 text-green-700" :
                     suggestion.confidence === "low" ? "bg-amber-100 text-amber-700" :
                     "bg-stone-100 text-stone-600"
                   }`}>{suggestion.confidence}</span>
                 </div>
-                <p className="text-sm text-stone-900 mb-1.5 break-words" style={{ fontFamily: "var(--font-devanagari)" }}>
-                  {suggestion.suggested_text}
+
+                {/* Original */}
+                <div className="text-[10px] uppercase tracking-wide text-stone-500 font-semibold mb-0.5">Original</div>
+                <p className="text-sm text-stone-700 mb-2.5 px-2.5 py-1.5 bg-white border border-red-200 rounded line-through decoration-red-400 break-words" lang="hi">
+                  {selectedText}
                 </p>
+
+                {/* Suggested */}
+                <div className="text-[10px] uppercase tracking-wide text-purple-700 font-semibold mb-0.5">Suggested</div>
+                <p className="text-base text-stone-900 font-medium mb-2.5 px-2.5 py-1.5 bg-white border border-green-300 rounded break-words" lang="hi">
+                  {suggestion.suggested_text || <em className="text-stone-400 text-sm">(no suggestion)</em>}
+                </p>
+
                 {suggestion.changes.length > 0 && (
-                  <div className="text-[10px] text-stone-600 mb-1.5">
-                    {suggestion.changes.map((c, ci) => (
-                      <div key={ci} className="flex flex-wrap items-center gap-1 mb-0.5">
-                        <span className="line-through text-red-500" style={{ fontFamily: "var(--font-devanagari)" }}>{c.from}</span>
-                        <span>→</span>
-                        <span className="text-green-700 font-medium" style={{ fontFamily: "var(--font-devanagari)" }}>{c.to}</span>
-                        <span className="text-stone-500 italic">({c.reason})</span>
-                      </div>
-                    ))}
+                  <div className="mb-2.5">
+                    <div className="text-[10px] uppercase tracking-wide text-stone-500 font-semibold mb-0.5">Changes</div>
+                    <div className="text-[11px] text-stone-700 space-y-1">
+                      {suggestion.changes.map((c, ci) => (
+                        <div key={ci} className="flex flex-wrap items-center gap-1">
+                          <span className="line-through text-red-500" lang="hi">{c.from}</span>
+                          <span className="text-stone-400">→</span>
+                          <span className="text-green-700 font-medium" lang="hi">{c.to}</span>
+                          {c.reason && <span className="text-stone-500 italic">({c.reason})</span>}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
                 {suggestion.explanation && (
-                  <p className="text-[10px] text-stone-500 italic mb-2">{suggestion.explanation}</p>
+                  <p className="text-[10px] text-stone-500 italic mb-2.5">{suggestion.explanation}</p>
                 )}
-                <div className="flex gap-1.5">
+                <div className="flex gap-2">
                   <button
                     onClick={() => {
+                      if (!suggestion.suggested_text || suggestion.suggested_text === selectedText) {
+                        setSuggestion(null);
+                        return;
+                      }
                       applyEdit(selectedText, suggestion.suggested_text);
                       setSuggestion(null);
                       setShow(false);
                     }}
-                    className="flex-1 px-2 py-1 text-[10px] font-semibold bg-purple-600 text-white rounded hover:bg-purple-700"
+                    className="flex-1 px-3 py-1.5 text-xs font-semibold bg-purple-600 text-white rounded-lg hover:bg-purple-700"
                   >
-                    Accept
+                    Accept &amp; save
                   </button>
                   <button
                     onClick={() => setSuggestion(null)}
-                    className="px-2 py-1 text-[10px] font-medium text-stone-600 hover:bg-stone-100 rounded"
+                    className="px-3 py-1.5 text-xs font-medium text-stone-600 hover:bg-stone-100 rounded-lg"
                   >
                     Dismiss
                   </button>
