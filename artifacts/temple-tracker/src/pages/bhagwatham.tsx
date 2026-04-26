@@ -878,6 +878,10 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
   const [selectedText, setSelectedText] = useState("");
   const [appliedFlash, setAppliedFlash] = useState(false);
   const pageNumRef = useRef<number | null>(null);
+  // Tracks ~40 chars before and after the selection from the rendered DOM.
+  // Used by applyEdit to disambiguate when the same text appears in multiple
+  // sections of the page (e.g. shabdarth + shlok + anuvad all repeat words).
+  const selectionContextRef = useRef<{ before: string; after: string }>({ before: "", after: "" });
   const toolbarRef = useRef<HTMLDivElement>(null);
 
   // TTS state — matches ShlokSpeaker pattern (loading → playing → stop)
@@ -927,12 +931,34 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
 
         // Find which page this selection is in
         const range = sel.getRangeAt(0);
-        const pageEl = range.startContainer.parentElement?.closest("[data-page-num]");
+        const pageEl = range.startContainer.parentElement?.closest("[data-page-num]") as HTMLElement | null;
         const pageNum = pageEl ? parseInt(pageEl.getAttribute("data-page-num") || "0", 10) : 0;
+
+        // Capture surrounding context so the replace targets the EXACT occurrence
+        // the user highlighted, not a different match earlier on the page.
+        // We grab ~40 chars before and after from the page's rendered text.
+        let ctxBefore = "";
+        let ctxAfter = "";
+        if (pageEl) {
+          try {
+            const beforeRange = document.createRange();
+            beforeRange.setStart(pageEl, 0);
+            beforeRange.setEnd(range.startContainer, range.startOffset);
+            const beforeFull = beforeRange.toString();
+            ctxBefore = beforeFull.slice(-40);
+
+            const afterRange = document.createRange();
+            afterRange.setStart(range.endContainer, range.endOffset);
+            afterRange.setEndAfter(pageEl);
+            const afterFull = afterRange.toString();
+            ctxAfter = afterFull.slice(0, 40);
+          } catch { /* range walk failed — keep empty contexts */ }
+        }
 
         const rect = range.getBoundingClientRect();
         setPosition({ x: rect.left + rect.width / 2, y: rect.top - 10 });
         setSelectedText(text);
+        selectionContextRef.current = { before: ctxBefore, after: ctxAfter };
         pageNumRef.current = pageNum;
         setShow(true);
       }, 250);
@@ -962,27 +988,59 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
 
       const sourceText = targetPage.text;
       const escapeForRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const ctxBefore = selectionContextRef.current.before || "";
+      const ctxAfter = selectionContextRef.current.after || "";
 
-      // STRATEGY 1: Exact replace
-      let fullNewText = sourceText.replace(oldText, newText);
+      // Helper: build a regex for arbitrary chunk that's tolerant to
+      // whitespace runs, dash variants, danda variants.
+      const buildFlexibleRegex = (chunk: string): string => {
+        return chunk
+          .normalize("NFC")
+          .split("")
+          .map((ch) => {
+            if (/\s/.test(ch)) return "\\s+";
+            if (/[-‐-―−]/.test(ch)) return "[\\u002D\\u2010-\\u2015\\u2212]";
+            if (ch === "।" || ch === "॥") return "[\\u0964\\u0965]";
+            return escapeForRegex(ch);
+          })
+          .join("");
+      };
 
-      // STRATEGY 2: Per-character flexible regex.
-      // Each whitespace run → \s+; any dash variant matches any other dash variant
-      // (— vs - vs – vs ―); danda variants (। ॥) cross-match. This handles the
-      // common case where the DOM renders an em-dash but the OCR source has a hyphen.
+      let fullNewText = sourceText;
+
+      // STRATEGY 0: Context-anchored replace — find the exact occurrence of
+      // `oldText` that has the captured before/after context surrounding it.
+      // This disambiguates when the same word appears multiple times on the
+      // page (e.g. shabdarth dictionary + shlok + anuvad all use the same word).
+      if (ctxBefore || ctxAfter) {
+        try {
+          const beforeAnchor = ctxBefore.length >= 8 ? buildFlexibleRegex(ctxBefore.slice(-25)) : "";
+          const afterAnchor = ctxAfter.length >= 8 ? buildFlexibleRegex(ctxAfter.slice(0, 25)) : "";
+          const middle = buildFlexibleRegex(oldText);
+          // Use lookahead/lookbehind so we replace only the middle, not the anchors
+          const reStr =
+            (beforeAnchor ? `(?<=${beforeAnchor})` : "") +
+            middle +
+            (afterAnchor ? `(?=${afterAnchor})` : "");
+          const re = new RegExp(reStr);
+          if (re.test(sourceText)) {
+            fullNewText = sourceText.replace(re, newText);
+          }
+        } catch { /* lookbehind not supported / regex malformed — fall through */ }
+      }
+
+      // STRATEGY 1: Exact replace (only the first match — used as a fallback
+      // when context anchoring couldn't pin down a unique match)
+      if (fullNewText === sourceText) {
+        fullNewText = sourceText.replace(oldText, newText);
+      }
+
+      // STRATEGY 2: Per-character flexible regex (no context anchor).
+      // Last resort when neither context nor exact match worked. Catches the
+      // em-dash vs hyphen and similar Unicode-form mismatches.
       if (fullNewText === sourceText) {
         try {
-          const flexible = oldText
-            .normalize("NFC")
-            .split("")
-            .map((ch) => {
-              if (/\s/.test(ch)) return "\\s+";
-              if (/[-‐-―−]/.test(ch)) return "[\\u002D\\u2010-\\u2015\\u2212]";
-              if (ch === "।" || ch === "॥") return "[\\u0964\\u0965]";
-              return escapeForRegex(ch);
-            })
-            .join("");
-          const re = new RegExp(flexible);
+          const re = new RegExp(buildFlexibleRegex(oldText));
           fullNewText = sourceText.replace(re, newText);
         } catch { /* malformed — fall through */ }
       }
