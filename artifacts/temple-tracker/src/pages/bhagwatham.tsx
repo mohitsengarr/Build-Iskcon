@@ -1180,24 +1180,40 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
 
   if (!show) return null;
 
-  // Decide whether the toolbar should pop ABOVE or BELOW the selection.
-  // When showing the AI suggestion panel it can be tall, so flip below if the
-  // top of the viewport is too close (no room above). Default = above.
-  const flipBelow = suggestion ? position.y < 320 : position.y < 120;
+  // When the AI suggestion is open, lock the toolbar to the screen centre so
+  // the full panel (Original / Suggested / Changes / buttons) is always visible.
+  // Otherwise anchor near the selection: above by default, flipping below if
+  // there isn't enough room above.
+  const isCentered = !!suggestion;
+  const flipBelow = !isCentered && position.y < 120;
 
   return (
     <>
+      {/* Backdrop dimming the page when the suggestion panel is open —
+          makes the centred modal stand out and gives a click-out target. */}
+      {isCentered && (
+        <div
+          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[1px]"
+          onClick={() => { setSuggestion(null); }}
+        />
+      )}
       <div
         ref={toolbarRef}
-        className={`fixed z-50 bg-white rounded-2xl shadow-2xl border border-stone-200 -translate-x-1/2 ${
-          flipBelow ? "translate-y-2" : "-translate-y-full"
-        } max-h-[80vh] overflow-y-auto`}
-        style={{
-          left: Math.max(100, Math.min(position.x, window.innerWidth - 100)),
-          top: flipBelow ? position.y + 30 : Math.max(60, position.y - 5),
-          minWidth: 220,
-          maxWidth: "min(420px, 92vw)",
-        }}
+        className={`fixed z-50 bg-white rounded-2xl shadow-2xl border border-stone-200 max-h-[85vh] overflow-y-auto ${
+          isCentered
+            ? "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+            : `-translate-x-1/2 ${flipBelow ? "translate-y-2" : "-translate-y-full"}`
+        }`}
+        style={
+          isCentered
+            ? { width: "min(480px, 92vw)" }
+            : {
+                left: Math.max(100, Math.min(position.x, window.innerWidth - 100)),
+                top: flipBelow ? position.y + 30 : Math.max(60, position.y - 5),
+                minWidth: 220,
+                maxWidth: "min(420px, 92vw)",
+              }
+        }
       >
         {(
           <div className="p-2">
