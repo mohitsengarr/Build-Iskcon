@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
@@ -9,7 +9,7 @@ import {
   RefreshCw, Search, BookMarked, Sparkles,
   List, X, ChevronDown, ChevronUp, Image as ImageIcon, Languages,
   Download, Share2, Bookmark, Trash2, LogIn, Volume2, Square, Check,
-  Settings, Sun, Moon, Type, Minus, Plus, Maximize2, Undo2, Pencil, Wand2, Send,
+  Settings, Sun, Moon, Type, Minus, Plus, Maximize2, Undo2, Pencil, Wand2, Send, Bold,
 } from "lucide-react";
 
 // ── Reading Settings ─────────────────────────────────────────────────────────
@@ -444,6 +444,20 @@ function stripLeadingPageNumber(line: string): string {
   // Only strip 2+ digit numbers to avoid stripping numbered lists like "1) श्रवण"
   // Also handles brackets: "42] दर्शन" → "दर्शन"
   return line.replace(/^\d{2,5}[\]\)]*\s+/, "");
+}
+
+// Inline markdown-bold renderer — converts **text** runs in a line to <strong>.
+// Used everywhere we render `sec.lines` so users can highlight text and bold it.
+// Plain text passes through unchanged.
+function renderInlineBold(line: string): React.ReactNode {
+  if (!line.includes("**")) return line;
+  const parts = line.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**") && part.length >= 4) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    return <React.Fragment key={i}>{part}</React.Fragment>;
+  });
 }
 
 function cleanOcrText(text: string): string {
@@ -1150,6 +1164,38 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     }
   }, [selectedText, allPages, suggestLoading]);
 
+  // Bold/unbold the current selection.
+  //   - If the page source already wraps the selection in **...**, remove them.
+  //   - Otherwise wrap the selection in **...**.
+  // The change goes through applyEdit so it persists in Supabase.
+  const isCurrentSelectionBold = useMemo(() => {
+    if (!selectedText) return false;
+    // Selection literally contains the markers
+    if (selectedText.startsWith("**") && selectedText.endsWith("**") && selectedText.length >= 4) return true;
+    // Or the page source has **selectedText** somewhere
+    const pageNum = pageNumRef.current;
+    if (!pageNum) return false;
+    const page = allPages.find(p => p.pageNumber === pageNum);
+    return !!page && page.text.includes(`**${selectedText}**`);
+  }, [selectedText, allPages]);
+
+  const toggleBold = useCallback(() => {
+    if (!selectedText) return;
+    const stripped = selectedText.replace(/\*\*/g, "");
+
+    if (selectedText.startsWith("**") && selectedText.endsWith("**") && selectedText.length >= 4) {
+      // Selection literally contains the markers — unwrap in place
+      applyEdit(selectedText, selectedText.slice(2, -2));
+    } else if (isCurrentSelectionBold) {
+      // Page source has **selectedText** — replace with just selectedText
+      applyEdit(`**${selectedText}**`, stripped);
+    } else {
+      // Plain text → bold
+      applyEdit(stripped, `**${stripped}**`);
+    }
+    setShow(false);
+  }, [selectedText, isCurrentSelectionBold]); // applyEdit referenced via closure
+
   // Dictionary lookup state
   const [dictResult, setDictResult] = useState<{ word: string; meaning: string; examples: string[] } | null>(null);
   const [dictLoading, setDictLoading] = useState(false);
@@ -1235,6 +1281,17 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
               </button>
               <button onClick={lookupWord} disabled={dictLoading} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Dictionary meaning">
                 {dictLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookOpen className="w-3.5 h-3.5" />} Meaning
+              </button>
+              <button
+                onClick={toggleBold}
+                className={`flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium rounded-lg transition-colors ${
+                  isCurrentSelectionBold
+                    ? "text-stone-900 bg-stone-200 hover:bg-stone-300"
+                    : "text-stone-600 hover:text-stone-900 hover:bg-stone-100"
+                }`}
+                title={isCurrentSelectionBold ? "Remove bold" : "Bold"}
+              >
+                <Bold className="w-3.5 h-3.5" /> {isCurrentSelectionBold ? "Unbold" : "Bold"}
               </button>
               <button
                 onClick={requestSuggestion}
@@ -1504,7 +1561,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
           );
         })}
         {enLines.map((l, i) => (
-          <p key={i} className={`leading-[1.8] ${t.text} mb-1`}>{l}</p>
+          <p key={i} className={`leading-[1.8] ${t.text} mb-1`}>{renderInlineBold(l)}</p>
         ))}
       </div>
     );
@@ -2017,7 +2074,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
                 <div className="flex items-start gap-2">
                   <div className="flex-1">
                     {sec.lines.map((l, j) => (
-                      <p key={j} className={`font-bold leading-[1.9] mb-0.5 ${t.text}`} style={{ fontSize: "1.15em", fontFamily: "var(--font-sanskrit)" }}>{l}</p>
+                      <p key={j} className={`font-bold leading-[1.9] mb-0.5 ${t.text}`} style={{ fontSize: "1.15em", fontFamily: "var(--font-sanskrit)" }}>{renderInlineBold(l)}</p>
                     ))}
                   </div>
                   {/* ShlokSpeaker removed — TTS still available via the selection toolbar (highlight any text → 🔊 Listen). */}
@@ -2032,7 +2089,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             return (
               <div key={i} data-section-type="ref-shlok" className={isRefShlokContinuation ? "" : `pl-4 border-l-2 my-2 ${themeKey === "dark" ? "border-amber-800/40" : themeKey === "sepia" ? "border-[#c4ad80]" : "border-[#c4956a]/40"}`}>
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`leading-[1.7] italic mb-0.5 ${isRefShlokContinuation ? "pl-4" : ""} ${themeKey === "dark" ? "text-amber-400/70" : themeKey === "sepia" ? "text-[#6b4020]" : "text-[#8b5a30]"}`} style={{ fontSize: "0.9em", fontFamily: "var(--font-sanskrit)" }}>{l}</p>
+                  <p key={j} className={`leading-[1.7] italic mb-0.5 ${isRefShlokContinuation ? "pl-4" : ""} ${themeKey === "dark" ? "text-amber-400/70" : themeKey === "sepia" ? "text-[#6b4020]" : "text-[#8b5a30]"}`} style={{ fontSize: "0.9em", fontFamily: "var(--font-sanskrit)" }}>{renderInlineBold(l)}</p>
                 ))}
               </div>
             );
@@ -2064,7 +2121,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             return (
               <div key={i} data-section-type="anuvad" className={isAnuvadContinuation ? "" : "mt-3"}>
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>{l}</p>
+                  <p key={j} className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>{renderInlineBold(l)}</p>
                 ))}
               </div>
             );
@@ -2079,7 +2136,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
                 {sec.lines.map((l, j) => (
                   <p key={j} className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>
                     {j === 0 && !isContinuation && <><span className="font-semibold">तात्पर्य :</span>{" "}</>}
-                    {l}
+                    {renderInlineBold(l)}
                   </p>
                 ))}
               </div>
@@ -2089,7 +2146,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             return (
               <div key={i} data-section-type="text">
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`leading-[1.8] ${t.text} mb-1`} style={{ fontSize: "1em" }}>{l}</p>
+                  <p key={j} className={`leading-[1.8] ${t.text} mb-1`} style={{ fontSize: "1em" }}>{renderInlineBold(l)}</p>
                 ))}
               </div>
             );
