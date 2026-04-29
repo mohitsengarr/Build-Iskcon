@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SEOHead } from "@/components/SEOHead";
 import { Link } from "wouter";
-import { Phone, User, LogIn, LogOut, Pencil, Check, X, RotateCcw, Target, Volume2, VolumeX } from "lucide-react";
+import { Phone, User, LogIn, LogOut, Pencil, Check, X, RotateCcw, Target, Volume2, VolumeX, Share2 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -580,7 +580,7 @@ export default function JapaCounter() {
         </div>
 
         {/* Bottom controls */}
-        <div className="flex items-center justify-center gap-6 mt-4 mb-6">
+        <div className="flex items-center justify-center gap-4 mt-4 mb-6 flex-wrap">
           <button
             onClick={handleResetToday}
             className="flex items-center gap-1.5 text-amber-400/80 text-sm px-4 py-2 rounded-xl bg-white/5 active:bg-white/10 transition-colors"
@@ -593,6 +593,22 @@ export default function JapaCounter() {
           >
             {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             {soundOn ? "Sound" : "Mute"}
+          </button>
+          <button
+            onClick={async () => {
+              const text = `🙏 Hare Krishna! I chanted ${todayRounds} round${todayRounds !== 1 ? "s" : ""} today (${(todayRounds * BEADS_PER_ROUND).toLocaleString("en-IN")} beads). Lifetime: ${lifetimeTotal.toLocaleString("en-IN")} beads!\n\nTrack your japa at buildiskcon.com/japa`;
+              try {
+                if (navigator.share) {
+                  await navigator.share({ title: "Japa Counter — Build ISKCON", text, url: "https://buildiskcon.com/japa" });
+                } else {
+                  await navigator.clipboard.writeText(text);
+                  alert("Copied to clipboard!");
+                }
+              } catch { /* cancelled */ }
+            }}
+            className="flex items-center gap-1.5 text-amber-400/80 text-sm px-4 py-2 rounded-xl bg-white/5 active:bg-white/10 transition-colors"
+          >
+            <Share2 className="w-4 h-4" /> Share
           </button>
         </div>
 
