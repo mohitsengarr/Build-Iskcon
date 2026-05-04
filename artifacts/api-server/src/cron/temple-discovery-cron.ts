@@ -10,11 +10,14 @@
 import cron from "node-cron";
 import { logger } from "../lib/logger";
 import { discoverTemples, seedExistingTemples, getTempleCount } from "../services/temple-discovery";
+import { monitorTemplesTick } from "../services/temple-monitor";
 
 const FLOCK_WEBHOOK = "https://api.flock.com/hooks/sendMessage/b0159996-49f3-4f23-8d6b-bcd96dd2c316";
 
-// Once daily at 6:00 AM IST (00:30 UTC)
-const DISCOVERY_INTERVAL = "30 0 * * *";
+// Discovery (find NEW temples) — once a week, Sundays at 6:00 AM IST (00:30 UTC Sunday)
+const DISCOVERY_INTERVAL = "30 0 * * 0";
+// Monitoring (refresh news + donate links for EXISTING temples) — daily at 6:30 AM IST
+const MONITOR_INTERVAL = "0 1 * * *";
 
 let isRunning = false;
 let hasSeeded = false;
@@ -120,14 +123,31 @@ async function discoveryTick() {
   }
 }
 
-export function startTempleDiscoveryCron(): void {
-  logger.info(
-    { interval: DISCOVERY_INTERVAL },
-    "Temple discovery cron started (once daily at 6 AM IST)",
-  );
-
-  cron.schedule(DISCOVERY_INTERVAL, discoveryTick);
+async function monitorTick() {
+  try {
+    const result = await monitorTemplesTick({ batchSize: 12, alsoFullLinkCheck: true });
+    logger.info(result, "Temple monitor: tick complete");
+    if (result.broken > 0) {
+      await sendFlock(
+        `🔗 Donate-link check: ${result.broken} broken / ${result.checked} total — see /admin or query discovered_temples.donate_link_status`,
+      );
+    }
+  } catch (err: any) {
+    logger.error({ err: err?.message }, "Temple monitor cron failed");
+  }
 }
 
-// Export for manual trigger via API
-export { discoveryTick as runTempleDiscovery };
+export function startTempleDiscoveryCron(): void {
+  logger.info(
+    { discoveryInterval: DISCOVERY_INTERVAL, monitorInterval: MONITOR_INTERVAL },
+    "Temple discovery + monitor crons started",
+  );
+
+  // Weekly: find NEW temples
+  cron.schedule(DISCOVERY_INTERVAL, discoveryTick);
+  // Daily: refresh news + donate-link status for existing temples
+  cron.schedule(MONITOR_INTERVAL, monitorTick);
+}
+
+// Exports for manual triggers via API
+export { discoveryTick as runTempleDiscovery, monitorTick as runTempleMonitor };

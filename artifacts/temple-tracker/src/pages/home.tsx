@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
@@ -8,7 +8,7 @@ import {
   Building2, IndianRupee, ChartBar, CheckCircle2,
   Globe, MapPin, Heart, Users, ChevronDown, ExternalLink,
   BookOpen, Utensils, GraduationCap, Tv, Youtube,
-  Shield, ArrowRight, Mail, Clock,
+  Shield, ArrowRight, Mail, Clock, Search, X,
 } from "lucide-react";
 import {
   ISKCON_STATS, ISKCON_PROGRAMS, ISKCON_REGIONS, TOTAL_CATALOGUED,
@@ -288,12 +288,29 @@ const TABLE_PAGE_SIZE = 10;
 function TempleProjectsSection() {
   const [temples, setTemples] = useState<Temple[]>(TEMPLES);
   const [tablePage, setTablePage] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   useEffect(() => { fetchLiveTemples().then(setTemples); }, []);
   const liveStats = computeStats(temples);
   const liveTotalNeeded = liveStats.totalFundraisingGoal - liveStats.totalFundraisingRaised;
   const countries = new Set(temples.map(t => { const parts = t.location.split(","); return parts[parts.length - 1]?.trim(); }).filter(Boolean));
-  const totalPages = Math.ceil(temples.length / TABLE_PAGE_SIZE);
-  const pagedTemples = temples.slice(tablePage * TABLE_PAGE_SIZE, (tablePage + 1) * TABLE_PAGE_SIZE);
+
+  // Filter + search the temple list. Matches against name, location, deity, description.
+  const filteredTemples = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return temples.filter(t => {
+      if (statusFilter !== "all" && t.status !== statusFilter) return false;
+      if (!q) return true;
+      const haystack = [t.name, t.location, t.deity, t.description].join(" ").toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [temples, searchQuery, statusFilter]);
+
+  // Reset to page 0 whenever the filter/search changes
+  useEffect(() => { setTablePage(0); }, [searchQuery, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredTemples.length / TABLE_PAGE_SIZE));
+  const pagedTemples = filteredTemples.slice(tablePage * TABLE_PAGE_SIZE, (tablePage + 1) * TABLE_PAGE_SIZE);
   const urgentTemples = [...temples]
     .filter((t) => t.id !== 1 && t.status !== "consecrated" && t.fundraisingGoal > 0)
     .sort((a, b) => (b.constructionProgress) - (a.constructionProgress))
@@ -321,6 +338,56 @@ function TempleProjectsSection() {
           </div>
         ))}
       </div>
+
+      {/* Search + status filter */}
+      <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 sm:items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant pointer-events-none" />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search temples by name, city, country, deity…"
+            className="w-full pl-10 pr-10 py-2.5 text-sm rounded-xl border border-outline-variant/30 bg-surface focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10 transition-colors"
+            aria-label="Search ISKCON temples"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-surface-container-low text-on-surface-variant"
+              aria-label="Clear search"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {[
+            { key: "all", label: "All" },
+            { key: "construction", label: "Construction" },
+            { key: "planning", label: "Planning" },
+            { key: "finishing", label: "Finishing" },
+            { key: "consecrated", label: "Consecrated" },
+          ].map((s) => (
+            <button
+              key={s.key}
+              onClick={() => setStatusFilter(s.key)}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${
+                statusFilter === s.key
+                  ? "bg-primary text-on-primary border-primary"
+                  : "border-outline-variant/30 text-on-surface-variant hover:bg-surface-container-low"
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </motion.div>
+      {searchQuery && (
+        <p className="text-xs text-on-surface-variant -mt-7">
+          {filteredTemples.length} {filteredTemples.length === 1 ? "match" : "matches"} for "{searchQuery}"
+        </p>
+      )}
 
       {/* Static HTML table for SEO */}
       <div className="overflow-x-auto">
@@ -369,7 +436,9 @@ function TempleProjectsSection() {
         {/* Pagination */}
         <div className="flex items-center justify-between mt-4 px-1">
           <p className="text-xs text-on-surface-variant">
-            Showing {tablePage * TABLE_PAGE_SIZE + 1}–{Math.min((tablePage + 1) * TABLE_PAGE_SIZE, temples.length)} of {temples.length} temples
+            {filteredTemples.length === 0
+              ? "No temples match your search"
+              : `Showing ${tablePage * TABLE_PAGE_SIZE + 1}–${Math.min((tablePage + 1) * TABLE_PAGE_SIZE, filteredTemples.length)} of ${filteredTemples.length} temples`}
           </p>
           <div className="flex items-center gap-1.5">
             <button
