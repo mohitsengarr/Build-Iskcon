@@ -748,11 +748,32 @@ function ReaderIdentityModal({ onSave, onClose }: { onSave: (id: string, name: s
 
 // ── Bookmark Panel (in sidebar) ─────────────────────────────────────────────
 
-function BookmarkPanel({ bookmarks, onJump, onDelete }: {
+function BookmarkPanel({ bookmarks, onJump, onDelete, isLoggedIn, onLogin }: {
   bookmarks: BookmarkEntry[];
   onJump: (b: BookmarkEntry) => void;
   onDelete: (b: BookmarkEntry) => void;
+  isLoggedIn: boolean;
+  onLogin: () => void;
 }) {
+  if (!isLoggedIn) {
+    return (
+      <div className="px-4 py-8 text-center">
+        <div className="w-12 h-12 mx-auto mb-3 bg-orange-100 rounded-full flex items-center justify-center">
+          <LogIn className="w-5 h-5 text-orange-600" />
+        </div>
+        <p className="text-sm font-semibold text-stone-700 mb-1">Sign in to see your bookmarks</p>
+        <p className="text-[11px] text-stone-500 mb-4 leading-relaxed">
+          Save your reading progress with an email or phone — your bookmarks sync across devices.
+        </p>
+        <button
+          onClick={onLogin}
+          className="inline-flex items-center gap-1.5 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-xs font-semibold transition-colors"
+        >
+          <LogIn className="w-3.5 h-3.5" /> Sign in
+        </button>
+      </div>
+    );
+  }
   if (bookmarks.length === 0) {
     return (
       <div className="px-4 py-6 text-center">
@@ -2326,6 +2347,10 @@ function Sidebar({
   onBookmarkJump,
   onBookmarkDelete,
   vedabaseTitles,
+  readerId,
+  readerName,
+  onLogin,
+  onLogout,
 }: {
   chapters: ChapterEntry[];
   chapterImages: Map<number, Array<{ url: string; description: string; isInstagram?: boolean }>>;
@@ -2338,6 +2363,10 @@ function Sidebar({
   onBookmarkJump: (b: BookmarkEntry) => void;
   vedabaseTitles: Map<string, string>;
   onBookmarkDelete: (b: BookmarkEntry) => void;
+  readerId: string | null;
+  readerName: string | null;
+  onLogin: () => void;
+  onLogout: () => void;
 }) {
   const [sidebarTab, setSidebarTab] = useState<"chapters" | "bookmarks">("chapters");
   const [sidebarSearch, setSidebarSearch] = useState("");
@@ -2421,7 +2450,13 @@ function Sidebar({
         {/* Tab content */}
         {sidebarTab === "bookmarks" ? (
           <div className="py-3">
-            <BookmarkPanel bookmarks={bookmarks} onJump={onBookmarkJump} onDelete={onBookmarkDelete} />
+            <BookmarkPanel
+              bookmarks={bookmarks}
+              onJump={onBookmarkJump}
+              onDelete={onBookmarkDelete}
+              isLoggedIn={!!readerId}
+              onLogin={onLogin}
+            />
           </div>
         ) : (
           <>
@@ -2559,8 +2594,41 @@ function Sidebar({
           </>
         )}
 
+        {/* Identity / login footer */}
+        <div className="px-3 py-3 border-t border-stone-100 mt-2">
+          {readerId ? (
+            <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg bg-orange-50/60">
+              <div className="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                {(readerName || readerId).slice(0, 1).toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-stone-700 truncate">
+                  {readerName || "Signed in"}
+                </p>
+                <p className="text-[10px] text-stone-500 truncate">
+                  {readerId}
+                </p>
+              </div>
+              <button
+                onClick={onLogout}
+                className="p-1.5 rounded-lg text-stone-400 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
+                title="Sign out"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={onLogin}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-xs font-semibold transition-colors"
+            >
+              <LogIn className="w-3.5 h-3.5" /> Sign in to save bookmarks
+            </button>
+          )}
+        </div>
+
         {/* Footer credit */}
-        <div className="px-4 py-4 border-t border-stone-100 mt-2">
+        <div className="px-4 py-4 border-t border-stone-100">
           <p className="text-[10px] text-stone-400 leading-relaxed">
             श्रील प्रभुपाद द्वारा हिंदी अनुवाद एवं तात्पर्य — BBT
           </p>
@@ -3403,6 +3471,16 @@ export default function Bhagwatham() {
           onBookmarkJump={handleBookmarkJump}
           onBookmarkDelete={deleteBookmark}
           vedabaseTitles={vedabaseTitles}
+          readerId={readerId}
+          readerName={readerName}
+          onLogin={() => setShowIdentityModal(true)}
+          onLogout={() => {
+            localStorage.removeItem("bhagwatham_reader_id");
+            localStorage.removeItem("bhagwatham_reader_name");
+            setReaderId(null);
+            setReaderName(null);
+            setBookmarks([]);
+          }}
         />
 
         {/* ── Main content ── */}
