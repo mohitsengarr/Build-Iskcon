@@ -9,7 +9,8 @@ import { logger } from "../lib/logger";
 const CRON_INTERVAL = "0 2 * * *";            // 02:00 UTC = 07:30 IST — OCR batch
 const BACKFILL_INTERVAL = "0 3 * * *";        // 03:00 UTC = 08:30 IST — English backfill
 const AUDIT_INTERVAL = "0 5 * * *";           // 05:00 UTC = 10:30 IST — chapter audit
-const FAST_BACKFILL_INTERVAL = "0 6 * * *";   // 06:00 UTC = 11:30 IST — image backfill
+// Aggressive while finishing the last ~90 chapter images: every 15 min, 2 parallel = 192/day
+const FAST_BACKFILL_INTERVAL = "*/15 * * * *";
 const CREDIT_CHECK_INTERVAL = "0 8 * * *";    // 08:00 UTC = 13:30 IST — credit monitor
 
 export function startBhagwathamCron(): void {
@@ -139,11 +140,11 @@ export function startBhagwathamCron(): void {
   // ── Fast image backfill — 1 image every 30 min ───────────
   // COST: reduced from 5 parallel @ 2 min → 1 per tick @ 30 min (75× fewer calls)
   //   Previously: 150 images/hr. Now: 2/hr → 48/day max.
-  logger.info({ interval: FAST_BACKFILL_INTERVAL, parallelCount: 1 }, "Fast image backfill cron started");
+  logger.info({ interval: FAST_BACKFILL_INTERVAL, parallelCount: 2 }, "Fast image backfill cron started");
 
   cron.schedule(FAST_BACKFILL_INTERVAL, async () => {
     try {
-      const result = await fastImageBackfill(1);
+      const result = await fastImageBackfill(2);
       if (result.generated > 0) {
         logger.info(
           { generated: result.generated, remaining: result.remaining },
@@ -191,6 +192,26 @@ export function startBhagwathamCron(): void {
       }
     } catch (err) {
       logger.error({ err }, "Image regen-queue cron failed");
+    }
+  });
+
+  // ── Image delete queue processor ──────────────────────────────────────
+  // Picks up rows from bhagavatam_image_deletes (written by the gallery's
+  // delete button on the live site) and moves the corresponding files to
+  // the trash while removing manifest entries. Runs every 15 min so
+  // live-site deletions propagate to git within minutes.
+  const DELETE_QUEUE_INTERVAL = "*/15 * * * *";
+  logger.info({ interval: DELETE_QUEUE_INTERVAL }, "Image delete-queue cron started");
+
+  cron.schedule(DELETE_QUEUE_INTERVAL, async () => {
+    try {
+      const { processImageDeleteQueue } = await import("../services/bhagwatham-delete-queue");
+      const res = await processImageDeleteQueue();
+      if (res.processed > 0) {
+        logger.info({ processed: res.processed, failed: res.failed }, "Delete queue processed");
+      }
+    } catch (err) {
+      logger.error({ err }, "Image delete-queue cron failed");
     }
   });
 

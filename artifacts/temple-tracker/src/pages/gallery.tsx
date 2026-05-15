@@ -35,6 +35,23 @@ interface PersonaItem {
 // server — set VITE_PUBLIC_API_URL in Vercel to the ngrok/Cloudflare tunnel URL.
 const READ_API_BASE = "/api/bhagwatham";
 const MUTATION_API_BASE = `${import.meta.env.VITE_PUBLIC_API_URL || ""}/api/bhagwatham`;
+
+// Supabase direct access — works on the live site without any tunnel.
+// Deletions queue here; local cron flushes them into the manifest and disk.
+const SUPABASE_URL = "https://etfmndcrchundvgtvmot.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0Zm1uZGNyY2h1bmR2Z3R2bW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2NDE1MTIsImV4cCI6MjA2MzIxNzUxMn0.7GXS820xSFcUy2TRdbspN7s-NP3sgKFFtUP-Zw0Qbrs";
+
+function sbFetch(path: string, opts?: RequestInit) {
+  return fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...opts,
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      "Content-Type": "application/json",
+      ...(opts?.headers || {}),
+    },
+  });
+}
 const API_BASE = READ_API_BASE; // keep backward compat for read calls
 
 function isMutationApiConfigured(): boolean {
@@ -226,6 +243,18 @@ export default function Gallery() {
   // ── Fetch manifests ───────────────────────────────────────────────────────
   useEffect(() => {
     async function fetchAll() {
+      // Load Supabase delete queue in parallel — images flagged here are
+      // hidden from the gallery immediately (laptop cron will physically
+      // delete them when it next runs).
+      const deletedKeys = new Set<string>();
+      try {
+        const dRes = await sbFetch("bhagavatam_image_deletes?select=chapter_number,scene_index");
+        if (dRes.ok) {
+          const rows: Array<{ chapter_number: number; scene_index: number }> = await dRes.json();
+          for (const r of rows) deletedKeys.add(`${r.chapter_number}-${r.scene_index}`);
+        }
+      } catch { /* offline — keep all */ }
+
       const items: GalleryItem[] = [];
 
       try {
@@ -233,13 +262,15 @@ export default function Gallery() {
         const manifest = await res.json();
         if (manifest?.images) {
           for (const img of manifest.images) {
+            const scene = img.sceneIndex ?? 0;
+            if (deletedKeys.has(`${img.chapterNumber}-${scene}`)) continue;
             const cacheBuster = new Date(img.generatedAt).getTime() || Date.now();
             items.push({
-              id: `ch-${img.chapterNumber}-${img.sceneIndex ?? 0}`,
+              id: `ch-${img.chapterNumber}-${scene}`,
               chapterNumber: img.chapterNumber,
               chapterTitle: img.chapterTitle || `Chapter ${img.chapterNumber}`,
               cantoNumber: img.cantoNumber ?? 0,
-              sceneIndex: img.sceneIndex ?? 0,
+              sceneIndex: scene,
               url: `${API_BASE}/images/${img.imagePath}?v=${cacheBuster}`,
               description: img.descriptionHi || img.chapterTitle || img.prompt?.split(",").slice(0, 2).join(",").trim() || "",
               generatedAt: img.generatedAt,
@@ -254,12 +285,14 @@ export default function Gallery() {
         const igManifest = await igRes.json();
         if (igManifest?.images) {
           for (const img of igManifest.images) {
+            const scene = img.sceneIndex ?? 0;
+            if (deletedKeys.has(`${img.chapterNumber}-${scene}`)) continue;
             items.push({
-              id: `ig-${img.chapterNumber}-${img.sceneIndex ?? 0}`,
+              id: `ig-${img.chapterNumber}-${scene}`,
               chapterNumber: img.chapterNumber,
               chapterTitle: img.chapterTitle || `Chapter ${img.chapterNumber}`,
               cantoNumber: img.cantoNumber ?? 0,
-              sceneIndex: img.sceneIndex ?? 0,
+              sceneIndex: scene,
               url: img.publicUrl || `${API_BASE}/instagram/images/${img.imagePath}`,
               description: img.caption?.split("\n")[0] || img.prompt || "",
               generatedAt: img.generatedAt,
@@ -380,41 +413,40 @@ export default function Gallery() {
 
   const handleDeleteImage = useCallback(async (item: GalleryItem) => {
     const sceneIdx = item.sceneIndex ?? 0;
-    const deployed = typeof window !== "undefined" && window.location.hostname !== "localhost";
-    if (deployed && !isMutationApiConfigured()) {
-      alert(
-        "Delete not configured for the live site.\n\n" +
-        "To enable: start an ngrok tunnel to the local API server, then set VITE_PUBLIC_API_URL " +
-        "in Vercel project settings to the tunnel URL (e.g. https://xxxxx.ngrok-free.app) and redeploy.",
-      );
-      return;
-    }
+
+    // Confirm so a stray click doesn't wipe an image
+    const ok = typeof window !== "undefined" ? window.confirm(
+      `Delete image for ${item.chapterTitle}?\n\nThe image will disappear from the gallery immediately. The local generator will purge the file and manifest entry on its next run.`,
+    ) : true;
+    if (!ok) return;
+
+    // 1. Queue the delete in Supabase — works directly from the live site.
+    //    The (chapter_number, scene_index) PK + ON CONFLICT semantics make
+    //    repeated clicks idempotent.
     try {
-      // Pure delete — removes from manifest, Supabase Storage, Buffer, and local disk
-      // Does NOT regenerate. The audit cron will regenerate later with fixed prompts.
-      const res = await fetch(`${MUTATION_API_BASE}/image/delete/${item.chapterNumber}/${sceneIdx}`, {
-        method: "DELETE",
+      const res = await sbFetch("bhagavatam_image_deletes", {
+        method: "POST",
+        headers: { Prefer: "return=representation,resolution=merge-duplicates" },
+        body: JSON.stringify({
+          chapter_number: item.chapterNumber,
+          scene_index: sceneIdx,
+          requested_at: new Date().toISOString(),
+        }),
       });
-      const ct = res.headers.get("content-type") || "";
-      if (!ct.includes("application/json")) {
-        // On deployed (Vercel), static hosting returns HTML for unknown routes
-        alert("Delete failed — API server did not respond with JSON. Check that the tunnel is running and VITE_PUBLIC_API_URL is correct.");
-        return;
-      }
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        alert(data.error || "Failed to delete image");
+      if (!res.ok) {
+        const errText = await res.text().catch(() => "");
+        alert(`Delete failed: ${errText || res.statusText}`);
         return;
       }
     } catch (err) {
-      alert("Delete failed — could not reach the API server. Check that the tunnel is running.\n\n" + String(err));
+      alert(`Delete failed — could not reach Supabase.\n${String(err)}`);
       return;
     }
 
-    // Remove from local state immediately
+    // 2. Remove from local state immediately so the UI updates without reload.
     setAllItems(prev => prev.filter(i => i.id !== item.id));
 
-    // Navigate to next image in lightbox
+    // 3. Lightbox navigation — go to next image, or close if it was the last.
     const idx = filtered.findIndex(i => i.id === item.id);
     if (filtered.length > 1) {
       const nextItem = filtered[idx + 1] || filtered[idx - 1];
