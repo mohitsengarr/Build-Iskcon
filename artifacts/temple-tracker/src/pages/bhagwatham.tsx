@@ -2150,13 +2150,15 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
                 {!isShlokContinuation && i > 0 && sections[i - 1].kind !== "chapter" && (
                   <div className={`mb-4 h-px ${themeKey === "dark" ? "bg-white/5" : themeKey === "sepia" ? "bg-amber-300/30" : "bg-orange-200/40"}`} />
                 )}
-                <div className="flex items-start gap-2">
-                  <div className="flex-1">
-                    {sec.lines.map((l, j) => (
-                      <p key={j} className={`font-bold leading-[1.9] mb-0.5 ${t.text}`} style={{ fontSize: "1.15em", fontFamily: "var(--font-sanskrit)" }}>{renderInlineBold(l)}</p>
-                    ))}
-                  </div>
-                  {/* ShlokSpeaker removed — TTS still available via the selection toolbar (highlight any text → 🔊 Listen). */}
+                <div className="relative group/section">
+                  {sec.lines.map((l, j) => (
+                    <p key={j} className={`font-bold leading-[1.9] mb-0.5 pr-9 ${t.text}`} style={{ fontSize: "1.15em", fontFamily: "var(--font-sanskrit)" }}>{renderInlineBold(l)}</p>
+                  ))}
+                  {!isShlokContinuation && (
+                    <div className="absolute top-0 right-0">
+                      <ShlokSpeaker text={sec.lines.join(" ")} themeKey={themeKey} />
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -2198,10 +2200,15 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             // Hindi translation — same style as tatparya/body text, no separate label
             const isAnuvadContinuation = i === 0 && prevPageEndKind === "anuvad";
             return (
-              <div key={i} data-section-type="anuvad" className={isAnuvadContinuation ? "" : "mt-3"}>
+              <div key={i} data-section-type="anuvad" className={`relative ${isAnuvadContinuation ? "" : "mt-3"}`}>
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>{renderInlineBold(l)}</p>
+                  <p key={j} className={`leading-[2] mb-1 pr-9 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>{renderInlineBold(l)}</p>
                 ))}
+                {!isAnuvadContinuation && (
+                  <div className="absolute top-0 right-0">
+                    <ShlokSpeaker text={sec.lines.join(" ")} themeKey={themeKey} />
+                  </div>
+                )}
               </div>
             );
           }
@@ -2211,13 +2218,18 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             // Only the page-number divider is shown — no inline divider before tatparya
             const isContinuation = i === 0 && (prevPageEndKind === "tatparya" || prevPageEndKind === "ref-shlok");
             return (
-              <div key={i} data-section-type="tatparya" className={isContinuation ? "" : "mt-4 sm:mt-5"}>
+              <div key={i} data-section-type="tatparya" className={`relative ${isContinuation ? "" : "mt-4 sm:mt-5"}`}>
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>
+                  <p key={j} className={`leading-[2] mb-1 pr-9 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>
                     {j === 0 && !isContinuation && <><span className="font-semibold">तात्पर्य :</span>{" "}</>}
                     {renderInlineBold(l)}
                   </p>
                 ))}
+                {!isContinuation && (
+                  <div className="absolute top-0 right-0">
+                    <ShlokSpeaker text={sec.lines.join(" ")} themeKey={themeKey} />
+                  </div>
+                )}
               </div>
             );
           }

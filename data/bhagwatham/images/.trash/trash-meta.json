@@ -1,27 +1,5 @@
 [
   {
-    "trashId": "1-0-1775823104892",
-    "originalFile": "chapter-001.jpg",
-    "trashedFile": "1-0-1775823104892.jpg",
-    "manifestEntry": {
-      "chapterNumber": 1,
-      "chapterTitle": "Chapter एक",
-      "imagePath": "chapter-001.jpg",
-      "prompt": "Vyasa sits in serene meditation on a riverbank, hands folded in deep reverence, as he composes the opening invocation of the Bhagavatam. Before his mind's eye appears Krishna in divine radiance, the ultimate source of all creation. Narada and Brahma stand nearby as witnesses to this sacred moment of cosmic revelation.",
-      "personasUsed": [
-        "krishna_adult",
-        "narada",
-        "vyasa",
-        "brahma"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:09:22.431Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T12:11:44.893Z",
-    "operation": "regenerate"
-  },
-  {
     "trashId": "4-0-1775823218394",
     "originalFile": "chapter-004.jpg",
     "trashedFile": "4-0-1775823218394.jpg",
@@ -1004,5 +982,48 @@
     },
     "trashedAt": "2026-04-26T01:00:01.322Z",
     "operation": "regenerate"
+  },
+  {
+    "trashId": "21-0-1778825700250",
+    "originalFile": "chapter-021.jpg",
+    "trashedFile": "21-0-1778825700250.jpg",
+    "manifestEntry": {
+      "chapterNumber": 21,
+      "chapterTitle": "अध्याय दो",
+      "imagePath": "chapter-021.jpg",
+      "prompt": "Brahma regains his lost memory and creative power by meditating on the divine form, surrounded by the tranquil cosmos.",
+      "descriptionHi": "श्री शुकदेव गोस्वामी ने बताया कि ब्रह्माजी ने विराट रूप के ध्यान द्वारा भगवान्‌ को प्रसन्न करके विलुप्त हो चुकी अपनी चेतना प्राप्त की और सृष्टि का पुनर्निर्माण किया। यह घटना ब्रह्माजी की विस्मृति और उसके निवारण को दर्शाती है।",
+      "personasUsed": [
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T22:48:54.096Z",
+      "sceneIndex": 0,
+      "cantoNumber": 2
+    },
+    "trashedAt": "2026-05-15T06:15:00.253Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "22-0-1778825700361",
+    "originalFile": "chapter-022.jpg",
+    "trashedFile": "22-0-1778825700361.jpg",
+    "manifestEntry": {
+      "chapterNumber": 22,
+      "chapterTitle": "Chapter तीन",
+      "imagePath": "chapter-022.jpg",
+      "prompt": "Shukadeva speaks to King Parikshit about the duties of a wise dying man, surrounded by the serene atmosphere of the forest.",
+      "descriptionHi": "श्री शुकदेव गोस्वामी ने महाराज परीक्षित को मरणासन्न बुद्धिमान मनुष्य के कर्तव्य के विषय में उत्तर दिया है, जिसमें आत्मा के विषय में जिज्ञासा करने और स्वरुपसिद्ध गुरु के सम्पर्क में आने की बात कही गई है। यह अध्याय आत्म-साक्षात्कार और भगवान्‌ कृष्ण को जानने के महत्व पर केंद्रित है।",
+      "personasUsed": [
+        "shukadeva",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T23:28:41.694Z",
+      "sceneIndex": 0,
+      "cantoNumber": 2
+    },
+    "trashedAt": "2026-05-15T06:15:00.362Z",
+    "operation": "delete"
   }
 ]

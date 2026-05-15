@@ -313,62 +313,17 @@
     },
     {
       "chapterNumber": 21,
-      "chapterTitle": "अध्याय दो",
+      "chapterTitle": "(शुषा दो",
+      "cantoNumber": 2,
       "imagePath": "chapter-021.jpg",
-      "prompt": "Brahma regains his lost memory and creative power by meditating on the divine form, surrounded by the tranquil cosmos.",
-      "descriptionHi": "श्री शुकदेव गोस्वामी ने बताया कि ब्रह्माजी ने विराट रूप के ध्यान द्वारा भगवान्‌ को प्रसन्न करके विलुप्त हो चुकी अपनी चेतना प्राप्त की और सृष्टि का पुनर्निर्माण किया। यह घटना ब्रह्माजी की विस्मृति और उसके निवारण को दर्शाती है।",
+      "prompt": "Brahma regains consciousness and re-creates the universe after meditating on the divine presence in the vast cosmos.",
+      "descriptionHi": "श्री शुकदेव गोस्वामी ने बताया कि ब्रह्माजी ने विराट रूप के ध्यान द्वारा भगवान्‌ को प्रसन्न करके विलुप्त हो चुकी अपनी चेतना प्राप्त की और सृष्टि का पुनर्निर्माण किया। यह घटना ब्रह्माजी की विस्मृति का उदाहरण है।",
       "personasUsed": [
         "brahma"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T22:48:54.096Z",
-      "sceneIndex": 0,
-      "cantoNumber": 2
-    },
-    {
-      "chapterNumber": 21,
-      "chapterTitle": "अध्याय दो",
-      "imagePath": "chapter-045.jpg",
-      "prompt": "Vidura asks Brahma about Daksha's hatred towards Lord Shiva in a serene heavenly setting.",
-      "descriptionHi": "इस अध्याय में दक्ष द्वारा शिवजी को शाप देने की कथा है, जिसमें विदुर भगवान ब्रह्मा से पूछते हैं कि दक्ष ने शिवजी के प्रति इतनी शत्रुता क्यों प्रदर्शित की। यह कथा शिवजी और दक्ष के बीच मनमुटाव को दर्शाती है।",
-      "personasUsed": [
-        "brahma",
-        "vidura"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T23:12:33.469Z",
-      "sceneIndex": 0,
-      "cantoNumber": 2
-    },
-    {
-      "chapterNumber": 22,
-      "chapterTitle": "Chapter तीन",
-      "imagePath": "chapter-022.jpg",
-      "prompt": "Shukadeva speaks to King Parikshit about the duties of a wise dying man, surrounded by the serene atmosphere of the forest.",
-      "descriptionHi": "श्री शुकदेव गोस्वामी ने महाराज परीक्षित को मरणासन्न बुद्धिमान मनुष्य के कर्तव्य के विषय में उत्तर दिया है, जिसमें आत्मा के विषय में जिज्ञासा करने और स्वरुपसिद्ध गुरु के सम्पर्क में आने की बात कही गई है। यह अध्याय आत्म-साक्षात्कार और भगवान्‌ कृष्ण को जानने के महत्व पर केंद्रित है।",
-      "personasUsed": [
-        "shukadeva",
-        "parikshit"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T23:28:41.694Z",
-      "sceneIndex": 0,
-      "cantoNumber": 2
-    },
-    {
-      "chapterNumber": 22,
-      "chapterTitle": "Chapter तीन",
-      "imagePath": "chapter-046.jpg",
-      "prompt": "Daksh, filled with pride, begins a grand yajna without inviting Lord Shiva, amidst the presence of other deities like Brahma and Vishnu.",
-      "descriptionHi": "इस अध्याय में मैत्रेय द्वारा शिव और दक्ष के बीच तनाव का वर्णन किया गया है, जो दक्ष द्वारा शिव को यज्ञ में आमंत्रित नहीं करने से उत्पन्न हुआ। यह तनाव सती द्वारा अपना शरीर त्यागने का कारण बना।",
-      "personasUsed": [
-        "vishnu",
-        "brahma"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T23:21:01.638Z",
-      "sceneIndex": 0,
-      "cantoNumber": 2
+      "generatedAt": "2026-05-15T06:30:46.955Z",
+      "sceneIndex": 0
     },
     {
       "chapterNumber": 23,
@@ -4023,5 +3978,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-05-15T05:45:17.051Z"
+  "lastUpdated": "2026-05-15T06:30:46.955Z"
 }
