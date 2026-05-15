@@ -9,8 +9,9 @@ import { logger } from "../lib/logger";
 const CRON_INTERVAL = "0 2 * * *";            // 02:00 UTC = 07:30 IST — OCR batch
 const BACKFILL_INTERVAL = "0 3 * * *";        // 03:00 UTC = 08:30 IST — English backfill
 const AUDIT_INTERVAL = "0 5 * * *";           // 05:00 UTC = 10:30 IST — chapter audit
-// Aggressive while finishing the last ~90 chapter images: every 15 min, 2 parallel = 192/day
-const FAST_BACKFILL_INTERVAL = "*/15 * * * *";
+// Steady pace to finish the remaining ~90 chapter images within a week.
+// Every hour × 1 parallel = 24/day → 90 chapters done in ~4 days.
+const FAST_BACKFILL_INTERVAL = "0 * * * *";
 const CREDIT_CHECK_INTERVAL = "0 8 * * *";    // 08:00 UTC = 13:30 IST — credit monitor
 
 export function startBhagwathamCron(): void {
@@ -140,11 +141,11 @@ export function startBhagwathamCron(): void {
   // ── Fast image backfill — 1 image every 30 min ───────────
   // COST: reduced from 5 parallel @ 2 min → 1 per tick @ 30 min (75× fewer calls)
   //   Previously: 150 images/hr. Now: 2/hr → 48/day max.
-  logger.info({ interval: FAST_BACKFILL_INTERVAL, parallelCount: 2 }, "Fast image backfill cron started");
+  logger.info({ interval: FAST_BACKFILL_INTERVAL, parallelCount: 1 }, "Fast image backfill cron started");
 
   cron.schedule(FAST_BACKFILL_INTERVAL, async () => {
     try {
-      const result = await fastImageBackfill(2);
+      const result = await fastImageBackfill(1);
       if (result.generated > 0) {
         logger.info(
           { generated: result.generated, remaining: result.remaining },

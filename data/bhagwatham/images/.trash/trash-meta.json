@@ -1,25 +1,5 @@
 [
   {
-    "trashId": "4-0-1775823063100",
-    "originalFile": "chapter-004.jpg",
-    "trashedFile": "4-0-1775823063100.jpg",
-    "manifestEntry": {
-      "chapterNumber": 4,
-      "chapterTitle": "Chapter चार",
-      "imagePath": "chapter-004.jpg",
-      "prompt": "In the sacred forest of Naimisharanya, the elderly and wise sage Shaunaka rises with great reverence before Suta Goswami amid a gathering of sages engaged in a long sacrificial ceremony. Shaunaka folds his hands and addresses Suta Goswami with joyful praise, earnestly requesting him to recite the holy Bhagavata as originally spoken by the great Shukadeva Goswami.",
-      "personasUsed": [
-        "suta_goswami",
-        "shukadeva"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:08:42.799Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T12:11:03.101Z",
-    "operation": "regenerate"
-  },
-  {
     "trashId": "1-0-1775823104892",
     "originalFile": "chapter-001.jpg",
     "trashedFile": "1-0-1775823104892.jpg",
