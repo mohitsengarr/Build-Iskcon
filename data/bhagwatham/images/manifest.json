@@ -326,6 +326,21 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 22,
+      "chapterTitle": "Chapter तीन",
+      "cantoNumber": 2,
+      "imagePath": "chapter-022.jpg",
+      "prompt": "Shukadeva shares wisdom with Parikshit in a serene forest setting, explaining the duties of a wise man nearing death.",
+      "descriptionHi": "श्री शुकदेव गोस्वामी ने महाराज परीक्षित को मरणासन्न बुद्धिमान मनुष्य के कर्तव्य के विषय में उत्तर दिया है, जिसमें आत्मा के विषय में जिज्ञासा करने और स्वरुपसिद्ध गुरु के सम्पर्क में आने की महत्ता बताई गई है। यह अध्याय आत्म-साक्षात्कार और ज्ञान की प्राप्ति के विषय में है।",
+      "personasUsed": [
+        "shukadeva",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T07:30:40.894Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 23,
       "chapterTitle": "Chapter चार",
       "imagePath": "chapter-023.jpg",
@@ -3978,5 +3993,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-05-15T06:30:46.955Z"
+  "lastUpdated": "2026-05-15T11:30:06.930Z"
 }

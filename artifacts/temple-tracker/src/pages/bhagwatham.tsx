@@ -254,63 +254,30 @@ async function sarvamStreamPlay(text: string): Promise<HTMLAudioElement> {
     }),
   });
 
-  if (!response.ok || !response.body) {
-    throw new Error(`TTS HTTP error: ${response.status}`);
+  if (!response.ok) {
+    const errText = await response.text().catch(() => "");
+    throw new Error(`TTS HTTP ${response.status}: ${errText.substring(0, 200)}`);
   }
 
-  // Option 1: Real-time streaming via MediaSource API
-  if (typeof MediaSource !== "undefined" && MediaSource.isTypeSupported("audio/mpeg")) {
-    const audio = new Audio();
-    const mediaSource = new MediaSource();
-    audio.src = URL.createObjectURL(mediaSource);
-
-    await new Promise<void>((resolve, reject) => {
-      mediaSource.addEventListener("sourceopen", async () => {
-        try {
-          const sourceBuffer = mediaSource.addSourceBuffer("audio/mpeg");
-          const reader = response.body!.getReader();
-
-          // Start playback immediately (audio will buffer as chunks arrive)
-          audio.play().catch(() => {});
-
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) {
-              // Wait for pending appends before ending stream
-              if (sourceBuffer.updating) {
-                await new Promise<void>(r => sourceBuffer.addEventListener("updateend", () => r(), { once: true }));
-              }
-              if (mediaSource.readyState === "open") mediaSource.endOfStream();
-              break;
-            }
-
-            // Wait for previous append to complete
-            if (sourceBuffer.updating) {
-              await new Promise<void>(r => sourceBuffer.addEventListener("updateend", () => r(), { once: true }));
-            }
-            sourceBuffer.appendBuffer(value);
-          }
-          resolve();
-        } catch (err) {
-          reject(err);
-        }
-      }, { once: true });
-    });
-
-    return audio;
-  }
-
-  // Option 2: Fallback — collect all chunks then play
-  const chunks: Uint8Array[] = [];
-  const reader = response.body.getReader();
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-  }
-  const blob = new Blob(chunks, { type: "audio/mpeg" });
+  // Always use the Blob path — the previous MediaSource streaming flow had a
+  // silent `audio.play().catch(() => {})` inside an async event handler, which
+  // swallowed Chrome's autoplay-policy errors when the user gesture context
+  // was lost between the click and the actual play() call. The Blob path keeps
+  // the click → play in a single synchronous chain, so autoplay always allows
+  // it. A short Devanagari word is ~16–25 KB of MP3 and finishes downloading
+  // before the user notices the delay.
+  const buffer = await response.arrayBuffer();
+  const blob = new Blob([buffer], { type: "audio/mpeg" });
   const audio = new Audio(URL.createObjectURL(blob));
-  await audio.play();
+  // Don't `await audio.play()` here — let the caller chain it so the play() is
+  // tied to the original user gesture without the await splitting microtasks.
+  const playResult = audio.play();
+  if (playResult && typeof playResult.then === "function") {
+    playResult.catch((err) => {
+      // Surface the real failure so we know it's autoplay vs codec vs network
+      console.error("[TTS] audio.play() rejected:", err?.name || err);
+    });
+  }
   return audio;
 }
 
@@ -1172,13 +1139,23 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
         ttsAudioRef.current = null;
       };
       audio.onerror = () => {
+        console.error("[TTS] audio element error event", audio.error);
         setTtsPlaying(false);
         if (audio.src) URL.revokeObjectURL(audio.src);
         ttsAudioRef.current = null;
       };
-    } catch {
-      // Fallback to browser SpeechSynthesis
+    } catch (err) {
+      // Log the real reason so we can debug — was silently swallowed before.
+      console.error("[TTS] Sarvam playback failed:", err);
       setTtsLoading(false);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      // Surface obvious failures so the user knows something happened
+      if (/40\d/.test(errMsg)) {
+        alert(`Listen failed: ${errMsg}. The Sarvam API may need a new key.`);
+        return;
+      }
+      // Fallback to browser SpeechSynthesis (often poor Hindi quality, but
+      // something is better than silent failure)
       const utterance = new SpeechSynthesisUtterance(selectedText);
       utterance.lang = "hi-IN";
       utterance.rate = 0.7;
@@ -1188,6 +1165,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
         || voices.find(v => v.lang.startsWith("hi") && !/female|lekha|priya|swati|woman/i.test(v.name))
         || voices.find(v => v.lang.startsWith("hi"));
       if (pick) utterance.voice = pick;
+      else console.warn("[TTS] No Hindi voice available in browser fallback");
       utterance.onend = () => setTtsPlaying(false);
       window.speechSynthesis.speak(utterance);
       setTtsPlaying(true);
@@ -1530,11 +1508,13 @@ function ShlokSpeaker({ text, themeKey }: { text: string; themeKey: string }) {
         audioRef.current = null;
       };
       audio.onerror = () => {
+        console.error("[ShlokSpeaker] audio element error", audio.error);
         setPlaying(false);
         if (audio.src) URL.revokeObjectURL(audio.src);
         audioRef.current = null;
       };
-    } catch {
+    } catch (err) {
+      console.error("[ShlokSpeaker] Sarvam playback failed:", err);
       // Fallback to browser SpeechSynthesis
       setLoading(false);
       const utterance = new SpeechSynthesisUtterance(text);
