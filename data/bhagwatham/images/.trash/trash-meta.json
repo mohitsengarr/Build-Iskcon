@@ -1,682 +1,5 @@
 [
   {
-    "trashId": "5-0-1775825046431",
-    "originalFile": "chapter-005.jpg",
-    "trashedFile": "5-0-1775825046431.jpg",
-    "manifestEntry": {
-      "chapterNumber": 5,
-      "chapterTitle": "Chapter पाँच",
-      "imagePath": "chapter-005.jpg",
-      "prompt": "Narada, holding his veena and wearing a gentle smile, sits beside the great sage Vyasa on the tranquil banks of the Saraswati river. He tenderly questions Vyasa about his inner restlessness, pointing out that despite composing the magnificent Mahabharata, Vyasa remains spiritually unfulfilled because he has not yet properly glorified devotional service to the Supreme Lord.",
-      "personasUsed": [
-        "narada",
-        "vyasa"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:42:25.374Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T12:44:06.432Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "5-0-1775825152195",
-    "originalFile": "chapter-005.jpg",
-    "trashedFile": "5-0-1775825152195.jpg",
-    "manifestEntry": {
-      "chapterNumber": 5,
-      "chapterTitle": "Chapter पाँच",
-      "imagePath": "chapter-005.jpg",
-      "prompt": "Narada, holding his veena and wearing a gentle smile, sits beside the great sage Vyasa on the banks of the Saraswati river. He looks at the troubled Vyasa with knowing eyes and asks why, despite composing the magnificent Mahabharata and mastering all Vedic knowledge, Vyasa still appears restless and unfulfilled.",
-      "personasUsed": [
-        "narada",
-        "vyasa"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:44:21.291Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T12:45:52.196Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "5-0-1775825213323",
-    "originalFile": "chapter-005.jpg",
-    "trashedFile": "5-0-1775825213323.jpg",
-    "manifestEntry": {
-      "chapterNumber": 5,
-      "chapterTitle": "Chapter पाँच",
-      "imagePath": "chapter-005.jpg",
-      "prompt": "Narada, the divine sage holding a veena, sits serenely beside the great sage Vyasa on a forest riverbank. With a gentle knowing smile, Narada questions Vyasa about his inner restlessness and dissatisfaction, despite having composed the magnificent Mahabharata and mastering all Vedic knowledge.",
-      "personasUsed": [
-        "narada",
-        "vyasa"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:46:07.383Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T12:46:53.324Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "4-0-1775825353741",
-    "originalFile": "chapter-004.jpg",
-    "trashedFile": "4-0-1775825353741.jpg",
-    "manifestEntry": {
-      "chapterNumber": 4,
-      "chapterTitle": "Chapter चार",
-      "imagePath": "chapter-004.jpg",
-      "prompt": "In the sacred forest of Naimisharanya, the elderly and venerable sage Shaunaka rises from among a great assembly of rishis engaged in a long yajna, and with deep reverence and joy addresses Suta Goswami, praising him as the most fortunate among all speakers, earnestly requesting him to narrate the holy Bhagavata as spoken by the great Shukadeva Goswami.",
-      "personasUsed": [
-        "suta_goswami",
-        "shukadeva"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:41:38.729Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T12:49:13.742Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "5-0-1775825370879",
-    "originalFile": "chapter-005.jpg",
-    "trashedFile": "5-0-1775825370879.jpg",
-    "manifestEntry": {
-      "chapterNumber": 5,
-      "chapterTitle": "Chapter पाँच",
-      "imagePath": "chapter-005.jpg",
-      "prompt": "Narada, holding his vina and wearing a gentle smile, sits beside the great sage Vyasa on a forest riverbank. He speaks softly, asking Vyasa why he remains restless and unfulfilled despite having composed the magnificent Mahabharata and mastered all Vedic knowledge. Vyasa listens with a troubled expression, sensing Narada understands his hidden sorrow.",
-      "personasUsed": [
-        "narada",
-        "vyasa"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:49:13.740Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T12:49:30.880Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "3-0-1775825386854",
-    "originalFile": "chapter-003.jpg",
-    "trashedFile": "3-0-1775825386854.jpg",
-    "manifestEntry": {
-      "chapterNumber": 3,
-      "chapterTitle": "Chapter तीन",
-      "imagePath": "chapter-003.jpg",
-      "prompt": "Krishna, in his cosmic form as Karanodakashayi Vishnu, reclines upon the primordial causal ocean at the dawn of creation. From his divine body, countless universes emerge like bubbles from his pores, while Brahma and Vishnu stand witness to this supreme act of universal manifestation, the sixteen fundamental elements of material existence taking shape around them.",
-      "personasUsed": [
-        "krishna_adult",
-        "vishnu",
-        "brahma"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T11:54:42.360Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T12:49:46.855Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "1-0-1775825448844",
-    "originalFile": "chapter-001.jpg",
-    "trashedFile": "1-0-1775825448844.jpg",
-    "manifestEntry": {
-      "chapterNumber": 1,
-      "chapterTitle": "Chapter एक",
-      "imagePath": "chapter-001.jpg",
-      "prompt": "Vyasa sits in deep meditation on a riverbank, his eyes closed and hands folded, as he composes the opening verse of the Bhagavatam. In his vision, Krishna appears radiant in his divine abode, while Brahma receives sacred Vedic knowledge directly into his heart. Narada stands nearby, witnessing this moment of divine revelation.",
-      "personasUsed": [
-        "krishna_adult",
-        "narada",
-        "vyasa",
-        "brahma"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:34:52.064Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T12:50:48.845Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "3-0-1775825463076",
-    "originalFile": "chapter-003.jpg",
-    "trashedFile": "3-0-1775825463076.jpg",
-    "manifestEntry": {
-      "chapterNumber": 3,
-      "chapterTitle": "Chapter तीन",
-      "imagePath": "chapter-003.jpg",
-      "prompt": "At the dawn of cosmic creation, Krishna expands himself as the great Purusha form, Karanodakashayi Vishnu, reclining on the causal ocean in the vast spiritual sky. From the pores of his transcendental body, countless universes emerge like bubbles, as Brahma and Vishnu witness the magnificent origination of all material existence from the one supreme source.",
-      "personasUsed": [
-        "krishna_adult",
-        "vishnu",
-        "brahma"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:50:48.843Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T12:51:03.078Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "16-0-1775825529237",
-    "originalFile": "chapter-016.jpg",
-    "trashedFile": "16-0-1775825529237.jpg",
-    "manifestEntry": {
-      "chapterNumber": 16,
-      "chapterTitle": "Chapter सोलह",
-      "imagePath": "chapter-016.jpg",
-      "prompt": "Parikshit and Suta Goswami in a grand ancient Indian palace setting, ornate golden architecture, sacred atmosphere, warm golden light, wide cinematic landscape",
-      "descriptionHi": "परीक्षित ने कलियुग का सत्कार किस तरह किया",
-      "personasUsed": [
-        "suta_goswami",
-        "parikshit"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T10:05:26.507Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T12:52:09.238Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "15-1-1775826113613",
-    "originalFile": "chapter-015-2.jpg",
-    "trashedFile": "15-1-1775826113613.jpg",
-    "manifestEntry": {
-      "chapterNumber": 15,
-      "chapterTitle": "Chapter पन्द्रह",
-      "imagePath": "chapter-015-2.jpg",
-      "prompt": "Krishna and Arjuna riding golden chariots with white horses through an ancient Indian city, cheering crowds, grand temple architecture, golden hour light, wide landscape",
-      "descriptionHi": "परम पुरुष अपने शुद्ध भक्त के साथ सारे सम्बन्धो में पूर्ण हैं। श्री अर्जुन भगवान्‌ के विशिष्ट भक्तों में से हैं, जो सख…",
-      "personasUsed": [
-        "krishna_adult",
-        "arjuna"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T09:53:47.501Z",
-      "sceneIndex": 1
-    },
-    "trashedAt": "2026-04-10T13:01:53.613Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "11-0-1775826185272",
-    "originalFile": "chapter-011.jpg",
-    "trashedFile": "11-0-1775826185272.jpg",
-    "manifestEntry": {
-      "chapterNumber": 11,
-      "chapterTitle": "Chapter ग्यारह",
-      "imagePath": "chapter-011.jpg",
-      "prompt": "Lord Krishna entering the magnificent golden city of Dwarka on a grand chariot, citizens throwing flowers from ornate balconies, golden domes and spires, ocean in the background, festive wide landscape",
-      "descriptionHi": "भगवान्‌ श्रीकृष्ण का द्वारका में प्रवेश",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T09:55:15.282Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T13:03:05.273Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "10-0-1775826268284",
-    "originalFile": "chapter-010.jpg",
-    "trashedFile": "10-0-1775826268284.jpg",
-    "manifestEntry": {
-      "chapterNumber": 10,
-      "chapterTitle": "Chapter दस",
-      "imagePath": "chapter-010.jpg",
-      "prompt": "Lord Krishna departing on a golden chariot from Hastinapura, the Pandava family watching from the palace steps with tearful eyes, dramatic golden sunset sky, ancient city architecture, wide cinematic landscape",
-      "descriptionHi": "द्वारका के लिए भगवान्‌ कृष्ण का प्रस्थान",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T10:04:42.898Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T13:04:28.286Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "7-0-1775826474363",
-    "originalFile": "chapter-007.jpg",
-    "trashedFile": "7-0-1775826474363.jpg",
-    "manifestEntry": {
-      "chapterNumber": 7,
-      "chapterTitle": "Chapter सात",
-      "imagePath": "chapter-007.jpg",
-      "prompt": "Vyasa sits in deep meditation inside his peaceful hermitage at Shamyaprasa on the western bank of the Sarasvati river, surrounded by berry trees. After ritually touching the sacred water, he closes his eyes and turns his mind inward, preparing to receive the complete spiritual truth before composing the Bhagavata Purana.",
-      "personasUsed": [
-        "vyasa"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:43:14.609Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T13:07:54.364Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "5-0-1775826657450",
-    "originalFile": "chapter-005.jpg",
-    "trashedFile": "5-0-1775826657450.jpg",
-    "manifestEntry": {
-      "chapterNumber": 5,
-      "chapterTitle": "Chapter पाँच",
-      "imagePath": "chapter-005.jpg",
-      "prompt": "Narada, holding his veena and wearing a gentle smile, sits beside the great sage Vyasa on the banks of the Sarasvati river. He questions Vyasa about the deep restlessness troubling him despite having composed the magnificent Mahabharata, hinting that true fulfillment can only come through properly glorifying devotional service to the Supreme.",
-      "personasUsed": [
-        "narada",
-        "vyasa"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:49:46.853Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T13:10:57.451Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "14-0-1775826793169",
-    "originalFile": "chapter-014.jpg",
-    "trashedFile": "14-0-1775826793169.jpg",
-    "manifestEntry": {
-      "chapterNumber": 14,
-      "chapterTitle": "Chapter चौदह",
-      "imagePath": "chapter-014.jpg",
-      "prompt": "Yudhishthira stands at the entrance of his royal palace in Hastinapura, gazing anxiously at the darkened skies and disturbed surroundings. Seasons are out of order, people around him are angry and deceitful, and there is no news of Arjuna from Dwaraka. A deep dread grips Yudhishthira — he fears Krishna has left this world.",
-      "descriptionHi": "अर्जुन भगवान श्रीकृष्ण से मिलने और उनके अगले कार्यक्रम जानने के लिए द्वारका गए, परंतु कई महीने बीत जाने पर भी वापस नहीं लौटे। महाराज युधिष्ठिर को भयानक अपशकुन दिखने लगे — ऋतुओं में व्यतिक्रम, मनुष्यों में क्रोध, लोभ और झूठ का बोलबाला। यह सब संकेत दे रहा था कि भगवान श्रीकृष्ण इस पृथ्वी से अंतर्धान होने वाले हैं, जिससे युधिष्ठिर अत्यंत चिंतित हो उठे।",
-      "personasUsed": [
-        "krishna_adult",
-        "arjuna",
-        "yudhishthira"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T13:12:45.439Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T13:13:13.170Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "16-0-1775828244608",
-    "originalFile": "chapter-016.jpg",
-    "trashedFile": "16-0-1775828244608.jpg",
-    "manifestEntry": {
-      "chapterNumber": 16,
-      "chapterTitle": "Chapter सोलह",
-      "imagePath": "chapter-016.jpg",
-      "prompt": "In a grand royal court, King Parikshit sits on his throne surrounded by learned Brahmin sages and rishis who serve as his advisors. He listens reverently to their scriptural guidance on how to govern his kingdom righteously, embodying all the noble qualities the astrologers had predicted at his birth.",
-      "personasUsed": [
-        "parikshit"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:52:26.112Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T13:37:24.609Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "17-0-1775828304625",
-    "originalFile": "chapter-017.jpg",
-    "trashedFile": "17-0-1775828304625.jpg",
-    "manifestEntry": {
-      "chapterNumber": 17,
-      "chapterTitle": "Chapter सत्रह",
-      "imagePath": "chapter-017.jpg",
-      "prompt": "King Parikshit on his chariot encounters Dharma in the form of a white bull standing on one leg, and Mother Earth as a grieving cow, on a dusty ancient road. Kali personified stands nearby in royal disguise. A dramatic sunset sky over the Indian plains.",
-      "descriptionHi": "महाराज परीक्षित ने देखा कि धर्म रूपी श्वेत बैल एक पैर पर खड़ा है और गोमाता दुखी है। कलि ने राजा का वेश धारण किया है। यह कलियुग के आगमन का प्रतीक है।",
-      "personasUsed": [
-        "parikshit"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T13:36:16.438Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T13:38:24.629Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "14-1-1775828392707",
-    "originalFile": "chapter-014-2.jpg",
-    "trashedFile": "14-1-1775828392707.jpg",
-    "manifestEntry": {
-      "chapterNumber": 14,
-      "chapterTitle": "Chapter चौदह",
-      "imagePath": "chapter-014-2.jpg",
-      "prompt": "A wise sage teaching younger disciples under a massive banyan tree, sacred texts spread on the ground, golden afternoon light, forest ashram setting, wide landscape",
-      "descriptionHi": "जब सभ्यता का सम्बन्ध पूर्ण पुरुषोत्तम भगवान्‌ के प्रेम से टूट जाता है, तो ऋतु कौ नियमितता में परिवर्तन, जीविका के अनु…",
-      "generatedAt": "2026-04-10T09:52:14.413Z",
-      "sceneIndex": 1
-    },
-    "trashedAt": "2026-04-10T13:39:52.708Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "14-0-1775828445646",
-    "originalFile": "chapter-014.jpg",
-    "trashedFile": "14-0-1775828445646.jpg",
-    "manifestEntry": {
-      "chapterNumber": 14,
-      "chapterTitle": "Chapter चौदह",
-      "imagePath": "chapter-014.jpg",
-      "prompt": "Yudhishthira stands anxiously in his royal palace, gazing into the distance with deep unease. Months have passed since Arjuna departed for Dwarka to meet Krishna, yet no word has returned. Around Yudhishthira, the world shows fearful omens — unseasonal skies, restless people consumed by greed and anger — signaling that Krishna may have departed from the earth forever.",
-      "descriptionHi": "अर्जुन भगवान श्रीकृष्ण से मिलने और उनके अगले कार्यक्रम जानने के लिए द्वारका गये, परन्तु कई महीने बीत जाने के बाद भी वापस नहीं लौटे। महाराज युधिष्ठिर को भयानक अपशकुन दिखने लगे — ऋतुओं में व्यतिक्रम, लोगों में लोभ, क्रोध और झूठ का बढ़ना। युधिष्ठिर को आशंका हुई कि भगवान श्रीकृष्ण इस धरा से अन्तर्धान हो गये हैं, क्योंकि उनकी उपस्थिति के बिना ऐसे अशुभ लक्षण प्रकट नहीं हो सकते थे।",
-      "personasUsed": [
-        "krishna_adult",
-        "arjuna",
-        "yudhishthira"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T13:13:32.290Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T13:40:45.647Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "15-0-1775833134964",
-    "originalFile": "chapter-015.jpg",
-    "trashedFile": "15-0-1775833134964.jpg",
-    "manifestEntry": {
-      "chapterNumber": 15,
-      "chapterTitle": "Chapter पन्द्रह",
-      "imagePath": "chapter-015.jpg",
-      "prompt": "In a palace hall, Arjuna stands before his elder brother King Yudhishthira, his face pale and eyes filled with tears, struggling to speak. His lips tremble as he recalls Krishna's friendship, blessings, and the image of Krishna driving his chariot. With great effort, Arjuna wipes his tears and begins to answer in a choked, grief-stricken voice.",
-      "descriptionHi": "In a palace hall, Arjuna stands before his elder brother King Yudhishthira, his face pale and eyes filled with tears, struggling to speak. His lips tremble as he recalls Krishna's friendship, blessings, and the image of Krishna driving his chariot. With great effort, Arjuna wipes his tears and begins to answer in a choked, grief-stricken voice.",
-      "personasUsed": [
-        "krishna_adult",
-        "arjuna",
-        "yudhishthira"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:58:51.877Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T14:58:54.965Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "4-0-1775833296372",
-    "originalFile": "chapter-004.jpg",
-    "trashedFile": "4-0-1775833296372.jpg",
-    "manifestEntry": {
-      "chapterNumber": 4,
-      "chapterTitle": "Chapter चार",
-      "imagePath": "chapter-004.jpg",
-      "prompt": "In the forest of Naimisharanya, the elderly and learned sage Shaunaka rises from among a gathering of sages engaged in a long sacred ritual, and with great reverence and joy addresses Suta Goswami, praising him as the most fortunate among all speakers, and earnestly requests him to narrate the holy Bhagavatam as spoken by the great Shukadeva Goswami.",
-      "personasUsed": [
-        "suta_goswami",
-        "shukadeva"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:49:30.878Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T15:01:36.373Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "7-0-1775833308211",
-    "originalFile": "chapter-007.jpg",
-    "trashedFile": "7-0-1775833308211.jpg",
-    "manifestEntry": {
-      "chapterNumber": 7,
-      "chapterTitle": "Chapter सात",
-      "imagePath": "chapter-007.jpg",
-      "prompt": "Vyasa sits in deep meditation beneath berry trees at his hermitage on the western bank of the Saraswati river at Shamyaprasa. Having touched the sacred water for purification, he closes his eyes and stills his mind completely, preparing to receive the divine vision that will become the Srimad Bhagavatam.",
-      "descriptionHi": "इस अध्याय में अश्वत्थामा द्वारा द्रौपदी के पाँच पुत्रों की हत्या और अर्जुन द्वारा उसे दंडित किए जाने की घटना का संदर्भ दिया गया है। नारद मुनि के जाने के बाद, महर्षि व्यासदेव सरस्वती नदी के पश्चिमी तट पर शम्याप्रास आश्रम में बैठकर समाधि में लीन हो गए। यह अध्याय श्रीमद्भागवत के शुभारम्भ की पृष्ठभूमि तैयार करता है, जो परीक्षित के चमत्कारिक रक्षण की घटना से जुड़ी है।",
-      "personasUsed": [
-        "vyasa"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T13:08:13.785Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T15:01:48.214Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "15-0-1775833500330",
-    "originalFile": "chapter-015.jpg",
-    "trashedFile": "15-0-1775833500330.jpg",
-    "manifestEntry": {
-      "chapterNumber": 15,
-      "chapterTitle": "Chapter पन्द्रह",
-      "imagePath": "chapter-015.jpg",
-      "prompt": "Arjuna sits in a palace hall before his elder brother King Yudhishthira, his lotus-like eyes filled with tears, his face pale and voice choked with grief. He struggles to speak, overcome by the deep longing for his departed friend Krishna, remembering Krishna's gentle presence as his charioteer and beloved companion.",
-      "descriptionHi": "इस अध्याय में सूत गोस्वामी बताते हैं कि भगवान कृष्ण के वियोग से अर्जुन अत्यंत शोकसंतप्त था। महाराज युधिष्ठिर के प्रश्नों का उत्तर देने में वह असमर्थ था क्योंकि कृष्ण की मित्रता, आशीर्वाद, पारिवारिक संबंध और सारथी रूप का स्मरण करते हुए उसका गला रुंध जाता था। यह दृश्य शुद्ध भक्ति के सख्य भाव की गहन आध्यात्मिक अनुभूति को दर्शाता है।",
-      "personasUsed": [
-        "krishna_adult",
-        "arjuna",
-        "yudhishthira"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T15:04:56.177Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T15:05:00.330Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "1-0-1775833596097",
-    "originalFile": "chapter-001.jpg",
-    "trashedFile": "1-0-1775833596097.jpg",
-    "manifestEntry": {
-      "chapterNumber": 1,
-      "chapterTitle": "Chapter एक",
-      "imagePath": "chapter-001.jpg",
-      "prompt": "Vyasa sits in deep meditation at his hermitage, his eyes closed and hands folded, as he composes the opening invocation of the Bhagavatam. In his vision, he beholds Krishna as the supreme eternal truth, the origin of all creation, who once illuminated Brahma's heart with divine Vedic knowledge at the dawn of the universe.",
-      "personasUsed": [
-        "krishna_adult",
-        "vyasa",
-        "brahma"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T12:51:03.076Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T15:06:36.097Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "8-1-1775833860347",
-    "originalFile": "chapter-008-2.jpg",
-    "trashedFile": "8-1-1775833860347.jpg",
-    "manifestEntry": {
-      "chapterNumber": 8,
-      "chapterTitle": "अध्याय आठ",
-      "imagePath": "chapter-008-2.jpg",
-      "prompt": "Royal Indian women in white saris performing sacred water rituals on the ancient stone ghats of the Ganges river at sunset, priests chanting nearby, golden light reflecting on the holy water, wide landscape",
-      "descriptionHi": "परम पुरुष अपने शुद्ध भक्त के साथ सारे सम्बन्धो में पूर्ण हैं। श्री अर्जुन भगवान्‌ के विशिष्ट भक्तों में से हैं, जो सख…",
-      "generatedAt": "2026-04-10T09:44:35.776Z",
-      "sceneIndex": 1
-    },
-    "trashedAt": "2026-04-10T15:11:00.348Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "16-0-1775834628780",
-    "originalFile": "chapter-016.jpg",
-    "trashedFile": "16-0-1775834628780.jpg",
-    "manifestEntry": {
-      "chapterNumber": 16,
-      "chapterTitle": "Chapter सोलह",
-      "imagePath": "chapter-016.jpg",
-      "prompt": "King Parikshit sits on his royal throne in a magnificent palace court, surrounded by wise sages and learned Brahmin advisors. He listens with deep reverence as the elder rishis share guidance from the Vedic scriptures, his hands folded in respect. The atmosphere is serene, reflecting his role as a devoted and righteous ruler.",
-      "descriptionHi": "सूत गोस्वामी बताते हैं कि महाराज परीक्षित ने श्रेष्ठ ब्राह्मणों के मार्गदर्शन में एक महान भगवद्भक्त के रूप में पृथ्वी पर शासन किया, ठीक वैसे ही जैसा उनके जन्म के समय ज्योतिषियों ने भविष्यवाणी की थी। वे वैदिक शास्त्रों पर आधारित सलाहकार समिति के निर्देशानुसार राज्य चलाते थे। यह अध्याय आदर्श राजधर्म और भक्ति की शक्ति का आध्यात्मिक महत्व दर्शाता है।",
-      "personasUsed": [
-        "parikshit"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T13:37:40.580Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T15:23:48.782Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "15-0-1775834698069",
-    "originalFile": "chapter-015.jpg",
-    "trashedFile": "15-0-1775834698069.jpg",
-    "manifestEntry": {
-      "chapterNumber": 15,
-      "chapterTitle": "Chapter पन्द्रह",
-      "imagePath": "chapter-015.jpg",
-      "prompt": "Arjuna sits in a palace hall before his elder brother King Yudhishthira, his lotus-like eyes filled with tears, his face pale and voice choked with grief. He struggles to speak, overcome by the deep longing for his departed friend Krishna, remembering Krishna's gentle presence as his charioteer and beloved companion.",
-      "descriptionHi": "इस अध्याय में सूत गोस्वामी बताते हैं कि भगवान कृष्ण के वियोग से अर्जुन अत्यंत शोकसंतप्त था। महाराज युधिष्ठिर के प्रश्नों का उत्तर देने में वह असमर्थ था क्योंकि कृष्ण की मित्रता, आशीर्वाद, पारिवारिक संबंध और सारथी रूप का स्मरण करते हुए उसका गला रुंध जाता था। यह दृश्य शुद्ध भक्ति के सख्य भाव की गहन आध्यात्मिक अनुभूति को दर्शाता है।",
-      "personasUsed": [
-        "krishna_adult",
-        "arjuna",
-        "yudhishthira"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T15:06:33.631Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T15:24:58.070Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "6-0-1775834804039",
-    "originalFile": "chapter-006.jpg",
-    "trashedFile": "6-0-1775834804039.jpg",
-    "manifestEntry": {
-      "chapterNumber": 6,
-      "chapterTitle": "Chapter छह",
-      "imagePath": "chapter-006.jpg",
-      "prompt": "Vyasa sits humbly before Narada on the banks of a sacred river, asking him earnestly how he spent his life after receiving spiritual initiation from the great sages, and how he eventually shed his mortal body to attain his divine eternal form as Brahma's son and celestial sage.",
-      "descriptionHi": "इस अध्याय में व्यासदेव नारद जी से उनके पूर्वजन्म की दीक्षा के बाद के जीवन और शरीर त्याग के विषय में जिज्ञासा करते हैं। व्यासदेव नारद जी के शिष्य होने के नाते उनके आध्यात्मिक अनुभवों को जानना चाहते हैं। यह संवाद गुरु-शिष्य परम्परा की महत्ता और आत्मज्ञान की प्राप्ति के मार्ग को दर्शाता है।",
-      "personasUsed": [
-        "narada",
-        "vyasa",
-        "brahma"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T13:00:24.789Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T15:26:44.040Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "7-0-1775834822552",
-    "originalFile": "chapter-007.jpg",
-    "trashedFile": "7-0-1775834822552.jpg",
-    "manifestEntry": {
-      "chapterNumber": 7,
-      "chapterTitle": "Chapter सात",
-      "imagePath": "chapter-007.jpg",
-      "prompt": "Vyasa sits in deep meditation beside the sacred Saraswati river at his ashram in Shamyaprasa, surrounded by berry trees. Having performed ritual purification with river water, he sits in serene stillness, concentrating his mind inward. Nearby, the memory of Arjuna confronting Ashwatthama and the sorrow of Draupadi weigh upon the spiritual atmosphere.",
-      "descriptionHi": "इस अध्याय में बताया गया है कि नारद मुनि के जाने के बाद महर्षि व्यासदेव सरस्वती नदी के पश्चिमी तट पर स्थित शम्याप्रास आश्रम में ध्यानमग्न हो गए। इस अध्याय में अश्वत्थामा द्वारा द्रौपदी के पाँच पुत्रों को सोते में मार डालने और अर्जुन द्वारा उसे दंडित करने की घटना का भी उल्लेख है। यह सब घटनाएँ महाराज परीक्षित के जीवन से जुड़ी हैं और श्रीमद्भागवत के शुभारम्भ की पृष्ठभूमि बनती हैं।",
-      "personasUsed": [
-        "vyasa",
-        "arjuna",
-        "draupadi"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T15:09:33.150Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T15:27:02.553Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "5-0-1775835950487",
-    "originalFile": "chapter-005.jpg",
-    "trashedFile": "5-0-1775835950487.jpg",
-    "manifestEntry": {
-      "chapterNumber": 5,
-      "chapterTitle": "Chapter पाँच",
-      "imagePath": "chapter-005.jpg",
-      "prompt": "Narada, holding his veena and wearing a gentle smile, sits beside the great sage Vyasa on a riverbank. He speaks to Vyasa with compassion and wisdom, asking why the author of the magnificent Mahabharata still appears restless and unfulfilled, hinting that the true path of devotion has yet to be expressed completely.",
-      "descriptionHi": "देवर्षि नारद, हाथ में वीणा लिए और मुस्कुराते हुए, व्यासदेव के पास बैठकर उनसे उनके असंतोष का कारण पूछते हैं। नारद संकेत देते हैं कि इतने महान ग्रंथ महाभारत की रचना के बाद भी व्यासदेव इसलिए अतृप्त हैं क्योंकि उन्होंने भक्तियोग को उचित रूप से प्रस्तुत नहीं किया। यह वार्तालाप आध्यात्मिक दृष्टि से अत्यंत महत्वपूर्ण है क्योंकि यह श्रीमद्भागवत की रचना की प्रेरणा का मूल क्षण है।",
-      "personasUsed": [
-        "narada",
-        "vyasa"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T13:12:29.070Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T15:45:50.488Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "8-0-1775836119247",
-    "originalFile": "chapter-008.jpg",
-    "trashedFile": "8-0-1775836119247.jpg",
-    "manifestEntry": {
-      "chapterNumber": 8,
-      "chapterTitle": "अध्याय आठ",
-      "imagePath": "chapter-008.jpg",
-      "prompt": "On the sacred banks of the Ganga river, Yudhishthira, Dhritarashtra, Gandhari, Kunti, and Draupadi sit together in deep grief after the Kurukshetra war, mourning their fallen kinsmen. Krishna stands among them, gently consoling the bereaved family members alongside sages, explaining the supreme law of time that governs all living beings.",
-      "descriptionHi": "कुरुक्षेत्र युद्ध के बाद पाण्डवगण द्रौपदी सहित मृत परिजनों को जल-दान देने हेतु गंगा तट पर गये। वहाँ युधिष्ठिर, धृतराष्ट्र, गांधारी, कुन्ती और द्रौपदी सभी पुत्र-शोक से पीड़ित बैठे थे। भगवान् कृष्ण ने वहाँ उपस्थित मुनियों के साथ मिलकर सभी शोकाकुल परिजनों को काल की गति समझाकर सान्त्वना दी।",
-      "personasUsed": [
-        "krishna_adult",
-        "kunti",
-        "draupadi",
-        "gandhari",
-        "dhritarashtra",
-        "yudhishthira"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T13:07:09.760Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T15:48:39.248Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "36-0-1775863729209",
-    "originalFile": "chapter-036.jpg",
-    "trashedFile": "36-0-1775863729209.jpg",
-    "manifestEntry": {
-      "chapterNumber": 36,
-      "chapterTitle": "Chapter 36",
-      "imagePath": "chapter-036.jpg",
-      "prompt": "On the banks of the Ganges, King Parikshit sits reverently before the sage Shukadeva Goswami, asking with folded hands how Narada Muni described the transcendental qualities of the Lord to various disciples. The serene forest setting reflects the sacred flow of divine knowledge passing from Brahma to Narada and onward through the ages.",
-      "descriptionHi": "राजा परीक्षित ने शुकदेव गोस्वामी से पूछा कि नारद मुनि ने निर्गुण भगवान् के दिव्य गुणों का वर्णन किस प्रकार और किन-किन के समक्ष किया। यह प्रश्न शिष्य-परम्परा की महत्ता को दर्शाता है, जिसमें ब्रह्माजी से नारद को और नारद से आगे दिव्य ज्ञान प्रवाहित हुआ। इस प्रसंग का आध्यात्मिक महत्व यह है कि प्रामाणिक गुरु-शिष्य परम्परा ही वैदिक ज्ञान का एकमात्र विश्वसनीय स्रोत है।",
-      "personasUsed": [
-        "narada",
-        "shukadeva",
-        "brahma",
-        "parikshit"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T17:43:05.780Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-10T23:28:49.210Z",
-    "operation": "regenerate"
-  },
-  {
-    "trashId": "34-0-1777165201320",
-    "originalFile": "chapter-034.jpg",
-    "trashedFile": "34-0-1777165201320.jpg",
-    "manifestEntry": {
-      "chapterNumber": 34,
-      "chapterTitle": "Chapter पाँच",
-      "cantoNumber": 3,
-      "imagePath": "chapter-034.jpg",
-      "prompt": "Vidur approaches Maitreya by the Ganges River, seeking spiritual knowledge from the wise sage.",
-      "descriptionHi": "इस अध्याय में विदुर और मैत्रेय की मुलाकात का वर्णन है, जहाँ विदुर भगवान् की शुद्ध भक्ति में परिपूर्ण होकर मैत्रेय से ज्ञान प्राप्त करने के लिए आते हैं। यहाँ विदुर की अच्युत भगवान् की भक्ति और मैत्रेय के अगाध ज्ञान का महत्व बताया गया है।",
-      "generatedAt": "2026-04-15T07:04:06.169Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-04-26T01:00:01.322Z",
-    "operation": "regenerate"
-  },
-  {
     "trashId": "21-0-1778825700250",
     "originalFile": "chapter-021.jpg",
     "trashedFile": "21-0-1778825700250.jpg",
@@ -1042,6 +365,681 @@
       "cantoNumber": 2
     },
     "trashedAt": "2026-05-19T11:41:56.444Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "28-0-1779190996041",
+    "originalFile": "chapter-027.jpg",
+    "trashedFile": "28-0-1779190996041.jpg",
+    "manifestEntry": {
+      "chapterNumber": 28,
+      "chapterTitle": "अध्याय नौ",
+      "imagePath": "chapter-027.jpg",
+      "prompt": "A humble devotee approaches a wise guru on a serene riverbank, seeking guidance on the path to spiritual enlightenment.",
+      "descriptionHi": "भगवद्भक्ति के लिए समर्पण की आवश्यकता है, जो मनुष्य को आध्यात्मिक जीवन की ओर ले जाता है। ईश्वर का प्रामाणिक प्रतिनिधि मनुष्य को भगवान् के पास पहुँचाने में मदद करता है। यह समर्पण मनुष्य को पापों से मुक्ति दिलाने में सहायक होता है।",
+      "generatedAt": "2026-04-10T23:17:55.124Z",
+      "sceneIndex": 0,
+      "cantoNumber": 2
+    },
+    "trashedAt": "2026-05-19T11:43:16.042Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "30-0-1779191060298",
+    "originalFile": "chapter-030.jpg",
+    "trashedFile": "30-0-1779191060298.jpg",
+    "manifestEntry": {
+      "chapterNumber": 30,
+      "chapterTitle": "Chapter इक्तीस",
+      "imagePath": "chapter-030.jpg",
+      "prompt": "Vidura inquires about Swayambhuva Manu's lineage with Brahma, seeking wisdom on righteous progeny.",
+      "descriptionHi": "विदुर ने स्वायम्भुव मनु की वंश परम्परा के बारे में जानने की इच्छा व्यक्त की, जिसमें धार्मिक नियमों के अनुसार सन्तति-वृद्धि हुई। स्वायम्भुव मनु के दो पुत्रों प्रियव्रत तथा उत्तानपाद ने धार्मिक नियमानुसार सप्त द्वीपों वाले इस संसार पर राज्य किया।",
+      "personasUsed": [
+        "brahma",
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T22:34:55.531Z",
+      "sceneIndex": 0,
+      "cantoNumber": 3
+    },
+    "trashedAt": "2026-05-19T11:44:20.298Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "15-0-1779191083944",
+    "originalFile": "chapter-015.jpg",
+    "trashedFile": "15-0-1779191083944.jpg",
+    "manifestEntry": {
+      "chapterNumber": 15,
+      "chapterTitle": "Chapter पन्द्रह",
+      "imagePath": "chapter-015.jpg",
+      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 4 Chapter 15. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय पन्द्रह — राजा पृथु की उत्पत्ति और राज्याभिषेक. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 4 Chapter 15. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय पन्द्रह — राजा पृथु की उत्पत्ति और राज्याभिषेक. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-19T11:39:52.287Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T11:44:43.945Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "16-0-1779191120588",
+    "originalFile": "chapter-016.jpg",
+    "trashedFile": "16-0-1779191120588.jpg",
+    "manifestEntry": {
+      "chapterNumber": 16,
+      "chapterTitle": "Chapter सोलह",
+      "imagePath": "chapter-016.jpg",
+      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 3 Chapter 16. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय सोलह — वैकुण्ठ के दो द्वारपालों, जय-विजय को मुनियों द्वारा शाप ब्रह्मोवाच. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 3 Chapter 16. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय सोलह — वैकुण्ठ के दो द्वारपालों, जय-विजय को मुनियों द्वारा शाप ब्रह्मोवाच. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-19T11:32:15.367Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T11:45:20.588Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "21-0-1779191143645",
+    "originalFile": "chapter-021.jpg",
+    "trashedFile": "21-0-1779191143645.jpg",
+    "manifestEntry": {
+      "chapterNumber": 21,
+      "chapterTitle": "Chapter इक्कीस",
+      "imagePath": "chapter-021.jpg",
+      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 4 Chapter 21. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय इक्कीस — महाराज पृथु द्वारा उपदेश. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 4 Chapter 21. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय इक्कीस — महाराज पृथु द्वारा उपदेश. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-19T11:41:05.611Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T11:45:43.648Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "22-0-1779191172411",
+    "originalFile": "chapter-022.jpg",
+    "trashedFile": "22-0-1779191172411.jpg",
+    "manifestEntry": {
+      "chapterNumber": 22,
+      "chapterTitle": "Chapter बाईस",
+      "imagePath": "chapter-022.jpg",
+      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 4 Chapter 22. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय बाईस — चारों कुमारों से पृथु महाराज की भेंट. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 4 Chapter 22. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय बाईस — चारों कुमारों से पृथु महाराज की भेंट. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-19T11:41:28.716Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T11:46:12.412Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "23-0-1779191248929",
+    "originalFile": "chapter-023.jpg",
+    "trashedFile": "23-0-1779191248929.jpg",
+    "manifestEntry": {
+      "chapterNumber": 23,
+      "chapterTitle": "Chapter तेईस",
+      "imagePath": "chapter-023.jpg",
+      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 4 Chapter 23. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय तेईस — महाराज पृथु का भगवद्धाम गमन. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 4 Chapter 23. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय तेईस — महाराज पृथु का भगवद्धाम गमन. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-19T11:41:54.496Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T11:47:28.930Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "25-0-1779191277893",
+    "originalFile": "chapter-025.jpg",
+    "trashedFile": "25-0-1779191277893.jpg",
+    "manifestEntry": {
+      "chapterNumber": 25,
+      "chapterTitle": "Chapter पच्चीस",
+      "imagePath": "chapter-025.jpg",
+      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 4 Chapter 25. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय पच्चीस — राजा पुरञ्जन के गुणों का वर्णन. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 4 Chapter 25. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय पच्चीस — राजा पुरञ्जन के गुणों का वर्णन. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-19T11:42:46.064Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T11:47:57.894Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "1-0-1779191305840",
+    "originalFile": "chapter-001.jpg",
+    "trashedFile": "1-0-1779191305840.jpg",
+    "manifestEntry": {
+      "chapterNumber": 1,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-001.jpg",
+      "prompt": "Vyasa, the sage and divine author, sits in serene meditation by a peaceful riverbank, his hands folded in deep reverence. Before him shines a vision of Krishna in his transcendental abode, radiant and all-pervading. Vyasa composes the opening verse of the Bhagavatam, offering his humble salutation to Krishna as the ultimate supreme truth and origin of all creation.",
+      "descriptionHi": "यह अध्याय श्रीमद्भागवत का मंगलाचरण श्लोक प्रस्तुत करता है, जिसमें व्यासदेव भगवान् वासुदेव श्रीकृष्ण को परम सत्य के रूप में नमस्कार करते हैं। व्यासदेव स्पष्ट करते हैं कि श्रीकृष्ण ही समस्त ब्रह्माण्डों की उत्पत्ति, पालन और संहार के आदि कारण हैं तथा उन्होंने ही आदि जीव ब्रह्माजी के हृदय में वैदिक ज्ञान प्रदान किया। इस श्लोक का आध्यात्मिक महत्व यह है कि यह भगवान् श्रीकृष्ण की सर्वोच्चता और परम सत्य स्वरूप की घोषणा करता है, जो समस्त भ्रम और माया से परे अपने दिव्य धाम में विराजमान हैं।",
+      "personasUsed": [
+        "krishna_adult",
+        "vyasa"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T15:15:12.426Z",
+      "sceneIndex": 0,
+      "cantoNumber": 1
+    },
+    "trashedAt": "2026-05-19T11:48:25.840Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "16-0-1779191332400",
+    "originalFile": "chapter-016.jpg",
+    "trashedFile": "16-0-1779191332400.jpg",
+    "manifestEntry": {
+      "chapterNumber": 16,
+      "chapterTitle": "Chapter सोलह",
+      "imagePath": "chapter-016.jpg",
+      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 5 Chapter 16. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय सोलह — जम्बूद्वीप का वर्णन. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 5 Chapter 16. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय सोलह — जम्बूद्वीप का वर्णन. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-19T11:45:43.025Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T11:48:52.401Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "3-0-1779191362124",
+    "originalFile": "chapter-003.jpg",
+    "trashedFile": "3-0-1779191362124.jpg",
+    "manifestEntry": {
+      "chapterNumber": 3,
+      "chapterTitle": "Chapter तीन",
+      "imagePath": "chapter-003.jpg",
+      "prompt": "At the dawn of creation, Krishna expands himself as the Purusha avatar, Karanodakashayi Vishnu, reclining on the cosmic waters in the boundless spiritual sky. From his divine body, countless universes emerge like bubbles, while Brahma and Vishnu witness the magnificent unfolding of material creation from the sixteen primordial elements.",
+      "descriptionHi": "At the dawn of creation, Krishna expands himself as the Purusha avatar, Karanodakashayi Vishnu, reclining on the cosmic waters in the boundless spiritual sky. From his divine body, countless universes emerge like bubbles, while Brahma and Vishnu witness the magnificent unfolding of material creation from the sixteen primordial elements.",
+      "personasUsed": [
+        "krishna_adult",
+        "vishnu",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T12:56:49.463Z",
+      "sceneIndex": 0,
+      "cantoNumber": 1
+    },
+    "trashedAt": "2026-05-19T11:49:22.126Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "4-0-1779191385416",
+    "originalFile": "chapter-004.jpg",
+    "trashedFile": "4-0-1779191385416.jpg",
+    "manifestEntry": {
+      "chapterNumber": 4,
+      "chapterTitle": "Chapter चार",
+      "imagePath": "chapter-004.jpg",
+      "prompt": "In a forest hermitage during a great long-running yajna, the elderly and learned sage Shaunaka rises with reverence and joy, addressing Suta Goswami with folded hands. Surrounded by assembled sages and the sacred fire, Shaunaka earnestly requests Suta Goswami to narrate the holy Srimad Bhagavatam as originally spoken by the great Shukadeva Goswami.",
+      "descriptionHi": "इस अध्याय में शौनक मुनि, जो दीर्घकालीन यज्ञ में लगे ऋषियों के वयोवृद्ध अग्रणी हैं, सूत गोस्वामी को बधाई देते हैं और उनसे शुकदेव गोस्वामी द्वारा कही गई श्रीमद्भागवत की पवित्र कथा सुनाने का अनुरोध करते हैं। यह दृश्य गुरु-शिष्य परम्परा के महत्त्व और प्रामाणिक वाचन की आवश्यकता को रेखांकित करता है। इस क्षण की आध्यात्मिक महत्ता यह है कि एक योग्य श्रोता और एक प्रामाणिक वक्ता के मिलन से भागवत-ज्ञान की पवित्र धारा प्रवाहित होती है।",
+      "personasUsed": [
+        "suta_goswami",
+        "shukadeva"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T15:44:06.357Z",
+      "sceneIndex": 0,
+      "cantoNumber": 1
+    },
+    "trashedAt": "2026-05-19T11:49:45.417Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "5-0-1779191409050",
+    "originalFile": "chapter-005.jpg",
+    "trashedFile": "5-0-1779191409050.jpg",
+    "manifestEntry": {
+      "chapterNumber": 5,
+      "chapterTitle": "Chapter पाँच",
+      "imagePath": "chapter-005.jpg",
+      "prompt": "Narada, the divine sage holding a veena in his hands, sits serenely beside Vyasa on a riverbank in a peaceful forest ashram. With a gentle smile, Narada addresses the great sage Vyasa, asking why he remains spiritually restless despite having composed the magnificent Mahabharata and mastered all Vedic knowledge.",
+      "descriptionHi": "इस अध्याय में देवर्षि नारद, ऋषि व्यासदेव के पास सुखपूर्वक बैठकर मुस्कराते हुए उनसे उनके असंतोष का कारण पूछते हैं। नारद संकेत देते हैं कि महाभारत जैसे महान ग्रंथ की रचना करने के बावजूद व्यासदेव इसलिए असंतुष्ट हैं क्योंकि उन्होंने भक्तियोग को उचित रूप से प्रस्तुत नहीं किया। यह संवाद श्रीमद्भागवत की रचना की आवश्यकता को स्थापित करने की दिशा में एक महत्वपूर्ण आध्यात्मिक मोड़ है।",
+      "personasUsed": [
+        "narada",
+        "vyasa"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T15:46:08.070Z",
+      "sceneIndex": 0,
+      "cantoNumber": 1
+    },
+    "trashedAt": "2026-05-19T11:50:09.051Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "6-0-1779191442307",
+    "originalFile": "chapter-006.jpg",
+    "trashedFile": "6-0-1779191442307.jpg",
+    "manifestEntry": {
+      "chapterNumber": 6,
+      "chapterTitle": "Chapter छह",
+      "imagePath": "chapter-006.jpg",
+      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 4 Chapter 6. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय छह — ब्रह्मा द्वारा शिवजी को मनाना मैत्रेय उबाच. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 4 Chapter 6. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय छह — ब्रह्मा द्वारा शिवजी को मनाना मैत्रेय उबाच. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-19T11:37:15.812Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T11:50:42.308Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "7-0-1779191517647",
+    "originalFile": "chapter-007.jpg",
+    "trashedFile": "7-0-1779191517647.jpg",
+    "manifestEntry": {
+      "chapterNumber": 7,
+      "chapterTitle": "Chapter सात",
+      "cantoNumber": 1,
+      "imagePath": "chapter-007.jpg",
+      "prompt": "On the western bank of the sacred Saraswati river at the Shamyaprasa ashram, the sage Vyasa sits in deep meditative trance, having just received the wisdom shared by Narada Muni. Meanwhile, Arjuna stands before Ashwatthama in a solemn confrontation, delivering righteous justice for the harm caused to Draupadi and her lineage.",
+      "descriptionHi": "इस अध्याय में अश्वत्थामा द्वारा द्रौपदी के पाँच पुत्रों को सोते में मारने की घटना का उल्लेख है, जिसके लिए अर्जुन ने उसे दंडित किया। महाराज परीक्षित को उनकी माता के गर्भ में चमत्कारिक रूप से बचाया गया था। व्यासदेव ने नारद मुनि के जाने के पश्चात सरस्वती नदी के पश्चिमी तट पर शम्याप्रास आश्रम में समाधि द्वारा सारे सत्य की अनुभूति प्राप्त की।",
+      "personasUsed": [
+        "narada",
+        "vyasa",
+        "arjuna",
+        "draupadi"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-18T12:00:31.788Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T11:51:57.648Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "8-0-1779191550313",
+    "originalFile": "chapter-008.jpg",
+    "trashedFile": "8-0-1779191550313.jpg",
+    "manifestEntry": {
+      "chapterNumber": 8,
+      "chapterTitle": "Chapter 278 अध्याय",
+      "cantoNumber": 1,
+      "imagePath": "chapter-008.jpg",
+      "prompt": "On the sacred banks of the Ganga river, Draupadi, Kunti, and the Pandava women walk forward in a solemn procession, with Krishna accompanying them as a beloved family member. They offer handfuls of holy water to the departed souls, weeping softly, and then immerse themselves in the river, whose waters are sanctified by the dust of Lord Krishna's lotus feet.",
+      "descriptionHi": "युद्ध में मारे गए अपने परिजनों को जलदान देने के लिए पांडव, द्रौपदी और कुंती सहित भगवान कृष्ण के साथ गंगा तट पर गए। स्त्रियों को आगे करके सभी ने विलाप करते हुए मृतकों को जलांजलि अर्पित की और तत्पश्चात् हरि-चरण-धूलि से पवित्र गंगाजल में स्नान किया। यह दृश्य हिंदू परंपरा में पूर्वजों के प्रति श्रद्धा और भगवान कृष्ण की उपस्थिति में शोक को आध्यात्मिक शांति में परिवर्तित करने की भावना को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "kunti",
+        "draupadi"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-18T12:03:08.115Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T11:52:30.313Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "9-0-1779191576241",
+    "originalFile": "chapter-009.jpg",
+    "trashedFile": "9-0-1779191576241.jpg",
+    "manifestEntry": {
+      "chapterNumber": 9,
+      "chapterTitle": "अध्याय नौ",
+      "imagePath": "chapter-009.jpg",
+      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 4 Chapter 9. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय नौ — gd महाराज का घर लौटना मैत्रेय उवाच. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 4 Chapter 9. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय नौ — gd महाराज का घर लौटना मैत्रेय उवाच. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-19T11:38:55.195Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T11:52:56.242Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "10-0-1779191607030",
+    "originalFile": "chapter-010.jpg",
+    "trashedFile": "10-0-1779191607030.jpg",
+    "manifestEntry": {
+      "chapterNumber": 10,
+      "chapterTitle": "Chapter दस",
+      "imagePath": "chapter-010.jpg",
+      "prompt": "Krishna stands in the royal court of Hastinapur, his expression radiating deep satisfaction, as he places his hand on Yudhishthira's shoulder, formally restoring him to the throne. Around them, the remnants of the devastated Kuru dynasty look on — a family nearly destroyed by war's fire, now being carefully revived by the Lord's compassionate grace.",
+      "descriptionHi": "महाभारत युद्ध के पश्चात् भगवान् श्रीकृष्ण ने युधिष्ठिर को उनके वैध राज्य में पुनः स्थापित करके और क्रोध की दावाग्नि से विनष्ट हुए कुरुवंश को पुनरुज्जीवित करके अत्यन्त प्रसन्नता अनुभव की। शौनक ऋषि ने सूत गोस्वामी से पूछा कि शत्रुओं के वध के पश्चात् धर्मात्मा युधिष्ठिर ने किस प्रकार अपने राज्य का संचालन किया। यह अध्याय यह दर्शाता है कि भगवान् श्रीकृष्ण सृष्टि के पालनकर्ता हैं जो धर्म की पुनर्स्थापना और जीवों के कल्याण के लिए सदैव प्रयत्नशील रहते हैं।",
+      "personasUsed": [
+        "krishna_adult",
+        "yudhishthira"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T13:04:43.930Z",
+      "sceneIndex": 0,
+      "cantoNumber": 1
+    },
+    "trashedAt": "2026-05-19T11:53:27.031Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "11-0-1779191629700",
+    "originalFile": "chapter-011.jpg",
+    "trashedFile": "11-0-1779191629700.jpg",
+    "manifestEntry": {
+      "chapterNumber": 11,
+      "chapterTitle": "Chapter ग्यारह",
+      "imagePath": "chapter-011.jpg",
+      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 4 Chapter 11. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय ग्यारह — युद्ध बन्द करने के लिए. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 4 Chapter 11. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय ग्यारह — युद्ध बन्द करने के लिए. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-19T11:39:17.490Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T11:53:49.701Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "12-0-1779191652787",
+    "originalFile": "chapter-012.jpg",
+    "trashedFile": "12-0-1779191652787.jpg",
+    "manifestEntry": {
+      "chapterNumber": 12,
+      "chapterTitle": "Chapter बारह",
+      "imagePath": "chapter-012.jpg",
+      "prompt": "A divine newborn baby glowing with golden light in a grand palace chamber, royal family gathered around with joy, priests performing blessing rituals with sacred fire, wide cinematic composition",
+      "descriptionHi": "सम्राट परीक्षित का जन्म",
+      "generatedAt": "2026-04-10T09:43:08.237Z",
+      "sceneIndex": 0,
+      "cantoNumber": 1
+    },
+    "trashedAt": "2026-05-19T11:54:12.789Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "15-0-1779191685543",
+    "originalFile": "chapter-015.jpg",
+    "trashedFile": "15-0-1779191685543.jpg",
+    "manifestEntry": {
+      "chapterNumber": 15,
+      "chapterTitle": "Chapter पन्द्रह",
+      "imagePath": "chapter-015.jpg",
+      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 5 Chapter 15. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय पन्द्रह — राजा प्रियव्रत के वंशजों का यश-वर्णन. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 5 Chapter 15. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय पन्द्रह — राजा प्रियव्रत के वंशजों का यश-वर्णन. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-19T11:45:20.026Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T11:54:45.544Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "2-0-1779191717455",
+    "originalFile": "chapter-002.jpg",
+    "trashedFile": "2-0-1779191717455.jpg",
+    "manifestEntry": {
+      "chapterNumber": 2,
+      "chapterTitle": "अध्याय दो",
+      "imagePath": "chapter-002.jpg",
+      "prompt": "Vyasadeva sitting in a thatched forest hermitage, writing on palm-leaf manuscripts, golden morning light streaming through doorway",
+      "descriptionHi": "इस अध्याय में बताया गया है कि मनुष्य का सर्वोच्च धर्म क्या है — वह भक्ति जो भगवान श्रीकृष्ण में अनन्य प्रेम उत्पन्न करे और जिससे आत्मा को पूर्ण तृप्ति मिले।",
+      "generatedAt": "2026-04-10T10:34:00.000Z",
+      "sceneIndex": 0,
+      "cantoNumber": 1
+    },
+    "trashedAt": "2026-05-19T11:55:17.457Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "3-0-1779191747154",
+    "originalFile": "chapter-003.jpg",
+    "trashedFile": "3-0-1779191747154.jpg",
+    "manifestEntry": {
+      "chapterNumber": 3,
+      "chapterTitle": "Chapter तीन",
+      "imagePath": "chapter-003.jpg",
+      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 7 Chapter 3. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय तीन — हिरण्यकशिपु की अमर बनने की योजना. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 7 Chapter 3. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय तीन — हिरण्यकशिपु की अमर बनने की योजना. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-19T11:49:44.654Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T11:55:47.155Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "4-0-1779191785742",
+    "originalFile": "chapter-004.jpg",
+    "trashedFile": "4-0-1779191785742.jpg",
+    "manifestEntry": {
+      "chapterNumber": 4,
+      "chapterTitle": "Chapter चार",
+      "imagePath": "chapter-004.jpg",
+      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 7 Chapter 4. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय चार — ब्रह्माण्ड में हिरण्यकशिपु का आतंक. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 7 Chapter 4. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय चार — ब्रह्माण्ड में हिरण्यकशिपु का आतंक. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-19T11:50:08.160Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T11:56:25.744Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "6-0-1779191816596",
+    "originalFile": "chapter-006.jpg",
+    "trashedFile": "6-0-1779191816596.jpg",
+    "manifestEntry": {
+      "chapterNumber": 6,
+      "chapterTitle": "Chapter छह",
+      "imagePath": "chapter-006.jpg",
+      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 7 Chapter 6. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय छह — प्रह्लाद द्वारा अपने असुर सहपाठियों को उपदेश. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 7 Chapter 6. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय छह — प्रह्लाद द्वारा अपने असुर सहपाठियों को उपदेश. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-19T11:51:56.628Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T11:56:56.597Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "7-0-1779191848391",
+    "originalFile": "chapter-007.jpg",
+    "trashedFile": "7-0-1779191848391.jpg",
+    "manifestEntry": {
+      "chapterNumber": 7,
+      "chapterTitle": "Chapter सात",
+      "imagePath": "chapter-007.jpg",
+      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 7 Chapter 7. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय सात — प्रह्लाद ने गर्भ में क्या सीखा. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 7 Chapter 7. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय सात — प्रह्लाद ने गर्भ में क्या सीखा. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-19T11:52:29.404Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T11:57:28.392Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "8-0-1779191878166",
+    "originalFile": "chapter-008.jpg",
+    "trashedFile": "8-0-1779191878166.jpg",
+    "manifestEntry": {
+      "chapterNumber": 8,
+      "chapterTitle": "अध्याय आठ",
+      "imagePath": "chapter-008.jpg",
+      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 7 Chapter 8. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय आठ — भगवान् नृसिंह द्वारा असुरराज का वध. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 7 Chapter 8. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय आठ — भगवान् नृसिंह द्वारा असुरराज का वध. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-19T11:52:55.347Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T11:57:58.167Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "10-0-1779191910948",
+    "originalFile": "chapter-010.jpg",
+    "trashedFile": "10-0-1779191910948.jpg",
+    "manifestEntry": {
+      "chapterNumber": 10,
+      "chapterTitle": "Chapter दस",
+      "imagePath": "chapter-010.jpg",
+      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 7 Chapter 10. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय दस. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 7 Chapter 10. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय दस. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-19T11:53:48.851Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T11:58:30.949Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "11-0-1779191941529",
+    "originalFile": "chapter-011.jpg",
+    "trashedFile": "11-0-1779191941529.jpg",
+    "manifestEntry": {
+      "chapterNumber": 11,
+      "chapterTitle": "Chapter ग्यारह",
+      "imagePath": "chapter-011.jpg",
+      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 7 Chapter 11. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय ग्यारह — पूर्ण समाज: चातुर्वर्ण. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 7 Chapter 11. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय ग्यारह — पूर्ण समाज: चातुर्वर्ण. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-19T11:54:11.462Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T11:59:01.530Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "12-0-1779191971093",
+    "originalFile": "chapter-012.jpg",
+    "trashedFile": "12-0-1779191971093.jpg",
+    "manifestEntry": {
+      "chapterNumber": 12,
+      "chapterTitle": "Chapter बारह",
+      "imagePath": "chapter-012.jpg",
+      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 7 Chapter 12. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय बारह — पूर्ण समाज : चार आध्यात्मिक वर्ग. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 7 Chapter 12. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय बारह — पूर्ण समाज : चार आध्यात्मिक वर्ग. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-19T11:54:44.592Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T11:59:31.095Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "16-0-1779192034505",
+    "originalFile": "chapter-016.jpg",
+    "trashedFile": "16-0-1779192034505.jpg",
+    "manifestEntry": {
+      "chapterNumber": 16,
+      "chapterTitle": "Chapter सोलह",
+      "imagePath": "chapter-016.jpg",
+      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 6 Chapter 16. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय सोलह — राजा चित्रकेतु की परमेश्वर से भेंट. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 6 Chapter 16. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय सोलह — राजा चित्रकेतु की परमेश्वर से भेंट. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-19T11:49:21.014Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T12:00:34.507Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "19-0-1779192062761",
+    "originalFile": "chapter-019.jpg",
+    "trashedFile": "19-0-1779192062761.jpg",
+    "manifestEntry": {
+      "chapterNumber": 19,
+      "chapterTitle": "Chapter उन्नीस",
+      "imagePath": "chapter-019.jpg",
+      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 3 Chapter 19. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय उन्नीस — असुर हिरण्याक्ष का वध मैत्रेय उबाच. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 3 Chapter 19. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय उन्नीस — असुर हिरण्याक्ष का वध मैत्रेय उबाच. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-19T11:33:40.068Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-19T12:01:02.762Z",
+    "operation": "regenerate"
+  },
+  {
+    "trashId": "20-0-1779192094236",
+    "originalFile": "chapter-020.jpg",
+    "trashedFile": "20-0-1779192094236.jpg",
+    "manifestEntry": {
+      "chapterNumber": 20,
+      "chapterTitle": "Chapter एक",
+      "imagePath": "chapter-020.jpg",
+      "prompt": "Shukadeva welcomes Parikshit, who seeks guidance on his duties as a dying man, amidst a serene forest setting with Arjuna and Krishna.",
+      "descriptionHi": "इस अध्याय में भगवान कृष्ण की महिमा का वर्णन है और शुकदेव गोस्वामी महाराज परीक्षित को भगवान के विश्वरूप का ध्यान करने की विधि बताते हैं। महाराज परीक्षित को शुकदेव गोस्वामी का स्वागत करते हुए हर्ष हो रहा था और उन्हें गर्व था कि वे कृष्ण के अन्तरंग सखा अर्जुन के वंशज हैं।",
+      "personasUsed": [
+        "krishna_adult",
+        "shukadeva",
+        "arjuna",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-10T22:46:58.712Z",
+      "sceneIndex": 0,
+      "cantoNumber": 2
+    },
+    "trashedAt": "2026-05-19T12:01:34.236Z",
     "operation": "regenerate"
   }
 ]
