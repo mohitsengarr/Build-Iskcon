@@ -10,6 +10,7 @@ import {
   List, X, ChevronDown, ChevronUp, Image as ImageIcon, Languages,
   Download, Share2, Bookmark, Trash2, LogIn, Volume2, Square, Check,
   Settings, Sun, Moon, Type, Minus, Plus, Maximize2, Undo2, Pencil, Wand2, Send, Bold,
+  CornerDownLeft, Combine,
 } from "lucide-react";
 
 // ── Reading Settings ─────────────────────────────────────────────────────────
@@ -1253,6 +1254,25 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     setShow(false);
   }, [selectedText, isCurrentSelectionBold]); // applyEdit referenced via closure
 
+  // Word-doc style edits on the selection:
+  // - "New line" pushes the selection onto its own line (newline before it).
+  // - "Join" removes the spaces inside the selection (fixes wrongly-split words).
+  const insertLineBreak = useCallback(() => {
+    if (!selectedText) return;
+    const trimmed = selectedText.replace(/^\s+/, "");
+    // Prefix a newline so the selected text starts on a fresh line.
+    applyEdit(selectedText, "\n" + trimmed);
+    setShow(false);
+  }, [selectedText]);
+
+  const removeSpaces = useCallback(() => {
+    if (!selectedText) return;
+    const joined = selectedText.replace(/\s+/g, "");
+    if (joined === selectedText) return; // nothing to remove
+    applyEdit(selectedText, joined);
+    setShow(false);
+  }, [selectedText]);
+
   // Dictionary lookup state
   const [dictResult, setDictResult] = useState<{ word: string; meaning: string; examples: string[] } | null>(null);
   const [dictLoading, setDictLoading] = useState(false);
@@ -1321,7 +1341,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
         {(
           <div className="p-2">
             {/* Action buttons row — preventDefault stops clicks from collapsing text selection */}
-            <div className="flex items-center gap-1 mb-2" onMouseDown={e => e.preventDefault()}>
+            <div className="flex flex-wrap items-center gap-1 mb-2" onMouseDown={e => e.preventDefault()}>
               <button
                 onClick={listenToWord}
                 className={`flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium rounded-lg transition-colors ${
@@ -1349,6 +1369,20 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
                 title={isCurrentSelectionBold ? "Remove bold" : "Bold"}
               >
                 <Bold className="w-3.5 h-3.5" /> {isCurrentSelectionBold ? "Unbold" : "Bold"}
+              </button>
+              <button
+                onClick={insertLineBreak}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition-colors"
+                title="Move selection to a new line"
+              >
+                <CornerDownLeft className="w-3.5 h-3.5" /> New line
+              </button>
+              <button
+                onClick={removeSpaces}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition-colors"
+                title="Remove spaces between the selected words (join)"
+              >
+                <Combine className="w-3.5 h-3.5" /> Join
               </button>
               <button
                 onClick={requestSuggestion}
