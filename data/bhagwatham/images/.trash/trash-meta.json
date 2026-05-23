@@ -1,26 +1,5 @@
 [
   {
-    "trashId": "21-0-1778825700250",
-    "originalFile": "chapter-021.jpg",
-    "trashedFile": "21-0-1778825700250.jpg",
-    "manifestEntry": {
-      "chapterNumber": 21,
-      "chapterTitle": "अध्याय दो",
-      "imagePath": "chapter-021.jpg",
-      "prompt": "Brahma regains his lost memory and creative power by meditating on the divine form, surrounded by the tranquil cosmos.",
-      "descriptionHi": "श्री शुकदेव गोस्वामी ने बताया कि ब्रह्माजी ने विराट रूप के ध्यान द्वारा भगवान्‌ को प्रसन्न करके विलुप्त हो चुकी अपनी चेतना प्राप्त की और सृष्टि का पुनर्निर्माण किया। यह घटना ब्रह्माजी की विस्मृति और उसके निवारण को दर्शाती है।",
-      "personasUsed": [
-        "brahma"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-10T22:48:54.096Z",
-      "sceneIndex": 0,
-      "cantoNumber": 2
-    },
-    "trashedAt": "2026-05-15T06:15:00.253Z",
-    "operation": "delete"
-  },
-  {
     "trashId": "22-0-1778825700361",
     "originalFile": "chapter-022.jpg",
     "trashedFile": "22-0-1778825700361.jpg",
@@ -1041,5 +1020,22 @@
     },
     "trashedAt": "2026-05-19T12:01:34.236Z",
     "operation": "regenerate"
+  },
+  {
+    "trashId": "185-0-1779457501548",
+    "originalFile": "chapter-185.jpg",
+    "trashedFile": "185-0-1779457501548.jpg",
+    "manifestEntry": {
+      "chapterNumber": 185,
+      "chapterTitle": "Chapter आठ",
+      "cantoNumber": 9,
+      "imagePath": "chapter-185.jpg",
+      "prompt": "Anshuman stands humbly before the sage Kapila in a vast underground realm, where a sacrificial horse grazes peacefully nearby and a mound of sacred ash rests on the other side. Anshuman folds his hands in deep reverence, offering prayers to the luminous sage Kapila, who, pleased by his devotion, graciously returns the horse.",
+      "descriptionHi": "इस अध्याय में रोहित के वंश में उत्पन्न राजा सगर की कथा वर्णित है, जिसमें सगर के पुत्रों द्वारा अश्वमेध यज्ञ के घोड़े की खोज में पृथ्वी खोदना और महापुरुष कपिलदेव से उनकी भेंट का वर्णन है। सगर के पुत्र कपिलदेव पर आक्रमण करने के कारण भस्म हो गये, किन्तु अंशुमान ने विनम्रतापूर्वक कपिलदेव की स्तुति करके यज्ञ का घोड़ा वापस प्राप्त किया। यह कथा भक्ति, विनम्रता और दिव्य महापुरुषों के प्रति सम्मान के महत्व को दर्शाती है।",
+      "generatedAt": "2026-04-15T13:49:57.707Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-22T13:45:01.556Z",
+    "operation": "delete"
   }
 ]
