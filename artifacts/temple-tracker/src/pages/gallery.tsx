@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, ChevronUp, Trash2, Maximize2, Minimize2, RefreshCw, Users, Crown, Sparkles, Shield, CheckSquare, Square } from "lucide-react";
@@ -139,10 +140,15 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
     } catch { /* cancelled */ }
   };
 
-  return (
+  // Render via Portal to document.body. The page's <main> has a z-10 stacking
+  // context, which clamps the Lightbox's effective z-index below the navbar's
+  // z-50 — so without the Portal, the header still bleeds through on top of
+  // the photo. Portaling escapes the stacking context entirely.
+  if (typeof document === "undefined") return null;
+  return createPortal(
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center"
+      className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center"
       onClick={onClose}
     >
       {/* Top bar */}
@@ -222,7 +228,8 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
           </div>
         </div>
       )}
-    </motion.div>
+    </motion.div>,
+    document.body,
   );
 }
 
@@ -261,12 +268,16 @@ export default function Gallery() {
         const res = await fetch(`${API_BASE}/image-manifest`);
         const manifest = await res.json();
         if (manifest?.images) {
-          for (const img of manifest.images) {
+          manifest.images.forEach((img: { sceneIndex?: number; chapterNumber: number; chapterTitle?: string; cantoNumber?: number; generatedAt: string; imagePath?: string; descriptionHi?: string; prompt?: string }, idx: number) => {
             const scene = img.sceneIndex ?? 0;
-            if (deletedKeys.has(`${img.chapterNumber}-${scene}`)) continue;
+            if (deletedKeys.has(`${img.chapterNumber}-${scene}`)) return;
             const cacheBuster = new Date(img.generatedAt).getTime() || Date.now();
+            // Disambiguate with imagePath (always unique per image) so two
+            // images for the same chapter+scene can't share an id and confuse
+            // multi-select / lightbox routing.
+            const uniq = img.imagePath || String(idx);
             items.push({
-              id: `ch-${img.chapterNumber}-${scene}`,
+              id: `ch-${img.chapterNumber}-${scene}-${uniq}`,
               chapterNumber: img.chapterNumber,
               chapterTitle: img.chapterTitle || `Chapter ${img.chapterNumber}`,
               cantoNumber: img.cantoNumber ?? 0,
@@ -276,7 +287,7 @@ export default function Gallery() {
               generatedAt: img.generatedAt,
               type: "chapter",
             });
-          }
+          });
         }
       } catch { /* manifest not available */ }
 
@@ -284,11 +295,14 @@ export default function Gallery() {
         const igRes = await fetch(`${API_BASE}/instagram/manifest`);
         const igManifest = await igRes.json();
         if (igManifest?.images) {
-          for (const img of igManifest.images) {
+          igManifest.images.forEach((img: { sceneIndex?: number; chapterNumber: number; chapterTitle?: string; cantoNumber?: number; generatedAt: string; imagePath?: string; publicUrl?: string; caption?: string; prompt?: string }, idx: number) => {
             const scene = img.sceneIndex ?? 0;
-            if (deletedKeys.has(`${img.chapterNumber}-${scene}`)) continue;
+            if (deletedKeys.has(`${img.chapterNumber}-${scene}`)) return;
+            // Same uniqueness fix as above — fallback chain handles all the
+            // manifest schemas we've seen across Edge Function versions.
+            const uniq = img.imagePath || img.publicUrl || img.generatedAt || String(idx);
             items.push({
-              id: `ig-${img.chapterNumber}-${scene}`,
+              id: `ig-${img.chapterNumber}-${scene}-${uniq}`,
               chapterNumber: img.chapterNumber,
               chapterTitle: img.chapterTitle || `Chapter ${img.chapterNumber}`,
               cantoNumber: img.cantoNumber ?? 0,
@@ -298,7 +312,7 @@ export default function Gallery() {
               generatedAt: img.generatedAt,
               type: "instagram",
             });
-          }
+          });
         }
       } catch { /* IG manifest not available */ }
 
