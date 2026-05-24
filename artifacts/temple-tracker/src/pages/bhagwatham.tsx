@@ -918,10 +918,29 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
         const text = sel.toString().trim();
         if (text.length < 2) return;
 
-        // Find which page this selection is in
+        // Find which page this selection is in. If the selection crosses a page
+        // boundary, prefer the page where MORE of the selection lives — that's
+        // the page whose text we'll edit.
         const range = sel.getRangeAt(0);
-        const pageEl = range.startContainer.parentElement?.closest("[data-page-num]") as HTMLElement | null;
-        const pageNum = pageEl ? parseInt(pageEl.getAttribute("data-page-num") || "0", 10) : 0;
+        const startEl = range.startContainer.parentElement?.closest("[data-page-num]") as HTMLElement | null;
+        const endEl = range.endContainer.parentElement?.closest("[data-page-num]") as HTMLElement | null;
+        const startPage = startEl ? parseInt(startEl.getAttribute("data-page-num") || "0", 10) : 0;
+        const endPage = endEl ? parseInt(endEl.getAttribute("data-page-num") || "0", 10) : 0;
+        let pageEl: HTMLElement | null = startEl;
+        let pageNum = startPage;
+        if (startPage && endPage && startPage !== endPage && startEl && endEl) {
+          // Pick whichever page contains more of the selected text
+          const startLen = (() => {
+            try {
+              const r = document.createRange();
+              r.setStart(range.startContainer, range.startOffset);
+              r.setEnd(startEl, startEl.childNodes.length);
+              return r.toString().length;
+            } catch { return 0; }
+          })();
+          const endLen = text.length - startLen;
+          if (endLen > startLen) { pageEl = endEl; pageNum = endPage; }
+        }
 
         // Capture surrounding context so the replace targets the EXACT occurrence
         // the user highlighted, not a different match earlier on the page.
@@ -980,8 +999,14 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       const ctxBefore = selectionContextRef.current.before || "";
       const ctxAfter = selectionContextRef.current.after || "";
 
+      // Char class: every quote-like glyph we want to treat as interchangeable.
+      // Covers ASCII ' "  curly ' ' " "  low ‚ „  high ‛ ‟  prime ʼ ʻ  grave ` ´
+      const QUOTE_CLASS = "[\\u0022\\u0027\\u00B4\\u0060\\u2018\\u2019\\u201A\\u201B\\u201C\\u201D\\u201E\\u201F\\u02BB\\u02BC\\u2032\\u2033]";
+      const QUOTE_RE = /["'´`‘’‚‛“”„‟ʻʼ′″]/;
+
       // Helper: build a regex for arbitrary chunk that's tolerant to
-      // whitespace runs, dash variants, danda variants.
+      // whitespace runs, dash variants, danda variants, quote variants,
+      // and invisible ZWJ/ZWNJ glue chars common in Devanagari.
       const buildFlexibleRegex = (chunk: string): string => {
         return chunk
           .normalize("NFC")
@@ -990,7 +1015,10 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
             if (/\s/.test(ch)) return "\\s+";
             if (/[-‐-―−]/.test(ch)) return "[\\u002D\\u2010-\\u2015\\u2212]";
             if (ch === "।" || ch === "॥") return "[\\u0964\\u0965]";
-            return escapeForRegex(ch);
+            if (QUOTE_RE.test(ch)) return QUOTE_CLASS;
+            // ZWJ/ZWNJ are invisible glue — allow them around any non-space char
+            if (ch === "‍" || ch === "‌") return "[\\u200D\\u200C]?";
+            return escapeForRegex(ch) + "[\\u200D\\u200C]?";
           })
           .join("");
       };
@@ -1036,25 +1064,31 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
 
       // STRATEGY 3: Anchor on first/last 12 stripped chars. The middle of the
       // selection can have characters that differ from the source — but the
-      // boundaries usually match. Strip whitespace and normalise dashes when
-      // searching, then map cleaned indices back to original positions.
+      // boundaries usually match. Strip whitespace, ZWJ/ZWNJ, quotes, dashes
+      // when searching, then map cleaned indices back to original positions.
       if (fullNewText === sourceText && oldText.trim().length > 24) {
         const cleanedChars: number[] = []; // cleaned-index → original-index
         let cleaned = "";
         for (let i = 0; i < sourceText.length; i++) {
           const ch = sourceText[i];
           if (/\s/.test(ch)) continue;
+          if (ch === "‍" || ch === "‌") continue; // skip ZWJ/ZWNJ
           let mapped = ch.normalize("NFC");
           if (/[-‐-―−]/.test(mapped)) mapped = "-";
+          if (QUOTE_RE.test(mapped)) mapped = '"';
           cleaned += mapped;
           cleanedChars.push(i);
         }
         const stripSel = (s: string) =>
-          s.normalize("NFC").replace(/[‐-―−]/g, "-").replace(/\s+/g, "");
-        const head = stripSel(oldText.slice(0, 12));
-        const tail = stripSel(oldText.slice(-12));
-        const startInClean = cleaned.indexOf(head);
-        if (startInClean >= 0) {
+          s.normalize("NFC")
+            .replace(/[‐-―−]/g, "-")
+            .replace(/["'´`‘’‚‛“”„‟ʻʼ′″]/g, '"')
+            .replace(/[‍‌]/g, "")
+            .replace(/\s+/g, "");
+        const head = stripSel(oldText.slice(0, 16));
+        const tail = stripSel(oldText.slice(-16));
+        const startInClean = head ? cleaned.indexOf(head) : -1;
+        if (startInClean >= 0 && tail) {
           const tailIdx = cleaned.indexOf(tail, startInClean + head.length);
           if (tailIdx >= 0) {
             const realStart = cleanedChars[startInClean];
@@ -1067,11 +1101,54 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
         }
       }
 
+      // STRATEGY 4: Word-anchor fallback. For long selections, find the first
+      // and last "real" word tokens in the source and replace the range
+      // between them. Handles cases where middle has too many small unicode
+      // differences for char-by-char strategies to align. Range-size sanity
+      // check prevents accidentally replacing a huge wrong span.
+      if (fullNewText === sourceText && oldText.trim().length > 24) {
+        const wordify = (s: string) => s
+          .normalize("NFC")
+          .replace(/[‍‌]/g, "")
+          .replace(/[।॥.,;:!?"'´`‘’‚‛“”„‟ʻʼ′″\-‐-―−()\[\]{}]/g, " ")
+          .split(/\s+/)
+          .filter(w => w.length >= 3);
+
+        const oldWords = wordify(oldText);
+        if (oldWords.length >= 2) {
+          const first = oldWords[0];
+          const last = oldWords[oldWords.length - 1];
+          const startIdx = sourceText.indexOf(first);
+          if (startIdx >= 0) {
+            const endIdx = sourceText.indexOf(last, startIdx + first.length);
+            if (endIdx >= 0) {
+              const realEnd = endIdx + last.length;
+              const rangeLen = realEnd - startIdx;
+              const oldLen = oldText.length;
+              // Only accept if the matched range is roughly the same size as
+              // what the user selected — guards against picking far-apart words.
+              if (rangeLen >= oldLen * 0.5 && rangeLen <= oldLen * 2.5) {
+                fullNewText = sourceText.slice(0, startIdx) + newText + sourceText.slice(realEnd);
+              }
+            }
+          }
+        }
+      }
+
       if (fullNewText === sourceText) {
-        // Couldn't find — defer the alert so React doesn't double-fire it
+        // Log to console for debugging — easier than alert text for users to share
+        console.warn("[applyEdit] All 5 strategies failed:", {
+          pageNum,
+          oldText: oldText.slice(0, 80) + (oldText.length > 80 ? "…" : ""),
+          oldTextLen: oldText.length,
+          newText: newText.slice(0, 80) + (newText.length > 80 ? "…" : ""),
+          sourcePreview: sourceText.slice(0, 200),
+        });
+        // Defer the alert so React doesn't double-fire it
         setTimeout(() => alert(
-          "Couldn't locate the highlighted text in the page source — the selection " +
-          "may include text from multiple sections. Try selecting a smaller piece.",
+          "Couldn't locate the highlighted text in the page source.\n\n" +
+          "This usually means the selection spans content from a different page, " +
+          "or contains rendering-only text. Try selecting a smaller piece within one paragraph.",
         ), 0);
         return prev;
       }
