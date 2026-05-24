@@ -964,7 +964,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     confidence: "high" | "medium" | "low";
   } | null>(null);
 
-  // Cleanup TTS on unmount or when toolbar hides
+  // Cleanup TTS, suggestion & dictionary on unmount or when toolbar hides
   useEffect(() => {
     if (!show) {
       if (ttsAudioRef.current) { ttsAudioRef.current.pause(); ttsAudioRef.current = null; }
@@ -973,6 +973,8 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       setTtsLoading(false);
       setSuggestion(null);
       setSuggestLoading(false);
+      setDictResult(null);
+      setDictLoading(false);
     }
   }, [show]);
   useEffect(() => () => { ttsAudioRef.current?.pause(); window.speechSynthesis.cancel(); }, []);
@@ -1055,6 +1057,27 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       if (debounceTimer) clearTimeout(debounceTimer);
     };
   }, [ttsPlaying, ttsLoading]);
+
+  // Click-outside-to-close: if user mousedowns anywhere outside the toolbar,
+  // close it. This is independent of the selection-change handler — useful
+  // when the user clicks empty whitespace where no selection change fires.
+  // (The existing show=false useEffect clears suggestion / dictResult / TTS.)
+  useEffect(() => {
+    if (!show) return;
+    const onPointerDown = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node | null;
+      if (!target) return;
+      if (toolbarRef.current?.contains(target)) return; // click inside toolbar — ignore
+      if (ttsPlaying || ttsLoading) return; // let TTS finish
+      setShow(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("touchstart", onPointerDown, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("touchstart", onPointerDown);
+    };
+  }, [show, ttsPlaying, ttsLoading]);
 
   const applyEdit = useCallback(async (oldText: string, newText: string) => {
     const pageNum = pageNumRef.current;
@@ -1512,8 +1535,8 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
                 {ttsLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : ttsPlaying ? <Square className="w-3 h-3" /> : <Volume2 className="w-3.5 h-3.5" />}
                 {ttsLoading ? "Loading..." : ttsPlaying ? "Stop" : "Listen"}
               </button>
-              <button onClick={lookupWord} disabled={dictLoading} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Dictionary meaning">
-                {dictLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookOpen className="w-3.5 h-3.5" />} Meaning
+              <button onClick={lookupWord} disabled={dictLoading} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Look up the dictionary meaning of this word">
+                {dictLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookOpen className="w-3.5 h-3.5" />} Look up meaning
               </button>
               <button
                 onClick={toggleBold}
@@ -1522,32 +1545,32 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
                     ? "text-stone-900 bg-stone-200 hover:bg-stone-300"
                     : "text-stone-600 hover:text-stone-900 hover:bg-stone-100"
                 }`}
-                title={isCurrentSelectionBold ? "Remove bold" : "Bold"}
+                title={isCurrentSelectionBold ? "Remove bold formatting from this text" : "Make this text bold"}
               >
-                <Bold className="w-3.5 h-3.5" /> {isCurrentSelectionBold ? "Unbold" : "Bold"}
+                <Bold className="w-3.5 h-3.5" /> {isCurrentSelectionBold ? "Remove bold" : "Make bold"}
               </button>
               <button
                 onClick={insertLineBreak}
                 className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition-colors"
-                title="Move selection to a new line"
+                title="Push this selection onto a new paragraph"
               >
-                <CornerDownLeft className="w-3.5 h-3.5" /> New line
+                <CornerDownLeft className="w-3.5 h-3.5" /> Start new paragraph
               </button>
               <button
                 onClick={removeSpaces}
                 className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition-colors"
-                title="Remove spaces between the selected words (join)"
+                title="Remove the spaces between these words (fix wrongly split words)"
               >
-                <Combine className="w-3.5 h-3.5" /> Join
+                <Combine className="w-3.5 h-3.5" /> Join words
               </button>
               <button
                 onClick={requestSuggestion}
                 disabled={suggestLoading}
                 className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                title="AI correction suggestion"
+                title="Ask AI to suggest a corrected version of this text (fixes OCR errors, typos, spelling)"
               >
                 {suggestLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                AI fix
+                AI fix typos
               </button>
               {appliedFlash && (
                 <span className="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold text-green-700 bg-green-50 rounded">
