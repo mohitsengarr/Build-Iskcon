@@ -274,6 +274,81 @@ export default function Gallery() {
 
   useEffect(() => { fetchPending(); }, [fetchPending]);
 
+  // ── Bulk generation for missing chapters ──────────────────────────────────
+  interface BulkStatus { missingCount: number; pendingReviewCount: number; firstMissing: Array<{ canto: number; chapter: number; title: string }> }
+  const [bulkStatus, setBulkStatus] = useState<BulkStatus | null>(null);
+  const [bulkAction, setBulkAction] = useState<"idle" | "sampling" | "running">("idle");
+  const [bulkLimit, setBulkLimit] = useState(10);
+  const [sampleApproved, setSampleApproved] = useState(false);
+  const [bulkMessage, setBulkMessage] = useState<string | null>(null);
+
+  const refreshBulkStatus = useCallback(async () => {
+    try {
+      const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/functions/v1/bulk-generate-images", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "status" }),
+      });
+      if (res.ok) setBulkStatus(await res.json());
+    } catch { /* offline */ }
+  }, []);
+
+  useEffect(() => { refreshBulkStatus(); }, [refreshBulkStatus]);
+
+  const generateSample = useCallback(async () => {
+    setBulkAction("sampling");
+    setBulkMessage(null);
+    try {
+      const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/functions/v1/bulk-generate-images", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "sample" }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setBulkMessage(`Sample failed: ${data.error || res.statusText}`);
+      } else {
+        setBulkMessage(`✓ Sample generated for Canto ${data.chapter?.skandh}, Ch ${data.chapter?.number}. Review it below, then approve the style before bulk-generating.`);
+        // Allow bulk-trigger once a sample exists
+        fetchPending();
+        refreshBulkStatus();
+      }
+    } catch (err) {
+      setBulkMessage(`Network error: ${String(err)}`);
+    } finally {
+      setBulkAction("idle");
+    }
+  }, [fetchPending, refreshBulkStatus]);
+
+  const runBulk = useCallback(async () => {
+    if (!sampleApproved) {
+      const ok = window.confirm(`Generate ${bulkLimit} images in parallel? This uses ~${bulkLimit} FLUX-2 API calls and adds ${bulkLimit} posts to the Pending Review queue for approval.`);
+      if (!ok) return;
+    }
+    setBulkAction("running");
+    setBulkMessage(null);
+    try {
+      const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/functions/v1/bulk-generate-images", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "bulk", limit: bulkLimit, concurrency: 4 }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setBulkMessage(`Bulk failed: ${data.error || res.statusText}`);
+      } else {
+        setBulkMessage(`🚀 ${data.message || `Queued ${data.queued} chapters for generation.`}`);
+        // Pending review banner will populate as each image finishes; poll for updates.
+        const poll = setInterval(() => { fetchPending(); refreshBulkStatus(); }, 8000);
+        setTimeout(() => clearInterval(poll), 5 * 60 * 1000);
+      }
+    } catch (err) {
+      setBulkMessage(`Network error: ${String(err)}`);
+    } finally {
+      setBulkAction("idle");
+    }
+  }, [bulkLimit, sampleApproved, fetchPending, refreshBulkStatus]);
+
   const reviewPost = useCallback(async (id: number, action: "approve" | "reject") => {
     setReviewing(prev => new Set(prev).add(id));
     try {
@@ -288,6 +363,9 @@ export default function Gallery() {
       } else {
         // Drop the reviewed post from the pending list immediately
         setPending(prev => prev.filter(p => p.id !== id));
+        // Once the user approves at least one sample, treat the style as
+        // confirmed — bulk-generate button stops asking for confirmation.
+        if (action === "approve") setSampleApproved(true);
       }
     } catch (err) {
       alert(`Network error: ${String(err)}`);
@@ -620,6 +698,88 @@ export default function Gallery() {
 
         {!loading && (
           <>
+            {/* ── Bulk image generator (for missing chapters) ─────────────── */}
+            {bulkStatus && bulkStatus.missingCount > 0 && (
+              <div className="mb-6 bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl p-4">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-serif font-bold text-purple-900 text-sm">
+                      {bulkStatus.missingCount} chapters still missing images
+                    </h3>
+                    <p className="text-[11px] text-purple-700/80 mt-0.5 leading-relaxed">
+                      Generate one sample first to check the style, then bulk-generate the rest. Each image lands in the Pending Review section below for individual approval before posting.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={generateSample}
+                    disabled={bulkAction !== "idle"}
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 disabled:bg-stone-300 disabled:cursor-not-allowed rounded-lg transition-colors"
+                  >
+                    {bulkAction === "sampling" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImageIcon className="w-3.5 h-3.5" />}
+                    Generate 1 sample
+                  </button>
+
+                  <div className="flex items-center gap-1.5 bg-white rounded-lg border border-purple-200 px-2 py-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-purple-700">Bulk:</label>
+                    <input
+                      type="number"
+                      value={bulkLimit}
+                      onChange={(e) => setBulkLimit(Math.min(50, Math.max(1, parseInt(e.target.value, 10) || 10)))}
+                      min={1} max={50}
+                      className="w-12 text-xs font-bold text-purple-900 bg-transparent border-0 focus:outline-none text-center"
+                    />
+                    <span className="text-[10px] text-purple-700/70">images</span>
+                  </div>
+
+                  <button
+                    onClick={runBulk}
+                    disabled={bulkAction !== "idle"}
+                    className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-white rounded-lg transition-colors ${
+                      sampleApproved
+                        ? "bg-green-600 hover:bg-green-700 disabled:bg-stone-300"
+                        : "bg-amber-500 hover:bg-amber-600 disabled:bg-stone-300"
+                    } disabled:cursor-not-allowed`}
+                    title={sampleApproved ? "Bulk-generate the next N chapters in parallel" : "Generate a sample and approve it first to confirm the style"}
+                  >
+                    {bulkAction === "running" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                    {sampleApproved ? `Bulk-generate ${bulkLimit}` : `Bulk-generate ${bulkLimit} (no sample approved yet)`}
+                  </button>
+
+                  <button
+                    onClick={refreshBulkStatus}
+                    disabled={bulkAction !== "idle"}
+                    className="flex items-center gap-1 text-[11px] text-purple-700 hover:text-purple-900 px-2 py-2 disabled:opacity-50"
+                    title="Refresh missing-chapter count"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                  </button>
+                </div>
+
+                {bulkMessage && (
+                  <p className="mt-2.5 text-[11px] text-purple-900 bg-white/60 rounded-lg px-2.5 py-1.5 border border-purple-200">
+                    {bulkMessage}
+                  </p>
+                )}
+
+                {bulkStatus.firstMissing.length > 0 && (
+                  <div className="mt-2.5 flex flex-wrap gap-1.5">
+                    <span className="text-[10px] font-semibold text-purple-700/70 uppercase tracking-wider">Next up:</span>
+                    {bulkStatus.firstMissing.map((c, i) => (
+                      <span key={i} className="text-[10px] text-purple-700 bg-white/70 rounded-full px-2 py-0.5">
+                        C{c.canto}.Ch{c.chapter}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* ── Pending review (new Instagram posts awaiting approval) ──── */}
             {pending.length > 0 && (
               <div className="mb-8 bg-amber-50 border-2 border-amber-300 rounded-2xl overflow-hidden">
