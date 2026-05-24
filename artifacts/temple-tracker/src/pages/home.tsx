@@ -290,21 +290,55 @@ function TempleProjectsSection() {
   const [tablePage, setTablePage] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
   useEffect(() => { fetchLiveTemples().then(setTemples); }, []);
+
+  // Request user's coarse location once (silently fails if denied). Used only
+  // to sort the temple list so the user's nearest temples surface first.
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setUserCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      () => { /* denied or unavailable — fall back to default order */ },
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 60 * 60 * 1000 },
+    );
+  }, []);
+
   const liveStats = computeStats(temples);
   const liveTotalNeeded = liveStats.totalFundraisingGoal - liveStats.totalFundraisingRaised;
   const countries = new Set(temples.map(t => { const parts = t.location.split(","); return parts[parts.length - 1]?.trim(); }).filter(Boolean));
 
   // Filter + search the temple list. Matches against name, location, deity, description.
+  // When the browser shares the user's location, temples are also sorted by
+  // distance so the closest ones appear at the top of the table.
   const filteredTemples = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return temples.filter(t => {
+    const filtered = temples.filter(t => {
       if (statusFilter !== "all" && t.status !== statusFilter) return false;
       if (!q) return true;
       const haystack = [t.name, t.location, t.deity, t.description].join(" ").toLowerCase();
       return haystack.includes(q);
     });
-  }, [temples, searchQuery, statusFilter]);
+    if (!userCoords) return filtered;
+    // Haversine distance (km) — good enough for ranking.
+    const distKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+      const toRad = (d: number) => d * Math.PI / 180;
+      const R = 6371;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+      return 2 * R * Math.asin(Math.sqrt(a));
+    };
+    return [...filtered].sort((a, b) => {
+      const da = a.latitude != null && a.longitude != null
+        ? distKm(userCoords.lat, userCoords.lon, a.latitude, a.longitude)
+        : Infinity;
+      const db = b.latitude != null && b.longitude != null
+        ? distKm(userCoords.lat, userCoords.lon, b.latitude, b.longitude)
+        : Infinity;
+      return da - db;
+    });
+  }, [temples, searchQuery, statusFilter, userCoords]);
 
   // Reset to page 0 whenever the filter/search changes
   useEffect(() => { setTablePage(0); }, [searchQuery, statusFilter]);
@@ -1062,7 +1096,6 @@ export default function Home() {
         <SevaSection />
         <AboutSection />
         <DirectorySection />
-        <VisionSection />
         <PrabhupadaTribute />
         <EmailCapture />
         <FAQSection />

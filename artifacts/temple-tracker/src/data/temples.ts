@@ -435,7 +435,10 @@ export const TEMPLES: Temple[] = [
     status: "finishing", phase: "Granite & finishing works — 85% complete", constructionProgress: 85,
     fundraisingGoal: 3_600_000, fundraisingRaised: 2_800_000, startDate: "2021-01-01",
     expectedCompletion: "2026-12-31", projectLead: "ISKCON Mauritius",
-    coverImage: null, donateUrl: "https://templeofunity.org/donate",
+    // BEFORE adding any donateUrl: open it in an incognito tab to confirm it
+    // resolves (HTTP 200, real content). Dead URLs damage trust more than a
+    // missing link. If unsure, leave donateUrl as the official ISKCON page.
+    coverImage: null, donateUrl: "https://www.iskconmauritius.org",
     latitude: -20.265, longitude: 57.495,
   },
   {

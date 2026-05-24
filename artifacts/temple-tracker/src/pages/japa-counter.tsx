@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SEOHead } from "@/components/SEOHead";
 import { Link } from "wouter";
-import { Phone, User, LogIn, LogOut, Pencil, Check, X, RotateCcw, Target, Volume2, VolumeX, Share2 } from "lucide-react";
+import { Phone, User, LogIn, LogOut, Pencil, Check, X, RotateCcw, Target, Volume2, VolumeX, Share2, ArrowLeft } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -20,13 +20,17 @@ type Mode = "onscreen" | "focused";
 
 const BEADS_PER_ROUND = 108;
 
-// ── IST (Asia/Kolkata) date helpers ──────────────────────────────────────────
-// Daily reset must happen at midnight IST, not UTC midnight. Without this,
-// users in India see today_rounds reset at 5:30 AM local time.
+// ── Local-timezone date helpers ──────────────────────────────────────────────
+// Daily reset happens at midnight in the user's OWN timezone (not UTC, not
+// hard-coded IST). A user in New York sees the counter roll over at their
+// midnight; a user in Mumbai sees it roll over at theirs. Implementation uses
+// the browser's resolved timezone — same string format (YYYY-MM-DD) as before
+// so existing stored `today_date` values still compare correctly.
 function getTodayIST(): string {
-  // en-CA locale returns YYYY-MM-DD format, which matches ISO date strings.
+  // Function name kept for backwards compat with existing storage keys; the
+  // behaviour now follows the user's local timezone.
   return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Kolkata",
+    // No timeZone option → uses browser's resolved local timezone
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -454,11 +458,23 @@ export default function JapaCounter() {
       <div className="min-h-screen bg-[#111] text-white select-none" style={{ WebkitTapHighlightColor: "transparent" }}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Back to home — clear escape hatch since this page hides the global nav */}
             <Link href="/">
-              <span className="font-serif text-sm font-black text-amber-500 uppercase tracking-wider cursor-pointer">Build Iskcon</span>
+              <button
+                className="flex items-center gap-1 text-amber-400/70 hover:text-amber-400 px-2 py-1.5 rounded-lg hover:bg-white/5 text-xs font-medium"
+                title="Back to home"
+                aria-label="Back to home"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Back</span>
+              </button>
             </Link>
             <span className="text-white/10">|</span>
+            <Link href="/">
+              <span className="font-serif text-sm font-black text-amber-500 uppercase tracking-wider cursor-pointer hidden sm:inline">Build Iskcon</span>
+            </Link>
+            <span className="text-white/10 hidden sm:inline">|</span>
             <h1 className="text-lg font-bold text-amber-100 tracking-wide" style={{ fontFamily: "var(--font-devanagari, serif)" }}>
               हरे कृष्ण
             </h1>
@@ -475,8 +491,14 @@ export default function JapaCounter() {
                 <span>Login</span>
               </button>
             )}
-            <button onClick={openEdit} className="text-amber-400/60 p-1.5 rounded-lg hover:bg-white/5" title="Edit">
-              <Pencil className="w-4 h-4" />
+            <button
+              onClick={openEdit}
+              className="flex items-center gap-1.5 text-amber-400/70 hover:text-amber-400 px-2.5 py-1.5 rounded-lg hover:bg-white/5 text-xs font-medium"
+              title="Edit today's rounds, lifetime total, and daily target"
+              aria-label="Edit count, target, and totals"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Edit count</span>
             </button>
           </div>
         </div>
