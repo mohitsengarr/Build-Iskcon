@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
-import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, ChevronUp, Trash2, Maximize2, Minimize2, RefreshCw, Users, Crown, Sparkles, Shield } from "lucide-react";
+import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, ChevronUp, Trash2, Maximize2, Minimize2, RefreshCw, Users, Crown, Sparkles, Shield, CheckSquare, Square } from "lucide-react";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -408,6 +408,59 @@ export default function Gallery() {
     cantos: new Set(allItems.map(i => i.cantoNumber)).size,
   }), [allItems]);
 
+  // ── Multi-select & bulk delete ────────────────────────────────────────────
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const toggleSelected = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const exitSelectMode = useCallback(() => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  }, []);
+
+  const bulkDelete = useCallback(async () => {
+    const items = allItems.filter(i => selectedIds.has(i.id));
+    if (items.length === 0) return;
+    const ok = window.confirm(
+      `Delete ${items.length} image${items.length === 1 ? "" : "s"}?\n\nThis cannot be undone.`,
+    );
+    if (!ok) return;
+    setBulkDeleting(true);
+    let failed = 0;
+    for (const item of items) {
+      try {
+        const res = await sbFetch("bhagavatam_image_deletes", {
+          method: "POST",
+          headers: { Prefer: "return=representation,resolution=merge-duplicates" },
+          body: JSON.stringify({
+            chapter_number: item.chapterNumber,
+            scene_index: item.sceneIndex ?? 0,
+            requested_at: new Date().toISOString(),
+          }),
+        });
+        if (!res.ok) failed++;
+      } catch { failed++; }
+    }
+    // Remove successfully-deleted items from UI (we don't know which failed
+    // individually — refetch is the safest, but for snappy UX we drop all and
+    // surface a warning if any failed).
+    setAllItems(prev => prev.filter(i => !selectedIds.has(i.id)));
+    exitSelectMode();
+    setBulkDeleting(false);
+    if (failed > 0) {
+      alert(`${failed} of ${items.length} deletes failed — try again or refresh.`);
+    }
+  }, [allItems, selectedIds, exitSelectMode]);
+
   // ── Delete image (permanent, no auto-regeneration) ───────────────────────
   const [regenerating, setRegenerating] = useState<Set<number>>(new Set());
 
@@ -568,6 +621,39 @@ export default function Gallery() {
                   ? `${filteredPersonas.length} characters`
                   : `${filtered.length} / ${allItems.length}`}
               </span>
+
+              {/* Multi-select toggle (image views only) */}
+              {filterType !== "characters" && (
+                selectMode ? (
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-[11px] font-bold text-orange-700 bg-orange-50 px-2 py-1.5 rounded-lg">
+                      {selectedIds.size} selected
+                    </span>
+                    <button
+                      onClick={bulkDelete}
+                      disabled={selectedIds.size === 0 || bulkDeleting}
+                      className="flex items-center gap-1 text-[11px] font-semibold text-white bg-red-600 hover:bg-red-700 disabled:bg-stone-300 disabled:cursor-not-allowed px-2.5 py-1.5 rounded-lg transition-colors"
+                    >
+                      {bulkDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                      Delete
+                    </button>
+                    <button
+                      onClick={exitSelectMode}
+                      className="flex items-center gap-1 text-[11px] font-semibold text-stone-600 hover:bg-stone-100 px-2.5 py-1.5 rounded-lg transition-colors"
+                    >
+                      <X className="w-3 h-3" /> Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setSelectMode(true)}
+                    className="flex items-center gap-1 text-[11px] font-semibold text-stone-600 hover:text-orange-700 hover:bg-orange-50 px-2.5 py-1.5 rounded-lg transition-colors shrink-0"
+                    title="Select multiple images"
+                  >
+                    <CheckSquare className="w-3 h-3" /> Select
+                  </button>
+                )
+              )}
             </div>
 
             {/* ── Characters / Personas View ─────────────────────────────── */}
@@ -810,7 +896,9 @@ export default function Gallery() {
                             transition={{ duration: 0.25 }}
                             className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4"
                           >
-                            {cantoItems.map((item, idx) => (
+                            {cantoItems.map((item, idx) => {
+                              const isSelected = selectedIds.has(item.id);
+                              return (
                               <motion.div
                                 key={item.id}
                                 variants={fadeInUp}
@@ -818,15 +906,29 @@ export default function Gallery() {
                                 whileInView="visible"
                                 viewport={{ once: true, amount: 0.1 }}
                                 transition={{ delay: Math.min(idx * 0.02, 0.3) }}
-                                className="group relative rounded-2xl overflow-hidden bg-stone-100 shadow-sm hover:shadow-lg transition-shadow cursor-pointer aspect-[3/4]"
-                                onClick={() => setLightboxItem(item)}
+                                className={`group relative rounded-2xl overflow-hidden bg-stone-100 shadow-sm hover:shadow-lg transition-shadow cursor-pointer aspect-[3/4] ${
+                                  selectMode && isSelected ? "ring-4 ring-orange-500" : ""
+                                }`}
+                                onClick={() => selectMode ? toggleSelected(item.id) : setLightboxItem(item)}
                               >
                                 <img
                                   src={item.url}
                                   alt={item.description}
-                                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                  className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${
+                                    selectMode && isSelected ? "opacity-70" : ""
+                                  }`}
                                   loading="lazy"
                                 />
+
+                                {/* Multi-select checkbox overlay */}
+                                {selectMode && (
+                                  <div className="absolute top-2 left-2 z-10 bg-white/90 backdrop-blur-sm rounded-full p-1 shadow">
+                                    {isSelected
+                                      ? <CheckSquare className="w-5 h-5 text-orange-600" />
+                                      : <Square className="w-5 h-5 text-stone-400" />
+                                    }
+                                  </div>
+                                )}
 
                                 {/* Hover overlay with story description */}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
@@ -853,7 +955,8 @@ export default function Gallery() {
                                   </div>
                                 )}
                               </motion.div>
-                            ))}
+                            );
+                            })}
                           </motion.div>
                         )}
                       </AnimatePresence>

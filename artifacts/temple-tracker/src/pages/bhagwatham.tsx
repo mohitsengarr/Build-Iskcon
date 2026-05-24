@@ -230,13 +230,96 @@ const isMutationApiConfigured = () =>
 const SARVAM_TTS_URL = "https://api.sarvam.ai/text-to-speech/stream";
 const SARVAM_KEY = "sk_c81tz6ss_p9kDbB6SEeYB7s9V7yQHbUl8";
 
+// ── TTS audio cache (localStorage; persistent per-device) ─────────────────────
+// Saves Sarvam credits — every shlok/word fetched once is reused for the life
+// of the device. Key = stable hash of normalized text. Audio is stored as
+// base64 MP3 (typical 15–80 KB per shlok). Eviction on quota error: drop
+// oldest 25% of entries by access time.
+const TTS_CACHE_PREFIX = "tts_v2_";
+const TTS_CACHE_INDEX_KEY = "tts_v2_index"; // tracks last-access timestamps
+
+function ttsTextHash(text: string): string {
+  const norm = text.normalize("NFC").trim().replace(/\s+/g, " ").slice(0, 400);
+  try {
+    return btoa(unescape(encodeURIComponent(norm)));
+  } catch {
+    return norm.length + "_" + norm.charCodeAt(0) + "_" + norm.charCodeAt(norm.length - 1);
+  }
+}
+
+function ttsCacheRead(key: string): Blob | null {
+  try {
+    const b64 = localStorage.getItem(TTS_CACHE_PREFIX + key);
+    if (!b64) return null;
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    ttsCacheTouch(key); // mark as recently used
+    return new Blob([bytes], { type: "audio/mpeg" });
+  } catch { return null; }
+}
+
+function ttsCacheTouch(key: string): void {
+  try {
+    const idxRaw = localStorage.getItem(TTS_CACHE_INDEX_KEY);
+    const idx: Record<string, number> = idxRaw ? JSON.parse(idxRaw) : {};
+    idx[key] = Date.now();
+    localStorage.setItem(TTS_CACHE_INDEX_KEY, JSON.stringify(idx));
+  } catch { /* */ }
+}
+
+function ttsCacheWrite(key: string, buffer: ArrayBuffer): void {
+  // Chunked base64 encode (avoids stack overflow on 100KB+ buffers)
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  const b64 = btoa(binary);
+  const trySet = () => localStorage.setItem(TTS_CACHE_PREFIX + key, b64);
+  try {
+    trySet();
+    ttsCacheTouch(key);
+  } catch {
+    // Quota exceeded — evict oldest 25% of entries and retry
+    try {
+      const idxRaw = localStorage.getItem(TTS_CACHE_INDEX_KEY);
+      const idx: Record<string, number> = idxRaw ? JSON.parse(idxRaw) : {};
+      const entries = Object.entries(idx).sort((a, b) => a[1] - b[1]);
+      const drop = Math.max(1, Math.floor(entries.length * 0.25));
+      for (let i = 0; i < drop; i++) {
+        const [k] = entries[i];
+        try { localStorage.removeItem(TTS_CACHE_PREFIX + k); } catch { /* */ }
+        delete idx[k];
+      }
+      localStorage.setItem(TTS_CACHE_INDEX_KEY, JSON.stringify(idx));
+      trySet();
+      ttsCacheTouch(key);
+    } catch { /* still failed — give up silently */ }
+  }
+}
+
 /**
  * Stream TTS audio from Sarvam HTTP API and play in real-time.
- * Uses MediaSource API for instant playback as chunks arrive.
- * Falls back to collecting all chunks then playing if MediaSource unavailable.
+ * Cached in localStorage so repeated listens of the same text are free.
  * Returns the Audio element (already playing) so callers can track/stop it.
  */
 async function sarvamStreamPlay(text: string): Promise<HTMLAudioElement> {
+  const hash = ttsTextHash(text);
+
+  // L1: localStorage cache — instant, no network, no credits used.
+  const cached = ttsCacheRead(hash);
+  if (cached) {
+    const audio = new Audio(URL.createObjectURL(cached));
+    const p = audio.play();
+    if (p && typeof p.then === "function") {
+      p.catch((err) => console.error("[TTS] cached play rejected:", err?.name || err));
+    }
+    return audio;
+  }
+
+  // Cache miss — fetch from Sarvam.
   const response = await fetch(SARVAM_TTS_URL, {
     method: "POST",
     headers: {
@@ -249,7 +332,7 @@ async function sarvamStreamPlay(text: string): Promise<HTMLAudioElement> {
       speaker: "gokul",
       model: "bulbul:v3",
       pace: 1,
-      speech_sample_rate: 24000, // streaming endpoint max: 8000/16000/22050/24000
+      speech_sample_rate: 24000,
       output_audio_codec: "mp3",
       enable_preprocessing: true,
     }),
@@ -260,25 +343,19 @@ async function sarvamStreamPlay(text: string): Promise<HTMLAudioElement> {
     throw new Error(`TTS HTTP ${response.status}: ${errText.substring(0, 200)}`);
   }
 
-  // Always use the Blob path — the previous MediaSource streaming flow had a
-  // silent `audio.play().catch(() => {})` inside an async event handler, which
-  // swallowed Chrome's autoplay-policy errors when the user gesture context
-  // was lost between the click and the actual play() call. The Blob path keeps
-  // the click → play in a single synchronous chain, so autoplay always allows
-  // it. A short Devanagari word is ~16–25 KB of MP3 and finishes downloading
-  // before the user notices the delay.
+  // Blob path keeps the click → play in one synchronous chain so autoplay
+  // policy doesn't block. Buffer is also fed to the cache (fire-and-forget).
   const buffer = await response.arrayBuffer();
   const blob = new Blob([buffer], { type: "audio/mpeg" });
   const audio = new Audio(URL.createObjectURL(blob));
-  // Don't `await audio.play()` here — let the caller chain it so the play() is
-  // tied to the original user gesture without the await splitting microtasks.
   const playResult = audio.play();
   if (playResult && typeof playResult.then === "function") {
     playResult.catch((err) => {
-      // Surface the real failure so we know it's autoplay vs codec vs network
       console.error("[TTS] audio.play() rejected:", err?.name || err);
     });
   }
+  // Persist to cache after the audio starts playing — never blocks the UX.
+  try { ttsCacheWrite(hash, buffer); } catch { /* */ }
   return audio;
 }
 
@@ -1337,8 +1414,10 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
   const insertLineBreak = useCallback(() => {
     if (!selectedText) return;
     const trimmed = selectedText.replace(/^\s+/, "");
-    // Prefix a newline so the selected text starts on a fresh line.
-    applyEdit(selectedText, "\n" + trimmed);
+    // Prefix a paragraph break (blank line) so the selected text starts a new
+    // paragraph. The renderer only recognises section breaks on blank lines —
+    // a single `\n` got eaten by the prose-paragraph parser.
+    applyEdit(selectedText, "\n\n" + trimmed);
     setShow(false);
   }, [selectedText]);
 

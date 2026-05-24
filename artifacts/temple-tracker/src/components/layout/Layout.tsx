@@ -1,9 +1,56 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { slideDown } from "@/lib/animations";
+
+const SCROLL_KEY = (path: string) => `scroll_${path}`;
+
+/**
+ * Save the current scroll position for the active route and restore it when
+ * the user navigates back to that route. Survives in-session navigation
+ * (e.g. Bhagwatham → Gallery → Bhagwatham returns to where you were).
+ */
+function useScrollRestoration() {
+  const [location] = useLocation();
+  const prevLocation = useRef<string>(location);
+
+  // Continuously save scroll position for the current route (throttled).
+  useEffect(() => {
+    let raf: number | null = null;
+    const save = () => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        try { sessionStorage.setItem(SCROLL_KEY(location), String(window.scrollY)); } catch { /* */ }
+      });
+    };
+    window.addEventListener("scroll", save, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", save);
+      if (raf) cancelAnimationFrame(raf);
+      // One final save on unmount/route change so we don't miss the last scroll.
+      try { sessionStorage.setItem(SCROLL_KEY(location), String(window.scrollY)); } catch { /* */ }
+    };
+  }, [location]);
+
+  // Restore on route change. Double rAF to wait for the new page to render.
+  useEffect(() => {
+    if (prevLocation.current === location) return;
+    prevLocation.current = location;
+    let saved: number | null = null;
+    try {
+      const raw = sessionStorage.getItem(SCROLL_KEY(location));
+      saved = raw !== null ? parseInt(raw, 10) : null;
+    } catch { /* */ }
+    const target = saved ?? 0;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: target });
+      });
+    });
+  }, [location]);
+}
 
 const NAV_ITEMS: { href: string; label: string; isPage?: boolean }[] = [
   { href: "/", label: "Home", isPage: true },
@@ -21,6 +68,7 @@ function scrollTo(hash: string) {
 
 export function Layout({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  useScrollRestoration();
 
   return (
     <div className="flex min-h-screen bg-surface flex-col relative text-on-surface">
