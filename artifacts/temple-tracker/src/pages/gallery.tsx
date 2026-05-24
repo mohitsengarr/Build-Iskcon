@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
-import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, ChevronUp, Trash2, Maximize2, Minimize2, RefreshCw, Users, Crown, Sparkles, Shield, CheckSquare, Square } from "lucide-react";
+import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, ChevronUp, Trash2, Maximize2, Minimize2, RefreshCw, Users, Crown, Sparkles, Shield, CheckSquare, Square, Check } from "lucide-react";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -246,6 +246,55 @@ export default function Gallery() {
   const [personas, setPersonas] = useState<PersonaItem[]>([]);
   const [personasLoading, setPersonasLoading] = useState(false);
   const [expandedPersona, setExpandedPersona] = useState<string | null>(null);
+
+  // ── Pending Instagram posts awaiting human review ─────────────────────────
+  interface PendingPost {
+    id: number;
+    chapter_global_number: number;
+    chapter_canto: number;
+    chapter_in_canto: number;
+    chapter_title: string;
+    image_url: string;
+    caption: string;
+    hashtags: string;
+    status: "pending" | "approved" | "rejected";
+    created_at: string;
+    error_message: string | null;
+  }
+  const [pending, setPending] = useState<PendingPost[]>([]);
+  const [pendingExpanded, setPendingExpanded] = useState<number | null>(null);
+  const [reviewing, setReviewing] = useState<Set<number>>(new Set());
+
+  const fetchPending = useCallback(async () => {
+    try {
+      const r = await sbFetch("ig_pending_review?status=eq.pending&order=created_at.asc&select=*");
+      if (r.ok) setPending(await r.json());
+    } catch { /* offline */ }
+  }, []);
+
+  useEffect(() => { fetchPending(); }, [fetchPending]);
+
+  const reviewPost = useCallback(async (id: number, action: "approve" | "reject") => {
+    setReviewing(prev => new Set(prev).add(id));
+    try {
+      const res = await fetch(`https://etfmndcrchundvgtvmot.supabase.co/functions/v1/approve-instagram-post`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, action }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(`${action === "approve" ? "Approve" : "Reject"} failed: ${data.error || res.statusText}`);
+      } else {
+        // Drop the reviewed post from the pending list immediately
+        setPending(prev => prev.filter(p => p.id !== id));
+      }
+    } catch (err) {
+      alert(`Network error: ${String(err)}`);
+    } finally {
+      setReviewing(prev => { const next = new Set(prev); next.delete(id); return next; });
+    }
+  }, []);
 
   // ── Fetch manifests ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -571,6 +620,87 @@ export default function Gallery() {
 
         {!loading && (
           <>
+            {/* ── Pending review (new Instagram posts awaiting approval) ──── */}
+            {pending.length > 0 && (
+              <div className="mb-8 bg-amber-50 border-2 border-amber-300 rounded-2xl overflow-hidden">
+                <div className="px-5 py-3 border-b border-amber-200 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-700" />
+                  <h3 className="font-serif font-bold text-amber-900 text-sm">
+                    {pending.length} new Instagram post{pending.length === 1 ? "" : "s"} awaiting review
+                  </h3>
+                  <span className="ml-auto text-[10px] text-amber-700/70">Approve to publish to Buffer · Reject to discard</span>
+                </div>
+                <div className="divide-y divide-amber-200">
+                  {pending.map((p) => {
+                    const isExpanded = pendingExpanded === p.id;
+                    const isReviewing = reviewing.has(p.id);
+                    return (
+                      <div key={p.id} className="flex flex-col sm:flex-row gap-3 p-3">
+                        <img
+                          src={p.image_url}
+                          alt={p.chapter_title}
+                          className="w-full sm:w-32 h-40 sm:h-40 object-cover rounded-lg shadow-sm cursor-pointer"
+                          onClick={() => setPendingExpanded(isExpanded ? null : p.id)}
+                          loading="lazy"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start gap-2 mb-1">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                                Canto {p.chapter_canto} · Ch. {p.chapter_in_canto} · #{p.chapter_global_number}
+                              </p>
+                              <p className="text-sm font-semibold text-stone-800 truncate" style={{ fontFamily: "var(--font-devanagari)" }}>
+                                {p.chapter_title}
+                              </p>
+                            </div>
+                            <div className="flex gap-1.5 shrink-0">
+                              <button
+                                onClick={() => reviewPost(p.id, "approve")}
+                                disabled={isReviewing}
+                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 disabled:bg-stone-300 disabled:cursor-not-allowed rounded-lg transition-colors"
+                                title="Publish this post to Instagram + Threads via Buffer"
+                              >
+                                {isReviewing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => reviewPost(p.id, "reject")}
+                                disabled={isReviewing}
+                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 disabled:bg-stone-300 disabled:cursor-not-allowed rounded-lg transition-colors"
+                                title="Discard this image (won't be published)"
+                              >
+                                {isReviewing ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
+                                Reject
+                              </button>
+                            </div>
+                          </div>
+                          <p className={`text-xs text-stone-600 leading-relaxed whitespace-pre-line ${isExpanded ? "" : "line-clamp-3"}`}>
+                            {p.caption}
+                          </p>
+                          {p.caption.length > 200 && (
+                            <button
+                              onClick={() => setPendingExpanded(isExpanded ? null : p.id)}
+                              className="text-[10px] font-semibold text-amber-700 hover:text-amber-900 mt-1"
+                            >
+                              {isExpanded ? "Show less" : "Show full caption"}
+                            </button>
+                          )}
+                          {isExpanded && (
+                            <p className="text-[10px] text-stone-500 mt-2 italic break-words">{p.hashtags}</p>
+                          )}
+                          {p.error_message && (
+                            <p className="text-[11px] text-red-600 mt-1.5 font-medium">
+                              Last error: {p.error_message}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Regenerating banner */}
             {regenerating.size > 0 && (
               <div className="bg-orange-50 border border-orange-200/60 rounded-2xl px-4 py-3 mb-4 flex items-center gap-3">
