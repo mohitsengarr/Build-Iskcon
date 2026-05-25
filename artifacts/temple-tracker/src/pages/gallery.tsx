@@ -443,6 +443,44 @@ export default function Gallery() {
         }
       } catch { /* IG manifest not available */ }
 
+      // ALSO pull approved entries from the Supabase review queue — these
+      // are the human-approved IG posts (current source of truth, replaced
+      // the static instagram/manifest path).
+      try {
+        const sbRes = await sbFetch(
+          "ig_pending_review?status=eq.approved&select=id,chapter_global_number,chapter_canto,chapter_title,image_url,caption,reviewed_at&order=chapter_global_number.asc",
+        );
+        if (sbRes.ok) {
+          const rows: Array<{
+            id: number;
+            chapter_global_number: number;
+            chapter_canto: number;
+            chapter_title: string;
+            image_url: string;
+            caption: string;
+            reviewed_at: string;
+          }> = await sbRes.json();
+          for (const r of rows) {
+            const scene = 200 + r.id;
+            if (deletedKeys.has(`${r.chapter_global_number}-${scene}`)) continue;
+            // Dedupe — skip if the same URL is already in items
+            if (items.some(i => i.url === r.image_url)) continue;
+            const firstLine = r.caption?.split("\n").find(l => l.trim()) || r.chapter_title || "";
+            items.push({
+              id: `ig-approved-${r.id}`,
+              chapterNumber: r.chapter_global_number,
+              chapterTitle: r.chapter_title || `Chapter ${r.chapter_global_number}`,
+              cantoNumber: r.chapter_canto ?? 0,
+              sceneIndex: scene,
+              url: r.image_url,
+              description: firstLine.substring(0, 200),
+              generatedAt: r.reviewed_at,
+              type: "instagram",
+            });
+          }
+        }
+      } catch { /* offline — fine */ }
+
       // Sort by canto → chapter → sceneIndex
       items.sort((a, b) => a.cantoNumber - b.cantoNumber || a.chapterNumber - b.chapterNumber || a.sceneIndex - b.sceneIndex);
       setAllItems(items);
