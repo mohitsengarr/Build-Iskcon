@@ -366,13 +366,27 @@ export default function Gallery() {
         // Once the user approves at least one sample, treat the style as
         // confirmed — bulk-generate button stops asking for confirmation.
         if (action === "approve") setSampleApproved(true);
+
+        // On reject the backend auto-regenerates for the same chapter and
+        // returns the new pending id. Refetch so it appears at the top of
+        // the queue without a manual reload.
+        if (action === "reject") {
+          if (data?.regeneration?.ok) {
+            // The new pending row is already in the DB — refresh the list
+            await fetchPending();
+          } else if (data?.regeneration?.detail) {
+            // Capped out or the generator failed — show why so the user
+            // can intervene (e.g. adjust prompts, manual override).
+            alert(`Rejected — but auto-regeneration didn't queue: ${data.regeneration.detail}`);
+          }
+        }
       }
     } catch (err) {
       alert(`Network error: ${String(err)}`);
     } finally {
       setReviewing(prev => { const next = new Set(prev); next.delete(id); return next; });
     }
-  }, []);
+  }, [fetchPending]);
 
   // ── Fetch manifests ───────────────────────────────────────────────────────
   useEffect(() => {
