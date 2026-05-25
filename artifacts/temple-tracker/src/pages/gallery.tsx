@@ -832,15 +832,39 @@ export default function Gallery() {
                   {pending.map((p) => {
                     const isExpanded = pendingExpanded === p.id;
                     const isReviewing = reviewing.has(p.id);
+                    // Convert the pending row into a GalleryItem shape so the
+                    // existing lightbox component can display it full-screen.
+                    const openPreview = () => {
+                      setLightboxItem({
+                        id: `pending-${p.id}`,
+                        chapterNumber: p.chapter_global_number,
+                        chapterTitle: p.chapter_title || `Chapter ${p.chapter_global_number}`,
+                        cantoNumber: p.chapter_canto ?? 0,
+                        sceneIndex: 0,
+                        url: p.image_url,
+                        description: (p.caption || "").split("\n").find((l) => l.trim()) || p.chapter_title || "",
+                        generatedAt: p.created_at,
+                        type: "instagram",
+                      });
+                    };
                     return (
                       <div key={p.id} className="flex flex-col sm:flex-row gap-3 p-3">
-                        <img
-                          src={p.image_url}
-                          alt={p.chapter_title}
-                          className="w-full sm:w-32 h-40 sm:h-40 object-cover rounded-lg shadow-sm cursor-pointer"
-                          onClick={() => setPendingExpanded(isExpanded ? null : p.id)}
-                          loading="lazy"
-                        />
+                        <button
+                          onClick={openPreview}
+                          className="relative group/img w-full sm:w-32 h-40 sm:h-40 shrink-0 rounded-lg overflow-hidden shadow-sm cursor-zoom-in"
+                          title="Click to view full size"
+                          aria-label={`Preview ${p.chapter_title}`}
+                        >
+                          <img
+                            src={p.image_url}
+                            alt={p.chapter_title}
+                            className="w-full h-full object-cover transition-transform group-hover/img:scale-105"
+                            loading="lazy"
+                          />
+                          <span className="absolute inset-0 bg-black/0 group-hover/img:bg-black/30 transition-colors flex items-center justify-center">
+                            <Maximize2 className="w-5 h-5 text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow" />
+                          </span>
+                        </button>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start gap-2 mb-1">
                             <div className="flex-1 min-w-0">
