@@ -50,6 +50,29 @@ function ReadingSettingsPanel({ settings, onChange, onClose }: {
   onChange: (s: ReadingSettings) => void;
   onClose: () => void;
 }) {
+  const panelRef = useRef<HTMLDivElement | null>(null);
+
+  // Close on outside click / Esc. Click on the gear toggle is intentionally
+  // ignored (it has its own onClick handler that flips state).
+  useEffect(() => {
+    const onMouseDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      // Ignore clicks inside the panel
+      if (panelRef.current && panelRef.current.contains(target)) return;
+      // Ignore clicks on the gear button that opens this panel
+      if (target.closest("[data-settings-toggle]")) return;
+      onClose();
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
+
   const update = (partial: Partial<ReadingSettings>) => {
     const next = { ...settings, ...partial };
     onChange(next);
@@ -58,6 +81,7 @@ function ReadingSettingsPanel({ settings, onChange, onClose }: {
 
   return (
     <motion.div
+      ref={panelRef}
       initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
       className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-stone-800 rounded-xl shadow-xl border border-stone-200 dark:border-stone-700 p-4 z-50"
     >
@@ -3871,6 +3895,7 @@ export default function Bhagwatham() {
               {/* Settings button */}
               <div className="relative shrink-0">
                 <button
+                  data-settings-toggle="reading"
                   onClick={() => setShowSettings(!showSettings)}
                   className={`p-1 sm:p-1.5 rounded-lg transition-all ${showSettings ? "bg-orange-100 text-orange-600" : `hover:bg-stone-100 ${theme.muted}`}`}
                   title="Reading Settings"
