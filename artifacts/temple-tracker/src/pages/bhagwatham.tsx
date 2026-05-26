@@ -1086,6 +1086,56 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       return;
     }
 
+    // Strip rendering-only artifacts that the React renderer injects but the
+    // raw OCR source doesn't contain — otherwise applyEdit can't find them.
+    //   • "तात्पर्य :" prefix added to tatparya section starts
+    //   • "· 1587 ·" page-number dividers between pages
+    //   • Leading whitespace and surrounding empty lines
+    // We adjust BOTH oldText (search target) and newText (replacement) so the
+    // user's intended edit lands cleanly on the actual source.
+    const stripRenderArtifacts = (s: string): { stripped: string; leftTrim: string; rightTrim: string } => {
+      const original = s;
+      let leftTrim = "";
+      let rightTrim = "";
+      let cleaned = s;
+      // Leading rendering-only prefixes (only valid at start of selection)
+      const leadingRe = /^\s*(?:तात्पर्य\s*[:：]|अनुवाद\s*[:：]|शब्दार्थ\s*[:：])\s*/u;
+      const lm = cleaned.match(leadingRe);
+      if (lm) {
+        leftTrim = lm[0];
+        cleaned = cleaned.slice(lm[0].length);
+      }
+      // Strip embedded page-number dividers anywhere — "· 1587 ·" etc.
+      cleaned = cleaned.replace(/\s*[·•∙]\s*\d{1,5}\s*[·•∙]\s*/g, " ").trim();
+      // Strip surrounding whitespace
+      const m2 = cleaned.match(/^(\s*)([\s\S]*?)(\s*)$/);
+      if (m2) {
+        cleaned = m2[2];
+        // Whitespace already accounted for; leftTrim/rightTrim hold prefix/suffix
+      }
+      if (cleaned !== original) {
+        rightTrim = original.slice(original.length - (original.length - leftTrim.length - cleaned.length));
+      }
+      return { stripped: cleaned, leftTrim, rightTrim };
+    };
+
+    const { stripped: cleanedOld, leftTrim, rightTrim } = stripRenderArtifacts(oldText);
+    if (cleanedOld.length < 1) {
+      window.getSelection()?.removeAllRanges();
+      setTimeout(() => alert(
+        "Selection is empty after stripping rendering-only text (e.g. 'तात्पर्य :' prefix). Pick the actual content.",
+      ), 0);
+      return;
+    }
+    // If we stripped anything from the user's selection, also strip the same
+    // prefix/suffix from newText if they wrapped it (e.g. typing the same
+    // prefix in their replacement). Otherwise treat newText as-is.
+    let cleanedNew = newText;
+    if (leftTrim && cleanedNew.startsWith(leftTrim)) cleanedNew = cleanedNew.slice(leftTrim.length);
+    if (rightTrim && cleanedNew.endsWith(rightTrim)) cleanedNew = cleanedNew.slice(0, cleanedNew.length - rightTrim.length);
+    const effectiveOld = cleanedOld;
+    const effectiveNew = cleanedNew.trim() || newText;
+
     // Use functional setState to ALWAYS read the freshest text, even when
     // multiple AI fixes are applied back-to-back (avoids stale closure where
     // the second fix reads pre-first-fix text and silently no-ops).
@@ -1126,53 +1176,46 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       let fullNewText = sourceText;
 
       // STRATEGY 0: Context-anchored replace — find the exact occurrence of
-      // `oldText` that has the captured before/after context surrounding it.
+      // `effectiveOld` that has the captured before/after context surrounding it.
       // This disambiguates when the same word appears multiple times on the
       // page (e.g. shabdarth dictionary + shlok + anuvad all use the same word).
       if (ctxBefore || ctxAfter) {
         try {
           const beforeAnchor = ctxBefore.length >= 8 ? buildFlexibleRegex(ctxBefore.slice(-25)) : "";
           const afterAnchor = ctxAfter.length >= 8 ? buildFlexibleRegex(ctxAfter.slice(0, 25)) : "";
-          const middle = buildFlexibleRegex(oldText);
-          // Use lookahead/lookbehind so we replace only the middle, not the anchors
+          const middle = buildFlexibleRegex(effectiveOld);
           const reStr =
             (beforeAnchor ? `(?<=${beforeAnchor})` : "") +
             middle +
             (afterAnchor ? `(?=${afterAnchor})` : "");
           const re = new RegExp(reStr);
           if (re.test(sourceText)) {
-            fullNewText = sourceText.replace(re, newText);
+            fullNewText = sourceText.replace(re, effectiveNew);
           }
         } catch { /* lookbehind not supported / regex malformed — fall through */ }
       }
 
-      // STRATEGY 1: Exact replace (only the first match — used as a fallback
-      // when context anchoring couldn't pin down a unique match)
+      // STRATEGY 1: Exact replace
       if (fullNewText === sourceText) {
-        fullNewText = sourceText.replace(oldText, newText);
+        fullNewText = sourceText.replace(effectiveOld, effectiveNew);
       }
 
-      // STRATEGY 2: Per-character flexible regex (no context anchor).
-      // Last resort when neither context nor exact match worked. Catches the
-      // em-dash vs hyphen and similar Unicode-form mismatches.
+      // STRATEGY 2: Per-character flexible regex
       if (fullNewText === sourceText) {
         try {
-          const re = new RegExp(buildFlexibleRegex(oldText));
-          fullNewText = sourceText.replace(re, newText);
+          const re = new RegExp(buildFlexibleRegex(effectiveOld));
+          fullNewText = sourceText.replace(re, effectiveNew);
         } catch { /* malformed — fall through */ }
       }
 
-      // STRATEGY 3: Anchor on first/last 12 stripped chars. The middle of the
-      // selection can have characters that differ from the source — but the
-      // boundaries usually match. Strip whitespace, ZWJ/ZWNJ, quotes, dashes
-      // when searching, then map cleaned indices back to original positions.
-      if (fullNewText === sourceText && oldText.trim().length > 24) {
+      // STRATEGY 3: Anchor on first/last 16 stripped chars.
+      if (fullNewText === sourceText && effectiveOld.trim().length > 24) {
         const cleanedChars: number[] = []; // cleaned-index → original-index
         let cleaned = "";
         for (let i = 0; i < sourceText.length; i++) {
           const ch = sourceText[i];
           if (/\s/.test(ch)) continue;
-          if (ch === "‍" || ch === "‌") continue; // skip ZWJ/ZWNJ
+          if (ch === "‍" || ch === "‌") continue;
           let mapped = ch.normalize("NFC");
           if (/[-‐-―−]/.test(mapped)) mapped = "-";
           if (QUOTE_RE.test(mapped)) mapped = '"';
@@ -1185,8 +1228,8 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
             .replace(/["'´`‘’‚‛“”„‟ʻʼ′″]/g, '"')
             .replace(/[‍‌]/g, "")
             .replace(/\s+/g, "");
-        const head = stripSel(oldText.slice(0, 16));
-        const tail = stripSel(oldText.slice(-16));
+        const head = stripSel(effectiveOld.slice(0, 16));
+        const tail = stripSel(effectiveOld.slice(-16));
         const startInClean = head ? cleaned.indexOf(head) : -1;
         if (startInClean >= 0 && tail) {
           const tailIdx = cleaned.indexOf(tail, startInClean + head.length);
@@ -1196,17 +1239,13 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
             const realEnd = cleanedEndIdx < cleanedChars.length
               ? cleanedChars[cleanedEndIdx]
               : cleanedChars[cleanedChars.length - 1] + 1;
-            fullNewText = sourceText.slice(0, realStart) + newText + sourceText.slice(realEnd);
+            fullNewText = sourceText.slice(0, realStart) + effectiveNew + sourceText.slice(realEnd);
           }
         }
       }
 
-      // STRATEGY 4: Word-anchor fallback. For long selections, find the first
-      // and last "real" word tokens in the source and replace the range
-      // between them. Handles cases where middle has too many small unicode
-      // differences for char-by-char strategies to align. Range-size sanity
-      // check prevents accidentally replacing a huge wrong span.
-      if (fullNewText === sourceText && oldText.trim().length > 24) {
+      // STRATEGY 4: Word-anchor fallback.
+      if (fullNewText === sourceText && effectiveOld.trim().length > 24) {
         const wordify = (s: string) => s
           .normalize("NFC")
           .replace(/[‍‌]/g, "")
@@ -1214,7 +1253,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
           .split(/\s+/)
           .filter(w => w.length >= 3);
 
-        const oldWords = wordify(oldText);
+        const oldWords = wordify(effectiveOld);
         if (oldWords.length >= 2) {
           const first = oldWords[0];
           const last = oldWords[oldWords.length - 1];
@@ -1224,11 +1263,9 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
             if (endIdx >= 0) {
               const realEnd = endIdx + last.length;
               const rangeLen = realEnd - startIdx;
-              const oldLen = oldText.length;
-              // Only accept if the matched range is roughly the same size as
-              // what the user selected — guards against picking far-apart words.
+              const oldLen = effectiveOld.length;
               if (rangeLen >= oldLen * 0.5 && rangeLen <= oldLen * 2.5) {
-                fullNewText = sourceText.slice(0, startIdx) + newText + sourceText.slice(realEnd);
+                fullNewText = sourceText.slice(0, startIdx) + effectiveNew + sourceText.slice(realEnd);
               }
             }
           }
@@ -1236,10 +1273,11 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       }
 
       if (fullNewText === sourceText) {
-        // Log to console for debugging — easier than alert text for users to share
         console.warn("[applyEdit] All 5 strategies failed:", {
           pageNum,
           oldText: oldText.slice(0, 80) + (oldText.length > 80 ? "…" : ""),
+          effectiveOld: effectiveOld.slice(0, 80) + (effectiveOld.length > 80 ? "…" : ""),
+          leftTrim, rightTrim,
           oldTextLen: oldText.length,
           newText: newText.slice(0, 80) + (newText.length > 80 ? "…" : ""),
           sourcePreview: sourceText.slice(0, 200),
