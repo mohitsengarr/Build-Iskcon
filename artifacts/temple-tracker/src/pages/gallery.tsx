@@ -999,10 +999,10 @@ export default function Gallery() {
                       });
                     };
                     return (
-                      <div key={p.id} className="flex flex-col sm:flex-row gap-3 p-3">
+                      <div key={p.id} className="flex flex-col sm:flex-row gap-5 p-4">
                         <button
                           onClick={openPreview}
-                          className="relative group/img w-full sm:w-32 h-40 sm:h-40 shrink-0 rounded-lg overflow-hidden shadow-sm cursor-zoom-in"
+                          className="relative group/img w-full sm:w-72 md:w-80 lg:w-96 aspect-square shrink-0 rounded-xl overflow-hidden shadow-md cursor-zoom-in border border-amber-200"
                           title="Click to view full size"
                           aria-label={`Preview ${p.chapter_title}`}
                         >
@@ -1013,10 +1013,10 @@ export default function Gallery() {
                             loading="lazy"
                           />
                           <span className="absolute inset-0 bg-black/0 group-hover/img:bg-black/30 transition-colors flex items-center justify-center">
-                            <Maximize2 className="w-5 h-5 text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow" />
+                            <Maximize2 className="w-7 h-7 text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow" />
                           </span>
                         </button>
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 max-w-2xl">
                           <div className="flex items-start gap-2 mb-1">
                             <div className="flex-1 min-w-0">
                               <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">
