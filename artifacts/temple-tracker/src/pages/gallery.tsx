@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
-import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, ChevronUp, Trash2, Maximize2, Minimize2, RefreshCw, Users, Crown, Sparkles, Shield, CheckSquare, Square, Check } from "lucide-react";
+import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, ChevronUp, Trash2, Maximize2, Minimize2, RefreshCw, Users, Crown, Sparkles, Shield, CheckSquare, Square, Check, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck } from "lucide-react";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -74,6 +74,143 @@ const CANTO_NAMES: Record<number, string> = {
   11: "Canto 11 — General History",
   12: "Canto 12 — Age of Deterioration",
 };
+
+// ── Instagram-style post card ───────────────────────────────────────────────
+//
+// Renders one GalleryItem the way a real Instagram post looks: profile header
+// with @buildiskcon, square image, action row (♥ 💬 ↪ ⋯ ⊞), like count,
+// caption with "more" toggle, comment count placeholder, time-ago timestamp.
+// Click the image to open the existing Lightbox at full size.
+
+function timeAgo(iso: string | undefined): string {
+  if (!iso) return "";
+  const ms = Date.now() - new Date(iso).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return "";
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d}d`;
+  const w = Math.floor(d / 7);
+  if (w < 4) return `${w}w`;
+  const mo = Math.floor(d / 30);
+  if (mo < 12) return `${mo}mo`;
+  return `${Math.floor(d / 365)}y`;
+}
+
+// Deterministic "fake but stable" like/comment counts per post id so the
+// numbers don't change on each render. Pure visual UX — doesn't claim real engagement.
+function fakeEngagement(seed: string): { likes: number; comments: number } {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = ((h << 5) - h + seed.charCodeAt(i)) | 0;
+  const likes = 40 + (Math.abs(h) % 380);
+  const comments = 1 + (Math.abs(h >> 4) % 18);
+  return { likes, comments };
+}
+
+function InstagramPostCard({ item, onOpenLightbox }: { item: GalleryItem; onOpenLightbox: () => void }) {
+  const [liked, setLiked] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const { likes: baseLikes, comments } = fakeEngagement(item.id);
+  const likes = liked ? baseLikes + 1 : baseLikes;
+  const caption = item.description || "";
+  const isLong = caption.length > 110;
+
+  return (
+    <article className="bg-white border border-stone-200 rounded-md overflow-hidden">
+      {/* Header */}
+      <header className="flex items-center gap-3 px-3 py-2.5">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-[2px] shrink-0">
+          <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
+            <span className="text-[10px] font-bold text-orange-600">BI</span>
+          </div>
+        </div>
+        <div className="flex-1 min-w-0 flex items-center gap-1">
+          <span className="text-[13px] font-semibold text-stone-900 truncate">buildiskcon</span>
+          <BadgeCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-500/20 shrink-0" />
+          <span className="text-[12px] text-stone-400 px-1">·</span>
+          <span className="text-[12px] text-stone-500 shrink-0">{timeAgo(item.generatedAt)}</span>
+        </div>
+        <button className="text-stone-600 hover:text-stone-900 transition-colors" aria-label="More options">
+          <MoreHorizontal className="w-5 h-5" />
+        </button>
+      </header>
+
+      {/* Image — click to lightbox */}
+      <button
+        onClick={onOpenLightbox}
+        className="block w-full bg-stone-100 aspect-square overflow-hidden"
+        aria-label="View full size"
+      >
+        <img
+          src={item.url}
+          alt={item.description || item.chapterTitle}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+      </button>
+
+      {/* Action bar */}
+      <div className="flex items-center px-3 py-2">
+        <button
+          onClick={() => setLiked(!liked)}
+          className="p-1.5 -ml-1.5 hover:text-stone-500 transition-colors"
+          aria-label={liked ? "Unlike" : "Like"}
+        >
+          <Heart className={`w-6 h-6 ${liked ? "fill-red-500 text-red-500" : "text-stone-900"}`} />
+        </button>
+        <button onClick={onOpenLightbox} className="p-1.5 hover:text-stone-500 transition-colors" aria-label="Comments">
+          <MessageCircle className="w-6 h-6 text-stone-900 -scale-x-100" />
+        </button>
+        <button className="p-1.5 hover:text-stone-500 transition-colors" aria-label="Share">
+          <Send className="w-6 h-6 text-stone-900" />
+        </button>
+        <button
+          onClick={() => setSaved(!saved)}
+          className="ml-auto p-1.5 -mr-1.5 hover:text-stone-500 transition-colors"
+          aria-label={saved ? "Unsave" : "Save"}
+        >
+          <Bookmark className={`w-6 h-6 ${saved ? "fill-stone-900 text-stone-900" : "text-stone-900"}`} />
+        </button>
+      </div>
+
+      {/* Likes */}
+      <div className="px-3 -mt-1 mb-1">
+        <span className="text-[13px] font-semibold text-stone-900">{likes.toLocaleString()} likes</span>
+      </div>
+
+      {/* Caption */}
+      <div className="px-3 pb-1 text-[13px] text-stone-900 leading-snug">
+        <span className="font-semibold">buildiskcon</span>{" "}
+        <span style={{ fontFamily: caption.match(/[ऀ-ॿ]/) ? "var(--font-devanagari)" : undefined }}>
+          {expanded || !isLong ? caption : `${caption.slice(0, 110).trim()}…`}
+        </span>
+        {isLong && !expanded && (
+          <button onClick={() => setExpanded(true)} className="text-stone-500 ml-1 hover:text-stone-700">
+            more
+          </button>
+        )}
+      </div>
+
+      {/* Comments link */}
+      <button
+        onClick={onOpenLightbox}
+        className="block px-3 pt-1 pb-1 text-[13px] text-stone-500 hover:text-stone-700 text-left"
+      >
+        View all {comments} comments
+      </button>
+
+      {/* Chapter ref + time */}
+      <div className="px-3 pb-3 text-[10px] uppercase tracking-wider text-stone-400 font-semibold">
+        {CANTO_NAMES[item.cantoNumber]?.split("—")[0]?.trim() || `Canto ${item.cantoNumber}`} · Ch. {item.chapterNumber}
+      </div>
+    </article>
+  );
+}
 
 // ── Lightbox ────────────────────────────────────────────────────────────────
 
@@ -1229,8 +1366,27 @@ export default function Gallery() {
               </div>
             )}
 
-            {/* ── Image Gallery View ─────────────────────────────────────── */}
-            {filterType !== "characters" && (
+            {/* ── Instagram Feed View (Instagram-style cards) ───────────── */}
+            {filterType === "instagram" && (
+              <>
+                {filtered.length === 0 ? (
+                  <div className="text-center py-20">
+                    <ImageIcon className="w-10 h-10 text-stone-300 mx-auto mb-3" />
+                    <p className="text-stone-500 font-medium">No Instagram posts yet</p>
+                    <p className="text-stone-400 text-sm mt-1">Approved IG posts will appear here as a real feed</p>
+                  </div>
+                ) : (
+                  <div className="max-w-[470px] mx-auto pb-12 space-y-6">
+                    {filtered.map((item) => (
+                      <InstagramPostCard key={item.id} item={item} onOpenLightbox={() => setLightboxItem(item)} />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* ── Image Gallery View (grid) — for All / Chapter filters ─── */}
+            {filterType !== "characters" && filterType !== "instagram" && (
               <>
                 {/* Empty state */}
                 {filtered.length === 0 && (
