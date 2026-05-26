@@ -184,7 +184,32 @@ interface BookmarkEntry {
   chapter_number?: number;
   chapter_title?: string;
   label?: string;
+  /** First ~60 chars of the line that was at the top of the viewport when saved. */
+  line_anchor?: string | null;
   created_at: string;
+}
+
+/** Find the topmost <p> element visible inside a given page container. */
+function findTopmostVisibleParagraph(pageEl: HTMLElement): HTMLParagraphElement | null {
+  const ps = pageEl.querySelectorAll("p");
+  // headerBuffer accounts for the sticky top bar (~70px on most screens)
+  const headerBuffer = 90;
+  let best: HTMLParagraphElement | null = null;
+  let bestTop = Infinity;
+  for (const p of ps) {
+    const rect = (p as HTMLElement).getBoundingClientRect();
+    // Skip elements that have no content
+    if (!(p as HTMLElement).textContent?.trim()) continue;
+    // The paragraph is "visible at the top" if its top is just below the header
+    // and within the viewport. Prefer the one with the smallest positive distance
+    // from the header line.
+    const distFromHeader = rect.top - headerBuffer;
+    if (rect.bottom > headerBuffer && distFromHeader < bestTop && distFromHeader > -rect.height) {
+      bestTop = distFromHeader;
+      best = p as HTMLParagraphElement;
+    }
+  }
+  return best;
 }
 
 /** Manual section override — user marks line ranges with a specific type */
@@ -3459,6 +3484,18 @@ export default function Bhagwatham() {
     const chapterList = buildChapterIndex(allPages);
     const currentChapter = chapterList.slice().reverse().find(ch => ch.pageNumber <= pageNum);
 
+    // Capture the topmost-visible line on the page so we can scroll back to it
+    let lineAnchor: string | null = null;
+    try {
+      const pageEl = document.querySelector(`[data-page-num="${pageNum}"]`);
+      if (pageEl) {
+        const topP = findTopmostVisibleParagraph(pageEl as HTMLElement);
+        const text = topP?.textContent?.trim() || "";
+        // 80 chars is plenty for a unique anchor inside one page
+        lineAnchor = text.substring(0, 80) || null;
+      }
+    } catch { /* fallback: no anchor */ }
+
     try {
       await sbFetch("bhagavatam_bookmarks", {
         method: "POST",
@@ -3469,6 +3506,7 @@ export default function Bhagwatham() {
           page_number: pageNum,
           chapter_number: currentChapter?.number || null,
           chapter_title: currentChapter?.title || null,
+          line_anchor: lineAnchor,
           updated_at: new Date().toISOString(),
         }),
       });
@@ -3499,13 +3537,39 @@ export default function Bhagwatham() {
         setActiveChapter(ch.globalNumber);
         setScrollChapter(ch.title);
       }
-      // Scroll to the exact bookmarked page, not just the top
+      // Wait for the page view to render, then try to scroll to the exact line
+      // captured at bookmark time. If the anchor text can't be found (e.g.
+      // user edited the line since), fall back to scrolling to the page top.
       setTimeout(() => {
-        const el = document.querySelector(`[data-page-num="${b.page_number}"]`);
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-        else window.scrollTo({ top: 0, behavior: "smooth" });
-      }, 200);
+        const pageEl = document.querySelector(`[data-page-num="${b.page_number}"]`);
+        if (!pageEl) { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+
+        if (b.line_anchor && b.line_anchor.length > 4) {
+          const needle = b.line_anchor.trim().substring(0, 60);
+          const ps = pageEl.querySelectorAll("p");
+          let match: HTMLParagraphElement | null = null;
+          for (const p of ps) {
+            const txt = (p as HTMLElement).textContent?.trim() || "";
+            if (txt.startsWith(needle.substring(0, 30)) || txt.includes(needle.substring(0, 40))) {
+              match = p as HTMLParagraphElement;
+              break;
+            }
+          }
+          if (match) {
+            match.scrollIntoView({ behavior: "smooth", block: "start" });
+            // Flash highlight so the user can see which line was restored
+            match.style.transition = "background-color 0.4s";
+            const prevBg = match.style.backgroundColor;
+            match.style.backgroundColor = "rgba(251, 191, 36, 0.35)";
+            setTimeout(() => { match.style.backgroundColor = prevBg; }, 1500);
+            return;
+          }
+        }
+        // Fallback: scroll to page top
+        pageEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 250);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allPages]);
 
   const handleIdentitySave = useCallback((id: string, name: string) => {
@@ -4407,6 +4471,32 @@ export default function Bhagwatham() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Floating bookmark FAB — saves the current line within the visible page */}
+      <motion.button
+        onClick={saveBookmark}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        title={readerId ? "Save bookmark for current line" : "Sign in to save bookmarks"}
+        className={`fixed right-4 sm:right-6 top-1/2 -translate-y-1/2 z-40 w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-colors ${
+          bookmarkSaved
+            ? "bg-orange-500 text-white"
+            : "bg-white text-orange-600 hover:bg-orange-50 border-2 border-orange-200"
+        }`}
+        aria-label="Bookmark this line"
+      >
+        {bookmarkSaved
+          ? <Check className="w-5 h-5" />
+          : <Bookmark className={`w-5 h-5 ${bookmarkSaved ? "fill-white" : ""}`} />}
+        {bookmarkSaved && (
+          <motion.span
+            initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            className="absolute -top-9 right-0 whitespace-nowrap text-[11px] font-semibold bg-stone-800 text-white px-2.5 py-1 rounded-md shadow-lg"
+          >
+            Saved!
+          </motion.span>
+        )}
+      </motion.button>
 
       {/* Undo toast */}
       <AnimatePresence>
