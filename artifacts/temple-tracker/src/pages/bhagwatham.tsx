@@ -1181,6 +1181,12 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       // Helper: build a regex for arbitrary chunk that's tolerant to
       // whitespace runs, dash variants, danda variants, quote variants,
       // and invisible ZWJ/ZWNJ glue chars common in Devanagari.
+      // Devanagari danda `।` / double-danda `॥` and ASCII pipe `|` are commonly
+      // swapped by OCR. Same for ASCII colon `:` ↔ Devanagari visarga `ः`.
+      // Treat them as interchangeable so the selection matches the source even
+      // when the glyphs differ.
+      const DANDA_CLASS = "[\\u0964\\u0965\\u007C]";   //  ।  ॥  |
+      const VISARGA_CLASS = "[\\u0903\\u003A]";         //  ः  :
       const buildFlexibleRegex = (chunk: string): string => {
         return chunk
           .normalize("NFC")
@@ -1188,7 +1194,8 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
           .map((ch) => {
             if (/\s/.test(ch)) return "\\s+";
             if (/[-‐-―−]/.test(ch)) return "[\\u002D\\u2010-\\u2015\\u2212]";
-            if (ch === "।" || ch === "॥") return "[\\u0964\\u0965]";
+            if (ch === "।" || ch === "॥" || ch === "|") return DANDA_CLASS;
+            if (ch === "ः" || ch === ":") return VISARGA_CLASS;
             if (QUOTE_RE.test(ch)) return QUOTE_CLASS;
             // ZWJ/ZWNJ are invisible glue — allow them around any non-space char
             if (ch === "‍" || ch === "‌") return "[\\u200D\\u200C]?";
@@ -1242,6 +1249,8 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
           if (ch === "‍" || ch === "‌") continue;
           let mapped = ch.normalize("NFC");
           if (/[-‐-―−]/.test(mapped)) mapped = "-";
+          if (mapped === "।" || mapped === "॥" || mapped === "|") mapped = "।";
+          if (mapped === "ः" || mapped === ":") mapped = "ः";
           if (QUOTE_RE.test(mapped)) mapped = '"';
           cleaned += mapped;
           cleanedChars.push(i);
@@ -1249,6 +1258,8 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
         const stripSel = (s: string) =>
           s.normalize("NFC")
             .replace(/[‐-―−]/g, "-")
+            .replace(/[॥|]/g, "।")          // double-danda + pipe → single danda
+            .replace(/[:]/g, "ः")             // ASCII colon → visarga
             .replace(/["'´`‘’‚‛“”„‟ʻʼ′″]/g, '"')
             .replace(/[‍‌]/g, "")
             .replace(/\s+/g, "");
