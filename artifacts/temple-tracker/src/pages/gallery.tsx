@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
-import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, ChevronUp, Trash2, Maximize2, Minimize2, RefreshCw, Users, Crown, Sparkles, Shield, CheckSquare, Square, Check, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck } from "lucide-react";
+import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, ChevronUp, ChevronLeft, Trash2, Maximize2, Minimize2, RefreshCw, Users, Crown, Sparkles, Shield, CheckSquare, Square, Check, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck } from "lucide-react";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -15,6 +15,9 @@ interface GalleryItem {
   sceneIndex: number;
   url: string;
   description: string;
+  // Full Instagram caption (multi-line, with mantra + hashtags). For chapter
+  // art this is unset — `description` already carries the full prompt.
+  fullCaption?: string;
   generatedAt: string;
   type: "chapter" | "instagram";
 }
@@ -117,8 +120,10 @@ function InstagramPostCard({ item, onOpenLightbox }: { item: GalleryItem; onOpen
   const [expanded, setExpanded] = useState(false);
   const { likes: baseLikes, comments } = fakeEngagement(item.id);
   const likes = liked ? baseLikes + 1 : baseLikes;
-  const caption = item.description || "";
-  const isLong = caption.length > 110;
+  // First-line preview when collapsed; full multi-line caption when expanded
+  const fullCaption = (item.fullCaption || item.description || "").trim();
+  const previewCaption = (item.description || fullCaption.split("\n")[0] || "").trim();
+  const isLong = fullCaption.length > previewCaption.length || previewCaption.length > 110;
 
   return (
     <article className="bg-white border border-stone-200 rounded-md overflow-hidden">
@@ -183,15 +188,23 @@ function InstagramPostCard({ item, onOpenLightbox }: { item: GalleryItem; onOpen
         <span className="text-[13px] font-semibold text-stone-900">{likes.toLocaleString()} likes</span>
       </div>
 
-      {/* Caption */}
+      {/* Caption — preview first line; expand to full multi-line caption */}
       <div className="px-3 pb-1 text-[13px] text-stone-900 leading-snug">
         <span className="font-semibold">buildiskcon</span>{" "}
-        <span style={{ fontFamily: caption.match(/[ऀ-ॿ]/) ? "var(--font-devanagari)" : undefined }}>
-          {expanded || !isLong ? caption : `${caption.slice(0, 110).trim()}…`}
+        <span
+          className={expanded ? "whitespace-pre-wrap" : ""}
+          style={{ fontFamily: fullCaption.match(/[ऀ-ॿ]/) ? "var(--font-devanagari)" : undefined }}
+        >
+          {expanded
+            ? fullCaption
+            : (previewCaption.length > 110 ? `${previewCaption.slice(0, 110).trim()}…` : previewCaption)}
         </span>
-        {isLong && !expanded && (
-          <button onClick={() => setExpanded(true)} className="text-stone-500 ml-1 hover:text-stone-700">
-            more
+        {isLong && (
+          <button
+            onClick={() => setExpanded(e => !e)}
+            className="text-stone-500 ml-1 hover:text-stone-700"
+          >
+            {expanded ? "less" : "more"}
           </button>
         )}
       </div>
@@ -401,6 +414,10 @@ export default function Gallery() {
   const [pending, setPending] = useState<PendingPost[]>([]);
   const [pendingExpanded, setPendingExpanded] = useState<number | null>(null);
   const [reviewing, setReviewing] = useState<Set<number>>(new Set());
+  // Forward-ref to fetchAll so reviewPost (declared earlier in render order)
+  // can trigger a manifest refresh after approve. The actual function is
+  // assigned in a useEffect below once fetchAll is defined.
+  const fetchAllRef = useRef<(() => Promise<void>) | null>(null);
 
   const fetchPending = useCallback(async () => {
     try {
@@ -502,7 +519,12 @@ export default function Gallery() {
         setPending(prev => prev.filter(p => p.id !== id));
         // Once the user approves at least one sample, treat the style as
         // confirmed — bulk-generate button stops asking for confirmation.
-        if (action === "approve") setSampleApproved(true);
+        if (action === "approve") {
+          setSampleApproved(true);
+          // Refresh the Instagram feed so the just-approved post appears at
+          // the top of the timeline without requiring a page reload.
+          void fetchAllRef.current?.();
+        }
 
         // On reject the backend auto-regenerates for the same chapter and
         // returns the new pending id. Refetch so it appears at the top of
@@ -526,8 +548,9 @@ export default function Gallery() {
   }, [fetchPending]);
 
   // ── Fetch manifests ───────────────────────────────────────────────────────
-  useEffect(() => {
-    async function fetchAll() {
+  // Stored as a useCallback so reviewPost() can re-trigger after approve to
+  // surface the just-approved post in the Instagram feed without a reload.
+  const fetchAll = useCallback(async () => {
       // Load Supabase delete queue in parallel — images flagged here are
       // hidden from the gallery immediately (laptop cron will physically
       // delete them when it next runs).
@@ -587,6 +610,7 @@ export default function Gallery() {
               sceneIndex: scene,
               url: img.publicUrl || `${API_BASE}/instagram/images/${img.imagePath}`,
               description: img.caption?.split("\n")[0] || img.prompt || "",
+              fullCaption: img.caption || img.prompt || "",
               generatedAt: img.generatedAt,
               type: "instagram",
             });
@@ -625,6 +649,7 @@ export default function Gallery() {
               sceneIndex: scene,
               url: r.image_url,
               description: firstLine.substring(0, 200),
+              fullCaption: r.caption || r.chapter_title || "",
               generatedAt: r.reviewed_at,
               type: "instagram",
             });
@@ -636,9 +661,13 @@ export default function Gallery() {
       items.sort((a, b) => a.cantoNumber - b.cantoNumber || a.chapterNumber - b.chapterNumber || a.sceneIndex - b.sceneIndex);
       setAllItems(items);
       setLoading(false);
-    }
-    fetchAll();
   }, []);
+
+  // Initial load + expose fetchAll to earlier callbacks via the forward ref.
+  useEffect(() => {
+    fetchAllRef.current = fetchAll;
+    void fetchAll();
+  }, [fetchAll]);
 
   // ── Fetch personas when Characters tab is selected ──────────────────────
   useEffect(() => {
@@ -710,6 +739,16 @@ export default function Gallery() {
         i.description.toLowerCase().includes(q) ||
         String(i.chapterNumber).includes(q)
       );
+    }
+    // Instagram view mimics a real IG timeline — newest approved post on top.
+    // The global sort orders by canto/chapter (good for browsing chapter art);
+    // override here so the post you just approved sits at the top of the feed.
+    if (filterType === "instagram") {
+      result = [...result].sort((a, b) => {
+        const ta = new Date(a.generatedAt).getTime() || 0;
+        const tb = new Date(b.generatedAt).getTime() || 0;
+        return tb - ta; // newest first
+      });
     }
     return result;
   }, [allItems, filterCanto, filterType, searchQuery]);
@@ -994,6 +1033,7 @@ export default function Gallery() {
                         sceneIndex: 0,
                         url: p.image_url,
                         description: (p.caption || "").split("\n").find((l) => l.trim()) || p.chapter_title || "",
+                        fullCaption: p.caption || p.chapter_title || "",
                         generatedAt: p.created_at,
                         type: "instagram",
                       });
@@ -1084,7 +1124,27 @@ export default function Gallery() {
               </div>
             )}
 
-            {/* Filter Bar */}
+            {/* Compact header for Instagram mode — gives the user a way out
+                since the full filter bar is hidden to mimic a real IG feed. */}
+            {filterType === "instagram" && (
+              <div className="sticky top-[72px] z-30 max-w-[470px] mx-auto bg-white/95 backdrop-blur-md border-b border-stone-200 mb-2 px-3 py-2 flex items-center gap-2">
+                <button
+                  onClick={() => setFilterType("all")}
+                  className="flex items-center gap-1 text-[12px] font-semibold text-stone-600 hover:text-orange-700 hover:bg-orange-50 px-2 py-1 rounded-md transition-colors"
+                  title="Back to gallery"
+                  aria-label="Back to gallery"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" /> Back
+                </button>
+                <span className="text-[13px] font-bold text-stone-900 flex-1 text-center">buildiskcon</span>
+                <span className="text-[10px] font-bold text-stone-400 bg-stone-100 px-2 py-1 rounded">
+                  {filtered.length}
+                </span>
+              </div>
+            )}
+
+            {/* Filter Bar — hidden in Instagram mode to mimic the real feed */}
+            {filterType !== "instagram" && (
             <div className="sticky top-[72px] z-30 bg-white/90 backdrop-blur-md border border-stone-200/60 rounded-2xl shadow-sm px-4 py-3 mb-6 flex flex-wrap items-center gap-3">
               <Filter className="w-4 h-4 text-stone-400 hidden sm:block" />
 
@@ -1102,9 +1162,10 @@ export default function Gallery() {
                 </select>
               )}
 
-              {/* Type toggle */}
+              {/* Type toggle — Chapter Art and Characters tabs hidden per
+                  user request; "All" still surfaces chapter art mixed in. */}
               <div className="flex items-center gap-1 bg-stone-100 rounded-lg p-0.5">
-                {(["all", "chapter", "instagram", "characters"] as const).map(t => (
+                {(["all", "instagram"] as const).map(t => (
                   <button
                     key={t}
                     onClick={() => setFilterType(t)}
@@ -1114,8 +1175,7 @@ export default function Gallery() {
                         : "text-stone-500 hover:text-stone-700"
                     }`}
                   >
-                    {t === "characters" && <Users className="w-3 h-3" />}
-                    {t === "all" ? "All" : t === "chapter" ? "Chapter Art" : t === "instagram" ? "Instagram" : "Characters"}
+                    {t === "all" ? "All" : "Instagram"}
                   </button>
                 ))}
               </div>
@@ -1172,6 +1232,7 @@ export default function Gallery() {
                 )
               )}
             </div>
+            )}
 
             {/* ── Characters / Personas View ─────────────────────────────── */}
             {filterType === "characters" && (

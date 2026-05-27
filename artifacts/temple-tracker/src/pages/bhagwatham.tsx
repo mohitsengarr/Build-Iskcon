@@ -10,7 +10,7 @@ import {
   List, X, ChevronDown, ChevronUp, Image as ImageIcon, Languages,
   Download, Share2, Bookmark, Trash2, LogIn, Volume2, Square, Check,
   Settings, Sun, Moon, Type, Minus, Plus, Maximize2, Undo2, Pencil, Wand2, Send, Bold,
-  CornerDownLeft, Combine,
+  CornerDownLeft, Combine, Keyboard, Delete,
 } from "lucide-react";
 
 // ── Reading Settings ─────────────────────────────────────────────────────────
@@ -945,7 +945,13 @@ function isHalfShlokaLine(line: string): boolean {
 }
 
 // ── Determine what section kind a page ends with (for cross-page continuity) ──
-function getPageEndKind(text: string): string {
+// Optional `nextPageText`: if supplied and the page would otherwise end in a
+// half-shloka classified as ref-shlok (because we were inside tatparya context),
+// but the next page begins with a numbered shlok continuation (e.g. `॥ ११ ॥`),
+// the verse is actually a main shlok, not a ref-shlok. Upgrade the end kind so
+// the next page's first section renders as a shlok continuation (no divider,
+// no left border, no italic-brown styling).
+function getPageEndKind(text: string, nextPageText?: string): string {
   if (!text) return "text";
   const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
   let lastKind = "text";
@@ -982,7 +988,249 @@ function getPageEndKind(text: string): string {
       lastKind = "anuvad";
     }
   }
+  // Cross-page upgrade: a half-shloka ending classified as ref-shlok (because of
+  // surrounding tatparya context) gets promoted to shlok if the next page starts
+  // with a numbered-shlok continuation. The verse's number lives on the next page.
+  // Guard: only fire when the page actually ends in a half-shloka (single danda,
+  // no ॥) — a complete cited ref-shlok terminating in ॥ must not be reclassified.
+  if (lastKind === "ref-shlok" && nextPageText && pageStartsWithNumberedShlokContinuation(nextPageText)) {
+    const lastDevLine = [...lines].reverse().find(l => /[ऀ-ॿ]/.test(l)) || "";
+    const endsAsHalf = /।\s*$/.test(lastDevLine) && !/॥/.test(lastDevLine);
+    if (endsAsHalf) {
+      lastKind = "shlok";
+    }
+  }
   return lastKind;
+}
+
+// ── Peek next page: does it begin with the closing half of a numbered shlok? ──
+// True when the first verse-like line on the page (before any tatparya/शब्दार्थ/
+// अनुवाद marker or chapter heading) carries a `॥ N ॥` numbered terminator,
+// meaning the previous page's trailing half-shloka was the first half of that
+// numbered verse and should render as a main shlok, not a ref-shlok.
+function pageStartsWithNumberedShlokContinuation(text: string): boolean {
+  if (!text) return false;
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean).filter(l => !isStandalonePageNumber(l));
+  let scanned = 0;
+  for (const line of lines) {
+    if (scanned > 3) return false; // peek only first ~3 verse-like lines
+    // Stop at section markers — half-shloka cannot continue past these
+    if (/^(तात्पर्य|शब्दार्थ|अनुवाद)/u.test(line)) return false;
+    if (/^(अध्याय|स्कन्ध|Chapter)/iu.test(line)) return false;
+    if (isChapterHeading(line)) return false;
+    // Hindi prose — not a verse continuation
+    if (/(?:है[ँं]?|हैं|था|थी|गया|गयी|किया|रहा|होता|करता)(?:\s|।|$)/u.test(line)) return false;
+    // Numbered shlok terminator — confirms continuation
+    if (/॥\s*[\d१२३४५६७८९०]+\s*॥/u.test(line)) return true;
+    // Unnumbered ॥ — standalone ref-shlok or different verse, not a continuation
+    if (/॥/u.test(line)) return false;
+    scanned++;
+  }
+  return false;
+}
+
+// ── On-screen Devanagari keyboard ────────────────────────────────────────
+//
+// Opens inside the selection toolbar's "Manual fix" mode. Provides a textarea
+// pre-filled with the user's selection plus tappable rows of Devanagari
+// vowels, consonants, matras, numerals, and punctuation. Each key inserts at
+// the current cursor position; backspace deletes the char before the cursor.
+// The textarea also accepts the user's physical keyboard, so a desktop reader
+// with an OS Hindi IME can keep using it.
+//
+// Layout: 5 grouped rows, monospace-ish grid so keys line up cleanly.
+
+const DEVA_VOWELS = ["अ","आ","इ","ई","उ","ऊ","ऋ","ए","ऐ","ओ","औ","अं","अः"];
+const DEVA_CONSONANTS = [
+  ["क","ख","ग","घ","ङ"],
+  ["च","छ","ज","झ","ञ"],
+  ["ट","ठ","ड","ढ","ण"],
+  ["त","थ","द","ध","न"],
+  ["प","फ","ब","भ","म"],
+  ["य","र","ल","व","श"],
+  ["ष","स","ह","क्ष","त्र"],
+  ["ज्ञ","श्र","ड़","ढ़","फ़"],
+];
+const DEVA_MATRAS = ["ा","ि","ी","ु","ू","ृ","े","ै","ो","ौ","ं","ः","ँ","्"];
+const DEVA_DIGITS = ["०","१","२","३","४","५","६","७","८","९"];
+const DEVA_PUNCT = ["।","॥","—","-",",",":",";","?","!","(",")"];
+
+function ManualFixKeyboard({ value, onChange, onSave, onCancel }: {
+  value: string;
+  onChange: (v: string) => void;
+  onSave: (v: string) => void;
+  onCancel: () => void;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // Insert text at the current cursor position (or replace selection).
+  // After insertion, restore focus and place the caret right after the
+  // inserted span so consecutive key taps build up naturally.
+  const insertAtCursor = useCallback((chars: string) => {
+    const ta = textareaRef.current;
+    if (!ta) {
+      onChange(value + chars);
+      return;
+    }
+    const start = ta.selectionStart ?? value.length;
+    const end = ta.selectionEnd ?? value.length;
+    const next = value.slice(0, start) + chars + value.slice(end);
+    onChange(next);
+    requestAnimationFrame(() => {
+      const t = textareaRef.current;
+      if (!t) return;
+      t.focus();
+      const pos = start + chars.length;
+      t.setSelectionRange(pos, pos);
+    });
+  }, [value, onChange]);
+
+  // Backspace: delete the character immediately before the caret (or the
+  // current selection if any). Mirrors the OS keyboard's backspace.
+  const backspace = useCallback(() => {
+    const ta = textareaRef.current;
+    if (!ta) {
+      onChange(value.slice(0, -1));
+      return;
+    }
+    const start = ta.selectionStart ?? value.length;
+    const end = ta.selectionEnd ?? value.length;
+    let next: string;
+    let nextPos: number;
+    if (start !== end) {
+      // Has selection — delete it
+      next = value.slice(0, start) + value.slice(end);
+      nextPos = start;
+    } else if (start === 0) {
+      return;
+    } else {
+      next = value.slice(0, start - 1) + value.slice(start);
+      nextPos = start - 1;
+    }
+    onChange(next);
+    requestAnimationFrame(() => {
+      const t = textareaRef.current;
+      if (!t) return;
+      t.focus();
+      t.setSelectionRange(nextPos, nextPos);
+    });
+  }, [value, onChange]);
+
+  // Focus the textarea on mount so the user can immediately type / tap keys
+  useEffect(() => {
+    const t = textareaRef.current;
+    if (!t) return;
+    t.focus();
+    // Place caret at end so the existing text isn't accidentally overwritten
+    const len = t.value.length;
+    t.setSelectionRange(len, len);
+  }, []);
+
+  const Key = ({ ch, wide = false }: { ch: string; wide?: boolean }) => (
+    <button
+      type="button"
+      onMouseDown={e => e.preventDefault()}
+      onClick={() => insertAtCursor(ch)}
+      className={`${wide ? "px-4" : "px-2"} py-1.5 text-base font-medium rounded-md bg-white border border-stone-200 hover:bg-emerald-50 hover:border-emerald-300 active:bg-emerald-100 transition-colors`}
+      style={{ fontFamily: "var(--font-devanagari)" }}
+    >
+      {ch}
+    </button>
+  );
+
+  return (
+    <div className="mb-2 p-3 rounded-lg bg-emerald-50/70 border-2 border-emerald-200">
+      <div className="flex items-center gap-1.5 mb-2">
+        <Keyboard className="w-3.5 h-3.5 text-emerald-700" />
+        <span className="text-[11px] font-bold uppercase tracking-wide text-emerald-800">Manual fix</span>
+        <span className="text-[10px] text-stone-500 ml-auto">tap keys or type with your own keyboard</span>
+      </div>
+
+      <textarea
+        ref={textareaRef}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={3}
+        lang="hi"
+        inputMode="text"
+        className="w-full text-base text-stone-900 mb-2.5 px-3 py-2 bg-white border border-emerald-300 rounded-lg focus:outline-none focus:border-emerald-500 resize-y"
+        style={{ fontFamily: "var(--font-devanagari)" }}
+        onKeyDown={(e) => {
+          // Ctrl/Cmd + Enter saves; plain Enter inserts a newline (multiline allowed)
+          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            onSave(value);
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            onCancel();
+          }
+        }}
+      />
+
+      {/* Devanagari character grid */}
+      <div className="space-y-1.5" onMouseDown={e => e.preventDefault()}>
+        {/* Vowels */}
+        <div className="flex flex-wrap gap-1 justify-center">
+          {DEVA_VOWELS.map(c => <Key key={c} ch={c} />)}
+        </div>
+        {/* Consonant rows */}
+        {DEVA_CONSONANTS.map((row, ri) => (
+          <div key={ri} className="flex flex-wrap gap-1 justify-center">
+            {row.map(c => <Key key={c} ch={c} />)}
+          </div>
+        ))}
+        {/* Matras row */}
+        <div className="flex flex-wrap gap-1 justify-center pt-1 border-t border-emerald-200/60">
+          {DEVA_MATRAS.map(c => <Key key={c} ch={c} />)}
+        </div>
+        {/* Digits + punctuation */}
+        <div className="flex flex-wrap gap-1 justify-center">
+          {DEVA_DIGITS.map(c => <Key key={c} ch={c} />)}
+        </div>
+        <div className="flex flex-wrap gap-1 justify-center">
+          {DEVA_PUNCT.map(c => <Key key={c} ch={c} />)}
+        </div>
+        {/* Space + backspace */}
+        <div className="flex gap-1 justify-center pt-1">
+          <button
+            type="button"
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => insertAtCursor(" ")}
+            className="px-12 py-1.5 text-xs font-medium rounded-md bg-white border border-stone-200 hover:bg-emerald-50 hover:border-emerald-300 transition-colors"
+          >
+            Space
+          </button>
+          <button
+            type="button"
+            onMouseDown={e => e.preventDefault()}
+            onClick={backspace}
+            className="px-4 py-1.5 text-xs font-medium rounded-md bg-white border border-stone-200 hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors flex items-center gap-1"
+            title="Delete the character before the cursor"
+          >
+            <Delete className="w-3.5 h-3.5" /> Backspace
+          </button>
+        </div>
+      </div>
+
+      {/* Save / cancel */}
+      <div className="flex gap-2 mt-3">
+        <button
+          type="button"
+          onClick={() => onSave(value)}
+          className="flex-1 px-3 py-1.5 text-xs font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+        >
+          Apply &amp; save
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-3 py-1.5 text-xs font-medium text-stone-600 hover:bg-stone-100 rounded-lg"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
 }
 
 // ── Selection Toolbar (Listen / Meaning / AI fix for highlighted text) ────
@@ -997,6 +1245,11 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
   // Used by applyEdit to disambiguate when the same text appears in multiple
   // sections of the page (e.g. shabdarth + shlok + anuvad all repeat words).
   const selectionContextRef = useRef<{ before: string; after: string }>({ before: "", after: "" });
+  // Snapshotted at selection-change time: whether the current selection sits
+  // inside a bold (font-weight ≥ 600 or <strong>) span in the rendered DOM.
+  // Used as a fallback when the source-text bold-marker detection fails
+  // because the selection only partially overlaps the **...** span.
+  const [selectionIsBoldDom, setSelectionIsBoldDom] = useState(false);
   const toolbarRef = useRef<HTMLDivElement>(null);
 
   // TTS state — matches ShlokSpeaker pattern (loading → playing → stop)
@@ -1004,7 +1257,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
   const [ttsPlaying, setTtsPlaying] = useState(false);
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // AI correction suggestion
+  // AI correction suggestion (preview-and-confirm flow)
   const [suggestLoading, setSuggestLoading] = useState(false);
   const [suggestion, setSuggestion] = useState<{
     suggested_text: string;
@@ -1012,6 +1265,12 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     changes: Array<{ from: string; to: string; reason: string }>;
     confidence: "high" | "medium" | "low";
   } | null>(null);
+  // Quick AI fix (apply-immediately flow — no preview, no confirmation)
+  const [quickFixLoading, setQuickFixLoading] = useState(false);
+  // Manual fix mode — opens a textarea + on-screen Devanagari keyboard so the
+  // reader can fix typos without needing a Hindi IME installed on their device.
+  const [manualFixMode, setManualFixMode] = useState(false);
+  const [manualFixText, setManualFixText] = useState("");
 
   // Cleanup TTS, suggestion & dictionary on unmount or when toolbar hides
   useEffect(() => {
@@ -1022,6 +1281,10 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       setTtsLoading(false);
       setSuggestion(null);
       setSuggestLoading(false);
+      setQuickFixLoading(false);
+      setManualFixMode(false);
+      setManualFixText("");
+      setSelectionIsBoldDom(false);
       setDictResult(null);
       setDictLoading(false);
     }
@@ -1096,6 +1359,30 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
         setSelectedText(text);
         selectionContextRef.current = { before: ctxBefore, after: ctxAfter };
         pageNumRef.current = pageNum;
+
+        // Detect bold via the rendered DOM: walk up the range's common
+        // ancestor and check for <strong>, <b>, or computed font-weight ≥ 600.
+        // Catches the case where the source has **हरिः**-- भगवान् ।  but the
+        // user selected the whole "हरिः-- भगवान् ।" — markdown-text detection
+        // would miss the bold, but the rendered span is still <strong>.
+        let domBold = false;
+        try {
+          let node: Node | null = range.commonAncestorContainer;
+          // If the common ancestor is a text node, climb to its parent
+          if (node && node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+          while (node && node instanceof HTMLElement) {
+            const tag = node.tagName?.toUpperCase();
+            if (tag === "STRONG" || tag === "B") { domBold = true; break; }
+            const fw = window.getComputedStyle(node).fontWeight;
+            // fontWeight can be "bold" or a numeric string
+            if (fw === "bold" || (fw && parseInt(fw, 10) >= 600)) { domBold = true; break; }
+            // Stop walking once we leave the rendered content tree
+            if (node.hasAttribute && node.hasAttribute("data-page-num")) break;
+            node = node.parentNode;
+          }
+        } catch { /* DOM walk failed — leave domBold=false */ }
+        setSelectionIsBoldDom(domBold);
+
         setShow(true);
       }, 250);
     };
@@ -1490,8 +1777,11 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       if (page?.text) {
         const idx = page.text.indexOf(selectedText);
         if (idx >= 0) {
-          contextBefore = page.text.substring(Math.max(0, idx - 400), idx);
-          contextAfter = page.text.substring(idx + selectedText.length, idx + selectedText.length + 400);
+          // 600 chars context per side — gives Claude enough surrounding text
+          // to detect section transitions (शब्दार्थ → अनुवाद → तात्पर्य) and
+          // make accurate formatting decisions (paragraph breaks, bold heads).
+          contextBefore = page.text.substring(Math.max(0, idx - 600), idx);
+          contextAfter = page.text.substring(idx + selectedText.length, idx + selectedText.length + 600);
         }
       }
     }
@@ -1524,37 +1814,174 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     }
   }, [selectedText, allPages, suggestLoading]);
 
-  // Bold/unbold the current selection.
-  //   - If the page source already wraps the selection in **...**, remove them.
-  //   - Otherwise wrap the selection in **...**.
-  // The change goes through applyEdit so it persists in Supabase.
+  // Quick AI fix — calls the same correction endpoint as requestSuggestion,
+  // but applies the suggested text immediately without showing the preview
+  // panel. Designed so the reader can highlight a wonky stretch, tap the
+  // button, and keep reading — the fix lands in the background and the
+  // toolbar closes itself.
+  //
+  // Failure mode: errors are logged to console.warn (no alert/modal) so a
+  // silent network hiccup doesn't break flow. The user can always fall back
+  // to the regular AI fix button if they want to see what changed.
+  const requestQuickFix = useCallback(async () => {
+    if (!selectedText || quickFixLoading || suggestLoading) return;
+    const pageNum = pageNumRef.current;
+    setQuickFixLoading(true);
+    let contextBefore = "";
+    let contextAfter = "";
+    if (pageNum) {
+      const page = allPages.find(p => p.pageNumber === pageNum);
+      if (page?.text) {
+        const idx = page.text.indexOf(selectedText);
+        if (idx >= 0) {
+          contextBefore = page.text.substring(Math.max(0, idx - 600), idx);
+          contextAfter = page.text.substring(idx + selectedText.length, idx + selectedText.length + 600);
+        }
+      }
+    }
+    // Snapshot the selection now — applyEdit is async and React may
+    // unmount the toolbar before the response lands.
+    const oldText = selectedText;
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/bhagavatam-correct-text`, {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          selected_text: oldText,
+          context_before: contextBefore,
+          context_after: contextAfter,
+          page_number: pageNum,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.warn("Quick AI fix failed:", err.error || res.statusText);
+        return;
+      }
+      const data = await res.json();
+      const newText = (data?.suggested_text || "").trim();
+      // Close the toolbar straight away so reading isn't interrupted.
+      setShow(false);
+      if (newText && newText !== oldText) {
+        void applyEdit(oldText, newText);
+      }
+    } catch (err) {
+      console.warn("Quick AI fix error:", err);
+    } finally {
+      setQuickFixLoading(false);
+    }
+  }, [selectedText, allPages, quickFixLoading, suggestLoading]);
+
+  // Bold/unbold detection — true if the selection is bolded by ANY signal:
+  //   1. Selection literally contains the **...** markers
+  //   2. Source has **<exact selection>** somewhere
+  //   3. Selection text contains a **...** span inside it (partial overlap)
+  //   4. Selection sits inside an unclosed ** in source (count of ** before
+  //      the selection is odd → we're inside an open bold span)
+  //   5. Fallback: rendered DOM ancestor is <strong>/<b> or has font-weight≥600
   const isCurrentSelectionBold = useMemo(() => {
     if (!selectedText) return false;
-    // Selection literally contains the markers
+    // Cheap text-based checks first
     if (selectedText.startsWith("**") && selectedText.endsWith("**") && selectedText.length >= 4) return true;
-    // Or the page source has **selectedText** somewhere
+    if (selectedText.includes("**")) return true;
     const pageNum = pageNumRef.current;
-    if (!pageNum) return false;
-    const page = allPages.find(p => p.pageNumber === pageNum);
-    return !!page && page.text.includes(`**${selectedText}**`);
-  }, [selectedText, allPages]);
+    const page = pageNum ? allPages.find(p => p.pageNumber === pageNum) : null;
+    if (page) {
+      if (page.text.includes(`**${selectedText}**`)) return true;
+      // Source has a bold span that overlaps / contains the selection
+      const idx = page.text.indexOf(selectedText);
+      if (idx >= 0) {
+        const before = page.text.substring(0, idx);
+        const starsBefore = (before.match(/\*\*/g) || []).length;
+        if (starsBefore % 2 === 1) return true; // inside an open bold span
+      }
+    }
+    // Last resort: trust the rendered DOM
+    return selectionIsBoldDom;
+  }, [selectedText, allPages, selectionIsBoldDom]);
 
+  // Strip bold markers from the selection. Handles every shape:
+  //   - **selection**            → peel the wrapping markers
+  //   - selection contains **    → strip every `**` inside the selection
+  //   - **A**sel**B**            → strip all bold spans that overlap selection
+  //   - selection inside **X**   → strip the surrounding bold span markers
+  // The reverse path (plain → bold) only fires when no overlap is found.
   const toggleBold = useCallback(() => {
     if (!selectedText) return;
-    const stripped = selectedText.replace(/\*\*/g, "");
+    const pageNum = pageNumRef.current;
+    const page = pageNum ? allPages.find(p => p.pageNumber === pageNum) : null;
 
+    // CASE A — selection literally wraps the markers: peel them off
     if (selectedText.startsWith("**") && selectedText.endsWith("**") && selectedText.length >= 4) {
-      // Selection literally contains the markers — unwrap in place
-      applyEdit(selectedText, selectedText.slice(2, -2));
-    } else if (isCurrentSelectionBold) {
-      // Page source has **selectedText** — replace with just selectedText
-      applyEdit(`**${selectedText}**`, stripped);
-    } else {
-      // Plain text → bold
-      applyEdit(stripped, `**${stripped}**`);
+      void applyEdit(selectedText, selectedText.slice(2, -2));
+      setShow(false);
+      return;
     }
+
+    // CASE B — selection contains stray ** anywhere inside: strip them all
+    if (selectedText.includes("**")) {
+      void applyEdit(selectedText, selectedText.replace(/\*\*/g, ""));
+      setShow(false);
+      return;
+    }
+
+    if (page) {
+      // CASE C — source has **selection** exactly: unwrap the pair
+      if (page.text.includes(`**${selectedText}**`)) {
+        void applyEdit(`**${selectedText}**`, selectedText);
+        setShow(false);
+        return;
+      }
+
+      // CASE D — find any **...** spans that overlap the selection in source.
+      // Covers all three remaining shapes: selection is inside the span,
+      // span is inside selection, or selection starts/ends mid-span.
+      const idx = page.text.indexOf(selectedText);
+      if (idx >= 0) {
+        const selStart = idx;
+        const selEnd = idx + selectedText.length;
+        const re = /\*\*([^*]+?)\*\*/g;
+        const overlapping: Array<{ start: number; end: number }> = [];
+        let m: RegExpExecArray | null;
+        while ((m = re.exec(page.text)) !== null) {
+          const spanStart = m.index;
+          const spanEnd = m.index + m[0].length;
+          if (spanStart < selEnd && spanEnd > selStart) {
+            overlapping.push({ start: spanStart, end: spanEnd });
+          }
+        }
+        if (overlapping.length > 0) {
+          // Replace ONE contiguous chunk that contains the selection and all
+          // overlapping bold spans, with the same chunk stripped of `**`.
+          // This keeps applyEdit's single-source-replace contract intact.
+          const chunkStart = Math.min(selStart, ...overlapping.map(s => s.start));
+          const chunkEnd = Math.max(selEnd, ...overlapping.map(s => s.end));
+          const oldChunk = page.text.substring(chunkStart, chunkEnd);
+          const newChunk = oldChunk.replace(/\*\*/g, "");
+          if (oldChunk !== newChunk) {
+            void applyEdit(oldChunk, newChunk);
+            setShow(false);
+            return;
+          }
+        }
+      }
+    }
+
+    // CASE E — DOM said bold but no source markers found. Nothing to strip;
+    // dismiss so the user knows nothing changed instead of silently re-bolding.
+    if (selectionIsBoldDom) {
+      setShow(false);
+      return;
+    }
+
+    // CASE F — plain text → bold it
+    void applyEdit(selectedText, `**${selectedText}**`);
     setShow(false);
-  }, [selectedText, isCurrentSelectionBold]); // applyEdit referenced via closure
+  }, [selectedText, allPages, selectionIsBoldDom]);
 
   // Word-doc style edits on the selection:
   // - "New line" pushes the selection onto its own line (newline before it).
@@ -1607,11 +2034,12 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
 
   if (!show) return null;
 
-  // When the AI suggestion is open, lock the toolbar to the screen centre so
-  // the full panel (Original / Suggested / Changes / buttons) is always visible.
-  // Otherwise anchor near the selection: above by default, flipping below if
-  // there isn't enough room above.
-  const isCentered = !!suggestion;
+  // When the AI suggestion OR manual-fix keyboard is open, lock the toolbar to
+  // the screen centre so the full panel (Original / Suggested / Changes /
+  // buttons OR textarea + Devanagari keyboard) is always visible. Otherwise
+  // anchor near the selection: above by default, flipping below if there isn't
+  // enough room above.
+  const isCentered = !!suggestion || manualFixMode;
   const flipBelow = !isCentered && position.y < 120;
 
   return (
@@ -1621,7 +2049,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       {isCentered && (
         <div
           className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[1px]"
-          onClick={() => { setSuggestion(null); }}
+          onClick={() => { setSuggestion(null); setManualFixMode(false); }}
         />
       )}
       <div
@@ -1633,7 +2061,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
         }`}
         style={
           isCentered
-            ? { width: "min(480px, 92vw)" }
+            ? { width: manualFixMode ? "min(560px, 95vw)" : "min(480px, 92vw)" }
             : {
                 left: Math.max(100, Math.min(position.x, window.innerWidth - 100)),
                 top: flipBelow ? position.y + 30 : Math.max(60, position.y - 5),
@@ -1690,12 +2118,28 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
               </button>
               <button
                 onClick={requestSuggestion}
-                disabled={suggestLoading}
+                disabled={suggestLoading || quickFixLoading}
                 className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                title="Ask AI to suggest a corrected version of this text (fixes OCR errors, typos, spelling)"
+                title="Ask AI to fix this text — typos, missing words, line breaks, paragraph breaks, bold markers, and section formatting. Shows preview before saving."
               >
                 {suggestLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                AI fix typos
+                AI fix text &amp; format
+              </button>
+              <button
+                onClick={requestQuickFix}
+                disabled={suggestLoading || quickFixLoading}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                title="Fix typos & formatting instantly — no preview, applies the change in the background so you can keep reading"
+              >
+                {quickFixLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+                Quick AI fix
+              </button>
+              <button
+                onClick={() => { setManualFixText(selectedText); setManualFixMode(true); }}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                title="Edit this text yourself with an on-screen Devanagari keyboard — no Hindi IME needed"
+              >
+                <Keyboard className="w-3.5 h-3.5" /> Manual fix
               </button>
               {appliedFlash && (
                 <span className="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold text-green-700 bg-green-50 rounded">
@@ -1719,17 +2163,24 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
                   }`}>{suggestion.confidence}</span>
                 </div>
 
-                {/* Original */}
+                {/* Original — whitespace-pre-wrap preserves OCR line breaks */}
                 <div className="text-[10px] uppercase tracking-wide text-stone-500 font-semibold mb-0.5">Original</div>
-                <p className="text-sm text-stone-700 mb-2.5 px-2.5 py-1.5 bg-white border border-red-200 rounded line-through decoration-red-400 break-words" lang="hi">
+                <div className="text-sm text-stone-700 mb-2.5 px-2.5 py-1.5 bg-white border border-red-200 rounded line-through decoration-red-400 break-words whitespace-pre-wrap" lang="hi">
                   {selectedText}
-                </p>
+                </div>
 
-                {/* Suggested */}
+                {/* Suggested — renders \n as line breaks and **...** as bold */}
                 <div className="text-[10px] uppercase tracking-wide text-purple-700 font-semibold mb-0.5">Suggested</div>
-                <p className="text-base text-stone-900 font-medium mb-2.5 px-2.5 py-1.5 bg-white border border-green-300 rounded break-words" lang="hi">
-                  {suggestion.suggested_text || <em className="text-stone-400 text-sm">(no suggestion)</em>}
-                </p>
+                <div className="text-base text-stone-900 font-medium mb-2.5 px-2.5 py-1.5 bg-white border border-green-300 rounded break-words whitespace-pre-wrap" lang="hi">
+                  {suggestion.suggested_text
+                    ? suggestion.suggested_text.split("\n").map((ln, i, arr) => (
+                        <span key={i}>
+                          {renderInlineBold(ln)}
+                          {i < arr.length - 1 && "\n"}
+                        </span>
+                      ))
+                    : <em className="text-stone-400 text-sm">(no suggestion)</em>}
+                </div>
 
                 {suggestion.changes.length > 0 && (
                   <div className="mb-2.5">
@@ -1776,19 +2227,36 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
                 </div>
               </div>
             )}
-            {/* Edit input */}
-            <input
-              type="text"
-              defaultValue={selectedText}
-              className="w-full text-xs border border-stone-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-orange-400"
-              placeholder="Type correction, press Enter..."
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  applyEdit(selectedText, (e.target as HTMLInputElement).value);
+            {/* Manual fix panel — textarea + on-screen Devanagari keyboard */}
+            {manualFixMode && (
+              <ManualFixKeyboard
+                value={manualFixText}
+                onChange={setManualFixText}
+                onSave={(text) => {
+                  if (text && text !== selectedText) {
+                    void applyEdit(selectedText, text);
+                  }
+                  setManualFixMode(false);
                   setShow(false);
-                }
-              }}
-            />
+                }}
+                onCancel={() => setManualFixMode(false)}
+              />
+            )}
+            {/* Edit input — single-line quick edit using the user's own keyboard */}
+            {!manualFixMode && (
+              <input
+                type="text"
+                defaultValue={selectedText}
+                className="w-full text-xs border border-stone-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-orange-400"
+                placeholder="Type correction, press Enter (or use Manual fix for on-screen keyboard)"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    applyEdit(selectedText, (e.target as HTMLInputElement).value);
+                    setShow(false);
+                  }
+                }}
+              />
+            )}
           </div>
         )}
         {/* Dictionary result */}
@@ -1892,7 +2360,7 @@ function ShlokSpeaker({ text, themeKey }: { text: string; themeKey: string }) {
 
 // ── Content Renderer ───────────────────────────────────────────────────────────
 
-function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", onRegenerateImages, regeneratingChapters, queuedRegens, onDeleteImage, chapterNumMapper, pageNumber, overrides, onOverridesChange, prevPageEndKind }: { text: string; textEn?: string; lang: "hi" | "en"; chapterImages?: Map<number, Array<{ url: string; description: string; sceneIndex?: number; isInstagram?: boolean }>>; themeKey?: Theme; onRegenerateImages?: (chapterNum: number) => void; regeneratingChapters?: Set<number>; queuedRegens?: Set<number>; onDeleteImage?: (chapterNum: number, sceneIndex: number) => void; chapterNumMapper?: (perSkandhNum: number) => number; pageNumber?: number; overrides?: SectionOverride[]; onOverridesChange?: (pageNum: number, overrides: SectionOverride[]) => void; prevPageEndKind?: string }) {
+function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", onRegenerateImages, regeneratingChapters, queuedRegens, onDeleteImage, chapterNumMapper, pageNumber, overrides, onOverridesChange, prevPageEndKind, nextPageStartsNumberedShlok }: { text: string; textEn?: string; lang: "hi" | "en"; chapterImages?: Map<number, Array<{ url: string; description: string; sceneIndex?: number; isInstagram?: boolean }>>; themeKey?: Theme; onRegenerateImages?: (chapterNum: number) => void; regeneratingChapters?: Set<number>; queuedRegens?: Set<number>; onDeleteImage?: (chapterNum: number, sceneIndex: number) => void; chapterNumMapper?: (perSkandhNum: number) => number; pageNumber?: number; overrides?: SectionOverride[]; onOverridesChange?: (pageNum: number, overrides: SectionOverride[]) => void; prevPageEndKind?: string; nextPageStartsNumberedShlok?: boolean }) {
   const t = THEME_STYLES[themeKey];
   // If English selected and translation available, show English as plain text
   if (lang === "en" && textEn) {
@@ -2191,6 +2659,26 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
         sections[si + 1].lines = [...textLines, ...sections[si + 1].lines];
         sections.splice(si, 1);
         si--;
+      }
+    }
+  }
+
+  // ── Cross-page reconciliation: trailing ref-shlok → shlok ───────────
+  // If the next page begins with a numbered shlok continuation (e.g. `॥ ११ ॥`),
+  // any trailing ref-shlok on this page is actually the first half of that
+  // numbered verse. Promote it to "shlok" so both halves render with matching
+  // styling (bold, no left border, no italic-brown indent).
+  // Guard: only fire when the trailing section's last line is a half-shloka
+  // (single danda, no ॥) — complete cited ref-shloks must remain ref-shlok.
+  // Runs BEFORE overrides so the section editor sees the corrected default and
+  // any explicit user override still wins.
+  if (nextPageStartsNumberedShlok && sections.length > 0) {
+    const last = sections[sections.length - 1];
+    if (last.kind === "ref-shlok") {
+      const lastLine = last.lines[last.lines.length - 1] || "";
+      const endsAsHalf = /।\s*$/.test(lastLine) && !/॥/.test(lastLine);
+      if (endsAsHalf) {
+        last.kind = "shlok";
       }
     }
   }
@@ -4086,7 +4574,17 @@ export default function Bhagwatham() {
                     const allIdx = allPages.findIndex(p => p.pageNumber === page.pageNumber);
                     if (allIdx > 0) prevPage = allPages[allIdx - 1];
                   }
-                  const prevEndKind = prevPage ? getPageEndKind(prevPage.text) : undefined;
+                  // Pass current page text to upgrade prev-end-kind from ref-shlok → shlok
+                  // when this page starts with a numbered shlok continuation (e.g. ॥ ११ ॥).
+                  const prevEndKind = prevPage ? getPageEndKind(prevPage.text, page.text) : undefined;
+                  // Look ahead one page so the current page's trailing ref-shlok half-shloka
+                  // can be promoted to shlok if the next page closes the verse with `॥ N ॥`.
+                  let nextPage = pageIdx < displayPages.length - 1 ? displayPages[pageIdx + 1] : null;
+                  if (!nextPage && !searchQuery.trim()) {
+                    const allIdx = allPages.findIndex(p => p.pageNumber === page.pageNumber);
+                    if (allIdx >= 0 && allIdx < allPages.length - 1) nextPage = allPages[allIdx + 1];
+                  }
+                  const nextPageStartsNumberedShlok = nextPage ? pageStartsWithNumberedShlokContinuation(nextPage.text) : false;
                   // Hide the page number divider when a shloka or ref-shloka spans the page boundary —
                   // the verse should read as one continuous unit, not get visually broken.
                   const hidePageDivider = prevEndKind === "shlok" || prevEndKind === "ref-shlok";
@@ -4104,7 +4602,7 @@ export default function Bhagwatham() {
                       <p className={`text-[10px] ${theme.muted} font-medium text-right mt-1 mb-1 opacity-40`}>· {page.pageNumber} ·</p>
                     )}
                     {pageIdx === 0 && <p className={`text-[10px] ${theme.muted} font-medium text-right mt-0 mb-2 opacity-40`}>· {page.pageNumber} ·</p>}
-                    <RenderContent text={page.text} textEn={page.textEn} lang={lang} chapterImages={chapterImages} themeKey={settings.theme} onRegenerateImages={(num: number) => handleRegenerateImages(num, 0)} regeneratingChapters={regeneratingChapters} queuedRegens={queuedRegens} onDeleteImage={isDevMode ? handleDeleteImage : undefined} pageNumber={page.pageNumber} overrides={sectionOverrides[page.pageNumber]} onOverridesChange={isDevMode ? handleOverridesChange : undefined} prevPageEndKind={prevEndKind} chapterNumMapper={(perSkandhNum: number) => {
+                    <RenderContent text={page.text} textEn={page.textEn} lang={lang} chapterImages={chapterImages} themeKey={settings.theme} onRegenerateImages={(num: number) => handleRegenerateImages(num, 0)} regeneratingChapters={regeneratingChapters} queuedRegens={queuedRegens} onDeleteImage={isDevMode ? handleDeleteImage : undefined} pageNumber={page.pageNumber} overrides={sectionOverrides[page.pageNumber]} onOverridesChange={isDevMode ? handleOverridesChange : undefined} prevPageEndKind={prevEndKind} nextPageStartsNumberedShlok={nextPageStartsNumberedShlok} chapterNumMapper={(perSkandhNum: number) => {
                       // Find which skandh this page belongs to based on surrounding chapters
                       const ch = chapters.find(c => c.number === perSkandhNum && c.pageNumber <= page.pageNumber);
                       // Pick the last matching chapter (closest to this page)
