@@ -1333,8 +1333,33 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       }
 
       if (fullNewText === sourceText) {
-        console.warn("[applyEdit] All 5 strategies failed:", {
+        // FALLBACK: try adjacent pages. Sections (tatparya, anuvad, refs to
+        // Bhagavad Gita verses, etc.) can flow across page boundaries. The
+        // rendered DOM merges them but the source text is still split per
+        // page in the OCR — so the captured pageNum might be one page off
+        // from where the selection's text actually lives.
+        const tryPages = [pageNum - 1, pageNum + 1, pageNum - 2, pageNum + 2];
+        for (const tryNum of tryPages) {
+          if (tryNum < 1) continue;
+          const tryPage = prev.find(p => p.pageNumber === tryNum);
+          if (!tryPage) continue;
+          const src = tryPage.text;
+          let replaced = src.replace(effectiveOld, effectiveNew);
+          if (replaced === src) {
+            try { replaced = src.replace(new RegExp(buildFlexibleRegex(effectiveOld)), effectiveNew); } catch { /* skip */ }
+          }
+          if (replaced !== src) {
+            console.info(`[applyEdit] matched on adjacent page ${tryNum} (selection-captured page was ${pageNum})`);
+            savedText = replaced;
+            // Use the ADJACENT page's number for both state + persistence
+            (selectionContextRef.current as { resolvedPageNum?: number }).resolvedPageNum = tryNum;
+            return prev.map(p => p.pageNumber !== tryNum ? p : { ...p, text: replaced });
+          }
+        }
+
+        console.warn("[applyEdit] All strategies + adjacent-page fallback failed:", {
           pageNum,
+          triedPages: tryPages,
           oldText: oldText.slice(0, 80) + (oldText.length > 80 ? "…" : ""),
           effectiveOld: effectiveOld.slice(0, 80) + (effectiveOld.length > 80 ? "…" : ""),
           leftTrim, rightTrim,
@@ -1342,7 +1367,6 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
           newText: newText.slice(0, 80) + (newText.length > 80 ? "…" : ""),
           sourcePreview: sourceText.slice(0, 200),
         });
-        // Defer the alert so React doesn't double-fire it
         setTimeout(() => alert(
           "Couldn't locate the highlighted text in the page source.\n\n" +
           "This usually means the selection spans content from a different page, " +
@@ -1360,15 +1384,18 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     setAppliedFlash(true);
     setTimeout(() => setAppliedFlash(false), 1500);
 
-    // Persist directly to Supabase — works from the live site without any
-    // tunnel or local API server. Local cron picks these up and merges back to
-    // the batch JSON files for permanent storage.
+    // Persist directly to Supabase. If the adjacent-page fallback matched on
+    // a different page than the selection started on, use THAT page number
+    // — otherwise the row would overwrite the wrong page's edit.
+    const resolvedPageNum =
+      (selectionContextRef.current as { resolvedPageNum?: number }).resolvedPageNum ?? pageNum;
+    (selectionContextRef.current as { resolvedPageNum?: number }).resolvedPageNum = undefined; // reset for next call
     try {
       const res = await sbFetch("bhagavatam_page_edits", {
         method: "POST",
         headers: { Prefer: "return=representation,resolution=merge-duplicates" },
         body: JSON.stringify({
-          page_number: pageNum,
+          page_number: resolvedPageNum,
           text: savedText,
           edited_at: new Date().toISOString(),
           applied_to_git: false,
