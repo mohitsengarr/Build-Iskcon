@@ -1,950 +1,1066 @@
 [
   {
-    "trashId": "108-0-1779634807978",
-    "originalFile": "chapter-108.jpg",
-    "trashedFile": "108-0-1779634807978.jpg",
+    "trashId": "222-0-1779912909922",
+    "originalFile": "chapter-222.jpg",
+    "trashedFile": "222-0-1779912909922.jpg",
     "manifestEntry": {
-      "chapterNumber": 108,
-      "chapterTitle": "अध्याय पन्द्रह — राजा प्रियव्रत के वंशजों का यश-वर्णन",
-      "imagePath": "chapter-108.jpg",
-      "prompt": "Lord Krishna: handsome young man with luminous deep blue skin like dark rain cloud, oval face, large lotus-like almond dark brown eyes, enchanting gentle smile, clean-shaven, curly jet-black hair with peacock feather and golden crown, yellow silk dhoti, Kaustubha gem on chest, flower garland, bamboo flute in hand standing centrally in a scene from Srimad Bhagavatam Canto 5 Chapter 15. Scene: अध्याय पन्द्रह — राजा प्रियव्रत के वंशजों का यश-वर्णन. Ancient Vedic setting with forest, sacred river, s",
-      "generatedAt": "2026-05-19T12:04:49.989Z",
-      "sceneIndex": 0,
-      "cantoNumber": 5
-    },
-    "trashedAt": "2026-05-24T15:00:07.980Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "109-0-1779634808144",
-    "originalFile": "chapter-109.jpg",
-    "trashedFile": "109-0-1779634808144.jpg",
-    "manifestEntry": {
-      "chapterNumber": 109,
-      "chapterTitle": "अध्याय सोलह — जम्बूद्वीप का वर्णन",
-      "imagePath": "chapter-109.jpg",
-      "prompt": "Lord Krishna: handsome young man with luminous deep blue skin like dark rain cloud, oval face, large lotus-like almond dark brown eyes, enchanting gentle smile, clean-shaven, curly jet-black hair with peacock feather and golden crown, yellow silk dhoti, Kaustubha gem on chest, flower garland, bamboo flute in hand standing centrally in a scene from Srimad Bhagavatam Canto 5 Chapter 16. Scene: अध्याय सोलह — जम्बूद्वीप का वर्णन. Ancient Vedic setting with forest, sacred river, stone temples. Sages ",
-      "generatedAt": "2026-05-19T12:04:53.084Z",
-      "sceneIndex": 0,
-      "cantoNumber": 5
-    },
-    "trashedAt": "2026-05-24T15:00:08.144Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "113-0-1779634808324",
-    "originalFile": "chapter-134.jpg",
-    "trashedFile": "113-0-1779634808324.jpg",
-    "manifestEntry": {
-      "chapterNumber": 113,
-      "chapterTitle": "Chapter बीस",
-      "imagePath": "chapter-134.jpg",
-      "prompt": "Vamandev expands his body, revealing his vast divine form as Lord Vishnu, before Bali Maharaj in a serene celestial setting.",
-      "descriptionHi": "बलि महाराज ने अपना सर्वस्व भगवान् वामनदेव को दान में दे दिया, जो वास्तव में भगवान् विष्णु का अवतार थे। यह घटना बलि महाराज की बड़ी भक्ति और त्याग को दर्शाती है। भगवान् वामनदेव ने अपने विराट रूप को प्रकट किया।",
+      "chapterNumber": 222,
+      "chapterTitle": "Chapter इक्कीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-222.jpg",
+      "prompt": "Krishna plays his flute on the riverbank, enchanting the gopis with his divine music.",
+      "descriptionHi": "गोपियों ने कृष्ण के वेणुगीत की सराहना की, जो उनकी भक्ति और प्रेम को दर्शाता है। इस अध्याय में कृष्ण की मधुर वाणी और गोपियों के प्रेम का वर्णन है। यह अध्याय भक्ति और प्रेम की महत्ता को दर्शाता है।",
       "personasUsed": [
-        "vishnu"
+        "krishna_adult"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-12T02:53:31.286Z",
-      "sceneIndex": 0,
-      "cantoNumber": 5
+      "generatedAt": "2026-05-15T04:46:42.495Z",
+      "sceneIndex": 0
     },
-    "trashedAt": "2026-05-24T15:00:08.326Z",
+    "trashedAt": "2026-05-27T20:15:09.925Z",
     "operation": "delete"
   },
   {
-    "trashId": "114-0-1779634808483",
-    "originalFile": "chapter-114.jpg",
-    "trashedFile": "114-0-1779634808483.jpg",
+    "trashId": "223-0-1779912910099",
+    "originalFile": "chapter-223.jpg",
+    "trashedFile": "223-0-1779912910099.jpg",
     "manifestEntry": {
-      "chapterNumber": 114,
-      "chapterTitle": "अध्याय इक्कीस — सूर्य की गतियों का वर्णन",
-      "imagePath": "chapter-114.jpg",
-      "prompt": "Lord Krishna: handsome young man with luminous deep blue skin like dark rain cloud, oval face, large lotus-like almond dark brown eyes, enchanting gentle smile, clean-shaven, curly jet-black hair with peacock feather and golden crown, yellow silk dhoti, Kaustubha gem on chest, flower garland, bamboo flute in hand standing centrally in a scene from Srimad Bhagavatam Canto 5 Chapter 21. Scene: अध्याय इक्कीस — सूर्य की गतियों का वर्णन. Ancient Vedic setting with forest, sacred river, stone temples.",
-      "generatedAt": "2026-05-19T12:04:57.251Z",
-      "sceneIndex": 0,
-      "cantoNumber": 5
-    },
-    "trashedAt": "2026-05-24T15:00:08.484Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "115-0-1779634808650",
-    "originalFile": "chapter-115.jpg",
-    "trashedFile": "115-0-1779634808650.jpg",
-    "manifestEntry": {
-      "chapterNumber": 115,
-      "chapterTitle": "अध्याय बाईस — ग्रहों की कक्ष्याएँ",
-      "imagePath": "chapter-115.jpg",
-      "prompt": "Lord Krishna: handsome young man with luminous deep blue skin like dark rain cloud, oval face, large lotus-like almond dark brown eyes, enchanting gentle smile, clean-shaven, curly jet-black hair with peacock feather and golden crown, yellow silk dhoti, Kaustubha gem on chest, flower garland, bamboo flute in hand standing centrally in a scene from Srimad Bhagavatam Canto 5 Chapter 22. Scene: अध्याय बाईस — ग्रहों की कक्ष्याएँ. Ancient Vedic setting with forest, sacred river, stone temples. Sages ",
-      "generatedAt": "2026-05-19T12:05:00.393Z",
-      "sceneIndex": 0,
-      "cantoNumber": 5
-    },
-    "trashedAt": "2026-05-24T15:00:08.651Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "116-0-1779634808844",
-    "originalFile": "chapter-116.jpg",
-    "trashedFile": "116-0-1779634808844.jpg",
-    "manifestEntry": {
-      "chapterNumber": 116,
-      "chapterTitle": "अध्याय तेइस — शिशुमार ग्रह-मण्डल",
-      "imagePath": "chapter-116.jpg",
-      "prompt": "Lord Krishna: handsome young man with luminous deep blue skin like dark rain cloud, oval face, large lotus-like almond dark brown eyes, enchanting gentle smile, clean-shaven, curly jet-black hair with peacock feather and golden crown, yellow silk dhoti, Kaustubha gem on chest, flower garland, bamboo flute in hand standing centrally in a scene from Srimad Bhagavatam Canto 5 Chapter 23. Scene: अध्याय तेइस — शिशुमार ग्रह-मण्डल. Ancient Vedic setting with forest, sacred river, stone temples. Sages a",
-      "generatedAt": "2026-05-19T12:05:04.434Z",
-      "sceneIndex": 0,
-      "cantoNumber": 5
-    },
-    "trashedAt": "2026-05-24T15:00:08.845Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "117-0-1779634809006",
-    "originalFile": "chapter-117.jpg",
-    "trashedFile": "117-0-1779634809006.jpg",
-    "manifestEntry": {
-      "chapterNumber": 117,
-      "chapterTitle": "अध्याय चौबीस — नीचे के स्वर्गीय लोकों का वर्णन",
-      "imagePath": "chapter-117.jpg",
-      "prompt": "Lord Krishna: handsome young man with luminous deep blue skin like dark rain cloud, oval face, large lotus-like almond dark brown eyes, enchanting gentle smile, clean-shaven, curly jet-black hair with peacock feather and golden crown, yellow silk dhoti, Kaustubha gem on chest, flower garland, bamboo flute in hand standing centrally in a scene from Srimad Bhagavatam Canto 5 Chapter 24. Scene: अध्याय चौबीस — नीचे के स्वर्गीय लोकों का वर्णन. Ancient Vedic setting with forest, sacred river, stone te",
-      "generatedAt": "2026-05-19T12:05:08.702Z",
-      "sceneIndex": 0,
-      "cantoNumber": 5
-    },
-    "trashedAt": "2026-05-24T15:00:09.007Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "118-0-1779634809172",
-    "originalFile": "chapter-118.jpg",
-    "trashedFile": "118-0-1779634809172.jpg",
-    "manifestEntry": {
-      "chapterNumber": 118,
-      "chapterTitle": "अध्याय पच्चीस — भगवान् अनन्त की महिमा",
-      "imagePath": "chapter-118.jpg",
-      "prompt": "Lord Krishna: handsome young man with luminous deep blue skin like dark rain cloud, oval face, large lotus-like almond dark brown eyes, enchanting gentle smile, clean-shaven, curly jet-black hair with peacock feather and golden crown, yellow silk dhoti, Kaustubha gem on chest, flower garland, bamboo flute in hand standing centrally in a scene from Srimad Bhagavatam Canto 5 Chapter 25. Scene: अध्याय पच्चीस — भगवान् अनन्त की महिमा. Ancient Vedic setting with forest, sacred river, stone temples. Sa",
-      "generatedAt": "2026-05-19T12:05:12.802Z",
-      "sceneIndex": 0,
-      "cantoNumber": 5
-    },
-    "trashedAt": "2026-05-24T15:00:09.173Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "119-0-1779634809344",
-    "originalFile": "chapter-119.jpg",
-    "trashedFile": "119-0-1779634809344.jpg",
-    "manifestEntry": {
-      "chapterNumber": 119,
-      "chapterTitle": "अध्याय छब्बीस — नारकीय लोकों का वर्णन",
-      "imagePath": "chapter-119.jpg",
-      "prompt": "Lord Krishna: handsome young man with luminous deep blue skin like dark rain cloud, oval face, large lotus-like almond dark brown eyes, enchanting gentle smile, clean-shaven, curly jet-black hair with peacock feather and golden crown, yellow silk dhoti, Kaustubha gem on chest, flower garland, bamboo flute in hand standing centrally in a scene from Srimad Bhagavatam Canto 5 Chapter 26. Scene: अध्याय छब्बीस — नारकीय लोकों का वर्णन. Ancient Vedic setting with forest, sacred river, stone temples. Sa",
-      "generatedAt": "2026-05-19T12:05:16.876Z",
-      "sceneIndex": 0,
-      "cantoNumber": 5
-    },
-    "trashedAt": "2026-05-24T15:00:09.345Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "120-0-1779634809511",
-    "originalFile": "chapter-120.jpg",
-    "trashedFile": "120-0-1779634809511.jpg",
-    "manifestEntry": {
-      "chapterNumber": 120,
-      "chapterTitle": "अध्याय एक — अजामिल के जीवन का इतिहास",
-      "imagePath": "chapter-120.jpg",
-      "prompt": "Lord Krishna: handsome young man with luminous deep blue skin like dark rain cloud, oval face, large lotus-like almond dark brown eyes, enchanting gentle smile, clean-shaven, curly jet-black hair with peacock feather and golden crown, yellow silk dhoti, Kaustubha gem on chest, flower garland, bamboo flute in hand standing centrally in a scene from Srimad Bhagavatam Canto 6 Chapter 1. Scene: अध्याय एक — अजामिल के जीवन का इतिहास. Ancient Vedic setting with forest, sacred river, stone temples. Sage",
-      "generatedAt": "2026-05-19T12:05:20.136Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
-    },
-    "trashedAt": "2026-05-24T15:00:09.513Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "125-0-1779634809697",
-    "originalFile": "chapter-141.jpg",
-    "trashedFile": "125-0-1779634809697.jpg",
-    "manifestEntry": {
-      "chapterNumber": 125,
-      "chapterTitle": "Chapter छह",
-      "imagePath": "chapter-141.jpg",
-      "prompt": "Shukadeva narrates the story of Saubhari Muni's marriage to Mandhata's daughters in a serene forest setting.",
-      "descriptionHi": "इस अध्याय में महाराज अम्बरीष के वंशजों का वर्णन किया गया है, जिनमें विरूप, केतुमान और शम्भु प्रमुख हैं। सौभरि मुनि ने मान्धाता की पुत्रियों से विवाह किया और यह प्रसंग भी वर्णित किया गया है।",
+      "chapterNumber": 223,
+      "chapterTitle": "Chapter बाईस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-223.jpg",
+      "prompt": "Krishna removes the garments of unmarried gopis on a riverbank, who had worshipped Katyayani to attain him as their husband.",
+      "descriptionHi": "इस अध्याय में श्रीकृष्ण द्वारा अविवाहित गोपियों का चीरहरण किया गया है, जिन्होंने उन्हें पति रूप में पाने के लिए कात्यायनी की पूजा की थी। यह घटना कृष्ण की दिव्य लीला को दर्शाती है।",
       "personasUsed": [
-        "shukadeva"
+        "krishna_adult"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-12T04:22:52.300Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
+      "generatedAt": "2026-05-15T04:47:14.813Z",
+      "sceneIndex": 0
     },
-    "trashedAt": "2026-05-24T15:00:09.699Z",
+    "trashedAt": "2026-05-27T20:15:10.102Z",
     "operation": "delete"
   },
   {
-    "trashId": "126-0-1779634809903",
-    "originalFile": "chapter-142.jpg",
-    "trashedFile": "126-0-1779634809903.jpg",
+    "trashId": "224-0-1779912910359",
+    "originalFile": "chapter-224.jpg",
+    "trashedFile": "224-0-1779912910359.jpg",
     "manifestEntry": {
-      "chapterNumber": 126,
-      "chapterTitle": "Chapter सात",
-      "imagePath": "chapter-142.jpg",
-      "prompt": "Narada guides Harishchandra to worship Varuna, resulting in the birth of his son Rohit, in the royal palace.",
-      "descriptionHi": "इस अध्याय में मान्धाता के वंशजों का वर्णन हुआ है, जिसमें पुरुकुत्स तथा हरिश्चन्द्र की कथाएँ भी शामिल हैं। नरद मुनि के कहने पर हरिश्चन्द्र ने वरुण की उपासना की और उसके रोहित नाम का पुत्र उत्पन्न हुआ।",
+      "chapterNumber": 224,
+      "chapterTitle": "Chapter तेईस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-224.jpg",
+      "prompt": "Krishna meets the Brahmin wives near a yajna site, receiving their offerings and blessings.",
+      "descriptionHi": "इस अध्याय में भगवान श्रीकृष्ण ने ब्राह्मण-पत्नियों पर दया दिखाई और उन्हें आशीर्वाद दिया। ग्वालबालों को भोजन के लिए भिक्षा माँगने के लिए उत्साहित करने के बाद, श्रीकृष्ण ने ब्राह्मणों की पत्नियों से मिलकर उन्हें अपने दिव्य गुणों के बारे में बताया।",
       "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:47:44.087Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:15:10.360Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "225-0-1779912910573",
+    "originalFile": "chapter-225.jpg",
+    "trashedFile": "225-0-1779912910573.jpg",
+    "manifestEntry": {
+      "chapterNumber": 225,
+      "chapterTitle": "Chapter चौबीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-225.jpg",
+      "prompt": "Krishna stands before Nanda and the assembled cowherds in the lush village of Vrindavan, speaking with calm authority and wisdom. He gestures toward the majestic Govardhan hill in the background, convincing the villagers to redirect their worship from Indra to the sacred mountain, as the gathered cows and villagers listen with reverence and curiosity.",
+      "descriptionHi": "इस अध्याय में श्रीकृष्ण ने इन्द्र के लिए किये जाने वाले यज्ञ को रोककर गोवर्धन पर्वत की पूजा का विधान कराया। कृष्ण ने नन्द और ग्वालों को समझाया कि जीव कर्मवश जन्म लेते हैं और इन्द्र की पूजा की बजाय गोवर्धन पूजा अधिक उचित है। इस घटना का आध्यात्मिक महत्व यह है कि कृष्ण ने इन्द्र के अहंकार को चुनौती दी और प्रकृति एवं गोपालन की महत्ता को स्थापित किया।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:29:57.847Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:15:10.575Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "226-0-1779912910769",
+    "originalFile": "chapter-226.jpg",
+    "trashedFile": "226-0-1779912910769.jpg",
+    "manifestEntry": {
+      "chapterNumber": 226,
+      "chapterTitle": "Chapter पच्चीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-226.jpg",
+      "prompt": "Krishna stands in the lush meadows of Vrindavan, effortlessly lifting the massive Govardhan Hill on the tip of his little finger like an umbrella. Beneath the mountain, joyful villagers, cows, and calves take shelter from the torrential rain, gazing up at Krishna with wonder, gratitude, and devotion.",
+      "descriptionHi": "जब व्रजवासियों ने इन्द्र-यज्ञ बंद कर दिया तो देवराज इन्द्र क्रोधित होकर वृन्दावन पर प्रलयंकारी वर्षा बरसाने लगे। तब भगवान् श्रीकृष्ण ने गोवर्धन पर्वत को अपनी एक उंगली पर उठाकर समस्त गोकुलवासियों को उस विशाल छत्र के नीचे आश्रय दिया। यह घटना कृष्ण की अलौकिक शक्ति और भक्तों के प्रति उनके असीम प्रेम एवं संरक्षण का प्रतीक है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:30:34.235Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:15:10.771Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "227-0-1779912910978",
+    "originalFile": "chapter-227.jpg",
+    "trashedFile": "227-0-1779912910978.jpg",
+    "manifestEntry": {
+      "chapterNumber": 227,
+      "chapterTitle": "Chapter छब्बीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-227.jpg",
+      "prompt": "Nanda Maharaja sits among a gathering of attentive Gopa villagers in Vrindavana, narrating the divine prophecy of sage Garga. He speaks with reverence about young Krishna's celestial nature, describing how Krishna has appeared across the ages in different forms. The villagers listen with wonder and deep devotion on their faces.",
+      "descriptionHi": "इस अध्याय में नन्द महाराज गोपों को गर्ग मुनि द्वारा कही गई कृष्ण के ऐश्वर्य की बातें सुनाते हैं। गर्ग मुनि ने बताया था कि कृष्ण तीन पूर्व युगों में श्वेत, लाल और पीले रूपों में प्रकट हो चुके हैं और अब द्वापर में कृष्ण (गहरे नीले) रूप में अवतरित हुए हैं। यह अध्याय कृष्ण की दिव्यता और उनके गोकुल के रक्षक स्वरूप की आध्यात्मिक महत्ता को प्रकट करता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:31:35.983Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:15:10.979Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "229-0-1779912911144",
+    "originalFile": "chapter-229.jpg",
+    "trashedFile": "229-0-1779912911144.jpg",
+    "manifestEntry": {
+      "chapterNumber": 229,
+      "chapterTitle": "Chapter अट्ठाईस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-229.jpg",
+      "prompt": "Krishna stands before Varuna, the ocean deity, in his luminous underwater realm. Nanda Maharaja, recently freed from captivity, watches in reverence as Varuna bows respectfully before Krishna, honoring him with folded hands. The divine court glows with celestial light, and Nanda Maharaja gazes at Krishna in wonder, realizing the supreme godhood of his beloved son.",
+      "descriptionHi": "इस अध्याय में नन्द महाराज एकादशी व्रत के बाद रात्रि के अशुभ समय में यमुना स्नान करने गए, जहाँ वरुण के सेवक ने उन्हें बंदी बना लिया। भगवान कृष्ण ने स्थिति जानकर तुरंत वरुणलोक जाकर नन्द महाराज को मुक्त कराया और वरुणदेव ने कृष्ण का भव्य स्वागत किया। इस घटना से प्रेरित होकर ग्वालों ने कृष्ण के परम धाम के दर्शन की इच्छा व्यक्त की, जो कृष्ण की दिव्यता को पहचानने का भावपूर्ण क्षण था।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:33:17.865Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:15:11.148Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "230-0-1779912911324",
+    "originalFile": "chapter-230.jpg",
+    "trashedFile": "230-0-1779912911324.jpg",
+    "manifestEntry": {
+      "chapterNumber": 230,
+      "chapterTitle": "Chapter उन्तीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-230.jpg",
+      "prompt": "Krishna dances with the gopis in a joyful raas leela under the starry night sky.",
+      "descriptionHi": "इस अध्याय में भगवान श्रीकृष्ण और गोपियों के बीच रासनृत्य का आयोजन होता है, जिसमें वे तर्क-वितर्क करते हैं और फिर रासनृत्य का आनन्द लेते हैं। यह अध्याय प्रेम और भक्ति की भावना को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:48:14.763Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:15:11.325Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "231-0-1779913801552",
+    "originalFile": "chapter-231.jpg",
+    "trashedFile": "231-0-1779913801552.jpg",
+    "manifestEntry": {
+      "chapterNumber": 231,
+      "chapterTitle": "Chapter तीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-231.jpg",
+      "prompt": "Krishna disappears, leaving the gopis to search for him in the forest, following his footprints alongside Radharani's.",
+      "descriptionHi": "गोपियाँ कृष्ण की खोज में जंगल-जंगल घूमती हैं, उनकी लीलाओं की नकल उतारती हैं और श्रीमती राधारानी के पदचिह्न देखकर व्याकुल हो जाती हैं। इस अध्याय का मुख्य घटना गोपियों की कृष्ण के प्रति भक्ति और विरह को दर्शाती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:48:35.110Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:01.555Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "232-0-1779913801959",
+    "originalFile": "chapter-232.jpg",
+    "trashedFile": "232-0-1779913801959.jpg",
+    "manifestEntry": {
+      "chapterNumber": 232,
+      "chapterTitle": "Chapter इकतीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-232.jpg",
+      "prompt": "Krishna's absence prompts the gopis to sing sorrowful songs on the riverbank, expressing their longing and devotion to him.",
+      "descriptionHi": "गोपियों के विरह गीत में भगवान कृष्ण की अनुपस्थिति में गोपियों का दुःख और विरह भाव देखा जाता है, जो उनके प्रेम और भक्ति को दर्शाता है। गोपियों के गीत भगवान कृष्ण के प्रति उनके प्रेम को व्यक्त करते हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:48:59.581Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:01.961Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "233-0-1779913802388",
+    "originalFile": "chapter-233.jpg",
+    "trashedFile": "233-0-1779913802388.jpg",
+    "manifestEntry": {
+      "chapterNumber": 233,
+      "chapterTitle": "Chapter बत्तीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-233.jpg",
+      "prompt": "Krishna appears before the gopis, wearing silk yellow robes and a garland of flowers, and they rejoice at his presence.",
+      "descriptionHi": "इस अध्याय में श्रीकृष्ण ने गोपियों के मध्य प्रकट होकर उन्हें ढाढ़स दी और गहन आनन्द की अनुभूति व्यक्त की। गोपियाँ कृष्ण को देखकर आनन्द से गद्गद हो उठीं। कृष्ण ने रेशमी पीत वस्त्र और सुन्दर फूलों की माला पहने हुए गोपियों के समक्ष प्रकट हुए।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:49:49.025Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:02.389Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "234-0-1779913802796",
+    "originalFile": "chapter-234.jpg",
+    "trashedFile": "234-0-1779913802796.jpg",
+    "manifestEntry": {
+      "chapterNumber": 234,
+      "chapterTitle": "Chapter तैंतीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-234.jpg",
+      "prompt": "Krishna dances with gopis on the riverbank, surrounded by forest, as they sing and gesture in loving devotion.",
+      "descriptionHi": "भगवान् श्रीकृष्ण ने यमुना नदी के तट पर गोपियों के साथ रास नृत्य किया, जिसमें उन्होंने अपनी प्रिय सखियों के साथ अनेक रूपों में अपना विस्तार किया। गोपियाँ कृष्ण के साथ गीत, नृत्य और प्रेमपूर्ण इशारों के द्वारा उनकी इन्द्रियों को तुष्ट करने लगीं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:50:15.112Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:02.797Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "235-0-1779913803003",
+    "originalFile": "chapter-235.jpg",
+    "trashedFile": "235-0-1779913803003.jpg",
+    "manifestEntry": {
+      "chapterNumber": 235,
+      "chapterTitle": "Chapter चौंतीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-235.jpg",
+      "prompt": "In the Ambika forest at night, Krishna gently touches a large serpent with his lotus feet while the serpent holds Nanda Maharaja. In an instant, the serpent is transformed, releasing Nanda and revealing itself as Sudarsana, a radiant celestial being, who now stands before Krishna with folded hands, freed from his ancient curse.",
+      "descriptionHi": "इस अध्याय में भगवान् श्रीकृष्ण ने अपने पिता नन्द महाराज को एक विशाल सर्प के चंगुल से बचाया, जब वे अम्बिका वन में शिव पूजा के लिए गये थे। कृष्ण के चरणकमल स्पर्श से वह सर्प अपने श्राप से मुक्त होकर सुदर्शन नामक विद्याधर के दिव्य रूप में प्रकट हो गया। यह घटना यह दर्शाती है कि भगवान् के चरण-स्पर्श मात्र से जीव के समस्त पाप और श्राप नष्ट हो जाते हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:38:58.236Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:03.004Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "236-0-1779913803173",
+    "originalFile": "chapter-236.jpg",
+    "trashedFile": "236-0-1779913803173.jpg",
+    "manifestEntry": {
+      "chapterNumber": 236,
+      "chapterTitle": "Chapter पैंतीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-236.jpg",
+      "prompt": "Krishna plays his flute in the forest, enchanting the gopis, trees, and animals with his mesmerizing melody.",
+      "descriptionHi": "इस अध्याय में गोपियों द्वारा कृष्ण के प्रति अपना विरह-भाव व्यक्त किया जाता है, जब वे जंगल में चले जाते हैं। गोपियों के गीत कृष्ण के सौन्दर्य और उनकी बाँसुरी की मधुर ध्वनि का वर्णन करते हैं। यह अध्याय कृष्ण और गोपियों के प्रेम को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:50:42.535Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:03.174Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "237-0-1779913803437",
+    "originalFile": "chapter-237.jpg",
+    "trashedFile": "237-0-1779913803437.jpg",
+    "manifestEntry": {
+      "chapterNumber": 237,
+      "chapterTitle": "Chapter छत्तीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-237.jpg",
+      "prompt": "Krishna stands calm and radiant before a massive bull demon named Arishtasura near a cowherd village, fearlessly protecting the terrified villagers gathered behind him. With divine composure, Krishna confronts the charging beast, his form luminous and serene. Nearby, sage Narada later sits before King Kamsa, revealing the divine secret of Krishna and Balarama's true identity.",
+      "descriptionHi": "इस अध्याय में भगवान कृष्ण ने विशाल बैल का रूप धारण किए अरिष्टासुर का वध किया, जो ग्वालों के गाँव में भय फैला रहा था। कृष्ण ने ग्रामवासियों को अभय देकर उस असुर का अंत किया। बाद में नारद मुनि ने कंस को यह रहस्य बताया कि कृष्ण और बलराम वास्तव में वसुदेव के पुत्र हैं।",
+      "personasUsed": [
+        "krishna_adult",
         "narada"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-12T04:30:07.203Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
+      "generatedAt": "2026-04-15T14:40:35.682Z",
+      "sceneIndex": 0
     },
-    "trashedAt": "2026-05-24T15:00:09.905Z",
+    "trashedAt": "2026-05-27T20:30:03.437Z",
     "operation": "delete"
   },
   {
-    "trashId": "127-0-1779634810159",
-    "originalFile": "chapter-143.jpg",
-    "trashedFile": "127-0-1779634810159.jpg",
+    "trashId": "238-0-1779913803595",
+    "originalFile": "chapter-238.jpg",
+    "trashedFile": "238-0-1779913803595.jpg",
     "manifestEntry": {
-      "chapterNumber": 127,
-      "chapterTitle": "Chapter आठ",
-      "imagePath": "chapter-143.jpg",
-      "prompt": "Sagar's sons meet Kapildev near a vast excavation, where they mistakenly accuse him of stealing their ashvamedha horse.",
-      "descriptionHi": "इस अध्याय में रोहित के वंशजों का वर्णन मिलता है, जिसमें सगर नाम का एक राजा हुआ जिसकी कथा कपिलदेव तथा सगर के पुत्रों के विनाश के सम्बन्ध में वर्णित है। राजा सगर के पुत्रों ने अश्वमेघ यज्ञ के घोड़े की खोज के दौरान कपिलदेव से भेंट की।",
-      "generatedAt": "2026-04-12T04:33:38.306Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
-    },
-    "trashedAt": "2026-05-24T15:00:10.161Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "128-0-1779635701216",
-    "originalFile": "chapter-144.jpg",
-    "trashedFile": "128-0-1779635701216.jpg",
-    "manifestEntry": {
-      "chapterNumber": 128,
-      "chapterTitle": "Chapter नौ",
-      "imagePath": "chapter-144.jpg",
-      "prompt": "Bhagirath stands on the riverbank as Ganga descends to Earth, with Lord Shiva calming her waves in the background.",
-      "descriptionHi": "भगीरथ ने गंगा को पृथ्वी पर लाने के लिए कठोर तपस्या की और माता गंगा ने उनकी तपस्या से प्रसन्न होकर उन्हें दर्शन दिया। भगीरथ ने अपने पितरों का उद्धार करने की प्रार्थना की और माता गंगा ने भगवान शिव के माध्यम से उनकी तरंगों को वश में करने का वरदान दिया।",
-      "generatedAt": "2026-04-12T04:36:37.546Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
-    },
-    "trashedAt": "2026-05-24T15:15:01.220Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "129-0-1779635701410",
-    "originalFile": "chapter-145.jpg",
-    "trashedFile": "129-0-1779635701410.jpg",
-    "manifestEntry": {
-      "chapterNumber": 129,
-      "chapterTitle": "Chapter दस",
-      "imagePath": "chapter-145.jpg",
-      "prompt": "Lord Rama, accompanied by Lakshmana, searches for Sita in the forest after her abduction by Ravana.",
-      "descriptionHi": "इस अध्याय में भगवान् रामचन्द्र की लीलाओं का वर्णन किया गया है, जिनमें रावण को हराना और अयोध्या लौटना शामिल है। भगवान् रामचन्द्र के कार्यकलापों का भी वर्णन हुआ है।",
-      "generatedAt": "2026-04-12T04:39:55.182Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
-    },
-    "trashedAt": "2026-05-24T15:15:01.412Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "130-0-1779635701733",
-    "originalFile": "chapter-146.jpg",
-    "trashedFile": "130-0-1779635701733.jpg",
-    "manifestEntry": {
-      "chapterNumber": 130,
-      "chapterTitle": "Chapter ग्यारह",
-      "imagePath": "chapter-146.jpg",
-      "prompt": "Lord Rama, disguised as a commoner, walks through his kingdom and overhears a man questioning Sita's character, prompting Rama to send Sita into exile.",
-      "descriptionHi": "इस अध्याय में भगवान् रामचन्द्र के जीवन के महत्वपूर्ण घटनाओं का वर्णन किया गया है, जिनमें उनका अयोध्या में रहना, यज्ञों का सम्पन्न करना और सीतादेवी को वनवास देना शामिल है। भगवान् रामचन्द्र की ओर से भरत और शत्रुघ्न ने विभिन्न देशों पर विजय प्राप्त की। सीतादेवी अपने पुत्रों को वाल्मीकि के संरक्षण में छोड़कर पृथ्वी में समा गईं।",
-      "generatedAt": "2026-04-12T05:22:31.590Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
-    },
-    "trashedAt": "2026-05-24T15:15:01.735Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "131-0-1779635701912",
-    "originalFile": "chapter-147.jpg",
-    "trashedFile": "131-0-1779635701912.jpg",
-    "manifestEntry": {
-      "chapterNumber": 131,
-      "chapterTitle": "Chapter बारह",
-      "imagePath": "chapter-147.jpg",
-      "prompt": "Shukadeva narrates the lineage of Lord Rama's son Kush to Uttara in a serene forest setting.",
-      "descriptionHi": "भगवान् रामचन्द्र के पुत्र कुश की वंशावली का वर्णन किया गया है, जिसमें उनके वंश के सदस्यों के नाम और उनके उत्तराधिकारी बताए गए हैं। शुकदेव गोस्वामी ने यह वंशावली बताई है।",
+      "chapterNumber": 238,
+      "chapterTitle": "Chapter सैंतीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-238.jpg",
+      "prompt": "In the verdant pastures of Vraja, the young Krishna stands calm and radiant as the mighty demon Keshi, who has taken the form of a great horse, approaches. Krishna faces the enormous creature with serene composure and divine strength, subduing it effortlessly. Nearby, the sage Narada watches in reverent awe, ready to sing praises of Krishna's celestial deeds.",
+      "descriptionHi": "इस अध्याय में कंस के आदेश पर केशी असुर विशाल घोड़े का रूप धारण कर व्रज में आता है, किंतु भगवान् कृष्ण उसका वध करते हैं। तत्पश्चात् नारदमुनि कृष्ण की भावी लीलाओं का महिमा-गायन करते हैं और व्योमासुर का भी अंत होता है। यह अध्याय कृष्ण की अलौकिक शक्ति और उनके भक्त-रक्षक स्वरूप की आध्यात्मिक महिमा को प्रकट करता है।",
       "personasUsed": [
-        "shukadeva"
+        "krishna_adult",
+        "narada"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-12T06:03:12.960Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
+      "generatedAt": "2026-04-18T11:51:57.802Z",
+      "sceneIndex": 0
     },
-    "trashedAt": "2026-05-24T15:15:01.915Z",
+    "trashedAt": "2026-05-27T20:30:03.596Z",
     "operation": "delete"
   },
   {
-    "trashId": "132-0-1779635702081",
-    "originalFile": "chapter-148.jpg",
-    "trashedFile": "132-0-1779635702081.jpg",
+    "trashId": "239-0-1779913803758",
+    "originalFile": "chapter-239.jpg",
+    "trashedFile": "239-0-1779913803758.jpg",
     "manifestEntry": {
-      "chapterNumber": 132,
-      "chapterTitle": "Chapter तेरह",
-      "imagePath": "chapter-148.jpg",
-      "prompt": "Vasistha and King Nimi exchange curses in a serene palace setting, leading to their demise.",
-      "descriptionHi": "महाराज निमि की वंशावली का वर्णन किया गया है, जिसमें जनक का जन्म हुआ था। वसिष्ठ और निमि के बीच शाप और प्रतिशाप के कारण वे दोनों मर गये। इसके बाद जनक का जन्म हुआ और उनकी वंशावली का वर्णन किया गया है।",
-      "generatedAt": "2026-04-12T06:03:32.285Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
-    },
-    "trashedAt": "2026-05-24T15:15:02.083Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "133-0-1779635702257",
-    "originalFile": "chapter-149.jpg",
-    "trashedFile": "133-0-1779635702257.jpg",
-    "manifestEntry": {
-      "chapterNumber": 133,
-      "chapterTitle": "Chapter चौदह",
-      "imagePath": "chapter-149.jpg",
-      "prompt": "Pururava meets Urvashi in Kurukshetra, and they spend a night together, symbolizing their fleeting yet intense love.",
-      "descriptionHi": "इस अध्याय में पुरुरवा और उर्वशी की प्रेम कहानी का वर्णन है, जिसमें पुरुरवा उर्वशी के सौन्दर्य पर मोहित हो जाता है और उनके प्रेम की कहानी कुरुक्षेत्र में आगे बढ़ती है। ब्रह्मा और विष्णु की उत्पत्ति का वर्णन भी इस अध्याय में है।",
-      "generatedAt": "2026-04-12T06:07:02.837Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
-    },
-    "trashedAt": "2026-05-24T15:15:02.259Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "134-0-1779635702516",
-    "originalFile": "chapter-150.jpg",
-    "trashedFile": "134-0-1779635702516.jpg",
-    "manifestEntry": {
-      "chapterNumber": 134,
-      "chapterTitle": "Chapter पन्द्रह",
-      "imagePath": "chapter-150.jpg",
-      "prompt": "Parashurama stands before King Kartavirya Arjuna, refusing to back down, as Jamadagni looks on, amidst a serene landscape.",
-      "descriptionHi": "इस अध्याय में परशुराम की कथा का वर्णन है, जो भगवान् के योद्धा अवतार हैं और उन्होंने कार्तवीर्यार्जुन का वध किया। मुख्य पात्र परशुराम, जमदग्नि और कार्तवीर्यार्जुन हैं।",
+      "chapterNumber": 239,
+      "chapterTitle": "Chapter अड़तीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-239.jpg",
+      "prompt": "Akrura rides his chariot through a golden sunset landscape toward Gokul, his hands folded in reverence and his eyes filled with tears of devotion. He pauses on a meadow path, overwhelmed with spiritual longing, contemplating the divine vision of Krishna and Balarama whose feet even Brahma and Shiva worship.",
+      "descriptionHi": "इस अध्याय में अक्रूर की मथुरा से वृन्दावन की यात्रा का वर्णन है, जिसमें वे कंस के आदेश पर कृष्ण और बलराम को मथुरा लाने के लिए निकले। मार्ग में वे मन ही मन कृष्ण के चरणकमलों के दर्शन की आकांक्षा और भक्तिभाव से भरे सोचते रहे कि ब्रह्मा और रुद्र जिन चरणों की पूजा करते हैं, उन्हें देखने का सौभाग्य उन्हें मिलने वाला है। सूर्यास्त के समय वे गोकुल पहुँचे और भाव-विभोर होकर रथ से उतर पड़े।",
       "personasUsed": [
+        "krishna_adult",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:21:36.606Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:03.759Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "241-0-1779913803963",
+    "originalFile": "chapter-241.jpg",
+    "trashedFile": "241-0-1779913803963.jpg",
+    "manifestEntry": {
+      "chapterNumber": 241,
+      "chapterTitle": "Chapter चालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-241.jpg",
+      "prompt": "Akrura kneels with folded hands in reverence at the banks of the Yamuna river, his eyes filled with tears of devotion. Before him appear the radiant divine forms of Krishna and Balarama glowing with celestial light. Akrura, overwhelmed with spiritual bliss, offers a heartfelt prayer, surrendering completely to the Supreme Lord.",
+      "descriptionHi": "इस अध्याय में अक्रूर भगवान श्रीकृष्ण की स्तुति करते हैं। अक्रूर, जो कृष्ण को मथुरा ले जाने आए थे, यमुना नदी में स्नान के समय कृष्ण और बलराम का दिव्य दर्शन पाते हैं और भाव-विभोर होकर परमात्मा की महिमा का गुणगान करते हैं। यह स्तुति भक्ति और आत्मसमर्पण का अत्यंत मार्मिक एवं आध्यात्मिक क्षण है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:23:48.071Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:03.965Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "242-0-1779913804121",
+    "originalFile": "chapter-242.jpg",
+    "trashedFile": "242-0-1779913804121.jpg",
+    "manifestEntry": {
+      "chapterNumber": 242,
+      "chapterTitle": "Chapter इकतालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-242.jpg",
+      "prompt": "Krishna and his companions walk along a serene riverbank, engaged in a peaceful conversation under the warm sunlight.",
+      "descriptionHi": "इस अध्याय में कोई विशिष्ट कथा या घटना नहीं दी गई है, इसलिए मैं क्षमा चाहता हूँ कि मैं इस अध्याय के बारे में विस्तार से नहीं बता सकता। अध्याय की अनुपस्थिति में कोई विशिष्ट घटना या पात्रों का वर्णन नहीं किया जा सकता।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:24:28.444Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:04.125Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "243-0-1779913804315",
+    "originalFile": "chapter-243.jpg",
+    "trashedFile": "243-0-1779913804315.jpg",
+    "manifestEntry": {
+      "chapterNumber": 243,
+      "chapterTitle": "Chapter बयालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-243.jpg",
+      "prompt": "Krishna and Balaram meet hunchbacked Trivakra on a Mathura street, healing her hump with a touch.",
+      "descriptionHi": "इस अध्याय में भगवान कृष्ण और बलराम की मथुरा यात्रा का वर्णन है, जहाँ वे त्रिवक्रा नामक एक कुबड़ी दासी से मिलते हैं और उसका कूबड़ ठीक करते हैं। यहाँ पर यज्ञ-धनुष के टूटने की भी कथा है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:51:07.569Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:04.315Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "244-0-1779913804486",
+    "originalFile": "chapter-244.jpg",
+    "trashedFile": "244-0-1779913804486.jpg",
+    "manifestEntry": {
+      "chapterNumber": 244,
+      "chapterTitle": "Chapter तैंतालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-244.jpg",
+      "prompt": "Young Krishna stands fearlessly at the grand arena gateway in Mathura, facing the mighty royal elephant Kuvalayapida sent by Kansa. With divine strength and calm resolve, Krishna subdues the enormous tusked elephant, as amazed onlookers watch in awe. The atmosphere radiates Krishna's boundless courage and celestial power.",
+      "descriptionHi": "इस अध्याय में कृष्ण ने कंस द्वारा भेजे गए विशालकाय हाथी कुवलयापीड का वध किया, जो मल्लयुद्ध के अखाड़े के द्वार पर खड़ा था। कृष्ण ने अपनी अलौकिक शक्ति और साहस से उस मदमस्त हाथी को परास्त कर दिया। यह घटना कृष्ण की दैवीय शक्ति और अधर्म के विनाश की ओर उनके अटल संकल्प को दर्शाती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:27:44.233Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:04.487Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "245-0-1779913804647",
+    "originalFile": "chapter-245.jpg",
+    "trashedFile": "245-0-1779913804647.jpg",
+    "manifestEntry": {
+      "chapterNumber": 245,
+      "chapterTitle": "Chapter चवालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-245.jpg",
+      "prompt": "In the royal wrestling arena of Mathura, the young Krishna stands victorious after overcoming the mighty wrestler Chanura, as the assembled crowd cheers with joy. Nearby, Balrama stands equally triumphant. The atmosphere shifts as Krishna then confronts the tyrant king Kamsa upon his throne, bringing the reign of injustice to its decisive end.",
+      "descriptionHi": "इस अध्याय में कृष्ण और बलराम ने कंस के पहलवानों चाणूर और मुष्टिक को पराजित किया और अंततः कृष्ण ने कंस का वध किया। अखाड़े में उपस्थित स्त्रियाँ इस असमान युद्ध को देखकर व्यथित थीं, परन्तु कृष्ण की दिव्य शक्ति ने सत्य की विजय सुनिश्चित की। यह अध्याय अधर्म पर धर्म की और अत्याचार पर न्याय की विजय का प्रतीक है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:28:39.585Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:04.648Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "246-0-1779913804796",
+    "originalFile": "chapter-246.jpg",
+    "trashedFile": "246-0-1779913804796.jpg",
+    "manifestEntry": {
+      "chapterNumber": 246,
+      "chapterTitle": "Chapter पैंतालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-246.jpg",
+      "prompt": "Krishna and Balaram comfort their parents, Devaki and Vasudeva, in the palace.",
+      "descriptionHi": "इस अध्याय में कृष्ण द्वारा अपने माता-पिता देवकी और वसुदेव को सान्त्वना देने और उग्रसेन को राजा के रूप में प्रतिष्ठित करने का वर्णन है। कृष्ण और बलराम अपने गुरु के मृत पुत्र को वापस लाने के लिए जाते हैं और फिर घर लौटते हैं। यह अध्याय कृष्ण के प्रेम और समर्पण को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:51:39.181Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:04.796Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "247-0-1779913805009",
+    "originalFile": "chapter-247.jpg",
+    "trashedFile": "247-0-1779913805009.jpg",
+    "manifestEntry": {
+      "chapterNumber": 247,
+      "chapterTitle": "Chapter छियालिस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-247.jpg",
+      "prompt": "Krishna sends Udhdava to Vrindavan to comfort Nanda, Yashoda, and the gopis, who are sorrowful due to separation from him.",
+      "descriptionHi": "इस अध्याय में श्रीकृष्ण ने उद्धव को व्रज भेजा ताकि वे नन्द, यशोदा और गोपियों के दुख को दूर कर सकें। उद्धव ने व्रज पहुँचकर गौवों और ग्वालों को कृष्ण और बलराम की महिमा का गायन करते देखा। यह अध्याय कृष्ण के प्रेम और उनके भक्तों के प्रति उनकी चिंता को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "yashoda"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:51:58.388Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:05.010Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "248-0-1779913805162",
+    "originalFile": "chapter-248.jpg",
+    "trashedFile": "248-0-1779913805162.jpg",
+    "manifestEntry": {
+      "chapterNumber": 248,
+      "chapterTitle": "Chapter सैंतालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-248.jpg",
+      "prompt": "Krishna's messenger Udhhav consoles grieving Gopiyas in a serene forest setting.",
+      "descriptionHi": "इस अध्याय में भगवान् श्रीकृष्ण के आदेश से उद्धव ने गोपियों को भगवान् का सन्देश दिया और उन्हें ढाढ़स बँधाया। गोपियाँ कृष्ण के साथ खेली गईं लीलाओं का स्मरण करने लगीं और सारी लाज-हया छोड़कर जोर जोर से रोने लगीं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:52:43.128Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:05.164Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "249-0-1779913805308",
+    "originalFile": "chapter-249.jpg",
+    "trashedFile": "249-0-1779913805308.jpg",
+    "manifestEntry": {
+      "chapterNumber": 249,
+      "chapterTitle": "Chapter अड़तालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-249.jpg",
+      "prompt": "Trivakra, beautifully adorned, welcomes Krishna with deep reverence into her elegantly decorated home, offering him a place of honor. Krishna, gracious and radiant, accepts her devoted hospitality as she and her companions perform a heartfelt worship, her lifelong longing finally fulfilled through this rare and blessed moment of divine closeness.",
+      "descriptionHi": "इस अध्याय में श्रीकृष्ण त्रिवक्रा (कुब्जा) के घर जाते हैं, जहाँ वह उनका भव्य स्वागत करती है और कृष्ण उसके साथ रमण करके उसकी काम-पीड़ा से मुक्ति करते हैं। त्रिवक्रा ने केवल एक बार चन्दन-लेप अर्पित करने के पुण्य से श्रीकृष्ण की दुर्लभ संगति प्राप्त की। इसके बाद भगवान् अक्रूर के घर जाते हैं और पाण्डवों की सहायता के लिए अक्रूर को हस्तिनापुर भेजते हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:33:35.396Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:05.309Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "250-0-1779913805534",
+    "originalFile": "chapter-250.jpg",
+    "trashedFile": "250-0-1779913805534.jpg",
+    "manifestEntry": {
+      "chapterNumber": 250,
+      "chapterTitle": "Chapter उनचास",
+      "cantoNumber": 10,
+      "imagePath": "chapter-250.jpg",
+      "prompt": "Kunti, with tearful eyes, asks Akruра about Krishna's concern for her and her sons in the palace of Hastinapur.",
+      "descriptionHi": "इस अध्याय में अक्रूर हस्तिनापुर जाकर धृतराष्ट्र के पाण्डवों के प्रति दुर्व्यवहार को देखते हैं और कुन्तीदेवी से मिलकर उन्हें आश्वासन देते हैं। कुन्तीदेवी अपने पुत्रों की विपदा में कृष्ण का नाम-कीर्तन करती हैं। अक्रूर धृतराष्ट्र को कृष्ण का सन्देश देते हैं।",
+      "personasUsed": [
+        "krishna_adult",
+        "kunti"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:53:18.845Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:05.535Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "251-0-1779913805698",
+    "originalFile": "chapter-251.jpg",
+    "trashedFile": "251-0-1779913805698.jpg",
+    "manifestEntry": {
+      "chapterNumber": 251,
+      "chapterTitle": "Chapter पचास",
+      "cantoNumber": 10,
+      "imagePath": "chapter-251.jpg",
+      "prompt": "Krishna stands at the edge of the western sea, overseeing the magnificent construction of Dwarkapuri, a golden coastal city rising from the ocean. Architects, divine builders, and citizens gather around him as he envisions a new home for the Yadava clan, his serene gaze reflecting wisdom, protection, and the promise of a prosperous future.",
+      "descriptionHi": "इस अध्याय में कृष्ण ने जरासन्ध को सत्रह बार युद्ध में पराजित किया और यादवों की सुरक्षा के लिए समुद्र तट पर द्वारकापुरी की स्थापना की। कंस-वध के बाद उसकी रानियाँ अस्ति और प्राप्ति अपने पिता जरासन्ध के पास गईं और उसे यादवों के विरुद्ध भड़काया। यह अध्याय कृष्ण की दूरदर्शिता और नेतृत्व का प्रतीक है, जिसमें उन्होंने अपनी प्रजा की रक्षा हेतु एक नई नगरी का निर्माण किया।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:35:12.889Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:05.700Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "252-0-1779913805871",
+    "originalFile": "chapter-252.jpg",
+    "trashedFile": "252-0-1779913805871.jpg",
+    "manifestEntry": {
+      "chapterNumber": 252,
+      "chapterTitle": "Chapter इक्यावन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-252.jpg",
+      "prompt": "Inside a dim mountain cave, Mucukunda awakens from his ancient sleep, his eyes filled with divine fire, as he gazes upon the radiant form of Krishna standing before him in golden light. Krishna, serene and unarmed, smiles gently at the awakened king, blessing him with his luminous presence after long ages of slumber.",
+      "descriptionHi": "इस अध्याय में श्रीकृष्ण ने चतुराई से कालयवन को एक पर्वतगुफा तक ले जाकर मुचुकुन्द की क्रोधाग्नि दृष्टि द्वारा उसका नाश करवाया। मुचुकुन्द, जो देवताओं की सेवा के पश्चात् दीर्घनिद्रा के वरदान के साथ गुफा में सो रहे थे, अचानक जागकर कृष्ण के दर्शन से धन्य हुए। यह घटना श्रीकृष्ण की दिव्य लीला और भक्त के प्रति उनकी अनुकम्पा का सुंदर उदाहरण है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:36:00.029Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:05.872Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "253-0-1779913806059",
+    "originalFile": "chapter-253.jpg",
+    "trashedFile": "253-0-1779913806059.jpg",
+    "manifestEntry": {
+      "chapterNumber": 253,
+      "chapterTitle": "Chapter बावन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-253.jpg",
+      "prompt": "Krishna receives Rukmini's message through a brahmin in Dwarka, leading to their union as husband and wife.",
+      "descriptionHi": "इस अध्याय में भगवान कृष्ण और रुक्मिणी की कहानी बताई गई है, जहां कृष्ण एक ब्राह्मण के माध्यम से रुक्मिणी का संदेश सुनते हैं और उन्हें अपनी पत्नी बनाते हैं। यह घटना द्वारका में होती है और इसमें कृष्ण की भक्ति और प्रेम की भावना को दर्शाया गया है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:53:47.092Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:06.060Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "254-0-1779913806274",
+    "originalFile": "chapter-254.jpg",
+    "trashedFile": "254-0-1779913806274.jpg",
+    "manifestEntry": {
+      "chapterNumber": 254,
+      "chapterTitle": "Chapter तिरपन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-254.jpg",
+      "prompt": "Krishna arrives in Kundin, the capital of Vidarbha, to rescue Rukmini from her unwanted marriage amidst the presence of powerful opponents.",
+      "descriptionHi": "इस अध्याय में भगवान् श्रीकृष्ण द्वारा रुक्मिणी का अपहरण वर्णित है, जिसमें कृष्ण अपने प्रेम को प्रकट करने और रुक्मिणी के भाई रुक्मी के विरोध का सामना करने के लिए विदर्भ की राजधानी कुण्डिन पहुँचते हैं। यह घटना कृष्ण और रुक्मिणी के प्रेम की गहराई और उनके बीच के भावनात्मक बंधन को दर्शाती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:54:11.756Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:06.275Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "255-0-1779913806429",
+    "originalFile": "chapter-255.jpg",
+    "trashedFile": "255-0-1779913806429.jpg",
+    "manifestEntry": {
+      "chapterNumber": 255,
+      "chapterTitle": "Chapter चौवन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-255.jpg",
+      "prompt": "Krishna rescues Rukmini from opposing kings on a battlefield, reassuring her with a gentle smile amidst the chaos.",
+      "descriptionHi": "इस अध्याय में श्रीकृष्ण और रुक्मिणी के विवाह की कहानी बताई गई है, जिसमें श्रीकृष्ण ने रुक्मिणी का अपहरण करने के बाद विरोधी राजाओं को परास्त किया। यह अध्याय श्रीकृष्ण की शक्ति और रुक्मिणी की भक्ति को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:54:34.393Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:06.431Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "256-0-1779913806585",
+    "originalFile": "chapter-256.jpg",
+    "trashedFile": "256-0-1779913806585.jpg",
+    "manifestEntry": {
+      "chapterNumber": 256,
+      "chapterTitle": "Chapter पचपन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-256.jpg",
+      "prompt": "Krishna's son Pradyumna stands calmly in the palace, surrounded by his family, as he shares his wisdom and spiritual insights with them.",
+      "descriptionHi": "इस अध्याय में प्रद्युम्न की कथा वर्णित है, जिसमें उनके जीवन और कार्यों का वर्णन किया गया है। यह अध्याय प्रद्युम्न के चरित्र और उनके द्वारा सामना की गई चुनौतियों पर केंद्रित है। प्रद्युम्न कृष्ण के पुत्र हैं और उनकी कहानी भक्ति और सpiritual ज्ञान से भरी हुई है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:55:04.522Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:06.586Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "257-0-1779913806773",
+    "originalFile": "chapter-257.jpg",
+    "trashedFile": "257-0-1779913806773.jpg",
+    "manifestEntry": {
+      "chapterNumber": 257,
+      "chapterTitle": "Chapter छप्पन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-257.jpg",
+      "prompt": "King Satrājit arrives in Dwarka wearing the dazzling Syamantaka gem on a golden chain around his neck, radiating such brilliant light that the citizens mistake him for the sun god himself. Krishna, seated among the people of Dwarka, calmly clarifies that the radiant visitor is Satrājit, not Surya, but a man adorned with a precious jewel.",
+      "descriptionHi": "इस अध्याय में राजा सत्राजित द्वारा स्यमन्तक मणि प्राप्त करने और उसके भाई प्रसेन के शिकार पर जाते समय सिंह द्वारा मारे जाने की कथा वर्णित है। सत्राजित ने लालचवश यह मणि यदुराज उग्रसेन को देने से मना कर दिया था। यह लीला भौतिक सम्पत्ति की व्यर्थता और उससे उत्पन्न होने वाली विपत्तियों को दर्शाती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:40:01.366Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:06.773Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "258-0-1779913806973",
+    "originalFile": "chapter-258.jpg",
+    "trashedFile": "258-0-1779913806973.jpg",
+    "manifestEntry": {
+      "chapterNumber": 258,
+      "chapterTitle": "Chapter सत्तावन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-258.jpg",
+      "prompt": "Satyabhama, grief-stricken and tearful, rushes to meet Krishna in Hastinapur to deliver the sorrowful news of her father Satrajit's death. Krishna listens with calm compassion, his hand gently raised in reassurance, as Balarama stands nearby. The setting is a royal courtyard, the atmosphere heavy with sorrow and divine solace.",
+      "descriptionHi": "इस अध्याय में शतधन्वा द्वारा सत्राजित की हत्या और स्यमन्तक मणि की चोरी का वर्णन है। सत्यभामा के शोक-संदेश पर श्रीकृष्ण और बलराम द्वारका लौटे और शतधन्वा का वध कर न्याय स्थापित किया। अंततः मणि अक्रूर के पास पाई गई और सत्राजित का अंतिम संस्कार सम्पन्न हुआ।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T15:42:47.149Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:06.974Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "259-0-1779913807124",
+    "originalFile": "chapter-259.jpg",
+    "trashedFile": "259-0-1779913807124.jpg",
+    "manifestEntry": {
+      "chapterNumber": 259,
+      "chapterTitle": "Chapter अट्ठावन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-259.jpg",
+      "prompt": "Krishna meets Yudhishthira and Draupadi at Indraprastha, receiving a warm welcome and blessings from Kunti.",
+      "descriptionHi": "इस अध्याय में भगवान् कृष्ण का पाँच राजकुमारियों से विवाह और पाण्डवों से मिलने इन्द्रप्रस्थ जाना बताया गया है। मुख्य पात्र कृष्ण, युधिष्ठिर, द्रौपदी, कुन्ती और ब्रह्मा हैं। यह अध्याय कृष्ण के प्रेम और संरक्षण को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "kunti",
+        "draupadi",
+        "yudhishthira"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:55:38.260Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:07.126Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "260-0-1779913807310",
+    "originalFile": "chapter-260.jpg",
+    "trashedFile": "260-0-1779913807310.jpg",
+    "manifestEntry": {
+      "chapterNumber": 260,
+      "chapterTitle": "Chapter उनसठ",
+      "cantoNumber": 10,
+      "imagePath": "chapter-260.jpg",
+      "prompt": "Krishna confronts Narakasur on the battlefield, surrounded by his defeated army, with Satyabhama by his side.",
+      "descriptionHi": "इस अध्याय में भगवान् कृष्ण द्वारा नरकासुर का वध और असुर द्वारा अपहरण की गई युवतियों से विवाह का वर्णन है। भगवान् कृष्ण ने अपनी शक्ति और बुद्धिमत्ता से नरकासुर को पराजित किया।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:56:15.569Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:07.311Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "261-0-1779913807474",
+    "originalFile": "chapter-261.jpg",
+    "trashedFile": "261-0-1779913807474.jpg",
+    "manifestEntry": {
+      "chapterNumber": 261,
+      "chapterTitle": "Chapter साठ",
+      "cantoNumber": 10,
+      "imagePath": "chapter-261.jpg",
+      "prompt": "Krishna teases Rukmini in her palace, sparking tears and emotional turmoil between the divine couple.",
+      "descriptionHi": "इस अध्याय में भगवान कृष्ण और रुक्मिणी के बीच एक परिहास दिखाया गया है, जहां कृष्ण रुक्मिणी को रुठाते हैं और फिर शांत करते हैं। यह अध्याय प्रेमियों के कलह रूपी ऐश्वर्य का प्रदर्शन करता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:56:38.565Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:07.476Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "262-0-1779913807632",
+    "originalFile": "chapter-262.jpg",
+    "trashedFile": "262-0-1779913807632.jpg",
+    "manifestEntry": {
+      "chapterNumber": 262,
+      "chapterTitle": "Chapter इकसठ",
+      "cantoNumber": 10,
+      "imagePath": "chapter-262.jpg",
+      "prompt": "At the festive wedding celebration of Aniruddha in a grand palace courtyard adorned with flowers and lamps, Balarama stands resolute and commanding before Rukmi, as a heated dispute over a dice game reaches its dramatic conclusion. Nearby, Krishna watches with a calm, sorrowful expression, witnessing the inevitable consequences of pride and bitter words.",
+      "descriptionHi": "इस अध्याय में भगवान् श्रीकृष्ण के पुत्रों, पौत्रों और अन्य संतानों की विस्तृत सूची प्रस्तुत की गई है। अनिरुद्ध के विवाहोत्सव के अवसर पर बलराम और रुक्मी के बीच द्यूत क्रीड़ा में विवाद उत्पन्न हुआ, जिसके परिणामस्वरूप बलराम ने रुक्मी का वध किया। यह घटना यह दर्शाती है कि अहंकार और वाणी की कटुता किस प्रकार विनाश का कारण बन सकती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T16:55:26.672Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:07.634Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "263-0-1779913807879",
+    "originalFile": "chapter-263.jpg",
+    "trashedFile": "263-0-1779913807879.jpg",
+    "manifestEntry": {
+      "chapterNumber": 263,
+      "chapterTitle": "Chapter बासठ",
+      "cantoNumber": 10,
+      "imagePath": "chapter-263.jpg",
+      "prompt": "In a beautifully adorned palace chamber, Usha, the daughter of Banasura, joyfully meets the young prince Aniruddha, grandson of Krishna. The two sit together in a moment of tender, divine love, surrounded by flowers and soft lamplight, their union blessed by destiny, while the grand city of Banasura lies peacefully outside.",
+      "descriptionHi": "इस अध्याय में बाणासुर की पुत्री उषा और अनिरुद्ध के प्रेम-मिलन का वर्णन है। बाणासुर राजा बलि का सबसे बड़ा पुत्र था और शिवजी का परम भक्त था, जिन्होंने प्रसन्न होकर उसकी नगरी की रक्षा का वचन दिया था। उषा और अनिरुद्ध का गुप्त मिलन और फिर बाणासुर द्वारा अनिरुद्ध को बंदी बनाए जाने की घटना इस अध्याय की मुख्य कथा है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T17:12:11.609Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:07.880Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "264-0-1779913808036",
+    "originalFile": "chapter-264.jpg",
+    "trashedFile": "264-0-1779913808036.jpg",
+    "manifestEntry": {
+      "chapterNumber": 264,
+      "chapterTitle": "Chapter तिरसठ",
+      "cantoNumber": 10,
+      "imagePath": "chapter-264.jpg",
+      "prompt": "Krishna faces Banasur's mother on the battlefield, turning away respectfully.",
+      "descriptionHi": "इस अध्याय में कृष्ण और बाणासुर के बीच युद्ध का वर्णन है, जिसमें कृष्ण ने बाणासुर की सेना का सफाया किया और उसकी माता के सामने अपना मुख मोड़ लिया। यह अध्याय कृष्ण की शक्ति और दया को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:57:00.008Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:08.039Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "265-0-1779913808197",
+    "originalFile": "chapter-265.jpg",
+    "trashedFile": "265-0-1779913808197.jpg",
+    "manifestEntry": {
+      "chapterNumber": 265,
+      "chapterTitle": "Chapter चौंसठ",
+      "cantoNumber": 10,
+      "imagePath": "chapter-265.jpg",
+      "prompt": "Krishna gently reaches out and touches a large lizard trapped in a dry well, transforming it back into King Nriga, who emerges in a radiant divine form with folded hands, gratitude and relief on his face. Surrounding him are astonished onlookers as he ascends heavenward, liberated from his long curse.",
+      "descriptionHi": "इस अध्याय में श्रीकृष्ण ने राजा नृग को उनके शाप से मुक्त किया, जो एक दान में गलती के कारण गिरगिट बन गए थे। श्रीकृष्ण ने उन्हें स्पर्श करके उनका उद्धार किया और वे पुनः दिव्य रूप प्राप्त कर स्वर्ग को गए। यह कथा दान की शुद्धता और भगवान की कृपा का महत्व दर्शाती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T17:15:45.554Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:08.199Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "266-0-1779913808515",
+    "originalFile": "chapter-266.jpg",
+    "trashedFile": "266-0-1779913808515.jpg",
+    "manifestEntry": {
+      "chapterNumber": 266,
+      "chapterTitle": "Chapter पैंसठ",
+      "cantoNumber": 10,
+      "imagePath": "chapter-266.jpg",
+      "prompt": "Balarama meets Krishna's parents, Nanda and Yashoda, on the riverbank of Yamuna in Gokul, embracing them with love and respect.",
+      "descriptionHi": "इस अध्याय में भगवान् बलराम के गोकुल जाने का वर्णन है, जहाँ वे गोपियों के साथ रमण करते हैं और यमुना नदी का कर्षण करते हैं। यह अध्याय प्रेम, स्नेह और परिवारिक मिलन की भावना को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "yashoda"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:57:24.159Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:08.516Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "278-0-1779913808677",
+    "originalFile": "chapter-278.jpg",
+    "trashedFile": "278-0-1779913808677.jpg",
+    "manifestEntry": {
+      "chapterNumber": 278,
+      "chapterTitle": "Chapter सतहत्तर",
+      "cantoNumber": 10,
+      "imagePath": "chapter-278.jpg",
+      "prompt": "Krishna confronts Shalva on the battlefield, resolving their conflict with divine power.",
+      "descriptionHi": "इस अध्याय में कृष्ण द्वारा शाल्व का वध वर्णित है, जिसमें कृष्ण की शक्ति और शाल्व की पराजय का वर्णन है। यह अध्याय कृष्ण की दिव्य शक्ति को प्रदर्शित करता है। कृष्ण की जीत आध्यात्मिक ज्ञान की प्राप्ति का प्रतीक है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:58:25.066Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:08.678Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "279-0-1779913808844",
+    "originalFile": "chapter-279.jpg",
+    "trashedFile": "279-0-1779913808844.jpg",
+    "manifestEntry": {
+      "chapterNumber": 279,
+      "chapterTitle": "Chapter अठहत्तर",
+      "cantoNumber": 10,
+      "imagePath": "chapter-279.jpg",
+      "prompt": "Krishna confronts Dantavakra on the battlefield, their gadas at the ready, as the fate of the conflict hangs in the balance.",
+      "descriptionHi": "इस अध्याय में भगवान् कृष्ण द्वारा दन्तवक्र और विदूरथ के पराजय का वर्णन है, जो अपने मित्र शाल्व की मृत्यु का बदला लेने के लिए युद्धभूमि में उतरे थे। कृष्ण की दिव्य शक्ति और शांति का प्रदर्शन इस अध्याय का मुख्य आकर्षण है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-05-15T04:58:55.774Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-05-27T20:30:08.846Z",
+    "operation": "delete"
+  },
+  {
+    "trashId": "290-0-1779913809002",
+    "originalFile": "chapter-290.jpg",
+    "trashedFile": "290-0-1779913809002.jpg",
+    "manifestEntry": {
+      "chapterNumber": 290,
+      "chapterTitle": "Chapter नवासी",
+      "imagePath": "chapter-290.jpg",
+      "prompt": "Krishna and Arjuna revive the dead sons of a bereaved brahmin in Dwarka, showcasing their divine powers and compassion.",
+      "descriptionHi": "इस अध्याय में भगवान कृष्ण और अर्जुन द्वारा एक दुखियारे ब्राह्मण के मृत पुत्रों को फिर से वापस लाने की कहानी बताई गई है, जो उनकी दिव्य शक्तियों और दया को प्रदर्शित करती है। यह घटना द्वारका में घटित हुई और इसमें भगवान कृष्ण की महानता का प्रदर्शन हुआ।",
+      "personasUsed": [
+        "krishna_adult",
         "arjuna"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-12T06:10:23.310Z",
+      "generatedAt": "2026-04-13T11:30:29.437Z",
       "sceneIndex": 0,
-      "cantoNumber": 6
+      "cantoNumber": 10
     },
-    "trashedAt": "2026-05-24T15:15:02.517Z",
+    "trashedAt": "2026-05-27T20:30:09.003Z",
     "operation": "delete"
   },
   {
-    "trashId": "135-0-1779635702676",
-    "originalFile": "chapter-135.jpg",
-    "trashedFile": "135-0-1779635702676.jpg",
+    "trashId": "291-0-1779913809202",
+    "originalFile": "chapter-291.jpg",
+    "trashedFile": "291-0-1779913809202.jpg",
     "manifestEntry": {
-      "chapterNumber": 135,
-      "chapterTitle": "अध्याय सोलह — राजा चित्रकेतु की परमेश्वर से भेंट",
-      "imagePath": "chapter-135.jpg",
-      "prompt": "Lord Krishna: handsome young man with luminous deep blue skin like dark rain cloud, oval face, large lotus-like almond dark brown eyes, enchanting gentle smile, clean-shaven, curly jet-black hair with peacock feather and golden crown, yellow silk dhoti, Kaustubha gem on chest, flower garland, bamboo flute in hand standing centrally in a scene from Srimad Bhagavatam Canto 6 Chapter 16. Scene: अध्याय सोलह — राजा चित्रकेतु की परमेश्वर से भेंट. Ancient Vedic setting with forest, sacred river, stone ",
-      "generatedAt": "2026-05-19T12:05:24.131Z",
+      "chapterNumber": 291,
+      "chapterTitle": "Chapter नब्बे",
+      "imagePath": "chapter-291.jpg",
+      "prompt": "Krishna, surrounded by Arjuna and Yudhishthira, showers blessings upon his people and brahmins in the kingdom of Dwaraka.",
+      "descriptionHi": "भगवान् कृष्ण ने अपनी प्रजा और ब्राह्मणों पर इच्छित वस्तुओं की वर्षा की, जैसे इन्द्र जल की वर्षा करता है। अर्जुन और युधिष्ठिर जैसे भक्तों के माध्यम से उन्होंने धर्म के सिद्धान्तों का पालन करवाया। यह अध्याय भगवान् कृष्ण की महिमाओं का सारांश प्रस्तुत करता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "arjuna",
+        "yudhishthira"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-13T11:25:26.992Z",
       "sceneIndex": 0,
-      "cantoNumber": 6
+      "cantoNumber": 10
     },
-    "trashedAt": "2026-05-24T15:15:02.679Z",
+    "trashedAt": "2026-05-27T20:30:09.203Z",
     "operation": "delete"
   },
   {
-    "trashId": "136-0-1779635702847",
-    "originalFile": "chapter-165.jpg",
-    "trashedFile": "136-0-1779635702847.jpg",
+    "trashId": "201-0-1779913809393",
+    "originalFile": "chapter-201.jpg",
+    "trashedFile": "201-0-1779913809393.jpg",
     "manifestEntry": {
-      "chapterNumber": 136,
-      "chapterTitle": "Chapter सत्रह",
-      "imagePath": "chapter-165.jpg",
-      "prompt": "Krishna and his companions stroll peacefully along a serene riverbank.",
-      "descriptionHi": "इस अध्याय में कोई विशेष घटना नहीं है क्योंकि अध्याय सामग्री खाली है।",
+      "chapterNumber": 201,
+      "chapterTitle": "Chapter चौबीस",
+      "cantoNumber": 9,
+      "imagePath": "chapter-201.jpg",
+      "prompt": "Krishna and Kunti sit together in a serene palace, discussing their family lineage and ancestral heritage.",
+      "descriptionHi": "इस अध्याय में विदर्भ के वंशजों और उनके परिवार के बारे में बताया गया है, जिसमें कृष्ण और कुन्ती जैसे महत्वपूर्ण पात्र शामिल हैं। यह अध्याय वंशावली और परिवारिक संबंधों पर केंद्रित है।",
       "personasUsed": [
-        "krishna_adult"
+        "krishna_adult",
+        "kunti"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-12T08:32:49.772Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
-    },
-    "trashedAt": "2026-05-24T15:15:02.848Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "137-0-1779635703024",
-    "originalFile": "chapter-153.jpg",
-    "trashedFile": "137-0-1779635703024.jpg",
-    "manifestEntry": {
-      "chapterNumber": 137,
-      "chapterTitle": "Chapter अठारह",
-      "imagePath": "chapter-153.jpg",
-      "prompt": "Yayati meets Devayani at a well and rescues her, leading to their marriage, in a serene forest setting.",
-      "descriptionHi": "राजा ययाति को अपने पुत्र पूरु से यौवन की पुनःप्राप्ति होती है, जो एक महत्वपूर्ण घटना है। इस अध्याय में ययाति के जीवन और उसके परिवार के सदस्यों के बीच के संबंधों का वर्णन किया गया है। यह अध्याय ययाति के जीवन के महत्वपूर्ण पहलुओं को उजागर करता है।",
-      "generatedAt": "2026-04-12T06:26:05.944Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
-    },
-    "trashedAt": "2026-05-24T15:15:03.025Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "138-0-1779635703181",
-    "originalFile": "chapter-166.jpg",
-    "trashedFile": "138-0-1779635703181.jpg",
-    "manifestEntry": {
-      "chapterNumber": 138,
-      "chapterTitle": "Chapter उन्नीस",
-      "imagePath": "chapter-166.jpg",
-      "prompt": "Krishna shields cows and cowherds from a massive forest fire in the Munjavana forest.",
-      "descriptionHi": "इस अध्याय में कृष्ण द्वारा मुञ्जारण्य में लगी महाग्नि से गौवों तथा ग्वालों की रक्षा की जानकारी दी गई है, जिसमें कृष्ण की दिव्य शक्ति और ग्वालों की रक्षा के लिए उनकी चिंता को दर्शाया गया है। यह घटना कृष्ण की दिव्य शक्ति और उनके अनुयायियों के प्रति उनके प्रेम को प्रकट करती है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-12T08:38:47.647Z",
-      "sceneIndex": 0,
-      "cantoNumber": 6
-    },
-    "trashedAt": "2026-05-24T15:15:03.182Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "1-0-1779635703348",
-    "originalFile": "chapter-001.jpg",
-    "trashedFile": "1-0-1779635703348.jpg",
-    "manifestEntry": {
-      "chapterNumber": 1,
-      "chapterTitle": "Chapter एक",
-      "imagePath": "chapter-001.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 6 Chapter 1. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय एक — अजामिल के जीवन का इतिहास. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 6 Chapter 1. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय एक — अजामिल के जीवन का इतिहास. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T11:48:51.423Z",
+      "generatedAt": "2026-05-15T04:42:39.225Z",
       "sceneIndex": 0
     },
-    "trashedAt": "2026-05-24T15:15:03.349Z",
+    "trashedAt": "2026-05-27T20:30:09.394Z",
     "operation": "delete"
   },
   {
-    "trashId": "2-0-1779635703510",
-    "originalFile": "chapter-002.jpg",
-    "trashedFile": "2-0-1779635703510.jpg",
+    "trashId": "240-0-1779913809553",
+    "originalFile": "chapter-240.jpg",
+    "trashedFile": "240-0-1779913809553.jpg",
     "manifestEntry": {
-      "chapterNumber": 2,
-      "chapterTitle": "Chapter दो",
-      "imagePath": "chapter-002.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 2. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय दो — गजेन्द्र का संकट. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 2. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय दो — गजेन्द्र का संकट. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T11:55:46.047Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:03.511Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "3-0-1779635703664",
-    "originalFile": "chapter-003.jpg",
-    "trashedFile": "3-0-1779635703664.jpg",
-    "manifestEntry": {
-      "chapterNumber": 3,
-      "chapterTitle": "Chapter तीन",
-      "imagePath": "chapter-003.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 3. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय तीन — गजेन्द्र की समर्पण-स्तुति. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 3. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय तीन — गजेन्द्र की समर्पण-स्तुति. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T11:56:24.633Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:03.666Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "4-0-1779635703852",
-    "originalFile": "chapter-004.jpg",
-    "trashedFile": "4-0-1779635703852.jpg",
-    "manifestEntry": {
-      "chapterNumber": 4,
-      "chapterTitle": "Chapter चार",
-      "imagePath": "chapter-004.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 4. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय चार — गजेन्द्र का वैकुण्ठ गमन. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 4. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय चार — गजेन्द्र का वैकुण्ठ गमन. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T11:56:55.570Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:03.856Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "5-0-1779635704022",
-    "originalFile": "chapter-005.jpg",
-    "trashedFile": "5-0-1779635704022.jpg",
-    "manifestEntry": {
-      "chapterNumber": 5,
-      "chapterTitle": "Chapter पाँच",
-      "imagePath": "chapter-005.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 7 Chapter 5. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय पाँच — हिरण्यकशिपु का साधु पुत्र प्रह्लाद महाराज. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 7 Chapter 5. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय पाँच — हिरण्यकशिपु का साधु पुत्र प्रह्लाद महाराज. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T11:50:41.403Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:04.024Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "6-0-1779635704209",
-    "originalFile": "chapter-006.jpg",
-    "trashedFile": "6-0-1779635704209.jpg",
-    "manifestEntry": {
-      "chapterNumber": 6,
-      "chapterTitle": "Chapter छह",
-      "imagePath": "chapter-006.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 6. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय छह — देवताओं तथा असुरों द्वारा सन्धि की घोषणा. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 6. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय छह — देवताओं तथा असुरों द्वारा सन्धि की घोषणा. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T11:57:27.164Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:04.211Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "7-0-1779635704378",
-    "originalFile": "chapter-007.jpg",
-    "trashedFile": "7-0-1779635704378.jpg",
-    "manifestEntry": {
-      "chapterNumber": 7,
-      "chapterTitle": "Chapter सात",
-      "imagePath": "chapter-007.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 7. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय सात — शिवजी द्वारा विषपान से ब्रह्माण्ड की रक्षा. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 7. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय सात — शिवजी द्वारा विषपान से ब्रह्माण्ड की रक्षा. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T11:57:57.045Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:04.380Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "8-0-1779635704531",
-    "originalFile": "chapter-008.jpg",
-    "trashedFile": "8-0-1779635704531.jpg",
-    "manifestEntry": {
-      "chapterNumber": 8,
-      "chapterTitle": "अध्याय आठ",
-      "imagePath": "chapter-008.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 8. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय आठ — क्षीरसागर का मन्थन. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 8. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय आठ — क्षीरसागर का मन्थन. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T11:58:30.059Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:04.532Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "9-0-1779635704692",
-    "originalFile": "chapter-009.jpg",
-    "trashedFile": "9-0-1779635704692.jpg",
-    "manifestEntry": {
-      "chapterNumber": 9,
-      "chapterTitle": "अध्याय नौ",
-      "imagePath": "chapter-009.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 7 Chapter 9. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय नौ — प्रह्लाद द्वारा नृसिंह देव का प्रार्थनाओं से शान्त किया जाना. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 7 Chapter 9. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय नौ — प्रह्लाद द्वारा नृसिंह देव का प्रार्थनाओं से शान्त किया जाना. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T11:53:25.866Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:04.696Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "10-0-1779635704881",
-    "originalFile": "chapter-010.jpg",
-    "trashedFile": "10-0-1779635704881.jpg",
-    "manifestEntry": {
-      "chapterNumber": 10,
-      "chapterTitle": "Chapter दस",
-      "imagePath": "chapter-010.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 10. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय दस — देवताओं तथा असुरों के बीच युद्ध. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 10. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय दस — देवताओं तथा असुरों के बीच युद्ध. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T11:59:00.441Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:04.884Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "11-0-1779635705046",
-    "originalFile": "chapter-011.jpg",
-    "trashedFile": "11-0-1779635705046.jpg",
-    "manifestEntry": {
-      "chapterNumber": 11,
-      "chapterTitle": "Chapter ग्यारह",
-      "imagePath": "chapter-011.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 11. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय ग्यारह — इन्द्र द्वारा असुरों का संहार. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 11. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय ग्यारह — इन्द्र द्वारा असुरों का संहार. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T11:59:28.853Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:05.047Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "12-0-1779635705207",
-    "originalFile": "chapter-012.jpg",
-    "trashedFile": "12-0-1779635705207.jpg",
-    "manifestEntry": {
-      "chapterNumber": 12,
-      "chapterTitle": "Chapter बारह",
-      "imagePath": "chapter-012.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 12. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय बारह — मोहिनी-मूर्ति अवतार पर शिवजी का मोहित होना. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 12. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय बारह — मोहिनी-मूर्ति अवतार पर शिवजी का मोहित होना. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T11:59:59.214Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:05.209Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "13-0-1779635705403",
-    "originalFile": "chapter-013.jpg",
-    "trashedFile": "13-0-1779635705403.jpg",
-    "manifestEntry": {
-      "chapterNumber": 13,
-      "chapterTitle": "Chapter तेरह",
-      "imagePath": "chapter-013.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 13. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय तेरह — भावी मनुओं का वर्णन. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 13. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय तेरह — भावी मनुओं का वर्णन. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T12:00:33.229Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:05.410Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "15-0-1779635705572",
-    "originalFile": "chapter-015.jpg",
-    "trashedFile": "15-0-1779635705572.jpg",
-    "manifestEntry": {
-      "chapterNumber": 15,
-      "chapterTitle": "Chapter पन्द्रह",
-      "imagePath": "chapter-015.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 7 Chapter 15. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय पंद्रह — सुसंस्कृत मनुष्यों के लिए उपदेश. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 7 Chapter 15. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय पंद्रह — सुसंस्कृत मनुष्यों के लिए उपदेश. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T11:55:16.546Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:05.575Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "16-0-1779635705734",
-    "originalFile": "chapter-016.jpg",
-    "trashedFile": "16-0-1779635705734.jpg",
-    "manifestEntry": {
-      "chapterNumber": 16,
-      "chapterTitle": "Chapter सोलह",
-      "imagePath": "chapter-016.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 16. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय सोलह — पयोव्रत पूजा विधि का पालन करना. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 16. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय सोलह — पयोव्रत पूजा विधि का पालन करना. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T12:01:01.866Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:05.736Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "17-0-1779635705927",
-    "originalFile": "chapter-017.jpg",
-    "trashedFile": "17-0-1779635705927.jpg",
-    "manifestEntry": {
-      "chapterNumber": 17,
-      "chapterTitle": "Chapter सत्रह",
-      "imagePath": "chapter-017.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 3 Chapter 17. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय सत्रह — हिरण्याक्ष की दिग्विजय मैत्रेय उबाच. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 3 Chapter 17. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय सत्रह — हिरण्याक्ष की दिग्विजय मैत्रेय उबाच. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T11:32:48.371Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:05.929Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "18-0-1779635706129",
-    "originalFile": "chapter-018.jpg",
-    "trashedFile": "18-0-1779635706129.jpg",
-    "manifestEntry": {
-      "chapterNumber": 18,
-      "chapterTitle": "Chapter अठारह",
-      "imagePath": "chapter-018.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 3 Chapter 18. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय अठारह — भगवान्‌ वराह तथा असुर हिरण्याक्च के मध्य युद्ध मैत्रेय उबाच. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 3 Chapter 18. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय अठारह — भगवान्‌ वराह तथा असुर हिरण्याक्च के मध्य युद्ध मैत्रेय उबाच. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T11:33:11.553Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:06.131Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "19-0-1779635706305",
-    "originalFile": "chapter-019.jpg",
-    "trashedFile": "19-0-1779635706305.jpg",
-    "manifestEntry": {
-      "chapterNumber": 19,
-      "chapterTitle": "Chapter उन्नीस",
-      "imagePath": "chapter-019.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 19. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय उन्नीस — बलि महाराज से वामनदेव द्वारा दान की याचना. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 19. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय उन्नीस — बलि महाराज से वामनदेव द्वारा दान की याचना. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T12:01:32.909Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:06.308Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "20-0-1779635706573",
-    "originalFile": "chapter-020.jpg",
-    "trashedFile": "20-0-1779635706573.jpg",
-    "manifestEntry": {
-      "chapterNumber": 20,
-      "chapterTitle": "Chapter बीस",
-      "imagePath": "chapter-020.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 20. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय बीस — बलि महाराज द्वारा ब्रह्माण्ड समर्पण. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 8 Chapter 20. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय बीस — बलि महाराज द्वारा ब्रह्माण्ड समर्पण. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T12:02:05.366Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:06.578Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "23-0-1779635706818",
-    "originalFile": "chapter-023.jpg",
-    "trashedFile": "23-0-1779635706818.jpg",
-    "manifestEntry": {
-      "chapterNumber": 23,
-      "chapterTitle": "Chapter तेईस",
-      "imagePath": "chapter-023.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 5 Chapter 23. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय तेइस — शिशुमार ग्रह-मण्डल. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 5 Chapter 23. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय तेइस — शिशुमार ग्रह-मण्डल. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T11:47:56.406Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:06.823Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "25-0-1779635706997",
-    "originalFile": "chapter-025.jpg",
-    "trashedFile": "25-0-1779635706997.jpg",
-    "manifestEntry": {
-      "chapterNumber": 25,
-      "chapterTitle": "Chapter पच्चीस",
-      "imagePath": "chapter-025.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 5 Chapter 25. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय पच्चीस — भगवान् अनन्त की महिमा. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 5 Chapter 25. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय पच्चीस — भगवान् अनन्त की महिमा. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T11:48:24.373Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:06.999Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "27-0-1779635707186",
-    "originalFile": "chapter-027.jpg",
-    "trashedFile": "27-0-1779635707186.jpg",
-    "manifestEntry": {
-      "chapterNumber": 27,
-      "chapterTitle": "Chapter सत्ताईस",
-      "imagePath": "chapter-027.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 4 Chapter 27. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय सताईस. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 4 Chapter 27. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय सताईस. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T11:43:14.998Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:07.189Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "28-0-1779635707348",
-    "originalFile": "chapter-028.jpg",
-    "trashedFile": "28-0-1779635707348.jpg",
-    "manifestEntry": {
-      "chapterNumber": 28,
-      "chapterTitle": "Chapter अट्ठाईस",
-      "imagePath": "chapter-028.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 4 Chapter 28. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय अट्ठाईस — अगले जन्म में पुरञ्जन को स्त्री-योनि की प्राप्ति. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 4 Chapter 28. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय अट्ठाईस — अगले जन्म में पुरञ्जन को स्त्री-योनि की प्राप्ति. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T11:44:18.788Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:07.349Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "30-0-1779635707515",
-    "originalFile": "chapter-030.jpg",
-    "trashedFile": "30-0-1779635707515.jpg",
-    "manifestEntry": {
-      "chapterNumber": 30,
-      "chapterTitle": "Chapter इक्तीस",
-      "imagePath": "chapter-030.jpg",
-      "prompt": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 4 Chapter 30. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय तीस — प्रचेताओं के कार्यकलाप. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "descriptionHi": "A wide establishing shot classical oil painting scene from Srimad Bhagavatam Canto 4 Chapter 30. Lord Krishna with deep blue skin peacock feather crown yellow silk dhoti stands centrally blessing devotees. Scene: अध्याय तीस — प्रचेताओं के कार्यकलाप. Ancient Vedic forest ashram setting, golden afternoon sunlight, sages seated around, sacred river nearby.",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-19T11:44:42.444Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-24T15:15:07.518Z",
-    "operation": "delete"
-  },
-  {
-    "trashId": "49-0-1779648300392",
-    "originalFile": "chapter-068.jpg",
-    "trashedFile": "49-0-1779648300392.jpg",
-    "manifestEntry": {
-      "chapterNumber": 49,
-      "chapterTitle": "अध्याय बीस",
-      "imagePath": "chapter-068.jpg",
-      "prompt": "Vishnu appears at King Prithu's yajna site, teaching him and expressing delight at his character amidst a serene gathering.",
-      "descriptionHi": "इस अध्याय में भगवान् विष्णु का राजा पृथु के यज्ञस्थल में प्राकट्य होता है, जहां वे राजा पृथु को उपदेश देते हैं और उनके चरित्र से प्रसन्न होते हैं। यह अध्याय भक्ति और आध्यात्मिक ज्ञान के महत्व को दर्शाता है।",
+      "chapterNumber": 240,
+      "chapterTitle": "Chapter उनतालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-240.jpg",
+      "prompt": "Akrura is submerged to his waist in the sacred Yamuna river, his hands joined in reverence, his eyes wide with divine wonder. Before him in the luminous waters appears a radiant vision of Lord Vishnu reclining on Shesha, surrounded by celestial light. Akrura gazes upon this transcendent sight with tears of devotion streaming down his face.",
+      "descriptionHi": "इस अध्याय में अक्रूर वृन्दावन पहुँचकर कृष्ण और बलराम से मिलते हैं तथा उन्हें कंस की दुष्ट योजनाओं की सूचना देते हैं। कृष्ण के मथुरा जाने की बात सुनकर गोपियाँ अत्यंत व्यथित होकर विलाप करने लगती हैं। यात्रा के दौरान अक्रूर यमुना के जल में विष्णु-धाम का दिव्य दर्शन प्राप्त करते हैं, जो इस अध्याय का परम आध्यात्मिक क्षण है।",
       "personasUsed": [
         "vishnu"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-11T05:47:31.803Z",
-      "sceneIndex": 0,
-      "cantoNumber": 3
+      "generatedAt": "2026-04-15T15:22:44.721Z",
+      "sceneIndex": 0
     },
-    "trashedAt": "2026-05-24T18:45:00.393Z",
+    "trashedAt": "2026-05-27T20:30:09.554Z",
     "operation": "delete"
   },
   {
-    "trashId": "9-1-1779649200927",
-    "originalFile": "chapter-009-2.jpg",
-    "trashedFile": "9-1-1779649200927.jpg",
+    "trashId": "1-0-1779930001630",
+    "originalFile": "chapter-001.jpg",
+    "trashedFile": "1-0-1779930001630.jpg",
     "manifestEntry": {
-      "chapterNumber": 9,
-      "chapterTitle": "अध्याय नौ",
-      "imagePath": "chapter-009-2.jpg",
-      "prompt": "Bhishma speaking his final words of wisdom from his bed of arrows, sages and warriors gathered around listening, rays of golden light breaking through dramatic clouds above, wide landscape",
-      "descriptionHi": "इस नवम अध्याय में, जैसाकि भगवान्‌ श्रीकृष्ण की इच्छा थी, भीष्पदेव राजा युधिष्ठिर को वृत्ति-विषयक कर्तव्यों के सम्बन्ध…",
+      "chapterNumber": 1,
+      "chapterTitle": "Chapter एक",
+      "cantoNumber": 1,
+      "imagePath": "chapter-001.jpg",
+      "prompt": "Krishna and Brahma sit in a serene forest, surrounded by nature, as Brahma extols Krishna's divine virtues.",
+      "descriptionHi": "इस अध्याय में भगवान श्रीकृष्ण की महिमा का वर्णन किया गया है, जो सृष्टि के उत्पत्ति, पालन और संहार के कारण हैं। भगवान श्रीकृष्ण को परम सत्य और स्वतंत्र बताया गया है। ब्रह्मा जी उनकी महिमा का वर्णन कर रहे हैं।",
       "personasUsed": [
-        "bhishma"
+        "krishna_adult",
+        "brahma"
       ],
       "personaVersion": 1,
-      "generatedAt": "2026-04-10T09:49:57.303Z",
-      "sceneIndex": 1,
-      "cantoNumber": 1
+      "generatedAt": "2026-05-24T15:30:25.724Z",
+      "sceneIndex": 0
     },
-    "trashedAt": "2026-05-24T19:00:00.931Z",
-    "operation": "delete"
+    "trashedAt": "2026-05-28T01:00:01.633Z",
+    "operation": "regenerate"
   }
 ]
