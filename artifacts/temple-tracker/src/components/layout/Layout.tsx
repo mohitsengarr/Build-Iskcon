@@ -1,7 +1,17 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Instagram } from "lucide-react";
+
+// Lucide doesn't ship a Threads glyph, so inline the official Meta path.
+// Sized via className so it inherits text color and follows our hover states.
+function ThreadsIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
+      <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 0 1 3.02.142c-.126-.742-.375-1.332-.74-1.757-.504-.582-1.279-.878-2.303-.882h-.031c-.823 0-1.939.226-2.652 1.286l-1.741-1.169c.95-1.413 2.487-2.198 4.392-2.198h.046c3.187.02 5.087 1.967 5.275 5.367.108.046.213.094.317.142 1.476.692 2.555 1.741 3.122 3.034.79 1.804.863 4.748-1.527 7.082-1.821 1.776-4.034 2.581-7.184 2.604Zm1.063-11.466a8.27 8.27 0 0 0-1.385.106c-1.857.156-3.014.91-2.953 2.024.064 1.166 1.345 1.706 2.578 1.641 1.135-.063 2.612-.501 2.86-3.583a10.6 10.6 0 0 0-1.1-.188Z" />
+    </svg>
+  );
+}
 import { cn } from "@/lib/utils";
 import { slideDown } from "@/lib/animations";
 
@@ -201,7 +211,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
       {/* Footer */}
       <footer className="bg-on-surface text-[#fbf9f8] w-full mt-auto">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-10 px-6 sm:px-12 py-12 sm:py-16 w-full max-w-screen-2xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-10 px-6 sm:px-12 py-12 sm:py-16 w-full max-w-screen-2xl mx-auto">
           <div className="col-span-2 md:col-span-1">
             <div className="font-serif text-lg font-black text-primary uppercase tracking-wider mb-3">Build Iskcon</div>
             <p className="text-white/60 font-sans text-xs font-medium leading-relaxed">
@@ -225,6 +235,29 @@ export function Layout({ children }: { children: ReactNode }) {
             <a href="https://www.iskcon.org" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-primary text-xs font-medium transition-colors">ISKCON.org</a>
             <a href="https://www.bbt.org" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-primary text-xs font-medium transition-colors">BBT</a>
             <a href="https://www.iskcon.org/contact" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-primary text-xs font-medium transition-colors">Contact</a>
+          </div>
+          <div className="flex flex-col gap-3">
+            <span className="font-sans text-[10px] uppercase tracking-[0.15em] font-bold text-primary mb-1">Follow</span>
+            <a
+              href="https://www.instagram.com/dailybhagwatham/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-white/70 hover:text-primary text-xs font-medium transition-colors"
+              aria-label="Follow Daily Bhagwatham on Instagram"
+            >
+              <Instagram className="w-4 h-4" />
+              <span>@dailybhagwatham</span>
+            </a>
+            <a
+              href="https://www.threads.com/@dailybhagwatham"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-white/70 hover:text-primary text-xs font-medium transition-colors"
+              aria-label="Follow Daily Bhagwatham on Threads"
+            >
+              <ThreadsIcon className="w-4 h-4" />
+              <span>@dailybhagwatham</span>
+            </a>
           </div>
           <div className="flex flex-col gap-3">
             <span className="font-sans text-[10px] uppercase tracking-[0.15em] font-bold text-primary mb-1">Legal</span>
