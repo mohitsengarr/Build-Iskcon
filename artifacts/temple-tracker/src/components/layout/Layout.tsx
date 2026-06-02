@@ -134,12 +134,34 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
 
           {/* Trailing Controls */}
-          <div className="flex items-center gap-1 sm:gap-3">
+          <div className="flex items-center gap-1 sm:gap-2">
+            {/* Social icons — Instagram + Threads (@dailybhagwatham).
+                Icon-only to keep the header compact; full handles live in the footer. */}
+            <a
+              href="https://www.instagram.com/dailybhagwatham/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 text-on-surface-variant hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+              aria-label="Follow @dailybhagwatham on Instagram"
+              title="Follow @dailybhagwatham on Instagram"
+            >
+              <Instagram className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
+            </a>
+            <a
+              href="https://www.threads.com/@dailybhagwatham"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 text-on-surface-variant hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+              aria-label="Follow @dailybhagwatham on Threads"
+              title="Follow @dailybhagwatham on Threads"
+            >
+              <ThreadsIcon className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
+            </a>
             <a
               href="https://tovp.org/donate/"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center bg-primary text-on-primary px-4 py-2 rounded-lg font-bold text-xs tracking-wide hover:bg-primary/90 transition-all active:scale-95"
+              className="hidden sm:inline-flex items-center bg-primary text-on-primary px-4 py-2 rounded-lg font-bold text-xs tracking-wide hover:bg-primary/90 transition-all active:scale-95 ml-1"
             >
               Donate
             </a>
