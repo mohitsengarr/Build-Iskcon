@@ -31,10 +31,11 @@ function App() {
             <Route path="/japa" component={JapaCounter} />
             <Route path="/personas" component={PersonaGallery} />
             <Route path="/gallery" component={Gallery} />
-            {/* /instagram is a shortcut into the gallery's Instagram feed.
+            {/* /bhaktigram — the BuildIskcon devotional feed (was /instagram).
                 Gallery reads useLocation() and sets filterType="instagram"
-                when the path matches. */}
-            <Route path="/instagram" component={Gallery} />
+                when the path matches. The internal filterType value stays
+                "instagram" so existing data + filters don't churn. */}
+            <Route path="/bhaktigram" component={Gallery} />
             <Route path="/" component={Home} />
           </Switch>
           <Toaster />

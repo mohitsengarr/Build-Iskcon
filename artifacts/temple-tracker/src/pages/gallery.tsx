@@ -401,15 +401,17 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
 // ── Gallery Page ─────────────────────────────────────────────────────────────
 
 export default function Gallery() {
-  // /instagram is an alias for /gallery?filter=instagram. We keep filterType
-  // in state and mirror it into the URL so the Instagram feed has a stable,
-  // shareable URL and the back button works as expected.
+  // /bhaktigram is an alias for /gallery?filter=instagram. We keep filterType
+  // in state and mirror it into the URL so the Bhaktigram feed has a stable,
+  // shareable URL and the back button works as expected. The internal value
+  // stays "instagram" — only the route slug + UI label say "Bhaktigram".
+  const BHAKTI_PATH = "/bhaktigram";
   const [location, setLocation] = useLocation();
   const [allItems, setAllItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterCanto, setFilterCanto] = useState<number | "all">("all");
   const [filterType, setFilterType] = useState<"all" | "chapter" | "instagram" | "characters">(
-    location === "/instagram" ? "instagram" : "all"
+    location === BHAKTI_PATH ? "instagram" : "all"
   );
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -417,16 +419,16 @@ export default function Gallery() {
   // pull the filter from the path. When filterType changes via the UI, push
   // the new path so the URL bar reflects the current view.
   useEffect(() => {
-    const wantInstagram = location === "/instagram";
-    if (wantInstagram && filterType !== "instagram") setFilterType("instagram");
-    if (!wantInstagram && filterType === "instagram") setFilterType("all");
+    const wantBhakti = location === BHAKTI_PATH;
+    if (wantBhakti && filterType !== "instagram") setFilterType("instagram");
+    if (!wantBhakti && filterType === "instagram") setFilterType("all");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
 
   useEffect(() => {
-    if (filterType === "instagram" && location !== "/instagram") {
-      setLocation("/instagram");
-    } else if (filterType !== "instagram" && location === "/instagram") {
+    if (filterType === "instagram" && location !== BHAKTI_PATH) {
+      setLocation(BHAKTI_PATH);
+    } else if (filterType !== "instagram" && location === BHAKTI_PATH) {
       setLocation("/gallery");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1589,7 +1591,7 @@ export default function Gallery() {
                         : "text-stone-500 hover:text-stone-700"
                     }`}
                   >
-                    {t === "all" ? "All" : "Instagram"}
+                    {t === "all" ? "All" : "Bhaktigram"}
                   </button>
                 ))}
               </div>
