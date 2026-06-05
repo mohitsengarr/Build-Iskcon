@@ -503,6 +503,146 @@ export default function Gallery() {
     }
   }, [bulkLimit, sampleApproved, fetchPending, refreshBulkStatus]);
 
+  // ── Chapter-art parallel pipeline ─────────────────────────────────────────
+  // Identical workflow to the Instagram pipeline above but writes/reads from
+  // bhagavatam_chapter_art_review (landscape 1344x1088 chapter covers) instead
+  // of ig_pending_review (square 1088x1344 Instagram posts).
+  interface PendingChapterArt {
+    id: number;
+    chapter_global_number: number;
+    chapter_canto: number;
+    chapter_in_canto: number;
+    chapter_title: string;
+    image_url: string;
+    image_path: string;
+    description_hi: string | null;
+    scene_title: string | null;
+    status: "pending" | "approved" | "rejected";
+    created_at: string;
+    error_message: string | null;
+  }
+  interface ChapterArtBulkStatus {
+    missingCount: number;
+    pendingReviewCount: number;
+    approvedCount: number;
+    firstMissing: Array<{ canto: number; chapter: number; title: string }>;
+  }
+  const [pendingChapterArt, setPendingChapterArt] = useState<PendingChapterArt[]>([]);
+  const [reviewingChapterArt, setReviewingChapterArt] = useState<Set<number>>(new Set());
+  const [chartBulkStatus, setChartBulkStatus] = useState<ChapterArtBulkStatus | null>(null);
+  const [chartBulkAction, setChartBulkAction] = useState<"idle" | "sampling" | "running">("idle");
+  const [chartBulkLimit, setChartBulkLimit] = useState(10);
+  const [chartSampleApproved, setChartSampleApproved] = useState(false);
+  const [chartBulkMessage, setChartBulkMessage] = useState<string | null>(null);
+
+  const fetchPendingChapterArt = useCallback(async () => {
+    try {
+      const r = await sbFetch("bhagavatam_chapter_art_review?status=eq.pending&order=created_at.asc&select=*");
+      if (r.ok) setPendingChapterArt(await r.json());
+    } catch { /* offline */ }
+  }, []);
+
+  useEffect(() => { fetchPendingChapterArt(); }, [fetchPendingChapterArt]);
+
+  const refreshChartBulkStatus = useCallback(async () => {
+    try {
+      const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/functions/v1/bulk-generate-chapter-art", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "status" }),
+      });
+      if (res.ok) setChartBulkStatus(await res.json());
+    } catch { /* offline */ }
+  }, []);
+
+  useEffect(() => { refreshChartBulkStatus(); }, [refreshChartBulkStatus]);
+
+  const generateChartSample = useCallback(async () => {
+    setChartBulkAction("sampling");
+    setChartBulkMessage(null);
+    try {
+      const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/functions/v1/bulk-generate-chapter-art", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "sample" }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setChartBulkMessage(`Sample failed: ${data.error || res.statusText}`);
+      } else {
+        setChartBulkMessage(`✓ Chapter-art sample generated for Canto ${data.chapter?.skandh}, Ch ${data.chapter?.number}. Review it below, then approve the style before bulk-generating.`);
+        fetchPendingChapterArt();
+        refreshChartBulkStatus();
+      }
+    } catch (err) {
+      setChartBulkMessage(`Network error: ${String(err)}`);
+    } finally {
+      setChartBulkAction("idle");
+    }
+  }, [fetchPendingChapterArt, refreshChartBulkStatus]);
+
+  const runChartBulk = useCallback(async () => {
+    if (!chartSampleApproved) {
+      const ok = window.confirm(`Generate ${chartBulkLimit} chapter-art images in parallel? This uses ~${chartBulkLimit} FLUX-2 API calls and queues ${chartBulkLimit} reviews for approval.`);
+      if (!ok) return;
+    }
+    setChartBulkAction("running");
+    setChartBulkMessage(null);
+    try {
+      const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/functions/v1/bulk-generate-chapter-art", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "bulk", limit: chartBulkLimit, concurrency: 4 }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setChartBulkMessage(`Bulk failed: ${data.error || res.statusText}`);
+      } else {
+        setChartBulkMessage(`🚀 ${data.message || `Queued ${data.queued} chapter-art images for generation.`}`);
+        const poll = setInterval(() => { fetchPendingChapterArt(); refreshChartBulkStatus(); }, 8000);
+        setTimeout(() => clearInterval(poll), 5 * 60 * 1000);
+      }
+    } catch (err) {
+      setChartBulkMessage(`Network error: ${String(err)}`);
+    } finally {
+      setChartBulkAction("idle");
+    }
+  }, [chartBulkLimit, chartSampleApproved, fetchPendingChapterArt, refreshChartBulkStatus]);
+
+  const reviewChapterArt = useCallback(async (id: number, action: "approve" | "reject") => {
+    setReviewingChapterArt(prev => new Set(prev).add(id));
+    try {
+      const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/functions/v1/approve-chapter-art", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, action }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(`${action === "approve" ? "Approve" : "Reject"} failed: ${data.error || res.statusText}`);
+      } else {
+        // Remove the reviewed row from the local pending list immediately.
+        setPendingChapterArt(prev => prev.filter(p => p.id !== id));
+        if (action === "approve") {
+          setChartSampleApproved(true);
+          // Approved art should now surface in the gallery; refresh the main
+          // manifest so it appears alongside the existing items.
+          void fetchAllRef.current?.();
+        }
+        if (action === "reject" && data?.regeneration?.ok) {
+          await fetchPendingChapterArt();
+        } else if (action === "reject" && data?.regeneration?.detail) {
+          alert(`Rejected — but auto-regeneration didn't queue: ${data.regeneration.detail}`);
+        }
+        refreshChartBulkStatus();
+      }
+    } catch (err) {
+      alert(`Network error: ${String(err)}`);
+    } finally {
+      setReviewingChapterArt(prev => { const next = new Set(prev); next.delete(id); return next; });
+    }
+  }, [fetchPendingChapterArt, refreshChartBulkStatus]);
+
   const reviewPost = useCallback(async (id: number, action: "approve" | "reject") => {
     setReviewing(prev => new Set(prev).add(id));
     try {
@@ -652,6 +792,44 @@ export default function Gallery() {
               fullCaption: r.caption || r.chapter_title || "",
               generatedAt: r.reviewed_at,
               type: "instagram",
+            });
+          }
+        }
+      } catch { /* offline — fine */ }
+
+      // ── Pull approved chapter-art rows (landscape 1344x1088 hero images)
+      // from the new bhagavatam_chapter_art_review pipeline. Mixes into the
+      // gallery as type=chapter so they appear in the All / Chapter views.
+      try {
+        const sbRes = await sbFetch(
+          "bhagavatam_chapter_art_review?status=eq.approved&select=id,chapter_global_number,chapter_canto,chapter_title,image_url,description_hi,reviewed_at&order=chapter_global_number.asc",
+        );
+        if (sbRes.ok) {
+          const rows: Array<{
+            id: number;
+            chapter_global_number: number;
+            chapter_canto: number;
+            chapter_title: string;
+            image_url: string;
+            description_hi: string | null;
+            reviewed_at: string;
+          }> = await sbRes.json();
+          for (const r of rows) {
+            // sceneIndex 300+ for chapter art so it doesn't collide with
+            // legacy chapter-art (0-199) or approved IG (200-299).
+            const scene = 300 + r.id;
+            if (deletedKeys.has(`${r.chapter_global_number}-${scene}`)) continue;
+            if (items.some(i => i.url === r.image_url)) continue;
+            items.push({
+              id: `chart-approved-${r.id}`,
+              chapterNumber: r.chapter_global_number,
+              chapterTitle: r.chapter_title || `Chapter ${r.chapter_global_number}`,
+              cantoNumber: r.chapter_canto ?? 0,
+              sceneIndex: scene,
+              url: r.image_url,
+              description: (r.description_hi || r.chapter_title || "").substring(0, 200),
+              generatedAt: r.reviewed_at,
+              type: "chapter",
             });
           }
         }
@@ -1104,6 +1282,182 @@ export default function Gallery() {
                           {p.error_message && (
                             <p className="text-[11px] text-red-600 mt-1.5 font-medium">
                               Last error: {p.error_message}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── Bulk chapter-art generator (landscape hero images) ───────── */}
+            {chartBulkStatus && chartBulkStatus.missingCount > 0 && (
+              <div className="mb-6 bg-gradient-to-br from-teal-50 to-cyan-50 border-2 border-teal-200 rounded-2xl p-4">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-xl bg-teal-600 flex items-center justify-center shrink-0">
+                    <ImageIcon className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-serif font-bold text-teal-900 text-sm">
+                      {chartBulkStatus.missingCount} chapters missing chapter-art covers
+                    </h3>
+                    <p className="text-[11px] text-teal-700/80 mt-0.5 leading-relaxed">
+                      Landscape (1344×1088) hero images shown at the top of each chapter in the reader and in the gallery. Generate one sample to lock the style, then bulk-generate. Each one lands below for individual approval.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={generateChartSample}
+                    disabled={chartBulkAction !== "idle"}
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 disabled:bg-stone-300 disabled:cursor-not-allowed rounded-lg transition-colors"
+                  >
+                    {chartBulkAction === "sampling" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImageIcon className="w-3.5 h-3.5" />}
+                    Generate 1 sample
+                  </button>
+
+                  <div className="flex items-center gap-1.5 bg-white rounded-lg border border-teal-200 px-2 py-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-teal-700">Bulk:</label>
+                    <input
+                      type="number"
+                      value={chartBulkLimit}
+                      onChange={(e) => setChartBulkLimit(Math.min(50, Math.max(1, parseInt(e.target.value, 10) || 10)))}
+                      min={1}
+                      max={50}
+                      className="w-12 text-xs font-bold text-teal-900 bg-transparent border-0 focus:outline-none text-center"
+                    />
+                    <span className="text-[10px] text-teal-700/70">covers</span>
+                  </div>
+
+                  <button
+                    onClick={runChartBulk}
+                    disabled={chartBulkAction !== "idle"}
+                    className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-white rounded-lg transition-colors ${
+                      chartSampleApproved
+                        ? "bg-green-600 hover:bg-green-700 disabled:bg-stone-300"
+                        : "bg-amber-500 hover:bg-amber-600 disabled:bg-stone-300"
+                    } disabled:cursor-not-allowed`}
+                    title={chartSampleApproved ? "Bulk-generate the next N chapters in parallel" : "Generate a sample and approve it first to confirm the style"}
+                  >
+                    {chartBulkAction === "running" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                    {chartSampleApproved ? `Bulk-generate ${chartBulkLimit}` : `Bulk-generate ${chartBulkLimit} (no sample approved yet)`}
+                  </button>
+
+                  <button
+                    onClick={refreshChartBulkStatus}
+                    disabled={chartBulkAction !== "idle"}
+                    className="flex items-center gap-1 text-[11px] text-teal-700 hover:text-teal-900 px-2 py-2 disabled:opacity-50"
+                    title="Refresh missing-chapter count"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                  </button>
+                </div>
+
+                {chartBulkMessage && (
+                  <p className="mt-2.5 text-[11px] text-teal-900 bg-white/60 rounded-lg px-2.5 py-1.5 border border-teal-200">
+                    {chartBulkMessage}
+                  </p>
+                )}
+
+                {chartBulkStatus.firstMissing.length > 0 && (
+                  <div className="mt-2.5 flex flex-wrap gap-1.5">
+                    <span className="text-[10px] font-semibold text-teal-700/70 uppercase tracking-wider">Next up:</span>
+                    {chartBulkStatus.firstMissing.map((c, i) => (
+                      <span key={i} className="text-[10px] text-teal-700 bg-white/70 rounded-full px-2 py-0.5">
+                        C{c.canto}.Ch{c.chapter}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Pending chapter-art review (new covers awaiting approval) ─ */}
+            {pendingChapterArt.length > 0 && (
+              <div className="mb-8 bg-cyan-50 border-2 border-cyan-300 rounded-2xl overflow-hidden">
+                <div className="px-5 py-3 border-b border-cyan-200 flex items-center gap-2">
+                  <ImageIcon className="w-4 h-4 text-cyan-700" />
+                  <h3 className="font-serif font-bold text-cyan-900 text-sm">
+                    {pendingChapterArt.length} new chapter cover{pendingChapterArt.length === 1 ? "" : "s"} awaiting review
+                  </h3>
+                  <span className="ml-auto text-[10px] text-cyan-700/70">Approve to surface in reader · Reject to regenerate</span>
+                </div>
+                <div className="divide-y divide-cyan-200">
+                  {pendingChapterArt.map((p) => {
+                    const isReviewing = reviewingChapterArt.has(p.id);
+                    const openPreview = () => {
+                      setLightboxItem({
+                        id: `chart-pending-${p.id}`,
+                        chapterNumber: p.chapter_global_number,
+                        chapterTitle: p.chapter_title || `Chapter ${p.chapter_global_number}`,
+                        cantoNumber: p.chapter_canto ?? 0,
+                        sceneIndex: 0,
+                        url: p.image_url,
+                        description: p.description_hi || p.scene_title || p.chapter_title || "",
+                        generatedAt: p.created_at,
+                        type: "chapter",
+                      });
+                    };
+                    return (
+                      <div key={p.id} className="flex flex-col sm:flex-row gap-5 p-4">
+                        <button
+                          onClick={openPreview}
+                          className="relative group/img w-full sm:w-80 md:w-96 lg:w-[28rem] aspect-[4/3] shrink-0 rounded-xl overflow-hidden shadow-md cursor-zoom-in border border-cyan-200"
+                          title="Click to view full size"
+                          aria-label={`Preview ${p.chapter_title}`}
+                        >
+                          <img
+                            src={p.image_url}
+                            alt={p.chapter_title}
+                            className="w-full h-full object-cover transition-transform group-hover/img:scale-105"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/15 transition-colors flex items-center justify-center">
+                            <Maximize2 className="w-6 h-6 text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow-md" />
+                          </div>
+                        </button>
+                        <div className="flex-1 min-w-0 max-w-2xl">
+                          <div className="flex items-baseline gap-2 mb-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-700">
+                              {CANTO_NAMES[p.chapter_canto]?.split("—")[0]?.trim() || `Canto ${p.chapter_canto}`} · Ch. {p.chapter_in_canto}
+                            </span>
+                            <span className="text-[9px] text-cyan-600/60 font-mono">#{p.chapter_global_number}</span>
+                          </div>
+                          <h4 className="font-serif font-bold text-stone-900 text-sm mb-1.5" style={{ fontFamily: "var(--font-devanagari)" }}>
+                            {p.chapter_title}
+                          </h4>
+                          {p.scene_title && (
+                            <p className="text-[11px] text-cyan-700/80 italic mb-2">Scene: {p.scene_title}</p>
+                          )}
+                          {p.description_hi && (
+                            <p className="text-xs text-stone-600 leading-relaxed mb-3 line-clamp-3" style={{ fontFamily: "var(--font-devanagari)" }}>
+                              {p.description_hi}
+                            </p>
+                          )}
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            <button
+                              onClick={() => reviewChapterArt(p.id, "approve")}
+                              disabled={isReviewing}
+                              className="flex items-center gap-1 text-xs font-bold text-white bg-green-600 hover:bg-green-700 disabled:bg-stone-300 px-3 py-1.5 rounded-lg transition-colors"
+                            >
+                              {isReviewing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => reviewChapterArt(p.id, "reject")}
+                              disabled={isReviewing}
+                              className="flex items-center gap-1 text-xs font-bold text-white bg-red-600 hover:bg-red-700 disabled:bg-stone-300 px-3 py-1.5 rounded-lg transition-colors"
+                            >
+                              {isReviewing ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
+                              Reject
+                            </button>
+                          </div>
+                          {p.error_message && (
+                            <p className="mt-2 text-[10px] text-red-600 bg-red-50 border border-red-200 rounded-md px-2 py-1">
+                              {p.error_message}
                             </p>
                           )}
                         </div>
