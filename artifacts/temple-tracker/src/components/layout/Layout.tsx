@@ -86,6 +86,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const isBhaktigram = location === "/bhaktigram";
   const hideMobileCta = isBhaktigram;
   const hideTopNav = isBhaktigram;
+  const hideFooter = isBhaktigram;
   useScrollRestoration();
 
   return (
@@ -247,7 +248,9 @@ export function Layout({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      {/* Footer */}
+      {/* Footer — hidden on /bhaktigram so the feed reads end-to-end as a
+          standalone Instagram-style app (no brand footer, no donate columns). */}
+      {!hideFooter && (
       <footer className="bg-on-surface text-[#fbf9f8] w-full mt-auto">
         <div className="grid grid-cols-2 md:grid-cols-6 gap-10 px-6 sm:px-12 py-12 sm:py-16 w-full max-w-screen-2xl mx-auto">
           <div className="col-span-2 md:col-span-1">
@@ -310,6 +313,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </p>
         </div>
       </footer>
+      )}
     </div>
   );
 }
