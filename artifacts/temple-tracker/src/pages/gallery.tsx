@@ -2143,74 +2143,117 @@ export default function Gallery() {
                 gradient avatar + display name + stats + bio + 3-column post
                 grid. Click a tile → opens the lightbox (same path as the feed). */}
             {filterType === "instagram" && isProfileView && (
-              <div className="max-w-[940px] mx-auto pb-12 px-3 sm:px-6">
-                {/* Profile header */}
-                <div className="flex items-center gap-6 sm:gap-12 py-6 sm:py-10">
-                  <div className="w-20 h-20 sm:w-36 sm:h-36 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-1 shrink-0">
+              <div className="max-w-[940px] mx-auto pb-12">
+                {/* Sticky top bar — matches IG profile mobile: settings gear
+                    on left, handle dropdown centered, back chevron on right. */}
+                <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-stone-200 px-3 py-3 flex items-center gap-2">
+                  <button
+                    onClick={() => setLocation(BHAKTI_PATH)}
+                    className="text-stone-700 hover:text-orange-700"
+                    title="Back to feed"
+                    aria-label="Back to feed"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <h1 className="text-[15px] font-bold text-stone-900 flex-1 text-center">bhaktigram</h1>
+                  <div className="w-5" />
+                </div>
+
+                {/* Profile row: avatar LEFT, stats horizontally on RIGHT.
+                    Matches Instagram mobile profile exactly. */}
+                <div className="flex items-center gap-6 sm:gap-12 px-4 py-5">
+                  <div className="w-[85px] h-[85px] sm:w-[150px] sm:h-[150px] rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-[2.5px] shrink-0">
                     <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
-                      <span className="text-xl sm:text-3xl font-bold text-orange-600">BI</span>
+                      <span className="text-2xl sm:text-4xl font-bold text-orange-600">BI</span>
                     </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-3 sm:mb-4 flex-wrap">
-                      <h1 className="text-xl sm:text-2xl text-stone-900 flex items-center gap-2">
-                        bhaktigram
-                        <BadgeCheck className="w-5 h-5 text-blue-500 fill-blue-500/20" />
-                      </h1>
-                      <a
-                        href="https://www.instagram.com/dailybhagwatham/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[12px] font-semibold bg-stone-100 hover:bg-stone-200 text-stone-900 px-3 py-1.5 rounded-lg transition-colors"
-                      >
-                        Follow on Instagram
-                      </a>
-                      <a
-                        href="https://www.threads.com/@dailybhagwatham"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[12px] font-semibold bg-stone-100 hover:bg-stone-200 text-stone-900 px-3 py-1.5 rounded-lg transition-colors"
-                      >
-                        Follow on Threads
-                      </a>
+                  {/* Stats grid — 3 evenly-spaced columns, count on top, label below */}
+                  <div className="flex-1 flex items-center justify-around sm:justify-start sm:gap-12">
+                    <div className="text-center">
+                      <div className="text-base sm:text-lg font-semibold text-stone-900">{filtered.length}</div>
+                      <div className="text-xs sm:text-sm text-stone-700">posts</div>
                     </div>
-                    {/* Stats — desktop only (mobile shows them below) */}
-                    <div className="hidden sm:flex items-center gap-8 mb-4">
-                      <span className="text-sm"><span className="font-semibold text-stone-900">{filtered.length}</span> <span className="text-stone-600">posts</span></span>
-                      <span className="text-sm"><span className="font-semibold text-stone-900">∞</span> <span className="text-stone-600">followers</span></span>
-                      <span className="text-sm"><span className="font-semibold text-stone-900">12</span> <span className="text-stone-600">cantos</span></span>
+                    <div className="text-center">
+                      <div className="text-base sm:text-lg font-semibold text-stone-900">∞</div>
+                      <div className="text-xs sm:text-sm text-stone-700">followers</div>
                     </div>
-                    {/* Bio */}
-                    <div className="text-sm leading-snug">
-                      <p className="font-semibold text-stone-900">Daily Bhagwatham</p>
-                      <p className="text-stone-700">
-                        Srimad Bhagavatam — every chapter painted in Raja Ravi Varma style.<br />
-                        🙏 Hare Krishna · A BuildIskcon devotional channel.
-                      </p>
-                      <a href="https://buildiskcon.com" className="block text-orange-700 hover:underline font-medium mt-1">buildiskcon.com</a>
+                    <div className="text-center">
+                      <div className="text-base sm:text-lg font-semibold text-stone-900">12</div>
+                      <div className="text-xs sm:text-sm text-stone-700">cantos</div>
                     </div>
                   </div>
                 </div>
-                {/* Mobile stats row — under the avatar block */}
-                <div className="sm:hidden flex items-center justify-around border-y border-stone-200 py-3 mb-4 text-center">
-                  <div><div className="font-semibold text-stone-900">{filtered.length}</div><div className="text-xs text-stone-500">posts</div></div>
-                  <div><div className="font-semibold text-stone-900">∞</div><div className="text-xs text-stone-500">followers</div></div>
-                  <div><div className="font-semibold text-stone-900">12</div><div className="text-xs text-stone-500">cantos</div></div>
-                </div>
-                {/* Tab strip — only "Posts" tab for now */}
-                <div className="border-t border-stone-200 flex items-center justify-center -mt-px">
-                  <div className="flex items-center gap-2 px-3 py-3 border-t-2 border-stone-900 text-stone-900 text-[11px] uppercase tracking-[0.2em] font-semibold">
-                    <ImageIcon className="w-3.5 h-3.5" /> Posts
+
+                {/* Display name + bio — left-aligned, below the row */}
+                <div className="px-4 pb-3">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <p className="text-sm font-semibold text-stone-900">Daily Bhagwatham</p>
+                    <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-500/20" />
                   </div>
+                  <p className="text-sm text-stone-800 leading-snug">
+                    Srimad Bhagavatam — every chapter painted in Raja Ravi Varma style.<br />
+                    🙏 Hare Krishna · A BuildIskcon devotional channel.
+                  </p>
+                  <a href="https://buildiskcon.com" className="text-sm text-orange-700 hover:underline font-medium block mt-0.5">
+                    buildiskcon.com
+                  </a>
                 </div>
-                {/* 3-column post grid */}
+
+                {/* Action button row — full-width split, matching IG */}
+                <div className="px-4 pb-3 flex gap-1.5">
+                  <a
+                    href="https://www.instagram.com/dailybhagwatham/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 text-center text-[13px] font-semibold bg-stone-100 hover:bg-stone-200 text-stone-900 py-1.5 rounded-lg transition-colors"
+                  >
+                    Follow on Instagram
+                  </a>
+                  <a
+                    href="https://www.threads.com/@dailybhagwatham"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 text-center text-[13px] font-semibold bg-stone-100 hover:bg-stone-200 text-stone-900 py-1.5 rounded-lg transition-colors"
+                  >
+                    Follow on Threads
+                  </a>
+                </div>
+
+                {/* Tab strip — 3 icons evenly spaced, active tab gets black bar on TOP */}
+                <div className="border-t border-stone-200 flex items-center justify-around">
+                  <button
+                    className="flex-1 flex items-center justify-center py-3 border-t-2 border-stone-900 text-stone-900"
+                    aria-label="Posts"
+                    title="Posts"
+                  >
+                    <ImageIcon className="w-5 h-5" />
+                  </button>
+                  <button
+                    className="flex-1 flex items-center justify-center py-3 border-t-2 border-transparent text-stone-400"
+                    aria-label="Reels"
+                    title="Reels (coming soon)"
+                    disabled
+                  >
+                    <Send className="w-5 h-5 rotate-[-30deg]" />
+                  </button>
+                  <button
+                    className="flex-1 flex items-center justify-center py-3 border-t-2 border-transparent text-stone-400"
+                    aria-label="Tagged"
+                    title="Tagged (coming soon)"
+                    disabled
+                  >
+                    <Bookmark className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* 3-column post grid — IG mobile uses 3px-ish gutters via gap-px */}
                 {filtered.length === 0 ? (
                   <div className="text-center py-20">
                     <ImageIcon className="w-10 h-10 text-stone-300 mx-auto mb-3" />
                     <p className="text-stone-500 font-medium">No bhaktigram posts yet</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-3 gap-1 sm:gap-2 mt-2">
+                  <div className="grid grid-cols-3 gap-px sm:gap-1">
                     {filtered.map((item) => (
                       <button
                         key={item.id}
@@ -2222,7 +2265,7 @@ export default function Gallery() {
                           src={item.url}
                           alt={item.chapterTitle}
                           loading="lazy"
-                          className="w-full h-full object-cover transition-transform group-hover:scale-[1.03]"
+                          className="w-full h-full object-cover transition-transform group-hover:scale-[1.02]"
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                           <Maximize2 className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
