@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "wouter";
 import { Layout } from "@/components/layout/Layout";
 import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, ChevronUp, ChevronLeft, Trash2, Maximize2, Minimize2, RefreshCw, Users, Crown, Sparkles, Shield, CheckSquare, Square, Check, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck } from "lucide-react";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
@@ -400,11 +401,36 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
 // ── Gallery Page ─────────────────────────────────────────────────────────────
 
 export default function Gallery() {
+  // /instagram is an alias for /gallery?filter=instagram. We keep filterType
+  // in state and mirror it into the URL so the Instagram feed has a stable,
+  // shareable URL and the back button works as expected.
+  const [location, setLocation] = useLocation();
   const [allItems, setAllItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterCanto, setFilterCanto] = useState<number | "all">("all");
-  const [filterType, setFilterType] = useState<"all" | "chapter" | "instagram" | "characters">("all");
+  const [filterType, setFilterType] = useState<"all" | "chapter" | "instagram" | "characters">(
+    location === "/instagram" ? "instagram" : "all"
+  );
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Sync filterType ↔ URL. When the path changes (back/forward, deep link),
+  // pull the filter from the path. When filterType changes via the UI, push
+  // the new path so the URL bar reflects the current view.
+  useEffect(() => {
+    const wantInstagram = location === "/instagram";
+    if (wantInstagram && filterType !== "instagram") setFilterType("instagram");
+    if (!wantInstagram && filterType === "instagram") setFilterType("all");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location]);
+
+  useEffect(() => {
+    if (filterType === "instagram" && location !== "/instagram") {
+      setLocation("/instagram");
+    } else if (filterType !== "instagram" && location === "/instagram") {
+      setLocation("/gallery");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterType]);
   const [lightboxItem, setLightboxItem] = useState<GalleryItem | null>(null);
   const [collapsedCantos, setCollapsedCantos] = useState<Set<number>>(new Set());
   const [personas, setPersonas] = useState<PersonaItem[]>([]);

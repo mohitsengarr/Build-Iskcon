@@ -31,6 +31,10 @@ function App() {
             <Route path="/japa" component={JapaCounter} />
             <Route path="/personas" component={PersonaGallery} />
             <Route path="/gallery" component={Gallery} />
+            {/* /instagram is a shortcut into the gallery's Instagram feed.
+                Gallery reads useLocation() and sets filterType="instagram"
+                when the path matches. */}
+            <Route path="/instagram" component={Gallery} />
             <Route path="/" component={Home} />
           </Switch>
           <Toaster />
