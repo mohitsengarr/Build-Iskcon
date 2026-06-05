@@ -81,8 +81,11 @@ export function Layout({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [location] = useLocation();
   // /bhaktigram is a pure social feed and should look exactly like Instagram —
-  // suppress the mobile donate CTA bar there.
-  const hideMobileCta = location === "/bhaktigram";
+  // suppress the top nav (logo + menu + Donate CTA) and the mobile donate
+  // CTA bar so only the in-page Back button + the post timeline are visible.
+  const isBhaktigram = location === "/bhaktigram";
+  const hideMobileCta = isBhaktigram;
+  const hideTopNav = isBhaktigram;
   useScrollRestoration();
 
   return (
@@ -91,7 +94,9 @@ export function Layout({ children }: { children: ReactNode }) {
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:bg-primary focus:text-on-primary focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm focus:font-bold">
         Skip to content
       </a>
-      {/* TopNavBar */}
+      {/* TopNavBar — hidden on /bhaktigram so the feed reads as a pure
+          Instagram-style timeline with no surrounding chrome. */}
+      {!hideTopNav && (
       <nav className="fixed top-0 z-50 w-full bg-surface/90 backdrop-blur-md shadow-[0_4px_24px_rgba(27,28,28,0.06)] border-b border-outline-variant/10">
         <div className="flex justify-between items-center w-full px-4 sm:px-8 py-4 max-w-screen-2xl mx-auto">
 
@@ -215,11 +220,12 @@ export function Layout({ children }: { children: ReactNode }) {
           )}
         </AnimatePresence>
       </nav>
+      )}
 
-      {/* Main Content — pb-28 reserves room for the mobile donate CTA; drop
-          that reservation when the CTA is hidden so /bhaktigram doesn't have
-          a phantom gap at the bottom. */}
-      <main id="main-content" className={`flex-1 w-full z-10 pt-24 ${hideMobileCta ? "pb-8" : "pb-28 sm:pb-16"}`}>
+      {/* Main Content — pt-24 reserves room for the fixed top nav, pb-28 for
+          the mobile donate CTA. When either is hidden (e.g. /bhaktigram),
+          drop the corresponding reservation so there's no phantom gap. */}
+      <main id="main-content" className={`flex-1 w-full z-10 ${hideTopNav ? "pt-4" : "pt-24"} ${hideMobileCta ? "pb-8" : "pb-28 sm:pb-16"}`}>
         {children}
       </main>
 

@@ -1611,7 +1611,10 @@ export default function Gallery() {
             {/* Compact header for Instagram mode — gives the user a way out
                 since the full filter bar is hidden to mimic a real IG feed. */}
             {filterType === "instagram" && (
-              <div className="sticky top-[72px] z-30 max-w-[470px] mx-auto bg-white/95 backdrop-blur-md border-b border-stone-200 mb-2 px-3 py-2 flex items-center gap-2">
+              // Top nav is hidden on /bhaktigram, so this header sits flush at
+              // top-0 instead of clearing a 72px nav. Lower z so it doesn't
+              // sit above OS-level scrollbars/notches.
+              <div className="sticky top-0 z-30 max-w-[470px] mx-auto bg-white/95 backdrop-blur-md border-b border-stone-200 mb-2 px-3 py-2 flex items-center gap-2">
                 <button
                   onClick={() => setFilterType("all")}
                   className="flex items-center gap-1 text-[12px] font-semibold text-stone-600 hover:text-orange-700 hover:bg-orange-50 px-2 py-1 rounded-md transition-colors"
