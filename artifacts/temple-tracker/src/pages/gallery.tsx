@@ -298,7 +298,7 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
   return createPortal(
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center"
+      className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-md flex items-center justify-center"
       onClick={onClose}
     >
       {/* Top bar */}
@@ -326,58 +326,72 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
         </button>
       )}
 
-      {/* Image */}
-      <motion.img
-        key={item.id}
-        initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2 }}
-        src={item.url}
-        alt={item.description}
-        className={`object-contain shadow-2xl transition-all duration-300 cursor-zoom-in ${
-          fullscreen ? "max-h-screen max-w-full rounded-none" : "max-h-[85vh] max-w-[95vw] rounded-2xl"
+      {/* Two-column layout (md+): image on the LEFT, metadata + buttons on the
+          RIGHT. On mobile (default), stacks vertically with image on top.
+          In fullscreen mode the info panel is hidden and the image expands. */}
+      <div
+        className={`flex w-full items-center justify-center gap-6 px-4 sm:px-12 ${
+          fullscreen ? "" : "flex-col md:flex-row max-w-[1600px]"
         }`}
-        onClick={(e) => { e.stopPropagation(); setFullscreen(f => !f); }}
-      />
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Image */}
+        <motion.img
+          key={item.id}
+          initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2 }}
+          src={item.url}
+          alt={item.description}
+          className={`object-contain shadow-2xl transition-all duration-300 cursor-zoom-in ${
+            fullscreen
+              ? "max-h-screen max-w-full rounded-none"
+              : "max-h-[85vh] w-auto md:max-w-[65vw] max-w-[92vw] rounded-2xl"
+          }`}
+          onClick={(e) => { e.stopPropagation(); setFullscreen(f => !f); }}
+        />
 
-      {/* Bottom info bar — hidden in fullscreen */}
-      {!fullscreen && (
-        <div className="mt-4 max-w-xl w-full text-center px-4" onClick={(e) => e.stopPropagation()}>
-          <p className="text-white/90 text-sm font-medium mb-1">{item.chapterTitle}</p>
-          {item.description && (
-            <p className="text-white/60 text-xs leading-relaxed mb-2 line-clamp-2" style={{ fontFamily: "var(--font-devanagari)" }}>
-              {item.description}
+        {/* Right-hand info panel — hidden in fullscreen */}
+        {!fullscreen && (
+          <div className="w-full md:w-[28rem] md:shrink-0 text-left">
+            <p className="text-white/90 text-lg font-semibold mb-2 leading-snug" style={{ fontFamily: "var(--font-devanagari)" }}>
+              {item.chapterTitle}
             </p>
-          )}
-          <p className="text-white/40 text-[10px] mb-3">
-            {CANTO_NAMES[item.cantoNumber] || `Canto ${item.cantoNumber}`} · Chapter {item.chapterNumber} · Scene {item.sceneIndex}
-            {item.type === "instagram" && <span className="ml-2 px-1.5 py-0.5 bg-pink-500/30 text-pink-300 rounded text-[10px]">Instagram</span>}
-          </p>
-          <div className="flex items-center justify-center gap-2">
-            <button onClick={handleDownload} className="flex items-center gap-1.5 text-xs text-white/70 hover:text-white px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
-              <Download className="w-3.5 h-3.5" /> Download
-            </button>
-            <button onClick={handleShare} className="flex items-center gap-1.5 text-xs text-white/70 hover:text-white px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
-              <Share2 className="w-3.5 h-3.5" /> Share
-            </button>
-            {!confirmDelete ? (
-              <button onClick={() => setConfirmDelete(true)} className="flex items-center gap-1.5 text-xs text-red-400/70 hover:text-red-400 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 transition-colors">
-                <Trash2 className="w-3.5 h-3.5" /> Delete
-              </button>
-            ) : (
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => { onDelete(item); setConfirmDelete(false); }}
-                  className="flex items-center gap-1 text-xs text-white px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 transition-colors font-semibold"
-                >
-                  <RefreshCw className="w-3 h-3" /> Delete
-                </button>
-                <button onClick={() => setConfirmDelete(false)} className="text-xs text-white/50 hover:text-white px-2 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
-                  Cancel
-                </button>
-              </div>
+            {item.description && (
+              <p className="text-white/70 text-sm leading-relaxed mb-3" style={{ fontFamily: "var(--font-devanagari)" }}>
+                {item.description}
+              </p>
             )}
+            <p className="text-white/40 text-[11px] mb-5 uppercase tracking-wider">
+              {CANTO_NAMES[item.cantoNumber] || `Canto ${item.cantoNumber}`} · Chapter {item.chapterNumber} · Scene {item.sceneIndex}
+              {item.type === "instagram" && <span className="ml-2 px-1.5 py-0.5 bg-pink-500/30 text-pink-300 rounded text-[10px] normal-case tracking-normal">Instagram</span>}
+            </p>
+            <div className="flex flex-col gap-2">
+              <button onClick={handleDownload} className="flex items-center gap-2 text-xs text-white/80 hover:text-white px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
+                <Download className="w-3.5 h-3.5" /> Download
+              </button>
+              <button onClick={handleShare} className="flex items-center gap-2 text-xs text-white/80 hover:text-white px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
+                <Share2 className="w-3.5 h-3.5" /> Share
+              </button>
+              {!confirmDelete ? (
+                <button onClick={() => setConfirmDelete(true)} className="flex items-center gap-2 text-xs text-red-400/80 hover:text-red-400 px-3 py-2 rounded-lg bg-white/5 hover:bg-red-500/20 transition-colors">
+                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                </button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => { onDelete(item); setConfirmDelete(false); }}
+                    className="flex-1 flex items-center justify-center gap-1 text-xs text-white px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 transition-colors font-semibold"
+                  >
+                    <RefreshCw className="w-3 h-3" /> Confirm delete
+                  </button>
+                  <button onClick={() => setConfirmDelete(false)} className="text-xs text-white/60 hover:text-white px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </motion.div>,
     document.body,
   );
