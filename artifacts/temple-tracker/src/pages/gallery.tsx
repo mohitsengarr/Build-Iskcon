@@ -19,6 +19,9 @@ interface GalleryItem {
   // Full Instagram caption (multi-line, with mantra + hashtags). For chapter
   // art this is unset — `description` already carries the full prompt.
   fullCaption?: string;
+  // For Bhaktigram posts: numeric id from ig_pending_review. Used as the
+  // foreign-key target for bhaktigram_comments.
+  igPostId?: number;
   generatedAt: string;
   type: "chapter" | "instagram";
 }
@@ -115,16 +118,84 @@ function fakeEngagement(seed: string): { likes: number; comments: number } {
   return { likes, comments };
 }
 
+interface BhaktigramComment {
+  id: number;
+  author_name: string;
+  body: string;
+  created_at: string;
+}
+
 function InstagramPostCard({ item, onOpenLightbox }: { item: GalleryItem; onOpenLightbox: () => void }) {
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const { likes: baseLikes, comments } = fakeEngagement(item.id);
+  const { likes: baseLikes } = fakeEngagement(item.id);
   const likes = liked ? baseLikes + 1 : baseLikes;
   // First-line preview when collapsed; full multi-line caption when expanded
   const fullCaption = (item.fullCaption || item.description || "").trim();
   const previewCaption = (item.description || fullCaption.split("\n")[0] || "").trim();
   const isLong = fullCaption.length > previewCaption.length || previewCaption.length > 110;
+
+  // ── Comments (real, from bhaktigram_comments table) ─────────────────────
+  // Stored author name persists across posts in localStorage so users don't
+  // have to retype it. Empty array until the post is expanded into comments.
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentList, setCommentList] = useState<BhaktigramComment[]>([]);
+  const [commentLoading, setCommentLoading] = useState(false);
+  const [commentBody, setCommentBody] = useState("");
+  const [commentAuthor, setCommentAuthor] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem("bhaktigram_author") || "";
+  });
+  const [commentPosting, setCommentPosting] = useState(false);
+
+  const fetchComments = useCallback(async () => {
+    if (!item.igPostId) return;
+    setCommentLoading(true);
+    try {
+      const r = await sbFetch(`bhaktigram_comments?ig_post_id=eq.${item.igPostId}&select=id,author_name,body,created_at&order=created_at.asc`);
+      if (r.ok) setCommentList(await r.json());
+    } catch { /* offline — keep current list */ }
+    finally { setCommentLoading(false); }
+  }, [item.igPostId]);
+
+  const submitComment = useCallback(async () => {
+    if (!item.igPostId) return;
+    const body = commentBody.trim();
+    const author = commentAuthor.trim() || "Anonymous";
+    if (body.length < 1 || body.length > 600) return;
+    setCommentPosting(true);
+    try {
+      const r = await sbFetch("bhaktigram_comments", {
+        method: "POST",
+        headers: { Prefer: "return=representation" },
+        body: JSON.stringify({ ig_post_id: item.igPostId, author_name: author.substring(0, 60), body }),
+      });
+      if (r.ok) {
+        const inserted: BhaktigramComment[] = await r.json();
+        setCommentList(prev => [...prev, ...inserted]);
+        setCommentBody("");
+        // Persist the author name for next time on this device.
+        if (author && author !== "Anonymous") {
+          try { localStorage.setItem("bhaktigram_author", author); } catch { /* quota */ }
+        }
+      } else {
+        const err = await r.text();
+        alert(`Couldn't post comment: ${err.substring(0, 200)}`);
+      }
+    } catch (err) {
+      alert(`Network error: ${String(err)}`);
+    } finally {
+      setCommentPosting(false);
+    }
+  }, [item.igPostId, commentBody, commentAuthor]);
+
+  // Auto-fetch when the user expands the section
+  useEffect(() => {
+    if (commentsOpen && commentList.length === 0) void fetchComments();
+  }, [commentsOpen, commentList.length, fetchComments]);
+
+  const commentCount = commentList.length;
 
   return (
     <article className="bg-white border border-stone-200 rounded-md overflow-hidden">
@@ -169,7 +240,12 @@ function InstagramPostCard({ item, onOpenLightbox }: { item: GalleryItem; onOpen
         >
           <Heart className={`w-6 h-6 ${liked ? "fill-red-500 text-red-500" : "text-stone-900"}`} />
         </button>
-        <button onClick={onOpenLightbox} className="p-1.5 hover:text-stone-500 transition-colors" aria-label="Comments">
+        <button
+          onClick={() => { if (item.igPostId) setCommentsOpen(o => !o); else onOpenLightbox(); }}
+          className="p-1.5 hover:text-stone-500 transition-colors"
+          aria-label="Comments"
+          title="Comments"
+        >
           <MessageCircle className="w-6 h-6 text-stone-900 -scale-x-100" />
         </button>
         <button
@@ -244,16 +320,85 @@ function InstagramPostCard({ item, onOpenLightbox }: { item: GalleryItem; onOpen
         )}
       </div>
 
-      {/* Comments link */}
-      <button
-        onClick={onOpenLightbox}
-        className="block px-3 pt-1 pb-1 text-[13px] text-stone-500 hover:text-stone-700 text-left"
-      >
-        View all {comments} comments
-      </button>
+      {/* Comments — real comments from bhaktigram_comments table */}
+      {item.igPostId ? (
+        <div className="px-3 pt-1">
+          <button
+            onClick={() => setCommentsOpen(o => !o)}
+            className="text-[13px] text-stone-500 hover:text-stone-700 text-left"
+          >
+            {commentsOpen
+              ? (commentCount > 0 ? `Hide ${commentCount} comment${commentCount === 1 ? "" : "s"}` : "Hide comments")
+              : (commentLoading ? "Loading comments…" : "View comments")}
+          </button>
+
+          {commentsOpen && (
+            <div className="mt-2 space-y-2">
+              {commentLoading && commentList.length === 0 && (
+                <p className="text-[12px] text-stone-400">Loading…</p>
+              )}
+              {!commentLoading && commentList.length === 0 && (
+                <p className="text-[12px] text-stone-400 italic">No comments yet — be the first to say something.</p>
+              )}
+              {commentList.map(c => (
+                <div key={c.id} className="text-[13px] leading-snug">
+                  <span className="font-semibold text-stone-900 mr-1.5">{c.author_name}</span>
+                  <span className="text-stone-700" style={{ fontFamily: c.body.match(/[ऀ-ॿ]/) ? "var(--font-devanagari)" : undefined }}>
+                    {c.body}
+                  </span>
+                </div>
+              ))}
+
+              {/* Add comment — name (optional) + body. Enter submits.
+                  Name persists in localStorage for next post on this device. */}
+              <div className="pt-2 mt-2 border-t border-stone-100 space-y-1.5">
+                <input
+                  type="text"
+                  value={commentAuthor}
+                  onChange={(e) => setCommentAuthor(e.target.value)}
+                  placeholder="Your name (optional)"
+                  maxLength={60}
+                  className="w-full text-[12px] bg-stone-50 border border-stone-200 rounded-md px-2 py-1.5 focus:outline-none focus:border-orange-400"
+                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={commentBody}
+                    onChange={(e) => setCommentBody(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && commentBody.trim() && !commentPosting) {
+                        e.preventDefault();
+                        void submitComment();
+                      }
+                    }}
+                    placeholder="Add a comment…"
+                    maxLength={600}
+                    className="flex-1 text-[13px] bg-stone-50 border border-stone-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:border-orange-400"
+                    style={{ fontFamily: commentBody.match(/[ऀ-ॿ]/) ? "var(--font-devanagari)" : undefined }}
+                  />
+                  <button
+                    onClick={() => void submitComment()}
+                    disabled={!commentBody.trim() || commentPosting}
+                    className="text-[12px] font-semibold text-orange-600 hover:text-orange-700 disabled:text-stone-300 disabled:cursor-not-allowed px-1"
+                  >
+                    {commentPosting ? "…" : "Post"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <button
+          onClick={onOpenLightbox}
+          className="block px-3 pt-1 pb-1 text-[13px] text-stone-500 hover:text-stone-700 text-left"
+        >
+          View post
+        </button>
+      )}
 
       {/* Chapter ref + time */}
-      <div className="px-3 pb-3 text-[10px] uppercase tracking-wider text-stone-400 font-semibold">
+      <div className="px-3 py-3 text-[10px] uppercase tracking-wider text-stone-400 font-semibold">
         {CANTO_NAMES[item.cantoNumber]?.split("—")[0]?.trim() || `Canto ${item.cantoNumber}`} · Ch. {item.chapterNumber}
       </div>
     </article>
@@ -910,6 +1055,7 @@ export default function Gallery() {
               url: r.image_url,
               description: firstLine.substring(0, 200),
               fullCaption: r.caption || r.chapter_title || "",
+              igPostId: r.id,
               generatedAt: r.reviewed_at,
               type: "instagram",
             });
