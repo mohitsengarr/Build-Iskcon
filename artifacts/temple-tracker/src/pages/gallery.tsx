@@ -172,7 +172,41 @@ function InstagramPostCard({ item, onOpenLightbox }: { item: GalleryItem; onOpen
         <button onClick={onOpenLightbox} className="p-1.5 hover:text-stone-500 transition-colors" aria-label="Comments">
           <MessageCircle className="w-6 h-6 text-stone-900 -scale-x-100" />
         </button>
-        <button className="p-1.5 hover:text-stone-500 transition-colors" aria-label="Share">
+        <button
+          onClick={async () => {
+            const shareText = `${item.chapterTitle}\n${item.description || ""}\n\nvia @dailybhagwatham`.trim();
+            const shareUrl = item.url;
+            // Prefer the native share sheet (mobile + modern desktop browsers).
+            // Some browsers reject share() unless called from a user gesture
+            // AND fail on file shares — fall back to clipboard copy.
+            try {
+              if (typeof navigator !== "undefined" && navigator.share) {
+                try {
+                  // Try sharing image as a file (richer experience on mobile)
+                  const res = await fetch(item.url);
+                  const blob = await res.blob();
+                  const file = new File([blob], "bhaktigram.jpg", { type: blob.type || "image/jpeg" });
+                  if ((navigator as Navigator & { canShare?: (data: { files: File[] }) => boolean }).canShare?.({ files: [file] })) {
+                    await navigator.share({ title: item.chapterTitle, text: shareText, files: [file] });
+                    return;
+                  }
+                } catch { /* fall through to URL share */ }
+                await navigator.share({ title: item.chapterTitle, text: shareText, url: shareUrl });
+                return;
+              }
+            } catch { /* user cancelled or share unsupported */ }
+            // Final fallback: copy image URL to clipboard
+            try {
+              await navigator.clipboard.writeText(shareUrl);
+              alert("Image link copied to clipboard");
+            } catch {
+              window.open(shareUrl, "_blank", "noopener");
+            }
+          }}
+          className="p-1.5 hover:text-stone-500 transition-colors"
+          aria-label="Share"
+          title="Share this post"
+        >
           <Send className="w-6 h-6 text-stone-900" />
         </button>
         <button
@@ -238,6 +272,10 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
   const currentIndex = items.findIndex(i => i.id === item.id);
   const [fullscreen, setFullscreen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // Touch-swipe tracking — record the first contact point on touchstart,
+  // compare on touchend. >50px horizontal swing = navigate, anything less
+  // = treat as a tap (which still toggles fullscreen via the img onClick).
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const goPrev = useCallback(() => {
     if (currentIndex > 0) onNavigate(items[currentIndex - 1]);
@@ -336,18 +374,48 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
         }`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Image */}
+        {/* Image — supports touch swipe (left/right) for navigation. A small
+            horizontal swipe (>50px x-axis dominant) goes to prev/next; a
+            tap (no significant movement) toggles fullscreen. */}
         <motion.img
           key={item.id}
           initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2 }}
           src={item.url}
           alt={item.description}
-          className={`object-contain shadow-2xl transition-all duration-300 cursor-zoom-in ${
+          className={`object-contain shadow-2xl transition-all duration-300 cursor-zoom-in touch-pan-y select-none ${
             fullscreen
               ? "max-h-screen max-w-full rounded-none"
               : "max-h-[85vh] w-auto md:max-w-[65vw] max-w-[92vw] rounded-2xl"
           }`}
-          onClick={(e) => { e.stopPropagation(); setFullscreen(f => !f); }}
+          draggable={false}
+          onTouchStart={(e) => {
+            const t = e.touches[0];
+            touchStartRef.current = { x: t.clientX, y: t.clientY };
+          }}
+          onTouchEnd={(e) => {
+            const start = touchStartRef.current;
+            touchStartRef.current = null;
+            if (!start) return;
+            const t = e.changedTouches[0];
+            const dx = t.clientX - start.x;
+            const dy = t.clientY - start.y;
+            // Require horizontal-dominant motion AND > 50px to count as swipe
+            if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+              e.stopPropagation();
+              e.preventDefault();
+              if (dx > 0) goPrev();
+              else goNext();
+            }
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            // If a touch swipe already navigated, the click event fires
+            // immediately after. Suppress fullscreen-toggle within 200ms of
+            // a navigation by checking if we just moved. Simplest: only
+            // toggle if there's no current touch in flight.
+            if (touchStartRef.current) return;
+            setFullscreen(f => !f);
+          }}
         />
 
         {/* Right-hand info panel — hidden in fullscreen */}
