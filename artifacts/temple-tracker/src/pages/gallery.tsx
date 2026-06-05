@@ -670,7 +670,17 @@ export default function Gallery() {
           void fetchAllRef.current?.();
         }
         if (action === "reject" && data?.regeneration?.ok) {
+          // approve-chapter-art v2 backgrounds the regen via EdgeRuntime.waitUntil,
+          // so the new pending row arrives ~20-40s later (FLUX is slow). Poll
+          // for ~75s so the new card shows up without a manual refresh.
           await fetchPendingChapterArt();
+          let pollCount = 0;
+          const poll = window.setInterval(async () => {
+            pollCount++;
+            await fetchPendingChapterArt();
+            refreshChartBulkStatus();
+            if (pollCount >= 15) window.clearInterval(poll);
+          }, 5000);
         } else if (action === "reject" && data?.regeneration?.detail) {
           alert(`Rejected — but auto-regeneration didn't queue: ${data.regeneration.detail}`);
         }
