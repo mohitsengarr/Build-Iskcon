@@ -136,7 +136,7 @@ function InstagramPostCard({ item, onOpenLightbox }: { item: GalleryItem; onOpen
           </div>
         </div>
         <div className="flex-1 min-w-0 flex items-center gap-1">
-          <span className="text-[13px] font-semibold text-stone-900 truncate">buildiskcon</span>
+          <span className="text-[13px] font-semibold text-stone-900 truncate">bhaktigram</span>
           <BadgeCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-500/20 shrink-0" />
           <span className="text-[12px] text-stone-400 px-1">·</span>
           <span className="text-[12px] text-stone-500 shrink-0">{timeAgo(item.generatedAt)}</span>
@@ -225,7 +225,7 @@ function InstagramPostCard({ item, onOpenLightbox }: { item: GalleryItem; onOpen
 
       {/* Caption — preview first line; expand to full multi-line caption */}
       <div className="px-3 pb-1 text-[13px] text-stone-900 leading-snug">
-        <span className="font-semibold">buildiskcon</span>{" "}
+        <span className="font-semibold">bhaktigram</span>{" "}
         <span
           className={expanded ? "whitespace-pre-wrap" : ""}
           style={{ fontFamily: fullCaption.match(/[ऀ-ॿ]/) ? "var(--font-devanagari)" : undefined }}
@@ -1623,7 +1623,7 @@ export default function Gallery() {
                 >
                   <ChevronLeft className="w-3.5 h-3.5" /> Back
                 </button>
-                <span className="text-[13px] font-bold text-stone-900 flex-1 text-center">buildiskcon</span>
+                <span className="text-[13px] font-bold text-stone-900 flex-1 text-center">bhaktigram</span>
                 <span className="text-[10px] font-bold text-stone-400 bg-stone-100 px-2 py-1 rounded">
                   {filtered.length}
                 </span>
