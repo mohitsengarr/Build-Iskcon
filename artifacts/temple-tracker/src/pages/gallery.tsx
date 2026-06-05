@@ -125,12 +125,91 @@ interface BhaktigramComment {
   created_at: string;
 }
 
+// Stable anonymous device id stored in localStorage. Used as the per-visitor
+// key for likes (UNIQUE(ig_post_id, device_id) in bhaktigram_likes). Survives
+// across sessions on the same browser. Falls back to a random per-tab string
+// when localStorage isn't available (private browsing) — that visitor's likes
+// then can't unlike across sessions but everything else still works.
+function getBhaktigramDeviceId(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    let id = localStorage.getItem("bhaktigram_device_id");
+    if (!id) {
+      id = (crypto as Crypto & { randomUUID?: () => string }).randomUUID
+        ? (crypto as Crypto & { randomUUID: () => string }).randomUUID()
+        : `dev-${Math.random().toString(36).slice(2)}-${Date.now()}`;
+      localStorage.setItem("bhaktigram_device_id", id);
+    }
+    return id;
+  } catch {
+    return `dev-${Math.random().toString(36).slice(2)}`;
+  }
+}
+
 function InstagramPostCard({ item, onOpenLightbox }: { item: GalleryItem; onOpenLightbox: () => void }) {
+  // Real likes — fetched from bhaktigram_likes. We only render the count
+  // when > 0 (per user request: "do not show until there's a real like").
+  const deviceId = getBhaktigramDeviceId();
   const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [likeBusy, setLikeBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const { likes: baseLikes } = fakeEngagement(item.id);
-  const likes = liked ? baseLikes + 1 : baseLikes;
+
+  // Fetch like count + my-like state on mount. One round-trip per post; with
+  // the IG-feed cap of ~50-100 visible posts this is cheap enough.
+  useEffect(() => {
+    if (!item.igPostId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [countRes, mineRes] = await Promise.all([
+          sbFetch(`bhaktigram_likes?ig_post_id=eq.${item.igPostId}&select=id`, { headers: { Prefer: "count=exact" } }),
+          sbFetch(`bhaktigram_likes?ig_post_id=eq.${item.igPostId}&device_id=eq.${encodeURIComponent(deviceId)}&select=id&limit=1`),
+        ]);
+        if (cancelled) return;
+        if (countRes.ok) {
+          // Supabase REST returns count via Content-Range header when Prefer: count=exact is set.
+          const range = countRes.headers.get("content-range");
+          const total = range ? Number(range.split("/")[1] || "0") : (await countRes.json()).length;
+          setLikeCount(Number.isFinite(total) ? total : 0);
+        }
+        if (mineRes.ok) {
+          const rows = await mineRes.json();
+          setLiked(Array.isArray(rows) && rows.length > 0);
+        }
+      } catch { /* offline — silently keep 0 / false */ }
+    })();
+    return () => { cancelled = true; };
+  }, [item.igPostId, deviceId]);
+
+  const toggleLike = useCallback(async () => {
+    if (!item.igPostId || likeBusy) return;
+    setLikeBusy(true);
+    // Optimistic UI: flip immediately, roll back on error.
+    const wasLiked = liked;
+    setLiked(!wasLiked);
+    setLikeCount((c) => Math.max(0, c + (wasLiked ? -1 : 1)));
+    try {
+      if (wasLiked) {
+        const r = await sbFetch(`bhaktigram_likes?ig_post_id=eq.${item.igPostId}&device_id=eq.${encodeURIComponent(deviceId)}`, { method: "DELETE" });
+        if (!r.ok) throw new Error("unlike failed");
+      } else {
+        const r = await sbFetch("bhaktigram_likes", {
+          method: "POST",
+          headers: { Prefer: "resolution=ignore-duplicates" },
+          body: JSON.stringify({ ig_post_id: item.igPostId, device_id: deviceId }),
+        });
+        if (!r.ok && r.status !== 409) throw new Error("like failed");
+      }
+    } catch {
+      // Roll back optimistic UI on failure
+      setLiked(wasLiked);
+      setLikeCount((c) => Math.max(0, c + (wasLiked ? 1 : -1)));
+    } finally {
+      setLikeBusy(false);
+    }
+  }, [item.igPostId, liked, likeBusy, deviceId]);
   // First-line preview when collapsed; full multi-line caption when expanded
   const fullCaption = (item.fullCaption || item.description || "").trim();
   const previewCaption = (item.description || fullCaption.split("\n")[0] || "").trim();
@@ -197,8 +276,11 @@ function InstagramPostCard({ item, onOpenLightbox }: { item: GalleryItem; onOpen
 
   const commentCount = commentList.length;
 
+  // Card: borderless full-width on mobile (matches Instagram's mobile feed
+  // where the image touches the screen edges); sm+ gets the classic bordered
+  // rounded card.
   return (
-    <article className="bg-white border border-stone-200 rounded-md overflow-hidden">
+    <article className="bg-white sm:border sm:border-stone-200 sm:rounded-md overflow-hidden">
       {/* Header */}
       <header className="flex items-center gap-3 px-3 py-2.5">
         {/* Avatar + handle both link to the bhaktigram profile, matching the
@@ -238,8 +320,9 @@ function InstagramPostCard({ item, onOpenLightbox }: { item: GalleryItem; onOpen
       {/* Action bar */}
       <div className="flex items-center px-3 py-2">
         <button
-          onClick={() => setLiked(!liked)}
-          className="p-1.5 -ml-1.5 hover:text-stone-500 transition-colors"
+          onClick={toggleLike}
+          disabled={likeBusy || !item.igPostId}
+          className="p-1.5 -ml-1.5 hover:text-stone-500 transition-colors disabled:cursor-not-allowed"
           aria-label={liked ? "Unlike" : "Like"}
         >
           <Heart className={`w-6 h-6 ${liked ? "fill-red-500 text-red-500" : "text-stone-900"}`} />
@@ -298,10 +381,15 @@ function InstagramPostCard({ item, onOpenLightbox }: { item: GalleryItem; onOpen
         </button>
       </div>
 
-      {/* Likes */}
-      <div className="px-3 -mt-1 mb-1">
-        <span className="text-[13px] font-semibold text-stone-900">{likes.toLocaleString()} likes</span>
-      </div>
+      {/* Likes — only render when there's at least one real like.
+          Singular vs plural to match Instagram's wording. */}
+      {likeCount > 0 && (
+        <div className="px-3 -mt-1 mb-1">
+          <span className="text-[13px] font-semibold text-stone-900">
+            {likeCount.toLocaleString()} like{likeCount === 1 ? "" : "s"}
+          </span>
+        </div>
+      )}
 
       {/* Caption — preview first line; expand to full multi-line caption */}
       <div className="px-3 pb-1 text-[13px] text-stone-900 leading-snug">
@@ -1761,40 +1849,10 @@ export default function Gallery() {
               </>
             )}
 
-            {/* Compact header for Instagram mode — gives the user a way out
-                since the full filter bar is hidden to mimic a real IG feed. */}
-            {filterType === "instagram" && (
-              // Top nav is hidden on /bhaktigram, so this header sits flush at
-              // top-0 instead of clearing a 72px nav. Lower z so it doesn't
-              // sit above OS-level scrollbars/notches.
-              <div className="sticky top-0 z-30 max-w-[470px] mx-auto bg-white/95 backdrop-blur-md border-b border-stone-200 mb-2 px-3 py-2 flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    // From the profile view, Back returns to the feed.
-                    // From the feed view, Back returns to the gallery.
-                    if (isProfileView) setLocation(BHAKTI_PATH);
-                    else setFilterType("all");
-                  }}
-                  className="flex items-center gap-1 text-[12px] font-semibold text-stone-600 hover:text-orange-700 hover:bg-orange-50 px-2 py-1 rounded-md transition-colors"
-                  title="Back"
-                  aria-label="Back"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" /> Back
-                </button>
-                {/* Clicking the handle navigates to the profile page —
-                    matches Instagram's behavior of tapping the @username. */}
-                <button
-                  onClick={() => setLocation(isProfileView ? BHAKTI_PATH : BHAKTI_PROFILE_PATH)}
-                  className="text-[13px] font-bold text-stone-900 flex-1 text-center hover:text-orange-700 transition-colors"
-                  title={isProfileView ? "Go to feed" : "Go to bhaktigram profile"}
-                >
-                  bhaktigram
-                </button>
-                <span className="text-[10px] font-bold text-stone-400 bg-stone-100 px-2 py-1 rounded">
-                  {filtered.length}
-                </span>
-              </div>
-            )}
+            {/* Sticky bhaktigram header removed — the feed runs edge-to-edge
+                without any in-page chrome. Navigation back to /gallery now
+                lives in the browser's back button. Profile page still has its
+                own header inside the profile view. */}
 
             {/* Filter Bar — hidden in Instagram mode to mimic the real feed */}
             {filterType !== "instagram" && (
@@ -2186,7 +2244,9 @@ export default function Gallery() {
                     <p className="text-stone-400 text-sm mt-1">Approved IG posts will appear here as a real feed</p>
                   </div>
                 ) : (
-                  <div className="max-w-[470px] mx-auto pb-12 space-y-6">
+                  // Mobile: edge-to-edge full-width feed (matches IG mobile).
+                  // sm+: cap at 470px and center, matching IG desktop.
+                  <div className="w-full sm:max-w-[470px] sm:mx-auto pb-12 space-y-2 sm:space-y-6">
                     {filtered.map((item) => (
                       <InstagramPostCard key={item.id} item={item} onOpenLightbox={() => setLightboxItem(item)} />
                     ))}
