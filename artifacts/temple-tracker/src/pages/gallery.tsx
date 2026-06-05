@@ -1120,29 +1120,32 @@ export default function Gallery() {
   return (
     <Layout>
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-8">
-        {/* Header */}
-        <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="text-center mb-8 pt-4">
-          <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 bg-orange-100/60 text-orange-700 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide mb-4">
-            <ImageIcon className="w-3.5 h-3.5" /> BHAGWATHAM IMAGE GALLERY
-          </motion.div>
-          <motion.h1 variants={fadeInUp} className="font-serif text-3xl sm:text-4xl font-bold text-stone-800 mb-3">
-            Sacred Illustrations
-          </motion.h1>
-          <motion.p variants={fadeInUp} className="text-stone-500 text-sm max-w-lg mx-auto leading-relaxed">
-            AI-generated artwork from the Srimad Bhagavatam — chapter covers and Instagram scene illustrations, all in one place.
-          </motion.p>
-          {!loading && (
-            <motion.div variants={fadeInUp} className="flex items-center justify-center gap-4 mt-4 text-[11px] text-stone-400 font-medium">
-              <span>{stats.total} images</span>
-              <span className="w-1 h-1 rounded-full bg-stone-300" />
-              <span>{stats.chapter} chapter covers</span>
-              <span className="w-1 h-1 rounded-full bg-stone-300" />
-              <span>{stats.instagram} Instagram scenes</span>
-              <span className="w-1 h-1 rounded-full bg-stone-300" />
-              <span>{stats.cantos} cantos</span>
+        {/* Header — hidden in Instagram mode so /instagram looks like the
+            real IG feed (no page chrome above the slim buildiskcon header). */}
+        {filterType !== "instagram" && (
+          <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="text-center mb-8 pt-4">
+            <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 bg-orange-100/60 text-orange-700 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide mb-4">
+              <ImageIcon className="w-3.5 h-3.5" /> BHAGWATHAM IMAGE GALLERY
             </motion.div>
-          )}
-        </motion.div>
+            <motion.h1 variants={fadeInUp} className="font-serif text-3xl sm:text-4xl font-bold text-stone-800 mb-3">
+              Sacred Illustrations
+            </motion.h1>
+            <motion.p variants={fadeInUp} className="text-stone-500 text-sm max-w-lg mx-auto leading-relaxed">
+              AI-generated artwork from the Srimad Bhagavatam — chapter covers and Instagram scene illustrations, all in one place.
+            </motion.p>
+            {!loading && (
+              <motion.div variants={fadeInUp} className="flex items-center justify-center gap-4 mt-4 text-[11px] text-stone-400 font-medium">
+                <span>{stats.total} images</span>
+                <span className="w-1 h-1 rounded-full bg-stone-300" />
+                <span>{stats.chapter} chapter covers</span>
+                <span className="w-1 h-1 rounded-full bg-stone-300" />
+                <span>{stats.instagram} Instagram scenes</span>
+                <span className="w-1 h-1 rounded-full bg-stone-300" />
+                <span>{stats.cantos} cantos</span>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
 
         {/* Loading */}
         {loading && (
@@ -1154,6 +1157,11 @@ export default function Gallery() {
 
         {!loading && (
           <>
+            {/* All admin panels (bulk generators, pending review queues,
+                regenerating banner) are hidden in Instagram mode so /instagram
+                reads as a pure social feed with only the Back button + posts. */}
+            {filterType !== "instagram" && (
+              <>
             {/* ── Bulk image generator (for missing chapters) ─────────────── */}
             {bulkStatus && bulkStatus.missingCount > 0 && (
               <div className="mb-6 bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl p-4">
@@ -1526,6 +1534,8 @@ export default function Gallery() {
                   Regenerating {regenerating.size} chapter{regenerating.size > 1 ? "s" : ""}: Ch. {[...regenerating].join(", ")} — new images will appear automatically
                 </p>
               </div>
+            )}
+              </>
             )}
 
             {/* Compact header for Instagram mode — gives the user a way out
