@@ -36,6 +36,9 @@ function App() {
                 when the path matches. The internal filterType value stays
                 "instagram" so existing data + filters don't churn. */}
             <Route path="/bhaktigram" component={Gallery} />
+            {/* /bhaktigram/profile — Instagram-style profile page for the
+                bhaktigram channel: header + stats + grid of all approved posts. */}
+            <Route path="/bhaktigram/profile" component={Gallery} />
             <Route path="/" component={Home} />
           </Switch>
           <Toaster />

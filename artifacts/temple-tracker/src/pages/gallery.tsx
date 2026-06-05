@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Layout } from "@/components/layout/Layout";
 import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, ChevronUp, ChevronLeft, Trash2, Maximize2, Minimize2, RefreshCw, Users, Crown, Sparkles, Shield, CheckSquare, Square, Check, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck } from "lucide-react";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
@@ -201,13 +201,17 @@ function InstagramPostCard({ item, onOpenLightbox }: { item: GalleryItem; onOpen
     <article className="bg-white border border-stone-200 rounded-md overflow-hidden">
       {/* Header */}
       <header className="flex items-center gap-3 px-3 py-2.5">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-[2px] shrink-0">
+        {/* Avatar + handle both link to the bhaktigram profile, matching the
+            Instagram pattern of tapping either to land on the channel page. */}
+        <Link href="/bhaktigram/profile" className="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-[2px] shrink-0 cursor-pointer">
           <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
             <span className="text-[10px] font-bold text-orange-600">BI</span>
           </div>
-        </div>
+        </Link>
         <div className="flex-1 min-w-0 flex items-center gap-1">
-          <span className="text-[13px] font-semibold text-stone-900 truncate">bhaktigram</span>
+          <Link href="/bhaktigram/profile" className="text-[13px] font-semibold text-stone-900 truncate hover:text-orange-700 transition-colors cursor-pointer">
+            bhaktigram
+          </Link>
           <BadgeCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-500/20 shrink-0" />
           <span className="text-[12px] text-stone-400 px-1">·</span>
           <span className="text-[12px] text-stone-500 shrink-0">{timeAgo(item.generatedAt)}</span>
@@ -618,30 +622,33 @@ export default function Gallery() {
   // in state and mirror it into the URL so the Bhaktigram feed has a stable,
   // shareable URL and the back button works as expected. The internal value
   // stays "instagram" — only the route slug + UI label say "Bhaktigram".
+  // /bhaktigram/profile is the channel profile page (header + grid of posts).
   const BHAKTI_PATH = "/bhaktigram";
+  const BHAKTI_PROFILE_PATH = "/bhaktigram/profile";
   const [location, setLocation] = useLocation();
+  const isBhaktigramRoute = location === BHAKTI_PATH || location === BHAKTI_PROFILE_PATH;
+  const isProfileView = location === BHAKTI_PROFILE_PATH;
   const [allItems, setAllItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterCanto, setFilterCanto] = useState<number | "all">("all");
   const [filterType, setFilterType] = useState<"all" | "chapter" | "instagram" | "characters">(
-    location === BHAKTI_PATH ? "instagram" : "all"
+    isBhaktigramRoute ? "instagram" : "all"
   );
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Sync filterType ↔ URL. When the path changes (back/forward, deep link),
-  // pull the filter from the path. When filterType changes via the UI, push
-  // the new path so the URL bar reflects the current view.
+  // Sync filterType ↔ URL. Both /bhaktigram and /bhaktigram/profile use
+  // filterType="instagram" (so all the IG-mode chrome suppression kicks in);
+  // the profile sub-page is rendered conditionally based on isProfileView.
   useEffect(() => {
-    const wantBhakti = location === BHAKTI_PATH;
-    if (wantBhakti && filterType !== "instagram") setFilterType("instagram");
-    if (!wantBhakti && filterType === "instagram") setFilterType("all");
+    if (isBhaktigramRoute && filterType !== "instagram") setFilterType("instagram");
+    if (!isBhaktigramRoute && filterType === "instagram") setFilterType("all");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
 
   useEffect(() => {
-    if (filterType === "instagram" && location !== BHAKTI_PATH) {
+    if (filterType === "instagram" && !isBhaktigramRoute) {
       setLocation(BHAKTI_PATH);
-    } else if (filterType !== "instagram" && location === BHAKTI_PATH) {
+    } else if (filterType !== "instagram" && isBhaktigramRoute) {
       setLocation("/gallery");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1762,14 +1769,27 @@ export default function Gallery() {
               // sit above OS-level scrollbars/notches.
               <div className="sticky top-0 z-30 max-w-[470px] mx-auto bg-white/95 backdrop-blur-md border-b border-stone-200 mb-2 px-3 py-2 flex items-center gap-2">
                 <button
-                  onClick={() => setFilterType("all")}
+                  onClick={() => {
+                    // From the profile view, Back returns to the feed.
+                    // From the feed view, Back returns to the gallery.
+                    if (isProfileView) setLocation(BHAKTI_PATH);
+                    else setFilterType("all");
+                  }}
                   className="flex items-center gap-1 text-[12px] font-semibold text-stone-600 hover:text-orange-700 hover:bg-orange-50 px-2 py-1 rounded-md transition-colors"
-                  title="Back to gallery"
-                  aria-label="Back to gallery"
+                  title="Back"
+                  aria-label="Back"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" /> Back
                 </button>
-                <span className="text-[13px] font-bold text-stone-900 flex-1 text-center">bhaktigram</span>
+                {/* Clicking the handle navigates to the profile page —
+                    matches Instagram's behavior of tapping the @username. */}
+                <button
+                  onClick={() => setLocation(isProfileView ? BHAKTI_PATH : BHAKTI_PROFILE_PATH)}
+                  className="text-[13px] font-bold text-stone-900 flex-1 text-center hover:text-orange-700 transition-colors"
+                  title={isProfileView ? "Go to feed" : "Go to bhaktigram profile"}
+                >
+                  bhaktigram
+                </button>
                 <span className="text-[10px] font-bold text-stone-400 bg-stone-100 px-2 py-1 rounded">
                   {filtered.length}
                 </span>
@@ -2060,8 +2080,104 @@ export default function Gallery() {
               </div>
             )}
 
+            {/* ── Bhaktigram Profile View ──────────────────────────────────
+                /bhaktigram/profile renders an Instagram-style profile page:
+                gradient avatar + display name + stats + bio + 3-column post
+                grid. Click a tile → opens the lightbox (same path as the feed). */}
+            {filterType === "instagram" && isProfileView && (
+              <div className="max-w-[940px] mx-auto pb-12 px-3 sm:px-6">
+                {/* Profile header */}
+                <div className="flex items-center gap-6 sm:gap-12 py-6 sm:py-10">
+                  <div className="w-20 h-20 sm:w-36 sm:h-36 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-1 shrink-0">
+                    <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
+                      <span className="text-xl sm:text-3xl font-bold text-orange-600">BI</span>
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-3 sm:mb-4 flex-wrap">
+                      <h1 className="text-xl sm:text-2xl text-stone-900 flex items-center gap-2">
+                        bhaktigram
+                        <BadgeCheck className="w-5 h-5 text-blue-500 fill-blue-500/20" />
+                      </h1>
+                      <a
+                        href="https://www.instagram.com/dailybhagwatham/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[12px] font-semibold bg-stone-100 hover:bg-stone-200 text-stone-900 px-3 py-1.5 rounded-lg transition-colors"
+                      >
+                        Follow on Instagram
+                      </a>
+                      <a
+                        href="https://www.threads.com/@dailybhagwatham"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[12px] font-semibold bg-stone-100 hover:bg-stone-200 text-stone-900 px-3 py-1.5 rounded-lg transition-colors"
+                      >
+                        Follow on Threads
+                      </a>
+                    </div>
+                    {/* Stats — desktop only (mobile shows them below) */}
+                    <div className="hidden sm:flex items-center gap-8 mb-4">
+                      <span className="text-sm"><span className="font-semibold text-stone-900">{filtered.length}</span> <span className="text-stone-600">posts</span></span>
+                      <span className="text-sm"><span className="font-semibold text-stone-900">∞</span> <span className="text-stone-600">followers</span></span>
+                      <span className="text-sm"><span className="font-semibold text-stone-900">12</span> <span className="text-stone-600">cantos</span></span>
+                    </div>
+                    {/* Bio */}
+                    <div className="text-sm leading-snug">
+                      <p className="font-semibold text-stone-900">Daily Bhagwatham</p>
+                      <p className="text-stone-700">
+                        Srimad Bhagavatam — every chapter painted in Raja Ravi Varma style.<br />
+                        🙏 Hare Krishna · A BuildIskcon devotional channel.
+                      </p>
+                      <a href="https://buildiskcon.com" className="block text-orange-700 hover:underline font-medium mt-1">buildiskcon.com</a>
+                    </div>
+                  </div>
+                </div>
+                {/* Mobile stats row — under the avatar block */}
+                <div className="sm:hidden flex items-center justify-around border-y border-stone-200 py-3 mb-4 text-center">
+                  <div><div className="font-semibold text-stone-900">{filtered.length}</div><div className="text-xs text-stone-500">posts</div></div>
+                  <div><div className="font-semibold text-stone-900">∞</div><div className="text-xs text-stone-500">followers</div></div>
+                  <div><div className="font-semibold text-stone-900">12</div><div className="text-xs text-stone-500">cantos</div></div>
+                </div>
+                {/* Tab strip — only "Posts" tab for now */}
+                <div className="border-t border-stone-200 flex items-center justify-center -mt-px">
+                  <div className="flex items-center gap-2 px-3 py-3 border-t-2 border-stone-900 text-stone-900 text-[11px] uppercase tracking-[0.2em] font-semibold">
+                    <ImageIcon className="w-3.5 h-3.5" /> Posts
+                  </div>
+                </div>
+                {/* 3-column post grid */}
+                {filtered.length === 0 ? (
+                  <div className="text-center py-20">
+                    <ImageIcon className="w-10 h-10 text-stone-300 mx-auto mb-3" />
+                    <p className="text-stone-500 font-medium">No bhaktigram posts yet</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-1 sm:gap-2 mt-2">
+                    {filtered.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => setLightboxItem(item)}
+                        className="group relative aspect-square overflow-hidden bg-stone-100"
+                        title={item.chapterTitle}
+                      >
+                        <img
+                          src={item.url}
+                          alt={item.chapterTitle}
+                          loading="lazy"
+                          className="w-full h-full object-cover transition-transform group-hover:scale-[1.03]"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                          <Maximize2 className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* ── Instagram Feed View (Instagram-style cards) ───────────── */}
-            {filterType === "instagram" && (
+            {filterType === "instagram" && !isProfileView && (
               <>
                 {filtered.length === 0 ? (
                   <div className="text-center py-20">

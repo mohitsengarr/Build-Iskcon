@@ -83,7 +83,7 @@ export function Layout({ children }: { children: ReactNode }) {
   // /bhaktigram is a pure social feed and should look exactly like Instagram —
   // suppress the top nav (logo + menu + Donate CTA) and the mobile donate
   // CTA bar so only the in-page Back button + the post timeline are visible.
-  const isBhaktigram = location === "/bhaktigram";
+  const isBhaktigram = location === "/bhaktigram" || location === "/bhaktigram/profile";
   const hideMobileCta = isBhaktigram;
   const hideTopNav = isBhaktigram;
   const hideFooter = isBhaktigram;
