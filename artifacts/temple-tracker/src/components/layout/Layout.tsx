@@ -79,6 +79,10 @@ function scrollTo(hash: string) {
 
 export function Layout({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [location] = useLocation();
+  // /bhaktigram is a pure social feed and should look exactly like Instagram —
+  // suppress the mobile donate CTA bar there.
+  const hideMobileCta = location === "/bhaktigram";
   useScrollRestoration();
 
   return (
@@ -212,25 +216,30 @@ export function Layout({ children }: { children: ReactNode }) {
         </AnimatePresence>
       </nav>
 
-      {/* Main Content */}
-      <main id="main-content" className="flex-1 w-full z-10 pt-24 pb-28 sm:pb-16">
+      {/* Main Content — pb-28 reserves room for the mobile donate CTA; drop
+          that reservation when the CTA is hidden so /bhaktigram doesn't have
+          a phantom gap at the bottom. */}
+      <main id="main-content" className={`flex-1 w-full z-10 pt-24 ${hideMobileCta ? "pb-8" : "pb-28 sm:pb-16"}`}>
         {children}
       </main>
 
-      {/* Mobile sticky donate bar */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-md border-t border-outline-variant/10 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] px-4 py-3 grid grid-cols-2 gap-3">
-        <a href="#projects" onClick={(e) => { e.preventDefault(); scrollTo("#projects"); }} className="bg-primary text-on-primary py-3 rounded-xl font-bold text-sm tracking-wide text-center hover:bg-primary/90 transition-all active:scale-95 block">
-          Choose a Project
-        </a>
-        <a
-          href="https://tovp.org/donate/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="border-2 border-primary/40 text-primary py-3 rounded-xl font-bold text-sm tracking-wide text-center hover:bg-primary/5 transition-all active:scale-95"
-        >
-          Donate
-        </a>
-      </div>
+      {/* Mobile sticky donate bar — hidden on /bhaktigram so the feed reads
+          as a pure social timeline with no commerce overlay. */}
+      {!hideMobileCta && (
+        <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-md border-t border-outline-variant/10 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] px-4 py-3 grid grid-cols-2 gap-3">
+          <a href="#projects" onClick={(e) => { e.preventDefault(); scrollTo("#projects"); }} className="bg-primary text-on-primary py-3 rounded-xl font-bold text-sm tracking-wide text-center hover:bg-primary/90 transition-all active:scale-95 block">
+            Choose a Project
+          </a>
+          <a
+            href="https://tovp.org/donate/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border-2 border-primary/40 text-primary py-3 rounded-xl font-bold text-sm tracking-wide text-center hover:bg-primary/5 transition-all active:scale-95"
+          >
+            Donate
+          </a>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="bg-on-surface text-[#fbf9f8] w-full mt-auto">
