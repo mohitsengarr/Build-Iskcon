@@ -67,6 +67,7 @@ const NAV_ITEMS: { href: string; label: string; isPage?: boolean }[] = [
   { href: "/bhagwatham", label: "Bhagwatham", isPage: true },
   { href: "/japa", label: "Japa Counter", isPage: true },
   { href: "/gallery", label: "Gallery", isPage: true },
+  { href: "/bhaktigram", label: "Bhaktigram", isPage: true },
 ];
 
 function scrollTo(hash: string) {
@@ -246,6 +247,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <a href="/bhagwatham" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Bhagwatham</a>
             <a href="/japa" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Japa Counter</a>
             <a href="/gallery" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Gallery</a>
+            <a href="/bhaktigram" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Bhaktigram</a>
           </div>
           <div className="flex flex-col gap-3">
             <span className="font-sans text-[10px] uppercase tracking-[0.15em] font-bold text-primary mb-1">Give</span>
