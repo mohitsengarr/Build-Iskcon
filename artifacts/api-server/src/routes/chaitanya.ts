@@ -5,6 +5,7 @@ import {
   getChaitanyaProgress,
   processNextChaitanyaChapter,
 } from "../services/chaitanya-sarvam";
+import { extractNextChaitanyaScenes } from "../services/chaitanya-scenes";
 import { logger } from "../lib/logger";
 
 const router = Router();
@@ -16,7 +17,7 @@ const router = Router();
  * Mirrors the shape of /api/bhagwatham/chapter-index so the frontend can
  * reuse the same iteration patterns.
  */
-router.get("/api/chaitanya/chapter-index", async (_req, res) => {
+router.get("/chaitanya/chapter-index", async (_req, res) => {
   try {
     const SUPABASE_URL = process.env.SUPABASE_URL || "";
     const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || "";
@@ -59,7 +60,7 @@ router.get("/api/chaitanya/chapter-index", async (_req, res) => {
  * Returns the batch JSON for a chapter (one batch per chapter in Chaitanya).
  * Shape-compatible with /api/bhagwatham/batch/:n.
  */
-router.get("/api/chaitanya/batch/:n", (req, res) => {
+router.get("/chaitanya/batch/:n", (req, res) => {
   const n = parseInt(req.params.n, 10);
   if (!Number.isFinite(n)) {
     res.status(400).json({ error: "Invalid batch number" });
@@ -79,7 +80,7 @@ router.get("/api/chaitanya/batch/:n", (req, res) => {
  * Counts of queued/processing/ready/failed chapters + last-processed metadata.
  * Used by the /chaitanya placeholder page to show live OCR progress.
  */
-router.get("/api/chaitanya/progress", async (_req, res) => {
+router.get("/chaitanya/progress", async (_req, res) => {
   try {
     const progress = await getChaitanyaProgress();
     res.json(progress);
@@ -95,7 +96,7 @@ router.get("/api/chaitanya/progress", async (_req, res) => {
  * Manually trigger the next OCR pass (does what the cron does, but on demand).
  * Useful for kicking off the first chapter without waiting for the next tick.
  */
-router.post("/api/chaitanya/process-next", async (_req, res) => {
+router.post("/chaitanya/process-next", async (_req, res) => {
   try {
     const r = await processNextChaitanyaChapter();
     res.json(r);
@@ -110,7 +111,7 @@ router.post("/api/chaitanya/process-next", async (_req, res) => {
  *
  * Diagnostic: list all batch JSON files currently on disk.
  */
-router.get("/api/chaitanya/batches", (_req, res) => {
+router.get("/chaitanya/batches", (_req, res) => {
   const batches = getAllChaitanyaBatches().map(b => ({
     chapterGlobalNumber: b.chapterGlobalNumber,
     chapterPart: b.chapterPart,
@@ -120,6 +121,57 @@ router.get("/api/chaitanya/batches", (_req, res) => {
     processedAt: b.processedAt,
   }));
   res.json({ count: batches.length, batches });
+});
+
+/**
+ * POST /api/chaitanya/extract-next-scenes
+ *
+ * Manually trigger scene extraction for the next ready chapter (does what
+ * the cron does, but on demand). Useful for catching up after OCR finishes.
+ */
+router.post("/chaitanya/extract-next-scenes", async (req, res) => {
+  try {
+    const max = parseInt(String((req.query.max as string) || "3"), 10) || 3;
+    const r = await extractNextChaitanyaScenes(max);
+    res.json(r);
+  } catch (err) {
+    logger.error({ err }, "Chaitanya extract-next-scenes failed");
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+/**
+ * GET /api/chaitanya/scenes/:n
+ *
+ * Returns the extracted scenes for one chapter (jsonb scenes array).
+ */
+router.get("/chaitanya/scenes/:n", async (req, res) => {
+  const n = parseInt(req.params.n, 10);
+  if (!Number.isFinite(n)) {
+    res.status(400).json({ error: "Invalid global number" });
+    return;
+  }
+  try {
+    const SUPABASE_URL = process.env.SUPABASE_URL || "";
+    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || "";
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/chaitanya_chapter_scenes?chapter_global_number=eq.${n}&select=*`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } },
+    );
+    if (!r.ok) {
+      res.status(502).json({ error: `Supabase ${r.status}` });
+      return;
+    }
+    const rows = await r.json() as Array<Record<string, unknown>>;
+    if (!rows[0]) {
+      res.status(404).json({ error: `No scenes yet for chapter ${n}` });
+      return;
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    logger.error({ err, n }, "Chaitanya scenes fetch failed");
+    res.status(500).json({ error: String(err) });
+  }
 });
 
 export default router;
