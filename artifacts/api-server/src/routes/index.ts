@@ -6,6 +6,7 @@ import socialRouter from "./social";
 import insightsRouter from "./insights";
 import videosRouter from "./videos";
 import bhagwathamRouter from "./bhagwatham";
+import chaitanyaRouter from "./chaitanya";
 import gitaRouter from "./gita";
 import japaRouter from "./japa";
 
@@ -18,6 +19,7 @@ router.use(socialRouter);
 router.use(insightsRouter);
 router.use(videosRouter);
 router.use(bhagwathamRouter);
+router.use(chaitanyaRouter);
 router.use(gitaRouter);
 router.use(japaRouter);
 

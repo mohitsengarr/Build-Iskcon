@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { startBhagwathamCron } from "./cron/bhagwatham-cron";
+import { startChaitanyaCron } from "./cron/chaitanya-cron";
 import { startInstagramCron } from "./cron/instagram-cron";
 import { startTempleDiscoveryCron } from "./cron/temple-discovery-cron";
 import { startGitaCron } from "./cron/gita-cron";
@@ -53,6 +54,7 @@ export async function createApp(): Promise<Express> {
 
   // Bhagwatham OCR + audit + image gen + re-OCR (Sarvam AI)
   startBhagwathamCron();
+  startChaitanyaCron();
 
   // Gita OCR (SEN-84) — ON HOLD, disabled by user request
   // startGitaCron();
