@@ -703,6 +703,17 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
   );
 }
 
+// ── Feature flags ────────────────────────────────────────────────────────────
+
+// Pause flag for the Chaitanya Charitamrit image-generation pipeline.
+// When `true`: the gallery hides the bulk-generate banner + pending review
+// panel, and skips the recurring fetch + status polls. Flip to `false` once
+// OCR + scene extraction for all 18 Adi-lila chapters complete, so every
+// chapter cover renders against the full chapter text. Edge functions
+// (`bulk-generate-chaitanya-art`, `approve-chaitanya-art`) stay deployed
+// either way.
+const CHAITANYA_IMAGE_GEN_PAUSED = true;
+
 // ── Gallery Page ─────────────────────────────────────────────────────────────
 
 export default function Gallery() {
@@ -1038,7 +1049,9 @@ export default function Gallery() {
       if (r.ok) setPendingChaitanya(await r.json());
     } catch { /* offline */ }
   }, []);
-  useEffect(() => { fetchPendingChaitanya(); }, [fetchPendingChaitanya]);
+  // Polling disabled while Chaitanya image generation is paused — saves a
+  // page-load round-trip to Supabase that would always return [].
+  // useEffect(() => { fetchPendingChaitanya(); }, [fetchPendingChaitanya]);
 
   const refreshCcBulkStatus = useCallback(async () => {
     try {
@@ -1050,7 +1063,9 @@ export default function Gallery() {
       if (res.ok) setCcBulkStatus(await res.json());
     } catch { /* offline */ }
   }, []);
-  useEffect(() => { refreshCcBulkStatus(); }, [refreshCcBulkStatus]);
+  // useEffect(() => { refreshCcBulkStatus(); }, [refreshCcBulkStatus]);
+  // ↑ also paused — re-enable alongside fetchPendingChaitanya when images
+  // are unpaused.
 
   const generateCcSample = useCallback(async () => {
     setCcBulkAction("sampling");
@@ -1980,8 +1995,13 @@ export default function Gallery() {
 
             {/* ── Bulk Chaitanya chapter-art generator ─────────────────────
                 Parallel to the Bhagavatam chapter-art banner above. Indigo
-                colour scheme to keep the two pipelines visually distinct. */}
-            {ccBulkStatus && ccBulkStatus.missingCount > 0 && (
+                colour scheme to keep the two pipelines visually distinct.
+                PAUSED — image generation is intentionally disabled until OCR
+                + scene extraction for all 18 Adi-lila chapters completes.
+                The edge function stays deployed; only the UI trigger is
+                hidden. Flip CHAITANYA_IMAGE_GEN_PAUSED to false to re-enable
+                once OCR is done. */}
+            {!CHAITANYA_IMAGE_GEN_PAUSED && ccBulkStatus && ccBulkStatus.missingCount > 0 && (
               <div className="mb-6 bg-gradient-to-br from-indigo-50 to-violet-50 border-2 border-indigo-200 rounded-2xl p-4">
                 <div className="flex items-start gap-3 mb-3">
                   <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0">
@@ -2063,8 +2083,11 @@ export default function Gallery() {
               </div>
             )}
 
-            {/* ── Pending Chaitanya review (new covers awaiting approval) ── */}
-            {pendingChaitanya.length > 0 && (
+            {/* ── Pending Chaitanya review (new covers awaiting approval) ──
+                PAUSED — see comment above the bulk-generate banner. Even if
+                a pending row sneaks in via direct edge-function call, hide
+                the panel so reviewers don't approve anything prematurely. */}
+            {!CHAITANYA_IMAGE_GEN_PAUSED && pendingChaitanya.length > 0 && (
               <div className="mb-8 bg-violet-50 border-2 border-violet-300 rounded-2xl overflow-hidden">
                 <div className="px-5 py-3 border-b border-violet-200 flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-violet-700" />

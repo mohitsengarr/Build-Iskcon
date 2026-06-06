@@ -84,11 +84,49 @@ table to support pause/resume + restart from the last incomplete chapter.
 - [x] 18 PDFs copied into `pdfs/adi-lila/`.
 - [x] `/chaitanya` placeholder route registered with the chapter manifest.
 - [x] Navigation restructured: top-level **Books** dropdown with both books.
-- [ ] OCR pipeline cloned and run per chapter.
+- [x] Supabase tables (`chaitanya_chapters`, `chaitanya_chapter_scenes`,
+      `chaitanya_chapter_art_review`) + `chaitanya-art-images` storage bucket.
+- [x] Edge Functions `bulk-generate-chaitanya-art` + `approve-chaitanya-art`
+      deployed and verified.
+- [x] Gallery review queue UI built (indigo bulk banner + violet pending
+      panel) — **currently hidden via the pause flag, see below**.
+- [ ] OCR pipeline cloned and run per chapter (next).
 - [ ] Scene extraction edge function deployed.
-- [ ] Image generation pipelines wired up.
 - [ ] Reader UI built.
-- [ ] Gallery + Bhaktigram integration.
+- [ ] Bhaktigram integration.
+
+## ⏸  Image generation is paused
+
+Per project decision (2026-06-06): the FLUX image-generation pipeline for
+Chaitanya is intentionally **off** until OCR completes for all 18 Adi-lila
+chapters. This way, every chapter cover is rendered against the full
+chapter text, not Claude's general knowledge — better persona accuracy
+and zero wasted FLUX budget on re-renders.
+
+What's still allowed while paused:
+
+- OCR runs (Sarvam) → produces `data/chaitanya/batches/N.json`
+- Scene extraction runs → populates `chaitanya_chapter_scenes`
+- DB tables + Edge Functions remain deployed (no need to redeploy on
+  resume)
+
+What's blocked while paused:
+
+- The `Bulk Chaitanya generator` and `Pending Chaitanya review` panels
+  in `/gallery` are hidden via `{false && ...}` flags in `gallery.tsx`.
+- No traffic hits `bulk-generate-chaitanya-art` from the UI.
+
+To resume:
+
+1. Confirm every row in `chaitanya_chapters` has `ocr_status = 'ready'`
+   and `chaitanya_chapter_scenes` has a corresponding row.
+2. In `gallery.tsx`, flip both `{false && ...}` guards in the two
+   Chaitanya UI panels back to `{ccBulkStatus && ...}` /
+   `{pendingChaitanya.length > 0 && ...}`.
+3. Uncomment the two paused `useEffect`s for `fetchPendingChaitanya` and
+   `refreshCcBulkStatus`.
+4. Hit "Generate 1 sample" → review → "Bulk-generate N" as you did for
+   Bhagavatam.
 
 The placeholder page at `/chaitanya` shows the chapter manifest with a
 "Queued" badge per row and explains the pipeline so visitors understand

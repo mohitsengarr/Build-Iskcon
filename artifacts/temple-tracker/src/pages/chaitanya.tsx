@@ -60,15 +60,15 @@ export default function Chaitanya() {
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-serif font-bold text-amber-900 text-base mb-1">
-                OCR pipeline in progress
+                OCR + scene extraction in progress — image generation paused
               </h3>
               <p className="text-sm text-amber-800 leading-relaxed">
-                The {ADI_LILA_CHAPTERS.length} chapters of Adi-lila have been ingested as PDFs and are queued for the OCR + scene-extraction + image-generation pipeline that already powers Bhagwatham. The reader, gallery, and Bhaktigram integrations will light up as each chapter completes processing.
+                The {ADI_LILA_CHAPTERS.length} chapters of Adi-lila have been ingested as PDFs and are queued for OCR + scene extraction. Image generation is intentionally <strong>paused</strong> until every chapter has been OCR'd, so each scene image renders against the full chapter text instead of Claude's general knowledge. The pause keeps FLUX budget reserved for the final, fully-informed batch.
               </p>
               <ul className="text-[12px] text-amber-700 mt-3 space-y-1 list-disc list-inside leading-relaxed">
-                <li><strong>Pages → text:</strong> Sarvam OCR per page, batched into JSON</li>
-                <li><strong>Text → scenes:</strong> Claude Haiku 4.5 extracts 3-5 narratively-central scenes per chapter</li>
-                <li><strong>Scenes → images:</strong> FLUX.2-pro generates Raja Ravi Varma-style cover art (landscape) + IG posts (portrait)</li>
+                <li><strong>Pages → text (running):</strong> Sarvam OCR per page, batched into JSON</li>
+                <li><strong>Text → scenes (running):</strong> Claude Haiku 4.5 extracts 3-5 narratively-central scenes per chapter</li>
+                <li><strong>Scenes → images (paused):</strong> Will unpause once all chapters reach OCR status <code>ready</code>. Then FLUX.2-pro generates Raja Ravi Varma-style cover art (landscape) + Bhaktigram posts (portrait)</li>
                 <li><strong>Persona-aware:</strong> Sri Caitanya, Nityananda, Advaita Acharya, Gadadhara, Srivasa, etc. detected and looked up against canonical descriptions</li>
               </ul>
             </div>
