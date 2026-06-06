@@ -1352,6 +1352,64 @@ export default function Gallery() {
         }
       } catch { /* offline — fine */ }
 
+      // ── Chaitanya Charitamrit approved chapter-art (PAUSE-GATED) ───────────
+      // Mirrors the bhagavatam block above. While CHAITANYA_IMAGE_GEN_PAUSED
+      // is true this fetch is skipped, so the user's pause request holds even
+      // if approved rows exist. When the flag flips to false, approved
+      // Chaitanya art appears in the same gallery grid as Bhagwatham art.
+      //
+      // Mapping into the GalleryItem.cantoNumber namespace:
+      //   Adi-lila    → 21  (won't collide with the 12 Bhagwatham cantos)
+      //   Madhya-lila → 22
+      //   Antya-lila  → 23
+      // chapterNumber is the chapter_in_part so chapters from different
+      // parts can sit next to each other and sort sanely. We also tag a
+      // `book="chaitanya"` flag inside the id string so downstream filters
+      // can distinguish if they want to (no UI consumes this yet — kept as
+      // an extension point).
+      if (!CHAITANYA_IMAGE_GEN_PAUSED) try {
+        const sbRes = await sbFetch(
+          "chaitanya_chapter_art_review?status=eq.approved&select=id,chapter_global_number,chapter_part,chapter_in_part,chapter_title,image_url,description_hi,reviewed_at&order=chapter_global_number.asc",
+        );
+        if (sbRes.ok) {
+          const rows: Array<{
+            id: number;
+            chapter_global_number: number;
+            chapter_part: string;
+            chapter_in_part: number;
+            chapter_title: string;
+            image_url: string;
+            description_hi: string | null;
+            reviewed_at: string;
+          }> = await sbRes.json();
+          const partToCanto = (p: string): number => {
+            if (p?.startsWith("Adi")) return 21;
+            if (p?.startsWith("Madhya")) return 22;
+            if (p?.startsWith("Antya")) return 23;
+            return 21;
+          };
+          for (const r of rows) {
+            // sceneIndex 400+ for chaitanya chapter art so it doesn't collide
+            // with bhagwatham legacy art (0-199), approved IG (200-299), or
+            // bhagavatam chapter art (300-399).
+            const scene = 400 + r.id;
+            if (deletedKeys.has(`${r.chapter_global_number}-${scene}`)) continue;
+            if (items.some(i => i.url === r.image_url)) continue;
+            items.push({
+              id: `chaitanya-chart-approved-${r.id}`,
+              chapterNumber: r.chapter_global_number,
+              chapterTitle: r.chapter_title || `Chapter ${r.chapter_global_number}`,
+              cantoNumber: partToCanto(r.chapter_part),
+              sceneIndex: scene,
+              url: r.image_url,
+              description: (r.description_hi || r.chapter_title || "").substring(0, 200),
+              generatedAt: r.reviewed_at,
+              type: "chapter",
+            });
+          }
+        }
+      } catch { /* offline — fine */ }
+
       // Sort by canto → chapter → sceneIndex
       items.sort((a, b) => a.cantoNumber - b.cantoNumber || a.chapterNumber - b.chapterNumber || a.sceneIndex - b.sceneIndex);
       setAllItems(items);
