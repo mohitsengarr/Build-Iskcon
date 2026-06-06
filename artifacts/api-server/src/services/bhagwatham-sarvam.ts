@@ -102,11 +102,16 @@ export function getBatch(batchNumber: number): BatchData | null {
 // ── PDF → Images ──────────────────────────────────────────────────────────────
 
 function getTotalPages(pdfPath: string): number {
+  // Some scanner-generated PDFs (e.g. Canon iR-ADV output) embed binary bytes
+  // in metadata. Piping `pdfinfo` through `grep` makes grep treat the stream
+  // as binary and skip line matching entirely → 0 pages → chapter is
+  // mis-marked "failed". Capture the full pdfinfo output in JS and parse with
+  // a multiline regex instead. Same fix as chaitanya-sarvam.
   try {
-    const output = execSync(`pdfinfo "${pdfPath}" 2>/dev/null | grep "Pages:" | awk '{print $2}'`, {
-      encoding: "utf-8",
-    }).trim();
-    return parseInt(output, 10) || 0;
+    const output = execSync(`pdfinfo "${pdfPath}" 2>/dev/null`, { encoding: "utf-8" });
+    const m = output.match(/^Pages:\s+(\d+)/m);
+    if (m) return parseInt(m[1], 10) || 0;
+    return 0;
   } catch {
     return 0;
   }
