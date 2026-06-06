@@ -1,26 +1,5 @@
 [
   {
-    "trashId": "222-0-1779912909922",
-    "originalFile": "chapter-222.jpg",
-    "trashedFile": "222-0-1779912909922.jpg",
-    "manifestEntry": {
-      "chapterNumber": 222,
-      "chapterTitle": "Chapter इक्कीस",
-      "cantoNumber": 10,
-      "imagePath": "chapter-222.jpg",
-      "prompt": "Krishna plays his flute on the riverbank, enchanting the gopis with his divine music.",
-      "descriptionHi": "गोपियों ने कृष्ण के वेणुगीत की सराहना की, जो उनकी भक्ति और प्रेम को दर्शाता है। इस अध्याय में कृष्ण की मधुर वाणी और गोपियों के प्रेम का वर्णन है। यह अध्याय भक्ति और प्रेम की महत्ता को दर्शाता है।",
-      "personasUsed": [
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-05-15T04:46:42.495Z",
-      "sceneIndex": 0
-    },
-    "trashedAt": "2026-05-27T20:15:09.925Z",
-    "operation": "delete"
-  },
-  {
     "trashId": "223-0-1779912910099",
     "originalFile": "chapter-223.jpg",
     "trashedFile": "223-0-1779912910099.jpg",
@@ -1062,5 +1041,27 @@
     },
     "trashedAt": "2026-05-28T01:00:01.633Z",
     "operation": "regenerate"
+  },
+  {
+    "trashId": "206-0-1780764300560",
+    "originalFile": "chapter-206.jpg",
+    "trashedFile": "206-0-1780764300560.jpg",
+    "manifestEntry": {
+      "chapterNumber": 206,
+      "chapterTitle": "Chapter पाँच",
+      "cantoNumber": 10,
+      "imagePath": "chapter-206.jpg",
+      "prompt": "Nanda Maharaj and Vasudeva meet warmly at the joyful birth celebration of baby Krishna in the village of Gokul. Nanda Maharaj, filled with fatherly pride, greets Vasudeva with deep affection as festive music and offerings surround them, both men united in their love for the divine newborn child.",
+      "descriptionHi": "इस अध्याय में नन्द महाराज ने नवजात शिशु कृष्ण का जन्मोत्सव बड़े धूमधाम से मनाया। इस अवसर पर नन्द महाराज और वसुदेव की भेंट हुई, जो एक भावपूर्ण और महत्वपूर्ण मिलन था। यह अध्याय दो परिवारों के प्रेम और दिव्य शिशु कृष्ण के जन्म की आनंदमय उत्सव-भावना को दर्शाता है।",
+      "personasUsed": [
+        "krishna_child",
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-04-15T14:09:21.352Z",
+      "sceneIndex": 0
+    },
+    "trashedAt": "2026-06-06T16:45:00.563Z",
+    "operation": "delete"
   }
 ]

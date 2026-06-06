@@ -247,7 +247,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-05-19T11:46:11.513Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 2
     },
     {
       "chapterNumber": 22,
@@ -260,7 +261,8 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-05-19T11:47:28.004Z",
-      "sceneIndex": 0
+      "sceneIndex": 0,
+      "cantoNumber": 2
     },
     {
       "chapterNumber": 26,
@@ -1340,21 +1342,6 @@
       "sceneIndex": 0
     },
     {
-      "chapterNumber": 206,
-      "chapterTitle": "Chapter पाँच",
-      "cantoNumber": 10,
-      "imagePath": "chapter-206.jpg",
-      "prompt": "Nanda Maharaj and Vasudeva meet warmly at the joyful birth celebration of baby Krishna in the village of Gokul. Nanda Maharaj, filled with fatherly pride, greets Vasudeva with deep affection as festive music and offerings surround them, both men united in their love for the divine newborn child.",
-      "descriptionHi": "इस अध्याय में नन्द महाराज ने नवजात शिशु कृष्ण का जन्मोत्सव बड़े धूमधाम से मनाया। इस अवसर पर नन्द महाराज और वसुदेव की भेंट हुई, जो एक भावपूर्ण और महत्वपूर्ण मिलन था। यह अध्याय दो परिवारों के प्रेम और दिव्य शिशु कृष्ण के जन्म की आनंदमय उत्सव-भावना को दर्शाता है।",
-      "personasUsed": [
-        "krishna_child",
-        "krishna_adult"
-      ],
-      "personaVersion": 1,
-      "generatedAt": "2026-04-15T14:09:21.352Z",
-      "sceneIndex": 0
-    },
-    {
       "chapterNumber": 218,
       "chapterTitle": "Chapter सत्रह",
       "cantoNumber": 10,
@@ -2181,5 +2168,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-05-29T19:30:04.548Z"
+  "lastUpdated": "2026-06-06T17:00:11.879Z"
 }

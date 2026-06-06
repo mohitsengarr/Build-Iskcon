@@ -170,9 +170,15 @@ export function getAllChaitanyaBatches(): ChaitanyaBatchData[] {
 // ── PDF → Images ──────────────────────────────────────────────────────────────
 
 function getTotalPages(pdfPath: string): number {
+  // Some PDFs (e.g. Canon iR-ADV scanner output) embed binary bytes in
+  // their metadata. Piping pdfinfo through `grep` makes grep treat the
+  // stream as binary and skip line-matching entirely. Capture the full
+  // pdfinfo output in JS and parse it as a string instead.
   try {
-    const out = execSync(`pdfinfo "${pdfPath}" 2>/dev/null | grep "Pages:" | awk '{print $2}'`, { encoding: "utf-8" }).trim();
-    return parseInt(out, 10) || 0;
+    const out = execSync(`pdfinfo "${pdfPath}" 2>/dev/null`, { encoding: "utf-8" });
+    const m = out.match(/^Pages:\s+(\d+)/m);
+    if (m) return parseInt(m[1], 10) || 0;
+    return 0;
   } catch { return 0; }
 }
 
