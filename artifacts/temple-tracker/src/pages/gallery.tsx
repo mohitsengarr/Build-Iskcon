@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation, Link } from "wouter";
 import { Layout } from "@/components/layout/Layout";
-import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, ChevronUp, ChevronLeft, Trash2, Maximize2, Minimize2, RefreshCw, Users, Crown, Sparkles, Shield, CheckSquare, Square, Check, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck } from "lucide-react";
+import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, ChevronUp, ChevronLeft, Trash2, Maximize2, Minimize2, RefreshCw, Users, Crown, Sparkles, Shield, CheckSquare, Square, Check, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck, BookOpen } from "lucide-react";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -1003,6 +1003,147 @@ export default function Gallery() {
     }
   }, [fetchPendingChapterArt, refreshChartBulkStatus]);
 
+  // ── Chaitanya Charitamrit pipeline (mirrors the chapter-art one) ───────
+  interface PendingChaitanyaArt {
+    id: number;
+    chapter_global_number: number;
+    chapter_part: string;
+    chapter_in_part: number;
+    chapter_title: string;
+    image_url: string;
+    image_path: string;
+    description_hi: string | null;
+    scene_title: string | null;
+    status: "pending" | "approved" | "rejected";
+    created_at: string;
+    error_message: string | null;
+  }
+  interface ChaitanyaBulkStatus {
+    missingCount: number;
+    pendingReviewCount: number;
+    approvedCount: number;
+    firstMissing: Array<{ part: string; chapter: number; title: string }>;
+  }
+  const [pendingChaitanya, setPendingChaitanya] = useState<PendingChaitanyaArt[]>([]);
+  const [reviewingChaitanya, setReviewingChaitanya] = useState<Set<number>>(new Set());
+  const [ccBulkStatus, setCcBulkStatus] = useState<ChaitanyaBulkStatus | null>(null);
+  const [ccBulkAction, setCcBulkAction] = useState<"idle" | "sampling" | "running">("idle");
+  const [ccBulkLimit, setCcBulkLimit] = useState(10);
+  const [ccSampleApproved, setCcSampleApproved] = useState(false);
+  const [ccBulkMessage, setCcBulkMessage] = useState<string | null>(null);
+
+  const fetchPendingChaitanya = useCallback(async () => {
+    try {
+      const r = await sbFetch("chaitanya_chapter_art_review?status=eq.pending&order=created_at.asc&select=*");
+      if (r.ok) setPendingChaitanya(await r.json());
+    } catch { /* offline */ }
+  }, []);
+  useEffect(() => { fetchPendingChaitanya(); }, [fetchPendingChaitanya]);
+
+  const refreshCcBulkStatus = useCallback(async () => {
+    try {
+      const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/functions/v1/bulk-generate-chaitanya-art", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "status" }),
+      });
+      if (res.ok) setCcBulkStatus(await res.json());
+    } catch { /* offline */ }
+  }, []);
+  useEffect(() => { refreshCcBulkStatus(); }, [refreshCcBulkStatus]);
+
+  const generateCcSample = useCallback(async () => {
+    setCcBulkAction("sampling");
+    setCcBulkMessage(null);
+    try {
+      const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/functions/v1/bulk-generate-chaitanya-art", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "sample" }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setCcBulkMessage(`Sample failed: ${data.error || res.statusText}`);
+      } else {
+        setCcBulkMessage(`✓ Chaitanya sample generated for ${data.chapter?.part}-lila Ch ${data.chapter?.number_in_part}. Review below, then approve the style before bulk-generating.`);
+        fetchPendingChaitanya();
+        refreshCcBulkStatus();
+      }
+    } catch (err) {
+      setCcBulkMessage(`Network error: ${String(err)}`);
+    } finally {
+      setCcBulkAction("idle");
+    }
+  }, [fetchPendingChaitanya, refreshCcBulkStatus]);
+
+  const runCcBulk = useCallback(async () => {
+    if (!ccSampleApproved) {
+      const ok = window.confirm(`Generate ${ccBulkLimit} Chaitanya chapter-art images in parallel? This uses ~${ccBulkLimit} FLUX-2 API calls and queues ${ccBulkLimit} reviews for approval.`);
+      if (!ok) return;
+    }
+    setCcBulkAction("running");
+    setCcBulkMessage(null);
+    try {
+      const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/functions/v1/bulk-generate-chaitanya-art", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "bulk", limit: ccBulkLimit, concurrency: 4 }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCcBulkMessage(`Bulk failed: ${data.error || res.statusText}`);
+      } else {
+        setCcBulkMessage(`🚀 ${data.message || `Queued ${data.queued} Chaitanya chapters for generation.`}`);
+        const poll = setInterval(() => { fetchPendingChaitanya(); refreshCcBulkStatus(); }, 8000);
+        setTimeout(() => clearInterval(poll), 5 * 60 * 1000);
+      }
+    } catch (err) {
+      setCcBulkMessage(`Network error: ${String(err)}`);
+    } finally {
+      setCcBulkAction("idle");
+    }
+  }, [ccBulkLimit, ccSampleApproved, fetchPendingChaitanya, refreshCcBulkStatus]);
+
+  const reviewChaitanyaArt = useCallback(async (id: number, action: "approve" | "reject") => {
+    setReviewingChaitanya(prev => new Set(prev).add(id));
+    try {
+      const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/functions/v1/approve-chaitanya-art", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, action }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(`${action === "approve" ? "Approve" : "Reject"} failed: ${data.error || res.statusText}`);
+      } else {
+        setPendingChaitanya(prev => prev.filter(p => p.id !== id));
+        if (action === "approve") {
+          setCcSampleApproved(true);
+          void fetchAllRef.current?.();
+        }
+        if (action === "reject" && data?.regeneration?.ok) {
+          // Background regen → poll for the new row to appear (matches the
+          // chapter-art pattern). ~75s window with margin.
+          await fetchPendingChaitanya();
+          let pollCount = 0;
+          const poll = window.setInterval(async () => {
+            pollCount++;
+            await fetchPendingChaitanya();
+            refreshCcBulkStatus();
+            if (pollCount >= 15) window.clearInterval(poll);
+          }, 5000);
+        } else if (action === "reject" && data?.regeneration?.detail) {
+          alert(`Rejected — but auto-regeneration didn't queue: ${data.regeneration.detail}`);
+        }
+        refreshCcBulkStatus();
+      }
+    } catch (err) {
+      alert(`Network error: ${String(err)}`);
+    } finally {
+      setReviewingChaitanya(prev => { const next = new Set(prev); next.delete(id); return next; });
+    }
+  }, [fetchPendingChaitanya, refreshCcBulkStatus]);
+
   const reviewPost = useCallback(async (id: number, action: "approve" | "reject") => {
     setReviewing(prev => new Set(prev).add(id));
     try {
@@ -1817,6 +1958,184 @@ export default function Gallery() {
                             </button>
                             <button
                               onClick={() => reviewChapterArt(p.id, "reject")}
+                              disabled={isReviewing}
+                              className="flex items-center gap-1 text-xs font-bold text-white bg-red-600 hover:bg-red-700 disabled:bg-stone-300 px-3 py-1.5 rounded-lg transition-colors"
+                            >
+                              {isReviewing ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
+                              Reject
+                            </button>
+                          </div>
+                          {p.error_message && (
+                            <p className="mt-2 text-[10px] text-red-600 bg-red-50 border border-red-200 rounded-md px-2 py-1">
+                              {p.error_message}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── Bulk Chaitanya chapter-art generator ─────────────────────
+                Parallel to the Bhagavatam chapter-art banner above. Indigo
+                colour scheme to keep the two pipelines visually distinct. */}
+            {ccBulkStatus && ccBulkStatus.missingCount > 0 && (
+              <div className="mb-6 bg-gradient-to-br from-indigo-50 to-violet-50 border-2 border-indigo-200 rounded-2xl p-4">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0">
+                    <BookOpen className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-serif font-bold text-indigo-900 text-sm">
+                      {ccBulkStatus.missingCount} Chaitanya Charitamrit chapters missing covers
+                    </h3>
+                    <p className="text-[11px] text-indigo-700/80 mt-0.5 leading-relaxed">
+                      Landscape (1344×1088) hero images for the new Chaitanya book. Same FLUX-2 + Raja Ravi Varma pipeline as Bhagavatam, but with medieval-Bengali / Gaudiya-Vaishnava anachronism rules. Sample first, then bulk-generate.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={generateCcSample}
+                    disabled={ccBulkAction !== "idle"}
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-stone-300 disabled:cursor-not-allowed rounded-lg transition-colors"
+                  >
+                    {ccBulkAction === "sampling" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImageIcon className="w-3.5 h-3.5" />}
+                    Generate 1 sample
+                  </button>
+
+                  <div className="flex items-center gap-1.5 bg-white rounded-lg border border-indigo-200 px-2 py-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-indigo-700">Bulk:</label>
+                    <input
+                      type="number"
+                      value={ccBulkLimit}
+                      onChange={(e) => setCcBulkLimit(Math.min(50, Math.max(1, parseInt(e.target.value, 10) || 10)))}
+                      min={1}
+                      max={50}
+                      className="w-12 text-xs font-bold text-indigo-900 bg-transparent border-0 focus:outline-none text-center"
+                    />
+                    <span className="text-[10px] text-indigo-700/70">covers</span>
+                  </div>
+
+                  <button
+                    onClick={runCcBulk}
+                    disabled={ccBulkAction !== "idle"}
+                    className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-white rounded-lg transition-colors ${
+                      ccSampleApproved
+                        ? "bg-green-600 hover:bg-green-700 disabled:bg-stone-300"
+                        : "bg-amber-500 hover:bg-amber-600 disabled:bg-stone-300"
+                    } disabled:cursor-not-allowed`}
+                    title={ccSampleApproved ? "Bulk-generate the next N Chaitanya chapters in parallel" : "Generate a sample and approve it first to confirm the style"}
+                  >
+                    {ccBulkAction === "running" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                    {ccSampleApproved ? `Bulk-generate ${ccBulkLimit}` : `Bulk-generate ${ccBulkLimit} (no sample approved yet)`}
+                  </button>
+
+                  <button
+                    onClick={refreshCcBulkStatus}
+                    disabled={ccBulkAction !== "idle"}
+                    className="flex items-center gap-1 text-[11px] text-indigo-700 hover:text-indigo-900 px-2 py-2 disabled:opacity-50"
+                    title="Refresh missing-chapter count"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                  </button>
+                </div>
+
+                {ccBulkMessage && (
+                  <p className="mt-2.5 text-[11px] text-indigo-900 bg-white/60 rounded-lg px-2.5 py-1.5 border border-indigo-200">
+                    {ccBulkMessage}
+                  </p>
+                )}
+
+                {ccBulkStatus.firstMissing.length > 0 && (
+                  <div className="mt-2.5 flex flex-wrap gap-1.5">
+                    <span className="text-[10px] font-semibold text-indigo-700/70 uppercase tracking-wider">Next up:</span>
+                    {ccBulkStatus.firstMissing.map((c, i) => (
+                      <span key={i} className="text-[10px] text-indigo-700 bg-white/70 rounded-full px-2 py-0.5">
+                        {c.part}.Ch{c.chapter}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Pending Chaitanya review (new covers awaiting approval) ── */}
+            {pendingChaitanya.length > 0 && (
+              <div className="mb-8 bg-violet-50 border-2 border-violet-300 rounded-2xl overflow-hidden">
+                <div className="px-5 py-3 border-b border-violet-200 flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-violet-700" />
+                  <h3 className="font-serif font-bold text-violet-900 text-sm">
+                    {pendingChaitanya.length} Chaitanya cover{pendingChaitanya.length === 1 ? "" : "s"} awaiting review
+                  </h3>
+                  <span className="ml-auto text-[10px] text-violet-700/70">Approve to use as chapter art · Reject to regenerate</span>
+                </div>
+                <div className="divide-y divide-violet-200">
+                  {pendingChaitanya.map((p) => {
+                    const isReviewing = reviewingChaitanya.has(p.id);
+                    const openPreview = () => {
+                      setLightboxItem({
+                        id: `cc-pending-${p.id}`,
+                        chapterNumber: p.chapter_global_number,
+                        chapterTitle: p.chapter_title || `${p.chapter_part}-lila Ch ${p.chapter_in_part}`,
+                        cantoNumber: 0,
+                        sceneIndex: 0,
+                        url: p.image_url,
+                        description: p.description_hi || p.scene_title || p.chapter_title || "",
+                        generatedAt: p.created_at,
+                        type: "chapter",
+                      });
+                    };
+                    return (
+                      <div key={p.id} className="flex flex-col sm:flex-row gap-5 p-4">
+                        <button
+                          onClick={openPreview}
+                          className="relative group/img w-full sm:w-80 md:w-96 lg:w-[28rem] aspect-[4/3] shrink-0 rounded-xl overflow-hidden shadow-md cursor-zoom-in border border-violet-200"
+                          title="Click to view full size"
+                          aria-label={`Preview ${p.chapter_title}`}
+                        >
+                          <img
+                            src={p.image_url}
+                            alt={p.chapter_title}
+                            className="w-full h-full object-cover transition-transform group-hover/img:scale-105"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/15 transition-colors flex items-center justify-center">
+                            <Maximize2 className="w-6 h-6 text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow-md" />
+                          </div>
+                        </button>
+                        <div className="flex-1 min-w-0 max-w-2xl">
+                          <div className="flex items-baseline gap-2 mb-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-violet-700">
+                              Chaitanya Charitamrit · {p.chapter_part}-lila · Ch. {p.chapter_in_part}
+                            </span>
+                            <span className="text-[9px] text-violet-600/60 font-mono">#{p.chapter_global_number}</span>
+                          </div>
+                          <h4 className="font-serif font-bold text-stone-900 text-sm mb-1.5" style={{ fontFamily: "var(--font-devanagari)" }}>
+                            {p.chapter_title}
+                          </h4>
+                          {p.scene_title && (
+                            <p className="text-[11px] text-violet-700/80 italic mb-2">Scene: {p.scene_title}</p>
+                          )}
+                          {p.description_hi && (
+                            <p className="text-xs text-stone-600 leading-relaxed mb-3 line-clamp-3" style={{ fontFamily: "var(--font-devanagari)" }}>
+                              {p.description_hi}
+                            </p>
+                          )}
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            <button
+                              onClick={() => reviewChaitanyaArt(p.id, "approve")}
+                              disabled={isReviewing}
+                              className="flex items-center gap-1 text-xs font-bold text-white bg-green-600 hover:bg-green-700 disabled:bg-stone-300 px-3 py-1.5 rounded-lg transition-colors"
+                            >
+                              {isReviewing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => reviewChaitanyaArt(p.id, "reject")}
                               disabled={isReviewing}
                               className="flex items-center gap-1 text-xs font-bold text-white bg-red-600 hover:bg-red-700 disabled:bg-stone-300 px-3 py-1.5 rounded-lg transition-colors"
                             >
