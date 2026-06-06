@@ -48,3 +48,9 @@ Thumbs.db
 .cache/
 .local/
 .vercel
+
+# Source PDFs for Chaitanya Charitamrit — kept locally for OCR pipeline,
+# not committed (too large). Outputs (data/chaitanya/batches/*.json) are
+# committed once OCR completes.
+data/chaitanya/pdfs/**/*.pdf
+

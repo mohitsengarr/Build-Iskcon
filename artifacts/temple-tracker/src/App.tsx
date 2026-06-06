@@ -7,6 +7,7 @@ import Home from "@/pages/home";
 import HowToBuildTemple from "@/pages/how-to-build-temple";
 import KrishnaJanmabhoomi from "@/pages/krishna-janmabhoomi";
 import Bhagwatham from "@/pages/bhagwatham";
+import Chaitanya from "@/pages/chaitanya";
 import Gita from "@/pages/gita";
 import Library from "@/pages/library";
 import JapaCounter from "@/pages/japa-counter";
@@ -25,6 +26,7 @@ function App() {
             <Route path="/how-to-build-temple" component={HowToBuildTemple} />
             <Route path="/krishna-janmabhoomi" component={KrishnaJanmabhoomi} />
             <Route path="/bhagwatham" component={Bhagwatham} />
+            <Route path="/chaitanya" component={Chaitanya} />
             <Route path="/gita" component={Gita} />
             <Route path="/library" component={Library} />
             <Route path="/admin" component={Admin} />

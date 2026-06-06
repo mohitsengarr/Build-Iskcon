@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
-import { Menu, X, Instagram } from "lucide-react";
+import { Menu, X, Instagram, ChevronDown } from "lucide-react";
 
 // Lucide doesn't ship a Threads glyph, so inline the official Meta path.
 // Sized via className so it inherits text color and follows our hover states.
@@ -62,9 +62,26 @@ function useScrollRestoration() {
   }, [location]);
 }
 
-const NAV_ITEMS: { href: string; label: string; isPage?: boolean }[] = [
+interface NavItem {
+  href: string;
+  label: string;
+  isPage?: boolean;
+  // When set, the item renders as a hover-dropdown on desktop and an
+  // expandable group in the mobile drawer instead of a direct link.
+  children?: { href: string; label: string }[];
+}
+
+const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Home", isPage: true },
-  { href: "/bhagwatham", label: "Bhagwatham", isPage: true },
+  {
+    href: "/books",
+    label: "Books",
+    isPage: true,
+    children: [
+      { href: "/bhagwatham", label: "Srimad Bhagwatham" },
+      { href: "/chaitanya", label: "Chaitanya Charitamrit" },
+    ],
+  },
   { href: "/japa", label: "Japa Counter", isPage: true },
   { href: "/gallery", label: "Gallery", isPage: true },
   { href: "/bhaktigram", label: "Bhaktigram", isPage: true },
@@ -122,7 +139,29 @@ export function Layout({ children }: { children: ReactNode }) {
             {/* Desktop Navigation Links */}
             <div className="hidden md:flex items-center gap-8">
               {NAV_ITEMS.map((item) =>
-                item.isPage ? (
+                item.children && item.children.length > 0 ? (
+                  // Hover-dropdown group (e.g. Books → Bhagwatham · Chaitanya).
+                  // CSS-only via `group` + `group-hover`, no JS state needed.
+                  <div key={item.href} className="relative group">
+                    <button className="font-medium text-sm tracking-tight cursor-pointer transition-colors duration-300 px-2 py-1 rounded text-on-surface-variant hover:text-primary hover:bg-primary/5 flex items-center gap-1">
+                      {item.label}
+                      <ChevronDown className="w-3.5 h-3.5 opacity-60 group-hover:rotate-180 transition-transform" />
+                    </button>
+                    <div className="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all min-w-[200px] z-50">
+                      <div className="bg-surface border border-outline-variant/20 rounded-lg shadow-lg overflow-hidden">
+                        {item.children.map((child) => (
+                          <Link
+                            key={child.href}
+                            href={child.href}
+                            className="block px-4 py-2.5 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer"
+                          >
+                            {child.label}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : item.isPage ? (
                   <Link
                     key={item.href}
                     href={item.href}
@@ -197,7 +236,25 @@ export function Layout({ children }: { children: ReactNode }) {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.05, duration: 0.2 }}
                   >
-                    {item.isPage ? (
+                    {item.children && item.children.length > 0 ? (
+                      // Books-style group: render the label as a heading and
+                      // the children as indented links underneath.
+                      <div>
+                        <div className="block py-3 px-4 rounded-lg font-bold text-sm text-on-surface-variant">
+                          {item.label}
+                        </div>
+                        {item.children.map((child) => (
+                          <Link
+                            key={child.href}
+                            href={child.href}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="block py-2.5 pl-8 pr-4 rounded-lg font-medium text-sm cursor-pointer transition-colors text-on-surface-variant/80 hover:text-primary hover:bg-primary/5"
+                          >
+                            {child.label}
+                          </Link>
+                        ))}
+                      </div>
+                    ) : item.isPage ? (
                       <Link
                         href={item.href}
                         onClick={() => setMobileMenuOpen(false)}
@@ -262,7 +319,8 @@ export function Layout({ children }: { children: ReactNode }) {
           <div className="flex flex-col gap-3">
             <span className="font-sans text-[10px] uppercase tracking-[0.15em] font-bold text-primary mb-1">Explore</span>
             <a href="/" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Home</a>
-            <a href="/bhagwatham" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Bhagwatham</a>
+            <a href="/bhagwatham" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Srimad Bhagwatham</a>
+            <a href="/chaitanya" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Chaitanya Charitamrit</a>
             <a href="/japa" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Japa Counter</a>
             <a href="/gallery" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Gallery</a>
             <a href="/bhaktigram" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Bhaktigram</a>
