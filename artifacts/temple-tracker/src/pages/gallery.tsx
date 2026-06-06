@@ -1383,9 +1383,10 @@ export default function Gallery() {
             reviewed_at: string;
           }> = await sbRes.json();
           const partToCanto = (p: string): number => {
-            if (p?.startsWith("Adi")) return 21;
-            if (p?.startsWith("Madhya")) return 22;
-            if (p?.startsWith("Antya")) return 23;
+            const k = (p || "").toLowerCase();
+            if (k.startsWith("adi")) return 21;
+            if (k.startsWith("madhya")) return 22;
+            if (k.startsWith("antya")) return 23;
             return 21;
           };
           for (const r of rows) {
