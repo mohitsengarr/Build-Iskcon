@@ -1645,7 +1645,12 @@ export default function Gallery() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <Layout>
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-8">
+      {/* In Bhaktigram mode (filterType === "instagram") we drop the outer
+          px-4 sm:px-8 so the feed images go edge-to-edge on mobile, exactly
+          like the real Instagram app. On sm+ the InstagramPostCard's own
+          sm:max-w-[470px] sm:mx-auto re-centers the card, so killing the
+          outer padding doesn't widen the desktop column. */}
+      <div className={`max-w-screen-2xl mx-auto ${filterType === "instagram" ? "" : "px-4 sm:px-8"}`}>
         {/* Header — hidden in Instagram mode so /instagram looks like the
             real IG feed (no page chrome above the slim buildiskcon header). */}
         {filterType !== "instagram" && (
