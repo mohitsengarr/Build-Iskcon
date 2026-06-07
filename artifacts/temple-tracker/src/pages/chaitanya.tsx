@@ -232,21 +232,35 @@ interface ChapterEntry {
 }
 
 // Sensible order for the three lilas.
-const PART_ORDER = ["Adi-lila", "Madhya-lila", "Antya-lila"];
+// Order keys MUST match what the API returns. The chaitanya_chapters DB
+// stores `part` as lowercase short codes ('adi' / 'madhya' / 'antya'), so
+// PART_ORDER uses those same strings. Mixed-case or "-lila"-suffixed values
+// are also tolerated via partKey() normalization so legacy or future data
+// shapes don't silently fall into the "other" bucket.
+const PART_ORDER = ["adi", "madhya", "antya"];
+function partKey(part: string): string {
+  if (!part) return "";
+  const k = part.toLowerCase();
+  if (k.startsWith("adi")) return "adi";
+  if (k.startsWith("madhya")) return "madhya";
+  if (k.startsWith("antya")) return "antya";
+  return k;
+}
 function getPartOrder(part: string): number {
-  const idx = PART_ORDER.indexOf(part);
-  return idx >= 0 ? idx : PART_ORDER.length + part.charCodeAt(0);
+  const idx = PART_ORDER.indexOf(partKey(part));
+  return idx >= 0 ? idx : PART_ORDER.length + (part?.charCodeAt(0) ?? 0);
 }
 
-// Display labels for each lila (Hindi + English).
+// Display labels for each lila (Hindi + English). Keyed by the same
+// short codes as PART_ORDER; partKey() normalizes input.
 const PART_LABELS: Record<string, { hi: string; en: string }> = {
-  "Adi-lila":    { hi: "आदि-लीला",    en: "Adi-lila" },
-  "Madhya-lila": { hi: "मध्य-लीला",   en: "Madhya-lila" },
-  "Antya-lila":  { hi: "अंत्य-लीला",  en: "Antya-lila" },
+  adi:    { hi: "आदि-लीला",    en: "Adi-lila" },
+  madhya: { hi: "मध्य-लीला",   en: "Madhya-lila" },
+  antya:  { hi: "अंत्य-लीला",  en: "Antya-lila" },
 };
 
 function partLabelHi(part: string): string {
-  return PART_LABELS[part]?.hi || part;
+  return PART_LABELS[partKey(part)]?.hi || part;
 }
 
 const API_BASE = `/api/${BOOK_KEY}`;
