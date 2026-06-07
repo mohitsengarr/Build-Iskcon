@@ -293,4 +293,65 @@ if (fs.existsSync(igManifestSrc)) {
   console.log(`✓ instagram/manifest (${imgCount} images)`);
 }
 
+// ── /api/chaitanya/* — Chaitanya Charitamrit static endpoints ─────────────
+// Each chapter is its own batch (no parsing of chapter boundaries from page
+// text — they're a per-chapter PDF). Reads data/chaitanya/batches/*.json,
+// emits chapter-index, batch/:n, and progress. Skipped silently if the data
+// dir doesn't exist (e.g. local checkout before any OCR ran).
+const CC_DATA_DIR = path.resolve(__dirname, "..", "..", "..", "data", "chaitanya");
+const CC_BATCHES_DIR = path.join(CC_DATA_DIR, "batches");
+const CC_OUT_DIR = path.resolve(__dirname, "..", "public", "api", "chaitanya");
+if (fs.existsSync(CC_BATCHES_DIR)) {
+  fs.mkdirSync(CC_OUT_DIR, { recursive: true });
+  fs.mkdirSync(path.join(CC_OUT_DIR, "batch"), { recursive: true });
+
+  const ccBatchFiles = fs.readdirSync(CC_BATCHES_DIR)
+    .filter(f => /^\d+\.json$/.test(f))
+    .sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+
+  const ccBatches = ccBatchFiles.map(f =>
+    JSON.parse(fs.readFileSync(path.join(CC_BATCHES_DIR, f), "utf-8")),
+  );
+
+  // chapter-index — mirrors the shape the api-server returns
+  // (frontend reshape: globalNumber/part/number/title/batchNumber/pageNumber/ocrStatus)
+  const ccChapters = ccBatches.map(b => ({
+    globalNumber: b.chapterGlobalNumber,
+    part: b.chapterPart,
+    number: b.chapterInPart,
+    title: b.chapterTitle,
+    pdfPath: null,
+    batchNumber: b.chapterGlobalNumber,
+    pageNumber: null,
+    ocrStatus: "ready",
+  }));
+  fs.writeFileSync(path.join(CC_OUT_DIR, "chapter-index"), JSON.stringify({ chapters: ccChapters }));
+  console.log(`✓ chaitanya/chapter-index (${ccChapters.length} chapters)`);
+
+  // batch/:n — full chapter text per chapter
+  for (const b of ccBatches) {
+    fs.writeFileSync(path.join(CC_OUT_DIR, "batch", String(b.chapterGlobalNumber)), JSON.stringify(b));
+  }
+  console.log(`✓ chaitanya/batch files (${ccBatches.length})`);
+
+  // progress — simple counts (all-ready since they're on disk)
+  const lastProcessed = ccBatches
+    .map(b => b.processedAt)
+    .filter(Boolean)
+    .sort()
+    .at(-1) || null;
+  fs.writeFileSync(path.join(CC_OUT_DIR, "progress"), JSON.stringify({
+    total: ccChapters.length,
+    queued: 0,
+    processing: 0,
+    ready: ccChapters.length,
+    failed: 0,
+    lastProcessedAt: lastProcessed,
+    lastProcessedTitle: ccBatches.at(-1)?.chapterTitle || null,
+  }));
+  console.log(`✓ chaitanya/progress`);
+} else {
+  console.log("⚠ chaitanya data dir absent — skipping chaitanya static API");
+}
+
 console.log("\n✅ Static API files generated successfully");

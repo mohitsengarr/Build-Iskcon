@@ -19,6 +19,13 @@
         { "key": "Content-Type", "value": "application/json" },
         { "key": "Cache-Control", "value": "public, max-age=300, s-maxage=600" }
       ]
+    },
+    {
+      "source": "/api/chaitanya/(.*)",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json" },
+        { "key": "Cache-Control", "value": "public, max-age=300, s-maxage=600" }
+      ]
     }
   ],
   "rewrites": [
@@ -39,6 +46,9 @@
     { "source": "/api/gita/image-manifest", "destination": "/api/gita/image-manifest" },
     { "source": "/api/gita/images/:path*", "destination": "/api/gita/images/:path*" },
     { "source": "/api/gita/chapter-index", "destination": "/api/gita/chapter-index" },
+    { "source": "/api/chaitanya/progress", "destination": "/api/chaitanya/progress" },
+    { "source": "/api/chaitanya/chapter-index", "destination": "/api/chaitanya/chapter-index" },
+    { "source": "/api/chaitanya/batch/:number", "destination": "/api/chaitanya/batch/:number" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

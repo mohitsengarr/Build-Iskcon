@@ -54,3 +54,6 @@ Thumbs.db
 # committed once OCR completes.
 data/chaitanya/pdfs/**/*.pdf
 
+
+# OCR working dirs — never commit
+data/chaitanya/.tmp-images/
