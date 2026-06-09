@@ -294,28 +294,90 @@ if (fs.existsSync(igManifestSrc)) {
 }
 
 // ── /api/chaitanya/* — Chaitanya Charitamrit static endpoints ─────────────
-// Each chapter is its own batch (no parsing of chapter boundaries from page
-// text — they're a per-chapter PDF). Reads data/chaitanya/batches/*.json,
-// emits chapter-index, batch/:n, and progress. Skipped silently if the data
-// dir doesn't exist (e.g. local checkout before any OCR ran).
+// Hybrid source: the chapter list comes from Supabase (`chaitanya_chapters`
+// — the canonical queue, includes queued/processing rows so the reader's
+// sidebar shows EVERY chapter even before OCR has run); the per-chapter
+// content comes from data/chaitanya/batches/*.json (only present on disk
+// for chapters whose OCR has finished).
+//
+// Effect on the live site:
+// - Sidebar always lists all 18 Adi + 23 Madhya + 20 Antya chapters with
+//   their actual status badge (Ready / Processing / Queued)
+// - Clicking a "Ready" chapter loads the OCR content from the static batch
+// - Clicking a "Queued"/"Processing" chapter shows the reader's built-in
+//   "still being processed" alert (no crash)
 const CC_DATA_DIR = path.resolve(__dirname, "..", "..", "..", "data", "chaitanya");
 const CC_BATCHES_DIR = path.join(CC_DATA_DIR, "batches");
 const CC_OUT_DIR = path.resolve(__dirname, "..", "public", "api", "chaitanya");
-if (fs.existsSync(CC_BATCHES_DIR)) {
-  fs.mkdirSync(CC_OUT_DIR, { recursive: true });
-  fs.mkdirSync(path.join(CC_OUT_DIR, "batch"), { recursive: true });
 
-  const ccBatchFiles = fs.readdirSync(CC_BATCHES_DIR)
-    .filter(f => /^\d+\.json$/.test(f))
-    .sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+const SUPABASE_URL = process.env.SUPABASE_URL || "https://etfmndcrchundvgtvmot.supabase.co";
+// Public anon key (same one the frontend bundles for sbFetch). Read-only on
+// chaitanya_chapters per its RLS — safe to embed.
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0Zm1uZGNyY2h1bmR2Z3R2bW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2NDE1MTIsImV4cCI6MjA2MzIxNzUxMn0.7GXS820xSFcUy2TRdbspN7s-NP3sgKFFtUP-Zw0Qbrs";
 
-  const ccBatches = ccBatchFiles.map(f =>
-    JSON.parse(fs.readFileSync(path.join(CC_BATCHES_DIR, f), "utf-8")),
-  );
+async function fetchChaitanyaChapterList() {
+  // 10s timeout — Vercel build shouldn't hang if Supabase is slow / down.
+  // Falls back gracefully to disk-only chapter list.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10_000);
+  try {
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/chaitanya_chapters?select=global_number,part,number_in_part,title,pdf_path,ocr_status&order=global_number.asc`,
+      {
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+        signal: controller.signal,
+      },
+    );
+    clearTimeout(timer);
+    if (!r.ok) {
+      console.log(`⚠ Supabase chapter list fetch failed (${r.status}) — falling back to disk-only`);
+      return null;
+    }
+    const rows = await r.json();
+    console.log(`  fetched ${rows.length} chaitanya_chapters rows from Supabase`);
+    return rows;
+  } catch (err) {
+    clearTimeout(timer);
+    console.log(`⚠ Supabase chapter list fetch errored — falling back to disk-only:`, err.message);
+    return null;
+  }
+}
 
-  // chapter-index — mirrors the shape the api-server returns
-  // (frontend reshape: globalNumber/part/number/title/batchNumber/pageNumber/ocrStatus)
-  const ccChapters = ccBatches.map(b => ({
+const ccDbRows = await fetchChaitanyaChapterList();
+
+fs.mkdirSync(CC_OUT_DIR, { recursive: true });
+fs.mkdirSync(path.join(CC_OUT_DIR, "batch"), { recursive: true });
+
+// Read whatever batches exist on disk (the only chapters with real content).
+const ccBatchFiles = fs.existsSync(CC_BATCHES_DIR)
+  ? fs.readdirSync(CC_BATCHES_DIR)
+      .filter(f => /^\d+\.json$/.test(f))
+      .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
+  : [];
+const ccBatches = ccBatchFiles.map(f =>
+  JSON.parse(fs.readFileSync(path.join(CC_BATCHES_DIR, f), "utf-8")),
+);
+const ccBatchByGlobal = new Map(ccBatches.map(b => [b.chapterGlobalNumber, b]));
+
+// Build the chapter-index.
+let ccChapters;
+if (ccDbRows && ccDbRows.length > 0) {
+  // Canonical source = DB. Status reflects reality across queued/processing/ready.
+  ccChapters = ccDbRows.map(r => ({
+    globalNumber: r.global_number,
+    part: r.part,
+    number: r.number_in_part,
+    title: r.title,
+    pdfPath: r.pdf_path,
+    batchNumber: r.global_number,
+    pageNumber: null,
+    // Force "ready" if we actually have a batch on disk, even if DB lags.
+    ocrStatus: ccBatchByGlobal.has(r.global_number) ? "ready" : r.ocr_status,
+  }));
+} else {
+  // Fallback: disk-only (every disk batch is ready).
+  ccChapters = ccBatches.map(b => ({
     globalNumber: b.chapterGlobalNumber,
     part: b.chapterPart,
     number: b.chapterInPart,
@@ -325,33 +387,33 @@ if (fs.existsSync(CC_BATCHES_DIR)) {
     pageNumber: null,
     ocrStatus: "ready",
   }));
-  fs.writeFileSync(path.join(CC_OUT_DIR, "chapter-index"), JSON.stringify({ chapters: ccChapters }));
-  console.log(`✓ chaitanya/chapter-index (${ccChapters.length} chapters)`);
-
-  // batch/:n — full chapter text per chapter
-  for (const b of ccBatches) {
-    fs.writeFileSync(path.join(CC_OUT_DIR, "batch", String(b.chapterGlobalNumber)), JSON.stringify(b));
-  }
-  console.log(`✓ chaitanya/batch files (${ccBatches.length})`);
-
-  // progress — simple counts (all-ready since they're on disk)
-  const lastProcessed = ccBatches
-    .map(b => b.processedAt)
-    .filter(Boolean)
-    .sort()
-    .at(-1) || null;
-  fs.writeFileSync(path.join(CC_OUT_DIR, "progress"), JSON.stringify({
-    total: ccChapters.length,
-    queued: 0,
-    processing: 0,
-    ready: ccChapters.length,
-    failed: 0,
-    lastProcessedAt: lastProcessed,
-    lastProcessedTitle: ccBatches.at(-1)?.chapterTitle || null,
-  }));
-  console.log(`✓ chaitanya/progress`);
-} else {
-  console.log("⚠ chaitanya data dir absent — skipping chaitanya static API");
 }
+fs.writeFileSync(path.join(CC_OUT_DIR, "chapter-index"), JSON.stringify({ chapters: ccChapters }));
+const readyCount = ccChapters.filter(c => c.ocrStatus === "ready").length;
+console.log(`✓ chaitanya/chapter-index (${ccChapters.length} chapters, ${readyCount} ready)`);
+
+// batch/:n — only the chapters that have OCR'd content on disk.
+for (const b of ccBatches) {
+  fs.writeFileSync(path.join(CC_OUT_DIR, "batch", String(b.chapterGlobalNumber)), JSON.stringify(b));
+}
+console.log(`✓ chaitanya/batch files (${ccBatches.length})`);
+
+// progress — real counts including queued/processing.
+const ccCounts = { queued: 0, processing: 0, ready: 0, failed: 0 };
+for (const c of ccChapters) {
+  if (c.ocrStatus in ccCounts) ccCounts[c.ocrStatus]++;
+}
+const lastProcessed = ccBatches
+  .map(b => b.processedAt)
+  .filter(Boolean)
+  .sort()
+  .at(-1) || null;
+fs.writeFileSync(path.join(CC_OUT_DIR, "progress"), JSON.stringify({
+  total: ccChapters.length,
+  ...ccCounts,
+  lastProcessedAt: lastProcessed,
+  lastProcessedTitle: ccBatches.at(-1)?.chapterTitle || null,
+}));
+console.log(`✓ chaitanya/progress (${JSON.stringify(ccCounts)})`);
 
 console.log("\n✅ Static API files generated successfully");
