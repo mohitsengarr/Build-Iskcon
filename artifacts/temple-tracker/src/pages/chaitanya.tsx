@@ -753,6 +753,68 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
   const [show, setShow] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [forceFlipBelow, setForceFlipBelow] = useState(false);
+
+  // ── AI-activity glow ───────────────────────────────────────────────────────
+  // Pulsing saffron outline + shimmer over the selected text while an AI fix
+  // runs — visible feedback that "AI is working on this". One glow box per
+  // rendered line (Range.getClientRects), re-anchored on scroll/resize via
+  // the cloned Range so the glow stays glued to the words.
+  const [aiGlowRects, setAiGlowRects] = useState<Array<{ left: number; top: number; width: number; height: number }>>([]);
+  const aiGlowRangeRef = useRef<Range | null>(null);
+  const aiGlowPulseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const computeGlowRects = useCallback((): Array<{ left: number; top: number; width: number; height: number }> => {
+    const range = aiGlowRangeRef.current;
+    if (!range) return [];
+    try {
+      const rects = Array.from(range.getClientRects())
+        .filter(r => r.width > 2 && r.height > 4)
+        .slice(0, 14)
+        .map(r => ({ left: r.left - 3, top: r.top - 2, width: r.width + 6, height: r.height + 4 }));
+      if (rects.length > 0) return rects;
+      const b = range.getBoundingClientRect();
+      return b.width > 0 ? [{ left: b.left - 3, top: b.top - 2, width: b.width + 6, height: b.height + 4 }] : [];
+    } catch { return []; }
+  }, []);
+
+  const startAiGlow = useCallback(() => {
+    if (aiGlowPulseTimer.current) { clearTimeout(aiGlowPulseTimer.current); aiGlowPulseTimer.current = null; }
+    try {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) aiGlowRangeRef.current = sel.getRangeAt(0).cloneRange();
+    } catch { /* keep previous range */ }
+    setAiGlowRects(computeGlowRects());
+  }, [computeGlowRects]);
+
+  const stopAiGlow = useCallback(() => {
+    if (aiGlowPulseTimer.current) { clearTimeout(aiGlowPulseTimer.current); aiGlowPulseTimer.current = null; }
+    aiGlowRangeRef.current = null;
+    setAiGlowRects([]);
+  }, []);
+
+  // One-shot pulse for instant (non-async) actions — bold, join, new paragraph.
+  const pulseAiGlow = useCallback(() => {
+    startAiGlow();
+    aiGlowPulseTimer.current = setTimeout(() => stopAiGlow(), 900);
+  }, [startAiGlow, stopAiGlow]);
+
+  // Re-anchor the glow while the page scrolls or resizes.
+  useEffect(() => {
+    if (aiGlowRects.length === 0) return;
+    let raf = 0;
+    const reanchor = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => setAiGlowRects(computeGlowRects()));
+    };
+    window.addEventListener("scroll", reanchor, { passive: true, capture: true });
+    window.addEventListener("resize", reanchor);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", reanchor, { capture: true } as EventListenerOptions);
+      window.removeEventListener("resize", reanchor);
+    };
+  }, [aiGlowRects.length, computeGlowRects]);
+
   const [selectedText, setSelectedText] = useState("");
   const [appliedFlash, setAppliedFlash] = useState(false);
   const pageNumRef = useRef<number | null>(null);
@@ -1239,6 +1301,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     if (!selectedText || suggestLoading) return;
     const pageNum = pageNumRef.current;
     setSuggestLoading(true);
+    startAiGlow();
     setSuggestion(null);
     let contextBefore = "";
     let contextAfter = "";
@@ -1281,6 +1344,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       alert(`AI suggest failed: ${String(err)}`);
     } finally {
       setSuggestLoading(false);
+      stopAiGlow();
     }
   }, [selectedText, allPages, suggestLoading]);
 
@@ -1288,6 +1352,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     if (!selectedText || quickFixLoading || suggestLoading) return;
     const pageNum = pageNumRef.current;
     setQuickFixLoading(true);
+    startAiGlow();
     let contextBefore = "";
     let contextAfter = "";
     if (pageNum) {
@@ -1332,6 +1397,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       console.warn("Quick AI fix error:", err);
     } finally {
       setQuickFixLoading(false);
+      stopAiGlow();
     }
   }, [selectedText, allPages, quickFixLoading, suggestLoading, applyEdit]);
 
@@ -1354,6 +1420,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
   }, [selectedText, allPages, selectionIsBoldDom]);
 
   const toggleBold = useCallback(() => {
+    pulseAiGlow();
     if (!selectedText) return;
     const pageNum = pageNumRef.current;
     const page = pageNum ? allPages.find(p => p.pageNumber === pageNum) : null;
@@ -1415,6 +1482,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
   }, [selectedText, allPages, selectionIsBoldDom, applyEdit]);
 
   const insertLineBreak = useCallback(() => {
+    pulseAiGlow();
     if (!selectedText) return;
     const trimmed = selectedText.replace(/^\s+/, "");
     applyEdit(selectedText, "\n\n" + trimmed);
@@ -1422,6 +1490,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
   }, [selectedText, applyEdit]);
 
   const removeSpaces = useCallback(() => {
+    pulseAiGlow();
     if (!selectedText) return;
     const joined = selectedText.replace(/\s+/g, "");
     if (joined === selectedText) return;
@@ -1481,6 +1550,39 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
           className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[1px]"
           onClick={() => { setSuggestion(null); setManualFixMode(false); }}
         />
+      )}
+      {/* AI-activity glow over the selected text — fixed boxes per rendered
+          line, under the toolbar (z-40 vs z-50), never intercepting clicks. */}
+      {aiGlowRects.length > 0 && (
+        <>
+          <style>{`
+            @keyframes aiGlowPulse {
+              0%, 100% { box-shadow: 0 0 0 2px rgba(245,158,11,.50), 0 0 12px 3px rgba(249,115,22,.30); }
+              50% { box-shadow: 0 0 0 3px rgba(249,115,22,.85), 0 0 24px 8px rgba(245,158,11,.50); }
+            }
+            @keyframes aiGlowSweep {
+              0% { background-position: -150% 0; }
+              100% { background-position: 250% 0; }
+            }
+          `}</style>
+          {aiGlowRects.map((r, i) => (
+            <div
+              key={i}
+              className="fixed z-40 pointer-events-none rounded-md"
+              style={{
+                left: r.left,
+                top: r.top,
+                width: r.width,
+                height: r.height,
+                background: "linear-gradient(110deg, transparent 35%, rgba(251,191,36,.22) 50%, transparent 65%) 0 0 / 220% 100%",
+                animationName: "aiGlowPulse, aiGlowSweep",
+                animationDuration: "1.1s, 1.4s",
+                animationTimingFunction: "ease-in-out, linear",
+                animationIterationCount: "infinite, infinite",
+              }}
+            />
+          ))}
+        </>
       )}
       <div
         ref={toolbarRef}
