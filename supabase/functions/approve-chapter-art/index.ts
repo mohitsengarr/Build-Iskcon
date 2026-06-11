@@ -1,9 +1,17 @@
-// Supabase Edge Function: approve-chaitanya-art
+// Supabase Edge Function: approve-chapter-art (v3)
 //
-// Approve / reject a Chaitanya chapter-art review row. Mirrors approve-chapter-art:
-// approve flips status, reject deletes the storage file + queues a regen via
-// EdgeRuntime.waitUntil (so the HTTP response returns immediately while
-// FLUX runs in the background).
+// v3 changes:
+// - triggerRegenerate now PARSES the inner result. v2 fired-and-forgot: when
+//   the chapter-mode generation failed (FLUX rejection, Claude hiccup), the
+//   reviewer was promised "a new pending row in ~30s" but got nothing — the
+//   image was already deleted and the failure left zero trace. Failures now
+//   write a rejected marker row with error_message so the gallery can show
+//   WHY nothing appeared.
+// - Deployed with verify_jwt (v2 was fully public — anyone on the internet
+//   could approve/reject rows with a bare curl). The gallery now sends the
+//   anon JWT on every call.
+//
+// v2: reject fires regeneration via EdgeRuntime.waitUntil (background).
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -12,46 +20,49 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-interface RowMeta { chapter_part?: string | null; chapter_in_part?: number | null; chapter_title?: string | null }
+interface ReviewRow {
+  id: number;
+  chapter_global_number: number;
+  chapter_canto: number | null;
+  chapter_in_canto: number | null;
+  chapter_title: string | null;
+  image_path: string;
+  image_url: string;
+  status: string;
+}
 
-async function triggerRegenerate(chapterGlobalNumber: number, rowMeta?: RowMeta): Promise<void> {
-  // The reject flow promises the reviewer "a new pending row in ~30s".
-  // Parse the inner result and surface failures: the chapter-mode call
-  // returns HTTP 200 with {ok:false} on generation failure, so a bare
-  // fetch-and-forget left the reviewer with a deleted image, no new row,
-  // and zero trace. On failure we write a rejected marker row with the
-  // error so the review UI shows WHY nothing appeared.
+async function triggerRegenerate(row: ReviewRow): Promise<void> {
   try {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/bulk-generate-chaitanya-art`, {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/bulk-generate-chapter-art`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
         apikey: SUPABASE_SERVICE_KEY,
       },
-      body: JSON.stringify({ mode: "chapter", chapter_global_number: chapterGlobalNumber }),
+      body: JSON.stringify({ mode: "chapter", chapter_global_number: row.chapter_global_number }),
     });
-    const data = await res.json().catch(() => null) as { ok?: boolean; error?: string } | null;
+    const data = await res.json().catch(() => null) as { ok?: boolean; skipped?: boolean; error?: string; message?: string } | null;
     if (!res.ok || !data || data.ok === false) {
-      const detail = data?.error || `HTTP ${res.status}`;
-      console.error(`Chaitanya regen for chapter ${chapterGlobalNumber} did not produce a row: ${detail}`);
-      await supabase.from("chaitanya_chapter_art_review").insert({
-        chapter_global_number: chapterGlobalNumber,
-        chapter_part: rowMeta?.chapter_part ?? null,
-        chapter_in_part: rowMeta?.chapter_in_part ?? null,
-        chapter_title: rowMeta?.chapter_title ?? null,
+      const detail = data?.error || data?.message || `HTTP ${res.status}`;
+      console.error(`Chapter-art regen for ${row.chapter_global_number} did not produce a row: ${detail}`);
+      await supabase.from("bhagavatam_chapter_art_review").insert({
+        chapter_global_number: row.chapter_global_number,
+        chapter_canto: row.chapter_canto,
+        chapter_in_canto: row.chapter_in_canto,
+        chapter_title: row.chapter_title,
         status: "rejected",
         error_message: `auto-regen failed: ${String(detail).substring(0, 400)}`,
       });
     }
   } catch (err) {
-    console.error(`Background Chaitanya regen for chapter ${chapterGlobalNumber} failed:`, err);
+    console.error(`Background regen for chapter ${row.chapter_global_number} failed:`, err);
     try {
-      await supabase.from("chaitanya_chapter_art_review").insert({
-        chapter_global_number: chapterGlobalNumber,
-        chapter_part: rowMeta?.chapter_part ?? null,
-        chapter_in_part: rowMeta?.chapter_in_part ?? null,
-        chapter_title: rowMeta?.chapter_title ?? null,
+      await supabase.from("bhagavatam_chapter_art_review").insert({
+        chapter_global_number: row.chapter_global_number,
+        chapter_canto: row.chapter_canto,
+        chapter_in_canto: row.chapter_in_canto,
+        chapter_title: row.chapter_title,
         status: "rejected",
         error_message: `auto-regen crashed: ${String(err).substring(0, 400)}`,
       });
@@ -81,7 +92,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const { data: row, error: fetchErr } = await supabase
-      .from("chaitanya_chapter_art_review")
+      .from("bhagavatam_chapter_art_review")
       .select("*")
       .eq("id", id)
       .single();
@@ -93,28 +104,31 @@ Deno.serve(async (req: Request) => {
     }
 
     if (action === "reject") {
-      try { await supabase.storage.from("chaitanya-art-images").remove([row.image_path]); } catch { /* best effort */ }
+      try { await supabase.storage.from("chapter-art-images").remove([row.image_path]); } catch { /* best effort */ }
       const { error: upErr } = await supabase
-        .from("chaitanya_chapter_art_review")
+        .from("bhagavatam_chapter_art_review")
         .update({ status: "rejected", reviewed_at: new Date().toISOString() })
         .eq("id", id);
       if (upErr) throw new Error(`Reject update: ${upErr.message}`);
 
       // @ts-ignore - EdgeRuntime is provided by Supabase
-      EdgeRuntime.waitUntil(triggerRegenerate(row.chapter_global_number, row));
+      EdgeRuntime.waitUntil(triggerRegenerate(row as ReviewRow));
 
       return new Response(JSON.stringify({
         success: true,
         status: "rejected",
         id,
-        regeneration: { ok: true, detail: "Regeneration started in background — a new pending row will appear in ~30s." },
+        regeneration: {
+          ok: true,
+          detail: "Regeneration started in background — a new pending row will appear in ~30-60s.",
+        },
         message: "Rejected. New attempt queued — will appear in pending review shortly.",
       }), { headers: cors });
     }
 
     // action === "approve"
     const { error: upErr } = await supabase
-      .from("chaitanya_chapter_art_review")
+      .from("bhagavatam_chapter_art_review")
       .update({ status: "approved", reviewed_at: new Date().toISOString() })
       .eq("id", id);
     if (upErr) throw new Error(`Approve update: ${upErr.message}`);

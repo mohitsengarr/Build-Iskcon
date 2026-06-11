@@ -49,6 +49,16 @@ const MUTATION_API_BASE = `${import.meta.env.VITE_PUBLIC_API_URL || ""}/api/bhag
 const SUPABASE_URL = "https://etfmndcrchundvgtvmot.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0Zm1uZGNyY2h1bmR2Z3R2bW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2NDE1MTIsImV4cCI6MjA2MzIxNzUxMn0.7GXS820xSFcUy2TRdbspN7s-NP3sgKFFtUP-Zw0Qbrs";
 
+// Every edge-function call MUST carry the anon JWT: functions deployed with
+// verify_jwt (all of them, after the security pass) are rejected by the
+// Supabase gateway with 401 BEFORE the function runs if these headers are
+// missing. This was why Chaitanya approve/reject silently never worked.
+const FN_HEADERS = {
+  "Content-Type": "application/json",
+  apikey: SUPABASE_ANON_KEY,
+  Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+};
+
 function sbFetch(path: string, opts?: RequestInit) {
   return fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     ...opts,
@@ -913,7 +923,7 @@ export default function Gallery() {
     try {
       const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/functions/v1/bulk-generate-images", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: FN_HEADERS,
         body: JSON.stringify({ mode: "status" }),
       });
       if (res.ok) setBulkStatus(await res.json());
@@ -932,7 +942,7 @@ export default function Gallery() {
     try {
       const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/functions/v1/bulk-generate-images", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: FN_HEADERS,
         body: JSON.stringify({ mode: "sample" }),
       });
       const data = await res.json();
@@ -961,7 +971,7 @@ export default function Gallery() {
     try {
       const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/functions/v1/bulk-generate-images", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: FN_HEADERS,
         body: JSON.stringify({ mode: "bulk", limit: bulkLimit, concurrency: 4 }),
       });
       const data = await res.json();
@@ -1030,7 +1040,7 @@ export default function Gallery() {
     try {
       const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/functions/v1/bulk-generate-chapter-art", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: FN_HEADERS,
         body: JSON.stringify({ mode: "status" }),
       });
       if (res.ok) setChartBulkStatus(await res.json());
@@ -1049,7 +1059,7 @@ export default function Gallery() {
     try {
       const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/functions/v1/bulk-generate-chapter-art", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: FN_HEADERS,
         body: JSON.stringify({ mode: "sample" }),
       });
       const data = await res.json();
@@ -1077,7 +1087,7 @@ export default function Gallery() {
     try {
       const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/functions/v1/bulk-generate-chapter-art", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: FN_HEADERS,
         body: JSON.stringify({ mode: "bulk", limit: chartBulkLimit, concurrency: 4 }),
       });
       const data = await res.json();
@@ -1101,12 +1111,12 @@ export default function Gallery() {
     try {
       const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/functions/v1/approve-chapter-art", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: FN_HEADERS,
         body: JSON.stringify({ id, action }),
       });
       const data = await res.json();
       if (!res.ok) {
-        alert(`${action === "approve" ? "Approve" : "Reject"} failed: ${data.error || res.statusText}`);
+        alert(`${action === "approve" ? "Approve" : "Reject"} failed: ${data.error || data.msg || res.statusText || `HTTP ${res.status}`}`);
       } else {
         // Remove the reviewed row from the local pending list immediately.
         setPendingChapterArt(prev => prev.filter(p => p.id !== id));
@@ -1183,7 +1193,7 @@ export default function Gallery() {
     try {
       const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/functions/v1/bulk-generate-chaitanya-art", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: FN_HEADERS,
         body: JSON.stringify({ mode: "status" }),
       });
       if (res.ok) setCcBulkStatus(await res.json());
@@ -1201,7 +1211,7 @@ export default function Gallery() {
     try {
       const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/functions/v1/bulk-generate-chaitanya-art", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: FN_HEADERS,
         body: JSON.stringify({ mode: "sample" }),
       });
       const data = await res.json();
@@ -1229,7 +1239,7 @@ export default function Gallery() {
     try {
       const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/functions/v1/bulk-generate-chaitanya-art", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: FN_HEADERS,
         body: JSON.stringify({ mode: "bulk", limit: ccBulkLimit, concurrency: 4 }),
       });
       const data = await res.json();
@@ -1253,12 +1263,12 @@ export default function Gallery() {
     try {
       const res = await fetch("https://etfmndcrchundvgtvmot.supabase.co/functions/v1/approve-chaitanya-art", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: FN_HEADERS,
         body: JSON.stringify({ id, action }),
       });
       const data = await res.json();
       if (!res.ok) {
-        alert(`${action === "approve" ? "Approve" : "Reject"} failed: ${data.error || res.statusText}`);
+        alert(`${action === "approve" ? "Approve" : "Reject"} failed: ${data.error || data.msg || res.statusText || `HTTP ${res.status}`}`);
       } else {
         setPendingChaitanya(prev => prev.filter(p => p.id !== id));
         if (action === "approve") {
@@ -1289,12 +1299,12 @@ export default function Gallery() {
     try {
       const res = await fetch(`https://etfmndcrchundvgtvmot.supabase.co/functions/v1/approve-instagram-post`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: FN_HEADERS,
         body: JSON.stringify({ id, action }),
       });
       const data = await res.json();
       if (!res.ok) {
-        alert(`${action === "approve" ? "Approve" : "Reject"} failed: ${data.error || res.statusText}`);
+        alert(`${action === "approve" ? "Approve" : "Reject"} failed: ${data.error || data.msg || res.statusText || `HTTP ${res.status}`}`);
       } else {
         // Drop the reviewed post from the pending list immediately
         setPending(prev => prev.filter(p => p.id !== id));
@@ -1307,13 +1317,14 @@ export default function Gallery() {
           void fetchAllRef.current?.();
         }
 
-        // On reject the backend auto-regenerates for the same chapter and
-        // returns the new pending id. Refetch so it appears at the top of
-        // the queue without a manual reload.
+        // On reject the backend auto-regenerates for the same chapter IN THE
+        // BACKGROUND (30-90s: Claude caption + FLUX). A single immediate
+        // refetch would land before the new row exists — poll like the
+        // chaitanya handler does so the replacement appears without a reload.
         if (action === "reject") {
           if (data?.regeneration?.ok) {
-            // The new pending row is already in the DB — refresh the list
             await fetchPending();
+            startPoller("ig-regen", () => { void fetchPending(); }, 5000, 120 * 1000);
           } else if (data?.regeneration?.detail) {
             // Capped out or the generator failed — show why so the user
             // can intervene (e.g. adjust prompts, manual override).
@@ -1326,7 +1337,7 @@ export default function Gallery() {
     } finally {
       setReviewing(prev => { const next = new Set(prev); next.delete(id); return next; });
     }
-  }, [fetchPending]);
+  }, [fetchPending, startPoller]);
 
   // ── Fetch manifests ───────────────────────────────────────────────────────
   // Stored as a useCallback so reviewPost() can re-trigger after approve to
