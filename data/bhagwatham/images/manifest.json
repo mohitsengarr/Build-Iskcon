@@ -409,6 +409,23 @@
       "cantoNumber": 2
     },
     {
+      "chapterNumber": 27,
+      "chapterTitle": "Chapter 36",
+      "cantoNumber": 2,
+      "imagePath": "chapter-027.jpg",
+      "prompt": "Narada, guided by Brahma, shares divine wisdom with Parikshit and Shukadeva in a serene forest setting.",
+      "descriptionHi": "राजा परीक्षित शुकदेव गोस्वामी से नारद मुनि द्वारा दिव्य गुणों के वर्णन के बारे में पूछते हैं, जो ब्रह्माजी द्वारा उपदेशित थे। यह प्रश्न शिष्य-परम्परा के महत्व को दर्शाता है।",
+      "personasUsed": [
+        "narada",
+        "shukadeva",
+        "brahma",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-11T16:00:36.723Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 31,
       "chapterTitle": "(शुषा दो",
       "cantoNumber": 3,
@@ -2288,5 +2305,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-06-11T15:00:08.103Z"
+  "lastUpdated": "2026-06-11T16:00:36.724Z"
 }

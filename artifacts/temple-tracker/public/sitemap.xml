@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://buildiskcon.com/</loc>
     <lastmod>2026-06-11</lastmod>
@@ -8,6 +8,18 @@
   </url>
   <url>
     <loc>https://buildiskcon.com/shrimad-bhagavatam/</loc>
+    <xhtml:link rel="alternate" hreflang="hi" href="https://buildiskcon.com/shrimad-bhagavatam/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://buildiskcon.com/srimad-bhagavatam/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://buildiskcon.com/srimad-bhagavatam/"/>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://buildiskcon.com/srimad-bhagavatam/</loc>
+    <xhtml:link rel="alternate" hreflang="hi" href="https://buildiskcon.com/shrimad-bhagavatam/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://buildiskcon.com/srimad-bhagavatam/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://buildiskcon.com/srimad-bhagavatam/"/>
     <lastmod>2026-06-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>

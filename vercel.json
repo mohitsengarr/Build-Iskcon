@@ -62,6 +62,8 @@
     { "source": "/api/chaitanya/batch/:number", "destination": "/api/chaitanya/batch/:number" },
     { "source": "/shrimad-bhagavatam", "destination": "/shrimad-bhagavatam/index.html" },
     { "source": "/shrimad-bhagavatam/", "destination": "/shrimad-bhagavatam/index.html" },
+    { "source": "/srimad-bhagavatam", "destination": "/srimad-bhagavatam/index.html" },
+    { "source": "/srimad-bhagavatam/", "destination": "/srimad-bhagavatam/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

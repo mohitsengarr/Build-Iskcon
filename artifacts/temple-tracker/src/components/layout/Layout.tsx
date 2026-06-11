@@ -370,6 +370,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 static page outside the SPA router — client-side navigation
                 would 404. A full page load serves the static file. */}
             <a href="/shrimad-bhagavatam/" className="text-white/40 hover:text-primary text-xs font-medium transition-colors">श्रीमद्भागवत परिचय</a>
+            <a href="/srimad-bhagavatam/" className="text-white/40 hover:text-primary text-xs font-medium transition-colors">About Srimad Bhagavatam</a>
             <a href="/privacy" className="text-white/40 hover:text-primary text-xs font-medium transition-colors">Privacy Policy</a>
             <a href="/terms" className="text-white/40 hover:text-primary text-xs font-medium transition-colors">Terms of Use</a>
           </div>
