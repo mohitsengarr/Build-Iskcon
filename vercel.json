@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "pnpm install",
-  "buildCommand": "node artifacts/temple-tracker/scripts/generate-static-api.mjs && pnpm --filter @workspace/temple-tracker run build && mkdir -p public && cp -r artifacts/temple-tracker/dist/public/* public/",
+  "buildCommand": "node artifacts/temple-tracker/scripts/generate-static-api.mjs && node artifacts/temple-tracker/scripts/generate-landing.mjs && pnpm --filter @workspace/temple-tracker run build && mkdir -p public && cp -r artifacts/temple-tracker/dist/public/* public/",
   "outputDirectory": "public",
   "framework": null,
   "headers": [
@@ -48,6 +48,8 @@
     { "source": "/api/chaitanya/progress", "destination": "/api/chaitanya/progress" },
     { "source": "/api/chaitanya/chapter-index", "destination": "/api/chaitanya/chapter-index" },
     { "source": "/api/chaitanya/batch/:number", "destination": "/api/chaitanya/batch/:number" },
+    { "source": "/shrimad-bhagavatam", "destination": "/shrimad-bhagavatam/index.html" },
+    { "source": "/shrimad-bhagavatam/", "destination": "/shrimad-bhagavatam/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

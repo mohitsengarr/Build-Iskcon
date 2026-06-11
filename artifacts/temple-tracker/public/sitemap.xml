@@ -2,44 +2,56 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://buildiskcon.com/</loc>
-    <lastmod>2026-03-31</lastmod>
+    <lastmod>2026-06-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://buildiskcon.com/#projects</loc>
-    <lastmod>2026-03-31</lastmod>
+    <loc>https://buildiskcon.com/shrimad-bhagavatam/</loc>
+    <lastmod>2026-06-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://buildiskcon.com/#about</loc>
-    <lastmod>2026-03-31</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://buildiskcon.com/bhagwatham</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://buildiskcon.com/chaitanya</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://buildiskcon.com/#directory</loc>
-    <lastmod>2026-03-31</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://buildiskcon.com/#vision</loc>
-    <lastmod>2026-03-31</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://buildiskcon.com/gallery</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://buildiskcon.com/how-to-build-temple</loc>
-    <lastmod>2026-03-31</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <loc>https://buildiskcon.com/bhaktigram</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://buildiskcon.com/krishna-janmabhoomi</loc>
-    <lastmod>2026-03-31</lastmod>
+    <loc>https://buildiskcon.com/japa</loc>
+    <lastmod>2026-06-11</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://buildiskcon.com/privacy</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  <url>
+    <loc>https://buildiskcon.com/terms</loc>
+    <lastmod>2026-06-11</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
   </url>
 </urlset>

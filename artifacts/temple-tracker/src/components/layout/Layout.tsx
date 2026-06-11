@@ -366,6 +366,10 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
           <div className="flex flex-col gap-3">
             <span className="font-sans text-[10px] uppercase tracking-[0.15em] font-bold text-primary mb-1">Legal</span>
+            {/* Plain <a> on purpose: /shrimad-bhagavatam/ is a pre-rendered
+                static page outside the SPA router — client-side navigation
+                would 404. A full page load serves the static file. */}
+            <a href="/shrimad-bhagavatam/" className="text-white/40 hover:text-primary text-xs font-medium transition-colors">श्रीमद्भागवत परिचय</a>
             <a href="/privacy" className="text-white/40 hover:text-primary text-xs font-medium transition-colors">Privacy Policy</a>
             <a href="/terms" className="text-white/40 hover:text-primary text-xs font-medium transition-colors">Terms of Use</a>
           </div>
