@@ -20,8 +20,72 @@ import {
   generateImagesForBatch,
   regenerateChapterImages,
 } from "../services/gita-image-gen";
+import { logger } from "../lib/logger";
 
 const router = Router();
+
+// ── Chapter heading detection (mirrors gita-audit.ts) ──────────────────────
+// C9: regenerate-chapter previously fed the START of the book (chapter 1's
+// text) to EVERY chapter. These helpers locate the requested chapter's
+// heading so the content snippet is sliced from THERE.
+
+const GITA_HINDI_NUMS: Record<string, number> = {
+  एक: 1, दो: 2, तीन: 3, चार: 4, पाँच: 5, पांच: 5, छः: 6, छह: 6, सात: 7, आठ: 8, नौ: 9, दस: 10,
+  ग्यारह: 11, बारह: 12, तेरह: 13, चौदह: 14, पन्द्रह: 15, पंद्रह: 15, सोलह: 16, सत्रह: 17,
+  अठारह: 18,
+};
+
+const GITA_CHAPTER_RE = /^(?:Chapter\s+\S+|अध्याय\s+(?:[ऀ-ॿ]+(?:\s+[ऀ-ॿ]+){0,2}|\d+))\s*$/iu;
+
+function isGitaChapterHeading(line: string): boolean {
+  const cleaned = line.replace(/^\d+\s+/, "");
+  if (cleaned.length > 60) return false;
+  if (line.includes("पूर्ण हुए") || line.includes("पूर्ण हुआ")) return false;
+  return GITA_CHAPTER_RE.test(cleaned);
+}
+
+function extractGitaChapterNum(line: string): number {
+  const after = line.replace(/^(?:अध्याय|Chapter)\s*/iu, "").trim();
+  if (after && GITA_HINDI_NUMS[after] !== undefined) return GITA_HINDI_NUMS[after];
+  for (const [w, n] of Object.entries(GITA_HINDI_NUMS)) {
+    if (line.includes(w)) return n;
+  }
+  const m = line.match(/\d+/);
+  if (m) {
+    const n = parseInt(m[0], 10);
+    if (n > 0 && n <= 18) return n;
+  }
+  return 0;
+}
+
+/** Slice ~3000 chars of content starting at the requested chapter's heading. */
+function extractGitaChapterContent(
+  allPages: Array<{ text: string }>,
+  chapterNumber: number,
+): string | null {
+  for (let p = 0; p < allPages.length; p++) {
+    const text = allPages[p]?.text || "";
+    if (text.length < 20) continue;
+    const lines = text.split("\n");
+    // Skip ToC pages (2+ heading-looking lines on one page)
+    const headingCount = lines.filter((l) => isGitaChapterHeading(l.trim())).length;
+    if (headingCount >= 2) continue;
+
+    for (let i = 0; i < lines.length; i++) {
+      const t = lines[i].trim();
+      if (!isGitaChapterHeading(t)) continue;
+      if (extractGitaChapterNum(t) !== chapterNumber) continue;
+
+      // Found the chapter heading — collect content from here across pages
+      let content = lines.slice(i).join("\n");
+      for (let q = p + 1; q < allPages.length && content.length < 3000; q++) {
+        content += "\n" + (allPages[q]?.text || "");
+      }
+      return content.substring(0, 3000);
+    }
+  }
+  return null;
+}
 
 // ── Static file serving ────────────────────────────────────────────────────
 
@@ -180,11 +244,20 @@ router.post("/gita/regenerate-chapter/:number", async (req, res) => {
       return;
     }
 
-    // Get chapter content from batches
+    // Get chapter content from batches.
+    // C9: slice from the requested chapter's own heading — joining all pages
+    // and taking the first 3000 chars fed chapter 1's text to every chapter.
     const allBatches = getAllBatches();
     const allPages = allBatches.flatMap((b) => b.pages);
     const chapterTitle = `Chapter ${chapterNumber}`;
-    const contentSnippet = allPages.map((p) => p.text).join("\n").substring(0, 3000);
+    let contentSnippet = extractGitaChapterContent(allPages, chapterNumber);
+    if (!contentSnippet) {
+      logger.warn(
+        { chapterNumber },
+        "Gita regenerate: chapter heading not found in pages — falling back to start-of-book content",
+      );
+      contentSnippet = allPages.map((p) => p.text).join("\n").substring(0, 3000);
+    }
 
     const result = await regenerateChapterImages(chapterNumber, chapterTitle, contentSnippet);
     const manifest = getImageManifest();

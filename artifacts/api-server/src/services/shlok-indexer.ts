@@ -10,11 +10,10 @@
 
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 import { logger } from "../lib/logger";
+import { DATA_DIR as ROOT_DATA_DIR } from "../lib/repo-root";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.resolve(__dirname, "..", "..", "..", "..", "data", "bhagwatham");
+const DATA_DIR = path.join(ROOT_DATA_DIR, "bhagwatham");
 const PAGES_DIR = path.join(DATA_DIR, "pages");
 const INDEX_STATE_FILE = path.join(DATA_DIR, "shlok-index-state.json");
 
@@ -53,7 +52,13 @@ interface IndexState {
   totalShloksIndexed: number;
   lastRunAt: string;
   status: "idle" | "running";
+  startedAt?: string;     // when status flipped to "running" — for crash recovery
+  lastChapterNum?: number; // C10: carry chapter number across pages/batches
 }
+
+// C8: a crash mid-batch leaves status="running" persisted forever, blocking
+// all future indexer ticks. Treat a running state older than this as stale.
+const STALE_RUNNING_MS = 30 * 60 * 1000;
 
 function readState(): IndexState {
   if (fs.existsSync(INDEX_STATE_FILE)) {
@@ -81,21 +86,27 @@ interface ExtractedShlok {
   globalChapter: number;
 }
 
-function extractShloksFromPage(text: string, pageNumber: number): ExtractedShlok[] {
-  if (!text || text.length < 50) return [];
+const SECTION_FIELD_CAP = 2000; // C10: per-field accumulation cap (~2000 chars)
 
+function extractShloksFromPage(
+  text: string,
+  pageNumber: number,
+  startChapterNum = 0, // C10: chapter carried over from previous pages/batches
+): { shloks: ExtractedShlok[]; lastChapterNum: number } {
   const canto = getSkandh(pageNumber);
+  // C10: most pages have no chapter heading — start from the carried-over
+  // chapter instead of defaulting everything to chapter 1.
+  let chapterNum = startChapterNum;
+
+  if (!text || text.length < 50) return { shloks: [], lastChapterNum: chapterNum };
+
   const lines = text.split("\n");
   const shloks: ExtractedShlok[] = [];
 
   let currentShlok: string[] = [];
   let currentVerseNum: number | null = null;
   let inShlok = false;
-  let shabdarth = "";
-  let anuvad = "";
-  let tatparya = "";
   let currentSection = "text"; // text, shlok, shabdarth, anuvad, tatparya
-  let chapterNum = 0;
 
   for (let i = 0; i < lines.length; i++) {
     const t = lines[i].trim();
@@ -168,25 +179,34 @@ function extractShloksFromPage(text: string, pageNumber: number): ExtractedShlok
       continue;
     }
 
-    // Accumulate section text for the last shlok
+    // Accumulate section text for the last shlok.
+    // C10: the old `!last.shabdarth` / `!last.anuvad` guards made multi-line
+    // accumulation dead code — only the FIRST line of each section was ever
+    // stored. Accumulate all lines, capped at ~2000 chars per field.
     if (shloks.length > 0) {
       const last = shloks[shloks.length - 1];
-      if (currentSection === "shabdarth" && !last.shabdarth) {
-        last.shabdarth += (last.shabdarth ? "\n" : "") + t;
-        if (last.shabdarth.length > 500) last.shabdarth = last.shabdarth.substring(0, 500);
-      } else if (currentSection === "anuvad" && !last.anuvad) {
-        last.anuvad += (last.anuvad ? "\n" : "") + t;
-        if (last.anuvad.length > 500) last.anuvad = last.anuvad.substring(0, 500);
+      if (currentSection === "shabdarth") {
+        if (last.shabdarth.length < SECTION_FIELD_CAP) {
+          last.shabdarth += (last.shabdarth ? "\n" : "") + t;
+          if (last.shabdarth.length > SECTION_FIELD_CAP) last.shabdarth = last.shabdarth.substring(0, SECTION_FIELD_CAP);
+        }
+      } else if (currentSection === "anuvad") {
+        if (last.anuvad.length < SECTION_FIELD_CAP) {
+          last.anuvad += (last.anuvad ? "\n" : "") + t;
+          if (last.anuvad.length > SECTION_FIELD_CAP) last.anuvad = last.anuvad.substring(0, SECTION_FIELD_CAP);
+        }
       } else if (currentSection === "tatparya") {
-        last.tatparya += (last.tatparya ? "\n" : "") + t;
-        if (last.tatparya.length > 500) last.tatparya = last.tatparya.substring(0, 500);
+        if (last.tatparya.length < SECTION_FIELD_CAP) {
+          last.tatparya += (last.tatparya ? "\n" : "") + t;
+          if (last.tatparya.length > SECTION_FIELD_CAP) last.tatparya = last.tatparya.substring(0, SECTION_FIELD_CAP);
+        }
       }
     }
 
     if (!inShlok) currentShlok = [];
   }
 
-  return shloks;
+  return { shloks, lastChapterNum: chapterNum };
 }
 
 // ── Normalize shlok text for dedup ──────────────────────────────────────────
@@ -303,7 +323,18 @@ export async function indexNextBatch(): Promise<{
 }> {
   const state = readState();
   if (state.status === "running") {
-    return { batchNumber: 0, shloksFound: 0, inserted: 0, updated: 0, message: "Already running" };
+    // C8: crash recovery — a persisted "running" older than 30 min is stale.
+    if (!state.startedAt) {
+      // Legacy state without a timestamp: stamp it now so the stale clock starts.
+      state.startedAt = new Date().toISOString();
+      writeState(state);
+      return { batchNumber: 0, shloksFound: 0, inserted: 0, updated: 0, message: "Already running" };
+    }
+    const ageMs = Date.now() - new Date(state.startedAt).getTime();
+    if (ageMs < STALE_RUNNING_MS) {
+      return { batchNumber: 0, shloksFound: 0, inserted: 0, updated: 0, message: "Already running" };
+    }
+    logger.warn({ startedAt: state.startedAt }, "Shlok indexer stuck in 'running' >30min — resetting (crash recovery)");
   }
 
   if (!getSbUrl() || !getSbKey()) {
@@ -311,6 +342,7 @@ export async function indexNextBatch(): Promise<{
   }
 
   state.status = "running";
+  state.startedAt = new Date().toISOString();
   writeState(state);
 
   try {
@@ -331,11 +363,15 @@ export async function indexNextBatch(): Promise<{
     let totalShloks = 0;
     let totalInserted = 0;
     let totalUpdated = 0;
+    // C10: carry the current chapter number across pages (and across batches
+    // via persisted state) — most pages have no heading line.
+    let chapterCursor = state.lastChapterNum || 0;
 
     for (const page of batch.pages) {
       if (!page.text || page.text.length < 50) continue;
 
-      const shloks = extractShloksFromPage(page.text, page.pageNumber);
+      const { shloks, lastChapterNum } = extractShloksFromPage(page.text, page.pageNumber, chapterCursor);
+      chapterCursor = lastChapterNum;
       totalShloks += shloks.length;
 
       for (const shlok of shloks) {
@@ -352,6 +388,7 @@ export async function indexNextBatch(): Promise<{
     state.lastProcessedBatch = nextBatch;
     state.totalShloksIndexed += totalInserted;
     state.lastRunAt = new Date().toISOString();
+    state.lastChapterNum = chapterCursor; // C10: persist chapter carry for next batch
     state.status = "idle";
     writeState(state);
 

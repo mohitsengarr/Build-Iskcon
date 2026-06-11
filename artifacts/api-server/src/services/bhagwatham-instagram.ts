@@ -1,17 +1,14 @@
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 import { logger } from "../lib/logger";
 import {
   buildAIScenePrompt,
   getImageManifest,
   type ChapterImage,
 } from "./bhagwatham-image-gen";
+import { DATA_DIR as ROOT_DATA_DIR } from "../lib/repo-root";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const DATA_DIR = path.resolve(__dirname, "..", "..", "..", "..", "data", "bhagwatham");
+const DATA_DIR = path.join(ROOT_DATA_DIR, "bhagwatham");
 const INSTAGRAM_DIR = path.join(DATA_DIR, "instagram");
 const IG_MANIFEST_FILE = path.join(INSTAGRAM_DIR, "ig-manifest.json");
 
@@ -1011,9 +1008,11 @@ export async function queueChapterToBuffer(
   chapterNumber: number,
 ): Promise<{ queued: number; errors: number }> {
   const manifest = readIGManifest();
-  // Find images that haven't been published to at least one channel
+  // C6: per-channel check — include images missing EITHER channel id, so a
+  // partially-posted image (e.g. IG ok, Threads missing) gets its missing
+  // channel published without re-posting the one that already succeeded.
   const images = manifest.images.filter(
-    (img) => img.chapterNumber === chapterNumber && !img.bufferId && !img.bufferThreadsId
+    (img) => img.chapterNumber === chapterNumber && (!img.bufferId || !img.bufferThreadsId)
   );
 
   if (images.length === 0) {
@@ -1029,30 +1028,32 @@ export async function queueChapterToBuffer(
       const localPath = path.join(INSTAGRAM_DIR, img.imagePath);
       if (!fs.existsSync(localPath)) { errors++; continue; }
       try {
-        img.publicUrl = await uploadToSupabaseStorage(localPath, img.imagePath);
+        const url = await uploadToSupabaseStorage(localPath, img.imagePath);
+        img.publicUrl = url;
+        // Persist the publicUrl on a fresh manifest read (publishSinglePost
+        // re-reads the manifest, so the URL must be durable first)
+        const m2 = readIGManifest();
+        const e2 = m2.images.find(
+          (i) => i.chapterNumber === img.chapterNumber && i.sceneIndex === img.sceneIndex
+        );
+        if (e2) { e2.publicUrl = url; writeIGManifest(m2); }
       } catch { errors++; continue; }
     }
 
     try {
-      const publishResults = await publishToAllChannels(img.publicUrl, img.caption, img.hashtags);
-      for (const pr of publishResults) {
-        if (pr.channelService === "instagram") img.bufferId = pr.postId;
-        if (pr.channelService === "threads") img.bufferThreadsId = pr.postId;
-      }
+      // publishSinglePost only publishes channels whose id is missing and
+      // persists the manifest after each channel success.
+      const publishResults = await publishSinglePost(img);
       if (publishResults.length > 0) {
-        img.bufferStatus = "sent";
-        img.queuedAt = new Date().toISOString();
         queued++;
       } else {
         errors++;
       }
     } catch {
-      img.bufferStatus = "error";
       errors++;
     }
   }
 
-  writeIGManifest(manifest);
   return { queued, errors };
 }
 
@@ -1072,31 +1073,67 @@ export function getInstagramDir(): string {
 }
 
 /**
- * Publish a single manifest entry to all channels (Instagram + Threads).
- * Updates the manifest in place.
+ * Publish a single manifest entry to its channels (Instagram + Threads).
+ *
+ * C6: per-channel idempotency. Each channel is published ONLY if its own post
+ * id (`bufferId` for Instagram, `bufferThreadsId` for Threads) is missing in
+ * the manifest — a partial failure (IG ok, Threads failed, or vice versa) must
+ * not re-post to the channel that already succeeded. The manifest is persisted
+ * immediately after EACH channel success so a crash between channels doesn't
+ * lose state.
  */
 export async function publishSinglePost(
   entry: { chapterNumber: number; sceneIndex: number; publicUrl?: string; caption: string; hashtags: string },
 ): Promise<Array<{ channelService: string; postId: string }>> {
   if (!entry.publicUrl) throw new Error("No public URL for image");
 
-  const results = await publishToAllChannels(entry.publicUrl, entry.caption, entry.hashtags);
-
-  // Update manifest
-  const manifest = readIGManifest();
-  const img = manifest.images.find(
+  // Read the CURRENT manifest state to decide which channels still need posting
+  const current = readIGManifest().images.find(
     (i) => i.chapterNumber === entry.chapterNumber && i.sceneIndex === entry.sceneIndex
   );
-  if (img) {
-    for (const r of results) {
-      if (r.channelService === "instagram") img.bufferId = r.postId;
-      if (r.channelService === "threads") img.bufferThreadsId = r.postId;
+  const missingServices: Array<"instagram" | "threads"> = [];
+  if (!current?.bufferId) missingServices.push("instagram");
+  if (!current?.bufferThreadsId) missingServices.push("threads");
+  if (missingServices.length === 0) {
+    logger.info(
+      { chapterNumber: entry.chapterNumber, sceneIndex: entry.sceneIndex },
+      "publishSinglePost: both channels already posted — nothing to do"
+    );
+    return [];
+  }
+
+  const channels = await getBufferChannels();
+  const targets = channels.filter(
+    (c) =>
+      (c.service === "instagram" || c.service === "threads") &&
+      missingServices.includes(c.service as "instagram" | "threads")
+  );
+
+  const results: Array<{ channelService: string; postId: string }> = [];
+  for (const ch of targets) {
+    try {
+      const res = await queueToBuffer(
+        entry.publicUrl, entry.caption, entry.hashtags, ch.id, ch.service as "instagram" | "threads"
+      );
+      results.push({ channelService: ch.service, postId: res.postId });
+      logger.info({ service: ch.service, postId: res.postId }, "Published to Buffer channel");
+
+      // Persist immediately after EACH channel success (re-read to avoid
+      // clobbering concurrent manifest updates).
+      const manifest = readIGManifest();
+      const img = manifest.images.find(
+        (i) => i.chapterNumber === entry.chapterNumber && i.sceneIndex === entry.sceneIndex
+      );
+      if (img) {
+        if (ch.service === "instagram") img.bufferId = res.postId;
+        if (ch.service === "threads") img.bufferThreadsId = res.postId;
+        img.bufferStatus = "sent";
+        img.queuedAt = new Date().toISOString();
+        writeIGManifest(manifest);
+      }
+    } catch (err) {
+      logger.warn({ err, service: ch.service }, "Failed to publish to channel");
     }
-    if (results.length > 0) {
-      img.bufferStatus = "sent";
-      img.queuedAt = new Date().toISOString();
-    }
-    writeIGManifest(manifest);
   }
 
   return results;

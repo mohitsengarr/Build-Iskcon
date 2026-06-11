@@ -100,11 +100,13 @@ function timeAgo(iso: string | undefined): string {
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h`;
   const d = Math.floor(h / 24);
+  // Day-based thresholds with no zero outputs at the boundaries:
+  //   1-6d → "1d".."6d", 7-29d → "1w".."4w", 30-364d → "1mo".."12mo",
+  //   365+ → "1y"+. The old w<4 / mo<12 cascade rendered "0mo" on days
+  //   28-29 and "0y" on days 360-364.
   if (d < 7) return `${d}d`;
-  const w = Math.floor(d / 7);
-  if (w < 4) return `${w}w`;
-  const mo = Math.floor(d / 30);
-  if (mo < 12) return `${mo}mo`;
+  if (d < 30) return `${Math.floor(d / 7)}w`;
+  if (d < 365) return `${Math.floor(d / 30)}mo`;
   return `${Math.floor(d / 365)}y`;
 }
 
@@ -154,6 +156,10 @@ function InstagramPostCard({ item, onOpenLightbox }: { item: GalleryItem; onOpen
   const [likeCount, setLikeCount] = useState(0);
   const [likeBusy, setLikeBusy] = useState(false);
   const [saved, setSaved] = useState(false);
+  // Set the moment the user taps like. The mount fetch below can resolve
+  // AFTER that tap — applying its stale snapshot would clobber the user's
+  // optimistic like state, so the fetch skips itself once this is true.
+  const userToggledRef = useRef(false);
   const [expanded, setExpanded] = useState(false);
 
   // Fetch like count + my-like state on mount. One round-trip per post; with
@@ -168,6 +174,9 @@ function InstagramPostCard({ item, onOpenLightbox }: { item: GalleryItem; onOpen
           sbFetch(`bhaktigram_likes?ig_post_id=eq.${item.igPostId}&device_id=eq.${encodeURIComponent(deviceId)}&select=id&limit=1`),
         ]);
         if (cancelled) return;
+        // User already toggled — don't overwrite optimistic state with the
+        // stale pre-toggle snapshot (see userToggledRef note above).
+        if (userToggledRef.current) return;
         if (countRes.ok) {
           // Supabase REST returns count via Content-Range header when Prefer: count=exact is set.
           const range = countRes.headers.get("content-range");
@@ -185,6 +194,7 @@ function InstagramPostCard({ item, onOpenLightbox }: { item: GalleryItem; onOpen
 
   const toggleLike = useCallback(async () => {
     if (!item.igPostId || likeBusy) return;
+    userToggledRef.current = true;
     setLikeBusy(true);
     // Optimistic UI: flip immediately, roll back on error.
     const wasLiked = liked;
@@ -458,7 +468,9 @@ function InstagramPostCard({ item, onOpenLightbox }: { item: GalleryItem; onOpen
                     value={commentBody}
                     onChange={(e) => setCommentBody(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && commentBody.trim() && !commentPosting) {
+                      // isComposing guard: the Enter that confirms a Devanagari
+                      // IME composition must not post a half-composed comment.
+                      if (e.key === "Enter" && !e.nativeEvent.isComposing && commentBody.trim() && !commentPosting) {
                         e.preventDefault();
                         void submitComment();
                       }
@@ -497,6 +509,31 @@ function InstagramPostCard({ item, onOpenLightbox }: { item: GalleryItem; onOpen
   );
 }
 
+// ── Delete eligibility ──────────────────────────────────────────────────────
+//
+// Deleting posts a (chapter_number, scene_index) row to bhagavatam_image_deletes,
+// which the laptop cron replays against the LEGACY manifest + files on disk.
+// Only items whose rows the cron maps back correctly may offer Delete:
+//   • ch-* / ig-*    — legacy static-manifest items (real scene indexes)
+//   • ig-approved-*  — approved Bhaktigram rows (scene 200 + row id)
+// Everything else must NOT offer Delete:
+//   • pending-* / chart-pending-* / cc-pending-* — synthetic Lightbox previews
+//     built with sceneIndex 0; a delete row for them would destroy the
+//     unrelated LIVE legacy scene-0 image of that chapter.
+//   • chart-approved-* (scene 300+) and chaitanya-chart-approved-* (scene 400+)
+//     — namespaces the laptop cron would misinterpret against legacy files.
+function isDeletableGalleryItem(item: GalleryItem): boolean {
+  if (item.id.startsWith("ig-approved-")) return true;
+  if (
+    item.id.startsWith("chart-approved-") ||
+    item.id.startsWith("chaitanya-chart-approved-") ||
+    item.id.startsWith("pending-") ||
+    item.id.startsWith("chart-pending-") ||
+    item.id.startsWith("cc-pending-")
+  ) return false;
+  return item.id.startsWith("ch-") || item.id.startsWith("ig-");
+}
+
 // ── Lightbox ────────────────────────────────────────────────────────────────
 
 function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
@@ -504,22 +541,37 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
   items: GalleryItem[];
   onClose: () => void;
   onNavigate: (item: GalleryItem) => void;
-  onDelete: (item: GalleryItem) => void;
+  // Optional — when absent, Delete is never rendered. Per-item eligibility is
+  // additionally enforced via isDeletableGalleryItem (see comment above).
+  onDelete?: (item: GalleryItem) => void;
 }) {
   const currentIndex = items.findIndex(i => i.id === item.id);
+  // Only legacy-manifest and approved-IG items may show Delete — synthetic
+  // pending previews + pipeline-managed art would queue delete rows that the
+  // laptop cron misinterprets, destroying unrelated live images.
+  const deletable = Boolean(onDelete) && isDeletableGalleryItem(item);
   const [fullscreen, setFullscreen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   // Touch-swipe tracking — record the first contact point on touchstart,
   // compare on touchend. >50px horizontal swing = navigate, anything less
   // = treat as a tap (which still toggles fullscreen via the img onClick).
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  // Timestamp of the last swipe-navigation. onTouchEnd nulls touchStartRef
+  // before the browser fires the synthetic click, so the click handler can't
+  // use touchStartRef to detect "this click came from a swipe" — it checks
+  // this timestamp instead (clicks within 350ms of a swipe are ignored).
+  const lastSwipeAtRef = useRef(0);
 
   const goPrev = useCallback(() => {
+    // Synthetic preview items (pending review) aren't in `items`, so findIndex
+    // is -1 — navigation must be a no-op, not a jump to items[0].
+    if (currentIndex === -1) return;
     if (currentIndex > 0) onNavigate(items[currentIndex - 1]);
     setConfirmDelete(false);
   }, [currentIndex, items, onNavigate]);
 
   const goNext = useCallback(() => {
+    if (currentIndex === -1) return; // synthetic preview — see goPrev note
     if (currentIndex < items.length - 1) onNavigate(items[currentIndex + 1]);
     setConfirmDelete(false);
   }, [currentIndex, items, onNavigate]);
@@ -534,6 +586,14 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose, goPrev, goNext, fullscreen]);
+
+  // Lock body scroll while the lightbox is open; restore the previous inline
+  // value on unmount so we don't clobber overflow styles set elsewhere.
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prevOverflow; };
+  }, []);
 
   const handleDownload = async () => {
     try {
@@ -579,7 +639,11 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
     >
       {/* Top bar */}
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3" onClick={(e) => e.stopPropagation()}>
-        <p className="text-white/50 text-xs">{currentIndex + 1} / {items.length}</p>
+        {/* Hide the counter for synthetic previews (findIndex === -1 would
+            render "0 / N"). Empty span preserves justify-between spacing. */}
+        {currentIndex !== -1 ? (
+          <p className="text-white/50 text-xs">{currentIndex + 1} / {items.length}</p>
+        ) : <span />}
         <div className="flex items-center gap-2">
           <button onClick={() => setFullscreen(f => !f)} className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors" title="Fullscreen (F)">
             {fullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -596,7 +660,8 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
           ‹
         </button>
       )}
-      {currentIndex < items.length - 1 && (
+      {/* currentIndex !== -1 — synthetic previews must show no arrows */}
+      {currentIndex !== -1 && currentIndex < items.length - 1 && (
         <button onClick={(e) => { e.stopPropagation(); goNext(); }} className="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors text-2xl">
           ›
         </button>
@@ -640,17 +705,16 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
             if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
               e.stopPropagation();
               e.preventDefault();
+              lastSwipeAtRef.current = Date.now(); // see lastSwipeAtRef note
               if (dx > 0) goPrev();
               else goNext();
             }
           }}
           onClick={(e) => {
             e.stopPropagation();
-            // If a touch swipe already navigated, the click event fires
-            // immediately after. Suppress fullscreen-toggle within 200ms of
-            // a navigation by checking if we just moved. Simplest: only
-            // toggle if there's no current touch in flight.
-            if (touchStartRef.current) return;
+            // Ignore the synthetic click the browser fires right after a
+            // swipe-navigation, otherwise every swipe also toggles fullscreen.
+            if (Date.now() - lastSwipeAtRef.current < 350) return;
             setFullscreen(f => !f);
           }}
         />
@@ -677,14 +741,17 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
               <button onClick={handleShare} className="flex items-center gap-2 text-xs text-white/80 hover:text-white px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
                 <Share2 className="w-3.5 h-3.5" /> Share
               </button>
-              {!confirmDelete ? (
+              {/* Delete only for deletable items — synthetic previews and
+                  pipeline-managed art must not queue delete rows (the cron
+                  would wipe unrelated live legacy images). */}
+              {deletable && (!confirmDelete ? (
                 <button onClick={() => setConfirmDelete(true)} className="flex items-center gap-2 text-xs text-red-400/80 hover:text-red-400 px-3 py-2 rounded-lg bg-white/5 hover:bg-red-500/20 transition-colors">
                   <Trash2 className="w-3.5 h-3.5" /> Delete
                 </button>
               ) : (
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => { onDelete(item); setConfirmDelete(false); }}
+                    onClick={() => { onDelete?.(item); setConfirmDelete(false); }}
                     className="flex-1 flex items-center justify-center gap-1 text-xs text-white px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 transition-colors font-semibold"
                   >
                     <RefreshCw className="w-3 h-3" /> Confirm delete
@@ -693,7 +760,7 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
                     Cancel
                   </button>
                 </div>
-              )}
+              ))}
             </div>
           </div>
         )}
@@ -712,7 +779,12 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
 // chapter cover renders against the full chapter text. Edge functions
 // (`bulk-generate-chaitanya-art`, `approve-chaitanya-art`) stay deployed
 // either way.
-const CHAITANYA_IMAGE_GEN_PAUSED = true;
+// UNPAUSED 2026-06-12: OCR for all 61 chapters (Adi+Madhya+Antya) and scene
+// extraction (264 scenes) are complete; bulk image generation is running.
+// The gallery now shows the same approval mechanism as Bhagwatham: pending
+// covers appear below, Approve keeps them, Reject deletes + auto-regenerates
+// until a version is approved.
+const CHAITANYA_IMAGE_GEN_PAUSED = false;
 
 // ── Gallery Page ─────────────────────────────────────────────────────────────
 
@@ -725,8 +797,10 @@ export default function Gallery() {
   const BHAKTI_PATH = "/bhaktigram";
   const BHAKTI_PROFILE_PATH = "/bhaktigram/profile";
   const [location, setLocation] = useLocation();
-  const isBhaktigramRoute = location === BHAKTI_PATH || location === BHAKTI_PROFILE_PATH;
-  const isProfileView = location === BHAKTI_PROFILE_PATH;
+  // Normalize trailing slashes + case so "/Bhaktigram/" still matches.
+  const norm = location.replace(/\/+$/, "").toLowerCase() || "/";
+  const isBhaktigramRoute = norm === BHAKTI_PATH || norm === BHAKTI_PROFILE_PATH;
+  const isProfileView = norm === BHAKTI_PROFILE_PATH;
   const [allItems, setAllItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterCanto, setFilterCanto] = useState<number | "all">("all");
@@ -780,6 +854,39 @@ export default function Gallery() {
   // assigned in a useEffect below once fetchAll is defined.
   const fetchAllRef = useRef<(() => Promise<void>) | null>(null);
 
+  // ── Poller registry ───────────────────────────────────────────────────────
+  // Every recurring setInterval on this page registers here so that
+  //   (a) starting a poller of a given kind clears the previous one of that
+  //       kind (re-triggering bulk runs / rejects used to stack intervals), and
+  //   (b) one unmount cleanup clears everything (intervals + their auto-stop
+  //       timeouts) — previously they leaked across route changes.
+  const pollersRef = useRef<Array<{ kind: string; intervalId: number; timeoutId: number }>>([]);
+
+  const clearPoller = useCallback((kind: string) => {
+    pollersRef.current = pollersRef.current.filter(p => {
+      if (p.kind !== kind) return true;
+      window.clearInterval(p.intervalId);
+      window.clearTimeout(p.timeoutId);
+      return false;
+    });
+  }, []);
+
+  const startPoller = useCallback((kind: string, fn: () => void, everyMs: number, stopAfterMs: number) => {
+    clearPoller(kind); // never run two pollers of the same kind concurrently
+    const intervalId = window.setInterval(fn, everyMs);
+    const timeoutId = window.setTimeout(() => clearPoller(kind), stopAfterMs);
+    pollersRef.current.push({ kind, intervalId, timeoutId });
+  }, [clearPoller]);
+
+  // Single unmount cleanup for every poller started on this page.
+  useEffect(() => () => {
+    for (const p of pollersRef.current) {
+      window.clearInterval(p.intervalId);
+      window.clearTimeout(p.timeoutId);
+    }
+    pollersRef.current = [];
+  }, []);
+
   const fetchPending = useCallback(async () => {
     try {
       const r = await sbFetch("ig_pending_review?status=eq.pending&order=created_at.asc&select=*");
@@ -787,7 +894,12 @@ export default function Gallery() {
     } catch { /* offline */ }
   }, []);
 
-  useEffect(() => { fetchPending(); }, [fetchPending]);
+  // Admin-only fetch — skip on public /bhaktigram routes so the IG feed
+  // costs zero admin calls.
+  useEffect(() => {
+    if (isBhaktigramRoute) return;
+    fetchPending();
+  }, [fetchPending, isBhaktigramRoute]);
 
   // ── Bulk generation for missing chapters ──────────────────────────────────
   interface BulkStatus { missingCount: number; pendingReviewCount: number; firstMissing: Array<{ canto: number; chapter: number; title: string }> }
@@ -808,7 +920,11 @@ export default function Gallery() {
     } catch { /* offline */ }
   }, []);
 
-  useEffect(() => { refreshBulkStatus(); }, [refreshBulkStatus]);
+  // Admin-only status call — skipped on /bhaktigram.
+  useEffect(() => {
+    if (isBhaktigramRoute) return;
+    refreshBulkStatus();
+  }, [refreshBulkStatus, isBhaktigramRoute]);
 
   const generateSample = useCallback(async () => {
     setBulkAction("sampling");
@@ -853,16 +969,17 @@ export default function Gallery() {
         setBulkMessage(`Bulk failed: ${data.error || res.statusText}`);
       } else {
         setBulkMessage(`🚀 ${data.message || `Queued ${data.queued} chapters for generation.`}`);
-        // Pending review banner will populate as each image finishes; poll for updates.
-        const poll = setInterval(() => { fetchPending(); refreshBulkStatus(); }, 8000);
-        setTimeout(() => clearInterval(poll), 5 * 60 * 1000);
+        // Pending review banner will populate as each image finishes; poll for
+        // updates. Registered poller — auto-stops after 5min, replaces any
+        // prior ig-bulk poller, cleared on unmount.
+        startPoller("ig-bulk", () => { fetchPending(); refreshBulkStatus(); }, 8000, 5 * 60 * 1000);
       }
     } catch (err) {
       setBulkMessage(`Network error: ${String(err)}`);
     } finally {
       setBulkAction("idle");
     }
-  }, [bulkLimit, sampleApproved, fetchPending, refreshBulkStatus]);
+  }, [bulkLimit, sampleApproved, fetchPending, refreshBulkStatus, startPoller]);
 
   // ── Chapter-art parallel pipeline ─────────────────────────────────────────
   // Identical workflow to the Instagram pipeline above but writes/reads from
@@ -903,7 +1020,11 @@ export default function Gallery() {
     } catch { /* offline */ }
   }, []);
 
-  useEffect(() => { fetchPendingChapterArt(); }, [fetchPendingChapterArt]);
+  // Admin-only fetch — skipped on /bhaktigram.
+  useEffect(() => {
+    if (isBhaktigramRoute) return;
+    fetchPendingChapterArt();
+  }, [fetchPendingChapterArt, isBhaktigramRoute]);
 
   const refreshChartBulkStatus = useCallback(async () => {
     try {
@@ -916,7 +1037,11 @@ export default function Gallery() {
     } catch { /* offline */ }
   }, []);
 
-  useEffect(() => { refreshChartBulkStatus(); }, [refreshChartBulkStatus]);
+  // Admin-only status call — skipped on /bhaktigram.
+  useEffect(() => {
+    if (isBhaktigramRoute) return;
+    refreshChartBulkStatus();
+  }, [refreshChartBulkStatus, isBhaktigramRoute]);
 
   const generateChartSample = useCallback(async () => {
     setChartBulkAction("sampling");
@@ -960,15 +1085,16 @@ export default function Gallery() {
         setChartBulkMessage(`Bulk failed: ${data.error || res.statusText}`);
       } else {
         setChartBulkMessage(`🚀 ${data.message || `Queued ${data.queued} chapter-art images for generation.`}`);
-        const poll = setInterval(() => { fetchPendingChapterArt(); refreshChartBulkStatus(); }, 8000);
-        setTimeout(() => clearInterval(poll), 5 * 60 * 1000);
+        // Registered poller — auto-stops after 5min, replaces any prior
+        // chart-bulk poller, cleared on unmount.
+        startPoller("chart-bulk", () => { fetchPendingChapterArt(); refreshChartBulkStatus(); }, 8000, 5 * 60 * 1000);
       }
     } catch (err) {
       setChartBulkMessage(`Network error: ${String(err)}`);
     } finally {
       setChartBulkAction("idle");
     }
-  }, [chartBulkLimit, chartSampleApproved, fetchPendingChapterArt, refreshChartBulkStatus]);
+  }, [chartBulkLimit, chartSampleApproved, fetchPendingChapterArt, refreshChartBulkStatus, startPoller]);
 
   const reviewChapterArt = useCallback(async (id: number, action: "approve" | "reject") => {
     setReviewingChapterArt(prev => new Set(prev).add(id));
@@ -995,13 +1121,9 @@ export default function Gallery() {
           // so the new pending row arrives ~20-40s later (FLUX is slow). Poll
           // for ~75s so the new card shows up without a manual refresh.
           await fetchPendingChapterArt();
-          let pollCount = 0;
-          const poll = window.setInterval(async () => {
-            pollCount++;
-            await fetchPendingChapterArt();
-            refreshChartBulkStatus();
-            if (pollCount >= 15) window.clearInterval(poll);
-          }, 5000);
+          // Registered poller — same ~75s window (15 × 5s) as before, but now
+          // cleared on unmount and replaced if another reject starts.
+          startPoller("chart-regen", () => { void fetchPendingChapterArt(); refreshChartBulkStatus(); }, 5000, 75 * 1000);
         } else if (action === "reject" && data?.regeneration?.detail) {
           alert(`Rejected — but auto-regeneration didn't queue: ${data.regeneration.detail}`);
         }
@@ -1012,7 +1134,7 @@ export default function Gallery() {
     } finally {
       setReviewingChapterArt(prev => { const next = new Set(prev); next.delete(id); return next; });
     }
-  }, [fetchPendingChapterArt, refreshChartBulkStatus]);
+  }, [fetchPendingChapterArt, refreshChartBulkStatus, startPoller]);
 
   // ── Chaitanya Charitamrit pipeline (mirrors the chapter-art one) ───────
   interface PendingChaitanyaArt {
@@ -1049,9 +1171,13 @@ export default function Gallery() {
       if (r.ok) setPendingChaitanya(await r.json());
     } catch { /* offline */ }
   }, []);
-  // Polling disabled while Chaitanya image generation is paused — saves a
-  // page-load round-trip to Supabase that would always return [].
-  // useEffect(() => { fetchPendingChaitanya(); }, [fetchPendingChaitanya]);
+  // Same gating as the Bhagavatam admin effects: skip on the public
+  // Bhaktigram feed, and skip entirely while the pause flag is on.
+  useEffect(() => {
+    if (CHAITANYA_IMAGE_GEN_PAUSED || isBhaktigramRoute) return;
+    fetchPendingChaitanya();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchPendingChaitanya]);
 
   const refreshCcBulkStatus = useCallback(async () => {
     try {
@@ -1063,9 +1189,11 @@ export default function Gallery() {
       if (res.ok) setCcBulkStatus(await res.json());
     } catch { /* offline */ }
   }, []);
-  // useEffect(() => { refreshCcBulkStatus(); }, [refreshCcBulkStatus]);
-  // ↑ also paused — re-enable alongside fetchPendingChaitanya when images
-  // are unpaused.
+  useEffect(() => {
+    if (CHAITANYA_IMAGE_GEN_PAUSED || isBhaktigramRoute) return;
+    refreshCcBulkStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshCcBulkStatus]);
 
   const generateCcSample = useCallback(async () => {
     setCcBulkAction("sampling");
@@ -1109,15 +1237,16 @@ export default function Gallery() {
         setCcBulkMessage(`Bulk failed: ${data.error || res.statusText}`);
       } else {
         setCcBulkMessage(`🚀 ${data.message || `Queued ${data.queued} Chaitanya chapters for generation.`}`);
-        const poll = setInterval(() => { fetchPendingChaitanya(); refreshCcBulkStatus(); }, 8000);
-        setTimeout(() => clearInterval(poll), 5 * 60 * 1000);
+        // Registered poller — auto-stops after 5min, replaces any prior
+        // cc-bulk poller, cleared on unmount.
+        startPoller("cc-bulk", () => { fetchPendingChaitanya(); refreshCcBulkStatus(); }, 8000, 5 * 60 * 1000);
       }
     } catch (err) {
       setCcBulkMessage(`Network error: ${String(err)}`);
     } finally {
       setCcBulkAction("idle");
     }
-  }, [ccBulkLimit, ccSampleApproved, fetchPendingChaitanya, refreshCcBulkStatus]);
+  }, [ccBulkLimit, ccSampleApproved, fetchPendingChaitanya, refreshCcBulkStatus, startPoller]);
 
   const reviewChaitanyaArt = useCallback(async (id: number, action: "approve" | "reject") => {
     setReviewingChaitanya(prev => new Set(prev).add(id));
@@ -1140,13 +1269,9 @@ export default function Gallery() {
           // Background regen → poll for the new row to appear (matches the
           // chapter-art pattern). ~75s window with margin.
           await fetchPendingChaitanya();
-          let pollCount = 0;
-          const poll = window.setInterval(async () => {
-            pollCount++;
-            await fetchPendingChaitanya();
-            refreshCcBulkStatus();
-            if (pollCount >= 15) window.clearInterval(poll);
-          }, 5000);
+          // Registered poller — same ~75s window (15 × 5s) as before, but now
+          // cleared on unmount and replaced if another reject starts.
+          startPoller("cc-regen", () => { void fetchPendingChaitanya(); refreshCcBulkStatus(); }, 5000, 75 * 1000);
         } else if (action === "reject" && data?.regeneration?.detail) {
           alert(`Rejected — but auto-regeneration didn't queue: ${data.regeneration.detail}`);
         }
@@ -1157,7 +1282,7 @@ export default function Gallery() {
     } finally {
       setReviewingChaitanya(prev => { const next = new Set(prev); next.delete(id); return next; });
     }
-  }, [fetchPendingChaitanya, refreshCcBulkStatus]);
+  }, [fetchPendingChaitanya, refreshCcBulkStatus, startPoller]);
 
   const reviewPost = useCallback(async (id: number, action: "approve" | "reject") => {
     setReviewing(prev => new Set(prev).add(id));
@@ -1294,10 +1419,8 @@ export default function Gallery() {
           for (const r of rows) {
             const scene = 200 + r.id;
             if (deletedKeys.has(`${r.chapter_global_number}-${scene}`)) continue;
-            // Dedupe — skip if the same URL is already in items
-            if (items.some(i => i.url === r.image_url)) continue;
             const firstLine = r.caption?.split("\n").find(l => l.trim()) || r.chapter_title || "";
-            items.push({
+            const approvedItem: GalleryItem = {
               id: `ig-approved-${r.id}`,
               chapterNumber: r.chapter_global_number,
               chapterTitle: r.chapter_title || `Chapter ${r.chapter_global_number}`,
@@ -1309,7 +1432,14 @@ export default function Gallery() {
               igPostId: r.id,
               generatedAt: r.reviewed_at,
               type: "instagram",
-            });
+            };
+            // Dedupe — if this URL already arrived via a static manifest,
+            // REPLACE that copy instead of skipping: the manifest copy lacks
+            // igPostId, which silently disables likes/comments for the post.
+            // The Supabase row is the source of truth.
+            const dupIdx = items.findIndex(i => i.url === r.image_url);
+            if (dupIdx !== -1) items[dupIdx] = approvedItem;
+            else items.push(approvedItem);
           }
         }
       } catch { /* offline — fine */ }
@@ -1551,7 +1681,11 @@ export default function Gallery() {
   }, []);
 
   const bulkDelete = useCallback(async () => {
-    const items = allItems.filter(i => selectedIds.has(i.id));
+    // Same eligibility rule as handleDeleteImage: pipeline-managed art
+    // (chart-approved-*, chaitanya-chart-approved-*) must never queue
+    // (chapter_number, scene_index) delete rows — the laptop cron would
+    // misinterpret their 300+/400+ scene namespaces against legacy files.
+    const items = allItems.filter(i => selectedIds.has(i.id) && isDeletableGalleryItem(i));
     if (items.length === 0) return;
     const ok = window.confirm(
       `Delete ${items.length} image${items.length === 1 ? "" : "s"}?\n\nThis cannot be undone.`,
@@ -1576,7 +1710,10 @@ export default function Gallery() {
     // Remove successfully-deleted items from UI (we don't know which failed
     // individually — refetch is the safest, but for snappy UX we drop all and
     // surface a warning if any failed).
-    setAllItems(prev => prev.filter(i => !selectedIds.has(i.id)));
+    // Only drop the items we actually queued — non-deletable selections must
+    // stay visible (nothing was queued for them).
+    const queuedIds = new Set(items.map(i => i.id));
+    setAllItems(prev => prev.filter(i => !queuedIds.has(i.id)));
     exitSelectMode();
     setBulkDeleting(false);
     if (failed > 0) {
@@ -1588,6 +1725,14 @@ export default function Gallery() {
   const [regenerating, setRegenerating] = useState<Set<number>>(new Set());
 
   const handleDeleteImage = useCallback(async (item: GalleryItem) => {
+    // Refuse anything that isn't a real, deletable gallery item. Synthetic
+    // pending-review previews are built with sceneIndex 0, so queueing their
+    // (chapter_number, scene_index) would destroy the unrelated LIVE legacy
+    // scene-0 image of that chapter; chart-approved-* / chaitanya-chart-
+    // approved-* scene namespaces (300+/400+) would be misinterpreted by the
+    // laptop cron against legacy files. The allItems membership check rejects
+    // any id that isn't an actual gallery item (e.g. lightbox previews).
+    if (!isDeletableGalleryItem(item) || !allItems.some(i => i.id === item.id)) return;
     const sceneIdx = item.sceneIndex ?? 0;
 
     // Confirm so a stray click doesn't wipe an image
@@ -1631,7 +1776,7 @@ export default function Gallery() {
     } else {
       setLightboxItem(null);
     }
-  }, [filtered]);
+  }, [filtered, allItems]);
 
   const toggleCanto = (canto: number) => {
     setCollapsedCantos(prev => {
@@ -2554,7 +2699,7 @@ export default function Gallery() {
                     on left, handle dropdown centered, back chevron on right. */}
                 <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-stone-200 px-3 py-3 flex items-center gap-2">
                   <button
-                    onClick={() => setLocation(BHAKTI_PATH)}
+                    onClick={() => setLocation(BHAKTI_PATH, { replace: true })}
                     className="text-stone-700 hover:text-orange-700"
                     title="Back to feed"
                     aria-label="Back to feed"

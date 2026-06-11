@@ -13,8 +13,6 @@
 
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
-import { execSync } from "child_process";
 import { logger } from "../lib/logger";
 import {
   type ChapterImage,
@@ -23,16 +21,17 @@ import {
   generateAdditionalScene,
   regenerateChapterImages,
   getPersonaVersions,
+  withManifestLock,
 } from "./bhagwatham-image-gen";
+import { REPO_ROOT, DATA_DIR as ROOT_DATA_DIR } from "../lib/repo-root";
+import { gitWithRetry } from "../lib/git-retry";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const DATA_DIR = path.resolve(__dirname, "..", "..", "..", "..", "data", "bhagwatham");
+const DATA_DIR = path.join(ROOT_DATA_DIR, "bhagwatham");
 const PAGES_DIR = path.join(DATA_DIR, "pages");
 const IMAGES_DIR = path.join(DATA_DIR, "images");
 const MANIFEST_FILE = path.join(IMAGES_DIR, "manifest.json");
 const AUDIT_PROGRESS_FILE = path.join(DATA_DIR, "audit-progress.json");
+const BACKFILL_FAILURES_FILE = path.join(DATA_DIR, "backfill-failures.json");
 
 // ── Audit progress tracking ─────────────────────────────────────────────────
 
@@ -41,8 +40,13 @@ interface AuditProgress {
   totalIssuesFixed: number;
   lastRunAt: string;
   status: "idle" | "running";
+  startedAt?: string; // when status flipped to "running" — used for crash recovery
   log: AuditLogEntry[];
 }
+
+// C8: a crash mid-pass leaves status="running" persisted forever, blocking all
+// future audit ticks. Treat a running state older than this as stale.
+const STALE_RUNNING_MS = 30 * 60 * 1000;
 
 interface AuditLogEntry {
   chapter: number;
@@ -344,10 +348,22 @@ export async function runAuditPass(): Promise<{ chaptersAudited: number; issuesF
   const auditProgress = readAuditProgress();
 
   if (auditProgress.status === "running") {
-    return { chaptersAudited: 0, issuesFound: 0, issuesFixed: 0, message: "Audit already running" };
+    // C8: crash recovery — a persisted "running" older than 30 min is stale.
+    if (!auditProgress.startedAt) {
+      // Legacy state without a timestamp: stamp it now so the stale clock starts.
+      auditProgress.startedAt = new Date().toISOString();
+      writeAuditProgress(auditProgress);
+      return { chaptersAudited: 0, issuesFound: 0, issuesFixed: 0, message: "Audit already running" };
+    }
+    const ageMs = Date.now() - new Date(auditProgress.startedAt).getTime();
+    if (ageMs < STALE_RUNNING_MS) {
+      return { chaptersAudited: 0, issuesFound: 0, issuesFixed: 0, message: "Audit already running" };
+    }
+    logger.warn({ startedAt: auditProgress.startedAt }, "Audit stuck in 'running' >30min — resetting (crash recovery)");
   }
 
   auditProgress.status = "running";
+  auditProgress.startedAt = new Date().toISOString();
   writeAuditProgress(auditProgress);
 
   try {
@@ -474,6 +490,10 @@ export async function runAuditPass(): Promise<{ chaptersAudited: number; issuesF
     const updatedManifest = readManifest();
     const updatedImages = updatedManifest.images.filter((img) => img.chapterNumber === targetChapter);
     let manifestDirty = false;
+    // C1: record only the fields this audit changes so we can merge them into a
+    // freshly-read manifest under the lock (instead of writing a stale snapshot).
+    const fieldFixes = new Map<string, { descriptionHi?: string; chapterTitle?: string }>();
+    const fixKey = (img: ChapterImage) => `${img.chapterNumber}:${img.sceneIndex ?? 0}`;
 
     for (const img of updatedImages) {
       if (!img.descriptionHi) {
@@ -481,6 +501,7 @@ export async function runAuditPass(): Promise<{ chaptersAudited: number; issuesF
         const desc = await generateDescriptionHi(targetChapter, chapterInfo.title, chapterInfo.contentSnippet);
         if (desc) {
           img.descriptionHi = desc;
+          fieldFixes.set(fixKey(img), { ...fieldFixes.get(fixKey(img)), descriptionHi: desc });
           manifestDirty = true;
           fixes.push(`Added descriptionHi for ${img.imagePath}: "${desc.slice(0, 60)}…"`);
         }
@@ -494,6 +515,7 @@ export async function runAuditPass(): Promise<{ chaptersAudited: number; issuesF
         issues.push(`Chapter title not in Hindi: "${img.chapterTitle}"`);
         if (/[\u0900-\u097F]/.test(chapterInfo.title)) {
           img.chapterTitle = chapterInfo.title;
+          fieldFixes.set(fixKey(img), { ...fieldFixes.get(fixKey(img)), chapterTitle: chapterInfo.title });
           manifestDirty = true;
           fixes.push(`Fixed chapter title to: "${chapterInfo.title}"`);
         }
@@ -553,7 +575,26 @@ export async function runAuditPass(): Promise<{ chaptersAudited: number; issuesF
     }
 
     if (manifestDirty) {
-      writeManifest(updatedManifest);
+      // C1: re-read the manifest just before writing and merge ONLY the fields
+      // this audit changed, under the manifest lock. Writing the snapshot read
+      // before the awaited regen above would clobber the regen's fresh entries.
+      await withManifestLock(async () => {
+        const fresh = readManifest();
+        let merged = 0;
+        for (const img of fresh.images) {
+          const fix = fieldFixes.get(`${img.chapterNumber}:${img.sceneIndex ?? 0}`);
+          if (!fix) continue;
+          if (fix.descriptionHi && !img.descriptionHi) {
+            img.descriptionHi = fix.descriptionHi;
+            merged++;
+          }
+          if (fix.chapterTitle && !/[ऀ-ॿ]/.test(img.chapterTitle)) {
+            img.chapterTitle = fix.chapterTitle;
+            merged++;
+          }
+        }
+        if (merged > 0) writeManifest(fresh);
+      });
     }
 
     // ── Update audit progress ───────────────────────────────────────────────
@@ -581,8 +622,7 @@ export async function runAuditPass(): Promise<{ chaptersAudited: number; issuesF
     // Stage only — daily commit cron handles commit + push
     if (fixes.length > 0) {
       try {
-        const REPO_ROOT = path.resolve(__dirname, "..", "..", "..", "..");
-        execSync("git add data/bhagwatham/images/ data/bhagwatham/audit-progress.json", { cwd: REPO_ROOT, stdio: "pipe" });
+        gitWithRetry("git add data/bhagwatham/images/ data/bhagwatham/audit-progress.json", { cwd: REPO_ROOT });
         logger.info({ chapter: targetChapter, fixes: fixes.length }, "Audit: changes staged (daily commit will push)");
       } catch (err) {
         logger.warn({ err }, "Audit: git stage failed — continuing");
@@ -614,6 +654,27 @@ export function getAuditProgress(): AuditProgress {
 // Generates images for multiple chapters in parallel to quickly fill gaps.
 // Called by a dedicated cron every 2 minutes.
 
+// C3: persisted per-chapter failure counts. A permanently-failing lowest
+// chapter would otherwise sit at the head of the queue and block ALL backfill
+// progress, retrying every tick forever.
+interface BackfillFailures {
+  counts: Record<string, number>; // global chapter number → consecutive failures
+  lastUpdated: string;
+}
+
+const MAX_BACKFILL_FAILURES = 3;
+
+function readBackfillFailures(): BackfillFailures {
+  if (!fs.existsSync(BACKFILL_FAILURES_FILE)) return { counts: {}, lastUpdated: "" };
+  try { return JSON.parse(fs.readFileSync(BACKFILL_FAILURES_FILE, "utf-8")); }
+  catch { return { counts: {}, lastUpdated: "" }; }
+}
+
+function writeBackfillFailures(failures: BackfillFailures): void {
+  failures.lastUpdated = new Date().toISOString();
+  fs.writeFileSync(BACKFILL_FAILURES_FILE, JSON.stringify(failures, null, 2) + "\n");
+}
+
 let _fastBackfillRunning = false;
 
 export async function fastImageBackfill(parallelCount = 3): Promise<{ generated: number; remaining: number }> {
@@ -629,9 +690,23 @@ export async function fastImageBackfill(parallelCount = 3): Promise<{ generated:
     const hasImage = new Set(manifest.images.map(img => img.chapterNumber));
 
     // Find chapters without images, sorted by global number ascending (fill from beginning)
-    const missing = Array.from(chapters.entries())
+    const missingAll = Array.from(chapters.entries())
       .filter(([globalNum]) => !hasImage.has(globalNum))
       .sort((a, b) => a[0] - b[0]);
+
+    // C3: park chapters that failed >= MAX_BACKFILL_FAILURES times so they stop
+    // head-of-line blocking everything behind them.
+    const failures = readBackfillFailures();
+    const failCount = (globalNum: number) => failures.counts[String(globalNum)] || 0;
+    const parked = missingAll.filter(([globalNum]) => failCount(globalNum) >= MAX_BACKFILL_FAILURES);
+    const missing = missingAll.filter(([globalNum]) => failCount(globalNum) < MAX_BACKFILL_FAILURES);
+
+    if (parked.length > 0) {
+      logger.info(
+        { parkedCount: parked.length, parkedChapters: parked.map(([n]) => n) },
+        "Fast backfill: skipping chapters parked after repeated failures"
+      );
+    }
 
     if (missing.length === 0) return { generated: 0, remaining: 0 };
 
@@ -642,24 +717,28 @@ export async function fastImageBackfill(parallelCount = 3): Promise<{ generated:
         try {
           const files = await generateChapterImages(globalNum, info.title, info.contentSnippet);
           if (files.length > 0) {
+            // Success — reset this chapter's failure count
+            if (failures.counts[String(globalNum)]) delete failures.counts[String(globalNum)];
             logger.info({ chapter: globalNum, files: files.length, title: info.title }, "Fast backfill: generated image");
             return true;
           }
+          failures.counts[String(globalNum)] = failCount(globalNum) + 1;
         } catch (err) {
-          logger.warn({ err, chapter: globalNum }, "Fast backfill: generation failed");
+          failures.counts[String(globalNum)] = failCount(globalNum) + 1;
+          logger.warn({ err, chapter: globalNum, failCount: failures.counts[String(globalNum)] }, "Fast backfill: generation failed");
         }
         return false;
       })
     );
+
+    writeBackfillFailures(failures);
 
     const generated = results.filter(r => r.status === "fulfilled" && r.value).length;
 
     // Stage only — daily commit cron handles commit + push
     if (generated > 0) {
       try {
-        const REPO_ROOT = path.resolve(__dirname, "..", "..", "..", "..");
-        const { execSync } = await import("child_process");
-        execSync("git add data/bhagwatham/images/", { cwd: REPO_ROOT, stdio: "pipe" });
+        gitWithRetry("git add data/bhagwatham/images/", { cwd: REPO_ROOT });
         logger.info({ generated, chapters: batch.map(([n]) => n) }, "Fast backfill: changes staged (daily commit will push)");
       } catch { /* git errors non-fatal */ }
     }
@@ -668,6 +747,16 @@ export async function fastImageBackfill(parallelCount = 3): Promise<{ generated:
   } finally {
     _fastBackfillRunning = false;
   }
+}
+
+/**
+ * C4: expose the audit's authoritative chapter map (skandh-aware, ToC-skipping,
+ * OCR-fix-applying) keyed by GLOBAL chapter number — the same numbering the
+ * image manifest uses. The regen queue uses this instead of a naive sequential
+ * heading count, which drifted and fed the WRONG chapter's text into regens.
+ */
+export function getChapterMap(): Map<number, { title: string; contentSnippet: string; pageNumber: number; skandh: number }> {
+  return findChaptersInBatches(loadAllBatches());
 }
 
 /** Reset audit to re-check all chapters from the beginning (highest chapter first) */

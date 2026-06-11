@@ -318,10 +318,13 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ||
 
 async function fetchChaitanyaChapterList() {
   // 10s timeout — Vercel build shouldn't hang if Supabase is slow / down.
-  // Falls back gracefully to disk-only chapter list.
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 10_000);
+  // Falls back gracefully to disk-only chapter list. Everything including
+  // AbortController/fetch setup lives INSIDE the try so the fallback also
+  // covers environment errors (e.g. Node <18 with no global fetch).
+  let timer;
   try {
+    const controller = new AbortController();
+    timer = setTimeout(() => controller.abort(), 10_000);
     const r = await fetch(
       `${SUPABASE_URL}/rest/v1/chaitanya_chapters?select=global_number,part,number_in_part,title,pdf_path,ocr_status&order=global_number.asc`,
       {
@@ -372,8 +375,14 @@ if (ccDbRows && ccDbRows.length > 0) {
     pdfPath: r.pdf_path,
     batchNumber: r.global_number,
     pageNumber: null,
-    // Force "ready" if we actually have a batch on disk, even if DB lags.
-    ocrStatus: ccBatchByGlobal.has(r.global_number) ? "ready" : r.ocr_status,
+    // Disk is the source of truth for "ready": a batch on disk is always
+    // servable (DB may lag behind). The INVERSE also matters — if the DB says
+    // ready but the batch JSON isn't in this checkout, the static batch file
+    // won't exist and the click would be a silent no-op; downgrade those to
+    // "processing" so the UI shows an honest badge instead of a phantom-ready.
+    ocrStatus: ccBatchByGlobal.has(r.global_number)
+      ? "ready"
+      : (r.ocr_status === "ready" ? "processing" : r.ocr_status),
   }));
 } else {
   // Fallback: disk-only (every disk batch is ready).

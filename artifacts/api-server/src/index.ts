@@ -1,11 +1,10 @@
 import dotenv from "dotenv";
 import path from "path";
-import { fileURLToPath } from "url";
+import { REPO_ROOT } from "./lib/repo-root";
 
 // Load .env BEFORE anything else — override: true ensures .env values win
 // even if the parent process sets empty env vars (e.g. ANTHROPIC_API_KEY="")
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, "..", "..", "..", ".env"), override: true });
+dotenv.config({ path: path.join(REPO_ROOT, ".env"), override: true });
 
 import { createApp } from "./app";
 import { logger } from "./lib/logger";
@@ -27,13 +26,17 @@ if (Number.isNaN(port) || port <= 0) {
 async function main() {
   const app = await createApp();
 
-  app.listen(port, (err) => {
+  // Bind explicitly: default to loopback so the server isn't exposed to the
+  // LAN by accident. Set HOST=0.0.0.0 to deliberately restore LAN access.
+  const host = process.env.HOST || "127.0.0.1";
+
+  app.listen(port, host, (err) => {
     if (err) {
       logger.error({ err }, "Error listening on port");
       process.exit(1);
     }
 
-    logger.info({ port }, "Server listening");
+    logger.info({ port, host }, "Server listening");
   });
 }
 

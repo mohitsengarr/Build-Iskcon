@@ -24,7 +24,10 @@ const SCROLL_KEY = (path: string) => `scroll_${path}`;
  */
 function useScrollRestoration() {
   const [location] = useLocation();
-  const prevLocation = useRef<string>(location);
+  // Initialize to "" (never a real path) so the restore effect's first run
+  // isn't skipped — seeding with the current location made the on-mount
+  // restore dead code, so a saved offset was never applied after a reload.
+  const prevLocation = useRef<string>("");
 
   // Continuously save scroll position for the current route (throttled).
   useEffect(() => {
@@ -100,7 +103,9 @@ export function Layout({ children }: { children: ReactNode }) {
   // /bhaktigram is a pure social feed and should look exactly like Instagram —
   // suppress the top nav (logo + menu + Donate CTA) and the mobile donate
   // CTA bar so only the in-page Back button + the post timeline are visible.
-  const isBhaktigram = location === "/bhaktigram" || location === "/bhaktigram/profile";
+  // Normalize trailing slashes + case so "/Bhaktigram/" still matches.
+  const norm = location.replace(/\/+$/, "").toLowerCase() || "/";
+  const isBhaktigram = norm === "/bhaktigram" || norm === "/bhaktigram/profile";
   const hideMobileCta = isBhaktigram;
   const hideTopNav = isBhaktigram;
   const hideFooter = isBhaktigram;

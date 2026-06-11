@@ -2,9 +2,9 @@ import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import path from "path";
-import { fileURLToPath } from "url";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { REPO_ROOT } from "./lib/repo-root";
 import { startBhagwathamCron } from "./cron/bhagwatham-cron";
 import { startChaitanyaCron } from "./cron/chaitanya-cron";
 import { startChaitanyaScenesCron } from "./cron/chaitanya-scenes-cron";
@@ -12,9 +12,6 @@ import { startInstagramCron } from "./cron/instagram-cron";
 import { startTempleDiscoveryCron } from "./cron/temple-discovery-cron";
 import { startGitaCron } from "./cron/gita-cron";
 import { startDailyCommitCron } from "./cron/daily-commit-cron";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname  = path.dirname(__filename);
 
 const IS_DEV = process.env.NODE_ENV !== "production";
 
@@ -45,6 +42,10 @@ export async function createApp(): Promise<Express> {
   app.use(express.urlencoded({ extended: true }));
 
   app.use("/api", router);
+
+  // Hard JSON 404 for any /api path the router didn't handle — without this,
+  // unknown API routes fall through to the SPA fallback and return index.html.
+  app.use("/api", (_req, res) => res.status(404).json({ error: "Not found" }));
 
   // One-time: fix "Canto 0" images in manifest (assign correct canto numbers)
   try {
@@ -86,7 +87,7 @@ export async function createApp(): Promise<Express> {
   if (IS_DEV) {
     // In development, use Vite's dev server as middleware for HMR + frontend
     const { createServer: createViteServer } = await import("vite");
-    const viteRoot = path.resolve(__dirname, "..", "..", "temple-tracker");
+    const viteRoot = path.join(REPO_ROOT, "artifacts", "temple-tracker");
     const vite = await createViteServer({
       root: viteRoot,
       configFile: path.join(viteRoot, "vite.config.ts"),
@@ -97,7 +98,7 @@ export async function createApp(): Promise<Express> {
     logger.info("Vite dev middleware attached — single monolith server");
   } else {
     // In production, serve the pre-built temple-tracker frontend.
-    const staticDir = path.join(__dirname, "..", "..", "temple-tracker", "dist", "public");
+    const staticDir = path.join(REPO_ROOT, "artifacts", "temple-tracker", "dist", "public");
     app.use(express.static(staticDir));
     // SPA fallback — let React Router handle all non-API paths
     app.use((_req, res) => {

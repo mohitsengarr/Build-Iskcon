@@ -34,7 +34,9 @@ function loadSettings(): ReadingSettings {
 }
 
 function saveSettings(s: ReadingSettings) {
-  localStorage.setItem("bhagwatham_settings", JSON.stringify(s));
+  try {
+    localStorage.setItem("bhagwatham_settings", JSON.stringify(s));
+  } catch { /* quota exceeded / private mode — settings just won't persist */ }
 }
 
 const THEME_STYLES: Record<Theme, { bg: string; text: string; surface: string; border: string; muted: string; accent: string }> = {
@@ -231,7 +233,9 @@ function loadSectionOverrides(): PageOverrides {
 }
 
 function saveSectionOverrides(o: PageOverrides) {
-  localStorage.setItem("bhagwatham_section_overrides", JSON.stringify(o));
+  try {
+    localStorage.setItem("bhagwatham_section_overrides", JSON.stringify(o));
+  } catch { /* quota exceeded / private mode — overrides just won't persist */ }
 }
 
 // BBT print-style section colors
@@ -275,9 +279,7 @@ const MUTATION_API_BASE = `${import.meta.env.VITE_PUBLIC_API_URL || ""}/api/bhag
 const isMutationApiConfigured = () =>
   Boolean(import.meta.env.VITE_PUBLIC_API_URL) || (typeof window !== "undefined" && window.location.hostname === "localhost");
 
-// ── Sarvam TTS (HTTP streaming — real-time playback via MediaSource) ──────────
-const SARVAM_TTS_URL = "https://api.sarvam.ai/text-to-speech/stream";
-const SARVAM_KEY = "sk_c81tz6ss_p9kDbB6SEeYB7s9V7yQHbUl8";
+// ── Sarvam TTS (via Supabase Edge Function proxy — keeps the API key server-side) ──
 
 // ── TTS audio cache (localStorage; persistent per-device) ─────────────────────
 // Saves Sarvam credits — every shlok/word fetched once is reused for the life
@@ -326,26 +328,48 @@ function ttsCacheWrite(key: string, buffer: ArrayBuffer): void {
     binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
   }
   const b64 = btoa(binary);
-  const trySet = () => localStorage.setItem(TTS_CACHE_PREFIX + key, b64);
-  try {
-    trySet();
-    ttsCacheTouch(key);
-  } catch {
-    // Quota exceeded — evict oldest 25% of entries and retry
+  // Update the index FIRST, then write the blob. If the blob write fails we
+  // roll the index entry back. This guarantees a blob never exists without an
+  // index entry — orphaned blobs would be invisible to eviction forever.
+  // (An index entry without a blob is harmless: reads miss, eviction cleans it.)
+  const addToIndex = () => {
+    const idxRaw = localStorage.getItem(TTS_CACHE_INDEX_KEY);
+    const idx: Record<string, number> = idxRaw ? JSON.parse(idxRaw) : {};
+    idx[key] = Date.now();
+    localStorage.setItem(TTS_CACHE_INDEX_KEY, JSON.stringify(idx));
+  };
+  const removeFromIndex = () => {
     try {
       const idxRaw = localStorage.getItem(TTS_CACHE_INDEX_KEY);
       const idx: Record<string, number> = idxRaw ? JSON.parse(idxRaw) : {};
-      const entries = Object.entries(idx).sort((a, b) => a[1] - b[1]);
+      if (key in idx) {
+        delete idx[key];
+        localStorage.setItem(TTS_CACHE_INDEX_KEY, JSON.stringify(idx));
+      }
+    } catch { /* */ }
+  };
+  const trySet = () => localStorage.setItem(TTS_CACHE_PREFIX + key, b64);
+  try {
+    addToIndex();
+    trySet();
+  } catch {
+    // Quota exceeded — evict oldest 25% of entries (never our fresh key) and retry
+    try {
+      const idxRaw = localStorage.getItem(TTS_CACHE_INDEX_KEY);
+      const idx: Record<string, number> = idxRaw ? JSON.parse(idxRaw) : {};
+      const entries = Object.entries(idx).filter(([k]) => k !== key).sort((a, b) => a[1] - b[1]);
       const drop = Math.max(1, Math.floor(entries.length * 0.25));
       for (let i = 0; i < drop; i++) {
         const [k] = entries[i];
         try { localStorage.removeItem(TTS_CACHE_PREFIX + k); } catch { /* */ }
         delete idx[k];
       }
+      idx[key] = Date.now();
       localStorage.setItem(TTS_CACHE_INDEX_KEY, JSON.stringify(idx));
       trySet();
-      ttsCacheTouch(key);
-    } catch { /* still failed — give up silently */ }
+    } catch {
+      removeFromIndex(); // blob write still failed — don't leave a dangling index entry
+    }
   }
 }
 
@@ -368,12 +392,14 @@ async function sarvamStreamPlay(text: string): Promise<HTMLAudioElement> {
     return audio;
   }
 
-  // Cache miss — fetch from Sarvam.
-  const response = await fetch(SARVAM_TTS_URL, {
+  // Cache miss — fetch via the Supabase Edge Function proxy so the Sarvam
+  // key stays server-side. The proxy streams back the same response format.
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/sarvam-tts`, {
     method: "POST",
     headers: {
-      "api-subscription-key": SARVAM_KEY,
       "Content-Type": "application/json",
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
     },
     body: JSON.stringify({
       text,
@@ -1472,13 +1498,13 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     const effectiveOld = cleanedOld;
     const effectiveNew = cleanedNew.trim() || newText;
 
-    // Use functional setState to ALWAYS read the freshest text, even when
-    // multiple AI fixes are applied back-to-back (avoids stale closure where
-    // the second fix reads pre-first-fix text and silently no-ops).
-    let savedText: string | null = null;
-    setAllPages(prev => {
-      const targetPage = prev.find(p => p.pageNumber === pageNum);
-      if (!targetPage) return prev;
+    // Compute the edit from the CURRENT pages state (allPages), then apply it
+    // with a pure state updater and run all side effects (alerts, Supabase
+    // POST) outside — React 18 may defer or double-invoke updater functions
+    // (e.g. in StrictMode), so updaters must stay side-effect free.
+    const computeEdit = (pages: PageContent[]): { pageNumber: number; text: string } | null => {
+      const targetPage = pages.find(p => p.pageNumber === pageNum);
+      if (!targetPage) return null;
 
       const sourceText = targetPage.text;
       const escapeForRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -1628,7 +1654,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
         const tryPages = [pageNum - 1, pageNum + 1, pageNum - 2, pageNum + 2];
         for (const tryNum of tryPages) {
           if (tryNum < 1) continue;
-          const tryPage = prev.find(p => p.pageNumber === tryNum);
+          const tryPage = pages.find(p => p.pageNumber === tryNum);
           if (!tryPage) continue;
           const src = tryPage.text;
           let replaced = src.replace(effectiveOld, effectiveNew);
@@ -1637,10 +1663,8 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
           }
           if (replaced !== src) {
             console.info(`[applyEdit] matched on adjacent page ${tryNum} (selection-captured page was ${pageNum})`);
-            savedText = replaced;
             // Use the ADJACENT page's number for both state + persistence
-            (selectionContextRef.current as { resolvedPageNum?: number }).resolvedPageNum = tryNum;
-            return prev.map(p => p.pageNumber !== tryNum ? p : { ...p, text: replaced });
+            return { pageNumber: tryNum, text: replaced };
           }
         }
 
@@ -1659,31 +1683,32 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
           "This usually means the selection spans content from a different page, " +
           "or contains rendering-only text. Try selecting a smaller piece within one paragraph.",
         ), 0);
-        return prev;
+        return null;
       }
 
-      savedText = fullNewText;
-      return prev.map(p => p.pageNumber !== pageNum ? p : { ...p, text: fullNewText });
-    });
+      return { pageNumber: pageNum, text: fullNewText };
+    };
 
-    if (!savedText) return; // replace failed — nothing to persist
+    const edit = computeEdit(allPages);
+    if (!edit) return; // replace failed — nothing to persist
+
+    // Pure updater — the replacement text was computed above, outside React.
+    setAllPages(prev => prev.map(p => p.pageNumber !== edit.pageNumber ? p : { ...p, text: edit.text }));
     window.getSelection()?.removeAllRanges();
     setAppliedFlash(true);
     setTimeout(() => setAppliedFlash(false), 1500);
 
     // Persist directly to Supabase. If the adjacent-page fallback matched on
-    // a different page than the selection started on, use THAT page number
-    // — otherwise the row would overwrite the wrong page's edit.
-    const resolvedPageNum =
-      (selectionContextRef.current as { resolvedPageNum?: number }).resolvedPageNum ?? pageNum;
-    (selectionContextRef.current as { resolvedPageNum?: number }).resolvedPageNum = undefined; // reset for next call
+    // a different page than the selection started on, edit.pageNumber already
+    // carries THAT page number — otherwise the row would overwrite the wrong
+    // page's edit.
     try {
       const res = await sbFetch("bhagavatam_page_edits", {
         method: "POST",
         headers: { Prefer: "return=representation,resolution=merge-duplicates" },
         body: JSON.stringify({
-          page_number: resolvedPageNum,
-          text: savedText,
+          page_number: edit.pageNumber,
+          text: edit.text,
           edited_at: new Date().toISOString(),
           applied_to_git: false,
         }),
@@ -1695,7 +1720,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     } catch (err) {
       alert(`Save failed — could not reach Supabase.\n${String(err)}`);
     }
-  }, [setAllPages]);
+  }, [allPages, setAllPages]);
 
   // Listen to selected word via Sarvam HTTP streaming TTS — real-time playback
   const listenToWord = useCallback(async () => {
@@ -1874,7 +1899,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     } finally {
       setQuickFixLoading(false);
     }
-  }, [selectedText, allPages, quickFixLoading, suggestLoading]);
+  }, [selectedText, allPages, quickFixLoading, suggestLoading, applyEdit]);
 
   // Bold/unbold detection — true if the selection is bolded by ANY signal:
   //   1. Selection literally contains the **...** markers
@@ -1981,7 +2006,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     // CASE F — plain text → bold it
     void applyEdit(selectedText, `**${selectedText}**`);
     setShow(false);
-  }, [selectedText, allPages, selectionIsBoldDom]);
+  }, [selectedText, allPages, selectionIsBoldDom, applyEdit]);
 
   // Word-doc style edits on the selection:
   // - "New line" pushes the selection onto its own line (newline before it).
@@ -1994,7 +2019,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     // a single `\n` got eaten by the prose-paragraph parser.
     applyEdit(selectedText, "\n\n" + trimmed);
     setShow(false);
-  }, [selectedText]);
+  }, [selectedText, applyEdit]);
 
   const removeSpaces = useCallback(() => {
     if (!selectedText) return;
@@ -2002,7 +2027,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     if (joined === selectedText) return; // nothing to remove
     applyEdit(selectedText, joined);
     setShow(false);
-  }, [selectedText]);
+  }, [selectedText, applyEdit]);
 
   // Dictionary lookup state
   const [dictResult, setDictResult] = useState<{ word: string; meaning: string; examples: string[] } | null>(null);
@@ -2362,6 +2387,15 @@ function ShlokSpeaker({ text, themeKey }: { text: string; themeKey: string }) {
 
 function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", onRegenerateImages, regeneratingChapters, queuedRegens, onDeleteImage, chapterNumMapper, pageNumber, overrides, onOverridesChange, prevPageEndKind, nextPageStartsNumberedShlok }: { text: string; textEn?: string; lang: "hi" | "en"; chapterImages?: Map<number, Array<{ url: string; description: string; sceneIndex?: number; isInstagram?: boolean }>>; themeKey?: Theme; onRegenerateImages?: (chapterNum: number) => void; regeneratingChapters?: Set<number>; queuedRegens?: Set<number>; onDeleteImage?: (chapterNum: number, sceneIndex: number) => void; chapterNumMapper?: (perSkandhNum: number) => number; pageNumber?: number; overrides?: SectionOverride[]; onOverridesChange?: (pageNum: number, overrides: SectionOverride[]) => void; prevPageEndKind?: string; nextPageStartsNumberedShlok?: boolean }) {
   const t = THEME_STYLES[themeKey];
+
+  // ── Section Editor state ────────────────────────────────────────────
+  // Hooks MUST be declared unconditionally before the English-mode early
+  // return below — otherwise toggling `lang` changes the hook order between
+  // renders and React crashes.
+  const [editMode, setEditMode] = useState(false);
+  const [selStart, setSelStart] = useState<number | null>(null);
+  const [selEnd, setSelEnd] = useState<number | null>(null);
+
   // If English selected and translation available, show English as plain text
   if (lang === "en" && textEn) {
     // Still parse chapter headings from Hindi for anchors/images
@@ -2717,13 +2751,11 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
     if (curLines.length > 0) sections.push({ kind: curKind as Section["kind"], lines: curLines });
   }
 
-  // ── Section Editor (inline) ─────────────────────────────────────────
-  const [editMode, setEditMode] = useState(false);
-  const [selStart, setSelStart] = useState<number | null>(null);
-  const [selEnd, setSelEnd] = useState<number | null>(null);
-
-  // Flatten sections into lines for the editor
-  const editorLines = useMemo(() => {
+  // ── Section Editor (inline) — state hooks live at the top of the component ──
+  // Flatten sections into lines for the editor. Plain computation, not a
+  // hook: `sections` is rebuilt on every render, so the old useMemo never hit
+  // its cache anyway — and hooks may not appear after the early return above.
+  const editorLines = (() => {
     const result: { text: string; kind: SectionKind; lineIdx: number }[] = [];
     let idx = 0;
     for (const sec of sections) {
@@ -2733,7 +2765,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
       }
     }
     return result;
-  }, [sections, editMode]); // eslint-disable-line react-hooks/exhaustive-deps
+  })();
 
   const handleLineClick = (lineIdx: number) => {
     if (selStart === null) {
@@ -3462,13 +3494,14 @@ export default function Bhagwatham() {
   const [chapterImages, setChapterImages] = useState<Map<number, Array<{ url: string; description: string; isInstagram?: boolean }>>>(new Map());
   const [sectionOverrides, setSectionOverrides] = useState<PageOverrides>(loadSectionOverrides);
   const handleOverridesChange = useCallback((pageNum: number, newOverrides: SectionOverride[]) => {
-    setSectionOverrides(prev => {
-      const next = { ...prev };
-      if (newOverrides.length === 0) { delete next[pageNum]; } else { next[pageNum] = newOverrides; }
-      saveSectionOverrides(next);
-      return next;
-    });
-  }, []);
+    // Compute the next value first, then set state and persist OUTSIDE the
+    // updater — React may defer/double-invoke updater functions, so they
+    // must stay side-effect free.
+    const next = { ...sectionOverrides };
+    if (newOverrides.length === 0) { delete next[pageNum]; } else { next[pageNum] = newOverrides; }
+    setSectionOverrides(next);
+    saveSectionOverrides(next);
+  }, [sectionOverrides]);
   const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1024);
   const [activeChapter, setActiveChapter] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -3605,6 +3638,10 @@ export default function Bhagwatham() {
   const fetchChapterIndex = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/chapter-index`);
+      // On Vercel a MISSING static file returns the SPA index.html with HTTP
+      // 200 — require a JSON content-type before parsing or json() throws.
+      const ct = res.headers.get("content-type") || "";
+      if (!res.ok || !ct.includes("application/json")) return;
       const data = await res.json();
       if (data.chapters?.length > 0) {
         const entries: ChapterEntry[] = data.chapters.map((c: any) => ({
@@ -3632,6 +3669,12 @@ export default function Bhagwatham() {
       toLoad.map(async (batchNum) => {
         try {
           const res = await fetch(`${API_BASE}/batch/${batchNum}`);
+          // Missing static files come back as the SPA index.html with HTTP
+          // 200 on Vercel — require JSON before parsing.
+          const ct = res.headers.get("content-type") || "";
+          if (!res.ok || !ct.includes("application/json")) {
+            return { batchNum, pages: [] as PageContent[] };
+          }
           const batch = await res.json();
           const pages = (batch.pages || []).filter((p: PageContent) => !isGarbagePage(p.text));
           return { batchNum, pages };
@@ -3660,7 +3703,8 @@ export default function Bhagwatham() {
       // Step 1: Load chapter index for instant sidebar (fast, ~30KB)
       try {
         const ciRes = await fetch(`${API_BASE}/chapter-index`);
-        if (ciRes.ok) {
+        const ciCt = ciRes.headers.get("content-type") || "";
+        if (ciRes.ok && ciCt.includes("application/json")) {
           const ciData = await ciRes.json();
           if (ciData.chapters?.length > 0) {
             setPrecomputedChapters(ciData.chapters.map((c: any) => ({
@@ -3706,7 +3750,10 @@ export default function Bhagwatham() {
       while (hasMore) {
         try {
           const res = await fetch(`${API_BASE}/content?page=${contentPage}&limit=100`);
-          if (!res.ok) break;
+          // SPA fallback returns index.html with HTTP 200 for missing files —
+          // require JSON before parsing or json() throws and the load stops.
+          const contentCt = res.headers.get("content-type") || "";
+          if (!res.ok || !contentCt.includes("application/json")) break;
           const data: ContentResponse = await res.json();
           const pages = data.batches.flatMap(b => b.pages).filter(p => !isGarbagePage(p.text));
           accumulated.push(...pages);
@@ -4012,7 +4059,7 @@ export default function Bhagwatham() {
     } catch { /* fallback: no anchor */ }
 
     try {
-      await sbFetch("bhagavatam_bookmarks", {
+      const res = await sbFetch("bhagavatam_bookmarks", {
         method: "POST",
         headers: { Prefer: "return=representation,resolution=merge-duplicates" },
         body: JSON.stringify({
@@ -4025,18 +4072,35 @@ export default function Bhagwatham() {
           updated_at: new Date().toISOString(),
         }),
       });
+      if (!res.ok) {
+        alert("Bookmark could not be saved — please try again.");
+        return;
+      }
       await fetchBookmarks();
       setBookmarkSaved(true);
       setTimeout(() => setBookmarkSaved(false), 2000);
-    } catch { /* ignore */ }
+    } catch {
+      alert("Bookmark could not be saved — please try again.");
+    }
   }, [readerId, readerName, allPages, currentPage, visiblePageNum, fetchBookmarks]);
+
+  // Latest-saveBookmark ref so the global "B" keydown listener (bound once
+  // per page-change) always calls the fresh closure without re-binding.
+  const saveBookmarkRef = useRef(saveBookmark);
+  saveBookmarkRef.current = saveBookmark;
 
   const deleteBookmark = useCallback(async (b: BookmarkEntry) => {
     if (!readerId) return;
     try {
-      await sbFetch(`bhagavatam_bookmarks?id=eq.${b.id}&reader_id=eq.${encodeURIComponent(readerId)}`, { method: "DELETE" });
+      const res = await sbFetch(`bhagavatam_bookmarks?id=eq.${b.id}&reader_id=eq.${encodeURIComponent(readerId)}`, { method: "DELETE" });
+      if (!res.ok) {
+        alert("Bookmark could not be deleted — please try again.");
+        return;
+      }
       setBookmarks(prev => prev.filter(x => x.id !== b.id));
-    } catch { /* ignore */ }
+    } catch {
+      alert("Bookmark could not be deleted — please try again.");
+    }
   }, [readerId]);
 
   const handleBookmarkJump = useCallback((b: BookmarkEntry) => {
@@ -4180,11 +4244,6 @@ export default function Bhagwatham() {
     setSearchQuery("");
     setActiveChapter(ch.globalNumber);
 
-    // Save per-chapter position (SEN-106)
-    const positions = JSON.parse(localStorage.getItem("bhagwatham_chapter_positions") || "{}");
-    positions[ch.globalNumber] = { pageNumber: ch.pageNumber, scrollOffset: 0 };
-    localStorage.setItem("bhagwatham_chapter_positions", JSON.stringify(positions));
-
     // Find target page in loaded content
     const pageIdx = allPages.findIndex((p) => p.pageNumber >= ch.pageNumber);
     if (pageIdx >= 0) {
@@ -4207,6 +4266,11 @@ export default function Bhagwatham() {
       // Content still loading — queue this chapter and navigate when loading completes
       pendingChapterRef.current = ch;
       setLoading(true);
+    } else {
+      // Content finished loading but this chapter's pages never arrived
+      // (e.g. its batch file is missing on the server) — tell the user
+      // instead of silently doing nothing.
+      alert("यह अध्याय अभी उपलब्ध नहीं है — कृपया बाद में देखें");
     }
   };
 
@@ -4249,7 +4313,9 @@ export default function Bhagwatham() {
           break;
         case "b":
           if (!e.ctrlKey && !e.metaKey) {
-            saveBookmark();
+            // Call through the ref — saveBookmark captured directly here
+            // would be stale (this effect's deps intentionally exclude it).
+            saveBookmarkRef.current();
           }
           break;
       }

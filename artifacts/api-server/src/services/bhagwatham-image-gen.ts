@@ -1,15 +1,12 @@
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
-import { execSync } from "child_process";
 import { logger } from "../lib/logger";
 import Anthropic from "@anthropic-ai/sdk";
 import { reportAIFailure } from "./ai-credit-monitor";
+import { REPO_ROOT, DATA_DIR as ROOT_DATA_DIR } from "../lib/repo-root";
+import { gitWithRetry } from "../lib/git-retry";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const DATA_DIR = path.resolve(__dirname, "..", "..", "..", "..", "data", "bhagwatham");
+const DATA_DIR = path.join(ROOT_DATA_DIR, "bhagwatham");
 const IMAGES_DIR = path.join(DATA_DIR, "images");
 const MANIFEST_FILE = path.join(IMAGES_DIR, "manifest.json");
 const TRASH_DIR = path.join(IMAGES_DIR, ".trash");
@@ -75,41 +72,46 @@ function trashImage(img: ChapterImage, operation: "delete" | "regenerate"): stri
 }
 
 /** Restore an image from trash back to images dir and manifest */
-export function restoreImage(trashId: string): { success: boolean; restored?: ChapterImage } {
-  const entries = readTrashMeta();
-  const idx = entries.findIndex(e => e.trashId === trashId);
-  if (idx === -1) return { success: false };
+export function restoreImage(trashId: string): Promise<{ success: boolean; restored?: ChapterImage }> {
+  // C1: manifest read→write must hold the manifest lock — otherwise a concurrent
+  // generation pass (which holds the manifest across long awaits) can clobber
+  // this write with its stale snapshot, or vice versa.
+  return withManifestLock(async () => {
+    const entries = readTrashMeta();
+    const idx = entries.findIndex(e => e.trashId === trashId);
+    if (idx === -1) return { success: false };
 
-  const entry = entries[idx];
-  const trashedPath = path.join(TRASH_DIR, entry.trashedFile);
-  const restorePath = path.join(IMAGES_DIR, entry.originalFile);
+    const entry = entries[idx];
+    const trashedPath = path.join(TRASH_DIR, entry.trashedFile);
+    const restorePath = path.join(IMAGES_DIR, entry.originalFile);
 
-  // Move file back
-  if (fs.existsSync(trashedPath)) {
-    // If a new image was generated at the same path, remove it first
-    if (fs.existsSync(restorePath)) fs.unlinkSync(restorePath);
-    fs.renameSync(trashedPath, restorePath);
-  } else {
-    return { success: false };
-  }
+    // Move file back
+    if (fs.existsSync(trashedPath)) {
+      // If a new image was generated at the same path, remove it first
+      if (fs.existsSync(restorePath)) fs.unlinkSync(restorePath);
+      fs.renameSync(trashedPath, restorePath);
+    } else {
+      return { success: false };
+    }
 
-  // Restore manifest entry — remove any current entry for same chapter+scene, then add back the old one
-  const manifest = readManifest();
-  const chNum = entry.manifestEntry.chapterNumber;
-  const scIdx = entry.manifestEntry.sceneIndex ?? 0;
-  manifest.images = manifest.images.filter(
-    i => !(i.chapterNumber === chNum && (i.sceneIndex ?? 0) === scIdx)
-  );
-  manifest.images.push(entry.manifestEntry);
-  manifest.lastUpdated = new Date().toISOString();
-  writeManifest(manifest);
+    // Restore manifest entry — remove any current entry for same chapter+scene, then add back the old one
+    const manifest = readManifest();
+    const chNum = entry.manifestEntry.chapterNumber;
+    const scIdx = entry.manifestEntry.sceneIndex ?? 0;
+    manifest.images = manifest.images.filter(
+      i => !(i.chapterNumber === chNum && (i.sceneIndex ?? 0) === scIdx)
+    );
+    manifest.images.push(entry.manifestEntry);
+    manifest.lastUpdated = new Date().toISOString();
+    writeManifest(manifest);
 
-  // Remove from trash meta
-  entries.splice(idx, 1);
-  writeTrashMeta(entries);
+    // Remove from trash meta
+    entries.splice(idx, 1);
+    writeTrashMeta(entries);
 
-  logger.info({ trashId, file: entry.originalFile }, "Image restored from trash");
-  return { success: true, restored: entry.manifestEntry };
+    logger.info({ trashId, file: entry.originalFile }, "Image restored from trash");
+    return { success: true, restored: entry.manifestEntry };
+  });
 }
 
 // NOTE: Art style is now inline in generateWithTogether() to keep it next to the prompt composition logic.
@@ -650,9 +652,11 @@ function ensureImageDir(): void {
   if (!fs.existsSync(IMAGES_DIR)) fs.mkdirSync(IMAGES_DIR, { recursive: true });
 }
 
-// Simple async mutex to prevent concurrent manifest corruption
+// Simple async mutex to prevent concurrent manifest corruption.
+// Exported so other modules (e.g. bhagwatham-audit) can serialize their own
+// manifest read→merge→write sequences against the generation path.
 let _manifestLock: Promise<void> = Promise.resolve();
-function withManifestLock<T>(fn: () => Promise<T>): Promise<T> {
+export function withManifestLock<T>(fn: () => Promise<T>): Promise<T> {
   const prev = _manifestLock;
   let resolve: () => void;
   _manifestLock = new Promise<void>((r) => { resolve = r; });
@@ -1177,7 +1181,9 @@ async function generateWithTogether(prompt: string, destPath: string, model: str
   const PROMPT_LIMIT = 2000;
   if (fullPrompt.length > PROMPT_LIMIT) {
     const reservedTail = styleSuffix.length + correctiveInstruction.length;
-    const maxPromptLen = PROMPT_LIMIT - reservedTail;
+    // C4: floor at 300 — a long corrective reason must never truncate the scene
+    // description to "" (which would generate an image of just the style suffix).
+    const maxPromptLen = Math.max(300, PROMPT_LIMIT - reservedTail);
     logger.warn({ originalLen: fullPrompt.length, truncatedTo: PROMPT_LIMIT, hasCorrection: !!correctiveInstruction }, "Truncating prompt for FLUX");
     fullPrompt = prompt.substring(0, maxPromptLen) + styleSuffix + correctiveInstruction;
   }
@@ -1274,6 +1280,29 @@ async function _generateChapterImages(
       const stat = fs.statSync(destPath);
       if (stat.size > 10_000) {
         logger.info({ chapterNumber, filename, sceneIdx, size: stat.size }, "Chapter image already exists, skipping");
+        // C2: if the manifest entry is missing (e.g. manifest was clobbered),
+        // restore it — otherwise the chapter stays invisible in the gallery and
+        // gets re-detected as "missing" by every audit/backfill tick forever.
+        const hasEntry = manifest.images.some(
+          (img) => img.chapterNumber === chapterNumber && (img.sceneIndex ?? 0) === sceneIdx
+        );
+        if (!hasEntry) {
+          const descriptions = (detectScenes as any)._lastDescriptions as string[] | undefined;
+          const personas = detectPersonasInScene(scenes[sceneIdx]);
+          manifest.images.push({
+            chapterNumber,
+            chapterTitle,
+            cantoNumber: getCantoForGlobalChapter(chapterNumber),
+            imagePath: filename,
+            prompt: scenes[sceneIdx],
+            descriptionHi: descriptions?.[sceneIdx] || undefined,
+            personasUsed: personas.length > 0 ? personas : undefined,
+            personaVersion: personas.length > 0 ? getPersonaGroupVersion(personas) : undefined,
+            generatedAt: new Date().toISOString(),
+            sceneIndex: sceneIdx,
+          });
+          logger.info({ chapterNumber, filename, sceneIdx }, "Restored missing manifest entry for existing image file");
+        }
         generatedFiles.push(filename);
         continue;
       }
@@ -1405,13 +1434,20 @@ export function regenerateChapterImages(
   chapterTitle: string,
   contentSnippet: string,
   reason?: string,
+  sceneIndex?: number,
 ): Promise<{ files: string[]; trashIds: string[] }> {
   return withManifestLock(async () => {
     ensureImageDir();
 
+    // C5: when a specific sceneIndex is requested, trash/regenerate ONLY that
+    // scene's entry (previously ALL scenes were trashed but only one came back).
+    const targetsEntry = (img: ChapterImage) =>
+      img.chapterNumber === chapterNumber &&
+      (sceneIndex === undefined || (img.sceneIndex ?? 0) === sceneIndex);
+
     // Move existing images to trash (for undo) instead of deleting
     const manifest = readManifest();
-    const existing = manifest.images.filter((img) => img.chapterNumber === chapterNumber);
+    const existing = manifest.images.filter(targetsEntry);
     const trashIds: string[] = [];
     for (const img of existing) {
       const tid = trashImage(img, "regenerate");
@@ -1419,22 +1455,92 @@ export function regenerateChapterImages(
     }
     // Remove from manifest entirely (also clears the cached scene prompt so
     // detectScenes will call AI fresh with the new reason context)
-    manifest.images = manifest.images.filter((img) => img.chapterNumber !== chapterNumber);
+    manifest.images = manifest.images.filter((img) => !targetsEntry(img));
     writeManifest(manifest);
 
     // Stash reason on the runtime so generateWithTogether can append it to the
     // style suffix as an explicit AVOID instruction.
+    // C4: clamp to 200 chars and strip newlines — the reason is user-supplied
+    // and is injected into the FLUX prompt; an unbounded multi-line reason
+    // could otherwise dominate/truncate the prompt.
     if (reason && reason.trim()) {
-      (globalThis as any).__nextRegenReason = { chapter: chapterNumber, reason: reason.trim() };
+      const safeReason = reason.replace(/[\r\n]+/g, " ").trim().slice(0, 200);
+      (globalThis as any).__nextRegenReason = { chapter: chapterNumber, reason: safeReason };
     }
 
     try {
+      if (sceneIndex !== undefined) {
+        const file = await _regenerateSingleScene(chapterNumber, chapterTitle, contentSnippet, sceneIndex);
+        return { files: file ? [file] : [], trashIds };
+      }
       const files = await _generateChapterImages(chapterNumber, chapterTitle, contentSnippet);
       return { files, trashIds };
     } finally {
       delete (globalThis as any).__nextRegenReason;
     }
   });
+}
+
+/**
+ * Regenerate exactly one scene of a chapter (mirrors the regenerateWithCustomPrompt
+ * flow, but with an AI-detected scene prompt instead of a user-supplied one).
+ * NOTE: deliberately does NOT pass chapterNumber to detectScenes — the manifest
+ * cache would return one of the chapter's OTHER scene prompts.
+ * Caller must hold the manifest lock.
+ */
+async function _regenerateSingleScene(
+  chapterNumber: number,
+  chapterTitle: string,
+  contentSnippet: string,
+  sceneIndex: number,
+): Promise<string | null> {
+  ensureImageDir();
+
+  const scenes = await detectScenes(chapterTitle, contentSnippet, 1);
+  if (scenes.length === 0) return null;
+  const scene = scenes[0];
+
+  const suffix = sceneIndex === 0 ? "" : `-${sceneIndex + 1}`;
+  const filename = `chapter-${String(chapterNumber).padStart(3, "0")}${suffix}.jpg`;
+  const destPath = path.join(IMAGES_DIR, filename);
+
+  const prompt = buildPrompt(scene, contentSnippet);
+
+  try {
+    logger.info({ chapterNumber, sceneIndex, engine: "together-flux2" }, "Regenerating single scene");
+    await generateWithTogether(prompt, destPath);
+
+    const descriptions = (detectScenes as any)._lastDescriptions as string[] | undefined;
+    const personas = detectPersonasInScene(scene);
+
+    const manifest = readManifest();
+    manifest.images = manifest.images.filter(
+      (img) => !(img.chapterNumber === chapterNumber && (img.sceneIndex ?? 0) === sceneIndex)
+    );
+    manifest.images.push({
+      chapterNumber,
+      chapterTitle,
+      cantoNumber: getCantoForGlobalChapter(chapterNumber),
+      imagePath: filename,
+      prompt: scene,
+      descriptionHi: descriptions?.[0] || undefined,
+      personasUsed: personas.length > 0 ? personas : undefined,
+      personaVersion: personas.length > 0 ? getPersonaGroupVersion(personas) : undefined,
+      generatedAt: new Date().toISOString(),
+      sceneIndex,
+    });
+    manifest.images.sort((a, b) => {
+      if (a.chapterNumber !== b.chapterNumber) return a.chapterNumber - b.chapterNumber;
+      return (a.sceneIndex ?? 0) - (b.sceneIndex ?? 0);
+    });
+    writeManifest(manifest);
+
+    logger.info({ chapterNumber, sceneIndex, filename }, "Single scene regenerated successfully");
+    return filename;
+  } catch (err) {
+    logger.warn({ chapterNumber, sceneIndex, err }, "Failed to regenerate single scene");
+    return null;
+  }
 }
 
 /**
@@ -1496,8 +1602,7 @@ export function regenerateWithCustomPrompt(
 
       // Stage only — daily commit cron handles commit + push
       try {
-        const repoRoot = path.resolve(DATA_DIR, "..", "..");
-        execSync("git add data/bhagwatham/", { cwd: repoRoot, stdio: "pipe" });
+        gitWithRetry("git add data/bhagwatham/", { cwd: REPO_ROOT });
         logger.info({ chapterNumber }, "Regenerated image staged (daily commit will push)");
       } catch (gitErr) {
         logger.warn({ gitErr }, "Git stage failed after regeneration");
@@ -1514,18 +1619,23 @@ export function regenerateWithCustomPrompt(
 /**
  * Delete a specific image by chapter number and scene index.
  */
-export function deleteChapterImage(chapterNumber: number, sceneIndex: number): { success: boolean; deleted?: string; trashId?: string } {
-  const manifest = readManifest();
-  const img = manifest.images.find((i) => i.chapterNumber === chapterNumber && (i.sceneIndex ?? 0) === sceneIndex);
-  if (!img) return { success: false };
+export function deleteChapterImage(chapterNumber: number, sceneIndex: number): Promise<{ success: boolean; deleted?: string; trashId?: string }> {
+  // C1: hold the manifest lock for the read→write — a concurrent generation
+  // pass writes its own (older) snapshot after long awaits and would silently
+  // resurrect the entry we just deleted.
+  return withManifestLock(async () => {
+    const manifest = readManifest();
+    const img = manifest.images.find((i) => i.chapterNumber === chapterNumber && (i.sceneIndex ?? 0) === sceneIndex);
+    if (!img) return { success: false };
 
-  // Move to trash instead of permanent delete
-  const trashId = trashImage(img, "delete");
+    // Move to trash instead of permanent delete
+    const trashId = trashImage(img, "delete");
 
-  manifest.images = manifest.images.filter((i) => !(i.chapterNumber === chapterNumber && (i.sceneIndex ?? 0) === sceneIndex));
-  writeManifest(manifest);
-  logger.info({ chapterNumber, sceneIndex, file: img.imagePath, trashId }, "Deleted chapter image (moved to trash)");
-  return { success: true, deleted: img.imagePath, trashId };
+    manifest.images = manifest.images.filter((i) => !(i.chapterNumber === chapterNumber && (i.sceneIndex ?? 0) === sceneIndex));
+    writeManifest(manifest);
+    logger.info({ chapterNumber, sceneIndex, file: img.imagePath, trashId }, "Deleted chapter image (moved to trash)");
+    return { success: true, deleted: img.imagePath, trashId };
+  });
 }
 
 // Keep backward-compatible single-image function

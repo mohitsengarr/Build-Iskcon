@@ -52,7 +52,7 @@ export async function processImageDeleteQueue(): Promise<{ processed: number; fa
 
     for (const req of rows) {
       try {
-        const result = deleteChapterImage(req.chapter_number, req.scene_index);
+        const result = await deleteChapterImage(req.chapter_number, req.scene_index);
         await sb(
           `bhagavatam_image_deletes?chapter_number=eq.${req.chapter_number}&scene_index=eq.${req.scene_index}`,
           {

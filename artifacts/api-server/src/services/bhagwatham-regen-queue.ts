@@ -11,7 +11,7 @@
  */
 import { logger } from "../lib/logger";
 import { regenerateChapterImages } from "./bhagwatham-image-gen";
-import { getAllBatches } from "./bhagwatham-sarvam";
+import { getChapterMap } from "./bhagwatham-audit";
 
 const SUPABASE_URL = "https://etfmndcrchundvgtvmot.supabase.co";
 const SUPABASE_ANON_KEY =
@@ -44,50 +44,48 @@ async function markStatus(id: number, fields: Record<string, unknown>): Promise<
 }
 
 /**
- * Resolve a sequential chapter number → { title, contentSnippet } using the OCR'd batches.
- * Walks through chapter headings in order and returns the contiguous content for the
- * Nth chapter (matches how findChaptersInBatches numbers them).
+ * Resolve a GLOBAL chapter number → { title, contentSnippet }.
+ *
+ * C4: uses the audit module's chapter detection (skandh-aware per-canto math,
+ * ToC-page skipping, OCR heading fixes) — the exact same map the image
+ * manifest numbering comes from. The previous sequential heading scan here
+ * used neither, so its Nth heading often belonged to a DIFFERENT chapter and
+ * regens were fed the wrong chapter's text.
  */
 function resolveChapterContent(globalNumber: number): { title: string; contentSnippet: string } | null {
-  const batches = getAllBatches();
-  const allPages = batches.flatMap((b) => b.pages);
-  // Heading detection — same logic as bhagwatham-utils
-  const isHeading = (line: string) => {
-    const t = line.trim();
-    if (!t || t.length > 100 || t.includes("पूर्ण हुए")) return false;
-    return /^(?:\d+\s+)?(?:Chapter|अध्याय)\s+\S+/iu.test(t);
-  };
+  const chapters = getChapterMap();
+  const info = chapters.get(globalNumber);
+  if (!info) return null;
+  return { title: info.title, contentSnippet: info.contentSnippet };
+}
 
-  const chapterStarts: Array<{ pageIdx: number; lineIdx: number; title: string }> = [];
-  for (let i = 0; i < allPages.length; i++) {
-    const lines = allPages[i].text.split("\n");
-    for (let j = 0; j < lines.length; j++) {
-      if (isHeading(lines[j])) {
-        chapterStarts.push({ pageIdx: i, lineIdx: j, title: lines[j].trim() });
-      }
-    }
+/**
+ * C8: crash recovery — rows stuck in status=processing (the process died after
+ * marking them but before completing) would otherwise never be retried.
+ * Re-queue them to pending. Called once at service start by the queue
+ * processor; also exported so the cron can invoke it explicitly.
+ */
+export async function recoverStuckRegenRequests(): Promise<number> {
+  try {
+    const res = await sb("bhagavatam_image_regen_requests?status=eq.processing&select=id");
+    if (!res.ok) return 0;
+    const rows = (await res.json()) as Array<{ id: number }>;
+    if (rows.length === 0) return 0;
+
+    await sb("bhagavatam_image_regen_requests?status=eq.processing", {
+      method: "PATCH",
+      body: JSON.stringify({ status: "pending" }),
+    });
+    logger.info({ recovered: rows.length, ids: rows.map((r) => r.id) }, "Regen queue: re-queued stuck 'processing' rows to pending (crash recovery)");
+    return rows.length;
+  } catch (err) {
+    logger.warn({ err }, "Regen queue: crash recovery failed (will retry next start)");
+    return 0;
   }
-
-  if (globalNumber < 1 || globalNumber > chapterStarts.length) return null;
-  const start = chapterStarts[globalNumber - 1];
-  const end = chapterStarts[globalNumber] ?? null;
-
-  // Concatenate text from the chapter heading up to (but not including) the next heading
-  const parts: string[] = [];
-  for (let i = start.pageIdx; i <= (end ? end.pageIdx : Math.min(allPages.length - 1, start.pageIdx + 5)); i++) {
-    const lines = allPages[i].text.split("\n");
-    const fromLine = i === start.pageIdx ? start.lineIdx + 1 : 0;
-    const toLine = end && i === end.pageIdx ? end.lineIdx : lines.length;
-    parts.push(lines.slice(fromLine, toLine).join("\n"));
-    if (parts.join("\n").length > 4000) break;
-  }
-  return {
-    title: start.title,
-    contentSnippet: parts.join("\n").substring(0, 4000),
-  };
 }
 
 let _running = false;
+let _recoveredAtStartup = false;
 
 export async function processImageRegenQueue(): Promise<{ processed: number; failed: number }> {
   if (_running) return { processed: 0, failed: 0 };
@@ -95,6 +93,12 @@ export async function processImageRegenQueue(): Promise<{ processed: number; fai
   let processed = 0;
   let failed = 0;
   try {
+    // C8: run crash recovery exactly once per process lifetime (= service start).
+    if (!_recoveredAtStartup) {
+      _recoveredAtStartup = true;
+      await recoverStuckRegenRequests();
+    }
+
     const res = await sb(
       "bhagavatam_image_regen_requests?status=eq.pending&select=id,chapter_number,scene_index,reason,status&order=requested_at.asc&limit=10",
     );
@@ -122,8 +126,18 @@ export async function processImageRegenQueue(): Promise<{ processed: number; fai
           continue;
         }
 
+        // C4: the reason is user-supplied and gets injected into the FLUX
+        // prompt — clamp to 200 chars and strip newlines.
+        const safeReason = (req.reason || "").replace(/[\r\n]+/g, " ").trim().slice(0, 200);
+        // C5: honor scene_index — regenerate ONLY the requested scene instead
+        // of trashing every scene of the chapter.
+        const sceneIndex =
+          typeof req.scene_index === "number" && Number.isInteger(req.scene_index) && req.scene_index >= 0
+            ? req.scene_index
+            : undefined;
+
         logger.info(
-          { chapter: req.chapter_number, reason: req.reason },
+          { chapter: req.chapter_number, sceneIndex, reason: safeReason },
           "Regenerating image with corrective reason",
         );
 
@@ -131,7 +145,8 @@ export async function processImageRegenQueue(): Promise<{ processed: number; fai
           req.chapter_number,
           chapterInfo.title,
           chapterInfo.contentSnippet,
-          req.reason,
+          safeReason,
+          sceneIndex,
         );
 
         if (result.files.length > 0) {

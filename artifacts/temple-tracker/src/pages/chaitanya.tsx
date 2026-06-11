@@ -37,7 +37,9 @@ function loadSettings(): ReadingSettings {
 }
 
 function saveSettings(s: ReadingSettings) {
-  localStorage.setItem(`${BOOK_KEY}_settings`, JSON.stringify(s));
+  try {
+    localStorage.setItem(`${BOOK_KEY}_settings`, JSON.stringify(s));
+  } catch { /* quota exceeded / private mode — settings just won't persist */ }
 }
 
 const THEME_STYLES: Record<Theme, { bg: string; text: string; surface: string; border: string; muted: string; accent: string }> = {
@@ -209,7 +211,9 @@ function loadSectionOverrides(): PageOverrides {
 }
 
 function saveSectionOverrides(o: PageOverrides) {
-  localStorage.setItem(`${BOOK_KEY}_section_overrides`, JSON.stringify(o));
+  try {
+    localStorage.setItem(`${BOOK_KEY}_section_overrides`, JSON.stringify(o));
+  } catch { /* quota exceeded / private mode — overrides just won't persist */ }
 }
 
 const SECTION_KIND_LABELS: Record<SectionKind, { label: string; color: string; bg: string }> = {
@@ -223,7 +227,8 @@ const SECTION_KIND_LABELS: Record<SectionKind, { label: string; color: string; b
 /** A chapter from the server chapter-index endpoint. */
 interface ChapterEntry {
   globalNumber: number;     // unique across all parts
-  part: string;             // "Adi-lila" | "Madhya-lila" | "Antya-lila"
+  part: string;             // lowercase short code from the DB: "adi" | "madhya" | "antya"
+                            // ("-lila"-suffixed / mixed-case legacy values tolerated via partKey())
   number: number;           // chapter number within the part
   title: string;
   pageNumber: number;       // first page of the chapter
@@ -264,13 +269,8 @@ function partLabelHi(part: string): string {
 }
 
 const API_BASE = `/api/${BOOK_KEY}`;
-const MUTATION_API_BASE = `${import.meta.env.VITE_PUBLIC_API_URL || ""}/api/${BOOK_KEY}`;
-const isMutationApiConfigured = () =>
-  Boolean(import.meta.env.VITE_PUBLIC_API_URL) || (typeof window !== "undefined" && window.location.hostname === "localhost");
 
-// ── Sarvam TTS (HTTP streaming) ──────────────────────────────────────────
-const SARVAM_TTS_URL = "https://api.sarvam.ai/text-to-speech/stream";
-const SARVAM_KEY = "sk_c81tz6ss_p9kDbB6SEeYB7s9V7yQHbUl8";
+// ── Sarvam TTS (via Supabase Edge Function proxy — keeps the API key server-side) ──
 
 const TTS_CACHE_PREFIX = "tts_v2_";
 const TTS_CACHE_INDEX_KEY = "tts_v2_index";
@@ -310,25 +310,48 @@ function ttsCacheWrite(key: string, buffer: ArrayBuffer): void {
     binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
   }
   const b64 = btoa(binary);
-  const trySet = () => localStorage.setItem(TTS_CACHE_PREFIX + key, b64);
-  try {
-    trySet();
-    ttsCacheTouch(key);
-  } catch {
+  // Update the index FIRST, then write the blob. If the blob write fails we
+  // roll the index entry back. This guarantees a blob never exists without an
+  // index entry — orphaned blobs would be invisible to eviction forever.
+  // (An index entry without a blob is harmless: reads miss, eviction cleans it.)
+  const addToIndex = () => {
+    const idxRaw = localStorage.getItem(TTS_CACHE_INDEX_KEY);
+    const idx: Record<string, number> = idxRaw ? JSON.parse(idxRaw) : {};
+    idx[key] = Date.now();
+    localStorage.setItem(TTS_CACHE_INDEX_KEY, JSON.stringify(idx));
+  };
+  const removeFromIndex = () => {
     try {
       const idxRaw = localStorage.getItem(TTS_CACHE_INDEX_KEY);
       const idx: Record<string, number> = idxRaw ? JSON.parse(idxRaw) : {};
-      const entries = Object.entries(idx).sort((a, b) => a[1] - b[1]);
+      if (key in idx) {
+        delete idx[key];
+        localStorage.setItem(TTS_CACHE_INDEX_KEY, JSON.stringify(idx));
+      }
+    } catch { /* */ }
+  };
+  const trySet = () => localStorage.setItem(TTS_CACHE_PREFIX + key, b64);
+  try {
+    addToIndex();
+    trySet();
+  } catch {
+    // Quota exceeded — evict oldest 25% of entries (never our fresh key) and retry
+    try {
+      const idxRaw = localStorage.getItem(TTS_CACHE_INDEX_KEY);
+      const idx: Record<string, number> = idxRaw ? JSON.parse(idxRaw) : {};
+      const entries = Object.entries(idx).filter(([k]) => k !== key).sort((a, b) => a[1] - b[1]);
       const drop = Math.max(1, Math.floor(entries.length * 0.25));
       for (let i = 0; i < drop; i++) {
         const [k] = entries[i];
         try { localStorage.removeItem(TTS_CACHE_PREFIX + k); } catch { /* */ }
         delete idx[k];
       }
+      idx[key] = Date.now();
       localStorage.setItem(TTS_CACHE_INDEX_KEY, JSON.stringify(idx));
       trySet();
-      ttsCacheTouch(key);
-    } catch { /* */ }
+    } catch {
+      removeFromIndex(); // blob write still failed — don't leave a dangling index entry
+    }
   }
 }
 
@@ -345,11 +368,14 @@ async function sarvamStreamPlay(text: string): Promise<HTMLAudioElement> {
     return audio;
   }
 
-  const response = await fetch(SARVAM_TTS_URL, {
+  // Proxied through a Supabase Edge Function so the Sarvam key stays
+  // server-side. The proxy streams back the same response format.
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/sarvam-tts`, {
     method: "POST",
     headers: {
-      "api-subscription-key": SARVAM_KEY,
       "Content-Type": "application/json",
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
     },
     body: JSON.stringify({
       text,
@@ -403,7 +429,6 @@ function sbFetch(path: string, opts?: RequestInit) {
 // schema as their bhagavatam_* counterparts.
 const TBL_PAGE_EDITS    = `${BOOK_KEY}_page_edits`;
 const TBL_BOOKMARKS     = `${BOOK_KEY}_bookmarks`;
-const TBL_REGEN_REQS    = `${BOOK_KEY}_image_regen_requests`;
 
 // Match chapter headings: "Chapter <anything>" or "अध्याय <any-hindi-word-or-digit>"
 const CHAPTER_RE = /^(?:Chapter\s+\S+|अध्याय\s+(?:[ऀ-ॿ]+(?:\s+[ऀ-ॿ]+){0,2}|\d+))\s*$/iu;
@@ -916,10 +941,13 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     const effectiveOld = cleanedOld;
     const effectiveNew = cleanedNew.trim() || newText;
 
-    let savedText: string | null = null;
-    setAllPages(prev => {
-      const targetPage = prev.find(p => p.pageNumber === pageNum);
-      if (!targetPage) return prev;
+    // Compute the edit from the CURRENT pages state (allPages), then apply it
+    // with a pure state updater and run all side effects (alerts, Supabase
+    // POST) outside — React 18 may defer or double-invoke updater functions
+    // (e.g. in StrictMode), so updaters must stay side-effect free.
+    const computeEdit = (pages: PageContent[]): { pageNumber: number; text: string } | null => {
+      const targetPage = pages.find(p => p.pageNumber === pageNum);
+      if (!targetPage) return null;
 
       const sourceText = targetPage.text;
       const escapeForRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -1046,7 +1074,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
         const tryPages = [pageNum - 1, pageNum + 1, pageNum - 2, pageNum + 2];
         for (const tryNum of tryPages) {
           if (tryNum < 1) continue;
-          const tryPage = prev.find(p => p.pageNumber === tryNum);
+          const tryPage = pages.find(p => p.pageNumber === tryNum);
           if (!tryPage) continue;
           const src = tryPage.text;
           let replaced = src.replace(effectiveOld, effectiveNew);
@@ -1055,9 +1083,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
           }
           if (replaced !== src) {
             console.info(`[applyEdit] matched on adjacent page ${tryNum} (selection-captured page was ${pageNum})`);
-            savedText = replaced;
-            (selectionContextRef.current as { resolvedPageNum?: number }).resolvedPageNum = tryNum;
-            return prev.map(p => p.pageNumber !== tryNum ? p : { ...p, text: replaced });
+            return { pageNumber: tryNum, text: replaced };
           }
         }
 
@@ -1066,28 +1092,28 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
           "Couldn't locate the highlighted text in the page source.\n\n" +
           "Try selecting a smaller piece within one paragraph.",
         ), 0);
-        return prev;
+        return null;
       }
 
-      savedText = fullNewText;
-      return prev.map(p => p.pageNumber !== pageNum ? p : { ...p, text: fullNewText });
-    });
+      return { pageNumber: pageNum, text: fullNewText };
+    };
 
-    if (!savedText) return;
+    const edit = computeEdit(allPages);
+    if (!edit) return;
+
+    // Pure updater — the replacement text was computed above, outside React.
+    setAllPages(prev => prev.map(p => p.pageNumber !== edit.pageNumber ? p : { ...p, text: edit.text }));
     window.getSelection()?.removeAllRanges();
     setAppliedFlash(true);
     setTimeout(() => setAppliedFlash(false), 1500);
 
-    const resolvedPageNum =
-      (selectionContextRef.current as { resolvedPageNum?: number }).resolvedPageNum ?? pageNum;
-    (selectionContextRef.current as { resolvedPageNum?: number }).resolvedPageNum = undefined;
     try {
       const res = await sbFetch(TBL_PAGE_EDITS, {
         method: "POST",
         headers: { Prefer: "return=representation,resolution=merge-duplicates" },
         body: JSON.stringify({
-          page_number: resolvedPageNum,
-          text: savedText,
+          page_number: edit.pageNumber,
+          text: edit.text,
           edited_at: new Date().toISOString(),
           applied_to_git: false,
         }),
@@ -1099,7 +1125,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     } catch (err) {
       alert(`Save failed — could not reach Supabase.\n${String(err)}`);
     }
-  }, [setAllPages]);
+  }, [allPages, setAllPages]);
 
   const listenToWord = useCallback(async () => {
     if (!selectedText) return;
@@ -1719,10 +1745,11 @@ function BookmarkPanel({ bookmarks, onJump, onDelete, isLoggedIn, onLogin }: {
               <Bookmark className="w-3.5 h-3.5 text-orange-500 shrink-0" />
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-stone-700 truncate">
-                  {b.label || (b.chapter_title ? b.chapter_title.split("—")[0].trim() : `Page ${b.page_number}`)}
+                  {/* page_number is synthesized (batch*100000 + page) — show the per-chapter page */}
+                  {b.label || (b.chapter_title ? b.chapter_title.split("—")[0].trim() : `Page ${b.page_number % 100000}`)}
                 </p>
                 <p className="text-[10px] text-stone-400">
-                  Page {b.page_number}
+                  Page {b.page_number % 100000}
                   {b.chapter_title && ` · ${b.chapter_title.split("—")[0].trim()}`}
                 </p>
               </div>
@@ -1755,6 +1782,14 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
   nextPageStartsNumberedShlok?: boolean;
 }) {
   const t = THEME_STYLES[themeKey];
+
+  // ── Section Editor state ────────────────────────────────────────────
+  // Hooks MUST be declared unconditionally before the English-mode early
+  // return below — otherwise toggling `lang` changes the hook order between
+  // renders and React crashes.
+  const [editMode, setEditMode] = useState(false);
+  const [selStart, setSelStart] = useState<number | null>(null);
+  const [selEnd, setSelEnd] = useState<number | null>(null);
 
   if (lang === "en" && textEn) {
     const enLines = textEn.split("\n")
@@ -2002,11 +2037,10 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
     if (curLines.length > 0) sections.push({ kind: curKind as Section["kind"], lines: curLines });
   }
 
-  const [editMode, setEditMode] = useState(false);
-  const [selStart, setSelStart] = useState<number | null>(null);
-  const [selEnd, setSelEnd] = useState<number | null>(null);
-
-  const editorLines = useMemo(() => {
+  // Flatten sections into lines for the editor. Plain computation, not a
+  // hook: `sections` is rebuilt on every render, so the old useMemo never hit
+  // its cache anyway — and hooks may not appear after the early return above.
+  const editorLines = (() => {
     const result: { text: string; kind: SectionKind; lineIdx: number }[] = [];
     let idx = 0;
     for (const sec of sections) {
@@ -2016,7 +2050,7 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
       }
     }
     return result;
-  }, [sections, editMode]); // eslint-disable-line react-hooks/exhaustive-deps
+  })();
 
   const handleLineClick = (lineIdx: number) => {
     if (selStart === null) {
@@ -2309,8 +2343,9 @@ function StepScrollIndicator({ themeKey }: { themeKey: Theme }) {
 }
 
 // ── Sidebar (Kindle-like index) ─────────────────────────────────────────
-// Grouped by `part` (string: "Adi-lila", "Madhya-lila", "Antya-lila") instead
-// of `canto` (integer 1..12 in bhagwatham). Order follows PART_ORDER.
+// Grouped by `part` — normalized via partKey() to the short codes
+// "adi" / "madhya" / "antya" — instead of `canto` (integer 1..12 in
+// bhagwatham). Order follows PART_ORDER.
 
 function Sidebar({
   chapters,
@@ -2342,9 +2377,11 @@ function Sidebar({
   const [sidebarTab, setSidebarTab] = useState<"chapters" | "bookmarks">("chapters");
   const [sidebarSearch, setSidebarSearch] = useState("");
 
-  const activePart = activeChapter
+  // Normalize through partKey() so expansion state matches the grouping keys
+  const rawActivePart = activeChapter
     ? chapters.find(c => c.globalNumber === activeChapter)?.part ?? null
     : null;
+  const activePart = rawActivePart ? partKey(rawActivePart) : null;
   const [expandedParts, setExpandedParts] = useState<Set<string>>(
     activePart ? new Set([activePart]) : new Set()
   );
@@ -2449,11 +2486,13 @@ function Sidebar({
                       )
                     : chapters;
 
-                  // Group chapters by part (string), preserve sensible order
+                  // Group chapters by normalized part key so "adi", "Adi-lila"
+                  // etc. all land in the same bucket, preserve sensible order
                   const partGroups = new Map<string, ChapterEntry[]>();
                   for (const ch of filteredChapters) {
-                    if (!partGroups.has(ch.part)) partGroups.set(ch.part, []);
-                    partGroups.get(ch.part)!.push(ch);
+                    const key = partKey(ch.part);
+                    if (!partGroups.has(key)) partGroups.set(key, []);
+                    partGroups.get(key)!.push(ch);
                   }
                   const sortedEntries = Array.from(partGroups.entries())
                     .sort((a, b) => getPartOrder(a[0]) - getPartOrder(b[0]));
@@ -2461,7 +2500,7 @@ function Sidebar({
                   return sortedEntries.map(([part, chs]) => {
                     const isExpanded = sidebarSearch.trim() ? true : expandedParts.has(part);
                     const hasActiveChapter = chs.some(ch => ch.globalNumber === activeChapter);
-                    const partInfo = PART_LABELS[part] || { hi: part, en: part };
+                    const partInfo = PART_LABELS[partKey(part)] || { hi: part, en: part };
                     return (
                     <div key={part}>
                       <button
@@ -2601,6 +2640,9 @@ export default function Chaitanya() {
   const [chapters, setChapters] = useState<ChapterEntry[]>([]);
   const [allPages, setAllPages] = useState<PageContent[]>([]);
   const [loading, setLoading] = useState(true);
+  // True when the chapter index couldn't be fetched (or came back empty) —
+  // renders an error state with a retry button instead of an endless spinner.
+  const [indexError, setIndexError] = useState(false);
   // Map<globalNumber → page-index-in-allPages> so we can navigate by chapter.
   // Page numbers in chaitanya are per-chapter (each chapter is its own batch),
   // so we synthesize a contiguous reading sequence across chapter boundaries.
@@ -2608,13 +2650,14 @@ export default function Chaitanya() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sectionOverrides, setSectionOverrides] = useState<PageOverrides>(loadSectionOverrides);
   const handleOverridesChange = useCallback((pageNum: number, newOverrides: SectionOverride[]) => {
-    setSectionOverrides(prev => {
-      const next = { ...prev };
-      if (newOverrides.length === 0) { delete next[pageNum]; } else { next[pageNum] = newOverrides; }
-      saveSectionOverrides(next);
-      return next;
-    });
-  }, []);
+    // Compute the next value first, then set state and persist OUTSIDE the
+    // updater — React may defer/double-invoke updater functions, so they
+    // must stay side-effect free.
+    const next = { ...sectionOverrides };
+    if (newOverrides.length === 0) { delete next[pageNum]; } else { next[pageNum] = newOverrides; }
+    setSectionOverrides(next);
+    saveSectionOverrides(next);
+  }, [sectionOverrides]);
   const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1024);
   const [activeChapter, setActiveChapter] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -2645,8 +2688,18 @@ export default function Chaitanya() {
     if (from > to || from < 1) return;
     setSummarizeModal({ fromPage: from, toPage: to, summary: "", loading: true });
 
+    // `from`/`to` are DISPLAY page numbers (per-chapter, restarting at 1).
+    // allPages holds SYNTHESIZED numbers (batchNumber * 100000 + page), so
+    // resolve the currently open chapter's batch prefix and compare against
+    // prefix + from/to — otherwise the range never matches any page.
+    const activeCh = activeChapter != null
+      ? chapters.find(c => c.globalNumber === activeChapter)
+      : undefined;
+    const prefix = activeCh
+      ? activeCh.batchNumber * 100000
+      : Math.floor((visiblePageNum || allPages[0]?.pageNumber || 0) / 100000) * 100000;
     const pageTexts = allPages
-      .filter(p => p.pageNumber >= from && p.pageNumber <= to)
+      .filter(p => p.pageNumber >= prefix + from && p.pageNumber <= prefix + to)
       .map(p => p.text)
       .join("\n\n");
 
@@ -2703,15 +2756,28 @@ export default function Chaitanya() {
     }
 
     setSummarizeModal(prev => prev ? { ...prev, summary: bullets.join("\n"), loading: false } : null);
-  }, [allPages]);
+  }, [allPages, chapters, activeChapter, visiblePageNum]);
 
-  // Fetch chapter index from server.
+  // Fetch chapter index from server. On failure (network error, non-JSON
+  // response such as the SPA index.html on Vercel, or an empty list) stop the
+  // loading spinner and surface a visible error state with a retry button.
   const fetchChapterIndex = useCallback(async () => {
+    setIndexError(false);
+    setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/chapter-index`);
-      if (!res.ok) return;
+      const ct = res.headers.get("content-type") || "";
+      if (!res.ok || !ct.includes("application/json")) {
+        setIndexError(true);
+        setLoading(false);
+        return;
+      }
       const data = await res.json();
-      if (!data.chapters?.length) return;
+      if (!data.chapters?.length) {
+        setIndexError(true);
+        setLoading(false);
+        return;
+      }
       const entries: ChapterEntry[] = data.chapters.map((c: any) => ({
         globalNumber: c.globalNumber,
         part: c.part,
@@ -2731,6 +2797,8 @@ export default function Chaitanya() {
       setChapters(entries);
     } catch (err) {
       console.warn("[chaitanya] chapter-index fetch failed:", err);
+      setIndexError(true);
+      setLoading(false);
     }
   }, []);
 
@@ -2745,7 +2813,10 @@ export default function Chaitanya() {
     }
     try {
       const res = await fetch(`${API_BASE}/batch/${globalNumber}`);
-      if (!res.ok) return [];
+      // On Vercel a MISSING static file returns the SPA index.html with HTTP
+      // 200 — require a JSON content-type before parsing or json() throws.
+      const ct = res.headers.get("content-type") || "";
+      if (!res.ok || !ct.includes("application/json")) return [];
       const batch: BatchData = await res.json();
       const pages = (batch.pages || [])
         .filter((p: PageContent) => !isGarbagePage(p.text))
@@ -2829,6 +2900,10 @@ export default function Chaitanya() {
       // queue. Surface this to the user.
       if (ch.ocrStatus && ch.ocrStatus !== "ready") {
         alert(`Chapter "${ch.title}" is still being processed (status: ${ch.ocrStatus}). Please check back later.`);
+      } else {
+        // Chapter claims to be ready but yielded zero pages (e.g. its batch
+        // file is missing on the server) — tell the user instead of a no-op.
+        alert("यह अध्याय अभी उपलब्ध नहीं है — कृपया बाद में देखें");
       }
       return;
     }
@@ -2882,7 +2957,7 @@ export default function Chaitanya() {
     } catch { /* */ }
 
     try {
-      await sbFetch(TBL_BOOKMARKS, {
+      const res = await sbFetch(TBL_BOOKMARKS, {
         method: "POST",
         headers: { Prefer: "return=representation,resolution=merge-duplicates" },
         body: JSON.stringify({
@@ -2895,18 +2970,35 @@ export default function Chaitanya() {
           updated_at: new Date().toISOString(),
         }),
       });
+      if (!res.ok) {
+        alert("Bookmark could not be saved — please try again.");
+        return;
+      }
       await fetchBookmarks();
       setBookmarkSaved(true);
       setTimeout(() => setBookmarkSaved(false), 2000);
-    } catch { /* */ }
+    } catch {
+      alert("Bookmark could not be saved — please try again.");
+    }
   }, [readerId, readerName, allPages, currentPage, visiblePageNum, chapters, fetchBookmarks]);
+
+  // Latest-saveBookmark ref so the global "B" keydown listener (bound once
+  // per page-change) always calls the fresh closure without re-binding.
+  const saveBookmarkRef = useRef(saveBookmark);
+  saveBookmarkRef.current = saveBookmark;
 
   const deleteBookmark = useCallback(async (b: BookmarkEntry) => {
     if (!readerId) return;
     try {
-      await sbFetch(`${TBL_BOOKMARKS}?id=eq.${b.id}&reader_id=eq.${encodeURIComponent(readerId)}`, { method: "DELETE" });
+      const res = await sbFetch(`${TBL_BOOKMARKS}?id=eq.${b.id}&reader_id=eq.${encodeURIComponent(readerId)}`, { method: "DELETE" });
+      if (!res.ok) {
+        alert("Bookmark could not be deleted — please try again.");
+        return;
+      }
       setBookmarks(prev => prev.filter(x => x.id !== b.id));
-    } catch { /* */ }
+    } catch {
+      alert("Bookmark could not be deleted — please try again.");
+    }
   }, [readerId]);
 
   const handleBookmarkJump = useCallback((b: BookmarkEntry) => {
@@ -2997,9 +3089,23 @@ export default function Chaitanya() {
   };
 
   // Convert displayed (original) page number back to a synthesized one when
-  // the user types into the page-number input box. We just search.
+  // the user types into the page-number input box. Per-chapter numbering
+  // restarts at 1, so search WITHIN the active chapter first — a global
+  // `% 100000` scan would always land in the first chapter. Fall back to the
+  // global scan only when the active chapter has no such page.
   const goToOriginalPageNum = (pageNum: number) => {
-    const matchIdx = allPages.findIndex(p => (p.pageNumber % 100000) >= pageNum);
+    const activeCh = activeChapter != null
+      ? chapters.find(c => c.globalNumber === activeChapter)
+      : undefined;
+    const prefix = activeCh
+      ? activeCh.batchNumber * 100000
+      : Math.floor((visiblePageNum || allPages[0]?.pageNumber || 0) / 100000) * 100000;
+    let matchIdx = allPages.findIndex(
+      p => p.pageNumber >= prefix + pageNum && p.pageNumber < prefix + 100000,
+    );
+    if (matchIdx < 0) {
+      matchIdx = allPages.findIndex(p => (p.pageNumber % 100000) >= pageNum);
+    }
     if (matchIdx >= 0) {
       const viewPage = Math.floor(matchIdx / PAGES_PER_VIEW) + 1;
       setCurrentPage(viewPage);
@@ -3014,9 +3120,6 @@ export default function Chaitanya() {
   const handleChapterClick = (ch: ChapterEntry) => {
     setSearchQuery("");
     setActiveChapter(ch.globalNumber);
-    const positions = JSON.parse(localStorage.getItem(`${BOOK_KEY}_chapter_positions`) || "{}");
-    positions[ch.globalNumber] = { pageNumber: ch.pageNumber, scrollOffset: 0 };
-    localStorage.setItem(`${BOOK_KEY}_chapter_positions`, JSON.stringify(positions));
     if (allPages.length === 0) {
       pendingChapterRef.current = ch;
       return;
@@ -3066,7 +3169,9 @@ export default function Chaitanya() {
           if (!e.ctrlKey && !e.metaKey) setFocusMode(prev => !prev);
           break;
         case "b":
-          if (!e.ctrlKey && !e.metaKey) saveBookmark();
+          // Call through the ref — saveBookmark captured directly here would
+          // be stale (this effect's deps intentionally exclude it).
+          if (!e.ctrlKey && !e.metaKey) saveBookmarkRef.current();
           break;
       }
     };
@@ -3214,7 +3319,7 @@ export default function Chaitanya() {
                   </form>
                 ) : scrollChapter ? (
                   <>
-                    <span className="text-orange-600 font-bold shrink-0">{currentChapterEntry?.part?.split("-")[0] || ""}</span>
+                    <span className="text-orange-600 font-bold shrink-0" style={{ fontFamily: "var(--font-devanagari)" }}>{currentChapterEntry ? partLabelHi(currentChapterEntry.part) : ""}</span>
                     <span className="truncate font-semibold" style={{ fontFamily: "var(--font-devanagari)" }}>{scrollChapter?.split("—")[0].trim()}</span>
                     {scrollChapter?.includes("—") && (
                       <span className={`truncate ${theme.muted} hidden sm:inline`} style={{ fontFamily: "var(--font-devanagari)" }}>— {scrollChapter.split("—").slice(1).join("—").trim()}</span>
@@ -3341,7 +3446,22 @@ export default function Chaitanya() {
             className="mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 [overflow-wrap:break-word] [word-break:break-word] overflow-x-clip"
             style={{ maxWidth: settings.maxWidth, fontSize: `clamp(13px, ${settings.fontSize}px, ${settings.fontSize}px)`, lineHeight: settings.lineHeight }}
           >
-            {loading ? (
+            {indexError ? (
+              <div className={`flex flex-col items-center justify-center py-24 ${theme.muted}`}>
+                <div className="w-16 h-16 mb-5 bg-orange-100 rounded-2xl flex items-center justify-center">
+                  <BookOpen className="w-8 h-8 text-orange-400" />
+                </div>
+                <p className={`text-sm font-semibold ${theme.text} mb-4 text-center`} style={{ fontFamily: "var(--font-devanagari)" }}>
+                  अध्याय सूची लोड नहीं हो पाई — पुनः प्रयास करें
+                </p>
+                <button
+                  onClick={() => { void fetchChapterIndex(); }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-xs font-semibold transition-colors"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" /> पुनः प्रयास करें
+                </button>
+              </div>
+            ) : loading ? (
               <div className={`flex flex-col items-center justify-center py-24 ${theme.muted}`}>
                 <Loader2 className="w-8 h-8 animate-spin mb-4" />
                 <p className="text-sm">Loading...</p>

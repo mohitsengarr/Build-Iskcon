@@ -131,7 +131,8 @@ router.get("/chaitanya/batches", (_req, res) => {
  */
 router.post("/chaitanya/extract-next-scenes", async (req, res) => {
   try {
-    const max = parseInt(String((req.query.max as string) || "3"), 10) || 3;
+    // Clamp to 1..5 — an unbounded max would let one request run away with the API budget
+    const max = Math.min(Math.max(parseInt(String((req.query.max as string) || "3"), 10) || 3, 1), 5);
     const r = await extractNextChaitanyaScenes(max);
     res.json(r);
   } catch (err) {

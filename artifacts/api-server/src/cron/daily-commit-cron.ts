@@ -2,26 +2,64 @@ import cron from "node-cron";
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 import { logger } from "../lib/logger";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const REPO_ROOT = path.resolve(__dirname, "..", "..", "..", "..");
+import { REPO_ROOT, DATA_DIR } from "../lib/repo-root";
 
 // Run at midnight IST (18:30 UTC) — single daily commit + push
 const DAILY_COMMIT_SCHEDULE = "30 18 * * *";
 
-const SUPABASE_URL = "https://etfmndcrchundvgtvmot.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0Zm1uZGNyY2h1bmR2Z3R2bW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2NDE1MTIsImV4cCI6MjA2MzIxNzUxMn0.7GXS820xSFcUy2TRdbspN7s-NP3sgKFFtUP-Zw0Qbrs";
+// Only these pathspecs are ever committed by this cron — a human's staged
+// files (.env, WIP code) must never ride along.
+const COMMIT_PATHSPECS = "data/ artifacts/temple-tracker/public/api/";
+
+// Read lazily (not at module init): ESM import hoisting means this module is
+// evaluated before index.ts runs dotenv.config().
+function supaUrl(): string {
+  return process.env.SUPABASE_URL || "";
+}
+
+function supaKey(): string {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || "";
+}
+
+function supaHeaders(): Record<string, string> {
+  return {
+    apikey: supaKey(),
+    Authorization: `Bearer ${supaKey()}`,
+    "Content-Type": "application/json",
+  };
+}
 
 export function startDailyCommitCron(): void {
   logger.info({ schedule: DAILY_COMMIT_SCHEDULE }, "Daily commit cron started (midnight IST)");
 
   cron.schedule(DAILY_COMMIT_SCHEDULE, async () => {
-    await applySupabasePageEdits();
-    commitAndPush();
+    // commitAndPush applies pending Supabase page edits itself — do not also
+    // apply them here (they used to run twice per tick).
+    await commitAndPush();
   });
+}
+
+interface PageEditRow {
+  page_number: number;
+  text?: string;
+  text_en?: string;
+}
+
+/** Mark one edit row applied; returns true only when the PATCH succeeded. */
+async function markEditApplied(table: string, pageNumber: number): Promise<boolean> {
+  const res = await fetch(
+    `${supaUrl()}/rest/v1/${table}?page_number=eq.${pageNumber}&applied_to_git=eq.false`,
+    {
+      method: "PATCH",
+      headers: supaHeaders(),
+      body: JSON.stringify({ applied_to_git: true }),
+    },
+  );
+  if (!res.ok) {
+    logger.warn({ table, pageNumber, status: res.status }, "Failed to mark page edit applied");
+  }
+  return res.ok;
 }
 
 /**
@@ -32,25 +70,24 @@ export function startDailyCommitCron(): void {
 async function applySupabasePageEdits(): Promise<{ applied: number; failed: number }> {
   let applied = 0;
   let failed = 0;
+  if (!supaUrl() || !supaKey()) {
+    logger.warn("Daily commit: SUPABASE_URL / key env vars not set — skipping page edits");
+    return { applied, failed };
+  }
   try {
-    const fetchUrl = `${SUPABASE_URL}/rest/v1/bhagavatam_page_edits?applied_to_git=eq.false&select=page_number,text,text_en`;
-    const res = await fetch(fetchUrl, {
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-    });
+    const fetchUrl = `${supaUrl()}/rest/v1/bhagavatam_page_edits?applied_to_git=eq.false&select=page_number,text,text_en&order=edited_at.asc`;
+    const res = await fetch(fetchUrl, { headers: supaHeaders() });
     if (!res.ok) {
       logger.warn({ status: res.status }, "Could not fetch pending page edits — skipping");
       return { applied: 0, failed: 0 };
     }
-    const rows = await res.json() as Array<{ page_number: number; text?: string; text_en?: string }>;
+    const rows = await res.json() as PageEditRow[];
     if (rows.length === 0) {
       logger.info("Daily commit: no pending Supabase page edits");
       return { applied: 0, failed: 0 };
     }
 
-    const PAGES_DIR = path.resolve(REPO_ROOT, "data", "bhagwatham", "pages");
+    const PAGES_DIR = path.join(DATA_DIR, "bhagwatham", "pages");
     for (const row of rows) {
       try {
         const batchNum = Math.ceil(row.page_number / 20);
@@ -72,20 +109,13 @@ async function applySupabasePageEdits(): Promise<{ applied: number; failed: numb
         batch.pages[idx].editedAt = new Date().toISOString();
         fs.writeFileSync(batchFile, JSON.stringify(batch, null, 2) + "\n");
 
-        // Mark applied in Supabase
-        await fetch(
-          `${SUPABASE_URL}/rest/v1/bhagavatam_page_edits?page_number=eq.${row.page_number}`,
-          {
-            method: "PATCH",
-            headers: {
-              apikey: SUPABASE_ANON_KEY,
-              Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ applied_to_git: true }),
-          },
-        );
-        applied++;
+        // Count as applied only when Supabase confirmed the flag flip;
+        // otherwise the edit will (harmlessly) be re-applied next run.
+        if (await markEditApplied("bhagavatam_page_edits", row.page_number)) {
+          applied++;
+        } else {
+          failed++;
+        }
       } catch (err) {
         logger.warn({ err, pageNumber: row.page_number }, "Failed to apply page edit");
         failed++;
@@ -94,6 +124,72 @@ async function applySupabasePageEdits(): Promise<{ applied: number; failed: numb
     logger.info({ applied, failed, total: rows.length }, "Daily commit: applied Supabase page edits");
   } catch (err) {
     logger.warn({ err }, "applySupabasePageEdits failed");
+  }
+  return { applied, failed };
+}
+
+/**
+ * Same flow for Chaitanya. chaitanya_page_edits synthesizes page_number as
+ * batch * 100000 + pageInBatch; the target file is
+ * data/chaitanya/batches/{batch}.json and the page is matched by
+ * pages[].pageNumber === pageInBatch.
+ */
+async function applyChaitanyaPageEdits(): Promise<{ applied: number; failed: number }> {
+  let applied = 0;
+  let failed = 0;
+  if (!supaUrl() || !supaKey()) {
+    return { applied, failed };
+  }
+  try {
+    const fetchUrl = `${supaUrl()}/rest/v1/chaitanya_page_edits?applied_to_git=eq.false&select=page_number,text,text_en&order=edited_at.asc`;
+    const res = await fetch(fetchUrl, { headers: supaHeaders() });
+    if (!res.ok) {
+      logger.warn({ status: res.status }, "Could not fetch pending Chaitanya page edits — skipping");
+      return { applied: 0, failed: 0 };
+    }
+    const rows = await res.json() as PageEditRow[];
+    if (rows.length === 0) {
+      logger.info("Daily commit: no pending Chaitanya page edits");
+      return { applied: 0, failed: 0 };
+    }
+
+    const BATCHES_DIR = path.join(DATA_DIR, "chaitanya", "batches");
+    for (const row of rows) {
+      try {
+        // Synthesized page_number encodes batch + page-in-batch
+        const batchNum = Math.floor(row.page_number / 100000);
+        const pageInBatch = row.page_number % 100000;
+        const batchFile = path.join(BATCHES_DIR, `${batchNum}.json`);
+        if (!fs.existsSync(batchFile)) {
+          logger.warn({ pageNumber: row.page_number, batchFile }, "Chaitanya batch file missing for edit");
+          failed++;
+          continue;
+        }
+        const batch = JSON.parse(fs.readFileSync(batchFile, "utf-8"));
+        const idx = (batch.pages || []).findIndex((p: { pageNumber: number }) => p.pageNumber === pageInBatch);
+        if (idx < 0) {
+          logger.warn({ pageNumber: row.page_number, batchNum, pageInBatch }, "Page not found in Chaitanya batch");
+          failed++;
+          continue;
+        }
+        if (typeof row.text === "string") batch.pages[idx].text = row.text;
+        if (typeof row.text_en === "string") batch.pages[idx].textEn = row.text_en;
+        batch.pages[idx].editedAt = new Date().toISOString();
+        fs.writeFileSync(batchFile, JSON.stringify(batch, null, 2) + "\n");
+
+        if (await markEditApplied("chaitanya_page_edits", row.page_number)) {
+          applied++;
+        } else {
+          failed++;
+        }
+      } catch (err) {
+        logger.warn({ err, pageNumber: row.page_number }, "Failed to apply Chaitanya page edit");
+        failed++;
+      }
+    }
+    logger.info({ applied, failed, total: rows.length }, "Daily commit: applied Chaitanya page edits");
+  } catch (err) {
+    logger.warn({ err }, "applyChaitanyaPageEdits failed");
   }
   return { applied, failed };
 }
@@ -121,6 +217,7 @@ export async function commitAndPush(): Promise<{ committed: boolean; message: st
   try {
     // Pull any pending Supabase edits down into the batch JSON files first
     await applySupabasePageEdits();
+    await applyChaitanyaPageEdits();
 
     // Then sync data → public/api/ so Vercel serves the latest images/manifests
     syncDataToPublic();
@@ -129,8 +226,8 @@ export async function commitAndPush(): Promise<{ committed: boolean; message: st
     execSync("git add data/", { cwd: REPO_ROOT, stdio: "pipe" });
     execSync("git add artifacts/temple-tracker/public/api/", { cwd: REPO_ROOT, stdio: "pipe" });
 
-    // Check if there are staged changes
-    const diff = execSync("git diff --cached --stat", { cwd: REPO_ROOT, encoding: "utf-8" }).trim();
+    // Check staged changes within OUR pathspecs only
+    const diff = execSync(`git diff --cached --stat -- ${COMMIT_PATHSPECS}`, { cwd: REPO_ROOT, encoding: "utf-8" }).trim();
     if (!diff) {
       logger.info("Daily commit: no changes to commit");
       return { committed: false, message: "No changes to commit" };
@@ -141,7 +238,9 @@ export async function commitAndPush(): Promise<{ committed: boolean; message: st
     const today = new Date().toISOString().slice(0, 10);
     const commitMsg = `chore: daily data sync ${today} (${fileCount} files)`;
 
-    execSync(`git commit -m "${commitMsg}"`, { cwd: REPO_ROOT, stdio: "pipe" });
+    // Pathspec-limited commit: only data/ + public/api/ go in, even if a
+    // human left other files staged (.env, WIP code).
+    execSync(`git commit -m "${commitMsg}" -- ${COMMIT_PATHSPECS}`, { cwd: REPO_ROOT, stdio: "pipe" });
     execSync("git push", { cwd: REPO_ROOT, stdio: "pipe" });
 
     logger.info({ fileCount, date: today }, "Daily commit: pushed successfully");

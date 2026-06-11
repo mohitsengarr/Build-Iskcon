@@ -57,3 +57,8 @@ data/chaitanya/pdfs/**/*.pdf
 
 # OCR working dirs — never commit
 data/chaitanya/.tmp-images/
+
+# Secrets — never commit
+.env
+.env.*
+!.env.example

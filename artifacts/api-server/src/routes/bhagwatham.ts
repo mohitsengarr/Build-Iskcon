@@ -346,7 +346,7 @@ router.get("/bhagwatham/image-manifest", (_req, res) => {
 });
 
 // DELETE /api/bhagwatham/image/:chapter/:scene — delete a specific chapter image
-router.delete("/bhagwatham/image/:chapter/:scene", (req, res) => {
+router.delete("/bhagwatham/image/:chapter/:scene", async (req, res) => {
   try {
     const chapterNumber = parseInt(req.params.chapter, 10);
     const sceneIndex = parseInt(req.params.scene, 10);
@@ -354,7 +354,7 @@ router.delete("/bhagwatham/image/:chapter/:scene", (req, res) => {
       res.status(400).json({ error: "Invalid chapter or scene number" });
       return;
     }
-    const result = deleteChapterImage(chapterNumber, sceneIndex);
+    const result = await deleteChapterImage(chapterNumber, sceneIndex);
     if (!result.success) {
       res.status(404).json({ error: "Image not found" });
       return;
@@ -375,7 +375,7 @@ router.delete("/bhagwatham/image/delete/:chapter/:scene", async (req, res) => {
       return;
     }
     // Delete regular chapter image
-    const deleteResult = deleteChapterImage(chapterNumber, sceneIndex);
+    const deleteResult = await deleteChapterImage(chapterNumber, sceneIndex);
     // Delete IG image (from manifest + Supabase Storage + Buffer — NO regeneration)
     const { deleteIGImage } = await import("../services/bhagwatham-instagram");
     const igResult = await deleteIGImage(chapterNumber, sceneIndex);
@@ -397,7 +397,7 @@ router.post("/bhagwatham/image/delete-and-regenerate/:chapter/:scene", async (re
     }
 
     // Also delete the regular chapter image from manifest
-    const deleteResult = deleteChapterImage(chapterNumber, sceneIndex);
+    const deleteResult = await deleteChapterImage(chapterNumber, sceneIndex);
 
     // Delete IG/Threads posts from Buffer and regenerate
     const igResult = await deleteAndRegenerateIG(chapterNumber, sceneIndex);
@@ -413,10 +413,10 @@ router.post("/bhagwatham/image/delete-and-regenerate/:chapter/:scene", async (re
 });
 
 // POST /api/bhagwatham/image/restore/:trashId — undo a delete or regenerate
-router.post("/bhagwatham/image/restore/:trashId", (req, res) => {
+router.post("/bhagwatham/image/restore/:trashId", async (req, res) => {
   try {
     const { trashId } = req.params;
-    const result = restoreImage(trashId);
+    const result = await restoreImage(trashId);
     if (!result.success) {
       res.status(404).json({ error: "Trash entry not found or file missing" });
       return;

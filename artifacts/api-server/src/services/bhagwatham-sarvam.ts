@@ -11,20 +11,16 @@
  */
 
 import fs from "fs";
+import os from "os";
 import path from "path";
-import { fileURLToPath } from "url";
 import { execSync } from "child_process";
 import { logger } from "../lib/logger";
 import { reportAIFailure } from "./ai-credit-monitor";
+import { REPO_ROOT, DATA_DIR as ROOT_DATA_DIR } from "../lib/repo-root";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const DATA_DIR = path.resolve(__dirname, "..", "..", "..", "..", "data", "bhagwatham");
+const DATA_DIR = path.join(ROOT_DATA_DIR, "bhagwatham");
 const PAGES_DIR = path.join(DATA_DIR, "pages");
 const PROGRESS_FILE = path.join(DATA_DIR, "progress.json");
-const REPO_ROOT = path.resolve(__dirname, "..", "..", "..", "..");
-const TMP_DIR = path.join(DATA_DIR, ".tmp-images");
 
 // Re-export types from the original processor
 export interface Progress {
@@ -109,45 +105,44 @@ function getTotalPages(pdfPath: string): number {
   // a multiline regex instead. Same fix as chaitanya-sarvam.
   try {
     const output = execSync(`pdfinfo "${pdfPath}" 2>/dev/null`, { encoding: "utf-8" });
-    const m = output.match(/^Pages:\s+(\d+)/m);
-    if (m) return parseInt(m[1], 10) || 0;
+    // Take the LAST match — scanner metadata can embed fake earlier "Pages:" lines.
+    const matches = [...output.matchAll(/^Pages:\s+(\d+)/gm)];
+    if (matches.length > 0) return parseInt(matches[matches.length - 1][1], 10) || 0;
     return 0;
   } catch {
     return 0;
   }
 }
 
-function convertPagesToImages(pdfPath: string, startPage: number, endPage: number): string[] {
-  if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR, { recursive: true });
-  for (const f of fs.readdirSync(TMP_DIR)) fs.unlinkSync(path.join(TMP_DIR, f));
+interface PageImage {
+  pageNumber: number;
+  imagePath: string;
+}
 
+/**
+ * Renders pages into the given per-run temp dir. Page numbers are derived
+ * from the produced PNG filenames (page-NNNNN.png), NOT from array position,
+ * so a page dropped by pdftoppm can't shift every subsequent page's number.
+ */
+function convertPagesToImages(pdfPath: string, startPage: number, endPage: number, tmpDir: string): PageImage[] {
   // 200 DPI is good for OCR
   execSync(
-    `pdftoppm -f ${startPage} -l ${endPage} -r 200 -png "${pdfPath}" "${path.join(TMP_DIR, "page")}"`,
+    `pdftoppm -f ${startPage} -l ${endPage} -r 200 -png "${pdfPath}" "${path.join(tmpDir, "page")}"`,
     { stdio: "pipe", timeout: 120_000 },
   );
 
-  const images: string[] = [];
-  for (let p = startPage; p <= endPage; p++) {
-    const patterns = [
-      `page-${String(p).padStart(5, "0")}.png`,
-      `page-${String(p).padStart(4, "0")}.png`,
-      `page-${String(p).padStart(3, "0")}.png`,
-      `page-${String(p).padStart(2, "0")}.png`,
-      `page-${String(p)}.png`,
-    ];
-    const found = patterns.find((pat) => fs.existsSync(path.join(TMP_DIR, pat)));
-    if (found) images.push(path.join(TMP_DIR, found));
+  const images: PageImage[] = [];
+  for (const f of fs.readdirSync(tmpDir)) {
+    const m = f.match(/^page-(\d+)\.png$/);
+    if (!m) continue;
+    images.push({ pageNumber: parseInt(m[1], 10), imagePath: path.join(tmpDir, f) });
   }
-  return images;
+  return images.sort((a, b) => a.pageNumber - b.pageNumber);
 }
 
-function cleanupTmpImages(): void {
-  try {
-    if (fs.existsSync(TMP_DIR)) {
-      for (const f of fs.readdirSync(TMP_DIR)) fs.unlinkSync(path.join(TMP_DIR, f));
-    }
-  } catch { /* ignore */ }
+function removeTmpDir(tmpDir: string | null): void {
+  if (!tmpDir) return;
+  try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch { /* ignore */ }
 }
 
 // ── Sarvam AI OCR (primary engine) ──────────────────────────────────────────
@@ -327,19 +322,16 @@ async function ocrSinglePageSarvam(imagePath: string, pageNumber: number, apiKey
  * Process images through OCR.
  * Sarvam AI primary → Tesseract fallback.
  */
-async function ocrWithSarvam(imagePaths: string[], startPage: number): Promise<PageContent[]> {
+async function ocrWithSarvam(pageImages: PageImage[]): Promise<PageContent[]> {
   const apiKey = process.env.SARVAM_API_KEY;
   if (!apiKey) {
     logger.warn("SARVAM_API_KEY not set — falling back to Tesseract");
-    return ocrWithTesseract(imagePaths, startPage);
+    return ocrWithTesseract(pageImages);
   }
 
   const pages: PageContent[] = [];
 
-  for (let i = 0; i < imagePaths.length; i++) {
-    const imagePath = imagePaths[i];
-    const pageNumber = startPage + i;
-
+  for (const { pageNumber, imagePath } of pageImages) {
     try {
       logger.info({ pageNumber }, "Processing page with Sarvam Vision");
       const text = await ocrSinglePageSarvam(imagePath, pageNumber, apiKey);
@@ -357,15 +349,14 @@ async function ocrWithSarvam(imagePaths: string[], startPage: number): Promise<P
 
 // ── Tesseract fallback ────────────────────────────────────────────────────────
 
-async function ocrWithTesseract(imagePaths: string[], startPage: number): Promise<PageContent[]> {
+async function ocrWithTesseract(pageImages: PageImage[]): Promise<PageContent[]> {
   const { createWorker } = await import("tesseract.js");
   const worker = await createWorker("hin+san+eng", 1);
   const pages: PageContent[] = [];
 
-  for (let i = 0; i < imagePaths.length; i++) {
-    const pageNumber = startPage + i;
+  for (const { pageNumber, imagePath } of pageImages) {
     try {
-      const { data } = await worker.recognize(imagePaths[i]);
+      const { data } = await worker.recognize(imagePath);
       pages.push({ pageNumber, text: data.text.trim() });
       logger.info({ pageNumber, textLength: data.text.length }, "Tesseract OCR completed for page");
     } catch (err) {
@@ -445,7 +436,14 @@ async function translateToEnglish(hindiText: string): Promise<string> {
       }
     }
 
-    return translatedChunks.join("\n");
+    const emptyChunks = translatedChunks.filter((c) => !c.trim()).length;
+    if (translatedChunks.length > 0 && emptyChunks / translatedChunks.length > 0.3) {
+      logger.warn({ emptyChunks, totalChunks: translatedChunks.length }, "Translation: >30% of chunks came back empty");
+    }
+    const joined = translatedChunks.join("\n");
+    // When every chunk failed, join("\n") yields a truthy "\n" which callers
+    // would store as a real translation — return "" for whitespace-only output.
+    return joined.trim().length > 0 ? joined : "";
   } catch (err) {
     logger.warn({ err }, "Translation to English failed");
     return "";
@@ -548,6 +546,9 @@ export async function backfillEnglishTranslations(): Promise<{
     // Process one batch per cron run to avoid rate limits
     const batch = batchesNeedingTranslation[0];
     let translatedCount = 0;
+    // Track exactly which pages this run translated, so the final write can
+    // merge ONLY those textEn fields onto a fresh copy of the file.
+    const changedEn = new Map<number, string>();
 
     logger.info(
       { batchNumber: batch.batchNumber, pages: batch.pages.length, remaining: batchesNeedingTranslation.length },
@@ -566,11 +567,13 @@ export async function backfillEnglishTranslations(): Promise<{
       }
 
       try {
-        page.textEn = await translateToEnglish(page.text);
-        if (page.textEn) {
+        const en = await translateToEnglish(page.text);
+        if (en) {
+          page.textEn = en;
+          changedEn.set(page.pageNumber, en);
           translatedCount++;
           logger.info(
-            { pageNumber: page.pageNumber, enLength: page.textEn.length },
+            { pageNumber: page.pageNumber, enLength: en.length },
             "Backfill: English translation added",
           );
         }
@@ -585,7 +588,21 @@ export async function backfillEnglishTranslations(): Promise<{
     // Save updated batch back to disk
     if (translatedCount > 0) {
       const batchFile = path.join(PAGES_DIR, `batch-${String(batch.batchNumber).padStart(4, "0")}.json`);
-      fs.writeFileSync(batchFile, JSON.stringify(batch, null, 2) + "\n");
+      try {
+        // Re-read the batch from disk and merge ONLY the textEn fields this
+        // run changed — a concurrent re-OCR may have recovered page text
+        // since we loaded the file, and writing our stale copy would revert it.
+        const fresh: BatchData = JSON.parse(fs.readFileSync(batchFile, "utf-8"));
+        for (const p of fresh.pages) {
+          const en = changedEn.get(p.pageNumber);
+          if (en !== undefined) p.textEn = en;
+        }
+        fs.writeFileSync(batchFile, JSON.stringify(fresh, null, 2) + "\n");
+      } catch (mergeErr) {
+        // Fresh copy unreadable — fall back to writing the in-memory batch
+        logger.warn({ mergeErr, batchNumber: batch.batchNumber }, "Backfill: merge re-read failed — writing in-memory batch");
+        fs.writeFileSync(batchFile, JSON.stringify(batch, null, 2) + "\n");
+      }
       logger.info({ batchNumber: batch.batchNumber, translatedCount }, "Backfill: batch file updated with translations");
 
       // Stage only — daily commit cron handles commit + push
@@ -632,6 +649,7 @@ export async function processNextBatch(): Promise<{
   progress.status = "processing";
   writeProgress(progress);
 
+  let tmpDir: string | null = null;
   try {
     if (progress.totalPagesInPdf === 0) {
       const total = getTotalPages(pdfPath);
@@ -653,18 +671,20 @@ export async function processNextBatch(): Promise<{
     logger.info({ batchNumber, startPage, endPage, ocr: "sarvam (primary) → tesseract (fallback)" },
       "Starting batch processing");
 
-    // Step 1: Convert PDF pages to images
-    const imagePaths = convertPagesToImages(pdfPath, startPage, endPage);
-    if (imagePaths.length === 0) {
+    // Step 1: Convert PDF pages to images (per-run temp dir — a shared dir
+    // gets wiped by every concurrent run)
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "bh-ocr-"));
+    const pageImages = convertPagesToImages(pdfPath, startPage, endPage, tmpDir);
+    if (pageImages.length === 0) {
       progress.status = "idle";
       writeProgress(progress);
       return { success: false, message: "No images generated from PDF pages" };
     }
 
-    logger.info({ imageCount: imagePaths.length }, "Images generated, starting OCR");
+    logger.info({ imageCount: pageImages.length }, "Images generated, starting OCR");
 
     // Step 2: OCR — use Sarvam if key available, else Tesseract
-    const extractedPages = await ocrWithSarvam(imagePaths, startPage);
+    const extractedPages = await ocrWithSarvam(pageImages);
 
     // Step 3: Translate to English (best-effort, non-blocking)
     if (process.env.SARVAM_API_KEY) {
@@ -679,9 +699,6 @@ export async function processNextBatch(): Promise<{
         }
       }
     }
-
-    // Step 4: Cleanup temp images
-    cleanupTmpImages();
 
     const actualEndPage = extractedPages.length > 0
       ? extractedPages[extractedPages.length - 1].pageNumber
@@ -753,12 +770,13 @@ export async function processNextBatch(): Promise<{
   } catch (err) {
     progress.status = "idle";
     writeProgress(progress);
-    cleanupTmpImages();
     logger.error({ err }, "Error processing batch");
     return {
       success: false,
       message: `Error processing batch: ${err instanceof Error ? err.message : String(err)}`,
     };
+  } finally {
+    removeTmpDir(tmpDir);
   }
 }
 
@@ -775,6 +793,11 @@ export async function reprocessEmptyPages(limit = 20, reverse = false): Promise<
   message: string;
 }> {
   const progress = readProgress();
+  // Same guard as processNextBatch: a batch run owns the progress file and
+  // the Sarvam quota — refuse instead of racing it.
+  if (progress.status === "processing") {
+    return { reprocessed: 0, totalEmpty: 0, message: "Batch run in progress — re-OCR deferred to next tick" };
+  }
   const pdfPath = progress.pdfPath;
   if (!fs.existsSync(pdfPath)) {
     return { reprocessed: 0, totalEmpty: 0, message: `PDF not found: ${pdfPath}` };
@@ -813,17 +836,18 @@ export async function reprocessEmptyPages(limit = 20, reverse = false): Promise<
   let reprocessed = 0;
 
   for (const ep of toProcess) {
+    let tmpDir: string | null = null;
     try {
-      // Convert single PDF page to image
-      const imagePaths = convertPagesToImages(pdfPath, ep.pageNumber, ep.pageNumber);
-      if (imagePaths.length === 0) {
+      // Convert single PDF page to image (per-run temp dir, see D1c rationale)
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "bh-reocr-"));
+      const pageImages = convertPagesToImages(pdfPath, ep.pageNumber, ep.pageNumber, tmpDir);
+      if (pageImages.length === 0) {
         logger.warn({ pageNumber: ep.pageNumber }, "No image generated for page");
         continue;
       }
 
       // OCR the page
-      const [page] = await ocrWithSarvam(imagePaths, ep.pageNumber);
-      cleanupTmpImages();
+      const [page] = await ocrWithSarvam(pageImages);
 
       if (!page || !page.text || page.text.trim().length < 10) {
         logger.warn({ pageNumber: ep.pageNumber }, "Re-OCR still produced empty text");
@@ -853,7 +877,8 @@ export async function reprocessEmptyPages(limit = 20, reverse = false): Promise<
       logger.info({ pageNumber: ep.pageNumber, textLength: page.text.length }, "Page re-OCR'd successfully");
     } catch (err) {
       logger.error({ pageNumber: ep.pageNumber, err }, "Failed to re-OCR page");
-      cleanupTmpImages();
+    } finally {
+      removeTmpDir(tmpDir);
     }
   }
 

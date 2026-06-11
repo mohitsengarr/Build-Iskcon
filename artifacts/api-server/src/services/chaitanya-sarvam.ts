@@ -19,20 +19,16 @@
  */
 
 import fs from "fs";
+import os from "os";
 import path from "path";
-import { fileURLToPath } from "url";
 import { execSync } from "child_process";
 import { logger } from "../lib/logger";
 import { reportAIFailure } from "./ai-credit-monitor";
+import { DATA_DIR as ROOT_DATA_DIR } from "../lib/repo-root";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const REPO_ROOT = path.resolve(__dirname, "..", "..", "..", "..");
-const DATA_DIR = path.join(REPO_ROOT, "data", "chaitanya");
+const DATA_DIR = path.join(ROOT_DATA_DIR, "chaitanya");
 const PDF_DIR = path.join(DATA_DIR, "pdfs");
 const BATCHES_DIR = path.join(DATA_DIR, "batches");
-const TMP_DIR = path.join(DATA_DIR, ".tmp-images");
 
 if (!fs.existsSync(BATCHES_DIR)) fs.mkdirSync(BATCHES_DIR, { recursive: true });
 
@@ -96,9 +92,10 @@ async function supaRequest(path: string, init: RequestInit = {}): Promise<Respon
   return fetch(`${supaUrl()}/rest/v1/${path}`, { ...init, headers });
 }
 
-async function getChapterByStatus(status: string): Promise<ChapterRow | null> {
+async function getChapterByStatus(status: string, excludeGlobals: number[] = []): Promise<ChapterRow | null> {
+  const exclude = excludeGlobals.length > 0 ? `&global_number=not.in.(${excludeGlobals.join(",")})` : "";
   const res = await supaRequest(
-    `chaitanya_chapters?ocr_status=eq.${status}&order=global_number.asc&limit=1&select=*`,
+    `chaitanya_chapters?ocr_status=eq.${status}${exclude}&order=global_number.asc&limit=1&select=*`,
   );
   if (!res.ok) return null;
   const rows = (await res.json()) as ChapterRow[];
@@ -106,10 +103,14 @@ async function getChapterByStatus(status: string): Promise<ChapterRow | null> {
 }
 
 async function setChapterStatus(globalNumber: number, ocr_status: string, extra: Partial<{ batch_number: number; page_number: number }> = {}): Promise<void> {
-  await supaRequest(`chaitanya_chapters?global_number=eq.${globalNumber}`, {
+  const res = await supaRequest(`chaitanya_chapters?global_number=eq.${globalNumber}`, {
     method: "PATCH",
     body: JSON.stringify({ ocr_status, ...extra }),
   });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`setChapterStatus(${globalNumber} → ${ocr_status}) failed: ${res.status} ${detail.substring(0, 200)}`);
+  }
 }
 
 export async function getChaitanyaProgress(): Promise<ChaitanyaProgress> {
@@ -139,12 +140,28 @@ export async function getChaitanyaProgress(): Promise<ChaitanyaProgress> {
   return { total: rows.length, ...counts, lastProcessedAt, lastProcessedTitle: lastTitle };
 }
 
-/** Best-effort: any chapter stuck in `processing` after a crash gets reset. */
+/** Best-effort: ALL chapters stuck in `processing` after a crash get reset (bulk). */
 export async function recoverStaleChaitanyaProgress(): Promise<void> {
-  const stuck = await getChapterByStatus("processing");
-  if (!stuck) return;
-  logger.warn({ chapter: stuck.global_number }, "Recovering stale Chaitanya 'processing' chapter back to 'queued'");
-  await setChapterStatus(stuck.global_number, "queued");
+  try {
+    const res = await supaRequest("chaitanya_chapters?ocr_status=eq.processing", {
+      method: "PATCH",
+      headers: { Prefer: "return=representation" },
+      body: JSON.stringify({ ocr_status: "queued" }),
+    });
+    if (!res.ok) {
+      logger.warn({ status: res.status }, "Could not reset stale Chaitanya 'processing' chapters");
+      return;
+    }
+    const rows = (await res.json()) as ChapterRow[];
+    if (rows.length > 0) {
+      logger.warn(
+        { count: rows.length, chapters: rows.map(r => r.global_number) },
+        "Recovered stale Chaitanya 'processing' chapters back to 'queued'",
+      );
+    }
+  } catch (err) {
+    logger.warn({ err }, "recoverStaleChaitanyaProgress failed");
+  }
 }
 
 // ── Batch JSON helpers ────────────────────────────────────────────────────────
@@ -176,40 +193,36 @@ function getTotalPages(pdfPath: string): number {
   // pdfinfo output in JS and parse it as a string instead.
   try {
     const out = execSync(`pdfinfo "${pdfPath}" 2>/dev/null`, { encoding: "utf-8" });
-    const m = out.match(/^Pages:\s+(\d+)/m);
-    if (m) return parseInt(m[1], 10) || 0;
+    // Take the LAST match — scanner metadata can embed fake earlier "Pages:" lines.
+    const matches = [...out.matchAll(/^Pages:\s+(\d+)/gm)];
+    if (matches.length > 0) return parseInt(matches[matches.length - 1][1], 10) || 0;
     return 0;
   } catch { return 0; }
 }
 
-function convertPagesToImages(pdfPath: string, startPage: number, endPage: number): string[] {
-  if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR, { recursive: true });
-  for (const f of fs.readdirSync(TMP_DIR)) fs.unlinkSync(path.join(TMP_DIR, f));
+interface PageImage {
+  pageNumber: number;
+  imagePath: string;
+}
 
+/**
+ * Renders pages into the given per-run temp dir. Page numbers are derived
+ * from the produced PNG filenames (page-NNNNN.png), NOT from array position,
+ * so a page dropped by pdftoppm can't shift every subsequent page's number.
+ */
+function convertPagesToImages(pdfPath: string, startPage: number, endPage: number, tmpDir: string): PageImage[] {
   execSync(
-    `pdftoppm -f ${startPage} -l ${endPage} -r 200 -png "${pdfPath}" "${path.join(TMP_DIR, "page")}"`,
+    `pdftoppm -f ${startPage} -l ${endPage} -r 200 -png "${pdfPath}" "${path.join(tmpDir, "page")}"`,
     { stdio: "pipe", timeout: 180_000 },
   );
 
-  const images: string[] = [];
-  for (let p = startPage; p <= endPage; p++) {
-    const patterns = [
-      `page-${String(p).padStart(5, "0")}.png`,
-      `page-${String(p).padStart(4, "0")}.png`,
-      `page-${String(p).padStart(3, "0")}.png`,
-      `page-${String(p).padStart(2, "0")}.png`,
-      `page-${String(p)}.png`,
-    ];
-    const found = patterns.find(pat => fs.existsSync(path.join(TMP_DIR, pat)));
-    if (found) images.push(path.join(TMP_DIR, found));
+  const images: PageImage[] = [];
+  for (const f of fs.readdirSync(tmpDir)) {
+    const m = f.match(/^page-(\d+)\.png$/);
+    if (!m) continue;
+    images.push({ pageNumber: parseInt(m[1], 10), imagePath: path.join(tmpDir, f) });
   }
-  return images;
-}
-
-function cleanupTmpImages(): void {
-  try {
-    if (fs.existsSync(TMP_DIR)) for (const f of fs.readdirSync(TMP_DIR)) fs.unlinkSync(path.join(TMP_DIR, f));
-  } catch { /* ignore */ }
+  return images.sort((a, b) => a.pageNumber - b.pageNumber);
 }
 
 // ── Sarvam OCR (per-page) ─────────────────────────────────────────────────────
@@ -342,37 +355,67 @@ export async function processNextChaitanyaChapter(): Promise<{ ok: boolean; chap
   const apiKey = process.env.SARVAM_API_KEY;
   if (!apiKey) return { ok: false, message: "SARVAM_API_KEY not set" };
 
-  const chapter = await getChapterByStatus("queued");
-  if (!chapter) return { ok: true, message: "No queued chapters" };
-
-  if (!chapter.pdf_path) {
-    logger.warn({ chapter: chapter.global_number }, "Chaitanya chapter has no pdf_path — skipping");
-    await setChapterStatus(chapter.global_number, "failed");
-    return { ok: false, chapter, message: "No pdf_path" };
+  // Internal guard: refuse if any chapter is already mid-OCR. The atomic claim
+  // below is the real protection; this keeps the route/cron from even trying.
+  const progress = await getChaitanyaProgress();
+  if (progress.processing > 0) {
+    return { ok: false, message: "chapter already in progress" };
   }
 
-  const pdfPath = path.join(PDF_DIR, chapter.pdf_path);
-  if (!fs.existsSync(pdfPath)) {
-    logger.warn({ pdfPath }, "Chaitanya PDF missing on disk — marking failed");
-    await setChapterStatus(chapter.global_number, "failed");
-    return { ok: false, chapter, message: `PDF missing: ${pdfPath}` };
+  // Atomic claim: conditional PATCH (queued → processing) filtered on
+  // ocr_status=eq.queued. If the returned representation is empty, another
+  // worker claimed the row first — loop to the next queued chapter.
+  let chapter: ChapterRow | null = null;
+  const attempted: number[] = [];
+  for (let i = 0; i < 25; i++) {
+    const candidate = await getChapterByStatus("queued", attempted);
+    if (!candidate) break;
+    attempted.push(candidate.global_number);
+
+    const claimRes = await supaRequest(
+      `chaitanya_chapters?global_number=eq.${candidate.global_number}&ocr_status=eq.queued`,
+      {
+        method: "PATCH",
+        headers: { Prefer: "return=representation" },
+        body: JSON.stringify({ ocr_status: "processing" }),
+      },
+    );
+    if (!claimRes.ok) {
+      logger.warn({ chapter: candidate.global_number, status: claimRes.status }, "Chaitanya claim PATCH failed — trying next chapter");
+      continue;
+    }
+    const claimed = (await claimRes.json()) as ChapterRow[];
+    if (claimed.length === 0) {
+      logger.info({ chapter: candidate.global_number }, "Chaitanya chapter already claimed by another worker — trying next");
+      continue;
+    }
+    chapter = claimed[0];
+    break;
+  }
+  if (!chapter) {
+    return { ok: true, message: attempted.length > 0 ? "nothing to claim" : "No queued chapters" };
   }
 
-  await setChapterStatus(chapter.global_number, "processing");
-  logger.info({ chapter: chapter.global_number, pdfPath }, "Chaitanya OCR started");
+  logger.info({ chapter: chapter.global_number }, "Chaitanya OCR started");
 
+  let tmpDir: string | null = null;
   try {
+    if (!chapter.pdf_path) throw new Error("Chapter has no pdf_path");
+    const pdfPath = path.join(PDF_DIR, chapter.pdf_path);
+    if (!fs.existsSync(pdfPath)) throw new Error(`PDF missing: ${pdfPath}`);
+
     const totalPages = getTotalPages(pdfPath);
     if (totalPages <= 0) throw new Error(`pdfinfo returned 0 pages for ${pdfPath}`);
 
-    const imagePaths = convertPagesToImages(pdfPath, 1, totalPages);
-    if (imagePaths.length === 0) throw new Error("pdftoppm produced no images");
+    // Per-run temp dir — a shared dir gets wiped by every concurrent run.
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "cc-ocr-"));
+    const pageImages = convertPagesToImages(pdfPath, 1, totalPages, tmpDir);
+    if (pageImages.length === 0) throw new Error("pdftoppm produced no images");
 
     const pages: ChaitanyaPageContent[] = [];
-    for (let i = 0; i < imagePaths.length; i++) {
-      const pageNumber = i + 1;
+    for (const { pageNumber, imagePath } of pageImages) {
       try {
-        const text = await ocrSinglePageSarvam(imagePaths[i], pageNumber, apiKey);
+        const text = await ocrSinglePageSarvam(imagePath, pageNumber, apiKey);
         pages.push({ pageNumber, text });
         logger.info({ chapter: chapter.global_number, pageNumber, len: text.length }, "Chaitanya OCR page complete");
       } catch (err) {
@@ -380,6 +423,18 @@ export async function processNextChaitanyaChapter(): Promise<{ ok: boolean; chap
         reportAIFailure("Sarvam AI (Chaitanya)", (err as Error)?.message || "OCR failed");
         pages.push({ pageNumber, text: "" });
       }
+    }
+
+    // Empty-OCR guard: if more than half the pages came back blank, mark the
+    // chapter failed instead of publishing a mostly-blank book as "ready".
+    const emptyCount = pages.filter(p => !p.text || p.text.trim().length === 0).length;
+    if (emptyCount * 2 > pages.length) {
+      logger.warn(
+        { chapter: chapter.global_number, emptyCount, pageCount: pages.length },
+        "Chaitanya OCR: >50% of pages are empty — marking chapter failed, batch JSON NOT written",
+      );
+      await setChapterStatus(chapter.global_number, "failed");
+      return { ok: false, chapter, pageCount: pages.length, message: `OCR mostly empty: ${emptyCount}/${pages.length} pages blank` };
     }
 
     const batch: ChaitanyaBatchData = {
@@ -400,13 +455,21 @@ export async function processNextChaitanyaChapter(): Promise<{ ok: boolean; chap
       page_number: 1,
     });
 
-    cleanupTmpImages();
     logger.info({ chapter: chapter.global_number, pageCount: pages.length, outFile }, "Chaitanya OCR chapter complete");
     return { ok: true, chapter, pageCount: pages.length, message: `OCR complete: ${pages.length} pages` };
   } catch (err) {
     logger.error({ chapter: chapter.global_number, err }, "Chaitanya OCR chapter failed");
-    await setChapterStatus(chapter.global_number, "failed");
-    cleanupTmpImages();
+    // We only reach here after a successful claim, so marking failed is safe.
+    // setChapterStatus throws on HTTP failure — don't mask the original error.
+    try {
+      await setChapterStatus(chapter.global_number, "failed");
+    } catch (statusErr) {
+      logger.error({ chapter: chapter.global_number, statusErr }, "Could not mark Chaitanya chapter failed");
+    }
     return { ok: false, chapter, message: `OCR failed: ${(err as Error).message}` };
+  } finally {
+    if (tmpDir) {
+      try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch { /* ignore */ }
+    }
   }
 }

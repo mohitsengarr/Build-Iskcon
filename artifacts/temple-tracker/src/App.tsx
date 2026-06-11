@@ -14,6 +14,9 @@ import JapaCounter from "@/pages/japa-counter";
 import PersonaGallery from "@/pages/persona-gallery";
 import Admin from "@/pages/admin";
 import Gallery from "@/pages/gallery";
+import Privacy from "@/pages/privacy";
+import Terms from "@/pages/terms";
+import PageNotFound from "@/pages/page-not-found";
 
 const queryClient = new QueryClient();
 
@@ -41,7 +44,13 @@ function App() {
             {/* /bhaktigram/profile — Instagram-style profile page for the
                 bhaktigram channel: header + stats + grid of all approved posts. */}
             <Route path="/bhaktigram/profile" component={Gallery} />
+            {/* Footer links to these — without routes they rendered blank. */}
+            <Route path="/privacy" component={Privacy} />
+            <Route path="/terms" component={Terms} />
             <Route path="/" component={Home} />
+            {/* Catch-all 404 — a pathless <Route> always matches, and inside
+                <Switch> it only renders when nothing above did. */}
+            <Route component={PageNotFound} />
           </Switch>
           <Toaster />
         </TooltipProvider>

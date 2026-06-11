@@ -1,8 +1,6 @@
 import cron from "node-cron";
 import fs from "fs";
 import path from "path";
-import { execSync } from "child_process";
-import { fileURLToPath } from "url";
 import { logger } from "../lib/logger";
 import {
   generateInstagramForChapter,
@@ -11,9 +9,8 @@ import {
 } from "../services/bhagwatham-instagram";
 import { getImageManifest } from "../services/bhagwatham-image-gen";
 import { getAllBatches, getBatch } from "../services/bhagwatham-sarvam";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { REPO_ROOT, DATA_DIR } from "../lib/repo-root";
+import { gitWithRetry } from "../lib/git-retry";
 
 // ── Config ──────────────────────────────────────────────────────────────────
 
@@ -24,9 +21,7 @@ const FLOCK_WEBHOOK = "https://api.flock.com/hooks/sendMessage/b0159996-49f3-4f2
 const INSTAGRAM_CRON_INTERVAL = "30 13 * * *"; // Once daily at 7:00 PM IST (13:30 UTC) — peak evening engagement
 
 // State file to track reverse-order progress
-const STATE_FILE = path.resolve(
-  __dirname, "..", "..", "..", "..", "data", "bhagwatham", "instagram", "ig-cron-state.json",
-);
+const STATE_FILE = path.join(DATA_DIR, "bhagwatham", "instagram", "ig-cron-state.json");
 
 // ── Canto mapping (global chapter → canto number) ───────────────────────────
 // Srimad Bhagavatam has 12 cantos (skandhs). We build a chapter index from
@@ -320,7 +315,6 @@ async function sendFlock(message: string) {
 
 // ── Git commit, push & deploy ───────────────────────────────────────────────
 
-const REPO_ROOT = path.resolve(__dirname, "..", "..", "..", "..");
 const PUBLIC_API_DIR = path.resolve(REPO_ROOT, "artifacts", "temple-tracker", "public", "api", "bhagwatham");
 
 function syncIGManifestToPublicDir() {
@@ -343,20 +337,20 @@ function gitCommitPushDeploy(chapterNumber: number, cantoNumber: number, sceneIn
     // Sync manifest to public dir so Vercel static site has the data
     syncIGManifestToPublicDir();
 
-    // Stage IG data + cron state + public API
-    execSync("git add data/bhagwatham/instagram/", { cwd: REPO_ROOT, stdio: "pipe" });
-    execSync("git add artifacts/temple-tracker/public/api/bhagwatham/instagram/", { cwd: REPO_ROOT, stdio: "pipe" });
+    // Stage IG data + cron state + public API (retry on index.lock contention)
+    gitWithRetry("git add data/bhagwatham/instagram/", { cwd: REPO_ROOT });
+    gitWithRetry("git add artifacts/temple-tracker/public/api/bhagwatham/instagram/", { cwd: REPO_ROOT });
 
     // Check if there are staged changes
-    const diff = execSync("git diff --cached --stat", { cwd: REPO_ROOT, encoding: "utf-8" }).trim();
+    const diff = gitWithRetry("git diff --cached --stat", { cwd: REPO_ROOT }).trim();
     if (!diff) {
       logger.info("No IG changes to commit — skipping");
       return;
     }
 
     const commitMsg = `feat(instagram): post ch ${chapterNumber} scene ${sceneIndex + 1} (canto ${cantoNumber})`;
-    execSync(`git commit -m "${commitMsg}"`, { cwd: REPO_ROOT, stdio: "pipe" });
-    execSync("git push", { cwd: REPO_ROOT, stdio: "pipe" });
+    gitWithRetry(`git commit -m "${commitMsg}"`, { cwd: REPO_ROOT });
+    gitWithRetry("git push", { cwd: REPO_ROOT });
     logger.info({ chapterNumber, cantoNumber, sceneIndex }, "IG cron: git commit + push done → Vercel deploy triggered");
   } catch (err) {
     logger.warn({ err }, "IG cron: git commit/push failed — continuing");
@@ -530,10 +524,14 @@ async function instagramCronTick() {
       }
     }
 
-    // Step 3: Find the next unposted scene
-    const unposted = scenes.filter((s) => !s.bufferId);
+    // Step 3: Find the next unposted scene.
+    // C6: check PER-CHANNEL ids — a scene that reached Instagram but not
+    // Threads (or vice versa) still needs its missing channel published.
+    // publishSinglePost only posts to channels whose own id is missing, so the
+    // already-posted channel is never duplicated.
+    const unposted = scenes.filter((s) => !s.bufferId || !s.bufferThreadsId);
     if (unposted.length === 0) {
-      // All scenes posted — move to previous chapter
+      // All scenes posted on all channels — move to previous chapter
       logger.info({ currentChapter }, "All scenes posted for chapter — moving backward");
       state.nextChapter = currentChapter - 1;
       writeState(state);
@@ -546,22 +544,34 @@ async function instagramCronTick() {
     try {
       const results = await publishSinglePost(scene);
 
-      state.totalPosted++;
-      state.lastPostedAt = new Date().toISOString();
-      state.lastError = null;
+      if (results.length > 0) {
+        state.totalPosted++;
+        state.lastPostedAt = new Date().toISOString();
+        state.lastError = null;
 
-      logger.info({
-        chapter: currentChapter,
-        canto: cantoNumber,
-        scene: scene.sceneIndex + 1,
-        totalPosted: state.totalPosted,
-        channels: results.length,
-      }, "Instagram cron: posted 1 scene");
+        logger.info({
+          chapter: currentChapter,
+          canto: cantoNumber,
+          scene: scene.sceneIndex + 1,
+          totalPosted: state.totalPosted,
+          channels: results.length,
+        }, "Instagram cron: posted 1 scene");
 
-      // Git commit, push & deploy (Vercel auto-deploys on push)
-      gitCommitPushDeploy(currentChapter, cantoNumber, scene.sceneIndex);
+        // Git commit, push & deploy (Vercel auto-deploys on push)
+        gitCommitPushDeploy(currentChapter, cantoNumber, scene.sceneIndex);
+      } else {
+        // Nothing published this tick (channel unavailable or already posted).
+        // Don't stall the queue forever on a partially-posted scene.
+        logger.warn(
+          { chapter: currentChapter, scene: scene.sceneIndex + 1 },
+          "Instagram cron: no channels published this tick",
+        );
+      }
 
-      // Check if this was the last scene for the chapter
+      // Check if this was the last scene for the chapter. Advancement is
+      // driven by the primary (Instagram) id so a permanently unavailable
+      // Threads channel can't block the queue — Threads still gets its
+      // catch-up attempt above while the chapter is current.
       const updatedManifest = getInstagramManifest();
       const stillUnposted = updatedManifest.images.filter(
         (img) => img.chapterNumber === currentChapter && !img.bufferId,
