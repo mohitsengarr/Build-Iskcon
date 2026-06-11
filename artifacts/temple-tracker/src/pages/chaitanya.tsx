@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo, useLayoutEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
@@ -752,6 +752,7 @@ function ManualFixKeyboard({ value, onChange, onSave, onCancel }: {
 function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; setAllPages: React.Dispatch<React.SetStateAction<PageContent[]>> }) {
   const [show, setShow] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [forceFlipBelow, setForceFlipBelow] = useState(false);
   const [selectedText, setSelectedText] = useState("");
   const [appliedFlash, setAppliedFlash] = useState(false);
   const pageNumRef = useRef<number | null>(null);
@@ -851,6 +852,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
 
         const rect = range.getBoundingClientRect();
         setPosition({ x: rect.left + rect.width / 2, y: rect.top - 10 });
+        setForceFlipBelow(false);
         setSelectedText(text);
         selectionContextRef.current = { before: ctxBefore, after: ctxAfter };
         pageNumRef.current = pageNum;
@@ -1452,10 +1454,25 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     setDictLoading(false);
   }, [selectedText]);
 
+  // The anchored toolbar renders ABOVE the selection (-translate-y-full),
+  // and only its BOTTOM edge was clamped — when a taller sub-panel (edit
+  // input, dictionary result) expands, the TOP edge slides behind the
+  // sticky site nav + reader toolbar (~150px stack). Measure after every
+  // render and flip the box below the selection if its top invades that
+  // safe area. Reset on each new selection (in the selectionchange handler).
+  const SAFE_TOP_PX = 160;
+  useLayoutEffect(() => {
+    if (!show || forceFlipBelow) return;
+    if (suggestion || manualFixMode) return; // centered modal positions itself
+    const el = toolbarRef.current;
+    if (!el) return;
+    if (el.getBoundingClientRect().top < SAFE_TOP_PX) setForceFlipBelow(true);
+  });
+
   if (!show) return null;
 
   const isCentered = !!suggestion || manualFixMode;
-  const flipBelow = !isCentered && position.y < 120;
+  const flipBelow = !isCentered && (position.y < 120 || forceFlipBelow);
 
   return (
     <>
