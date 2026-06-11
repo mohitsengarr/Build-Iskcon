@@ -6,17 +6,29 @@
   "framework": null,
   "headers": [
     {
-      "source": "/api/bhagwatham/(.*)",
+      "source": "/api/bhagwatham/((?!images/|faces/|instagram/).*)",
       "headers": [
         { "key": "Content-Type", "value": "application/json" },
         { "key": "Cache-Control", "value": "public, max-age=300, s-maxage=600" }
       ]
     },
     {
-      "source": "/api/gita/(.*)",
+      "source": "/api/bhagwatham/(images|faces)/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400, s-maxage=604800, immutable" }
+      ]
+    },
+    {
+      "source": "/api/gita/((?!images/).*)",
       "headers": [
         { "key": "Content-Type", "value": "application/json" },
         { "key": "Cache-Control", "value": "public, max-age=300, s-maxage=600" }
+      ]
+    },
+    {
+      "source": "/api/gita/images/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400, s-maxage=604800, immutable" }
       ]
     },
     {

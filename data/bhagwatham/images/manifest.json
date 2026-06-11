@@ -371,6 +371,20 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 25,
+      "chapterTitle": "Chapter 3:",
+      "cantoNumber": 2,
+      "imagePath": "chapter-025.jpg",
+      "prompt": "Brahma describes the cosmic form of the Supreme, with the mouth as the source of speech and Agni as its ruler, in a serene celestial setting.",
+      "descriptionHi": "ब्रह्माजी ने विराट पुरुष के विभिन्न अंगों का वर्णन किया और बताया कि उनका मुख वाणी का उद्गम-स्थान है और अग्नि इसका अधिष्ठाता है। उन्होंने यह भी बताया कि भगवान का रूप भौतिक सृष्टि से परे है।",
+      "personasUsed": [
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-11T15:00:08.102Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 26,
       "chapterTitle": "Chapter सात",
       "imagePath": "chapter-026.jpg",
@@ -2274,5 +2288,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-06-11T14:00:06.388Z"
+  "lastUpdated": "2026-06-11T15:00:08.103Z"
 }
