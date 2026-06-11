@@ -1502,7 +1502,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     // with a pure state updater and run all side effects (alerts, Supabase
     // POST) outside — React 18 may defer or double-invoke updater functions
     // (e.g. in StrictMode), so updaters must stay side-effect free.
-    const computeEdit = (pages: PageContent[]): { pageNumber: number; text: string } | null => {
+    const computeEdit = (pages: PageContent[]): Array<{ pageNumber: number; text: string }> | null => {
       const targetPage = pages.find(p => p.pageNumber === pageNum);
       if (!targetPage) return null;
 
@@ -1577,12 +1577,14 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
         } catch { /* malformed — fall through */ }
       }
 
-      // STRATEGY 3: Anchor on first/last 16 stripped chars.
-      if (fullNewText === sourceText && effectiveOld.trim().length > 24) {
-        const cleanedChars: number[] = []; // cleaned-index → original-index
+      // Whitespace/glyph-normalizing cleaner with an index map back to the
+      // original string. Shared by strategy 3 (same-page anchor match) and
+      // strategy 5 (cross-page split).
+      const cleanWithMap = (text: string): { cleaned: string; map: number[] } => {
+        const map: number[] = []; // cleaned-index → original-index
         let cleaned = "";
-        for (let i = 0; i < sourceText.length; i++) {
-          const ch = sourceText[i];
+        for (let i = 0; i < text.length; i++) {
+          const ch = text[i];
           if (/\s/.test(ch)) continue;
           if (ch === "‍" || ch === "‌") continue;
           let mapped = ch.normalize("NFC");
@@ -1591,16 +1593,22 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
           if (mapped === "ः" || mapped === ":") mapped = "ः";
           if (QUOTE_RE.test(mapped)) mapped = '"';
           cleaned += mapped;
-          cleanedChars.push(i);
+          map.push(i);
         }
-        const stripSel = (s: string) =>
-          s.normalize("NFC")
-            .replace(/[‐-―−]/g, "-")
-            .replace(/[॥|]/g, "।")          // double-danda + pipe → single danda
-            .replace(/[:]/g, "ः")             // ASCII colon → visarga
-            .replace(/["'´`‘’‚‛“”„‟ʻʼ′″]/g, '"')
-            .replace(/[‍‌]/g, "")
-            .replace(/\s+/g, "");
+        return { cleaned, map };
+      };
+      const stripSel = (s: string) =>
+        s.normalize("NFC")
+          .replace(/[‐-―−]/g, "-")
+          .replace(/[॥|]/g, "।")          // double-danda + pipe → single danda
+          .replace(/[:]/g, "ः")             // ASCII colon → visarga
+          .replace(/["'´`‘’‚‛“”„‟ʻʼ′″]/g, '"')
+          .replace(/[‍‌]/g, "")
+          .replace(/\s+/g, "");
+
+      // STRATEGY 3: Anchor on first/last 16 stripped chars.
+      if (fullNewText === sourceText && effectiveOld.trim().length > 24) {
+        const { cleaned, map: cleanedChars } = cleanWithMap(sourceText);
         const head = stripSel(effectiveOld.slice(0, 16));
         const tail = stripSel(effectiveOld.slice(-16));
         const startInClean = head ? cleaned.indexOf(head) : -1;
@@ -1664,7 +1672,47 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
           if (replaced !== src) {
             console.info(`[applyEdit] matched on adjacent page ${tryNum} (selection-captured page was ${pageNum})`);
             // Use the ADJACENT page's number for both state + persistence
-            return { pageNumber: tryNum, text: replaced };
+            return [{ pageNumber: tryNum, text: replaced }];
+          }
+        }
+
+        // STRATEGY 5: Cross-page split. The renderer merges page boundaries
+        // (cross-page paragraphs/shlokas), so a selection can legitimately
+        // start at the END of one OCR page and continue at the START of the
+        // next — no single page contains the whole selection, which is why
+        // every strategy above failed. Find the split: the longest suffix of
+        // page A's cleaned text that is a prefix of the cleaned selection,
+        // with the remainder matching the start of page B's cleaned text.
+        // The replacement lands at the end of page A; the consumed prefix of
+        // page B is removed.
+        const strippedSel = stripSel(effectiveOld);
+        if (strippedSel.length >= 12) {
+          const idxInArr = pages.findIndex(p => p.pageNumber === pageNum);
+          const pairs: Array<[PageContent, PageContent]> = [];
+          if (idxInArr >= 0) {
+            if (idxInArr + 1 < pages.length) pairs.push([pages[idxInArr], pages[idxInArr + 1]]);
+            if (idxInArr - 1 >= 0) pairs.push([pages[idxInArr - 1], pages[idxInArr]]);
+          }
+          for (const [pa, pb] of pairs) {
+            const A = cleanWithMap(pa.text);
+            const B = cleanWithMap(pb.text);
+            // Longest k (≥4 cleaned chars on each side) such that
+            // cleanedA ends with the selection's first k chars.
+            let k = -1;
+            const maxK = Math.min(strippedSel.length - 4, A.cleaned.length);
+            for (let cand = maxK; cand >= 4; cand--) {
+              if (A.cleaned.endsWith(strippedSel.slice(0, cand))) { k = cand; break; }
+            }
+            if (k < 4) continue;
+            const rest = strippedSel.slice(k);
+            if (!rest || !B.cleaned.startsWith(rest)) continue;
+            const startA = A.map[A.cleaned.length - k];
+            const endB = rest.length < B.map.length ? B.map[rest.length] : pb.text.length;
+            console.info(`[applyEdit] cross-page split matched: pages ${pa.pageNumber}+${pb.pageNumber}, ${k}/${strippedSel.length} cleaned chars on first page`);
+            return [
+              { pageNumber: pa.pageNumber, text: pa.text.slice(0, startA) + effectiveNew },
+              { pageNumber: pb.pageNumber, text: pb.text.slice(endB) },
+            ];
           }
         }
 
@@ -1686,39 +1734,43 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
         return null;
       }
 
-      return { pageNumber: pageNum, text: fullNewText };
+      return [{ pageNumber: pageNum, text: fullNewText }];
     };
 
-    const edit = computeEdit(allPages);
-    if (!edit) return; // replace failed — nothing to persist
+    const edits = computeEdit(allPages);
+    if (!edits || edits.length === 0) return; // replace failed — nothing to persist
 
-    // Pure updater — the replacement text was computed above, outside React.
-    setAllPages(prev => prev.map(p => p.pageNumber !== edit.pageNumber ? p : { ...p, text: edit.text }));
+    // Pure updater — the replacement texts were computed above, outside React.
+    // Cross-page splits produce TWO page updates; apply them atomically.
+    const editByPage = new Map(edits.map(e => [e.pageNumber, e.text]));
+    setAllPages(prev => prev.map(p => editByPage.has(p.pageNumber) ? { ...p, text: editByPage.get(p.pageNumber)! } : p));
     window.getSelection()?.removeAllRanges();
     setAppliedFlash(true);
     setTimeout(() => setAppliedFlash(false), 1500);
 
-    // Persist directly to Supabase. If the adjacent-page fallback matched on
-    // a different page than the selection started on, edit.pageNumber already
-    // carries THAT page number — otherwise the row would overwrite the wrong
-    // page's edit.
-    try {
-      const res = await sbFetch("bhagavatam_page_edits", {
-        method: "POST",
-        headers: { Prefer: "return=representation,resolution=merge-duplicates" },
-        body: JSON.stringify({
-          page_number: edit.pageNumber,
-          text: edit.text,
-          edited_at: new Date().toISOString(),
-          applied_to_git: false,
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.text().catch(() => "");
-        alert(`Save failed: ${data || res.statusText}`);
+    // Persist directly to Supabase — one row per touched page. If the
+    // adjacent-page fallback matched a different page than the selection
+    // started on, edits[].pageNumber already carries THAT page number;
+    // cross-page splits persist both pages.
+    for (const edit of edits) {
+      try {
+        const res = await sbFetch("bhagavatam_page_edits", {
+          method: "POST",
+          headers: { Prefer: "return=representation,resolution=merge-duplicates" },
+          body: JSON.stringify({
+            page_number: edit.pageNumber,
+            text: edit.text,
+            edited_at: new Date().toISOString(),
+            applied_to_git: false,
+          }),
+        });
+        if (!res.ok) {
+          const data = await res.text().catch(() => "");
+          alert(`Save failed (page ${edit.pageNumber}): ${data || res.statusText}`);
+        }
+      } catch (err) {
+        alert(`Save failed — could not reach Supabase.\n${String(err)}`);
       }
-    } catch (err) {
-      alert(`Save failed — could not reach Supabase.\n${String(err)}`);
     }
   }, [allPages, setAllPages]);
 

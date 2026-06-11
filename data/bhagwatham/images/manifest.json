@@ -237,6 +237,81 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 16,
+      "chapterTitle": "Chapter सोलह",
+      "cantoNumber": 1,
+      "imagePath": "chapter-016.jpg",
+      "prompt": "Parikshit, guided by Suta Goswami, wisely rules the earth, ushering in a new era of harmony.",
+      "descriptionHi": "महाराज परीक्षित ने श्रेष्ठ ब्राह्मणों की शिक्षा से पृथ्वी को शासित किया और कलियुग का सत्कार किया। इस अध्याय में परीक्षित और सूत गोस्वामी मुख्य पात्र हैं और यह भगवान की भक्ति के महत्व को दर्शाता है।",
+      "personasUsed": [
+        "suta_goswami",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-11T08:00:09.813Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 17,
+      "chapterTitle": "Chapter सत्रह",
+      "cantoNumber": 1,
+      "imagePath": "chapter-017.jpg",
+      "prompt": "King Parikshit encounters a low-caste man mistreating a cow and ox on the Saraswati riverbank.",
+      "descriptionHi": "महाराज परीक्षित ने एक नीच जाति के शुद्र को गाय और बैल के साथ दुर्व्यवहार करते हुए देखा, जो कलियुग की एक बड़ी विशेषता है। यह घटना परीक्षित के लिए एक महत्वपूर्ण क्षण है जो उन्हें कलियुग के प्रभाव को समझने में मदद करती है।",
+      "personasUsed": [
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-11T09:00:10.796Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 18,
+      "chapterTitle": "Chapter अठारह",
+      "cantoNumber": 1,
+      "imagePath": "chapter-018.jpg",
+      "prompt": "In a serene forest, Suta Goswami recounts to Krishna and Parikshit the miraculous birth of Parikshit, protected by Krishna's grace.",
+      "descriptionHi": "महाराज परीक्षित के अद्भुत जन्म की कहानी है, जिसमें भगवान्‌ श्रीकृष्ण की कृपा से वे द्रोणपुत्र के अस्त्र द्वारा अपनी माता के गर्भ में ही पрехार किये जाने पर भी जलाये नहीं जा सके। यह घटना नैमिषारण्य के ऋषियों को आश्चर्यचकित करती है।",
+      "personasUsed": [
+        "krishna_adult",
+        "suta_goswami",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-11T10:00:06.106Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 19,
+      "chapterTitle": "Chapter उन्नीस",
+      "cantoNumber": 1,
+      "imagePath": "chapter-019.jpg",
+      "prompt": "Parikshit receives a curse from a young brahmin boy in a serene forest setting, marking a pivotal moment in his life.",
+      "descriptionHi": "इस अध्याय में राजा परीक्षित को शाप मिलने की घटना का वर्णन है, जिसमें उन्हें एक ब्राह्मण बालक द्वारा शाप दिया जाता है। यह घटना परीक्षित के जीवन में एक महत्वपूर्ण मोड़ साबित होती है।",
+      "personasUsed": [
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-11T11:00:10.830Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 20,
+      "chapterTitle": "Chapter एक",
+      "cantoNumber": 2,
+      "imagePath": "chapter-020.jpg",
+      "prompt": "Arunja and Parikshit listen intently as Shukadeva recites prayers to Krishna in a serene forest setting.",
+      "descriptionHi": "इस अध्याय में भगवान कृष्ण की महिमा का वर्णन है और शukदेव गोस्वामी महाराज परीक्षित के प्रश्नों का उत्तर देते हैं। महाराज परीक्षित को शुकदेव गोस्वामी का स्वागत करते हुए हर्ष हो रहा था। यह अध्याय आध्यात्मिक ज्ञान और भक्ति की महत्ता को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "shukadeva",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-11T12:00:08.169Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 21,
       "chapterTitle": "Chapter इक्कीस",
       "imagePath": "chapter-021.jpg",
@@ -263,6 +338,37 @@
       "generatedAt": "2026-05-19T11:47:28.004Z",
       "sceneIndex": 0,
       "cantoNumber": 2
+    },
+    {
+      "chapterNumber": 23,
+      "chapterTitle": "Chapter चार",
+      "cantoNumber": 2,
+      "imagePath": "chapter-023.jpg",
+      "prompt": "Maharaj Parikshit focuses his mind on Krishna after hearing from Shukadeva Goswami in the palace.",
+      "descriptionHi": "इस अध्याय में महाराज परीक्षित शुकदेव गोस्वामी से भगवान कृष्ण के बारे में सुनकर अपना ध्यान कृष्ण में लगा देते हैं। यह अध्याय आत्म-संयम और भगवान के प्रति निष्ठा के महत्व को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "shukadeva",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-11T13:00:07.934Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 24,
+      "chapterTitle": "Chapter पाँच",
+      "cantoNumber": 2,
+      "imagePath": "chapter-024.jpg",
+      "prompt": "Narada humbly requests Brahma to reveal divine knowledge in a serene heavenly setting.",
+      "descriptionHi": "श्री नारद मुनि ने ब्रह्माजी से दिव्य ज्ञान प्राप्त करने की पूछताछ की, जो आत्मा और परमात्मा के सत्य तक ले जाने वाला है। इस अध्याय में परम्परा प्रणाली की पूर्णता की ओर पुष्टि हो रही है, जिसमें सही व्यक्ति से दिव्य ज्ञान के लिए याचना करना और सही ढंग से उसे प्राप्त करना महत्वपूर्ण है।",
+      "personasUsed": [
+        "narada",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-11T14:00:06.387Z",
+      "sceneIndex": 0
     },
     {
       "chapterNumber": 26,
@@ -2168,5 +2274,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-06-11T07:00:11.363Z"
+  "lastUpdated": "2026-06-11T14:00:06.388Z"
 }
