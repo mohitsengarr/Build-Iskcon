@@ -1,4 +1,13 @@
-// Supabase Edge Function: bulk-generate-chaitanya-art
+// Supabase Edge Function: bulk-generate-chaitanya-art (v3)
+//
+// v3 changes:
+// - SCENE CYCLING on regen via chaitanya_chapter_scenes.used_scene_indexes
+//   (parity with bulk-generate-chapter-art v4) — a rejected cover now
+//   regenerates from the NEXT scene instead of repeating rank 1 forever.
+// - Explicit per-run FLUX seed so even a repeated scene varies.
+// - generateOne returns personasUsed so persona injection is verifiable
+//   from the chapter-mode response (Gaura-lila persona set added to
+//   bhagwatham_personas — Chaitanya, Nityananda, Advaita, etc.).
 //
 // Sister function to bulk-generate-chapter-art (Bhagavatam). Reads scenes from
 // chaitanya_chapter_scenes, writes pending review rows to chaitanya_chapter_
@@ -118,28 +127,49 @@ function matchPersonas(names: string[], personas: Persona[]): Persona[] {
   return matched;
 }
 
-async function loadChapterScenes(globalNumber: number): Promise<ChapterScene[] | null> {
-  const { data } = await supabase
+async function loadChapterScenes(globalNumber: number): Promise<{ scenes: ChapterScene[]; usedIndexes: number[] } | null> {
+  const { data, error } = await supabase
     .from("chaitanya_chapter_scenes")
-    .select("scenes")
+    .select("scenes, used_scene_indexes")
     .eq("chapter_global_number", globalNumber)
     .maybeSingle();
-  const scenes = Array.isArray(data?.scenes) ? (data!.scenes as ChapterScene[]) : [];
-  return scenes.length === 0 ? null : scenes;
+  if (error || !data) return null;
+  const scenes = Array.isArray(data.scenes) ? (data.scenes as ChapterScene[]) : [];
+  if (scenes.length === 0) return null;
+  return { scenes, usedIndexes: data.used_scene_indexes || [] };
 }
 
-async function pickRank1Scene(globalNumber: number): Promise<ChapterScene | null> {
-  const scenes = await loadChapterScenes(globalNumber);
-  if (!scenes) return null;
-  return [...scenes].sort((a, b) => (a.rank || 99) - (b.rank || 99))[0];
+function pickScene(scenes: ChapterScene[], usedIndexes: number[]): { scene: ChapterScene; index: number; cycleReset: boolean } {
+  const sorted = scenes.map((s, idx) => ({ s, idx })).sort((a, b) => (a.s.rank || 99) - (b.s.rank || 99));
+  for (const { s, idx } of sorted) {
+    if (!usedIndexes.includes(idx)) return { scene: s, index: idx, cycleReset: false };
+  }
+  return { scene: sorted[0].s, index: sorted[0].idx, cycleReset: true };
 }
 
-async function tryGenerate(prompt: string, model: string, w: number, h: number): Promise<string | null> {
+async function markSceneUsed(globalNumber: number, sceneIndex: number, currentUsed: number[]): Promise<void> {
+  const updated = [...new Set([...currentUsed, sceneIndex])];
+  await supabase
+    .from("chaitanya_chapter_scenes")
+    .update({ used_scene_indexes: updated })
+    .eq("chapter_global_number", globalNumber);
+}
+
+async function resetSceneCycle(globalNumber: number, firstSceneIndex: number): Promise<void> {
+  await supabase
+    .from("chaitanya_chapter_scenes")
+    .update({ used_scene_indexes: [firstSceneIndex] })
+    .eq("chapter_global_number", globalNumber);
+}
+
+async function tryGenerate(prompt: string, model: string, w: number, h: number, seed?: number): Promise<string | null> {
   try {
+    const body: Record<string, unknown> = { model, prompt, width: w, height: h, n: 1, response_format: "b64_json" };
+    if (seed !== undefined) body.seed = seed;
     const res = await fetch(TOGETHER_API, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${TOGETHER_KEY}` },
-      body: JSON.stringify({ model, prompt, width: w, height: h, n: 1, response_format: "b64_json" }),
+      body: JSON.stringify(body),
     });
     if (!res.ok) { console.log(`${model}: ${res.status}`); return null; }
     return (await res.json()).data?.[0]?.b64_json || null;
@@ -162,13 +192,14 @@ async function generateImage(scenePrompt: string, matchedPersonas: Persona[]): P
   // "toward" → "toblessingd", even "firearms" inside ANACHRONISM_RULES —
   // corrupting every prompt sent to FLUX.
   const sanitized = fullPrompt.replace(/\b(battle|war|fight|weapon|sword|arrow|kill|death|blood|fire|burn|destroy|attack|strike|naked|nude|tattered|humiliating|shocking|disorder|defeat)\b/gi, "blessing");
+  const seed = Math.floor(Math.random() * 1_000_000);
   const attempts = [
-    { model: "black-forest-labs/FLUX.2-pro", prompt: sanitized, w: 1344, h: 1088 },
-    { model: "black-forest-labs/FLUX.1.1-pro", prompt: sanitized, w: 1024, h: 768 },
+    { model: "black-forest-labs/FLUX.2-pro", prompt: sanitized, w: 1344, h: 1088, seed },
+    { model: "black-forest-labs/FLUX.1.1-pro", prompt: sanitized, w: 1024, h: 768, seed },
     { model: "black-forest-labs/FLUX.1.1-pro", prompt: SAFE_FALLBACK, w: 1024, h: 768 },
   ];
   for (const a of attempts) {
-    const b64 = await tryGenerate(a.prompt, a.model, a.w, a.h);
+    const b64 = await tryGenerate(a.prompt, a.model, a.w, a.h, a.seed);
     if (b64) return b64;
   }
   throw new Error("All FLUX attempts failed");
@@ -234,21 +265,25 @@ async function generatePromptInline(chapter: ChaitanyaChapter): Promise<{ prompt
   };
 }
 
-async function generateOne(chapter: ChaitanyaChapter): Promise<{ ok: boolean; chapter: ChaitanyaChapter; pendingId?: number; error?: string }> {
+async function generateOne(chapter: ChaitanyaChapter): Promise<{ ok: boolean; chapter: ChaitanyaChapter; pendingId?: number; personasUsed?: string[]; error?: string }> {
   try {
-    const scene = await pickRank1Scene(chapter.global_number);
+    const sceneRow = await loadChapterScenes(chapter.global_number);
     let imagePrompt: string;
     let sceneTitle: string;
     let descriptionHi: string;
     let sceneIndex: number | null = null;
     let sceneCharacters: string[] = [];
+    let usedSceneInfo: { index: number; cycleReset: boolean } | null = null;
 
-    if (scene) {
+    if (sceneRow) {
+      const { scene, index, cycleReset } = pickScene(sceneRow.scenes, sceneRow.usedIndexes);
+      console.log(`Chapter ${chapter.global_number}: scene #${index} (rank ${scene.rank}) "${scene.title}"${cycleReset ? " [cycle reset]" : ""}`);
       imagePrompt = scene.image_prompt;
       sceneTitle = scene.title;
       descriptionHi = scene.summary;
-      sceneIndex = 0;
+      sceneIndex = index;
       sceneCharacters = scene.characters || [];
+      usedSceneInfo = { index, cycleReset };
     } else {
       const inline = await generatePromptInline(chapter);
       imagePrompt = inline.prompt;
@@ -280,7 +315,17 @@ async function generateOne(chapter: ChaitanyaChapter): Promise<{ ok: boolean; ch
       .select("id")
       .single();
     if (error) throw new Error(error.message);
-    return { ok: true, chapter, pendingId: inserted?.id };
+
+    // Advance the scene rotation only after a successful insert.
+    if (usedSceneInfo && sceneRow) {
+      if (usedSceneInfo.cycleReset) {
+        await resetSceneCycle(chapter.global_number, usedSceneInfo.index);
+      } else {
+        await markSceneUsed(chapter.global_number, usedSceneInfo.index, sceneRow.usedIndexes);
+      }
+    }
+
+    return { ok: true, chapter, pendingId: inserted?.id, personasUsed: matched.map(p => p.key) };
   } catch (e) {
     return { ok: false, chapter, error: String(e) };
   }
