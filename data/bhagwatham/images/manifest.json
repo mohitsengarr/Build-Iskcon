@@ -426,6 +426,53 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 28,
+      "chapterTitle": "(नौ",
+      "cantoNumber": 2,
+      "imagePath": "chapter-028.jpg",
+      "prompt": "In a sacred chamber, Shukadeva Goswami addresses King Parikshit, explaining how the pure soul becomes entangled in material existence through Lord Krishna's external energy (Maya). Shukadeva illustrates that just as a dreamer witnesses their own body acting within a dream, the conscious soul perceives material existence while remaining fundamentally separate from it—controlled by divine will yet eternally sentient.",
+      "descriptionHi": "शुकदेव गोस्वामी परीक्षित राजा को समझाते हैं कि शुद्ध आत्मा भगवान की माया शक्ति से प्रभावित होकर ही भौतिक जीवन में बंध जाती है। यह संबंध स्वप्न देखने वाले के समान है जो अपने ही शरीर को कार्य करते हुए देखता है। आत्मा स्वयं चेतन है, किन्तु भगवान की बहिरंगा शक्ति के वश में होने से भौतिक कर्मों में फंसी रहती है।",
+      "personasUsed": [
+        "krishna_adult",
+        "shukadeva",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-11T17:00:07.965Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 29,
+      "chapterTitle": "Chapter दस",
+      "cantoNumber": 2,
+      "imagePath": "chapter-029.jpg",
+      "prompt": "Shukadeva and Brahma discuss the creation of the universe in a serene celestial setting.",
+      "descriptionHi": "श्रीशुकदेव गोस्वामी ने श्रीमद्भागवत में ब्रह्माण्ड की उत्पत्ति और भगवान् के ज्ञान से संबंधित दस विभागों का वर्णन किया है, जिसमें ब्रह्मा भी उपस्थित हैं। इस अध्याय में ज्ञान, मुक्ति और आश्रय के महत्व को समझाया गया है।",
+      "personasUsed": [
+        "shukadeva",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-11T18:00:25.040Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 30,
+      "chapterTitle": "Chapter एक",
+      "cantoNumber": 3,
+      "imagePath": "chapter-030.jpg",
+      "prompt": "Krishna enters the home of Pandavas, while ignoring Duryodhana's house, in a forest, with Vidura and Shukadeva nearby.",
+      "descriptionHi": "श्री शुकदेव गोस्वामी ने बताया कि विदुर ने मैत्रेय ऋषि से प्रश्न पूछे और भगवान श्रीकृष्ण के पौरवेन्द्र गृह में प्रवेश करने की कथा सुनी। यह अध्याय विदुर और मैत्रेय ऋषि के बीच के संवाद की शुरुआत है।",
+      "personasUsed": [
+        "krishna_adult",
+        "shukadeva",
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-11T19:00:15.321Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 31,
       "chapterTitle": "(शुषा दो",
       "cantoNumber": 3,
@@ -625,6 +672,119 @@
       "cantoNumber": 3
     },
     {
+      "chapterNumber": 45,
+      "chapterTitle": "Chapter सोलह",
+      "cantoNumber": 3,
+      "imagePath": "chapter-045.jpg",
+      "prompt": "Lord Vishnu speaks to Brahma about Jay and Vijay's offense against the sages in the serene surroundings of Vaikuntha.",
+      "descriptionHi": "इस अध्याय में भगवान् विकुण्ठ के दो द्वारपालों, जय-विजय को मुनियों द्वारा शाप की कहानी बताई जा रही है, जिसमें ब्रह्मा और भगवान् प्रमुख पात्र हैं। यह घटना हमें भक्तों के चरणों पर अपराध के परिणामों के बारे में सिखाती है।",
+      "personasUsed": [
+        "vishnu",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-11T20:00:12.789Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 46,
+      "chapterTitle": "Chapter सत्रह",
+      "cantoNumber": 3,
+      "imagePath": "chapter-046.jpg",
+      "prompt": "Brahma explains the cause of darkness to the gods, freeing them from fear, in the heavenly realm with Krishna and Arjuna present.",
+      "descriptionHi": "इस अध्याय में मैत्रेय मुनि द्वारा ब्रह्मा की व्याख्या के बाद स्वर्गलोक के देवता अपने भय से मुक्त हो जाते हैं और अपने-अपने लोकों में वापस चले जाते हैं। इसमें अर्जुन और श्रीकृष्ण का उल्लेख भी है। यह अध्याय भय और अधिकारी के पास जाने के महत्व को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "arjuna",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-11T21:00:12.378Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 47,
+      "chapterTitle": "Chapter अठारह",
+      "cantoNumber": 3,
+      "imagePath": "chapter-047.jpg",
+      "prompt": "Narada informs Hiranyaksha about Lord Vishnu's presence, and the eager demon rushes to meet him in the ocean's depths.",
+      "descriptionHi": "इस अध्याय में भगवान् वराह और असुर हिरण्याक्ष के मध्य युद्ध का वर्णन है, जिसमें नारद और विदुर भी उपस्थित हैं। हिरण्याक्ष को नारद से पता चलता है कि श्री भगवान् उसका इंतजार कर रहे हैं और वह समुद्र की गहराइयों में जाकर उनसे मिलने के लिए उतावला हो जाता है।",
+      "personasUsed": [
+        "narada",
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-11T22:00:12.126Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 48,
+      "chapterTitle": "Chapter उन्नीस",
+      "cantoNumber": 3,
+      "imagePath": "chapter-048.jpg",
+      "prompt": "Brahma's sincere prayer is accepted by Lord Krishna with a warm smile in a serene heavenly setting.",
+      "descriptionHi": "मैत्रेय इस अध्याय में असुर हिरण्याक्ष के वध की कथा सुना रहे हैं, जिसमें ब्रह्माजी की प्रार्थना को भगवान् स्वीकार करते हैं। इस कथा में देवताओं और असुरों की प्रार्थनाओं में अंतर दिखाया गया है।",
+      "personasUsed": [
+        "krishna_adult",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-11T23:00:06.045Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 49,
+      "chapterTitle": "Chapter बीस",
+      "cantoNumber": 3,
+      "imagePath": "chapter-049.jpg",
+      "prompt": "Shounak asks Suta Goswami about Svayambhuva Manu's actions after Earth's restoration, seeking wisdom on spiritual liberation.",
+      "descriptionHi": "श्री शौनक ने सूत गोस्वामी से पूछा कि पृथ्वी के अपनी कक्ष्या में पुनः स्थापित हो जाने पर स्वायंभुव मनु ने फिर क्या किया। इसमें स्वायंभुव मनु के काल में भगवान् का आदि शूकर अवतार और मोक्ष के मार्ग की चर्चा है।",
+      "personasUsed": [
+        "suta_goswami"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-12T00:00:18.638Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 50,
+      "chapterTitle": "Chapter इक्तीस",
+      "cantoNumber": 3,
+      "imagePath": "chapter-050.jpg",
+      "prompt": "Vidura asks a revered sage about the descendants of Svayambhuva Manu, seeking knowledge of their noble lineage in a serene forest setting.",
+      "descriptionHi": "विदुर स्वायम्भुव मनु की वंश परम्परा के बारे में जानना चाहते हैं, जो एक आदरणीय और पूजनीय वंश है। इस वंश में कई भक्त राजा हुए हैं जिन्होंने अपनी प्रजा का पालन आत्मज्ञान के साथ किया था। विदुर इस वंश के इतिहास को सुनकर प्रबुद्ध बनना चाहते हैं।",
+      "personasUsed": [
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-12T01:00:04.371Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 51,
+      "chapterTitle": "Chapter बाईस",
+      "cantoNumber": 3,
+      "imagePath": "chapter-051.jpg",
+      "prompt": "King Manu humbly addresses Maitreya Muni in a serene forest setting, discussing Brahma's creation of brahmins.",
+      "descriptionHi": "इस अध्याय में मैत्रेय मुनि ने राजा मनु के गुणों और कार्यों का वर्णन किया है, जिसमें ब्रह्मा द्वारा ब्राह्मणों की उत्पत्ति और उनके कार्यों का उल्लेख है। राजा मनु और मैत्रेय मुनि मुख्य पात्र हैं।",
+      "personasUsed": [
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-12T02:00:43.330Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 52,
+      "chapterTitle": "Chapter तेईस",
+      "cantoNumber": 3,
+      "imagePath": "chapter-052.jpg",
+      "prompt": "Devahuti lovingly serves her husband Kardama Muni in a serene forest ashram, reminiscent of Goddess Parvati's devotion to Lord Shiva.",
+      "descriptionHi": "मैत्रेय इस अध्याय में देवहूति के अपने पति कर्दममुनि के प्रति प्रेम और समर्पण का वर्णन करते हैं, जो भवानी के शिवजी के प्रति भक्ति के समान है। देवहूति अपने माता-पिता के जाने के बाद अपने патि की सेवा में लग जाती है।",
+      "generatedAt": "2026-06-12T03:00:06.264Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 53,
       "chapterTitle": "Chapter ग्यारह",
       "imagePath": "chapter-053.jpg",
@@ -775,6 +935,21 @@
       "cantoNumber": 4
     },
     {
+      "chapterNumber": 64,
+      "chapterTitle": "(शुषा दो",
+      "cantoNumber": 4,
+      "imagePath": "chapter-064.jpg",
+      "prompt": "Vidura queries Brahma about Daksha's disdain for Lord Shiva, despite Shiva's serene nature, in a heavenly setting.",
+      "descriptionHi": "विदुर ने भगवान शिव और दक्ष के बीच के मनमुटाव का वर्णन किया, जो दक्ष द्वारा आयोजित विशाल यज्ञ के कारण उत्पन्न हुआ। दक्ष ने अपनी पुत्री सती का अनादर किया और शिवजी के प्रति शत्रुता प्रदर्शित की। यह घटना शिवजी के शान्त और विरक्त स्वभाव को प्रकट करती है।",
+      "personasUsed": [
+        "brahma",
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-12T04:00:29.350Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 65,
       "chapterTitle": "Chapter तीन",
       "imagePath": "chapter-104.jpg",
@@ -818,6 +993,88 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 68,
+      "chapterTitle": "Chapter छह",
+      "cantoNumber": 4,
+      "imagePath": "chapter-068.jpg",
+      "prompt": "Brahma and Vishnu observe the aftermath of the divine conflict, as deities gather around them in a serene heavenly setting.",
+      "descriptionHi": "इस अध्याय में देवताओं के रूप में ब्रह्मा और विष्णु का वर्णन किया गया है, जो शिवजी के सैनिकों द्वारा पराजित होने के बाद देवताओं की स्थिति को समझने का प्रयास करते हैं। ब्रह्मा और विष्णु दोनों ही दक्ष के यज्ञ में नहीं गए थे।",
+      "personasUsed": [
+        "vishnu",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-12T05:00:03.940Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 69,
+      "chapterTitle": "Chapter सात",
+      "cantoNumber": 4,
+      "imagePath": "chapter-069.jpg",
+      "prompt": "Shiv calmly explains to Brahma that he disciplines the gods to guide them, not to punish them, in a serene heavenly setting.",
+      "descriptionHi": "मैत्रेय मुनि भगवान्‌ ब्रह्मा और शिव के बीच की बातचीत का वर्णन करते हैं, जहाँ शिव देवताओं द्वारा किये गये अपराधों की परवाह नहीं करते और उन्हें राह पर लाने के लिए दण्डित करते हैं। यह अध्याय शिव की दया और क्षमा की भावना को दर्शाता है।",
+      "personasUsed": [
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-12T06:00:04.243Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 70,
+      "chapterTitle": "Chapter 36",
+      "cantoNumber": 4,
+      "imagePath": "chapter-070.jpg",
+      "prompt": "Narada and Brahma's sons, including Sanaka, discuss the importance of brahmacharya in a serene forest setting.",
+      "descriptionHi": "मैत्रेय ऋषि ने बताया कि ब्रह्मा के पुत्र सनकादि चारों कुमार और नारद ने घर पर निवास नहीं किया और नैष्ठिक ब्रह्मचारी बने। वे वीर्य को मस्तिष्क की ओर ले जाकर अद्भुत कार्य कर सकते थे।",
+      "personasUsed": [
+        "narada",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-12T07:00:16.562Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 71,
+      "chapterTitle": "(नौ",
+      "cantoNumber": 4,
+      "imagePath": "chapter-071.jpg",
+      "prompt": "Vishnu rides Garuda to Madhuvan to meet his devotee Dhruva, surrounded by divine beauty and peace.",
+      "descriptionHi": "महर्षि मेत्रेय ने विदुर से कहा कि जब भगवान्‌ ने देवताओं को आश्वासन दिलाया तो वे समस्त प्रकार के भय से मुक्त हो गये और अपने देवलोको को चले गये, भगवान्‌ गरुड़ पर सवार हुए ओर अपने दास ध्रुव को देखने के लिए मधुवन गये।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-12T08:00:05.452Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 72,
+      "chapterTitle": "Chapter दस",
+      "cantoNumber": 4,
+      "imagePath": "chapter-072.jpg",
+      "prompt": "Dhruva Maharaj marries Bhrami, daughter of Shishumara, in a serene palace ceremony.",
+      "descriptionHi": "मैत्रेय ऋषि ने विदुर को बताया कि ध्रुव महाराज ने प्रजापति शिशुमार की पुत्री भ्रमि से विवाह किया और उनके दो पुत्र कल्प और वत्सर हुए। यह घटना ध्रुव महाराज के आत्म-साक्षात्कार के बाद की है।",
+      "generatedAt": "2026-06-12T09:00:29.268Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 73,
+      "chapterTitle": "Chapter ग्यारह",
+      "cantoNumber": 4,
+      "imagePath": "chapter-073.jpg",
+      "prompt": "Krishna's devotee Dhruva loads the divine arrow on his bow, dispelling the illusion created by the yaksha, amidst a serene forest setting.",
+      "descriptionHi": "इस अध्याय में ध्रुव महाराज को भगवान्‌ नारायण द्वारा निर्मित विशेष बाण प्रदान किया गया था, जिससे उन्होंने यक्ष की माया को दूर किया। मैत्रेय मुनि विदुर को यह कथा सुना रहे हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-12T10:00:05.036Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 74,
       "chapterTitle": "Chapter बारह",
       "imagePath": "chapter-075.jpg",
@@ -836,6 +1093,35 @@
       "generatedAt": "2026-04-11T06:30:16.345Z",
       "sceneIndex": 0,
       "cantoNumber": 4
+    },
+    {
+      "chapterNumber": 76,
+      "chapterTitle": "Chapter चौदह",
+      "cantoNumber": 4,
+      "imagePath": "chapter-076.jpg",
+      "prompt": "Maitreya tells Vidura about King Vena's story, where sages like Bhrgu observe people's lives becoming animalistic without a king.",
+      "descriptionHi": "महर्षि मैत्रेय विदुर को राजा वेन की कथा सुना रहे हैं, जिसमें भृगु इत्यादि ऋषि लोगों के कल्याण के लिए चिन्तन करते हैं और राजा की अनुपस्थिति में जनता की दुर्दशा को देखते हैं। यह अध्याय जनता के लिए एक सक्षम नेतृत्व की आवश्यकता पर प्रकाश डालता है।",
+      "personasUsed": [
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-12T11:00:19.002Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 77,
+      "chapterTitle": "Chapter पन्द्रह",
+      "cantoNumber": 4,
+      "imagePath": "chapter-077.jpg",
+      "prompt": "Maitreya and Vidura witness the birth of a divine couple from King Vena's arms, a manifestation of Lord Vishnu's power.",
+      "descriptionHi": "मैत्रेय ऋषि ने विदुर को बताया कि राजा वेन के मृत शरीर की बाहुओं का मंथन करने से एक स्त्री और पुरुष का जोड़ा उत्पन्न हुआ, जो भगवान विष्णु का विस्तार था। इससे ऋषिगण अत्यधिक प्रसन्न हुए।",
+      "personasUsed": [
+        "vishnu",
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-12T12:00:10.388Z",
+      "sceneIndex": 0
     },
     {
       "chapterNumber": 78,
@@ -913,6 +1199,79 @@
       "generatedAt": "2026-04-11T07:06:08.979Z",
       "sceneIndex": 0,
       "cantoNumber": 4
+    },
+    {
+      "chapterNumber": 82,
+      "chapterTitle": "Chapter बीस",
+      "cantoNumber": 4,
+      "imagePath": "chapter-082.jpg",
+      "prompt": "Lord Vishnu appears at King Prithu's yajna site with Indra, advising Prithu to forgive Indra for disrupting his rituals.",
+      "descriptionHi": "महाराज पृथु के यज्ञस्थल में भगवान् विष्णु का प्राकट्य होता है, जो राजा पृथु द्वारा निन्यानवे अश्वमेध यज्ञों के सम्पन्न किये जाने से प्रसन्न हुए हैं। भगवान् विष्णु राजा इन्द्र को क्षमा करने के लिए कहते हैं।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-12T13:00:05.170Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 83,
+      "chapterTitle": "Chapter इक्कीस",
+      "cantoNumber": 4,
+      "imagePath": "chapter-083.jpg",
+      "prompt": "Maitreya narrates to Vidura as King Prithu's city is decorated with pearls, flower garlands, and golden gates for his grand welcome.",
+      "descriptionHi": "महाराज पृथु की नगरी में उनके स्वागत के लिए बड़े ही धूमधाम से तैयारी की गई थी, जिसमें मोतियों, फूलों की मालाओं, सुनहरे द्वारों और सुगन्धित धूप से नगरी को सजाया गया था। यह पूरा आयोजन महर्षि मैत्रेय द्वारा विदुर को सुनाया जा रहा है। इस आयोजन में नगरी की सुंदरता और आध्यात्मिक महत्व को दर्शाया गया है।",
+      "personasUsed": [
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-12T14:00:13.046Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 84,
+      "chapterTitle": "Chapter बाईस",
+      "cantoNumber": 4,
+      "imagePath": "chapter-084.jpg",
+      "prompt": "Maharaja Prithu meets the four Kumaras, radiant like the sun, in his palace.",
+      "descriptionHi": "महाराज पृथु की प्रजा उनकी दिव्य शक्तियों से सुरक्षित थी, वे ब्राह्मण और क्षत्रिय के रूप में कार्य करते थे। इस समय, चार कुमार - सूर्य के समान तेजस्वी - महाराज पृथु से मिलने आये। यह मुलाकात एक महत्वपूर्ण घटना है।",
+      "generatedAt": "2026-06-14T10:00:12.586Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 85,
+      "chapterTitle": "Chapter तेईस",
+      "cantoNumber": 4,
+      "imagePath": "chapter-085.jpg",
+      "prompt": "Maitreya describes King Prithu's departure to the divine abode, surrounded by his family and subjects in a serene forest setting.",
+      "descriptionHi": "महाराज पृथु का भगवद्धाम गमन इस अध्याय का मुख्य विषय है, जहाँ मैत्रेय ऋषि पृथु महाराज की महिमा का वर्णन करते हैं। पृथु महाराज की ख्याति भगवान् रामचन्द्र की महिमा के समान मधुर थी।",
+      "generatedAt": "2026-06-14T12:00:17.731Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 86,
+      "chapterTitle": "Chapter चौबीस",
+      "cantoNumber": 4,
+      "imagePath": "chapter-086.jpg",
+      "prompt": "Vijitashva, son of Maharaj Prithu, distributes territories to his younger brothers with affection and devotion in the royal palace.",
+      "descriptionHi": "इस अध्याय में महाराज पृथु के पुत्र विजिताश्व की कहानी बताई गई है, जो अपने भाइयों के प्रति अत्यंत स्नेही थे और उन्हें विभिन्न दिशाएँ दे दीं। यह अध्याय भक्ति और परोपकार की महत्ता को दर्शाता है।",
+      "generatedAt": "2026-06-14T13:00:09.466Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 87,
+      "chapterTitle": "Chapter पच्चीस",
+      "cantoNumber": 4,
+      "imagePath": "chapter-087.jpg",
+      "prompt": "Narada and Vidura witness Lord Shiva disappearing from sight after imparting wisdom to King Barhisat's sons in a serene palace setting.",
+      "descriptionHi": "इस अध्याय में महर्षि मैत्रेय विदुर से राजा बर्हिषत् के पुत्रों को शिवजी द्वारा दिए गए उपदेश के बारे में बता रहे हैं। राजकुमारों ने श्रद्धापूर्वक शिवजी की पूजा की और वे उनकी दृष्टि से ओझल हो गए। यह अध्याय प्राचीन काल में राजा के अधीन साम्राज्य सम्बन्धी एक महान् शिक्षा प्राप्त होती है।",
+      "personasUsed": [
+        "narada",
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-14T14:00:05.622Z",
+      "sceneIndex": 0
     },
     {
       "chapterNumber": 94,
@@ -2305,5 +2664,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-06-11T16:00:36.724Z"
+  "lastUpdated": "2026-06-14T14:00:05.622Z"
 }
