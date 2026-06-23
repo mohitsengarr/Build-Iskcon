@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Bhaktigram",
+    "slug": "bhaktigram",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "bhaktigram",
+    "splash": {
+      "backgroundColor": "#c2410c",
+      "resizeMode": "contain"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.buildiskcon.bhaktigram"
+    },
+    "android": {
+      "package": "com.buildiskcon.bhaktigram"
+    }
+  }
+}

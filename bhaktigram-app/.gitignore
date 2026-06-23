@@ -1,0 +1,21 @@
+# Expo / React Native
+node_modules/
+.expo/
+dist/
+web-build/
+*.log
+npm-debug.*
+yarn-error.*
+
+# Native build output
+android/
+ios/
+*.apk
+*.aab
+*.keystore
+
+# Env / secrets
+.env*.local
+
+# macOS
+.DS_Store
