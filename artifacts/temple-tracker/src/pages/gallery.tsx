@@ -2851,12 +2851,24 @@ export default function Gallery() {
                 ) : (
                   // Mobile: edge-to-edge full-width feed (matches IG mobile).
                   // sm+: cap at 470px and center, matching IG desktop.
-                  <div className="w-full sm:max-w-[470px] sm:mx-auto pb-12 space-y-2 sm:space-y-6">
+                  <div className="w-full sm:max-w-[470px] sm:mx-auto pb-24 space-y-2 sm:space-y-6">
                     {filtered.map((item) => (
                       <InstagramPostCard key={item.id} item={item} onOpenLightbox={() => setLightboxItem(item)} />
                     ))}
                   </div>
                 )}
+                {/* Bhaktigram Chat entry — WhatsApp-style sangha rooms. Fixed
+                    FAB so it rides above the edge-to-edge feed without needing
+                    layout changes; the chat list itself carries the Posts↔Chat
+                    bottom nav to get back. */}
+                <Link
+                  href="/bhaktigram/chat"
+                  className="fixed right-5 bottom-6 z-40 w-14 h-14 rounded-full shadow-xl flex items-center justify-center text-white active:scale-90 transition-transform"
+                  style={{ backgroundColor: "#25D366" }}
+                  aria-label="Open Bhaktigram community chat"
+                >
+                  <MessageCircle className="w-7 h-7" />
+                </Link>
               </>
             )}
 

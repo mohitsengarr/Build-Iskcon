@@ -105,7 +105,7 @@ export function Layout({ children }: { children: ReactNode }) {
   // CTA bar so only the in-page Back button + the post timeline are visible.
   // Normalize trailing slashes + case so "/Bhaktigram/" still matches.
   const norm = location.replace(/\/+$/, "").toLowerCase() || "/";
-  const isBhaktigram = norm === "/bhaktigram" || norm === "/bhaktigram/profile";
+  const isBhaktigram = norm === "/bhaktigram" || norm.startsWith("/bhaktigram/");
   const hideMobileCta = isBhaktigram;
   const hideTopNav = isBhaktigram;
   const hideFooter = isBhaktigram;

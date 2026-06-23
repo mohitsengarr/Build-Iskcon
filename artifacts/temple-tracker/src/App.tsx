@@ -14,6 +14,7 @@ import JapaCounter from "@/pages/japa-counter";
 import PersonaGallery from "@/pages/persona-gallery";
 import Admin from "@/pages/admin";
 import Gallery from "@/pages/gallery";
+import BhaktigramChat from "@/pages/bhaktigram-chat";
 import Privacy from "@/pages/privacy";
 import Terms from "@/pages/terms";
 import PageNotFound from "@/pages/page-not-found";
@@ -40,6 +41,8 @@ function App() {
                 Gallery reads useLocation() and sets filterType="instagram"
                 when the path matches. The internal filterType value stays
                 "instagram" so existing data + filters don't churn. */}
+            <Route path="/bhaktigram/chat/:room" component={BhaktigramChat} />
+            <Route path="/bhaktigram/chat" component={BhaktigramChat} />
             <Route path="/bhaktigram" component={Gallery} />
             {/* /bhaktigram/profile — Instagram-style profile page for the
                 bhaktigram channel: header + stats + grid of all approved posts. */}
