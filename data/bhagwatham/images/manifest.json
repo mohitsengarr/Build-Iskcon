@@ -2176,6 +2176,44 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 155,
+      "chapterTitle": "Chapter दो",
+      "cantoNumber": 8,
+      "imagePath": "chapter-155.jpg",
+      "prompt": "Gajendra, the elephant king, prays to Lord Krishna for rescue from a giant crocodile in the Kshirsagar lake.",
+      "descriptionHi": "इस अध्याय में गजेन्द्र के संकट की कहानी बताई गई है, जिसमें हाथियों के राजा गजेन्द्र को एक घड़ियाल ने पकड़ लिया और भगवान् ने उसकी रक्षा की। यह घटना क्षीरसागर के मध्य में स्थित एक पर्वत के पास हुई।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-19T15:00:24.471Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 156,
+      "chapterTitle": "Chapter तीन",
+      "cantoNumber": 8,
+      "imagePath": "chapter-156.jpg",
+      "prompt": "Gajendra prays to the Lord on the riverbank, seeking refuge amidst his desperate struggle with the crocodile.",
+      "descriptionHi": "इस अध्याय में गजेन्द्र की समर्पण-स्तुति का वर्णन हुआ है, जिसमें वह भगवान् को नमस्कार करता है और अपनी विषम स्थिति के कारण अपनी असमर्थता व्यक्त करता है। गजेन्द्र भगवान् की महिमा का वर्णन करता है और उनकी शरण में जाने की बात कहता है।",
+      "generatedAt": "2026-06-19T17:00:31.977Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 157,
+      "chapterTitle": "Chapter चार",
+      "cantoNumber": 8,
+      "imagePath": "chapter-157.jpg",
+      "prompt": "Lord Vishnu rescues Gajendra from the crocodile's grasp on a serene riverbank.",
+      "descriptionHi": "गजेन्द्र का वैकुण्ठ गमन इस अध्याय का मुख्य विषय है, जहाँ भगवान् विष्णु द्वारा गजेन्द्र का उद्धार और घड़ियाल का शापमुक्ति दिखाया गया है। गजेन्द्र को वैकुण्ठ में भगवान् का पार्षद बनाया जाता है और उसे चार हाथ प्राप्त होते हैं।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-19T23:30:02.799Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 158,
       "chapterTitle": "Chapter पाँच",
       "cantoNumber": 8,
@@ -2188,6 +2226,45 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-05-15T04:39:15.606Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 159,
+      "chapterTitle": "Chapter छह",
+      "cantoNumber": 8,
+      "imagePath": "chapter-159.jpg",
+      "prompt": "Brahma and Vishnu meet on the cosmic ocean, where Brahma praises Vishnu's divine qualities and infinite wisdom.",
+      "descriptionHi": "इस अध्याय में देवताओं और असुरों द्वारा सन्धि की घोषणा की गई है, जिसमें भगवान् विष्णु की सलाह के अनुसार समुद्र-मन्थन से अमृत प्राप्ति के लिए देवताओं ने असुरों के साथ सन्धि कर ली। ब्रह्माजी ने भगवान् की स्तुति की और उनके दिव्य गुणों का वर्णन किया।",
+      "personasUsed": [
+        "vishnu",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-20T00:00:35.443Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 160,
+      "chapterTitle": "Chapter सात",
+      "cantoNumber": 8,
+      "imagePath": "chapter-160.jpg",
+      "prompt": "Lord Shiva drinks the venom on the ocean floor, saving the universe from destruction.",
+      "descriptionHi": "इस अध्याय में भगवान शिव द्वारा विषपान की कहानी है, जिसमें वे समुद्र मन्थन से निकले विष को पीकर सभी को संतुष्ट करते हैं। यह घटना ब्रह्माण्ड की रक्षा के लिए होती है।",
+      "generatedAt": "2026-06-20T02:00:21.751Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 161,
+      "chapterTitle": "Chapter आठ",
+      "cantoNumber": 8,
+      "imagePath": "chapter-161.jpg",
+      "prompt": "Vishnu, as Mohini, emerges from the Kshirasagara, captivating the asuras and securing the amrit for the deities.",
+      "descriptionHi": "इस अध्याय में समुद्र मन्थन के दौरान लक्ष्मीजी के प्रकट होने और भगवान् विष्णु को अपना पति स्वीकार करने की कथा बताई गई है। भगवान् विष्णु मोहिनी के रूप में प्रकट हुए और असुरों को मोहित कर देवताओं के लिए अमृत बचाया।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-20T03:00:29.358Z",
       "sceneIndex": 0
     },
     {
@@ -2205,6 +2282,75 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 163,
+      "chapterTitle": "Chapter दस",
+      "cantoNumber": 8,
+      "imagePath": "chapter-163.jpg",
+      "prompt": "Krishna stands in a serene landscape, surrounded by devotees, as He explains the significance of selfless work and devotion.",
+      "descriptionHi": "इस अध्याय में भगवान कृष्ण की भक्ति का महत्व बताया गया है, जिसमें कहा गया है कि कृष्ण की तुष्टि के लिए किये गये कार्य स्थायी तथा उत्तम होते हैं। भगवान कृष्ण ही हर एक वस्तु के एकमात्र भोक्ता तथा स्वामी हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-20T08:00:25.576Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 164,
+      "chapterTitle": "Chapter ग्यारह",
+      "cantoNumber": 8,
+      "imagePath": "chapter-164.jpg",
+      "prompt": "Lord Hari calmly overpowers his foe Kalanemi on a serene battlefield.",
+      "descriptionHi": "भगवान् हरि ने अपने शत्रु कालनेमि को मार डाला और फिर माली तथा सुमाली नामक दो शक्तिशाली असुरों को भी पराजित किया। इस प्रसंग में भगवान् की शक्ति और उनके शत्रुओं पर विजय का वर्णन किया गया है।",
+      "generatedAt": "2026-06-20T10:00:27.364Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 165,
+      "chapterTitle": "Chapter बारह",
+      "cantoNumber": 8,
+      "imagePath": "chapter-165.jpg",
+      "prompt": "Krishna and Draupadi witness Bali Maharaj's calm and composed demeanor despite his defeat, showcasing his profound devotion and wisdom.",
+      "descriptionHi": "इस अध्याय में बलि महाराज की पराजय और उनकी भक्ति की महत्ता का वर्णन है, जिसमें वे हार के बाद भी शोक नहीं करते हैं। भगवान कृष्ण की कृपा से उन्हें जीवन का सही अर्थ समझ में आता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "draupadi"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-20T11:00:30.998Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 166,
+      "chapterTitle": "Chapter तेरह",
+      "cantoNumber": 8,
+      "imagePath": "chapter-166.jpg",
+      "prompt": "Krishna reassures Kunti on a serene riverbank, promising to always protect his devoted followers.",
+      "descriptionHi": "भगवान् अपने भक्तों का पक्ष लेते हैं और उनकी रक्षा करने के लिए सदैव तैयार रहते हैं। कुन्ती के सामने भगवान् अपने भक्तों के प्रति अपने प्रेम को व्यक्त करते हैं। यह अध्याय भक्तों के लिए भगवान् के प्रेम और समर्थन को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "kunti"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-20T14:00:25.899Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 167,
+      "chapterTitle": "Chapter चौदह",
+      "cantoNumber": 8,
+      "imagePath": "chapter-167.jpg",
+      "prompt": "Lord Hari emerges from Vitana's womb, as King Parikshit and Brahma look on in awe, amidst a serene celestial setting.",
+      "descriptionHi": "इस अध्याय में चौदहवें मन्वन्तर का वर्णन किया गया है, जिसमें भगवान विताना के गर्भ से प्रकट होंगे और उनके पिता का नाम सत्रायण होगा। राजा परीक्षित और ब्रह्मा इस चर्चा में शामिल हैं। यह अध्याय आध्यात्मिक कार्यकलाप और मन्वन्तरों के महत्व को दर्शाता है।",
+      "personasUsed": [
+        "brahma",
+        "parikshit"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-20T19:00:37.953Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 168,
       "chapterTitle": "Chapter छब्बीस",
       "imagePath": "chapter-168.jpg",
@@ -2217,6 +2363,21 @@
       "generatedAt": "2026-04-12T09:05:30.550Z",
       "sceneIndex": 0,
       "cantoNumber": 8
+    },
+    {
+      "chapterNumber": 169,
+      "chapterTitle": "Chapter सोलह",
+      "cantoNumber": 8,
+      "imagePath": "chapter-169.jpg",
+      "prompt": "Krishna and Vishnu observe Bali Maharaj enjoying his kingdom's prosperity, surrounded by blissful subjects.",
+      "descriptionHi": "इस अध्याय में बलि महाराज की कथा का वर्णन किया गया है, जो अपने कार्यों से सन्तुष्ट हैं और राज्य का भोग कर रहे हैं। इसमें कृष्ण और विष्णु का उल्लेख है, जो ब्राह्मणों और क्षत्रियों के मार्गदर्शन में महत्वपूर्ण भूमिका निभाते हैं।",
+      "personasUsed": [
+        "krishna_adult",
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-21T03:00:27.054Z",
+      "sceneIndex": 0
     },
     {
       "chapterNumber": 170,
@@ -2240,6 +2401,26 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-15T13:44:15.287Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 172,
+      "chapterTitle": "Chapter उन्नीस",
+      "cantoNumber": 8,
+      "imagePath": "chapter-172.jpg",
+      "prompt": "Vamanadeva requests three steps of land from Bali Maharaja in a serene forest setting.",
+      "descriptionHi": "भगवान् वामन ने बलि महाराज से तीन पग भूमि की याचना की, जिसे बलि महाराज ने स्वीकार कर लिया। इस घटना में भगवान् वामन और बलि महाराज मुख्य पात्र हैं। यह घटना भक्ति और त्याग की भावना को दर्शाती है।",
+      "generatedAt": "2026-06-21T05:00:33.545Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 173,
+      "chapterTitle": "Chapter बीस",
+      "cantoNumber": 8,
+      "imagePath": "chapter-173.jpg",
+      "prompt": "Lord Vamandev stands before Bali Maharaj, requesting a gift in a serene and divine forest setting.",
+      "descriptionHi": "इस अध्याय में भगवान् वामनदेव द्वारा बलि महाराज से दान की याचना की जा रही है, जिसमें उन्हें अपना सब कुछ दान करने के लिए कहा जा रहा है। यह अध्याय सत्य और असत्य के महत्व को दर्शाता है।",
+      "generatedAt": "2026-06-21T21:06:25.818Z",
       "sceneIndex": 0
     },
     {
@@ -2560,6 +2741,187 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 201,
+      "chapterTitle": "Chapter चौबीस",
+      "cantoNumber": 9,
+      "imagePath": "chapter-201.jpg",
+      "prompt": "Krishna's ancestors gather in a grand palace, discussing their lineage and heritage with reverence and admiration.",
+      "descriptionHi": "भगवान श्रीकृष्ण के वंश का वर्णन किया गया है, जिसमें विदर्भ के तीन पुत्रों और उनके वंशजों का उल्लेख है। यह अध्याय श्रीकृष्ण के पूर्वजों और उनके परिवार के बारे में जानकारी प्रदान करता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-21T22:00:24.511Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 206,
+      "chapterTitle": "Chapter पाँच",
+      "cantoNumber": 10,
+      "imagePath": "chapter-206.jpg",
+      "prompt": "Asura ministers, filled with rajo and tamoguna, begin to harass sadhu personalities in a dark and ominous setting.",
+      "descriptionHi": "इस अध्याय में असुर मंत्रीगणों की मूर्खता और साधु पुरुषों के प्रति उनके विद्वेष का वर्णन किया गया है, जो उनके पतन का कारण बनता है। रजो और तमोगुण से पूर्ण असुरों ने साधु पुरुषों को सताना शुरू किया, जिसके परिणामस्वरूप उनकी दीर्घायु, सौन्दर्य, यश और धर्म नष्ट हो जाते हैं।",
+      "generatedAt": "2026-06-21T23:00:28.338Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 207,
+      "chapterTitle": "Chapter छह",
+      "cantoNumber": 10,
+      "imagePath": "chapter-207.jpg",
+      "prompt": "Krishna faces Putana in Gokul village as she attempts to harm the divine child.",
+      "descriptionHi": "इस अध्याय में नन्द महाराज और वसुदेव की भेंट के बाद नन्द महाराज गोकुल वापस लौटते हैं और पूतना नामक राक्षसी को मारा जाता है, जो कंस द्वारा भेजी गई थी। भगवान कृष्ण की उपस्थिति में राक्षसी का खतरा समाप्त हो जाता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-22T00:00:38.463Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 208,
+      "chapterTitle": "Chapter सात",
+      "cantoNumber": 10,
+      "imagePath": "chapter-208.jpg",
+      "prompt": "Krishna calmly overpowers Putana in a serene forest setting, demonstrating his divine power.",
+      "descriptionHi": "इस अध्याय में कृष्ण द्वारा पूतना के मारे जाने की कहानी है, जिसमें कृष्ण की बाल लीलाएँ और उनकी अद्भुत शक्तियाँ दिखाई गई हैं। नन्द महाराज का भोलापन भी इस अध्याय में दिखाया गया है। कृष्ण की इस लीला को सुनने से मनुष्य को आदि पुरुष गोविन्द के प्रति अनुरक्ति प्राप्त होती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-22T01:00:33.077Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 209,
+      "chapterTitle": "Chapter आठ",
+      "cantoNumber": 10,
+      "imagePath": "chapter-209.jpg",
+      "prompt": "Krishna's naming ceremony takes place in Nanda Maharaj's home, where Gargamuni performs the ritual amidst secrecy to avoid Kansa's attention.",
+      "descriptionHi": "इस अध्याय में भगवान कृष्ण के नामकरण-संस्कार का वर्णन हुआ है, जिसमें गर्गमुनि द्वारा उनका नामकरण किया गया था। इसमें कृष्ण के बचपन के कुछ रोचक प्रसंग भी वर्णित हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-22T02:00:48.352Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 210,
+      "chapterTitle": "Chapter नौ",
+      "cantoNumber": 10,
+      "imagePath": "chapter-210.jpg",
+      "prompt": "Krishna's mother Yashoda tries to bind him in Vrindavan after he becomes upset when she stops breastfeeding to attend to boiling milk.",
+      "descriptionHi": "इस अध्याय में भगवान कृष्ण की माता यशोदा द्वारा उनका बाँधा जाना वर्णित है, जो उनकी बाल लीलाओं का एक महत्वपूर्ण हिस्सा है। माता यशोदा कृष्ण को स्तन-पान करा रही थीं और उन्हें दूध उबलता देखकर उन्होंने तुरंत दूध के पास जाने का फैसला किया।",
+      "personasUsed": [
+        "krishna_adult",
+        "yashoda"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-22T03:00:32.573Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 211,
+      "chapterTitle": "Chapter दस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-211.jpg",
+      "prompt": "Krishna approaches the Yamalarjuna trees, where Narada's curse once transformed Nalakuvara and Manigriva, in a serene forest setting.",
+      "descriptionHi": "इस अध्याय में भगवान कृष्ण द्वारा यमलार्जुन वृक्षों का उद्धार किया जाता है, जो कुवेर के पुत्र नलकूवर और मणिग्रीव थे। नारदमुनि के शाप के कारण वे वृक्ष बन गए थे। कृष्ण की दिव्य शक्ति से उन्हें मुक्ति मिलती है।",
+      "personasUsed": [
+        "krishna_adult",
+        "narada"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-22T04:00:42.043Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 212,
+      "chapterTitle": "Chapter ग्यारह",
+      "cantoNumber": 10,
+      "imagePath": "chapter-212.jpg",
+      "prompt": "Krishna stands calmly between fallen trees, freed from a wooden mortar, as Nanda and elderly villagers gather around in wonder.",
+      "descriptionHi": "इस अध्याय में कृष्ण की बाल-लीलाएँ बताई गई हैं, जिसमें वे वत्सासुर और बकासुर का वध करते हैं। गोकुलवासी गोकुल छोड़ कर वृन्दावन चले गये और कृष्ण ने अपनी लीलाओं से सभी को आकर्षित किया।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-22T06:00:41.222Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 213,
+      "chapterTitle": "Chapter बारह",
+      "cantoNumber": 10,
+      "imagePath": "chapter-213.jpg",
+      "prompt": "Krishna enters the massive serpent's mouth in the forest to save his friends trapped inside.",
+      "descriptionHi": "इस अध्याय में कृष्ण ने अघासुर का वध किया, जो एक बड़ा असुर था। कृष्ण के मित्र उस असुर के मुख में घुस गए थे और कृष्ण ने उन्हें बचाने के लिए असुर का वध किया। यह घटना कृष्ण की शक्ति और उनके मित्रों के प्रति उनके प्रेम को दर्शाती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-22T07:00:28.077Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 214,
+      "chapterTitle": "Chapter तेरह",
+      "cantoNumber": 10,
+      "imagePath": "chapter-214.jpg",
+      "prompt": "Krishna reassures his worried friends in a serene forest setting, promising to find their stray calves.",
+      "descriptionHi": "इस अध्याय में ब्रह्माजी द्वारा ग्वालबालों तथा बछड़ों को चुराने के प्रयास का वर्णन है, जिसमें कृष्ण की दिव्य लीला और ब्रह्माजी के मोहित होने का वर्णन है। कृष्ण अपने संगी ग्वालबालों को प्रोत्साहित करते हैं और बछड़ों को ढूँढ़ने जाते हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-22T08:00:33.337Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 215,
+      "chapterTitle": "Chapter चौदह",
+      "cantoNumber": 10,
+      "imagePath": "chapter-215.jpg",
+      "prompt": "Krishna sits serenely as Brahma offers heartfelt praise and seeks forgiveness in a divine forest setting.",
+      "descriptionHi": "इस अध्याय में ब्रह्मा द्वारा भगवान् कृष्ण की स्तुति का वर्णन है, जहाँ ब्रह्मा उनके दिव्य अंगों की स्तुति करते हैं और उनकी माधुरी की मूल पहचान को समझने की कठिनता को स्वीकार करते हैं। यह अध्याय भगवान् की अचिन्त्य महिमा और ब्रह्मा की क्षमायाचना को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult",
+        "brahma"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-22T09:01:02.471Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 216,
+      "chapterTitle": "Chapter पन्द्रह",
+      "cantoNumber": 10,
+      "imagePath": "chapter-216.jpg",
+      "prompt": "Krishna and Balaram tend to their cattle in a serene forest, surrounded by friends and a tranquil lake.",
+      "descriptionHi": "इस अध्याय में कृष्ण और बलराम द्वारा धेनुकासुर का वध वर्णित है, जिसमें वे वृन्दावन की चरागाहों में गौवें चराते हुए इस दुष्ट असुर का सामना करते हैं। यह घटना कृष्ण की बहादुरी और दिव्य शक्तियों को दर्शाती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-22T10:00:34.681Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 217,
+      "chapterTitle": "Chapter सोलह",
+      "cantoNumber": 10,
+      "imagePath": "chapter-217.jpg",
+      "prompt": "Krishna dances on Kaliya's head in the Yamuna River, surrounded by the naga's wives, as the serpent submits to the Lord's power.",
+      "descriptionHi": "इस अध्याय में भगवान् कृष्ण द्वारा कालिय नाग को प्रताड़ना की लीला का वर्णन है, जिसमें कालिय नाग की पत्नियों द्वारा स्तुति किये जाने पर कालिय पर कृपा की जाती है। भगवान् कृष्ण यमुना नदी के जल को शुद्ध करने के लिए कालिय नाग से मिलते हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-22T11:00:44.418Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 218,
       "chapterTitle": "Chapter सत्रह",
       "cantoNumber": 10,
@@ -2585,6 +2947,118 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 220,
+      "chapterTitle": "Chapter उन्नीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-220.jpg",
+      "prompt": "Krishna calms a raging forest fire in Munjavana, protecting cows and cowherds with his divine power.",
+      "descriptionHi": "इस अध्याय में कृष्ण द्वारा मुञ्जारण्य में लगी महाग्नि से गौवों तथा ग्वालों की रक्षा की जानकारी दी गई है, जिसमें कrishna का प्रेम और शक्ति दिखाई देती है। कृष्ण ने अपनी दिव्य शक्ति से अग्नि को नियंत्रित किया और सभी जीवों की सुरक्षा की।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-22T12:00:37.067Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 221,
+      "chapterTitle": "Chapter बीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-221.jpg",
+      "prompt": "Krishna rescues gopalas from a forest fire in Vrindavan, bringing joy to the waiting gopis.",
+      "descriptionHi": "इस अध्याय में श्री कृष्ण की लीलाओं का वर्णन किया गया है, जिसमें वे दावाग्नि से ग्वालबालों को बचाते हैं और गोपियों को उनके विरह की अग्नि से मुक्त करते हैं। श्री शुकदेव गोस्वामी वृन्दावन की शोभा का वर्णन करते हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-22T13:00:42.625Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 222,
+      "chapterTitle": "Chapter इक्कीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-222.jpg",
+      "prompt": "Krishna stands in a lush forest as merchants, kings, and sages freely move about, resuming their activities after the rainy season.",
+      "descriptionHi": "भगवान कृष्ण की उपस्थिति में शरद ऋतु बहुत ही सुंदर थी, व्यापारी, राजा और ऋषि-मुनि अपने अभीष्ट पदार्थ प्राप्त करने के लिए स्वतंत्र थे। अध्यात्मवादियों ने भी इस देहरूपी बन्धन से मुक्त हो जाने पर अभीष्ट प्राप्त किया।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-22T14:00:34.730Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 223,
+      "chapterTitle": "Chapter बाईस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-223.jpg",
+      "prompt": "Krishna strolls through Vrindavan's forest, as gopis recount his playful deeds, becoming fully absorbed in his thoughts.",
+      "descriptionHi": "गोपियाँ कृष्ण की वृन्दावन में लीलाओं का वर्णन करती हुई उनके विचारों में पूर्णतया निमग्न हो जाती हैं। यह कृष्णभावनामृत का पूर्ण उदाहरण है, जिससे किसी न किसी तरह कृष्ण के विचारों में निमग्न रहा जा सकता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-22T20:00:29.926Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 224,
+      "chapterTitle": "Chapter तेईस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-224.jpg",
+      "prompt": "Krishna sends the cowherd boys to beg for food from the brahmanas and their wives by the Yamuna river.",
+      "descriptionHi": "इस अध्याय में भगवान श्रीकृष्ण ने ग्वालबालों को भोजन के लिए ब्राह्मणों से भिक्षा माँगने के लिए प्रोत्साहित किया, लेकिन ब्राह्मणों ने उन्हें उपेक्षा की। तब श्रीकृष्ण ने उन्हें ब्राह्मणपत्नियों से भोजन माँगने की सलाह दी।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-22T21:00:38.220Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 225,
+      "chapterTitle": "Chapter चौबीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-225.jpg",
+      "prompt": "Krishna stops the yajna for Indra and initiates the Govardhan Puja in a serene village setting.",
+      "descriptionHi": "इस अध्याय में कृष्ण द्वारा इन्द्र के निमित्त किये जाने वाले यज्ञ को रोक कर उसके बदले गोवर्धन-पूजा के यज्ञ का शुभारम्भ कराकर इन्द्र के गर्व को चूर करने का वर्णन है, जिसमें कृष्ण मुख्य पात्र हैं। कृष्ण की उपेक्षा करने से उनके द्वारा जो अपराध हुआ था उसका स्मरण करते हुए ब्राह्मणों ने व्रज जाकर भगवान् के चरणकमलों की शरण ग्रहण करनी चाही।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-22T22:00:44.028Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 226,
+      "chapterTitle": "Chapter पच्चीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-226.jpg",
+      "prompt": "Krishna inspires the cowherds to worship Govardhan Hill, where they perform a grand ceremony with cows and Brahmins in the scenic Vrindavan countryside.",
+      "descriptionHi": "भगवान् कृष्ण ने गोवर्धन पर्वत की पूजा के लिए गोपजनों को प्रेरित किया, जिसमें वे गौवें और ब्राह्मणों के साथ मिलकर यज्ञ सम्पन्न करते हैं। इस घटना में कृष्ण और गोपजन मुख्य पात्र हैं। गोवर्धन पूजा का यह आयोजन आध्यात्मिक और भावनात्मक रूप से महत्वपूर्ण है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-22T23:00:27.832Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 227,
+      "chapterTitle": "Chapter छब्बीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-227.jpg",
+      "prompt": "Krishna stands calmly in the midst of Gokul, surrounded by amazed gopas, as Nanda Maharaj shares tales of his divine prowess.",
+      "descriptionHi": "इस अध्याय में नन्द महाराज गोपों से कृष्ण के ऐश्वर्य का वर्णन करते हैं जिसे उन्होंने गर्ग मुनि के मुख से सुना था। गोपगण कृष्ण की शक्ति से अनजान होने के कारण उनके विविध असामान्य कार्यों को देखकर चकित रह जाते थे।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-23T00:00:39.905Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 228,
       "chapterTitle": "Chapter सताईस",
       "cantoNumber": 10,
@@ -2596,6 +3070,198 @@
       ],
       "personaVersion": 1,
       "generatedAt": "2026-04-15T14:32:37.671Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 229,
+      "chapterTitle": "Chapter अट्ठाईस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-229.jpg",
+      "prompt": "Krishna rescues Nand Maharaj from Varuna's realm on the riverbank, showcasing his divine power and love.",
+      "descriptionHi": "इस अध्याय में कृष्ण द्वारा वरुणलोक से नन्द महाराज के वापस लाये जाने का उल्लेख हुआ है, जो कि ग्वालों द्वारा वैकुण्ठ दर्शन करने का एक महत्वपूर्ण क्षण है। भगवान कृष्ण ने अपने प्रेम और शक्ति का प्रदर्शन किया।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-23T01:00:28.271Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 230,
+      "chapterTitle": "Chapter उन्तीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-230.jpg",
+      "prompt": "Krishna reveals his divine realm to Nanda Maharaj and other cowherds by a serene riverbank.",
+      "descriptionHi": "नन्द महाराज और अन्य ग्वाले कृष्ण को वेदों से घिरे हुए देखकर परम सुख की अनुभूति करते हैं। कृष्ण उन्हें अपना निजी धाम दिखलाते हैं जो वृन्दावन के समान है। यह घटना ग्वालों को कृष्ण के अद्वितीय सौभाग्य को समझने में मदद करती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-23T02:00:29.238Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 231,
+      "chapterTitle": "Chapter तीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-231.jpg",
+      "prompt": "Krishna suddenly disappears, leaving the gopis to search for him in the forest, asking all creatures about his whereabouts.",
+      "descriptionHi": "इस अध्याय में गोपियों द्वारा कृष्ण की खोज का वर्णन है, जहाँ वे उनके साथ बिछुड़ने के बाद उन्हें जंगल में ढूँढ़ती हैं। भगवान कृष्ण की अन्तर्धान होने से गोपियाँ अत्यधिक व्यथित हो जाती हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-23T03:00:23.326Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 232,
+      "chapterTitle": "Chapter इकतीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-232.jpg",
+      "prompt": "Krishna's devotees gather by the Yamuna River, singing and longing for his return.",
+      "descriptionHi": "गोपियाँ कृष्ण के विचारों में लीन हो जाती हैं और उनके गुणों का गुणगान करने लगती हैं। वे अपने घरों को भूल जाती हैं और कृष्ण की उपस्थिति से पूरित अनुभव करती हैं। गोपियाँ फिर से कालिन्दी के किनारे आकर कृष्ण का ध्यान करती हैं और उनके आगमन की आशा लगाती हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-23T04:00:30.146Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 233,
+      "chapterTitle": "Chapter बत्तीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-233.jpg",
+      "prompt": "Krishna comforts the distressed gopis in a serene forest setting, alleviating their sorrow with his divine presence.",
+      "descriptionHi": "इस अध्याय में श्रीकृष्ण और गोपियों के पुनः मिलाप का वर्णन है, जो उनके विछोह के कारण अत्यधिक विक्षुब्ध हो चुकी थीं। श्रीकृष्ण ने गोपियों को ढाढ़स दिलाई और उन्हें गहन आनन्द की अनुभूति कराई।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-23T05:00:25.014Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 234,
+      "chapterTitle": "Chapter तैंतीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-234.jpg",
+      "prompt": "Krishna dances with his beloved gopis on the riverbank, surrounded by a serene forest landscape.",
+      "descriptionHi": "इस अध्याय में भगवान् श्रीकृष्ण के रास नृत्य का वर्णन है, जिसमें वे अपनी प्रिय सखियों के साथ यमुना नदी के तट पर जंगल में रचाया। गोपियाँ कृष्ण के साथ अनेक रूपों में अपना विस्तार करती हैं और रासनृत्य का आनन्द लेती हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-23T06:00:30.912Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 235,
+      "chapterTitle": "Chapter चौंतीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-235.jpg",
+      "prompt": "Krishna touches the serpent with his divine feet, freeing Nand Maharaj in the Ambika forest.",
+      "descriptionHi": "इस अध्याय में भगवान् श्रीकृष्ण ने अपने पिता नन्द महाराज को सर्प के चंगुल से छुड़ाया और सुदर्शन नामक एक विद्याधर का आंगिरस मुनियों के श्राप से उद्धार किया। भगवान् श्रीकृष्ण की दिव्य शक्ति और उनके प्रेम का प्रदर्शन हुआ।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-23T07:00:27.204Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 236,
+      "chapterTitle": "Chapter पैंतीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-236.jpg",
+      "prompt": "Krishna plays his flute in the forest, entrancing the gopis and heavenly beings with his enchanting melody.",
+      "descriptionHi": "इस अध्याय में गोपियों के गीत हैं जो कृष्ण के प्रति अपना विरह-भाव व्यक्त करती हैं, जब कृष्ण दिन के समय जंगल चले जाते हैं। गोपियों का विरह-भाव तीव्र होता जाता है और वे कृष्ण का सौन्दर्य गाती हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-23T08:00:43.202Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 237,
+      "chapterTitle": "Chapter छत्तीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-237.jpg",
+      "prompt": "Krishna and the gopis joyfully sing and dance together in the lush forests of Vrindavan, immersed in divine love and bliss.",
+      "descriptionHi": "इस अध्याय में कृष्ण द्वारा अरिष्टासुर का वध किया जाता है, जिसमें कृष्ण और गोपियों के बीच आध्यात्मिक प्रेम और आनन्द का वर्णन है। गोपियाँ कृष्ण की लीलाओं का गान करते हुए आनन्द लूटती हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-23T09:00:32.532Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 238,
+      "chapterTitle": "Chapter सैंतीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-238.jpg",
+      "prompt": "Kans instructs Akruro in the palace, amidst concerned ministers and servants.",
+      "descriptionHi": "इस अध्याय में अक्रूर और कंस के बीच एक महत्वपूर्ण बातचीत होती है, जहाँ अक्रूर कंस को उसके आदेश का पालन करने की बात कहता है। यहाँ पर श्रीशुकदेव जी इस पूरे वार्तालाप को सुनाते हैं।",
+      "generatedAt": "2026-06-23T10:01:41.185Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 239,
+      "chapterTitle": "Chapter अड़तीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-239.jpg",
+      "prompt": "Krishna and Balaram welcome Akrur in Vrindavan, honoring his arrival with respect and affection.",
+      "descriptionHi": "इस अध्याय में अक्रूर की मथुरा से वृन्दावन की यात्रा का वर्णन है, जहां वे कृष्ण और बलराम से मिलते हैं। अक्रूर को कंस के आदेश पर कृष्ण और बलराम को मथुरा ले जाना है, लेकिन वे इसे एक अवसर के रूप में देखते हैं कि वे भगवान के दर्शन प्राप्त करेंगे।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-23T11:00:30.116Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 240,
+      "chapterTitle": "Chapter उनतालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-240.jpg",
+      "prompt": "Krishna and Balaram warmly welcome Akruur by the serene riverside of Yamuna.",
+      "descriptionHi": "अक्रूर ने भगवान् कृष्ण तथा भगवान् बलराम को कंस की योजनाओं की सूचना दी, जिससे कृष्ण को मथुरा जाना पड़ा। इस घटना में गोपियाँ व्यथित होकर क्रन्दन करने लगीं। अक्रूर को यमुना के जल में विष्णु-धाम का दर्शन हुआ।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-23T12:00:39.338Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 241,
+      "chapterTitle": "Chapter चालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-241.jpg",
+      "prompt": "Akruur bows to Lord Vishnu on a serene riverbank, overcome with devotion and joy.",
+      "descriptionHi": "महाभागवत अक्रूर ने भगवान विष्णु को देखकर अत्यधिक प्रसन्न हो उठे और उनमें दिव्य शक्ति जाग उठी। अक्रूर को रोमांच हो आया और नेत्रों से अश्रु बह चले। यह दृश्य अक्रूर की भक्ति और प्रेम को दर्शाता है।",
+      "personasUsed": [
+        "vishnu"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-23T13:00:30.451Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 242,
+      "chapterTitle": "Chapter इकतालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-242.jpg",
+      "prompt": "Krishna stands serenely on a riverbank as a divine seeker humbly bows at His feet, seeking refuge and liberation from the cycle of life.",
+      "descriptionHi": "इस अध्याय में भगवान की कृपा और शुद्ध भक्तों की सेवा के माध्यम से भौतिक जीवन के चक्र से मुक्ति पाने की बात कही गई है, जिसमें भगवान के चरणों में शरण लेने का महत्व बताया गया है। यह अध्याय भगवान की दया और भक्तों की भक्ति को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-23T14:00:24.260Z",
       "sceneIndex": 0
     },
     {
@@ -3386,5 +4052,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-06-18T15:00:30.467Z"
+  "lastUpdated": "2026-06-23T14:00:24.260Z"
 }
