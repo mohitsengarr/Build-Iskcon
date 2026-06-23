@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRoute, Link } from "wouter";
+import { supabase } from "@/lib/supabase";
 import {
   ArrowLeft, Search, MoreVertical, Send, Smile, Paperclip, Camera, Mic,
   CheckCheck, MessageSquarePlus, Grid3x3, MessagesSquare, X,
@@ -215,10 +216,21 @@ function ChatList() {
     setLoading(false);
   }, []);
 
+  // Realtime: any INSERT into any room bumps the list instantly. A 45s poll
+  // is kept purely as a fallback in case the socket silently drops between
+  // supabase-js's own reconnects.
   useEffect(() => {
     fetchOverview();
-    const t = setInterval(fetchOverview, 10000);
-    return () => clearInterval(t);
+    const channel = supabase
+      .channel("chat-overview")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "bhaktigram_chat_messages" },
+        () => fetchOverview(),
+      )
+      .subscribe((status) => { if (status === "SUBSCRIBED") fetchOverview(); });
+    const t = setInterval(fetchOverview, 45000);
+    return () => { clearInterval(t); supabase.removeChannel(channel); };
   }, [fetchOverview]);
 
   return (
@@ -321,14 +333,44 @@ function ChatRoom({ room }: { room: Room }) {
     } catch { /* offline */ }
   }, [room.slug]);
 
-  // Initial load + poll while the room is open.
+  // Merge one socket-delivered INSERT into state, de-duping against rows we
+  // already have and against our own optimistic bubble (matched by
+  // device_id + body, since the optimistic row carries a temp id, not the
+  // real serial one).
+  const mergeIncoming = useCallback((row: ChatMessage) => {
+    setMessages(prev => {
+      if (prev.some(m => m.id === row.id)) return prev; // already have the real row
+      if (row.device_id === getDeviceId()) {
+        const pendingIdx = prev.findIndex(m => m.device_id === row.device_id && m.body === row.body && m.id > 1e12);
+        if (pendingIdx >= 0) {
+          const next = prev.slice();
+          next[pendingIdx] = row; // promote optimistic → real
+          return next;
+        }
+      }
+      return [...prev, row];
+    });
+  }, []);
+
+  // Initial history load + Realtime socket for this room. supabase-js manages
+  // the websocket, heartbeats and reconnects; on every (re)subscribe we
+  // re-pull history to catch anything missed while connecting. A 45s poll
+  // remains as a last-resort fallback.
   useEffect(() => {
     setMessages([]);
     lastIdRef.current = 0;
     fetchMessages();
-    const t = setInterval(fetchMessages, 5000);
-    return () => clearInterval(t);
-  }, [fetchMessages]);
+    const channel = supabase
+      .channel(`chat:${room.slug}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "bhaktigram_chat_messages", filter: `room=eq.${room.slug}` },
+        (payload) => mergeIncoming(payload.new as ChatMessage),
+      )
+      .subscribe((status) => { if (status === "SUBSCRIBED") fetchMessages(); });
+    const t = setInterval(fetchMessages, 45000);
+    return () => { clearInterval(t); supabase.removeChannel(channel); };
+  }, [fetchMessages, mergeIncoming, room.slug]);
 
   // Keep pinned to the newest message as messages arrive.
   useEffect(() => {
