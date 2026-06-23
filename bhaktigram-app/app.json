@@ -19,6 +19,12 @@
     },
     "android": {
       "package": "com.buildiskcon.bhaktigram"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "9d4fad16-a959-460b-b096-d0108b5f1b07"
+      }
+    },
+    "owner": "mohitsengarr"
   }
 }
