@@ -3265,6 +3265,260 @@
       "sceneIndex": 0
     },
     {
+      "chapterNumber": 243,
+      "chapterTitle": "Chapter बयालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-243.jpg",
+      "prompt": "Krishna gently heals the hunchback of Trivakra, a young servant, in the streets of Mathura.",
+      "descriptionHi": "इस अध्याय में भगवान् कृष्ण और बलराम की मित्रता और दयालुता का वर्णन है, विशेष रूप से त्रिवक्रा नामक एक कुबड़ी दासी के साथ। कृष्ण ने उसकी कूबड़ को ठीक किया और उसकी मानसिक पीड़ा दूर करने का वादा किया।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-23T15:00:28.186Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 244,
+      "chapterTitle": "Chapter तैंतालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-244.jpg",
+      "prompt": "Nanda Maharaj and other cowherds present their offerings to Kansa in a grand assembly hall.",
+      "descriptionHi": "नंद महाराज और अन्य ग्वालों ने कंस को अपनी भेंटें पेश कीं और एक दीर्घा में बैठ गए। इस घटना में नंद महाराज और कंस मुख्य पात्र हैं और यह घटना उनके giữa संबंधों को दर्शाती है।",
+      "generatedAt": "2026-06-23T16:00:33.287Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 245,
+      "chapterTitle": "Chapter चवालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-245.jpg",
+      "prompt": "Krishna and Balarama overpower the wrestlers in the royal arena, as the crowd watches in awe.",
+      "descriptionHi": "इस अध्याय में कृष्ण और बलराम के द्वारा कंस वध की कहानी बताई गई है, जिसमें वे पहलवानों को हराते हैं और कंस को पराजित करते हैं। यह घटना कृष्ण की शक्ति और बलराम की वीरता को दर्शाती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-23T17:00:22.010Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 246,
+      "chapterTitle": "Chapter पैंतालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-246.jpg",
+      "prompt": "Krishna and Balaram comfort their emotional parents, Devaki and Vasudeva, in the palace.",
+      "descriptionHi": "इस अध्याय में कृष्ण ने अपने माता-पिता देवकी और वसुदेव को सान्त्वना दी और उग्रसेन को राजा के रूप में प्रतिष्ठित किया। कृष्ण और बलराम ने अपनी शिक्षा पूरी की और अपने गुरु के मृत पुत्र को वापस लाये।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-23T18:00:30.178Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 247,
+      "chapterTitle": "Chapter छियालिस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-247.jpg",
+      "prompt": "Krishna sends Udhdhava to Vrindavan in a chariot to comfort Nanda, Yashoda, and the gopis.",
+      "descriptionHi": "इस अध्याय में कृष्ण ने उद्धव को व्रज भेजा ताकि वे नन्द, यशोदा और गोपियों के दुख को दूर कर सकें। उद्धव ने रथ पर चढ़कर व्रज पहुँचे और गौवों को गोकुल में चरते हुए देखा।",
+      "personasUsed": [
+        "krishna_adult",
+        "yashoda"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-23T19:00:27.853Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 248,
+      "chapterTitle": "Chapter सैंतालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-248.jpg",
+      "prompt": "Uddhva meets the gopis in a serene forest setting, conveying Krishna's message and offering comfort to the distressed women.",
+      "descriptionHi": "इस अध्याय में भगवान श्रीकृष्ण के आदेश से उद्धव द्वारा गोपियों को सन्देश देने और उन्हें ढाढ़स बँधाने का वर्णन है। गोपियों ने उद्धव को कृष्ण से मिलता-जुलता पाया और उन्हें एकान्त स्थान में ले जाकर गोपनीय बातें कीं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-23T20:00:28.740Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 249,
+      "chapterTitle": "Chapter अड़तालीस",
+      "cantoNumber": 10,
+      "imagePath": "chapter-249.jpg",
+      "prompt": "Krishna lies on a luxurious bed, embracing Trivakra in her elaborately decorated home.",
+      "descriptionHi": "इस अध्याय में कृष्ण अपने भक्तों की तुष्टि के लिए त्रिवक्रा के यहाँ जाते हैं और उसके साथ संभोग करते हैं। इसके बाद अक्रूर के यहाँ जाते हैं और भगवान् पाण्डवों को प्रसन्न करने के लिए अक्रूर को हस्तिनापुर भेजते हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-23T22:00:30.273Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 250,
+      "chapterTitle": "Chapter उनचास",
+      "cantoNumber": 10,
+      "imagePath": "chapter-250.jpg",
+      "prompt": "Kunti, with tearful eyes, asks Akruра about Krishna's concern for her and her sons, while Vidura stands by in the palace of Hastinapur.",
+      "descriptionHi": "इस अध्याय में अक्रूर के हस्तिनापुर जाने और धृतराष्ट्र के पाण्डवों के प्रति दुर्व्यवहार को देखने का वर्णन है, जहाँ विदुर और कुन्तीदेवी ने उन्हें पाण्डवों की विपदा के बारे में बताया। कुन्तीदेवी ने अक्रूर से कृष्ण को याद किया और उनकी रक्षा के लिए प्रार्थना की।",
+      "personasUsed": [
+        "krishna_adult",
+        "kunti",
+        "vidura"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-23T23:00:25.353Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 251,
+      "chapterTitle": "Chapter पचास",
+      "cantoNumber": 10,
+      "imagePath": "chapter-251.jpg",
+      "prompt": "Krishna listens intently as Akruur recounts Dhritarashtra's intentions in the palace of Dwaraka.",
+      "descriptionHi": "इस अध्याय में अक्रूर द्वारा धृतराष्ट्र के अभिप्राय को समझने और कृष्ण को सूचित करने का वर्णन है, जो कि पाण्डवों के प्रति धृतराष्ट्र के बर्ताव को लेकर है। इसमें कृष्ण, अक्रूर, धृतराष्ट्र और पाण्डवों के बीच के संबंधों का वर्णन है।",
+      "personasUsed": [
+        "krishna_adult",
+        "dhritarashtra"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-24T05:00:31.030Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 252,
+      "chapterTitle": "Chapter इक्यावन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-252.jpg",
+      "prompt": "Krishna leads Kalyavan to a cave where Mucukund awaits, resulting in Kalyavan's demise near the ancient king.",
+      "descriptionHi": "इस अध्याय में कृष्ण और मुचुकुन्द के बीच की घटना का वर्णन किया गया है, जिसमें कालयवन का अंत होता है। मुचुकुन्द की वक्र दृष्टि से कालयवन का वध होता है। कृष्ण और मुचुकुन्द के बीच एक महत्वपूर्ण वार्ता होती है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-24T06:00:28.857Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 253,
+      "chapterTitle": "Chapter बावन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-253.jpg",
+      "prompt": "Krishna advises the king to atone for his sins through devotion in a serene forest setting.",
+      "descriptionHi": "भगवान् कृष्ण ने राजन् को समझाया कि उन्हें अपने पापों को मिटाने के लिए तपस्या करनी चाहिए और उनके शरण में रहना चाहिए। अगले जन्म में राजन् श्रेष्ठ ब्राह्मण बनेगा और भगवान् कृष्ण के पास आएगा।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-24T07:00:27.016Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 254,
+      "chapterTitle": "Chapter तिरपन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-254.jpg",
+      "prompt": "Krishna arrives in Kundin, the capital of Vidarbha, to rescue Rukmini from her unwanted marriage amidst opposition from her brother Rukmi and other powerful kings.",
+      "descriptionHi": "भगवान् श्रीकृष्ण ने रुक्मिणी का अपहरण किया और विदर्भ की राजधानी कुण्डिन में उसका पत्र सुनने के बाद उन्होंने यह निर्णय लिया। रुक्मिणी के भाई रुक्मी ने कृष्ण के साथ उसके विवाह का विरोध किया था। इस अध्याय में कृष्ण और रुक्मिणी के बीच के प्रेम की कहानी को दर्शाया गया है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-24T08:00:28.885Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 255,
+      "chapterTitle": "Chapter चौवन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-255.jpg",
+      "prompt": "Krishna rescues Rukmini from opposing kings on the battlefield near her kingdom.",
+      "descriptionHi": "इस अध्याय में श्रीकृष्ण और रुक्मिणी के विवाह की कहानी बताई गई है, जहां श्रीकृष्ण ने रुक्मिणी का अपहरण किया और विरोधी राजाओं को परास्त किया। यह अध्याय कृष्ण की शक्ति और रुक्मिणी के प्रति उनके प्रेम को दर्शाता है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-24T09:00:25.773Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 256,
+      "chapterTitle": "Chapter पचपन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-256.jpg",
+      "prompt": "Krishna and Rukmini stand together in Dvarka, surrounded by joyful citizens, as news of their union spreads and royal families gather to celebrate.",
+      "descriptionHi": "इस अध्याय में कृष्ण और रुक्मिणी के विवाह का वर्णन है, जिसमें विभिन्न राजवंशों के लोग उत्सव में भाग लेते हैं और रुक्मिणी के हरण की कहानी सुनकर चकित होते हैं। द्वारका के निवासी कृष्ण और रुक्मिणी को देखकर प्रमुदित होते हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-24T10:00:30.919Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 257,
+      "chapterTitle": "Chapter छप्पन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-257.jpg",
+      "prompt": "Krishna requests Satrajit to hand over the Syamantaka gem to Ugrasen in the palace of Dwaraka.",
+      "descriptionHi": "भगवान् कृष्ण ने स्यमन्तक मणि को फिर से प्राप्त किया और जाम्बवान तथा सत्राजित की कन्याओं से विवाह किया, भगवान् ने स्यमन्तक मणि विषयक लीला करके भौतिक सम्पत्ति की व्यर्थता सिद्ध कर दी। इस अध्याय में भगवान् कृष्ण, परीक्षित और शुकदेव प्रमुख पात्र हैं।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-24T11:00:25.259Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 258,
+      "chapterTitle": "Chapter सत्तावन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-258.jpg",
+      "prompt": "Krishna and Balaram pursue Shatadhanva through the streets of Dwaraka, determined to recover the stolen Syamantaka jewel.",
+      "descriptionHi": "The chapter सत्तावन describes the events following the murder of Satrajit by Shatadhanva, who steals the Syamantaka jewel. Krishna returns to Dwaraka with Balaram to avenge the death and retrieve the jewel. The story highlights Krishna's role in upholding justice and protecting his devotees.",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-24T12:00:26.995Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 259,
+      "chapterTitle": "Chapter अट्ठावन",
+      "cantoNumber": 10,
+      "imagePath": "chapter-259.jpg",
+      "prompt": "Krishna meets Draupadi and Kunti in the palace of Indraprastha, receiving warm greetings and respect from the Pandavas.",
+      "descriptionHi": "इस अध्याय में भगवान् कृष्ण का पाँच राजकुमारियों से विवाह और पाण्डवों से मिलने इन्द्रप्रस्थ जाने का वर्णन है। भगवान् कृष्ण, द्रौपदी, कुन्ती और विष्णु इस अध्याय के मुख्य पात्र हैं। इस अध्याय में शान्ति और मंगल की प्राप्ति का महत्व बताया गया है।",
+      "personasUsed": [
+        "krishna_adult",
+        "kunti",
+        "draupadi"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-24T13:00:36.554Z",
+      "sceneIndex": 0
+    },
+    {
+      "chapterNumber": 260,
+      "chapterTitle": "Chapter उनसठ",
+      "cantoNumber": 10,
+      "imagePath": "chapter-260.jpg",
+      "prompt": "Krishna and Satyabhama ride on Garuda towards Naraka's kingdom to rescue the abducted women.",
+      "descriptionHi": "भगवान् कृष्ण ने नरकासुर को हराया और उसके द्वारा अपहरण की गईं हजारों युवतियों से विवाह किया। इस अध्याय में भगवान् कृष्ण की वीरता और दया का वर्णन किया गया है।",
+      "personasUsed": [
+        "krishna_adult"
+      ],
+      "personaVersion": 1,
+      "generatedAt": "2026-06-24T14:00:30.618Z",
+      "sceneIndex": 0
+    },
+    {
       "chapterNumber": 267,
       "chapterTitle": "Chapter छियासठ",
       "imagePath": "chapter-267.jpg",
@@ -4052,5 +4306,5 @@
       "cantoNumber": 12
     }
   ],
-  "lastUpdated": "2026-06-23T14:00:24.260Z"
+  "lastUpdated": "2026-06-24T14:00:30.618Z"
 }
