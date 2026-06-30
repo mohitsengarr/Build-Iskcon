@@ -1,9 +1,17 @@
 {
-  "lastAuditedChapter": 266,
+  "lastAuditedChapter": 265,
   "totalIssuesFixed": 43,
-  "lastRunAt": "2026-04-13T22:10:46.920Z",
-  "status": "running",
+  "lastRunAt": "2026-06-30T01:00:01.388Z",
+  "status": "idle",
   "log": [
+    {
+      "chapter": 265,
+      "timestamp": "2026-06-30T01:00:01.388Z",
+      "issues": [
+        "Low तात्पर्य count (9) vs shloks (52) — some commentaries may be missed"
+      ],
+      "fixes": []
+    },
     {
       "chapter": 266,
       "timestamp": "2026-04-13T22:10:46.918Z",
@@ -510,13 +518,7 @@
       "timestamp": "2026-04-12T22:07:01.375Z",
       "issues": [],
       "fixes": []
-    },
-    {
-      "chapter": 7,
-      "timestamp": "2026-04-12T21:37:01.109Z",
-      "issues": [],
-      "fixes": []
     }
   ],
-  "startedAt": "2026-06-18T01:00:00.223Z"
+  "startedAt": "2026-06-30T01:00:00.988Z"
 }
