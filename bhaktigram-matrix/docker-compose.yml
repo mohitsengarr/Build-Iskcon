@@ -1,0 +1,43 @@
+# Bhaktigram chat — self-hosted Matrix homeserver (Synapse Community, free).
+#
+# Two containers on one small VPS (~2 GB RAM is comfortable):
+#   - synapse : the Matrix homeserver (client API on 8008, plaintext)
+#   - db      : PostgreSQL 16 (Synapse requires Postgres 13+; the upstream
+#               contrib compose pins 12 — do NOT use that)
+#
+# TLS is terminated by your reverse proxy on :443 (see reverse-proxy/nginx.conf);
+# only the plaintext 8008 client listener is published to the host loopback, so
+# Synapse is never directly reachable from the internet. Federation (8448) is
+# intentionally NOT published — this is a closed, single-community server.
+#
+# Bring-up order is in README.md (you must run the one-shot `generate` step and
+# edit files/homeserver.yaml BEFORE the first `docker compose up -d`).
+
+services:
+  synapse:
+    image: docker.io/matrixdotorg/synapse:latest
+    container_name: bhaktigram-synapse
+    restart: unless-stopped
+    environment:
+      - SYNAPSE_CONFIG_PATH=/data/homeserver.yaml
+      - TZ=UTC
+    volumes:
+      - ./files:/data          # homeserver.yaml, signing keys, registration secret
+    depends_on:
+      - db
+    ports:
+      - "127.0.0.1:8008:8008"  # loopback only — the reverse proxy fronts this
+
+  db:
+    image: docker.io/postgres:16-alpine
+    container_name: bhaktigram-synapse-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=synapse
+      - POSTGRES_PASSWORD=CHANGE_ME_STRONG_DB_PASSWORD
+      - POSTGRES_DB=synapse
+      # MANDATORY: C collation + UTF-8. Only applied on FIRST init (empty volume).
+      # Wrong collation => Synapse refuses to start and you must recreate the DB.
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data

@@ -1,4 +1,15 @@
-// Supabase Edge Function: approve-instagram-post (v7)
+// Supabase Edge Function: approve-instagram-post (v8)
+//
+// v8 changes:
+// - APPROVAL DECOUPLED FROM PUBLISHING. v7 returned 502 and left the post
+//   `pending` whenever Buffer couldn't publish — so a Buffer outage (e.g. an
+//   unauthorized API token) blocked ALL approvals, including the ones that only
+//   feed the in-app Bhaktigram feed/gallery and don't need Buffer at all. Now
+//   Approve always marks the post approved; Buffer publishing is best-effort and
+//   any failure is recorded as a non-fatal note (error_message), not a block.
+// - Buffer GraphQL errors are now surfaced. bufferGQL only checked the HTTP
+//   status, so a 200-with-FORBIDDEN ("Not authorized to access this resource")
+//   was mislabelled as "no channels connected". The real cause is now reported.
 //
 // v7 changes:
 // - REJECT REGEN NOW RUNS IN THE BACKGROUND (EdgeRuntime.waitUntil). v6
@@ -41,6 +52,14 @@ async function queueToBuffer(imgUrl: string, caption: string, hashtags: string):
   errors: Array<{ service: string; channelId: string; error: string }>;
 }> {
   const cr = await bufferGQL(`query { account { organizations { channels { id name service } } } }`);
+  // Buffer returns HTTP 200 even when the API token is unauthorized — the real
+  // cause arrives as a GraphQL `errors` entry (e.g. FORBIDDEN "Not authorized
+  // to access this resource"), which nulls `account`. Surface that instead of
+  // the misleading "no channels connected".
+  const gqlErrors: string[] = ((cr?.errors || []) as Array<{ message?: string }>).map(e => e?.message).filter(Boolean) as string[];
+  if (gqlErrors.length > 0 && !cr?.data?.account) {
+    throw new Error(`Buffer authorization failed: ${gqlErrors.join("; ")} — re-authorize the Buffer API token at https://publish.buffer.com`);
+  }
   const chs: BufferChannel[] = [];
   for (const o of cr?.data?.account?.organizations || []) {
     for (const c of o.channels || []) {
@@ -48,7 +67,8 @@ async function queueToBuffer(imgUrl: string, caption: string, hashtags: string):
     }
   }
   if (chs.length === 0) {
-    throw new Error("No Instagram/Threads channels connected in Buffer. Reconnect at https://publish.buffer.com");
+    const why = gqlErrors.length > 0 ? ` (${gqlErrors.join("; ")})` : "";
+    throw new Error(`No Instagram/Threads channels available in Buffer${why}. Reconnect/re-authorize at https://publish.buffer.com`);
   }
   const results: Array<{ service: string; postId: string }> = [];
   const errors: Array<{ service: string; channelId: string; error: string }> = [];
@@ -207,19 +227,17 @@ Deno.serve(async (req: Request) => {
       topLevelError = String(err);
     }
 
-    if (bufferResults.length === 0) {
-      const combined = topLevelError
-        || bufferErrors.map(e => `${e.service}(${e.channelId}): ${e.error}`).join(" | ")
-        || "Buffer returned no successful channels";
-      await supabase
-        .from("ig_pending_review")
-        .update({ error_message: combined })
-        .eq("id", id);
-      return new Response(
-        JSON.stringify({ error: combined, id, channelErrors: bufferErrors }),
-        { status: 502, headers: corsHeaders },
-      );
-    }
+    // DECOUPLED FROM PUBLISHING: approval ALWAYS marks the post approved (it
+    // then surfaces in the gallery + in-app Bhaktigram feed). Publishing to
+    // Buffer is best-effort — a Buffer outage (e.g. an unauthorized API token)
+    // is recorded as a non-fatal note on the row, never a block. Instagram/
+    // Threads posting resumes automatically once the Buffer token is fixed.
+    const published = bufferResults.length > 0;
+    const publishNote = !published
+      ? (topLevelError
+          || bufferErrors.map(e => `${e.service}(${e.channelId}): ${e.error}`).join(" | ")
+          || "Buffer returned no successful channels")
+      : (bufferErrors.length > 0 ? bufferErrors.map(e => `${e.service}: ${e.error}`).join(" | ") : null);
 
     const { error: upErr } = await supabase
       .from("ig_pending_review")
@@ -227,13 +245,25 @@ Deno.serve(async (req: Request) => {
         status: "approved",
         buffer_post_ids: bufferResults,
         reviewed_at: new Date().toISOString(),
-        error_message: bufferErrors.length > 0 ? bufferErrors.map(e => `${e.service}: ${e.error}`).join(" | ") : null,
+        // Non-fatal publishing note (null only when every channel posted OK).
+        error_message: publishNote,
       })
       .eq("id", id);
     if (upErr) throw new Error(`Approve update: ${upErr.message}`);
 
     return new Response(
-      JSON.stringify({ success: true, status: "approved", id, buffer: bufferResults, partialErrors: bufferErrors }),
+      JSON.stringify({
+        success: true,
+        status: "approved",
+        id,
+        published,
+        buffer: bufferResults,
+        publishNote,
+        partialErrors: bufferErrors,
+        message: published
+          ? `Approved and queued to ${bufferResults.length} channel(s).`
+          : `Approved (saved to the app feed). Instagram/Threads publishing skipped: ${publishNote}`,
+      }),
       { headers: corsHeaders },
     );
   } catch (err) {

@@ -5,16 +5,32 @@ import { StatusBar } from "expo-status-bar";
 import Feed from "./src/screens/Feed";
 import ChatList from "./src/screens/ChatList";
 import ChatRoom from "./src/screens/ChatRoom";
+import Books from "./src/screens/Books";
+import BookReader from "./src/screens/BookReader";
 import { Room, COLORS } from "./src/lib";
+import { Chapter } from "./src/books";
 
-// Deliberately no navigation library — the surface is small (Feed, Chat list,
-// Chat room), so plain state switching keeps the dependency tree minimal and
-// the first APK build low-risk.
-type Tab = "feed" | "chat";
+// Deliberately no navigation library — the surface is small (Feed, Books, Chat),
+// so plain state switching keeps the dependency tree minimal and the APK build
+// low-risk.
+type Tab = "feed" | "books" | "chat";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("feed");
   const [activeRoom, setActiveRoom] = useState<Room | null>(null);
+  const [activeChapter, setActiveChapter] = useState<Chapter | null>(null);
+
+  // A book chapter takes over the whole screen (its own header + back).
+  if (activeChapter) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar style="dark" />
+        <SafeAreaView style={styles.flex} edges={["top", "bottom"]}>
+          <BookReader chapter={activeChapter} onBack={() => setActiveChapter(null)} />
+        </SafeAreaView>
+      </SafeAreaProvider>
+    );
+  }
 
   // A room conversation takes over the whole screen (its own header + back).
   if (activeRoom) {
@@ -35,12 +51,18 @@ export default function App() {
         <View style={styles.flex}>
           {tab === "feed"
             ? <Feed />
-            : <ChatList onOpenRoom={(r) => setActiveRoom(r)} />}
+            : tab === "books"
+              ? <Books onOpenChapter={(c) => setActiveChapter(c)} />
+              : <ChatList onOpenRoom={(r) => setActiveRoom(r)} />}
         </View>
         <View style={styles.tabBar}>
           <TouchableOpacity style={styles.tab} onPress={() => setTab("feed")} activeOpacity={0.7}>
             <Text style={[styles.tabIcon, tab === "feed" && styles.tabActiveSaffron]}>▦</Text>
             <Text style={[styles.tabLabel, tab === "feed" && styles.tabActiveSaffron]}>Posts</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.tab} onPress={() => setTab("books")} activeOpacity={0.7}>
+            <Text style={[styles.tabIcon, tab === "books" && styles.tabActiveSaffron]}>📖</Text>
+            <Text style={[styles.tabLabel, tab === "books" && styles.tabActiveSaffron]}>Books</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.tab} onPress={() => setTab("chat")} activeOpacity={0.7}>
             <Text style={[styles.tabIcon, tab === "chat" && styles.tabActiveGreen]}>💬</Text>

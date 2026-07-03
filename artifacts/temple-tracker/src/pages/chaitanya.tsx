@@ -9,7 +9,7 @@ import {
   Search, BookMarked, Sparkles,
   List, X, ChevronDown, ChevronUp, Languages,
   Bookmark, Trash2, LogIn, Volume2, Square, Check,
-  Settings, Minus, Plus, Maximize2, Pencil, Wand2, Bold,
+  Settings, Minus, Plus, Maximize2, Pencil, Wand2, Undo2, Bold, Eraser, GripHorizontal,
   CornerDownLeft, Combine, Keyboard, Delete, RefreshCw,
 } from "lucide-react";
 
@@ -25,9 +25,10 @@ interface ReadingSettings {
   lineHeight: number;
   maxWidth: number;
   theme: Theme;
+  showPageNumbers: boolean; // the · N · dividers between pages
 }
 
-const DEFAULT_SETTINGS: ReadingSettings = { fontSize: 15, lineHeight: 1.8, maxWidth: 768, theme: "light" };
+const DEFAULT_SETTINGS: ReadingSettings = { fontSize: 15, lineHeight: 1.8, maxWidth: 768, theme: "light", showPageNumbers: true };
 
 function loadSettings(): ReadingSettings {
   try {
@@ -145,6 +146,22 @@ function ReadingSettingsPanel({ settings, onChange, onClose }: {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Page numbers — the · N · dividers between OCR pages. Off = continuous reading. */}
+      <div className="mt-3">
+        <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5 block">Page Numbers</label>
+        <button
+          onClick={() => update({ showPageNumbers: !settings.showPageNumbers })}
+          className={`w-full flex items-center justify-between py-2 px-3 rounded-lg text-[11px] font-semibold border transition-all ${
+            settings.showPageNumbers ? "bg-orange-100 border-orange-300 text-orange-700" : "border-stone-200 text-stone-500 hover:bg-stone-50"
+          }`}
+        >
+          <span>{settings.showPageNumbers ? "Shown between pages" : "Hidden — continuous"}</span>
+          <span className={`relative inline-block w-8 h-4 rounded-full transition-colors ${settings.showPageNumbers ? "bg-orange-400" : "bg-stone-300"}`}>
+            <span className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all ${settings.showPageNumbers ? "left-4" : "left-0.5"}`} />
+          </span>
+        </button>
       </div>
     </motion.div>
   );
@@ -751,8 +768,13 @@ function ManualFixKeyboard({ value, onChange, onSave, onCancel }: {
 
 function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; setAllPages: React.Dispatch<React.SetStateAction<PageContent[]>> }) {
   const [show, setShow] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [position, setPosition] = useState({ x: 0, y: 0, bottom: 0 });
   const [forceFlipBelow, setForceFlipBelow] = useState(false);
+  // Drag-to-move: once the user drags the toolbar, dragPos pins it there
+  // (overriding the default left dock) for the rest of the session.
+  const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
+  const draggingRef = useRef(false);
+  const dragOffsetRef = useRef({ dx: 0, dy: 0 });
 
   // ── AI-activity glow ───────────────────────────────────────────────────────
   // Pulsing saffron outline + shimmer over the selected text while an AI fix
@@ -913,7 +935,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
         }
 
         const rect = range.getBoundingClientRect();
-        setPosition({ x: rect.left + rect.width / 2, y: rect.top - 10 });
+        setPosition({ x: rect.left + rect.width / 2, y: rect.top - 10, bottom: rect.bottom });
         setForceFlipBelow(false);
         setSelectedText(text);
         selectionContextRef.current = { before: ctxBefore, after: ctxAfter };
@@ -1241,6 +1263,27 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     }
   }, [allPages, setAllPages]);
 
+  // ── Undo for AI fixes ──────────────────────────────────────────────────
+  // After an AI fix applies (Quick AI fix / AI fix text & format), keep the
+  // (old, new, page) so the user can revert. Single-level, auto-dismiss ~12s.
+  // The toast renders in BOTH branches below since Quick AI fix closes the bar.
+  const [undoFix, setUndoFix] = useState<{ oldText: string; newText: string; pageNum: number } | null>(null);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const recordUndo = useCallback((oldText: string, newText: string, pageNum: number | null) => {
+    if (!pageNum || !oldText || !newText || oldText === newText) return;
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    setUndoFix({ oldText, newText, pageNum });
+    undoTimerRef.current = setTimeout(() => setUndoFix(null), 12000);
+  }, []);
+  const runUndo = useCallback(() => {
+    if (!undoFix) return;
+    pageNumRef.current = undoFix.pageNum;              // revert on the same page
+    void applyEdit(undoFix.newText, undoFix.oldText);  // swap the replacement back
+    setUndoFix(null);
+    if (undoTimerRef.current) { clearTimeout(undoTimerRef.current); undoTimerRef.current = null; }
+  }, [undoFix, applyEdit]);
+  useEffect(() => () => { if (undoTimerRef.current) clearTimeout(undoTimerRef.current); }, []);
+
   const listenToWord = useCallback(async () => {
     if (!selectedText) return;
 
@@ -1392,6 +1435,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       setShow(false);
       if (newText && newText !== oldText) {
         void applyEdit(oldText, newText);
+        recordUndo(oldText, newText, pageNum);
       }
     } catch (err) {
       console.warn("Quick AI fix error:", err);
@@ -1399,7 +1443,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       setQuickFixLoading(false);
       stopAiGlow();
     }
-  }, [selectedText, allPages, quickFixLoading, suggestLoading, applyEdit]);
+  }, [selectedText, allPages, quickFixLoading, suggestLoading, applyEdit, recordUndo]);
 
   const isCurrentSelectionBold = useMemo(() => {
     if (!selectedText) return false;
@@ -1481,6 +1525,51 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     setShow(false);
   }, [selectedText, allPages, selectionIsBoldDom, applyEdit]);
 
+  // Clear formatting — deterministically STRIP bold (**...**) from the selection.
+  // Unlike "Make bold" (a toggle that may re-bold), this only ever removes, so a
+  // mixed selection (part bold word-meanings, part plain) normalises to clean,
+  // uniform plain text in one click.
+  const clearFormatting = useCallback(() => {
+    pulseAiGlow();
+    if (!selectedText) { setShow(false); return; }
+    const pageNum = pageNumRef.current;
+    const page = pageNum ? allPages.find(p => p.pageNumber === pageNum) : null;
+    // Selection literally contains the markers → strip them.
+    if (selectedText.includes("**")) {
+      void applyEdit(selectedText, selectedText.replace(/\*\*/g, ""));
+      setShow(false); return;
+    }
+    if (page) {
+      // Exact **selection** pair in source → unwrap.
+      if (page.text.includes(`**${selectedText}**`)) {
+        void applyEdit(`**${selectedText}**`, selectedText);
+        setShow(false); return;
+      }
+      // Any **...** spans overlapping the selection → strip the whole chunk.
+      const idx = page.text.indexOf(selectedText);
+      if (idx >= 0) {
+        const selStart = idx;
+        const selEnd = idx + selectedText.length;
+        const re = /\*\*([^*]+?)\*\*/g;
+        const overlapping: Array<{ start: number; end: number }> = [];
+        let m: RegExpExecArray | null;
+        while ((m = re.exec(page.text)) !== null) {
+          if (m.index < selEnd && m.index + m[0].length > selStart) {
+            overlapping.push({ start: m.index, end: m.index + m[0].length });
+          }
+        }
+        if (overlapping.length > 0) {
+          const chunkStart = Math.min(selStart, ...overlapping.map(s => s.start));
+          const chunkEnd = Math.max(selEnd, ...overlapping.map(s => s.end));
+          const oldChunk = page.text.substring(chunkStart, chunkEnd);
+          const newChunk = oldChunk.replace(/\*\*/g, "");
+          if (oldChunk !== newChunk) { void applyEdit(oldChunk, newChunk); setShow(false); return; }
+        }
+      }
+    }
+    setShow(false); // nothing to strip
+  }, [selectedText, allPages, applyEdit]);
+
   const insertLineBreak = useCallback(() => {
     pulseAiGlow();
     if (!selectedText) return;
@@ -1538,10 +1627,90 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     if (el.getBoundingClientRect().top < SAFE_TOP_PX) setForceFlipBelow(true);
   });
 
-  if (!show) return null;
+  // AI-activity glow over the selected text — rendered whether or not the
+  // toolbar is open, so closing the popup mid-fix keeps the highlight alive
+  // until the request's finally block calls stopAiGlow(). Fixed boxes per
+  // rendered line, under the toolbar (z-40 vs z-50), never intercept clicks.
+  const aiGlow = aiGlowRects.length > 0 ? (
+    <>
+      <style>{`
+        @keyframes aiGlowPulse {
+          0%, 100% { box-shadow: 0 0 0 2px rgba(245,158,11,.50), 0 0 12px 3px rgba(249,115,22,.30); }
+          50% { box-shadow: 0 0 0 3px rgba(249,115,22,.85), 0 0 24px 8px rgba(245,158,11,.50); }
+        }
+        @keyframes aiGlowSweep {
+          0% { background-position: -150% 0; }
+          100% { background-position: 250% 0; }
+        }
+      `}</style>
+      {aiGlowRects.map((r, i) => (
+        <div
+          key={i}
+          className="fixed z-40 pointer-events-none rounded-md"
+          style={{
+            left: r.left,
+            top: r.top,
+            width: r.width,
+            height: r.height,
+            background: "linear-gradient(110deg, transparent 35%, rgba(251,191,36,.22) 50%, transparent 65%) 0 0 / 220% 100%",
+            animationName: "aiGlowPulse, aiGlowSweep",
+            animationDuration: "1.1s, 1.4s",
+            animationTimingFunction: "ease-in-out, linear",
+            animationIterationCount: "infinite, infinite",
+          }}
+        />
+      ))}
+    </>
+  ) : null;
+
+  // Undo toast for AI fixes — renders whether or not the toolbar is open, and
+  // lets the user revert the last Quick AI fix / AI fix text & format.
+  const undoToastEl = undoFix ? (
+    <div className="fixed bottom-6 left-1/2 z-[60] flex -translate-x-1/2 items-center gap-3 rounded-xl bg-stone-900 px-4 py-2.5 text-sm text-white shadow-2xl">
+      <span className="flex items-center gap-1.5"><Wand2 className="w-3.5 h-3.5 text-amber-300" /> AI fix applied</span>
+      <button onClick={runUndo} className="flex items-center gap-1 font-semibold text-amber-300 hover:text-amber-200">
+        <Undo2 className="w-3.5 h-3.5" /> Undo
+      </button>
+      <button
+        onClick={() => { setUndoFix(null); if (undoTimerRef.current) clearTimeout(undoTimerRef.current); }}
+        className="ml-1 text-stone-400 hover:text-white"
+        aria-label="Dismiss"
+      >
+        <X className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  ) : null;
+
+  // Toolbar hidden — keep the AI glow AND the undo toast on screen (Quick AI
+  // fix closes the toolbar, but the user may still want to revert).
+  if (!show) return (<>{aiGlow}{undoToastEl}</>);
 
   const isCentered = !!suggestion || manualFixMode;
   const flipBelow = !isCentered && (position.y < 120 || forceFlipBelow);
+
+  // Grab the handle to move the toolbar anywhere (pointer capture => works for
+  // mouse + touch, keeps tracking outside the element).
+  const onDragDown = (e: React.PointerEvent) => {
+    const el = toolbarRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    dragOffsetRef.current = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+    draggingRef.current = true;
+    setDragPos({ x: r.left, y: r.top });
+    try { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); } catch { /* noop */ }
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  const onDragMove = (e: React.PointerEvent) => {
+    if (!draggingRef.current) return;
+    const nx = Math.max(4, Math.min(e.clientX - dragOffsetRef.current.dx, window.innerWidth - 60));
+    const ny = Math.max(4, Math.min(e.clientY - dragOffsetRef.current.dy, window.innerHeight - 44));
+    setDragPos({ x: nx, y: ny });
+  };
+  const onDragUp = (e: React.PointerEvent) => {
+    draggingRef.current = false;
+    try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch { /* noop */ }
+  };
 
   return (
     <>
@@ -1551,59 +1720,44 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
           onClick={() => { setSuggestion(null); setManualFixMode(false); }}
         />
       )}
-      {/* AI-activity glow over the selected text — fixed boxes per rendered
-          line, under the toolbar (z-40 vs z-50), never intercepting clicks. */}
-      {aiGlowRects.length > 0 && (
-        <>
-          <style>{`
-            @keyframes aiGlowPulse {
-              0%, 100% { box-shadow: 0 0 0 2px rgba(245,158,11,.50), 0 0 12px 3px rgba(249,115,22,.30); }
-              50% { box-shadow: 0 0 0 3px rgba(249,115,22,.85), 0 0 24px 8px rgba(245,158,11,.50); }
-            }
-            @keyframes aiGlowSweep {
-              0% { background-position: -150% 0; }
-              100% { background-position: 250% 0; }
-            }
-          `}</style>
-          {aiGlowRects.map((r, i) => (
-            <div
-              key={i}
-              className="fixed z-40 pointer-events-none rounded-md"
-              style={{
-                left: r.left,
-                top: r.top,
-                width: r.width,
-                height: r.height,
-                background: "linear-gradient(110deg, transparent 35%, rgba(251,191,36,.22) 50%, transparent 65%) 0 0 / 220% 100%",
-                animationName: "aiGlowPulse, aiGlowSweep",
-                animationDuration: "1.1s, 1.4s",
-                animationTimingFunction: "ease-in-out, linear",
-                animationIterationCount: "infinite, infinite",
-              }}
-            />
-          ))}
-        </>
-      )}
+      {/* AI-activity glow (defined above so it can also render while the
+          toolbar is closed). Sits under the toolbar (z-40 vs z-50). */}
+      {aiGlow}
+      {undoToastEl}
       <div
         ref={toolbarRef}
         className={`fixed z-50 bg-white rounded-2xl shadow-2xl border border-stone-200 max-h-[85vh] overflow-y-auto ${
           isCentered
             ? "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-            : `-translate-x-1/2 ${flipBelow ? "translate-y-2" : "-translate-y-full"}`
+            : dragPos ? "" : "left-3 top-1/2 -translate-y-1/2"
         }`}
         style={
           isCentered
             ? { width: manualFixMode ? "min(560px, 95vw)" : "min(480px, 92vw)" }
-            : {
-                left: Math.max(100, Math.min(position.x, window.innerWidth - 100)),
-                top: flipBelow ? position.y + 30 : Math.max(60, position.y - 5),
-                minWidth: 220,
-                maxWidth: "min(420px, 92vw)",
-              }
+            : dragPos
+              ? { left: dragPos.x, top: dragPos.y, width: 250, maxWidth: "min(280px, 82vw)" }
+              : {
+                  // Default: docked vertically on the LEFT (over the menu area) so
+                  // it doesn't cover the content. Drag the handle to move it.
+                  width: 250,
+                  maxWidth: "min(280px, 82vw)",
+                }
         }
       >
         <div className="p-2">
-          <div className="flex flex-wrap items-center gap-1 mb-2" onMouseDown={e => e.preventDefault()}>
+          {/* Drag handle — hold and move the toolbar anywhere on screen. */}
+          <div
+            onPointerDown={onDragDown}
+            onPointerMove={onDragMove}
+            onPointerUp={onDragUp}
+            onPointerCancel={onDragUp}
+            onLostPointerCapture={onDragUp}
+            className="flex items-center justify-center h-4 mb-1 cursor-move touch-none select-none"
+            title="Drag to move"
+          >
+            <GripHorizontal className="w-4 h-4 text-stone-300" />
+          </div>
+          <div className="flex flex-col items-stretch gap-1 mb-2" onMouseDown={e => e.preventDefault()}>
             <button
               onClick={listenToWord}
               className={`flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium rounded-lg transition-colors ${
@@ -1631,6 +1785,13 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
               title={isCurrentSelectionBold ? "Remove bold" : "Make bold"}
             >
               <Bold className="w-3.5 h-3.5" /> {isCurrentSelectionBold ? "Remove bold" : "Make bold"}
+            </button>
+            <button
+              onClick={clearFormatting}
+              className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition-colors"
+              title="Strip bold / markup so this selection reads as plain, uniform text"
+            >
+              <Eraser className="w-3.5 h-3.5" /> Clear formatting
             </button>
             <button
               onClick={insertLineBreak}
@@ -1736,8 +1897,10 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
                     }
                     const oldText = selectedText;
                     const newText = suggestion.suggested_text;
+                    const pn = pageNumRef.current;
                     setSuggestion(null);
                     void applyEdit(oldText, newText);
+                    recordUndo(oldText, newText, pn);
                   }}
                   className="flex-1 px-3 py-1.5 text-xs font-semibold bg-purple-600 text-white rounded-lg hover:bg-purple-700"
                 >
@@ -2564,6 +2727,18 @@ function Sidebar({
     }
   }, [activePart]);
 
+  // Scroll the sidebar to the current chapter when Contents opens (and when the
+  // active chapter changes while open), so the reader lands on their place
+  // instead of scrolling to find it. Ref is on the active chapter row below.
+  const activeChapterRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!isOpen || sidebarTab !== "chapters") return;
+    const t = setTimeout(() => {
+      activeChapterRef.current?.scrollIntoView({ block: "center", behavior: "auto" });
+    }, 90); // let the active part expand + render first
+    return () => clearTimeout(t);
+  }, [isOpen, sidebarTab, activeChapter]);
+
   const togglePart = (part: string) => {
     setExpandedParts(prev => {
       if (prev.has(part)) return new Set();
@@ -2724,6 +2899,7 @@ function Sidebar({
                             return (
                               <button
                                 key={ch.globalNumber}
+                                ref={isActive ? activeChapterRef : null}
                                 onClick={() => onChapterClick(ch)}
                                 className={`w-full text-left px-4 py-2.5 flex items-start gap-3 transition-all hover:bg-orange-50/60 ${
                                   isActive ? "bg-orange-50 border-r-2 border-orange-500" : ""
@@ -3690,17 +3866,17 @@ export default function Chaitanya() {
                             </h2>
                           </div>
                         )}
-                        {pageIdx > 0 && !hidePageDivider && !isFirstPageOfChapter && (
+                        {pageIdx > 0 && !hidePageDivider && !isFirstPageOfChapter && settings.showPageNumbers && (
                           <div className={`flex items-center gap-3 my-8 sm:my-10 ${theme.muted}`}>
                             <div className={`flex-1 h-px ${settings.theme === "dark" ? "bg-white/10" : settings.theme === "sepia" ? "bg-amber-300/40" : "bg-orange-200/60"}`} />
                             <span className="text-[10px] font-medium opacity-50 shrink-0 px-2">· {displayPageNum(page.pageNumber)} ·</span>
                             <div className={`flex-1 h-px ${settings.theme === "dark" ? "bg-white/10" : settings.theme === "sepia" ? "bg-amber-300/40" : "bg-orange-200/60"}`} />
                           </div>
                         )}
-                        {pageIdx > 0 && hidePageDivider && !isFirstPageOfChapter && (
+                        {pageIdx > 0 && hidePageDivider && !isFirstPageOfChapter && settings.showPageNumbers && (
                           <p className={`text-[10px] ${theme.muted} font-medium text-right mt-1 mb-1 opacity-40`}>· {displayPageNum(page.pageNumber)} ·</p>
                         )}
-                        {pageIdx === 0 && !isFirstPageOfChapter && <p className={`text-[10px] ${theme.muted} font-medium text-right mt-0 mb-2 opacity-40`}>· {displayPageNum(page.pageNumber)} ·</p>}
+                        {pageIdx === 0 && !isFirstPageOfChapter && settings.showPageNumbers && <p className={`text-[10px] ${theme.muted} font-medium text-right mt-0 mb-2 opacity-40`}>· {displayPageNum(page.pageNumber)} ·</p>}
                         <RenderContent
                           text={page.text}
                           textEn={page.textEn}
