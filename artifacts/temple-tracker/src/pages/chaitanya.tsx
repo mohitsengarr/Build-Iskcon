@@ -991,6 +991,12 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       return;
     }
 
+    // Section labels ("तात्पर्य :", "अनुवाद :", "शब्दार्थ :") are injected by the
+    // renderer at the start of each section and do NOT exist in page.text. Strip
+    // a label ONLY when it follows a newline (the section boundary), keeping that
+    // newline — so a verse→purport selection maps to the source, while a literal
+    // "तात्पर्य" OCR-joined mid-line (which IS in the source) is preserved.
+    const SECTION_LABEL_RE = /\n[^\S\n]*(?:तात्पर्य|अनुवाद|शब्दार्थ)[^\S\n]*[:：ः][^\S\n]*/gu;
     const stripRenderArtifacts = (s: string): { stripped: string; leftTrim: string; rightTrim: string } => {
       const original = s;
       let leftTrim = "";
@@ -1003,6 +1009,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
         cleaned = cleaned.slice(lm[0].length);
       }
       cleaned = cleaned.replace(/\s*[·•∙]\s*\d{1,5}\s*[·•∙]\s*/g, " ").trim();
+      cleaned = cleaned.replace(SECTION_LABEL_RE, "\n");
       const m2 = cleaned.match(/^(\s*)([\s\S]*?)(\s*)$/);
       if (m2) {
         cleaned = m2[2];
@@ -1024,6 +1031,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     let cleanedNew = newText;
     if (leftTrim && cleanedNew.startsWith(leftTrim)) cleanedNew = cleanedNew.slice(leftTrim.length);
     if (rightTrim && cleanedNew.endsWith(rightTrim)) cleanedNew = cleanedNew.slice(0, cleanedNew.length - rightTrim.length);
+    cleanedNew = cleanedNew.replace(SECTION_LABEL_RE, "\n");
     const effectiveOld = cleanedOld;
     const effectiveNew = cleanedNew.trim() || newText;
 
