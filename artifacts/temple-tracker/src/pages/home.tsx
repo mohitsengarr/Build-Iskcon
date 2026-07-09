@@ -1,8 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
+import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
 import { WorldMap } from "@/components/WorldMap";
+import ThreeTemple from "@/components/ThreeTemple";
+import { INDIA_CITY_COUNT, INDIA_STATES } from "@/data/india-cities";
 import { fadeInUp, fadeIn, staggerContainer, scaleIn, viewportOnce } from "@/lib/animations";
 import {
   Building2, IndianRupee, ChartBar, CheckCircle2,
@@ -811,6 +814,64 @@ function DirectorySection() {
   );
 }
 
+// ── Section: Design Your Temple (3D) ─────────────────────────────────────────
+function DesignYourTempleSection() {
+  const featured = ["Vrindavan", "Ayodhya", "Mayapur", "Tirupati", "Dwarka", "Puri", "Ujjain", "Kanchipuram"];
+  return (
+    <motion.section
+      aria-label="Design Your Temple"
+      variants={fadeInUp}
+      initial="hidden"
+      whileInView="visible"
+      viewport={viewportOnce}
+      className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/5 via-surface to-surface"
+    >
+      <div className="grid gap-6 lg:grid-cols-[1.05fr_1fr] items-center p-6 sm:p-8 md:p-10">
+        <div>
+          <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-primary">
+            Vision 2051 · {INDIA_CITY_COUNT} cities · {INDIA_STATES.length} states & UTs
+          </span>
+          <h2 className="mt-4 font-serif text-3xl sm:text-4xl md:text-5xl font-black leading-tight max-w-xl">
+            Design your own temple — in 3D
+          </h2>
+          <p className="mt-3 max-w-xl text-on-surface-variant">
+            Pick any of {INDIA_CITY_COUNT} cities across India, shape your temple in an interactive 3D model, and
+            open a living community page where devotees gather to help manifest it — posts, photos, progress,
+            chat, calls, and email updates.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            {featured.map((c) => (
+              <span key={c} className="rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-on-surface-variant">
+                {c}
+              </span>
+            ))}
+            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">+{INDIA_CITY_COUNT - featured.length} more</span>
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link href="/design-temple">
+              <button className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-on-primary shadow-sm hover:opacity-90 transition">
+                Manifest your temple <ArrowRight className="w-4 h-4" />
+              </button>
+            </Link>
+            <a href="https://tovp.org/donate" target="_blank" rel="noreferrer">
+              <button className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-5 py-3 text-sm font-semibold hover:border-primary/50 transition">
+                Donate to TOVP <ExternalLink className="w-4 h-4" />
+              </button>
+            </a>
+          </div>
+        </div>
+
+        <div className="relative h-[300px] sm:h-[360px] md:h-[420px] rounded-2xl overflow-hidden border border-border bg-[#fbf6ee]">
+          <ThreeTemple style="tovp-dome" autoRotate interactive />
+          <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg bg-black/45 px-2.5 py-1 text-[11px] font-medium text-white">
+            Temple of the Vedic Planetarium · drag to explore
+          </div>
+        </div>
+      </div>
+    </motion.section>
+  );
+}
+
 // ── Section: Vision 2051 ─────────────────────────────────────────────────────
 
 function VisionSection() {
@@ -1090,6 +1151,7 @@ export default function Home() {
       <div className="px-4 md:px-8 max-w-screen-2xl mx-auto space-y-16 sm:space-y-20">
         <HeroSection stats={liveStats} />
         <KeyMetrics stats={liveStats} />
+        <DesignYourTempleSection />
         <TrustSection />
         <FeaturedProject />
         <TempleProjectsSection />

@@ -15,6 +15,8 @@ import PersonaGallery from "@/pages/persona-gallery";
 import Admin from "@/pages/admin";
 import Gallery from "@/pages/gallery";
 import BhaktigramChat from "@/pages/bhaktigram-chat";
+import DesignTemple from "@/pages/design-temple";
+import TempleCommunity from "@/pages/temple-community";
 import Privacy from "@/pages/privacy";
 import Terms from "@/pages/terms";
 import PageNotFound from "@/pages/page-not-found";
@@ -37,6 +39,9 @@ function App() {
             <Route path="/japa" component={JapaCounter} />
             <Route path="/personas" component={PersonaGallery} />
             <Route path="/gallery" component={Gallery} />
+            {/* Design Your Temple — 3D builder + per-temple community pages */}
+            <Route path="/design-temple" component={DesignTemple} />
+            <Route path="/temple/:slug" component={TempleCommunity} />
             {/* /bhaktigram — the BuildIskcon devotional feed (was /instagram).
                 Gallery reads useLocation() and sets filterType="instagram"
                 when the path matches. The internal filterType value stays
