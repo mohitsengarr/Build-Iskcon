@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>Delete your Bhaktigram account</title>
+<style>
+  :root { --saffron:#c2410c; --saffron-dark:#9a3412; --ink:#1c1917; --muted:#78716c; --line:#e7e5e4; --bg:#fbf7f1; --card:#ffffff; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; color:var(--ink); background:var(--bg); line-height:1.55; }
+  .wrap { max-width:640px; margin:0 auto; padding:28px 20px 60px; }
+  h1 { font-size:1.6rem; margin:.2em 0 .1em; }
+  h2 { font-size:1.05rem; margin:1.6em 0 .5em; color:var(--saffron-dark); }
+  .lotus { font-size:2rem; }
+  .sub { color:var(--muted); margin-top:0; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px 18px; margin:16px 0; }
+  ol,ul { padding-left:1.2em; } li { margin:.25em 0; }
+  label { display:block; font-weight:600; margin:14px 0 5px; font-size:.95rem; }
+  input,textarea { width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:10px; font-size:1rem; font-family:inherit; background:#fff; }
+  textarea { min-height:74px; resize:vertical; }
+  button { margin-top:16px; width:100%; padding:13px; border:0; border-radius:11px; background:var(--saffron); color:#fff; font-size:1.02rem; font-weight:700; cursor:pointer; }
+  button:disabled { opacity:.55; cursor:default; }
+  .note { color:var(--muted); font-size:.9rem; }
+  .msg { margin-top:14px; padding:12px 14px; border-radius:10px; display:none; }
+  .msg.ok { display:block; background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; }
+  .msg.err { display:block; background:#fef2f2; color:#991b1b; border:1px solid #fecaca; }
+  a { color:var(--saffron-dark); }
+  .foot { margin-top:26px; font-size:.85rem; color:var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="lotus">🪷</div>
+  <h1>Delete your Bhaktigram account</h1>
+  <p class="sub">Bhaktigram (<code>com.buildiskcon.bhaktigram</code>) · Build ISKCON</p>
+
+  <div class="card">
+    <h2 style="margin-top:0">Fastest way — in the app</h2>
+    <p>Open <strong>Bhaktigram → your Profile → Delete account</strong>. This deletes your account and all associated data immediately.</p>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Uninstalled the app? Request deletion here</h2>
+    <p class="note">Enter the <strong>username</strong> you used (or the phone number / email you signed in with). We'll delete your account and associated data within 30 days and, where needed, contact you to confirm.</p>
+    <label for="identifier">Your username, phone, or email</label>
+    <input id="identifier" autocomplete="off" placeholder="e.g. your_username or +91…" />
+    <label for="note">Anything that helps us find your account (optional)</label>
+    <textarea id="note" placeholder="Display name, when you joined, etc."></textarea>
+    <button id="submit">Request account deletion</button>
+    <div id="msg" class="msg"></div>
+  </div>
+
+  <h2>What gets deleted</h2>
+  <ul>
+    <li>Your profile, username, and photo</li>
+    <li>Your posts, stories, reels, and uploaded media</li>
+    <li>Your messages, comments, likes, follows, and bookmarks</li>
+    <li>Your notification tokens and japa records</li>
+  </ul>
+  <p class="note">Shared spaces you took part in (community channels) remain for other members. We may retain minimal records where required for security or legal reasons.</p>
+
+  <p class="foot">
+    Questions or trouble? Email <a href="mailto:mohitsengar1992@gmail.com">mohitsengar1992@gmail.com</a>.<br />
+    See our <a href="/bhaktigram/privacy.html">Privacy Policy</a>.
+  </p>
+</div>
+
+<script>
+  // Public anon key (same key that ships in the app) — only authorizes the
+  // delete-account function's "request" action, which logs a deletion request.
+  var SB = "https://etfmndcrchundvgtvmot.supabase.co";
+  var ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0Zm1uZGNyY2h1bmR2Z3R2bW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2NDE1MTIsImV4cCI6MjA2MzIxNzUxMn0.7GXS820xSFcUy2TRdbspN7s-NP3sgKFFtUP-Zw0Qbrs";
+  var btn = document.getElementById("submit");
+  var msg = document.getElementById("msg");
+  function show(kind, text){ msg.className = "msg " + kind; msg.textContent = text; }
+  btn.addEventListener("click", async function(){
+    var identifier = document.getElementById("identifier").value.trim();
+    var note = document.getElementById("note").value.trim();
+    if (!identifier){ show("err","Please enter your username, phone, or email."); return; }
+    btn.disabled = true; btn.textContent = "Sending…"; msg.className = "msg";
+    try {
+      var r = await fetch(SB + "/functions/v1/delete-account", {
+        method: "POST",
+        headers: { "apikey": ANON, "Authorization": "Bearer " + ANON, "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "request", identifier: identifier, note: note })
+      });
+      var j = await r.json().catch(function(){ return {}; });
+      if (r.ok && j && j.success){
+        show("ok","Request received 🙏 We'll delete your account and associated data within 30 days. You can close this page.");
+        btn.textContent = "Request sent";
+      } else {
+        show("err","Sorry, that didn't go through. Please email mohitsengar1992@gmail.com and we'll delete your account.");
+        btn.disabled = false; btn.textContent = "Request account deletion";
+      }
+    } catch (e){
+      show("err","Network error. Please email mohitsengar1992@gmail.com and we'll delete your account.");
+      btn.disabled = false; btn.textContent = "Request account deletion";
+    }
+  });
+</script>
+</body>
+</html>
