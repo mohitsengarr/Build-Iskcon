@@ -425,4 +425,69 @@ fs.writeFileSync(path.join(CC_OUT_DIR, "progress"), JSON.stringify({
 }));
 console.log(`✓ chaitanya/progress (${JSON.stringify(ccCounts)})`);
 
+// ── /api/gita/* — Bhagavad-gita static endpoints ──────────────────────────────
+// Source: data/gita/{progress.json,pages/batch-NNNN.json}, produced by the Gita
+// OCR ingest. Same shape as the bhagwatham endpoints; gita.tsx fetches exactly
+// progress / batches / batch/:n / content (it builds its chapter index client-side).
+// Skipped silently when the data isn't on disk, so the build never breaks before
+// the book has been ingested.
+const GITA_DATA_DIR = path.resolve(__dirname, "..", "..", "..", "data", "gita");
+const GITA_PAGES_DIR = path.join(GITA_DATA_DIR, "pages");
+const GITA_OUT_DIR = path.resolve(__dirname, "..", "public", "api", "gita");
+
+if (fs.existsSync(GITA_PAGES_DIR)) {
+  const gitaBatchFiles = fs.readdirSync(GITA_PAGES_DIR)
+    .filter(f => f.startsWith("batch-") && f.endsWith(".json"))
+    .sort();
+
+  if (gitaBatchFiles.length === 0) {
+    console.log("• gita: no batch files yet — skipping");
+  } else {
+    fs.mkdirSync(GITA_OUT_DIR, { recursive: true });
+
+    const gitaBatches = gitaBatchFiles.map(f =>
+      JSON.parse(fs.readFileSync(path.join(GITA_PAGES_DIR, f), "utf-8"))
+    );
+
+    // /api/gita/progress
+    const gitaProgressPath = path.join(GITA_DATA_DIR, "progress.json");
+    const gitaProgress = fs.existsSync(gitaProgressPath)
+      ? JSON.parse(fs.readFileSync(gitaProgressPath, "utf-8"))
+      : {
+          totalPagesProcessed: gitaBatches.reduce((n, b) => n + b.pages.length, 0),
+          batchesCompleted: gitaBatches.length,
+          status: "completed",
+        };
+    fs.writeFileSync(path.join(GITA_OUT_DIR, "progress"), JSON.stringify(gitaProgress));
+
+    // /api/gita/batches — metadata only
+    const gitaBatchesMeta = gitaBatches.map(b => ({
+      batchNumber: b.batchNumber,
+      startPage: b.startPage,
+      endPage: b.endPage,
+      processedAt: b.processedAt,
+      pageCount: b.pages.length,
+    }));
+    fs.writeFileSync(path.join(GITA_OUT_DIR, "batches"), JSON.stringify(gitaBatchesMeta));
+
+    // /api/gita/batch/:number
+    const gitaBatchDir = path.join(GITA_OUT_DIR, "batch");
+    fs.mkdirSync(gitaBatchDir, { recursive: true });
+    for (const batch of gitaBatches) {
+      fs.writeFileSync(path.join(gitaBatchDir, String(batch.batchNumber)), JSON.stringify(batch));
+    }
+
+    // /api/gita/content — back-compat full payload (frontend prefers lazy batches)
+    fs.writeFileSync(path.join(GITA_OUT_DIR, "content"), JSON.stringify({
+      batches: gitaBatches,
+      pagination: { page: 1, limit: 100, totalBatches: gitaBatches.length, totalPages: 1, hasMore: false },
+    }));
+
+    const gitaPageCount = gitaBatches.reduce((n, b) => n + b.pages.length, 0);
+    console.log(`✓ gita (${gitaBatches.length} batches, ${gitaPageCount} pages)`);
+  }
+} else {
+  console.log("• gita: data/gita/pages missing — skipping");
+}
+
 console.log("\n✅ Static API files generated successfully");

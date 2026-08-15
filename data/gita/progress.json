@@ -1,10 +1,10 @@
 {
-  "lastProcessedPage": 0,
-  "totalPagesProcessed": 0,
+  "lastProcessedPage": 772,
+  "totalPagesProcessed": 772,
   "totalPagesInPdf": 772,
   "batchSize": 20,
-  "batchesCompleted": 0,
-  "lastProcessedAt": null,
-  "status": "idle",
+  "batchesCompleted": 39,
+  "lastProcessedAt": "2026-08-15T12:37:00.634965Z",
+  "status": "completed",
   "pdfPath": "data/gita/hindi.pdf"
 }
