@@ -249,6 +249,15 @@ function normalizeBoldKey(line: string): string {
   return line.replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
 }
 
+// Key for शब्दार्थ (word-meaning) lines. Their meanings are bolded by the RENDERER
+// (<strong>), not by `**`, so they need the same un-bold override as verses — but
+// the renderer prints every separator as "—" whatever the source used ("—", "--"
+// or "- "), so a rendered-text key would never equal a source-line key. Collapsing
+// each dash run to a single "—" makes both sides normalize identically.
+function normalizeDashKey(line: string): string {
+  return normalizeBoldKey(line).replace(/[-‐-―−]+/g, "—").replace(/\s*—\s*/g, "—");
+}
+
 function loadUnboldLines(): Set<string> {
   try {
     const raw = localStorage.getItem(`${BOOK_KEY}_unbold_lines`);
@@ -1174,6 +1183,18 @@ function VoiceEditToolbar({ allPages, setAllPages, unboldLines, onUnboldChange }
             for (const p of Array.from(shlokPs)) {
               if (range.intersectsNode(p)) {
                 const k = normalizeBoldKey(p.textContent || "");
+                if (k) shlokKeys.push(k);
+              }
+            }
+          }
+          // शब्दार्थ word-meanings are bolded by the renderer (<strong>), so they
+          // need the same override. The `strong` guard skips the section's own
+          // "शब्दार्थ" heading, which carries no meanings.
+          const shabPs = pageEl?.querySelectorAll?.('[data-section-type="shabdarth"] p');
+          if (shabPs) {
+            for (const p of Array.from(shabPs)) {
+              if (range.intersectsNode(p) && p.querySelector("strong")) {
+                const k = normalizeDashKey(p.textContent || "");
                 if (k) shlokKeys.push(k);
               }
             }
@@ -2843,12 +2864,15 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
                 <p className={`font-bold mb-2 text-center ${themeKey === "dark" ? "text-blue-400" : themeKey === "sepia" ? "text-[#1a3a6a]" : "text-[#1a4a8a]"}`} style={{ fontSize: "0.85em", fontFamily: "var(--font-devanagari)" }}>शब्दार्थ</p>
                 {sec.lines.map((l, j) => {
                   const parts = l.split(/(—|--|-\s)/);
+                  // Meanings are bold by default; "Clear formatting"/"Remove bold"
+                  // on the selection lightens them via the un-bold override.
+                  const unbolded = unboldLines?.has(normalizeDashKey(l));
                   return (
                     <p key={j} className={`leading-[1.7] mb-0.5 ${themeKey === "dark" ? "text-blue-300/80" : themeKey === "sepia" ? "text-[#1a3a6a]" : "text-[#1a4a8a]"}`} style={{ fontSize: "0.8em", fontFamily: "var(--font-devanagari)" }}>
                       {parts.map((part, k) => {
                         if (part === "—" || part === "--" || part === "- ") return <span key={k}>—</span>;
                         const isMeaning = k > 0 && (parts[k - 1] === "—" || parts[k - 1] === "--" || parts[k - 1] === "- ");
-                        return isMeaning
+                        return isMeaning && !unbolded
                           ? <strong key={k} className={themeKey === "dark" ? "text-blue-200" : themeKey === "sepia" ? "text-[#0a2a5a]" : "text-[#0a2a5a]"}>{part}</strong>
                           : <span key={k}>{part}</span>;
                       })}
