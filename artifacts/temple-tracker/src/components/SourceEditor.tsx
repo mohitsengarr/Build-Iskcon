@@ -17,6 +17,7 @@
 // unchanged; this is a maintainer edit surface (dev-gated by the caller).
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
 import { X, Save, Bold, Wand2, Loader2, Info, ChevronLeft, ChevronRight } from "lucide-react";
@@ -170,8 +171,9 @@ export default function SourceEditor({
 
   const btn = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
 
-  return (
-    <div className="fixed inset-0 z-[100] flex flex-col bg-white dark:bg-stone-900" role="dialog" aria-label={`Edit source — page ${pageNumber}`}>
+  if (typeof document === "undefined") return null;
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex flex-col bg-white dark:bg-stone-900" role="dialog" aria-label={`Edit source — page ${pageNumber}`}>
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-2.5 border-b border-stone-200 dark:border-stone-700 shrink-0">
         {onNavigate && (
@@ -238,6 +240,7 @@ export default function SourceEditor({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
