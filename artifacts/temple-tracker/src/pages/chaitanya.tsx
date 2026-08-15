@@ -2,6 +2,9 @@ import React, { useState, useEffect, useCallback, useRef, useMemo, useLayoutEffe
 import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
+import { type AiFixArgs } from "@/components/SourceEditor";
+// Lazy — CodeMirror only loads when a maintainer opens the editor.
+const SourceEditor = React.lazy(() => import("@/components/SourceEditor"));
 import { fadeInUp } from "@/lib/animations";
 import { applyTextCorrections } from "@/lib/bhagwatham-config";
 import {
@@ -232,6 +235,34 @@ function saveSectionOverrides(o: PageOverrides) {
     localStorage.setItem(`${BOOK_KEY}_section_overrides`, JSON.stringify(o));
   } catch { /* quota exceeded / private mode — overrides just won't persist */ }
 }
+
+// ── Per-line "un-bold" overrides ──────────────────────────────────────────────
+// Shlok (verse) lines render bold BY DESIGN (BBT print convention — see the
+// `font-bold` on the shlok <p>). That bold is structural CSS, NOT `**` markdown,
+// so the "Remove bold" toolbar (which only strips `**`) can never lighten a verse —
+// it silently no-ops. This lets a maintainer mark specific verse lines to render at
+// normal weight; the renderer honours it and "Make bold" toggles it back. Keyed by
+// the normalized line text (device-local, non-destructive, reversible) so it survives
+// re-pagination. `**` and whitespace are collapsed so the source line and the
+// rendered-DOM selection normalize to the same key.
+function normalizeBoldKey(line: string): string {
+  return line.replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+}
+
+function loadUnboldLines(): Set<string> {
+  try {
+    const raw = localStorage.getItem(`${BOOK_KEY}_unbold_lines`);
+    const arr = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch { return new Set(); }
+}
+
+function saveUnboldLines(s: Set<string>) {
+  try {
+    localStorage.setItem(`${BOOK_KEY}_unbold_lines`, JSON.stringify([...s]));
+  } catch { /* quota exceeded / private mode — override just won't persist */ }
+}
+
 
 const SECTION_KIND_LABELS: Record<SectionKind, { label: string; color: string; bg: string }> = {
   shlok:     { label: "Shlok",      color: "text-blue-700",   bg: "bg-blue-100 border-blue-300" },
@@ -471,15 +502,68 @@ function stripLeadingPageNumber(line: string): string {
   return line.replace(/^\d{2,5}[\]\)]*\s+/, "");
 }
 
+// Inline markdown-bold renderer — converts **text** runs to <strong>.
+// Used everywhere we render `sec.lines` so users can highlight text and bold it.
+// Plain text passes through unchanged.
+//
+// BUG FIX (multi-line bold): a **...** span can open on one line of a section
+// and close on a later line (e.g. a 3-line shlok wrapped in a single ** pair).
+// Splitting/rendering line-by-line left each line with an unbalanced "**",
+// so nothing matched and the literal asterisks were shown. We now tokenize
+// bold spans across the WHOLE block (all of a section's lines, joined with
+// "\n") and then re-split the result back into per-line React nodes so each
+// line keeps its own <p> wrapper. If a block has an odd number of "**"
+// markers, we treat the block as plain text (do not bold half of it, and do
+// not strip the stray asterisks — they're rendered as-is, same as before).
+function renderInlineBoldBlock(lines: string[]): React.ReactNode[] {
+  const joined = lines.join("\n");
+  if (!joined.includes("**")) return lines;
+
+  // Bail out to plain text if "**" markers are unbalanced across the block —
+  // never bold only half of an unmatched pair.
+  const markerCount = (joined.match(/\*\*/g) || []).length;
+  if (markerCount % 2 !== 0) return lines;
+
+  // Tokenize the whole block: alternating plain / bold segments. Bold segments
+  // may themselves contain "\n" (spanning multiple lines).
+  const tokens = joined.split(/(\*\*[^*]+\*\*)/g);
+  type Piece = { bold: boolean; text: string };
+  const pieces: Piece[] = tokens
+    .filter((tok) => tok.length > 0)
+    .map((tok) => {
+      if (tok.startsWith("**") && tok.endsWith("**") && tok.length >= 4) {
+        return { bold: true, text: tok.slice(2, -2) };
+      }
+      return { bold: false, text: tok };
+    });
+
+  // Re-split the flat piece list back into per-original-line node arrays,
+  // splitting any piece that contains "\n" at the line boundaries.
+  const perLine: React.ReactNode[][] = lines.map(() => []);
+  let lineIdx = 0;
+  let keySeq = 0;
+  for (const piece of pieces) {
+    const segments = piece.text.split("\n");
+    segments.forEach((seg, segIdx) => {
+      if (seg.length > 0) {
+        const node = piece.bold
+          ? <strong key={keySeq++}>{seg}</strong>
+          : <React.Fragment key={keySeq++}>{seg}</React.Fragment>;
+        perLine[lineIdx]?.push(node);
+      }
+      // A "\n" inside the piece means we've moved to the next source line.
+      if (segIdx < segments.length - 1) lineIdx++;
+    });
+  }
+  return perLine;
+}
+
+// Back-compat single-line wrapper — used only where a lone line (not a whole
+// block/section) is being rendered, e.g. an isolated AI-suggestion preview.
+// A "**" that opens and closes on THIS line still renders bold; an unbalanced
+// "**" on a single line renders as plain text (falls through unchanged).
 function renderInlineBold(line: string): React.ReactNode {
-  if (!line.includes("**")) return line;
-  const parts = line.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((part, i) => {
-    if (part.startsWith("**") && part.endsWith("**") && part.length >= 4) {
-      return <strong key={i}>{part.slice(2, -2)}</strong>;
-    }
-    return <React.Fragment key={i}>{part}</React.Fragment>;
-  });
+  return renderInlineBoldBlock([line])[0];
 }
 
 function cleanOcrText(text: string): string {
@@ -764,9 +848,95 @@ function ManualFixKeyboard({ value, onChange, onSave, onCancel }: {
   );
 }
 
+// Escape a string for literal use inside a RegExp.
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// ── Robust selection locator (BUG 2) ────────────────────────────────────────
+// `page.text.indexOf(selectedText)` returns -1 whenever the rendered/selected
+// text doesn't byte-match the raw page source — e.g. because:
+//   (i)   the source has "**bold**" markers that the rendered <strong> selection
+//         doesn't include;
+//   (ii)  whitespace/newline normalization differs (rendered text collapses
+//         lines/spaces; source keeps "\n" and OCR spacing);
+//   (iii) the DOM selection swept up rendering-only glyphs.
+// This helper tries progressively looser strategies and returns the FIRST hit
+// as {index, matchLength} — the caller should slice/replace using that
+// (index, matchLength) pair, never a naive `.replace(selectedText, ...)`
+// (which can silently hit the wrong occurrence, or fail outright).
+function locateSelectionInSource(sourceText: string, selectedText: string): { index: number; matchLength: number } | null {
+  if (!sourceText || !selectedText) return null;
+
+  // 1. Exact match.
+  {
+    const idx = sourceText.indexOf(selectedText);
+    if (idx >= 0) return { index: idx, matchLength: selectedText.length };
+  }
+
+  // 2. Exact match on the trimmed selection (handles leading/trailing
+  //    whitespace picked up by the DOM Selection API).
+  const trimmedSel = selectedText.trim();
+  if (trimmedSel && trimmedSel !== selectedText) {
+    const idx = sourceText.indexOf(trimmedSel);
+    if (idx >= 0) return { index: idx, matchLength: trimmedSel.length };
+  }
+
+  // 3. Whitespace-flexible match: every run of whitespace in the selection
+  //    matches any run of whitespace in the source. This handles rendered
+  //    selections that space-join what is, in the source, several lines
+  //    separated by "\n" (or OCR runs of multiple spaces).
+  const buildWhitespaceFlexibleRegex = (s: string): string =>
+    s.split(/(\s+)/).map((chunk) => (/^\s+$/.test(chunk) ? "\\s+" : escapeRegExp(chunk))).join("");
+  try {
+    const re = new RegExp(buildWhitespaceFlexibleRegex(trimmedSel || selectedText));
+    const m = re.exec(sourceText);
+    if (m) return { index: m.index, matchLength: m[0].length };
+  } catch { /* malformed regex — fall through */ }
+
+  // 4. Bold-insensitive match: strip "**" from both the source and the
+  //    selection, whitespace-flexible-match the stripped selection against
+  //    the stripped source, then map the hit back to the ORIGINAL source
+  //    offsets so the caller can still slice/replace the real (bold-marker-
+  //    including) text.
+  if (sourceText.includes("**") || selectedText.includes("**")) {
+    const strippedSel = (trimmedSel || selectedText).replace(/\*\*/g, "");
+    if (strippedSel) {
+      // Map: index in the "**"-stripped source → index in the original source.
+      const strippedToOriginal: number[] = [];
+      let stripped = "";
+      for (let i = 0; i < sourceText.length; i++) {
+        if (sourceText[i] === "*" && sourceText[i + 1] === "*") { i++; continue; }
+        stripped += sourceText[i];
+        strippedToOriginal.push(i);
+      }
+      try {
+        const re = new RegExp(buildWhitespaceFlexibleRegex(strippedSel));
+        const m = re.exec(stripped);
+        if (m && m[0].length > 0) {
+          const strippedStart = m.index;
+          const strippedEnd = m.index + m[0].length - 1;
+          const originalStart = strippedToOriginal[strippedStart];
+          const originalEndCharIdx = strippedToOriginal[strippedEnd];
+          if (originalStart !== undefined && originalEndCharIdx !== undefined) {
+            // Extend the end past any trailing "**" that belongs to the same
+            // bold span so the located span includes the closing markers.
+            let originalEnd = originalEndCharIdx + 1;
+            if (sourceText[originalEnd] === "*" && sourceText[originalEnd + 1] === "*") originalEnd += 2;
+            return { index: originalStart, matchLength: originalEnd - originalStart };
+          }
+        }
+      } catch { /* malformed regex — fall through */ }
+    }
+  }
+
+  // 5. Nothing matched — caller keeps its existing alert/fallback behavior.
+  return null;
+}
+
 // ── Selection Toolbar (Listen / Meaning / AI fix for highlighted text) ────
 
-function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; setAllPages: React.Dispatch<React.SetStateAction<PageContent[]>> }) {
+function VoiceEditToolbar({ allPages, setAllPages, unboldLines, onUnboldChange }: { allPages: PageContent[]; setAllPages: React.Dispatch<React.SetStateAction<PageContent[]>>; unboldLines: Set<string>; onUnboldChange: (next: Set<string>) => void }) {
   const [show, setShow] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0, bottom: 0 });
   const [forceFlipBelow, setForceFlipBelow] = useState(false);
@@ -842,6 +1012,13 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
   const pageNumRef = useRef<number | null>(null);
   const selectionContextRef = useRef<{ before: string; after: string }>({ before: "", after: "" });
   const [selectionIsBoldDom, setSelectionIsBoldDom] = useState(false);
+  // Whether the selection sits inside a shlok (verse) section — the only place
+  // the structural un-bold override applies.
+  const [selectionInShlok, setSelectionInShlok] = useState(false);
+  // Normalized RENDERED-line keys of the shlok <p>s the selection intersects,
+  // captured at selection time — they EXACTLY match the shlok renderer's
+  // normalizeBoldKey(sec.lines[j]) keys, so un-bold is immune to OCR-cleaning.
+  const selectionShlokKeysRef = useRef<string[]>([]);
   const toolbarRef = useRef<HTMLDivElement>(null);
 
   const [ttsLoading, setTtsLoading] = useState(false);
@@ -874,6 +1051,8 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       setManualFixMode(false);
       setManualFixText("");
       setSelectionIsBoldDom(false);
+      setSelectionInShlok(false);
+      selectionShlokKeysRef.current = [];
       setDictResult(null);
       setDictLoading(false);
     }
@@ -941,20 +1120,68 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
         selectionContextRef.current = { before: ctxBefore, after: ctxAfter };
         pageNumRef.current = pageNum;
 
+        // Bold detection must work for the natural WHOLE-VERSE gesture too:
+        // shloks put font-bold on each per-line <p> but wrap them in a plain
+        // <div>, so a multi-line selection's commonAncestorContainer is that
+        // NON-bold wrapper. Also probe the selection's start/end boundary nodes,
+        // then scan the bold blocks the range actually intersects.
+        // Threshold is font-weight >= 700 (Tailwind font-bold = verses) so the
+        // font-semibold (600) section labels like "तात्पर्य :" are NOT read as bold;
+        // `**` markdown renders as <strong>, still caught by the tag check.
         let domBold = false;
+        let shlokKeys: string[] = [];
         try {
-          let node: Node | null = range.commonAncestorContainer;
-          if (node && node.nodeType === Node.TEXT_NODE) node = node.parentNode;
-          while (node && node instanceof HTMLElement) {
-            const tag = node.tagName?.toUpperCase();
-            if (tag === "STRONG" || tag === "B") { domBold = true; break; }
-            const fw = window.getComputedStyle(node).fontWeight;
-            if (fw === "bold" || (fw && parseInt(fw, 10) >= 600)) { domBold = true; break; }
-            if (node.hasAttribute && node.hasAttribute("data-page-num")) break;
-            node = node.parentNode;
+          const isBoldFrom = (n: Node | null): boolean => {
+            let node: Node | null = n;
+            if (node && node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+            while (node && node instanceof HTMLElement) {
+              const tag = node.tagName?.toUpperCase();
+              if (tag === "STRONG" || tag === "B") return true;
+              const fw = window.getComputedStyle(node).fontWeight;
+              if (fw === "bold" || (fw && parseInt(fw, 10) >= 700)) return true;
+              if (node.hasAttribute && node.hasAttribute("data-page-num")) break;
+              node = node.parentNode;
+            }
+            return false;
+          };
+          domBold =
+            isBoldFrom(range.startContainer) ||
+            isBoldFrom(range.endContainer) ||
+            isBoldFrom(range.commonAncestorContainer);
+          if (!domBold) {
+            const anc = range.commonAncestorContainer;
+            const ancEl = anc.nodeType === Node.TEXT_NODE ? anc.parentElement : (anc as HTMLElement);
+            const blocks = ancEl?.querySelectorAll?.("p, strong, b");
+            if (blocks) {
+              for (const b of Array.from(blocks)) {
+                if (range.intersectsNode(b) && isBoldFrom(b)) { domBold = true; break; }
+              }
+            }
+          }
+          // Collect the RENDERED text of each shlok (verse) <p> the selection
+          // intersects. Keying off the rendered line — not the raw OCR source —
+          // guarantees the key equals the renderer's normalizeBoldKey(sec.lines[j]),
+          // so the un-bold override is immune to OCR-cleaning and page-number
+          // stripping that make raw source differ from what is displayed. A sub-line
+          // selection still intersects the whole <p>, so it maps to the full-line
+          // key; verses are the ONLY structurally-bold content the override applies
+          // to, so tatparya/shabdarth never trigger it.
+          const anc2 = range.commonAncestorContainer;
+          const ancEl2 = anc2.nodeType === Node.TEXT_NODE ? anc2.parentElement : (anc2 as HTMLElement);
+          const pageEl = (ancEl2?.closest?.("[data-page-num]") as HTMLElement | null) || ancEl2 || null;
+          const shlokPs = pageEl?.querySelectorAll?.('[data-section-type="shlok"] p');
+          if (shlokPs) {
+            for (const p of Array.from(shlokPs)) {
+              if (range.intersectsNode(p)) {
+                const k = normalizeBoldKey(p.textContent || "");
+                if (k) shlokKeys.push(k);
+              }
+            }
           }
         } catch { /* */ }
+        selectionShlokKeysRef.current = shlokKeys;
         setSelectionIsBoldDom(domBold);
+        setSelectionInShlok(shlokKeys.length > 0);
 
         setShow(true);
       }, 250);
@@ -1029,7 +1256,16 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       return;
     }
     let cleanedNew = newText;
-    if (leftTrim && cleanedNew.startsWith(leftTrim)) cleanedNew = cleanedNew.slice(leftTrim.length);
+    if (leftTrim) {
+      if (cleanedNew.startsWith(leftTrim)) {
+        cleanedNew = cleanedNew.slice(leftTrim.length);
+      } else if (cleanedNew.startsWith("**" + leftTrim)) {
+        // "Make bold" wrapped the whole selection INCLUDING the render-only
+        // label (e.g. "**तात्पर्य : x**"). Keep the `**` but drop the label so it
+        // isn't baked into the source as bold (which would double the label).
+        cleanedNew = "**" + cleanedNew.slice(("**" + leftTrim).length);
+      }
+    }
     if (rightTrim && cleanedNew.endsWith(rightTrim)) cleanedNew = cleanedNew.slice(0, cleanedNew.length - rightTrim.length);
     cleanedNew = cleanedNew.replace(SECTION_LABEL_RE, "\n");
     const effectiveOld = cleanedOld;
@@ -1096,6 +1332,20 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
           const re = new RegExp(buildFlexibleRegex(effectiveOld));
           fullNewText = sourceText.replace(re, effectiveNew);
         } catch { /* */ }
+      }
+
+      // STRATEGY 2.5: Shared robust locator (BUG 2/3 fix) — whitespace-flexible
+      // and bold-marker-insensitive. Catches cases strategies 1-2 miss, notably
+      // reverting a Quick AI fix via Undo: the AI's suggested_text needs to be
+      // re-located in the current source, and it may now sit inside/adjacent to
+      // "**...**" markers or have slightly different whitespace than when it
+      // was first inserted. Uses (index, matchLength) — never a naive .replace —
+      // so we always touch the exact located span, not a different occurrence.
+      if (fullNewText === sourceText) {
+        const loc = locateSelectionInSource(sourceText, effectiveOld);
+        if (loc) {
+          fullNewText = sourceText.slice(0, loc.index) + effectiveNew + sourceText.slice(loc.index + loc.matchLength);
+        }
       }
 
       // Whitespace/glyph-normalizing cleaner with an index map back to the
@@ -1286,6 +1536,13 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
   const runUndo = useCallback(() => {
     if (!undoFix) return;
     pageNumRef.current = undoFix.pageNum;              // revert on the same page
+    // Reverse the edit: locate the AI's suggested_text (newText) in the current
+    // source and swap it back to the original (oldText). applyEdit's own
+    // computeEdit pipeline now includes the shared robust locator (STRATEGY 2.5,
+    // whitespace-flexible + bold-insensitive) so this reliably finds newText
+    // even if it now sits next to "**" markers or the page was reformatted.
+    // applyEdit persists the reverted text to {book}_page_edits itself, so the
+    // undo is not just visual — it survives reload.
     void applyEdit(undoFix.newText, undoFix.oldText);  // swap the replacement back
     setUndoFix(null);
     if (undoTimerRef.current) { clearTimeout(undoTimerRef.current); undoTimerRef.current = null; }
@@ -1359,10 +1616,12 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     if (pageNum) {
       const page = allPages.find(p => p.pageNumber === pageNum);
       if (page?.text) {
-        const idx = page.text.indexOf(selectedText);
-        if (idx >= 0) {
-          contextBefore = page.text.substring(Math.max(0, idx - 600), idx);
-          contextAfter = page.text.substring(idx + selectedText.length, idx + selectedText.length + 600);
+        // BUG 2 fix: robust locator — falls back through trimmed / whitespace-
+        // flexible / bold-insensitive matching instead of a brittle indexOf.
+        const loc = locateSelectionInSource(page.text, selectedText);
+        if (loc) {
+          contextBefore = page.text.substring(Math.max(0, loc.index - 600), loc.index);
+          contextAfter = page.text.substring(loc.index + loc.matchLength, loc.index + loc.matchLength + 600);
         }
       }
     }
@@ -1409,10 +1668,11 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     if (pageNum) {
       const page = allPages.find(p => p.pageNumber === pageNum);
       if (page?.text) {
-        const idx = page.text.indexOf(selectedText);
-        if (idx >= 0) {
-          contextBefore = page.text.substring(Math.max(0, idx - 600), idx);
-          contextAfter = page.text.substring(idx + selectedText.length, idx + selectedText.length + 600);
+        // BUG 2 fix: robust locator instead of brittle indexOf.
+        const loc = locateSelectionInSource(page.text, selectedText);
+        if (loc) {
+          contextBefore = page.text.substring(Math.max(0, loc.index - 600), loc.index);
+          contextAfter = page.text.substring(loc.index + loc.matchLength, loc.index + loc.matchLength + 600);
         }
       }
     }
@@ -1461,9 +1721,10 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
     const page = pageNum ? allPages.find(p => p.pageNumber === pageNum) : null;
     if (page) {
       if (page.text.includes(`**${selectedText}**`)) return true;
-      const idx = page.text.indexOf(selectedText);
-      if (idx >= 0) {
-        const before = page.text.substring(0, idx);
+      // BUG 2 fix: robust locator instead of brittle indexOf.
+      const loc = locateSelectionInSource(page.text, selectedText);
+      if (loc) {
+        const before = page.text.substring(0, loc.index);
         const starsBefore = (before.match(/\*\*/g) || []).length;
         if (starsBefore % 2 === 1) return true;
       }
@@ -1496,10 +1757,11 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
         return;
       }
 
-      const idx = page.text.indexOf(selectedText);
-      if (idx >= 0) {
-        const selStart = idx;
-        const selEnd = idx + selectedText.length;
+      // BUG 2 fix: robust locator instead of brittle indexOf.
+      const locD = locateSelectionInSource(page.text, selectedText);
+      if (locD) {
+        const selStart = locD.index;
+        const selEnd = locD.index + locD.matchLength;
         const re = /\*\*([^*]+?)\*\*/g;
         const overlapping: Array<{ start: number; end: number }> = [];
         let m: RegExpExecArray | null;
@@ -1524,6 +1786,28 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
       }
     }
 
+    // Structural verse bold. Shlok verses render bold via CSS (font-bold), not
+    // `**`, so there are no markers to strip. Toggle a per-line "un-bold"
+    // override, gated on the selection actually being INSIDE a shlok (so
+    // tatparya/shabdarth never trigger it). Keys are the rendered <p> line texts
+    // captured at selection time (match the renderer exactly). Direction follows
+    // the button's own signal — selectionIsBoldDom true ("Remove bold") un-bolds
+    // every selected verse line; false ("Make bold") restores them — so a mixed
+    // selection can never invert into re-bolding what the user asked to lighten.
+    if (selectionInShlok) {
+      const keys = selectionShlokKeysRef.current;
+      if (keys.length) {
+        const next = new Set(unboldLines);
+        if (selectionIsBoldDom) keys.forEach(k => next.add(k));
+        else keys.forEach(k => next.delete(k));
+        onUnboldChange(next);
+      }
+      setShow(false);
+      return;
+    }
+
+    // Structurally bold but NOT a verse (e.g. a shabdarth <strong> meaning) with
+    // no `**` to strip: nothing this tool can remove — dismiss without re-bolding.
     if (selectionIsBoldDom) {
       setShow(false);
       return;
@@ -1531,7 +1815,7 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
 
     void applyEdit(selectedText, `**${selectedText}**`);
     setShow(false);
-  }, [selectedText, allPages, selectionIsBoldDom, applyEdit]);
+  }, [selectedText, allPages, selectionIsBoldDom, selectionInShlok, applyEdit, unboldLines, onUnboldChange]);
 
   // Clear formatting — deterministically STRIP bold (**...**) from the selection.
   // Unlike "Make bold" (a toggle that may re-bold), this only ever removes, so a
@@ -1554,10 +1838,11 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
         setShow(false); return;
       }
       // Any **...** spans overlapping the selection → strip the whole chunk.
-      const idx = page.text.indexOf(selectedText);
-      if (idx >= 0) {
-        const selStart = idx;
-        const selEnd = idx + selectedText.length;
+      // BUG 2 fix: robust locator instead of brittle indexOf.
+      const locClear = locateSelectionInSource(page.text, selectedText);
+      if (locClear) {
+        const selStart = locClear.index;
+        const selEnd = locClear.index + locClear.matchLength;
         const re = /\*\*([^*]+?)\*\*/g;
         const overlapping: Array<{ start: number; end: number }> = [];
         let m: RegExpExecArray | null;
@@ -1575,8 +1860,19 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
         }
       }
     }
-    setShow(false); // nothing to strip
-  }, [selectedText, allPages, applyEdit]);
+    // No `**` to strip — if the selection is inside a shlok verse (rendered
+    // font-bold via CSS), mark its line(s) to render at normal weight. Clear
+    // formatting only ever removes, so it always un-bolds (never restores).
+    if (selectionInShlok) {
+      const keys = selectionShlokKeysRef.current;
+      if (keys.length) {
+        const next = new Set(unboldLines);
+        keys.forEach(k => next.add(k));
+        onUnboldChange(next);
+      }
+    }
+    setShow(false); // nothing more to strip
+  }, [selectedText, allPages, applyEdit, selectionInShlok, unboldLines, onUnboldChange]);
 
   const insertLineBreak = useCallback(() => {
     pulseAiGlow();
@@ -1816,22 +2112,13 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
               <Combine className="w-3.5 h-3.5" /> Join words
             </button>
             <button
-              onClick={requestSuggestion}
-              disabled={suggestLoading || quickFixLoading}
-              className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-              title="Ask AI to fix this text"
-            >
-              {suggestLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-              AI fix text &amp; format
-            </button>
-            <button
               onClick={requestQuickFix}
               disabled={suggestLoading || quickFixLoading}
-              className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-              title="Apply AI fix instantly without preview"
+              className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+              title="Fix this text with AI — applies instantly (undo available)"
             >
-              {quickFixLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
-              Quick AI fix
+              {quickFixLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+              AI fix text &amp; format
             </button>
             <button
               onClick={() => { setManualFixText(selectedText); setManualFixMode(true); }}
@@ -1869,12 +2156,18 @@ function VoiceEditToolbar({ allPages, setAllPages }: { allPages: PageContent[]; 
               <div className="text-[10px] uppercase tracking-wide text-purple-700 font-semibold mb-0.5">Suggested</div>
               <div className="text-base text-stone-900 font-medium mb-2.5 px-2.5 py-1.5 bg-white border border-green-300 rounded break-words whitespace-pre-wrap" lang="hi">
                 {suggestion.suggested_text
-                  ? suggestion.suggested_text.split("\n").map((ln, i, arr) => (
-                      <span key={i}>
-                        {renderInlineBold(ln)}
-                        {i < arr.length - 1 && "\n"}
-                      </span>
-                    ))
+                  ? (() => {
+                      // Bold state must carry across lines here too — the preview is a
+                      // multi-line block, not independent lines (BUG FIX, same as sec.lines).
+                      const previewLines = suggestion.suggested_text.split("\n");
+                      const renderedPreview = renderInlineBoldBlock(previewLines);
+                      return previewLines.map((ln, i, arr) => (
+                        <span key={i}>
+                          {renderedPreview[i]}
+                          {i < arr.length - 1 && "\n"}
+                        </span>
+                      ));
+                    })()
                   : <em className="text-stone-400 text-sm">(no suggestion)</em>}
               </div>
 
@@ -2110,7 +2403,7 @@ function BookmarkPanel({ bookmarks, onJump, onDelete, isLoggedIn, onLogin }: {
 
 // ── Content Renderer ───────────────────────────────────────────────────────
 
-function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, overrides, onOverridesChange, prevPageEndKind, nextPageStartsNumberedShlok }: {
+function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, overrides, onOverridesChange, prevPageEndKind, nextPageStartsNumberedShlok, unboldLines }: {
   text: string;
   textEn?: string;
   lang: "hi" | "en";
@@ -2120,6 +2413,7 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
   onOverridesChange?: (pageNum: number, overrides: SectionOverride[]) => void;
   prevPageEndKind?: string;
   nextPageStartsNumberedShlok?: boolean;
+  unboldLines?: Set<string>;
 }) {
   const t = THEME_STYLES[themeKey];
 
@@ -2135,10 +2429,11 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
     const enLines = textEn.split("\n")
       .filter((l) => l.trim() && !isStandalonePageNumber(l))
       .map((l) => stripLeadingPageNumber(l));
+    const renderedEnLines = renderInlineBoldBlock(enLines); // bold state carries across lines
     return (
       <div className="space-y-4">
         {enLines.map((l, i) => (
-          <p key={i} className={`leading-[1.8] ${t.text} mb-1`}>{renderInlineBold(l)}</p>
+          <p key={i} className={`leading-[1.8] ${t.text} mb-1`}>{renderedEnLines[i]}</p>
         ))}
       </div>
     );
@@ -2514,19 +2809,30 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
                   <div className={`mb-4 h-px ${themeKey === "dark" ? "bg-white/5" : themeKey === "sepia" ? "bg-amber-300/30" : "bg-orange-200/40"}`} />
                 )}
                 <div>
-                  {sec.lines.map((l, j) => (
-                    <p key={j} className={`font-bold leading-[1.9] mb-0.5 ${t.text}`} style={{ fontSize: "1.15em", fontFamily: "var(--font-sanskrit)" }}>{renderInlineBold(l)}</p>
-                  ))}
+                  {(() => {
+                    // Bold state must carry across the verse's lines (BUG FIX: a ** pair
+                    // can open/close across multiple lines of the same shlok).
+                    const rendered = renderInlineBoldBlock(sec.lines);
+                    return sec.lines.map((l, j) => {
+                      // Verses are bold by default; a maintainer can lighten a
+                      // specific line via the "Remove bold" toolbar (un-bold override).
+                      const unbolded = unboldLines?.has(normalizeBoldKey(l));
+                      return (
+                        <p key={j} className={`${unbolded ? "" : "font-bold "}leading-[1.9] mb-0.5 ${t.text}`} style={{ fontSize: "1.15em", fontFamily: "var(--font-sanskrit)" }}>{rendered[j]}</p>
+                      );
+                    });
+                  })()}
                 </div>
               </div>
             );
           }
           case "ref-shlok": {
             const isRefShlokContinuation = i === 0 && prevPageEndKind === "ref-shlok";
+            const renderedRefShlok = renderInlineBoldBlock(sec.lines); // bold state carries across lines
             return (
               <div key={i} data-section-type="ref-shlok" className={isRefShlokContinuation ? "" : `pl-4 border-l-2 my-2 ${themeKey === "dark" ? "border-amber-800/40" : themeKey === "sepia" ? "border-[#c4ad80]" : "border-[#c4956a]/40"}`}>
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`leading-[1.7] italic mb-0.5 ${isRefShlokContinuation ? "pl-4" : ""} ${themeKey === "dark" ? "text-amber-400/70" : themeKey === "sepia" ? "text-[#6b4020]" : "text-[#8b5a30]"}`} style={{ fontSize: "0.9em", fontFamily: "var(--font-sanskrit)" }}>{renderInlineBold(l)}</p>
+                  <p key={j} className={`leading-[1.7] italic mb-0.5 ${isRefShlokContinuation ? "pl-4" : ""} ${themeKey === "dark" ? "text-amber-400/70" : themeKey === "sepia" ? "text-[#6b4020]" : "text-[#8b5a30]"}`} style={{ fontSize: "0.9em", fontFamily: "var(--font-sanskrit)" }}>{renderedRefShlok[j]}</p>
                 ))}
               </div>
             );
@@ -2553,35 +2859,39 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
             );
           case "anuvad": {
             const isAnuvadContinuation = i === 0 && prevPageEndKind === "anuvad";
+            const renderedAnuvad = renderInlineBoldBlock(sec.lines); // bold state carries across lines
             return (
               <div key={i} data-section-type="anuvad" className={isAnuvadContinuation ? "" : "mt-3"}>
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>{renderInlineBold(l)}</p>
+                  <p key={j} className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>{renderedAnuvad[j]}</p>
                 ))}
               </div>
             );
           }
           case "tatparya": {
             const isContinuation = i === 0 && (prevPageEndKind === "tatparya" || prevPageEndKind === "ref-shlok");
+            const renderedTatparya = renderInlineBoldBlock(sec.lines); // bold state carries across lines
             return (
               <div key={i} data-section-type="tatparya" className={isContinuation ? "" : "mt-4 sm:mt-5"}>
                 {sec.lines.map((l, j) => (
                   <p key={j} className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>
                     {j === 0 && !isContinuation && <><span className="font-semibold">तात्पर्य :</span>{" "}</>}
-                    {renderInlineBold(l)}
+                    {renderedTatparya[j]}
                   </p>
                 ))}
               </div>
             );
           }
-          default:
+          default: {
+            const renderedText = renderInlineBoldBlock(sec.lines); // bold state carries across lines
             return (
               <div key={i} data-section-type="text">
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`leading-[1.8] ${t.text} mb-1`} style={{ fontSize: "1em" }}>{renderInlineBold(l)}</p>
+                  <p key={j} className={`leading-[1.8] ${t.text} mb-1`} style={{ fontSize: "1em" }}>{renderedText[j]}</p>
                 ))}
               </div>
             );
+          }
         }
       })}
     </div>
@@ -3011,6 +3321,37 @@ export default function Chaitanya() {
     setSectionOverrides(next);
     saveSectionOverrides(next);
   }, [sectionOverrides]);
+  // Per-line "un-bold" overrides: verse lines a maintainer chose to render at
+  // normal weight (the "Remove bold" toolbar on a shlok). Device-local + reversible.
+  const [unboldLines, setUnboldLines] = useState<Set<string>>(loadUnboldLines);
+  const handleUnboldChange = useCallback((next: Set<string>) => {
+    setUnboldLines(next);
+    saveUnboldLines(next);
+  }, []);
+  // ── Source editor (CodeMirror) — dev-gated per-page raw-text editing ──────────
+  const [editSourcePage, setEditSourcePage] = useState<number | null>(null);
+  const savePageSource = useCallback(async (pn: number, newText: string) => {
+    setAllPages(prev => prev.map(p => (p.pageNumber === pn ? { ...p, text: newText } : p)));
+    const res = await sbFetch(TBL_PAGE_EDITS, {
+      method: "POST",
+      headers: { Prefer: "return=representation,resolution=merge-duplicates" },
+      body: JSON.stringify({ page_number: pn, text: newText, edited_at: new Date().toISOString(), applied_to_git: false }),
+    });
+    if (!res.ok) throw new Error((await res.text().catch(() => "")) || res.statusText);
+  }, []);
+  const runAiFixSpan = useCallback(async ({ selectedText, contextBefore, contextAfter, pageNumber }: AiFixArgs): Promise<string | null> => {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/bhagavatam-correct-text`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ selected_text: selectedText, context_before: contextBefore, context_after: contextAfter, page_number: pageNumber }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({} as { error?: string }));
+      throw new Error(err.error || res.statusText);
+    }
+    const data = await res.json();
+    return ((data?.suggested_text as string) || "").trim() || null;
+  }, []);
   const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1024);
   const [activeChapter, setActiveChapter] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -3634,7 +3975,33 @@ export default function Chaitanya() {
         />
 
         <main ref={contentRef} className={`flex-1 min-w-0 ${theme.bg} transition-colors duration-300`}>
-          <VoiceEditToolbar allPages={allPages} setAllPages={setAllPages} />
+          <VoiceEditToolbar allPages={allPages} setAllPages={setAllPages} unboldLines={unboldLines} onUnboldChange={handleUnboldChange} />
+          {/* Source editor (CodeMirror) — dev-gated full-screen raw-text editor */}
+          {editSourcePage != null && (() => {
+            const pg = allPages.find(p => p.pageNumber === editSourcePage);
+            if (!pg) return null;
+            const prevPn = allPages.some(p => p.pageNumber === editSourcePage - 1) ? editSourcePage - 1 : undefined;
+            const nextPn = allPages.some(p => p.pageNumber === editSourcePage + 1) ? editSourcePage + 1 : undefined;
+            return (
+              <React.Suspense fallback={<div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/90 dark:bg-stone-900/90"><Loader2 className="w-6 h-6 animate-spin text-orange-500" /></div>}>
+                <SourceEditor
+                  key={editSourcePage}
+                  pageNumber={editSourcePage}
+                  initialText={pg.text}
+                  dark={settings.theme === "dark"}
+                  renderPreview={(t) => (
+                    <RenderContent text={t} lang={lang} themeKey={settings.theme} pageNumber={editSourcePage ?? undefined} unboldLines={unboldLines} />
+                  )}
+                  onSave={savePageSource}
+                  requestAiFix={runAiFixSpan}
+                  onClose={() => setEditSourcePage(null)}
+                  prevPageNumber={prevPn}
+                  nextPageNumber={nextPn}
+                  onNavigate={setEditSourcePage}
+                />
+              </React.Suspense>
+            );
+          })()}
 
           {/* Top bar */}
           <div className={`sticky top-14 z-30 ${theme.surface} backdrop-blur-sm border-b ${theme.border} px-2 sm:px-4 md:px-6 py-1.5 sm:py-2`}>
@@ -3864,6 +4231,17 @@ export default function Chaitanya() {
 
                     return (
                       <div key={page.pageNumber} data-page-num={page.pageNumber}>
+                        {isDevMode && (
+                          <div className="flex justify-end">
+                            <button
+                              onClick={() => setEditSourcePage(page.pageNumber)}
+                              className="inline-flex items-center gap-1 text-[10px] font-semibold text-stone-400 hover:text-orange-600 px-2 py-0.5 rounded transition-colors"
+                              title="Edit this page's raw source in the CodeMirror editor"
+                            >
+                              <Pencil className="w-3 h-3" /> Edit source
+                            </button>
+                          </div>
+                        )}
                         {isFirstPageOfChapter && ch && (
                           <div id={`chapter-${ch.globalNumber}`} className="mt-6 mb-4 scroll-mt-20">
                             <p className={`text-[11px] uppercase tracking-widest ${theme.muted} font-semibold mb-1`}>
@@ -3895,6 +4273,7 @@ export default function Chaitanya() {
                           onOverridesChange={isDevMode ? handleOverridesChange : undefined}
                           prevPageEndKind={prevEndKind}
                           nextPageStartsNumberedShlok={nextPageStartsNumberedShlok}
+                          unboldLines={unboldLines}
                         />
                       </div>
                     );
