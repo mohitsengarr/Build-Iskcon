@@ -796,6 +796,144 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
 // until a version is approved.
 const CHAITANYA_IMAGE_GEN_PAUSED = false;
 
+// ── Story Scenes ─────────────────────────────────────────────────────────────
+// Passages a reader highlighted in the books and saved via "Add to scenes".
+// Unlike the AI-extracted chapter scenes, these are human-chosen text spans
+// queued for image generation; each row shows whether its image exists yet.
+
+interface ReaderScene {
+  id: number;
+  book: string;
+  page_number: number | null;
+  chapter_title: string | null;
+  selected_text: string;
+  note: string | null;
+  image_generated: boolean;
+  image_url: string | null;
+  status: string;
+  created_at: string;
+}
+
+const BOOK_LABEL: Record<string, string> = {
+  bhagavatam: "Śrīmad Bhāgavatam",
+  chaitanya: "Caitanya-caritāmṛta",
+  gita: "Bhagavad-gītā",
+};
+
+function StoryScenesSection() {
+  const [scenes, setScenes] = useState<ReaderScene[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(true);
+  const [filter, setFilter] = useState<"all" | "pending" | "generated">("all");
+  const [busyId, setBusyId] = useState<number | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await sbFetch("reader_scenes?select=*&order=created_at.desc&limit=200");
+      setScenes(res.ok ? await res.json() : []);
+    } catch { setScenes([]); }
+    finally { setLoading(false); }
+  }, []);
+  useEffect(() => { void load(); }, [load]);
+
+  const remove = useCallback(async (id: number) => {
+    if (!window.confirm("Remove this scene from the list?")) return;
+    setBusyId(id);
+    try {
+      const res = await sbFetch(`reader_scenes?id=eq.${id}`, { method: "DELETE" });
+      if (res.ok) setScenes(prev => prev.filter(s => s.id !== id));
+    } finally { setBusyId(null); }
+  }, []);
+
+  const shown = scenes.filter(s =>
+    filter === "all" ? true : filter === "generated" ? s.image_generated : !s.image_generated);
+  const genCount = scenes.filter(s => s.image_generated).length;
+
+  return (
+    <div className="mb-6 bg-white border-2 border-pink-200 rounded-2xl overflow-hidden">
+      <button onClick={() => setOpen(o => !o)} className="w-full flex items-center gap-3 p-4 hover:bg-pink-50/50 transition-colors text-left">
+        <div className="w-9 h-9 rounded-xl bg-pink-600 flex items-center justify-center shrink-0">
+          <BookOpen className="w-5 h-5 text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-serif font-bold text-pink-900 text-sm">Story Scenes {scenes.length > 0 && `(${scenes.length})`}</h3>
+          <p className="text-[11px] text-pink-700/80 mt-0.5">
+            Passages saved while reading, queued for image generation
+            {scenes.length > 0 && ` — ${genCount} illustrated, ${scenes.length - genCount} pending`}
+          </p>
+        </div>
+        {open ? <ChevronUp className="w-4 h-4 text-pink-400" /> : <ChevronDown className="w-4 h-4 text-pink-400" />}
+      </button>
+
+      {open && (
+        <div className="px-4 pb-4">
+          <div className="flex items-center gap-1.5 mb-3">
+            {(["all", "pending", "generated"] as const).map(f => (
+              <button key={f} onClick={() => setFilter(f)}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors ${
+                  filter === f ? "bg-pink-600 text-white border-pink-600" : "bg-white text-stone-600 border-stone-200 hover:border-pink-300"}`}>
+                {f === "all" ? "All" : f === "pending" ? "Not generated" : "Generated"}
+              </button>
+            ))}
+            <button onClick={() => void load()} className="ml-auto p-1.5 rounded-lg text-stone-400 hover:text-pink-600 hover:bg-pink-50" title="Refresh">
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            </button>
+          </div>
+
+          {loading ? (
+            <div className="flex items-center gap-2 py-6 justify-center text-stone-400 text-xs">
+              <Loader2 className="w-4 h-4 animate-spin" /> Loading scenes…
+            </div>
+          ) : shown.length === 0 ? (
+            <p className="text-[11px] text-stone-400 py-6 text-center leading-relaxed">
+              {scenes.length === 0
+                ? "No scenes saved yet. While reading, highlight a passage and choose “Add to scenes”."
+                : "No scenes match this filter."}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {shown.map(s => (
+                <div key={s.id} className="flex gap-3 p-3 rounded-xl border border-stone-200 hover:border-pink-200 transition-colors">
+                  {s.image_generated && s.image_url ? (
+                    <img src={s.image_url} alt="" className="w-16 h-16 rounded-lg object-cover shrink-0" loading="lazy" />
+                  ) : (
+                    <div className="w-16 h-16 rounded-lg bg-stone-100 flex items-center justify-center shrink-0">
+                      <ImageIcon className="w-5 h-5 text-stone-300" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded ${
+                        s.image_generated ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+                        {s.image_generated ? "Image generated" : "Not generated"}
+                      </span>
+                      <span className="text-[10px] text-stone-400 font-medium">
+                        {BOOK_LABEL[s.book] || s.book}{s.page_number ? ` · Pg. ${s.page_number}` : ""}
+                      </span>
+                      {s.status && s.status !== "pending" && !s.image_generated && (
+                        <span className="text-[9px] uppercase font-semibold text-stone-400">{s.status}</span>
+                      )}
+                    </div>
+                    <p className="text-[12px] text-stone-700 leading-relaxed line-clamp-3" style={{ fontFamily: "var(--font-devanagari)" }}>
+                      {s.selected_text}
+                    </p>
+                    {s.note && <p className="text-[10px] text-stone-400 mt-1 italic">{s.note}</p>}
+                  </div>
+                  <button onClick={() => void remove(s.id)} disabled={busyId === s.id}
+                    className="p-1.5 h-fit rounded-lg text-stone-300 hover:text-red-500 hover:bg-red-50 shrink-0" title="Remove scene">
+                    {busyId === s.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Gallery Page ─────────────────────────────────────────────────────────────
 
 export default function Gallery() {
@@ -1849,6 +1987,9 @@ export default function Gallery() {
                 reads as a pure social feed with only the Back button + posts. */}
             {filterType !== "instagram" && (
               <>
+            {/* ── Story Scenes (reader-saved passages) ────────────────────── */}
+            <StoryScenesSection />
+
             {/* ── Bulk image generator (for missing chapters) ─────────────── */}
             {bulkStatus && bulkStatus.missingCount > 0 && (
               <div className="mb-6 bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl p-4">

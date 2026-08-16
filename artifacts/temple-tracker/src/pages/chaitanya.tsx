@@ -13,7 +13,7 @@ import {
   List, X, ChevronDown, ChevronUp, Languages,
   Bookmark, Trash2, LogIn, Volume2, Square, Check,
   Settings, Minus, Plus, Maximize2, Pencil, Wand2, Undo2, Bold, Eraser, GripHorizontal,
-  CornerDownLeft, Combine, Keyboard, Delete, RefreshCw,
+  CornerDownLeft, Combine, Keyboard, Delete, RefreshCw, Image as ImageIcon,
 } from "lucide-react";
 
 // ── Book key (used everywhere a bhagwatham/bhagavatam discriminator lived) ──
@@ -1924,6 +1924,39 @@ function VoiceEditToolbar({ allPages, setAllPages, unboldLines, onUnboldChange }
     setShow(false); // nothing more to strip
   }, [selectedText, allPages, applyEdit, selectionInShlok, unboldLines, onUnboldChange]);
 
+  // ── Save the selection as an "interesting scene" ────────────────────────────
+  // Stores the highlighted passage in `reader_scenes` for later image generation;
+  // the Gallery's Story Scenes section lists them with their generation status.
+  const [sceneSaving, setSceneSaving] = useState(false);
+  const [sceneSaved, setSceneSaved] = useState(false);
+  const saveScene = useCallback(async () => {
+    if (!selectedText || sceneSaving) return;
+    setSceneSaving(true);
+    try {
+      const res = await sbFetch("reader_scenes", {
+        method: "POST",
+        body: JSON.stringify({
+          book: BOOK_KEY,
+          page_number: pageNumRef.current,
+          selected_text: selectedText,
+          device_id: localStorage.getItem(`${BOOK_KEY}_device_id`) || null,
+          reader_id: localStorage.getItem(`${BOOK_KEY}_reader_id`) || null,
+        }),
+      });
+      if (!res.ok) {
+        const msg = await res.text().catch(() => "");
+        alert(`Couldn't save the scene.\n${msg || res.statusText}`);
+        return;
+      }
+      setSceneSaved(true);
+      setTimeout(() => { setSceneSaved(false); setShow(false); }, 1000);
+    } catch (err) {
+      alert(`Couldn't save the scene.\n${String(err)}`);
+    } finally {
+      setSceneSaving(false);
+    }
+  }, [selectedText, sceneSaving]);
+
   const insertLineBreak = useCallback(() => {
     pulseAiGlow();
     if (!selectedText) return;
@@ -2176,6 +2209,15 @@ function VoiceEditToolbar({ allPages, setAllPages, unboldLines, onUnboldChange }
               title="Edit yourself with an on-screen Devanagari keyboard"
             >
               <Keyboard className="w-3.5 h-3.5" /> Manual fix
+            </button>
+            <button
+              onClick={saveScene}
+              disabled={sceneSaving}
+              className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-pink-600 hover:bg-pink-50 rounded-lg transition-colors disabled:opacity-50"
+              title="Save this passage as an interesting scene, to generate an image from later"
+            >
+              {sceneSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : sceneSaved ? <Check className="w-3.5 h-3.5 text-green-600" /> : <ImageIcon className="w-3.5 h-3.5" />}
+              {sceneSaved ? "Saved to scenes" : "Add to scenes"}
             </button>
             {appliedFlash && (
               <span className="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold text-green-700 bg-green-50 rounded">

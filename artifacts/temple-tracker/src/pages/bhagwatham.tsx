@@ -2574,6 +2574,40 @@ function VoiceEditToolbar({ allPages, setAllPages, unboldLines, onUnboldChange }
     setShow(false); // nothing more to strip
   }, [selectedText, allPages, applyEdit, selectionInShlok, unboldLines, onUnboldChange]);
 
+  // ── Save the selection as an "interesting scene" ────────────────────────────
+  // Stores the highlighted passage in `reader_scenes` so an image can be generated
+  // from it later. Distinct from the AI-extracted *_chapter_scenes: these are
+  // human-chosen spans, and the Gallery lists them with their generation status.
+  const [sceneSaving, setSceneSaving] = useState(false);
+  const [sceneSaved, setSceneSaved] = useState(false);
+  const saveScene = useCallback(async () => {
+    if (!selectedText || sceneSaving) return;
+    setSceneSaving(true);
+    try {
+      const res = await sbFetch("reader_scenes", {
+        method: "POST",
+        body: JSON.stringify({
+          book: "bhagavatam",
+          page_number: pageNumRef.current,
+          selected_text: selectedText,
+          device_id: localStorage.getItem("bhagwatham_device_id") || null,
+          reader_id: localStorage.getItem("bhagwatham_reader_id") || null,
+        }),
+      });
+      if (!res.ok) {
+        const msg = await res.text().catch(() => "");
+        alert(`Couldn't save the scene.\n${msg || res.statusText}`);
+        return;
+      }
+      setSceneSaved(true);
+      setTimeout(() => { setSceneSaved(false); setShow(false); }, 1000);
+    } catch (err) {
+      alert(`Couldn't save the scene.\n${String(err)}`);
+    } finally {
+      setSceneSaving(false);
+    }
+  }, [selectedText, sceneSaving]);
+
   // Word-doc style edits on the selection:
   // - "New line" pushes the selection onto its own line (newline before it).
   // - "Join" removes the spaces inside the selection (fixes wrongly-split words).
@@ -2844,6 +2878,15 @@ function VoiceEditToolbar({ allPages, setAllPages, unboldLines, onUnboldChange }
                 title="Edit this text yourself with an on-screen Devanagari keyboard — no Hindi IME needed"
               >
                 <Keyboard className="w-3.5 h-3.5" /> Manual fix
+              </button>
+              <button
+                onClick={saveScene}
+                disabled={sceneSaving}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium text-stone-600 hover:text-pink-600 hover:bg-pink-50 rounded-lg transition-colors disabled:opacity-50"
+                title="Save this passage as an interesting scene, to generate an image from later"
+              >
+                {sceneSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : sceneSaved ? <Check className="w-3.5 h-3.5 text-green-600" /> : <ImageIcon className="w-3.5 h-3.5" />}
+                {sceneSaved ? "Saved to scenes" : "Add to scenes"}
               </button>
               {appliedFlash && (
                 <span className="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold text-green-700 bg-green-50 rounded">
