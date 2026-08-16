@@ -258,6 +258,26 @@ function normalizeDashKey(line: string): string {
   return normalizeBoldKey(line).replace(/[-‐-―−]+/g, "—").replace(/\s*—\s*/g, "—");
 }
 
+// Tidy the AI's replacement before it goes into the page source.
+// The OCR keeps a newline at every PRINTED line end, and the renderer turns each
+// source line into its own rendered line. The model re-wraps prose at different
+// points, so its output rendered as ragged half-width lines. In prose we collapse
+// single newlines to spaces (the paragraph then reflows naturally to full width)
+// while keeping blank lines, which are real paragraph breaks. Verses are left
+// alone — there a single newline separates the half-lines and is meaningful.
+// Also fixes the doubled single-danda splice artifact ("होगा। ।").
+function tidyAiText(text: string, isVerse: boolean): string {
+  let out = text;
+  if (!isVerse) {
+    out = out.replace(/([^\n])\n(?!\n)/g, "$1 ");
+  }
+  out = out
+    .replace(/।[ \t]*।/g, "।")   // "। ।" → "।"  (॥ is one char, untouched)
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/[ \t]+\n/g, "\n");
+  return out.trim();
+}
+
 function loadUnboldLines(): Set<string> {
   try {
     const raw = localStorage.getItem(`${BOOK_KEY}_unbold_lines`);
@@ -1729,7 +1749,7 @@ function VoiceEditToolbar({ allPages, setAllPages, unboldLines, onUnboldChange }
         return;
       }
       const data = await res.json();
-      const newText = (data?.suggested_text || "").trim();
+      const newText = tidyAiText((data?.suggested_text || "").trim(), selectionInShlok);
       setShow(false);
       if (newText && newText !== oldText) {
         void applyEdit(oldText, newText);
