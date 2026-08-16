@@ -2073,9 +2073,19 @@ function VoiceEditToolbar({ allPages, setAllPages, unboldLines, onUnboldChange }
             }
             if (k < 4) continue;
             const rest = strippedSel.slice(k);
-            if (!rest || !B.cleaned.startsWith(rest)) continue;
+            if (!rest) continue;
+            // Page B's OCR source almost always begins with the book's PRINTED
+            // page number (e.g. "389\n\n…"), which the renderer strips for display
+            // (stripLeadingPageNumber) — so it can never appear in the selection.
+            // Comparing raw source against a rendered selection therefore failed
+            // here, which is why a sentence running across a page break reported
+            // "Couldn't locate the highlighted text". Skip that leading digit run.
+            const bLead = /^\d{1,5}/.exec(B.cleaned);
+            const bSkip = bLead && B.cleaned.slice(bLead[0].length).startsWith(rest) ? bLead[0].length : 0;
+            if (!B.cleaned.slice(bSkip).startsWith(rest)) continue;
             const startA = A.map[A.cleaned.length - k];
-            const endB = rest.length < B.map.length ? B.map[rest.length] : pb.text.length;
+            const endClean = bSkip + rest.length;
+            const endB = endClean < B.map.length ? B.map[endClean] : pb.text.length;
             console.info(`[applyEdit] cross-page split matched: pages ${pa.pageNumber}+${pb.pageNumber}, ${k}/${strippedSel.length} cleaned chars on first page`);
             return [
               { pageNumber: pa.pageNumber, text: pa.text.slice(0, startA) + effectiveNew },
