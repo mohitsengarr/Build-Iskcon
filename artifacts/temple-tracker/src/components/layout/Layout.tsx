@@ -83,6 +83,7 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { href: "/bhagwatham", label: "Srimad Bhagwatham" },
       { href: "/chaitanya", label: "Chaitanya Charitamrit" },
+      { href: "/gita", label: "Bhagavad Gita" },
     ],
   },
   { href: "/japa", label: "Japa Counter", isPage: true },
@@ -326,6 +327,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <a href="/" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Home</a>
             <a href="/bhagwatham" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Srimad Bhagwatham</a>
             <a href="/chaitanya" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Chaitanya Charitamrit</a>
+            <a href="/gita" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Bhagavad Gita</a>
             <a href="/japa" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Japa Counter</a>
             <a href="/gallery" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Gallery</a>
             <a href="/bhaktigram" className="text-white/70 hover:text-primary text-xs font-medium transition-colors cursor-pointer">Bhaktigram</a>
