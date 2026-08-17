@@ -106,16 +106,53 @@ async function tryGenerate(prompt: string, model: string, w: number, h: number):
   finally { clearTimeout(timer); }
 }
 
+// The active configuration approved in the Image Playground (/image-playground).
+// Fetched once per run; if the table is empty or unreachable we fall back to the
+// hard-coded values below, so generation never depends on it being present.
+interface ActiveGenConfig {
+  model: string; width: number; height: number; steps: number | null;
+  style_positives: string; style_negatives: string; extra_rules: string | null;
+  prompt_max_len: number;
+  fallback_model: string | null; fallback_width: number | null; fallback_height: number | null;
+}
+let activeCfgCache: ActiveGenConfig | null | undefined;
+async function getActiveConfig(): Promise<ActiveGenConfig | null> {
+  if (activeCfgCache !== undefined) return activeCfgCache;
+  try {
+    const { data } = await supabase.from("image_gen_config").select("*").eq("is_active", true).limit(1).maybeSingle();
+    activeCfgCache = (data as ActiveGenConfig) || null;
+  } catch { activeCfgCache = null; }
+  return activeCfgCache;
+}
+
 async function generateImage(prompt: string): Promise<string> {
-  let fullPrompt = `${prompt}, ${ART_STYLE}. ${MASCULINITY_RULE} ${ANACHRONISM_RULES}`;
-  if (fullPrompt.length > 2000) {
-    const stylePositives = "museum-quality 19th-century Indian devotional OIL PAINTING on canvas, Raja Ravi Varma 1880-1900 aesthetic, VISIBLE oil-paint brushstrokes, warm saffron palette, soft golden-hour lighting";
-    const styleNegatives = "NOT cartoon, NOT anime, NOT CGI, NOT 3D render, NOT digital illustration, NOT Pixar style, NOT Midjourney style, NOT plastic shiny skin, NOT photo-realistic";
-    fullPrompt = `${prompt}`.substring(0, 1050) + `, ${stylePositives}, ${styleNegatives}. ${MASCULINITY_RULE.substring(0, 180)} ${ANACHRONISM_RULES.substring(0, 540)}`;
-    if (fullPrompt.length > 2000) fullPrompt = fullPrompt.substring(0, 1980);
+  const cfg = await getActiveConfig();
+  let fullPrompt: string;
+  if (cfg) {
+    // Assemble exactly as the playground previews it.
+    fullPrompt = prompt;
+    if (cfg.style_positives) fullPrompt += `, ${cfg.style_positives}`;
+    if (cfg.style_negatives) fullPrompt += `, ${cfg.style_negatives}`;
+    if (cfg.extra_rules) fullPrompt += `. ${cfg.extra_rules}`;
+    const max = cfg.prompt_max_len || 2000;
+    if (fullPrompt.length > max) fullPrompt = fullPrompt.slice(0, max);
+  } else {
+    fullPrompt = `${prompt}, ${ART_STYLE}. ${MASCULINITY_RULE} ${ANACHRONISM_RULES}`;
+    if (fullPrompt.length > 2000) {
+      const stylePositives = "museum-quality 19th-century Indian devotional OIL PAINTING on canvas, Raja Ravi Varma 1880-1900 aesthetic, VISIBLE oil-paint brushstrokes, warm saffron palette, soft golden-hour lighting";
+      const styleNegatives = "NOT cartoon, NOT anime, NOT CGI, NOT 3D render, NOT digital illustration, NOT Pixar style, NOT Midjourney style, NOT plastic shiny skin, NOT photo-realistic";
+      fullPrompt = `${prompt}`.substring(0, 1050) + `, ${stylePositives}, ${styleNegatives}. ${MASCULINITY_RULE.substring(0, 180)} ${ANACHRONISM_RULES.substring(0, 540)}`;
+      if (fullPrompt.length > 2000) fullPrompt = fullPrompt.substring(0, 1980);
+    }
   }
   const sanitized = fullPrompt.replace(/battle|war|fight|weapon|sword|arrow|kill|death|blood|fire|burn|destroy|attack|strike|naked|nude/gi, "blessing");
-  const attempts = [
+  const attempts = cfg
+    ? [
+        { model: cfg.model, prompt: sanitized, w: cfg.width, h: cfg.height },
+        { model: cfg.fallback_model || cfg.model, prompt: sanitized, w: cfg.fallback_width || cfg.width, h: cfg.fallback_height || cfg.height },
+        { model: cfg.fallback_model || cfg.model, prompt: SAFE_FALLBACK, w: cfg.fallback_width || cfg.width, h: cfg.fallback_height || cfg.height },
+      ]
+    : [
     { model: "black-forest-labs/FLUX.2-pro", prompt: sanitized, w: 1088, h: 1344 },
     { model: "black-forest-labs/FLUX.1.1-pro", prompt: sanitized, w: 768, h: 1024 },
     { model: "black-forest-labs/FLUX.1.1-pro", prompt: SAFE_FALLBACK, w: 768, h: 1024 },
