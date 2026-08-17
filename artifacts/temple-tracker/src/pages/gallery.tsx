@@ -846,6 +846,47 @@ function StoryScenesSection() {
     } finally { setBusyId(null); }
   }, []);
 
+  // Edit the saved passage (fix OCR slips or trim it before generating art).
+  const [editId, setEditId] = useState<number | null>(null);
+  const [editText, setEditText] = useState("");
+  const saveEdit = useCallback(async (id: number) => {
+    setBusyId(id);
+    try {
+      const res = await sbFetch(`reader_scenes?id=eq.${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ selected_text: editText }),
+      });
+      if (res.ok) {
+        setScenes(prev => prev.map(s => (s.id === id ? { ...s, selected_text: editText } : s)));
+        setEditId(null);
+      } else alert(`Couldn't save: ${await res.text().catch(() => res.statusText)}`);
+    } finally { setBusyId(null); }
+  }, [editText]);
+
+  // Generate artwork for this scene, using the configuration approved in the playground.
+  const generate = useCallback(async (id: number) => {
+    setBusyId(id);
+    setScenes(prev => prev.map(s => (s.id === id ? { ...s, status: "generating" } : s)));
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/generate-scene-image`, {
+        method: "POST",
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ scene_id: id }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok || !d?.ok) {
+        alert(`Image generation failed: ${d?.error || res.statusText}`);
+        setScenes(prev => prev.map(s => (s.id === id ? { ...s, status: "failed" } : s)));
+        return;
+      }
+      setScenes(prev => prev.map(s => (s.id === id
+        ? { ...s, image_generated: true, image_url: d.image_url, status: "generated" } : s)));
+    } catch (err) {
+      alert(`Image generation failed: ${String(err)}`);
+      setScenes(prev => prev.map(s => (s.id === id ? { ...s, status: "failed" } : s)));
+    } finally { setBusyId(null); }
+  }, []);
+
   const shown = scenes.filter(s =>
     filter === "all" ? true : filter === "generated" ? s.image_generated : !s.image_generated);
   const genCount = scenes.filter(s => s.image_generated).length;
@@ -915,10 +956,47 @@ function StoryScenesSection() {
                         <span className="text-[9px] uppercase font-semibold text-stone-400">{s.status}</span>
                       )}
                     </div>
-                    <p className="text-[12px] text-stone-700 leading-relaxed line-clamp-3" style={{ fontFamily: "var(--font-devanagari)" }}>
-                      {s.selected_text}
-                    </p>
-                    {s.note && <p className="text-[10px] text-stone-400 mt-1 italic">{s.note}</p>}
+                    {editId === s.id ? (
+                      <div className="space-y-1.5">
+                        <textarea
+                          value={editText}
+                          onChange={e => setEditText(e.target.value)}
+                          rows={4}
+                          className="w-full px-2 py-1.5 rounded-lg border border-pink-300 text-[12px] focus:outline-none focus:ring-2 focus:ring-pink-200"
+                          style={{ fontFamily: "var(--font-devanagari)" }}
+                        />
+                        <div className="flex items-center gap-1.5">
+                          <button onClick={() => void saveEdit(s.id)} disabled={busyId === s.id}
+                            className="px-2.5 py-1 rounded-lg bg-pink-600 text-white text-[11px] font-semibold hover:bg-pink-700 disabled:opacity-50">
+                            {busyId === s.id ? "Saving…" : "Save"}
+                          </button>
+                          <button onClick={() => setEditId(null)}
+                            className="px-2.5 py-1 rounded-lg bg-stone-100 text-stone-600 text-[11px] font-semibold hover:bg-stone-200">
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-[12px] text-stone-700 leading-relaxed line-clamp-3" style={{ fontFamily: "var(--font-devanagari)" }}>
+                          {s.selected_text}
+                        </p>
+                        {s.note && <p className="text-[10px] text-stone-400 mt-1 italic">{s.note}</p>}
+                        <div className="flex items-center gap-1.5 mt-2">
+                          <button onClick={() => void generate(s.id)} disabled={busyId === s.id}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-600 text-white text-[11px] font-semibold hover:bg-purple-700 disabled:opacity-50"
+                            title="Generate artwork from this passage using the approved playground configuration">
+                            {busyId === s.id && s.status === "generating"
+                              ? <><Loader2 className="w-3 h-3 animate-spin" /> Generating…</>
+                              : <><Sparkles className="w-3 h-3" /> {s.image_generated ? "Regenerate" : "Generate"}</>}
+                          </button>
+                          <button onClick={() => { setEditId(s.id); setEditText(s.selected_text); }}
+                            className="px-2.5 py-1 rounded-lg bg-stone-100 text-stone-600 text-[11px] font-semibold hover:bg-stone-200">
+                            Edit
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                   <button onClick={() => void remove(s.id)} disabled={busyId === s.id}
                     className="p-1.5 h-fit rounded-lg text-stone-300 hover:text-red-500 hover:bg-red-50 shrink-0" title="Remove scene">
