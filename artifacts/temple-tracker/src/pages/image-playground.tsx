@@ -73,6 +73,9 @@ export default function ImagePlayground() {
   const [approvedFlash, setApprovedFlash] = useState(false);
   const [result, setResult] = useState<{ image?: string; request?: unknown; elapsed?: number; error?: string | null; chars?: number } | null>(null);
   const [history, setHistory] = useState<GenConfig[]>([]);
+  // Model list pulled live from the Together account, so the picker shows what
+  // is actually available rather than a hard-coded few. Falls back to MODELS.
+  const [models, setModels] = useState<Array<{ id: string; label: string; org: string }>>([]);
   const [showHistory, setShowHistory] = useState(false);
 
   const loadActive = useCallback(async () => {
@@ -85,6 +88,18 @@ export default function ImagePlayground() {
     } finally { setLoading(false); }
   }, []);
   useEffect(() => { void loadActive(); }, [loadActive]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fetch(`${SUPABASE_URL}/functions/v1/together-models`, {
+          headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+        });
+        const d = await r.json();
+        if (d?.models?.length) setModels(d.models);
+      } catch { /* keep the built-in list */ }
+    })();
+  }, []);
 
   const set = <K extends keyof GenConfig>(k: K, v: GenConfig[K]) =>
     setCfg(c => (c ? { ...c, [k]: v } : c));
@@ -190,9 +205,22 @@ export default function ImagePlayground() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className={lbl}>Model</label>
+                    <label className={lbl}>Model {models.length > 0 && `(${models.length} available)`}</label>
                     <select value={cfg.model} onChange={e => set("model", e.target.value)} className={field}>
-                      {MODELS.map(m => <option key={m} value={m}>{m.split("/").pop()}</option>)}
+                      {models.length === 0
+                        ? MODELS.map(m => <option key={m} value={m}>{m.split("/").pop()}</option>)
+                        : Object.entries(
+                            models.reduce((acc, m) => {
+                              (acc[m.org] ||= []).push(m); return acc;
+                            }, {} as Record<string, typeof models>),
+                          ).map(([org, list]) => (
+                            <optgroup key={org} label={org}>
+                              {list.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
+                            </optgroup>
+                          ))}
+                      {models.length > 0 && !models.some(m => m.id === cfg.model) && (
+                        <option value={cfg.model}>{cfg.model} (current)</option>
+                      )}
                     </select>
                   </div>
                   <div>
