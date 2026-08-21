@@ -75,7 +75,12 @@ export default function ImagePlayground() {
   const [history, setHistory] = useState<GenConfig[]>([]);
   // Model list pulled live from the Together account, so the picker shows what
   // is actually available rather than a hard-coded few. Falls back to MODELS.
-  const [models, setModels] = useState<Array<{ id: string; label: string; org: string }>>([]);
+  const [models, setModels] = useState<Array<{ id: string; label: string; org: string }>>(() => {
+    // Seed from the last successful fetch so the full list is there immediately
+    // on repeat visits, instead of flashing the 4 built-in fallbacks for a second.
+    try { return JSON.parse(localStorage.getItem("together_models_cache") || "[]"); } catch { return []; }
+  });
+  const [modelsLoading, setModelsLoading] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
 
   const loadActive = useCallback(async () => {
@@ -96,8 +101,12 @@ export default function ImagePlayground() {
           headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
         });
         const d = await r.json();
-        if (d?.models?.length) setModels(d.models);
-      } catch { /* keep the built-in list */ }
+        if (d?.models?.length) {
+          setModels(d.models);
+          try { localStorage.setItem("together_models_cache", JSON.stringify(d.models)); } catch { /* quota */ }
+        }
+      } catch { /* keep whatever we have */ }
+      finally { setModelsLoading(false); }
     })();
   }, []);
 
@@ -205,7 +214,9 @@ export default function ImagePlayground() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className={lbl}>Model {models.length > 0 && `(${models.length} available)`}</label>
+                    <label className={lbl}>
+                      Model {models.length > 0 ? `(${models.length} available)` : modelsLoading ? "(loading…)" : "(built-in list)"}
+                    </label>
                     <select value={cfg.model} onChange={e => set("model", e.target.value)} className={field}>
                       {models.length === 0
                         ? MODELS.map(m => <option key={m} value={m}>{m.split("/").pop()}</option>)
