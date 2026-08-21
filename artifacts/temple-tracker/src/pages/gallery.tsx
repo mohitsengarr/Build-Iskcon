@@ -1082,6 +1082,27 @@ export default function Gallery() {
   const [pending, setPending] = useState<PendingPost[]>([]);
   // Edit-the-prompt-and-re-render, so a near-miss image can be fixed on the card
   // instead of only Approve/Reject. Uses the playground's approved configuration.
+  // Chapter-cover prompt editing (Bhagavatam / Chaitanya / Gita queues).
+  const [artEdit, setArtEdit] = useState<{ book: string; id: number } | null>(null);
+  const [artDraft, setArtDraft] = useState("");
+  const [artBusy, setArtBusy] = useState<number | null>(null);
+  const regenerateChapterArt = useCallback(async (book: string, id: number, onDone: (url: string) => void) => {
+    if (!artDraft.trim()) return;
+    setArtBusy(id);
+    try {
+      const r = await fetch(`${SUPABASE_URL}/functions/v1/regenerate-chapter-art`, {
+        method: "POST",
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ book, id, prompt: artDraft }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d?.ok) { alert(`Regenerate failed: ${d?.error || r.statusText}`); return; }
+      onDone(`${d.image_url}?t=${Date.now()}`);
+      setArtEdit(null);
+    } catch (e) {
+      alert(`Regenerate failed: ${String(e)}`);
+    } finally { setArtBusy(null); }
+  }, [artDraft]);
   const [promptEditId, setPromptEditId] = useState<number | null>(null);
   const [promptDraft, setPromptDraft] = useState("");
   const [regenBusy, setRegenBusy] = useState<number | null>(null);
@@ -1243,6 +1264,7 @@ export default function Gallery() {
   // of ig_pending_review (square 1088x1344 Instagram posts).
   interface PendingChapterArt {
     id: number;
+    prompt?: string | null;
     chapter_global_number: number;
     chapter_canto: number;
     chapter_in_canto: number;
@@ -1395,6 +1417,7 @@ export default function Gallery() {
   // ── Chaitanya Charitamrit pipeline (mirrors the chapter-art one) ───────
   interface PendingChaitanyaArt {
     id: number;
+    prompt?: string | null;
     chapter_global_number: number;
     chapter_part: string;
     chapter_in_part: number;
@@ -2487,7 +2510,42 @@ export default function Gallery() {
                               {isReviewing ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
                               Reject
                             </button>
+                            <button
+                              onClick={() => { const open = artEdit?.id === p.id; setArtEdit(open ? null : { book: "bhagavatam", id: p.id }); setArtDraft(p.prompt || p.scene_title || ""); }}
+                              disabled={artBusy === p.id}
+                              className="flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-100 hover:bg-purple-200 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
+                              title="Edit the image prompt and re-render this cover"
+                            >
+                              <Sparkles className="w-3 h-3" />
+                              {artEdit?.id === p.id ? "Close" : "Edit prompt"}
+                            </button>
                           </div>
+                          {artEdit?.id === p.id && artEdit.book === "bhagavatam" && (
+                            <div className="mt-3 p-3 rounded-xl bg-purple-50 border border-purple-200">
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <span className="text-[10px] uppercase tracking-wider font-bold text-purple-700">Image prompt</span>
+                                <span className="text-[10px] text-purple-500 ml-auto">{artDraft.length} chars · approved style is appended automatically</span>
+                              </div>
+                              <textarea
+                                value={artDraft}
+                                onChange={e => setArtDraft(e.target.value)}
+                                rows={4}
+                                className="w-full px-2.5 py-2 rounded-lg border border-purple-300 text-[12px] focus:outline-none focus:ring-2 focus:ring-purple-200"
+                                placeholder="Describe the scene — who is present (label MALE/FEMALE), what they are doing, the setting…"
+                              />
+                              <div className="flex items-center gap-2 mt-2">
+                                <button
+                                  onClick={() => void regenerateChapterArt("bhagavatam", p.id, (url) => setPendingChapterArt(prev => prev.map(x => x.id === p.id ? { ...x, image_url: url } : x)))}
+                                  disabled={artBusy === p.id || !artDraft.trim()}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 disabled:opacity-50"
+                                >
+                                  {artBusy === p.id ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Regenerating…</> : <><RefreshCw className="w-3.5 h-3.5" /> Regenerate image</>}
+                                </button>
+                                <button onClick={() => setArtEdit(null)} className="px-3 py-1.5 rounded-lg bg-white text-stone-600 text-xs font-semibold border border-stone-200 hover:bg-stone-50">Cancel</button>
+                                <a href="/image-playground" className="ml-auto text-[10px] text-purple-600 hover:underline">Tune model &amp; style →</a>
+                              </div>
+                            </div>
+                          )}
                           {p.error_message && (
                             <p className="mt-2 text-[10px] text-red-600 bg-red-50 border border-red-200 rounded-md px-2 py-1">
                               {p.error_message}
@@ -2673,7 +2731,38 @@ export default function Gallery() {
                               {isReviewing ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
                               Reject
                             </button>
+                            <button
+                              onClick={() => { const open = artEdit?.id === p.id; setArtEdit(open ? null : { book: "chaitanya", id: p.id }); setArtDraft(p.prompt || p.scene_title || ""); }}
+                              disabled={artBusy === p.id}
+                              className="flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-100 hover:bg-purple-200 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
+                              title="Edit the image prompt and re-render this cover"
+                            >
+                              <Sparkles className="w-3 h-3" />
+                              {artEdit?.id === p.id ? "Close" : "Edit prompt"}
+                            </button>
                           </div>
+                          {artEdit?.id === p.id && artEdit.book === "chaitanya" && (
+                            <div className="mt-3 p-3 rounded-xl bg-purple-50 border border-purple-200">
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <span className="text-[10px] uppercase tracking-wider font-bold text-purple-700">Image prompt</span>
+                                <span className="text-[10px] text-purple-500 ml-auto">{artDraft.length} chars · approved style is appended automatically</span>
+                              </div>
+                              <textarea value={artDraft} onChange={e => setArtDraft(e.target.value)} rows={4}
+                                className="w-full px-2.5 py-2 rounded-lg border border-purple-300 text-[12px] focus:outline-none focus:ring-2 focus:ring-purple-200"
+                                placeholder="Describe the scene — who is present (label MALE/FEMALE), what they are doing, the setting…" />
+                              <div className="flex items-center gap-2 mt-2">
+                                <button
+                                  onClick={() => void regenerateChapterArt("chaitanya", p.id, (url) => setPendingChaitanya(prev => prev.map(x => x.id === p.id ? { ...x, image_url: url } : x)))}
+                                  disabled={artBusy === p.id || !artDraft.trim()}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 disabled:opacity-50"
+                                >
+                                  {artBusy === p.id ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Regenerating…</> : <><RefreshCw className="w-3.5 h-3.5" /> Regenerate image</>}
+                                </button>
+                                <button onClick={() => setArtEdit(null)} className="px-3 py-1.5 rounded-lg bg-white text-stone-600 text-xs font-semibold border border-stone-200 hover:bg-stone-50">Cancel</button>
+                                <a href="/image-playground" className="ml-auto text-[10px] text-purple-600 hover:underline">Tune model &amp; style →</a>
+                              </div>
+                            </div>
+                          )}
                           {p.error_message && (
                             <p className="mt-2 text-[10px] text-red-600 bg-red-50 border border-red-200 rounded-md px-2 py-1">
                               {p.error_message}

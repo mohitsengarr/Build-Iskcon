@@ -12,6 +12,24 @@ const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
+// ── Approved image configuration (Image Playground) ──────────────────────────
+// One set of settings drives every generator; falls back to the values below if
+// no configuration has been approved or the table is unreachable.
+interface ActiveGenCfg {
+  model: string; width: number; height: number; steps: number | null;
+  fallback_model: string | null; fallback_width: number | null; fallback_height: number | null;
+}
+let __cfgCache: ActiveGenCfg | null | undefined;
+async function getActiveGenConfig(): Promise<ActiveGenCfg | null> {
+  if (__cfgCache !== undefined) return __cfgCache;
+  try {
+    const { data } = await supabase.from("image_gen_config").select("*").eq("is_active", true).limit(1).maybeSingle();
+    __cfgCache = (data as ActiveGenCfg) || null;
+  } catch { __cfgCache = null; }
+  return __cfgCache;
+}
+
+
 // v35 changes:
 // - SANITIZER WORD BOUNDARIES: the bare alternation rewrote substrings inside
 //   ordinary words — "warm earthy palette" (ART_STYLE!) → "blessingm earthy
@@ -140,6 +158,75 @@ function matchPersonas(names: string[], personas: Persona[]): Persona[] {
   return matched;
 }
 
+// ── Mahājana attribution (the 12 authorities, SB 6.3.20-21) ──────────────────
+// Tag each generated post with the Mahājana account that speaks in / appears in
+// the chapter, so the app attributes the Darshan post to that account (feed +
+// profile) and the approve function cross-posts it under their name. Fail-soft:
+// null → no attribution, and the post falls back to the generic "bhaktigram".
+let _mahajanAliases: Array<{ mahajan_key: string; alias: string }> | null = null;
+async function loadMahajanAliases(): Promise<Array<{ mahajan_key: string; alias: string }>> {
+  if (_mahajanAliases) return _mahajanAliases;
+  const { data } = await supabase.from("bhaktigram_mahajan_aliases").select("mahajan_key, alias");
+  _mahajanAliases = data || [];
+  return _mahajanAliases;
+}
+
+const normName = (s: string): string => s.toLowerCase().replace(/[^a-z]/g, "");
+
+/**
+ * Resolve the Mahājana key from a chapter's detected characters, in priority
+ * order (the first/most-prominent named character who is one of the 12 wins).
+ * An alias matches when either side contains the other (normalized), so
+ * "Narada Muni" hits the "Narada" alias and "Shuka" hits "Shukadeva".
+ */
+async function resolveMahajanKey(characterNames: string[], matched: Persona[]): Promise<string | null> {
+  const aliases = await loadMahajanAliases();
+  if (!aliases.length) return null;
+  const normAliases = aliases.map(a => ({ key: a.mahajan_key, n: normName(a.alias) })).filter(a => a.n.length >= 3);
+  const candidates = [...characterNames, ...matched.map(m => m.name)];
+  for (const cand of candidates) {
+    const nc = normName(cand);
+    if (nc.length < 3) continue;
+    for (const a of normAliases) {
+      if (nc === a.n || nc.includes(a.n) || a.n.includes(nc)) return a.key;
+    }
+  }
+  return null;
+}
+
+// ── Darshan verse (Sanskrit śloka + Hindi) ───────────────────────────────────
+// Pull the anchor śloka in Devanagari + its Hindi translation for the depicted
+// scene, shown under the artwork on the Darshan card. Fail-soft: nulls on error.
+async function extractVerse(
+  chapterTitle: string,
+  content: string,
+  sceneTitle?: string,
+): Promise<{ sanskrit: string | null; hindi: string | null }> {
+  const NONE = { sanskrit: null, hindi: null };
+  try {
+    const focus = sceneTitle ? ` The image depicts this scene: "${sceneTitle}" — prefer the verse most relevant to it.` : "";
+    const res = await fetch(ANTHROPIC_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5",
+        max_tokens: 600,
+        messages: [{
+          role: "user",
+          content: `From this Srimad Bhagavatam chapter, choose the SINGLE most representative Sanskrit śloka and give its faithful Hindi translation.${focus}\n\nReturn ONLY JSON: {"sanskrit":"<the ORIGINAL Sanskrit verse in Devanagari script, the two half-lines separated by a newline>","hindi":"<Hindi translation in Devanagari>"}. The "sanskrit" MUST be original Sanskrit in Devanagari — NOT transliteration, NOT Hindi. If the text contains no clear Sanskrit verse, return {"sanskrit":null,"hindi":null}.\n\nTitle: ${chapterTitle}\nContent: ${content.substring(0, 2500)}`,
+        }],
+      }),
+    });
+    if (!res.ok) return NONE;
+    const text = (await res.json()).content?.[0]?.text || "";
+    const m = text.match(/\{[\s\S]*\}/);
+    if (!m) return NONE;
+    const parsed = JSON.parse(m[0]) as { sanskrit?: unknown; hindi?: unknown };
+    const clean = (v: unknown): string | null => (typeof v === "string" && v.trim() ? v.trim() : null);
+    return { sanskrit: clean(parsed.sanskrit), hindi: clean(parsed.hindi) };
+  } catch { return NONE; }
+}
+
 async function loadChapterByGlobalNumber(globalNumber: number): Promise<{ chapter: ChapterInfo; text: string }> {
   const indexRes = await fetch(`${BUILDISKCON}/api/bhagwatham/chapter-index`);
   if (!indexRes.ok) throw new Error(`chapter-index fetch failed`);
@@ -258,10 +345,18 @@ async function generateImage(prompt: string, matchedPersonas: Persona[], variety
   // rewrote substrings inside ordinary words ("warm" → "blessingm").
   const sanitized = fullPrompt.replace(/\b(battle|war|fight|weapon|sword|arrow|kill|death|blood|fire|burn|destroy|attack|strike|naked|nude)\b/gi, "blessing");
   const seed = varietySeed > 0 ? varietySeed : Math.floor(Math.random() * 1_000_000);
+  // Model/size come from the approved configuration when one exists.
+  const __cfg = await getActiveGenConfig();
+  const __m1 = __cfg?.model  || "black-forest-labs/FLUX.2-pro";
+  const __w1 = __cfg?.width  || 1088;
+  const __h1 = __cfg?.height || 1344;
+  const __m2 = __cfg?.fallback_model  || "black-forest-labs/FLUX.1.1-pro";
+  const __w2 = __cfg?.fallback_width  || 768;
+  const __h2 = __cfg?.fallback_height || 1024;
   const attempts: Array<{ model: string; prompt: string; w: number; h: number; seed?: number }> = [
-    { model: "black-forest-labs/FLUX.2-pro", prompt: sanitized, w: 1088, h: 1344, seed },
-    { model: "black-forest-labs/FLUX.1.1-pro", prompt: sanitized, w: 768, h: 1024, seed },
-    { model: "black-forest-labs/FLUX.1.1-pro", prompt: SAFE_FALLBACK, w: 768, h: 1024 },
+    { model: __m1, prompt: sanitized, w: __w1, h: __h1, seed },
+    { model: __m2, prompt: sanitized, w: __w2, h: __h2, seed },
+    { model: __m2, prompt: SAFE_FALLBACK, w: __w2, h: __h2 },
   ];
   for (const a of attempts) {
     const b64 = await tryGenerate(a.prompt, a.model, a.w, a.h, a.seed);
@@ -302,11 +397,13 @@ async function generateForChapter(chapterOverride: number | null): Promise<Recor
   let hashtags: string;
   let usedSceneInfo: { index: number; title: string; cycleReset?: boolean } | null = null;
   let matched: Persona[] = [];
+  let characterNames: string[] = [];
 
   if (sceneRow) {
     const { scene, index, cycleReset } = pickScene(sceneRow.scenes, sceneRow.usedIndexes);
     console.log(`Using pre-extracted scene #${index} (rank ${scene.rank}): "${scene.title}"${cycleReset ? " [cycle reset]" : ""}`);
     imagePrompt = scene.image_prompt;
+    characterNames = scene.characters || [];
     matched = matchPersonas(scene.characters || [], allPersonas);
     const cap = await buildCaptionForScene(chapter, scene);
     caption = cap.caption;
@@ -315,6 +412,7 @@ async function generateForChapter(chapterOverride: number | null): Promise<Recor
   } else {
     console.log(`No scenes in DB — falling back to inline Claude generation`);
     const detected = await detectCharacterNames(chapter.title, text);
+    characterNames = detected;
     matched = matchPersonas(detected, allPersonas);
     const { data: prevRejected } = await supabase
       .from("ig_pending_review")
@@ -333,6 +431,14 @@ async function generateForChapter(chapterOverride: number | null): Promise<Recor
   const b64 = await generateImage(imagePrompt, matched, varietySeed);
   const { url, path } = await uploadImage(b64, chapter);
 
+  // Attribute to the Mahājana who speaks in / appears in this chapter (fail-soft null).
+  const mahajanKey = await resolveMahajanKey(characterNames, matched);
+  console.log(`Mahājana attribution: ${mahajanKey || "(none)"} — characters: ${characterNames.join(", ") || "?"}`);
+
+  // Anchor Sanskrit śloka + Hindi for the Darshan card (fail-soft null).
+  const verse = await extractVerse(chapter.title, text, usedSceneInfo?.title);
+  console.log(`Verse: ${verse.sanskrit ? "extracted" : "(none)"}`);
+
   const { data: inserted, error: insErr } = await supabase
     .from("ig_pending_review")
     .insert({
@@ -345,6 +451,9 @@ async function generateForChapter(chapterOverride: number | null): Promise<Recor
       caption,
       hashtags,
       status: "pending",
+      mahajan_key: mahajanKey,
+      shlok_sanskrit: verse.sanskrit,
+      anuvad_hindi: verse.hindi,
     })
     .select("id")
     .single();
@@ -385,6 +494,32 @@ async function generateForChapter(chapterOverride: number | null): Promise<Recor
   };
 }
 
+// ── One-time / on-demand backfill of verses onto existing approved posts ──────
+// So the Darshan card shows a śloka on already-published posts, not only new
+// daily ones. Scans the most recent approved posts missing a verse.
+async function backfillVerses(limit: number): Promise<{ scanned: number; updated: number; errors: number }> {
+  const n = Math.max(1, Math.min(limit || 20, 40));
+  const { data: rows } = await supabase
+    .from("ig_pending_review")
+    .select("id, chapter_global_number, chapter_title")
+    .eq("status", "approved")
+    .is("shlok_sanskrit", null)
+    .order("reviewed_at", { ascending: false, nullsFirst: false })
+    .limit(n);
+  let updated = 0, errors = 0;
+  for (const row of rows || []) {
+    try {
+      const { chapter, text } = await loadChapterByGlobalNumber(row.chapter_global_number);
+      const verse = await extractVerse(chapter.title || row.chapter_title || "", text);
+      if (verse.sanskrit || verse.hindi) {
+        await supabase.from("ig_pending_review").update({ shlok_sanskrit: verse.sanskrit, anuvad_hindi: verse.hindi }).eq("id", row.id);
+        updated++;
+      }
+    } catch (e) { errors++; console.error(`backfill verse ${row.id}: ${e}`); }
+  }
+  return { scanned: (rows || []).length, updated, errors };
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, GET, OPTIONS", "Access-Control-Allow-Headers": "content-type, authorization, apikey" } });
@@ -392,12 +527,22 @@ Deno.serve(async (req: Request) => {
   if (req.method !== "POST" && req.method !== "GET") return new Response("Method not allowed", { status: 405 });
 
   let chapterOverride: number | null = null;
-  try {
-    if (req.method === "POST") {
-      const body = await req.json().catch(() => ({}));
-      const v = body?.chapter_global_number;
-      if (typeof v === "number" && v > 0) chapterOverride = v;
+  let body: Record<string, unknown> = {};
+  if (req.method === "POST") body = await req.json().catch(() => ({})) as Record<string, unknown>;
+
+  // On-demand verse backfill — handled here and RETURNED, never falls through to generation.
+  if (body?.action === "backfill_verses") {
+    try {
+      const res = await backfillVerses(Number(body?.limit) || 20);
+      return new Response(JSON.stringify({ success: true, backfill: res }), { headers: { "Content-Type": "application/json" } });
+    } catch (err) {
+      return new Response(JSON.stringify({ success: false, error: String(err) }), { status: 500, headers: { "Content-Type": "application/json" } });
     }
+  }
+
+  try {
+    const v = body?.chapter_global_number;
+    if (typeof v === "number" && v > 0) chapterOverride = v;
   } catch { /* no body */ }
 
   try {

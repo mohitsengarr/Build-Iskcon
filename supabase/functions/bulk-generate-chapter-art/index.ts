@@ -32,6 +32,25 @@ const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
+// ── Approved image configuration (Image Playground) ──────────────────────────
+// One set of settings drives every generator; falls back to the values below if
+// no configuration has been approved or the table is unreachable, so generation
+// never depends on it.
+interface ActiveGenCfg {
+  model: string; width: number; height: number; steps: number | null;
+  fallback_model: string | null; fallback_width: number | null; fallback_height: number | null;
+}
+let __cfgCache: ActiveGenCfg | null | undefined;
+async function getActiveGenConfig(): Promise<ActiveGenCfg | null> {
+  if (__cfgCache !== undefined) return __cfgCache;
+  try {
+    const { data } = await supabase.from("image_gen_config").select("*").eq("is_active", true).limit(1).maybeSingle();
+    __cfgCache = (data as ActiveGenCfg) || null;
+  } catch { __cfgCache = null; }
+  return __cfgCache;
+}
+
+
 const GENDER_RULES = [
   "ABSOLUTE GENDER RULES (NEVER VIOLATE):",
   "1) Women MUST have completely smooth clean-shaven feminine faces — ZERO facial hair.",
@@ -188,10 +207,18 @@ async function generateImage(scenePrompt: string, matchedPersonas: Persona[]): P
   // rewrote substrings inside ordinary words ("warm" → "blessingm").
   const sanitized = fullPrompt.replace(/\b(battle|war|fight|weapon|sword|arrow|kill|death|blood|fire|burn|destroy|attack|strike|naked|nude|tattered|humiliating|shocking|disorder|defeat)\b/gi, "blessing");
   const seed = Math.floor(Math.random() * 1_000_000);
+  // Model/size come from the approved configuration when one exists.
+  const __cfg = await getActiveGenConfig();
+  const __m1 = __cfg?.model  || "black-forest-labs/FLUX.2-pro";
+  const __w1 = __cfg?.width  || 1344;
+  const __h1 = __cfg?.height || 1088;
+  const __m2 = __cfg?.fallback_model  || "black-forest-labs/FLUX.1.1-pro";
+  const __w2 = __cfg?.fallback_width  || 1024;
+  const __h2 = __cfg?.fallback_height || 768;
   const attempts = [
-    { model: "black-forest-labs/FLUX.2-pro", prompt: sanitized, w: 1344, h: 1088, seed },
-    { model: "black-forest-labs/FLUX.1.1-pro", prompt: sanitized, w: 1024, h: 768, seed },
-    { model: "black-forest-labs/FLUX.1.1-pro", prompt: SAFE_FALLBACK, w: 1024, h: 768 },
+    { model: __m1, prompt: sanitized, w: __w1, h: __h1, seed },
+    { model: __m2, prompt: sanitized, w: __w2, h: __h2, seed },
+    { model: __m2, prompt: SAFE_FALLBACK, w: __w2, h: __h2 },
   ];
   for (const a of attempts) {
     const b64 = await tryGenerate(a.prompt, a.model, a.w, a.h, a.seed);
