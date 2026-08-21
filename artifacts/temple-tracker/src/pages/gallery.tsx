@@ -937,10 +937,16 @@ function StoryScenesSection() {
               {shown.map(s => (
                 <div key={s.id} className="flex gap-3 p-3 rounded-xl border border-stone-200 hover:border-pink-200 transition-colors">
                   {s.image_generated && s.image_url ? (
-                    <img src={s.image_url} alt="" className="w-16 h-16 rounded-lg object-cover shrink-0" loading="lazy" />
+                    // Big enough to actually judge the artwork; click opens full size.
+                    <a href={s.image_url} target="_blank" rel="noopener noreferrer" className="shrink-0 group/thumb relative">
+                      <img src={s.image_url} alt="" className="w-40 sm:w-56 rounded-xl object-cover border border-stone-200 group-hover/thumb:opacity-90 transition-opacity" loading="lazy" />
+                      <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/60 text-white text-[9px] font-semibold opacity-0 group-hover/thumb:opacity-100 transition-opacity">
+                        Open full size
+                      </span>
+                    </a>
                   ) : (
-                    <div className="w-16 h-16 rounded-lg bg-stone-100 flex items-center justify-center shrink-0">
-                      <ImageIcon className="w-5 h-5 text-stone-300" />
+                    <div className="w-40 sm:w-56 aspect-[4/5] rounded-xl bg-stone-100 flex items-center justify-center shrink-0">
+                      <ImageIcon className="w-6 h-6 text-stone-300" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
