@@ -315,6 +315,13 @@ function saveUnboldLines(s: Set<string>) {
   } catch { /* quota exceeded / private mode — override just won't persist */ }
 }
 
+
+// Approved reader-scene illustrations are keyed by the opening of the passage the
+// reader highlighted, so the artwork can be placed directly above that passage.
+function sceneKeyOf(text: string): string {
+  return text.replace(/\*\*/g, "").replace(/\s+/g, " ").trim().slice(0, 60);
+}
+
 // BBT print-style section colors
 const SECTION_KIND_LABELS: Record<SectionKind, { label: string; color: string; bg: string }> = {
   shlok:     { label: "Shlok",      color: "text-blue-700",   bg: "bg-blue-100 border-blue-300" },
@@ -3115,7 +3122,7 @@ function ShlokSpeaker({ text, themeKey }: { text: string; themeKey: string }) {
 
 // ── Content Renderer ───────────────────────────────────────────────────────────
 
-function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", onRegenerateImages, regeneratingChapters, queuedRegens, onDeleteImage, chapterNumMapper, pageNumber, overrides, onOverridesChange, prevPageEndKind, nextPageStartsNumberedShlok, unboldLines }: { text: string; textEn?: string; lang: "hi" | "en"; chapterImages?: Map<number, Array<{ url: string; description: string; sceneIndex?: number; isInstagram?: boolean }>>; themeKey?: Theme; onRegenerateImages?: (chapterNum: number) => void; regeneratingChapters?: Set<number>; queuedRegens?: Set<number>; onDeleteImage?: (chapterNum: number, sceneIndex: number) => void; chapterNumMapper?: (perSkandhNum: number) => number; pageNumber?: number; overrides?: SectionOverride[]; onOverridesChange?: (pageNum: number, overrides: SectionOverride[]) => void; prevPageEndKind?: string; nextPageStartsNumberedShlok?: boolean; unboldLines?: Set<string> }) {
+function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", onRegenerateImages, regeneratingChapters, queuedRegens, onDeleteImage, chapterNumMapper, pageNumber, overrides, onOverridesChange, prevPageEndKind, nextPageStartsNumberedShlok, unboldLines, sceneArt }: { text: string; textEn?: string; lang: "hi" | "en"; chapterImages?: Map<number, Array<{ url: string; description: string; sceneIndex?: number; isInstagram?: boolean }>>; themeKey?: Theme; onRegenerateImages?: (chapterNum: number) => void; regeneratingChapters?: Set<number>; queuedRegens?: Set<number>; onDeleteImage?: (chapterNum: number, sceneIndex: number) => void; chapterNumMapper?: (perSkandhNum: number) => number; pageNumber?: number; overrides?: SectionOverride[]; onOverridesChange?: (pageNum: number, overrides: SectionOverride[]) => void; prevPageEndKind?: string; nextPageStartsNumberedShlok?: boolean; unboldLines?: Set<string>; sceneArt?: Array<{ id: number; key: string; image_url: string }> }) {
   const t = THEME_STYLES[themeKey];
 
   // ── Section Editor state ────────────────────────────────────────────
@@ -3609,6 +3616,20 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
         </button>
       )}
       {sections.map((sec, i) => {
+        // An approved illustration renders directly above the passage it depicts.
+        const art = sceneArt?.find(a => {
+          const body = sceneKeyOf(sec.lines.join(" "));
+          return body.length > 0 && (body.startsWith(a.key) || a.key.startsWith(body.slice(0, 40)));
+        });
+        const artEl = art ? (
+          <figure key={`art-${art.id}`} className="my-5">
+            <img src={art.image_url} alt="" loading="lazy"
+              className="w-full max-w-md mx-auto rounded-xl border border-orange-200/60 shadow-sm" />
+          </figure>
+        ) : null;
+        const withArt = (node: React.ReactNode) =>
+          artEl ? <React.Fragment key={i}>{artEl}{node}</React.Fragment> : node;
+        return withArt((() => {
         switch (sec.kind) {
           case "chapter": {
             const globalNum = sec.chapterNum && chapterNumMapper ? chapterNumMapper(sec.chapterNum) : sec.chapterNum;
@@ -3816,6 +3837,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             );
           }
         }
+        })());
       })}
     </div>
   );
@@ -4273,6 +4295,27 @@ export default function Bhagwatham() {
     setUnboldLines(next);
     saveUnboldLines(next);
   }, []);
+  // Approved reader-scene illustrations, shown inside the book above the passage
+  // they depict. Keyed by page so each page only gets its own artwork.
+  const [sceneArtByPage, setSceneArtByPage] = useState<Map<number, Array<{ id: number; key: string; image_url: string }>>>(new Map());
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await sbFetch("reader_scenes?select=id,page_number,selected_text,image_url&book=eq.bhagavatam&approved=is.true&image_generated=is.true");
+        if (!res.ok) return;
+        const rows = await res.json() as Array<{ id: number; page_number: number | null; selected_text: string; image_url: string }>;
+        const m = new Map<number, Array<{ id: number; key: string; image_url: string }>>();
+        for (const r of rows) {
+          if (!r.page_number || !r.image_url) continue;
+          const list = m.get(r.page_number) || [];
+          list.push({ id: r.id, key: sceneKeyOf(r.selected_text), image_url: r.image_url });
+          m.set(r.page_number, list);
+        }
+        setSceneArtByPage(m);
+      } catch { /* illustrations are optional — the book still reads fine */ }
+    })();
+  }, []);
+
   // ── Source editor (CodeMirror) — dev-gated per-page raw-text editing ──────────
   // Replaces the fragile select-rendered-then-fuzzy-match flow: edits happen on the
   // real source string, so Save persists one canonical text and AI-fix / bold act on
@@ -5503,7 +5546,7 @@ export default function Bhagwatham() {
                       <p className={`text-[10px] ${theme.muted} font-medium text-right mt-1 mb-1 opacity-40`}>· {page.pageNumber} ·</p>
                     )}
                     {pageIdx === 0 && settings.showPageNumbers && <p className={`text-[10px] ${theme.muted} font-medium text-right mt-0 mb-2 opacity-40`}>· {page.pageNumber} ·</p>}
-                    <RenderContent text={page.text} textEn={page.textEn} lang={lang} chapterImages={chapterImages} themeKey={settings.theme} onRegenerateImages={(num: number) => handleRegenerateImages(num, 0)} regeneratingChapters={regeneratingChapters} queuedRegens={queuedRegens} onDeleteImage={isDevMode ? handleDeleteImage : undefined} pageNumber={page.pageNumber} overrides={sectionOverrides[page.pageNumber]} onOverridesChange={isDevMode ? handleOverridesChange : undefined} prevPageEndKind={prevEndKind} nextPageStartsNumberedShlok={nextPageStartsNumberedShlok} unboldLines={unboldLines} chapterNumMapper={(perSkandhNum: number) => {
+                    <RenderContent text={page.text} textEn={page.textEn} lang={lang} chapterImages={chapterImages} themeKey={settings.theme} onRegenerateImages={(num: number) => handleRegenerateImages(num, 0)} regeneratingChapters={regeneratingChapters} queuedRegens={queuedRegens} onDeleteImage={isDevMode ? handleDeleteImage : undefined} pageNumber={page.pageNumber} overrides={sectionOverrides[page.pageNumber]} onOverridesChange={isDevMode ? handleOverridesChange : undefined} prevPageEndKind={prevEndKind} nextPageStartsNumberedShlok={nextPageStartsNumberedShlok} unboldLines={unboldLines} sceneArt={sceneArtByPage.get(page.pageNumber)} chapterNumMapper={(perSkandhNum: number) => {
                       // Find which skandh this page belongs to based on surrounding chapters
                       const ch = chapters.find(c => c.number === perSkandhNum && c.pageNumber <= page.pageNumber);
                       // Pick the last matching chapter (closest to this page)

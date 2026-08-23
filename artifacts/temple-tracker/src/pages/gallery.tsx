@@ -811,6 +811,7 @@ interface ReaderScene {
   image_generated: boolean;
   image_url: string | null;
   status: string;
+  approved?: boolean;
   created_at: string;
 }
 
@@ -843,6 +844,19 @@ function StoryScenesSection() {
     try {
       const res = await sbFetch(`reader_scenes?id=eq.${id}`, { method: "DELETE" });
       if (res.ok) setScenes(prev => prev.filter(s => s.id !== id));
+    } finally { setBusyId(null); }
+  }, []);
+
+  // Approve: surface this illustration inside the book, above its passage.
+  const approveScene = useCallback(async (id: number, next: boolean) => {
+    setBusyId(id);
+    try {
+      const res = await sbFetch(`reader_scenes?id=eq.${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ approved: next, approved_at: next ? new Date().toISOString() : null }),
+      });
+      if (res.ok) setScenes(prev => prev.map(s => (s.id === id ? { ...s, approved: next } : s)));
+      else alert(`Couldn't update: ${await res.text().catch(() => res.statusText)}`);
     } finally { setBusyId(null); }
   }, []);
 
@@ -955,6 +969,9 @@ function StoryScenesSection() {
                         s.image_generated ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
                         {s.image_generated ? "Image generated" : "Not generated"}
                       </span>
+                      {s.approved && (
+                        <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-green-600 text-white">In book</span>
+                      )}
                       <span className="text-[10px] text-stone-400 font-medium">
                         {BOOK_LABEL[s.book] || s.book}{s.page_number ? ` · Pg. ${s.page_number}` : ""}
                       </span>
@@ -1000,6 +1017,15 @@ function StoryScenesSection() {
                             className="px-2.5 py-1 rounded-lg bg-stone-100 text-stone-600 text-[11px] font-semibold hover:bg-stone-200">
                             Edit
                           </button>
+                          {s.image_generated && (
+                            <button onClick={() => void approveScene(s.id, !s.approved)} disabled={busyId === s.id}
+                              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold disabled:opacity-50 ${
+                                s.approved ? "bg-green-600 text-white hover:bg-green-700" : "bg-green-100 text-green-700 hover:bg-green-200"}`}
+                              title={s.approved ? "Approved — showing in the book above this passage. Click to unapprove." : "Approve to show this illustration inside the book, above its passage"}>
+                              <Check className="w-3 h-3" />
+                              {s.approved ? "Approved" : "Approve"}
+                            </button>
+                          )}
                         </div>
                       </>
                     )}

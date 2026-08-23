@@ -221,7 +221,9 @@ function isGarbagePage(text: string): boolean {
 }
 
 function isStandalonePageNumber(line: string): boolean {
-  return /^\d{1,5}[\]\)]*$/.test(line.trim());
+  // This edition prints its page numbers in Devanagari digits (९३), which the
+  // ASCII-only test missed — so they rendered as stray lines inside the text.
+  return /^[\d\u0966-\u096F]{1,5}[\]\)]*$/u.test(line.trim());
 }
 
 function stripLeadingPageNumber(line: string): string {
@@ -230,7 +232,14 @@ function stripLeadingPageNumber(line: string): string {
 
 function cleanOcrText(text: string): string {
   return text
-    .replace(/^(\d{1,5}[\]\)]*)$/gmu, "")
+    .replace(/^([\d\u0966-\u096F]{1,5}[\]\)]*)$/gmu, "")
+    // Sarvam transcribes the danda as an ASCII pipe. Restore the real marks, or
+    // verse detection (which looks for ॥) never fires and the text shows "||".
+    .replace(/\|\s*\|/g, "॥")
+    .replace(/(?<=[\u0900-\u097F\s])\|/gu, "।")
+    // Lone Latin fragments on their own line are OCR noise (e.g. a garbled
+    // शब्दार्थ heading coming through as "WR").
+    .replace(/^[A-Za-z]{1,4}$/gmu, "")
     .replace(/(?<=[\u0900-\u097F\s;,।:—\-\.])\s*\b[a-zA-Z]{1,5}\b\s*[:\|]?\s*(?=[\u0900-\u097F\s;,।:—\-\.])/gu, " ")
     .replace(/(?<=[\u0900-\u097F])\s+[a-zA-Z]{1,4}\s+(?=[\u0900-\u097F])/gu, " ")
     .replace(/©/g, "")
@@ -374,6 +383,16 @@ function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind
     return true;
   };
 
+  // This edition prints word-by-word meanings with NO शब्दार्थ heading — just a
+  // dense run of "term meaning; term meaning;". Without this they fell through as
+  // ordinary prose, which is why the glossary looked like a wall of text.
+  const isWordMeanings = (line: string) => {
+    const semis = (line.match(/;/g) || []).length;
+    if (semis < 3) return false;
+    if (/^(तात्पर्य|अनुवाद)/u.test(line)) return false;
+    return semis / Math.max(1, line.length / 60) >= 1.2 || semis >= 5;
+  };
+
   const hasDoubleViramAhead = (fromIdx: number, maxLook: number = 3) => {
     for (let j = fromIdx; j < Math.min(lines.length, fromIdx + maxLook); j++) {
       if (/॥/u.test(lines[j].trim())) return true;
@@ -393,6 +412,12 @@ function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind
       const label = meta ? `अध्याय ${chapNum} — ${meta.hi}` : lt;
       sections.push({ kind: "chapter", lines: [label], chapterNum: chapNum });
       current = { kind: "text", lines: [] };
+      continue;
+    }
+
+    if (isWordMeanings(lt)) {
+      if (current.kind !== "shabdarth") { flush(); current = { kind: "shabdarth", lines: [] }; }
+      current.lines.push(lt);
       continue;
     }
 
