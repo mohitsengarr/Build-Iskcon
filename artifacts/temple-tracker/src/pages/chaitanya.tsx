@@ -246,7 +246,10 @@ function saveSectionOverrides(o: PageOverrides) {
 // re-pagination. `**` and whitespace are collapsed so the source line and the
 // rendered-DOM selection normalize to the same key.
 function normalizeBoldKey(line: string): string {
-  return line.replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+  // Danda-insensitive: the OCR emits both "।" and an ASCII "|" for the same mark,
+  // and normalising pipes for display would otherwise invalidate keys stored
+  // before that change.
+  return line.replace(/\*\*/g, "").replace(/[|॥]/g, "।").replace(/\s+/g, " ").trim();
 }
 
 // Key for शब्दार्थ (word-meaning) lines. Their meanings are bolded by the RENDERER
@@ -292,6 +295,13 @@ function saveUnboldLines(s: Set<string>) {
   } catch { /* quota exceeded / private mode — override just won't persist */ }
 }
 
+
+
+// Approved reader-scene illustrations are keyed by the opening of the passage the
+// reader highlighted, so the artwork can sit directly above that passage.
+function sceneKeyOf(text: string): string {
+  return text.replace(/\*\*/g, "").replace(/\s+/g, " ").trim().slice(0, 60);
+}
 
 const SECTION_KIND_LABELS: Record<SectionKind, { label: string; color: string; bg: string }> = {
   shlok:     { label: "Shlok",      color: "text-blue-700",   bg: "bg-blue-100 border-blue-300" },
@@ -597,6 +607,10 @@ function renderInlineBold(line: string): React.ReactNode {
 
 function cleanOcrText(text: string): string {
   let result = text
+    // The OCR transcribes roughly a quarter of dandas as ASCII pipes, which render
+    // as "|" and "|| १९ ||" instead of । and ॥. Restore the real marks.
+    .replace(/\|\s*\|/g, "॥")
+    .replace(/(?<=[\u0900-\u097F\s])\|/gu, "।")
     .replace(/^(\d{1,5}[\]\)]*)$/gmu, "")
     .replace(/(?<=[ऀ-ॿ\s;,।:—\-\.])\s*\b[a-zA-Z]{1,5}\b\s*[:\|]?\s*(?=[ऀ-ॿ\s;,।:—\-\.])/gu, " ")
     .replace(/(?<=[ऀ-ॿ])\s+[a-zA-Z]{1,4}\s+(?=[ऀ-ॿ])/gu, " ")
@@ -2495,7 +2509,7 @@ function BookmarkPanel({ bookmarks, onJump, onDelete, isLoggedIn, onLogin }: {
 
 // ── Content Renderer ───────────────────────────────────────────────────────
 
-function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, overrides, onOverridesChange, prevPageEndKind, nextPageStartsNumberedShlok, unboldLines }: {
+function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, overrides, onOverridesChange, prevPageEndKind, nextPageStartsNumberedShlok, unboldLines, sceneArt }: {
   text: string;
   textEn?: string;
   lang: "hi" | "en";
@@ -2506,6 +2520,7 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
   prevPageEndKind?: string;
   nextPageStartsNumberedShlok?: boolean;
   unboldLines?: Set<string>;
+  sceneArt?: Array<{ id: number; key: string; image_url: string }>;
 }) {
   const t = THEME_STYLES[themeKey];
 
@@ -2883,6 +2898,20 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
         </button>
       )}
       {sections.map((sec, i) => {
+        // An approved illustration renders directly above the passage it depicts.
+        const art = sceneArt?.find(a => {
+          const body = sceneKeyOf(sec.lines.join(" "));
+          return body.length > 0 && (body.startsWith(a.key) || a.key.startsWith(body.slice(0, 40)));
+        });
+        const artEl = art ? (
+          <figure key={`art-${art.id}`} className="my-5">
+            <img src={art.image_url} alt="" loading="lazy"
+              className="w-full max-w-md mx-auto rounded-xl border border-orange-200/60 shadow-sm" />
+          </figure>
+        ) : null;
+        const withArt = (node: React.ReactNode) =>
+          artEl ? <React.Fragment key={i}>{artEl}{node}</React.Fragment> : node;
+        return withArt((() => {
         switch (sec.kind) {
           case "chapter": {
             return (
@@ -2988,6 +3017,7 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
             );
           }
         }
+        })());
       })}
     </div>
   );
@@ -3423,6 +3453,26 @@ export default function Chaitanya() {
     setUnboldLines(next);
     saveUnboldLines(next);
   }, []);
+  // Approved reader-scene illustrations, shown inside the book above their passage.
+  const [sceneArtByPage, setSceneArtByPage] = useState<Map<number, Array<{ id: number; key: string; image_url: string }>>>(new Map());
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await sbFetch(`reader_scenes?select=id,page_number,selected_text,image_url&book=eq.${BOOK_KEY}&approved=is.true&image_generated=is.true`);
+        if (!res.ok) return;
+        const rows = await res.json() as Array<{ id: number; page_number: number | null; selected_text: string; image_url: string }>;
+        const m = new Map<number, Array<{ id: number; key: string; image_url: string }>>();
+        for (const r of rows) {
+          if (!r.page_number || !r.image_url) continue;
+          const list = m.get(r.page_number) || [];
+          list.push({ id: r.id, key: sceneKeyOf(r.selected_text), image_url: r.image_url });
+          m.set(r.page_number, list);
+        }
+        setSceneArtByPage(m);
+      } catch { /* illustrations are optional — the book still reads fine */ }
+    })();
+  }, []);
+
   // ── Source editor (CodeMirror) — dev-gated per-page raw-text editing ──────────
   const [editSourcePage, setEditSourcePage] = useState<number | null>(null);
   const savePageSource = useCallback(async (pn: number, newText: string) => {
@@ -4369,6 +4419,7 @@ export default function Chaitanya() {
                           prevPageEndKind={prevEndKind}
                           nextPageStartsNumberedShlok={nextPageStartsNumberedShlok}
                           unboldLines={unboldLines}
+                          sceneArt={sceneArtByPage.get(page.pageNumber)}
                         />
                       </div>
                     );

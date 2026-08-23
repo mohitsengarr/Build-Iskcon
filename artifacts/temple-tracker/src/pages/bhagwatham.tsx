@@ -269,7 +269,10 @@ function saveSectionOverrides(o: PageOverrides) {
 // re-pagination. `**` and whitespace are collapsed so the source line and the
 // rendered-DOM selection normalize to the same key.
 function normalizeBoldKey(line: string): string {
-  return line.replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+  // Danda-insensitive: the OCR emits both "।" and an ASCII "|" for the same mark,
+  // and normalising pipes for display would otherwise invalidate keys stored
+  // before that change.
+  return line.replace(/\*\*/g, "").replace(/[|॥]/g, "।").replace(/\s+/g, " ").trim();
 }
 
 // Key for शब्दार्थ (word-meaning) lines. Their meanings are bolded by the RENDERER
@@ -727,6 +730,10 @@ function cleanOcrText(text: string): string {
     }
   }
   result = result
+    // The OCR transcribes roughly a quarter of dandas as ASCII pipes, which render
+    // as "|" and "|| १९ ||" instead of । and ॥. Restore the real marks.
+    .replace(/\|\s*\|/g, "॥")
+    .replace(/(?<=[\u0900-\u097F\s])\|/gu, "।")
     // Remove standalone page number lines BEFORE collapsing whitespace
     // e.g., "6\n\nशब्दार्थं" → "\n\nशब्दार्थं" (prevents "6 शब्दार्थं" after collapse)
     .replace(/^(\d{1,5}[\]\)]*)$/gmu, "")
