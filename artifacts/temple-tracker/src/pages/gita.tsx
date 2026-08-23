@@ -240,17 +240,26 @@ function cleanOcrText(text: string): string {
     .trim();
 }
 
-const CHAPTER_RE = /^(?:Chapter\s+\S+|अध्याय\s+(?:[\u0900-\u097F]+(?:\s+[\u0900-\u097F]+){0,2}|\d+))\s*$/iu;
+// A chapter opening in the body reads "अध्याय एक : कुरुक्षेत्र के युद्धस्थल में सैन्यनिरीक्षण"
+// — number AND title on one line. The older pattern required the line to end right
+// after the number, so it only ever matched the bare entries in the table of
+// contents, which is why every chapter resolved to the contents page.
+const CHAPTER_RE = /^(?:Chapter\s+\S+|अध्याय\s+(?:[\u0900-\u097F]+(?:\s+[\u0900-\u097F]+){0,2}|\d+))(?:\s*[:：—–-]\s*.{0,70})?\s*$/iu;
 
 function isChapterHeading(t: string): boolean {
   const cleaned = t.replace(/^\d+\s+/, "");
-  if (cleaned.length > 60) return false;
+  if (cleaned.length > 100) return false;   // headings carry their title too
   if (t.includes("पूर्ण हुए") || t.includes("पूर्ण हुआ")) return false;
   return CHAPTER_RE.test(cleaned);
 }
 
 function extractChapterNum(line: string): number {
-  const numMatch = line.match(/\d+/);
+  // Search ONLY the part before the colon. The title after it can itself contain a
+  // number word — "अध्याय चौदह : प्रकृति के तीन गुण" — and scanning the whole line
+  // matched "तीन" (3) before "चौदह" (14), so chapter 14 resolved as an already-seen
+  // chapter 3 and vanished from the index.
+  const head = line.split(/[:：—–-]/)[0];
+  const numMatch = head.match(/\d+/);
   if (numMatch) {
     const n = parseInt(numMatch[0], 10);
     if (n > 0 && n <= 18) return n;
@@ -262,7 +271,7 @@ function extractChapterNum(line: string): number {
     तेरह: 13, चौदह: 14, पन्द्रह: 15, सोलह: 16, सत्रह: 17, अठारह: 18,
   };
   for (const [word, num] of Object.entries(HINDI_NUMS)) {
-    if (line.includes(word)) return num;
+    if (head.includes(word)) return num;
   }
   return 0;
 }
@@ -274,6 +283,13 @@ function buildChapterIndex(allPages: PageContent[]): ChapterEntry[] {
   for (const page of allPages) {
     if (isGarbagePage(page.text)) continue;
     const lines = page.text.split("\n");
+    // Skip the table of contents (विषय-सूची). It lists every chapter heading on a
+    // single page, and since we keep the FIRST occurrence of each number that page
+    // would claim all 18 chapters — which is exactly what it did. A real chapter
+    // opening announces one chapter, so >2 headings on a page means it is an index.
+    const headingCount = lines.reduce((n, l) => n + (isChapterHeading(l.trim()) ? 1 : 0), 0);
+    if (headingCount > 2) continue;
+    if (/विषय\s*-?\s*सूची/u.test(page.text)) continue;
     for (const line of lines) {
       const t = line.trim();
       if (isChapterHeading(t)) {
