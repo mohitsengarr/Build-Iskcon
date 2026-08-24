@@ -470,6 +470,77 @@ if (fs.existsSync(GITA_PAGES_DIR)) {
     }));
     fs.writeFileSync(path.join(GITA_OUT_DIR, "batches"), JSON.stringify(gitaBatchesMeta));
 
+    // /api/gita/chapter-index — the 18 chapters with the page each one opens on.
+    // The website builds this in the browser, but the mobile app needs it served,
+    // so the detection lives here and both can share one answer.
+    //
+    // Three things this has to get right, all learned from real pages:
+    //  1. A body heading carries its title — "अध्याय एक : कुरुक्षेत्र के युद्धस्थल में
+    //     सैन्यनिरीक्षण" — so the pattern must allow ": title" after the number.
+    //  2. The contents pages (विषय-सूची, pages 9-11) list every chapter at once and
+    //     would otherwise claim them all; a page with >2 headings is an index.
+    //  3. The number must be read from BEFORE the colon: "अध्याय चौदह : प्रकृति के
+    //     तीन गुण" contains "तीन" (3) in its title, which used to win over "चौदह" (14).
+    const GITA_CHAPTER_NAMES = {
+      1: "अर्जुनविषादयोग", 2: "सांख्ययोग", 3: "कर्मयोग", 4: "ज्ञानकर्मसंन्यासयोग",
+      5: "कर्मसंन्यासयोग", 6: "ध्यानयोग", 7: "ज्ञानविज्ञानयोग", 8: "अक्षरब्रह्मयोग",
+      9: "राजविद्याराजगुह्ययोग", 10: "विभूतियोग", 11: "विश्वरूपदर्शनयोग", 12: "भक्तियोग",
+      13: "क्षेत्रक्षेत्रज्ञविभागयोग", 14: "गुणत्रयविभागयोग", 15: "पुरुषोत्तमयोग",
+      16: "दैवासुरसम्पद्विभागयोग", 17: "श्रद्धात्रयविभागयोग", 18: "मोक्षसंन्यासयोग",
+    };
+    const GITA_HINDI_NUMS = {
+      "एक": 1, "दो": 2, "तीन": 3, "चार": 4, "पाँच": 5, "छः": 6, "छह": 6, "सात": 7,
+      "आठ": 8, "नौ": 9, "दस": 10, "ग्यारह": 11, "बारह": 12, "तेरह": 13, "चौदह": 14,
+      "पन्द्रह": 15, "सोलह": 16, "सत्रह": 17, "अठारह": 18,
+    };
+    const GITA_CHAPTER_RE =
+      /^(?:Chapter\s+\S+|अध्याय\s+(?:[\u0900-\u097F]+(?:\s+[\u0900-\u097F]+){0,2}|\d+))(?:\s*[:：—–-]\s*.{0,70})?\s*$/iu;
+    const gitaIsHeading = (t) => {
+      const c = t.replace(/^\d+\s+/, "");
+      if (c.length > 100) return false;
+      if (t.includes("पूर्ण हुए") || t.includes("पूर्ण हुआ")) return false;
+      return GITA_CHAPTER_RE.test(c);
+    };
+    const gitaChapterNum = (line) => {
+      const head = line.split(/[:：—–-]/)[0];
+      const m = head.match(/\d+/);
+      if (m) { const n = parseInt(m[0], 10); if (n > 0 && n <= 18) return n; }
+      for (const [w, n] of Object.entries(GITA_HINDI_NUMS)) if (head.includes(w)) return n;
+      return 0;
+    };
+
+    const gitaPages = gitaBatches.flatMap(b => b.pages).sort((a, b) => a.pageNumber - b.pageNumber);
+    const gitaSeen = new Set();
+    const gitaChapters = [];
+    for (const pg of gitaPages) {
+      const lines = String(pg.text || "").split("\n");
+      if (lines.reduce((n, l) => n + (gitaIsHeading(l.trim()) ? 1 : 0), 0) > 2) continue;
+      if (/विषय\s*-?\s*सूची/u.test(pg.text || "")) continue;
+      for (const line of lines) {
+        const t = line.trim();
+        if (!gitaIsHeading(t)) continue;
+        const num = gitaChapterNum(t);
+        if (num > 0 && num <= 18 && !gitaSeen.has(num)) {
+          gitaSeen.add(num);
+          gitaChapters.push({
+            number: num,
+            globalNumber: num,
+            title: GITA_CHAPTER_NAMES[num] ? `अध्याय ${num} — ${GITA_CHAPTER_NAMES[num]}` : `अध्याय ${num}`,
+            pageNumber: pg.pageNumber,
+            batchNumber: (gitaBatches.find(b => pg.pageNumber >= b.startPage && pg.pageNumber <= b.endPage) || {}).batchNumber ?? 1,
+          });
+        }
+      }
+    }
+    gitaChapters.sort((a, b) => a.number - b.number);
+    // Same envelope as the other two books: the app reads `.chapters`.
+    fs.writeFileSync(path.join(GITA_OUT_DIR, "chapter-index"), JSON.stringify({
+      book: "gita", total: gitaChapters.length, chapters: gitaChapters,
+    }));
+    if (gitaChapters.length !== 18) {
+      console.warn(`  ⚠ gita chapter-index: found ${gitaChapters.length}/18 chapters`);
+    }
+
     // /api/gita/batch/:number
     const gitaBatchDir = path.join(GITA_OUT_DIR, "batch");
     fs.mkdirSync(gitaBatchDir, { recursive: true });
@@ -484,7 +555,7 @@ if (fs.existsSync(GITA_PAGES_DIR)) {
     }));
 
     const gitaPageCount = gitaBatches.reduce((n, b) => n + b.pages.length, 0);
-    console.log(`✓ gita (${gitaBatches.length} batches, ${gitaPageCount} pages)`);
+    console.log(`✓ gita (${gitaChapters.length} chapters, ${gitaBatches.length} batches, ${gitaPageCount} pages)`);
   }
 } else {
   console.log("• gita: data/gita/pages missing — skipping");
