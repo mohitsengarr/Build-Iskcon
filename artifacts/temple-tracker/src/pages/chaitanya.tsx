@@ -995,6 +995,32 @@ function VoiceEditToolbar({ allPages, setAllPages, unboldLines, onUnboldChange }
   // rendered line (Range.getClientRects), re-anchored on scroll/resize via
   // the cloned Range so the glow stays glued to the words.
   const [aiGlowRects, setAiGlowRects] = useState<Array<{ left: number; top: number; width: number; height: number }>>([]);
+  // Brief blue tint on the text that changed, so it is obvious WHAT was edited.
+  const [appliedRects, setAppliedRects] = useState<Array<{ left: number; top: number; width: number; height: number }>>([]);
+  const appliedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flashApplied = useCallback((newText: string, pageNum: number | null) => {
+    const probe = newText.replace(/\*\*/g, "").replace(/\s+/g, " ").trim().slice(0, 40);
+    if (!probe) return;
+    requestAnimationFrame(() => setTimeout(() => {
+      try {
+        const scope = (pageNum ? document.querySelector(`[data-page-num="${pageNum}"]`) : null) || document.body;
+        const hits = Array.from(scope.querySelectorAll("p"))
+          .filter(el => (el.textContent || "").replace(/\s+/g, " ").includes(probe))
+          .slice(0, 6);
+        const rects = hits.flatMap(el => {
+          const r = el.getBoundingClientRect();
+          return r.width > 2 && r.height > 4
+            ? [{ left: r.left - 2, top: r.top - 1, width: r.width + 4, height: r.height + 2 }]
+            : [];
+        });
+        if (!rects.length) return;
+        if (appliedTimer.current) clearTimeout(appliedTimer.current);
+        setAppliedRects(rects);
+        appliedTimer.current = setTimeout(() => setAppliedRects([]), 1600);
+      } catch { /* cosmetic only */ }
+    }, 60));
+  }, []);
+
   const aiGlowRangeRef = useRef<Range | null>(null);
   const aiGlowPulseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -1766,8 +1792,9 @@ function VoiceEditToolbar({ allPages, setAllPages, unboldLines, onUnboldChange }
       const newText = tidyAiText((data?.suggested_text || "").trim(), selectionInShlok);
       setShow(false);
       if (newText && newText !== oldText) {
-        void applyEdit(oldText, newText);
+        await applyEdit(oldText, newText);
         recordUndo(oldText, newText, pageNum);
+        flashApplied(newText, pageNum);
       }
     } catch (err) {
       console.warn("Quick AI fix error:", err);
@@ -2044,6 +2071,18 @@ function VoiceEditToolbar({ allPages, setAllPages, unboldLines, onUnboldChange }
           100% { background-position: 250% 0; }
         }
       `}</style>
+      {appliedRects.map((r, i) => (
+        <div
+          key={`applied-${i}`}
+          className="fixed z-40 pointer-events-none rounded"
+          style={{
+            left: r.left, top: r.top, width: r.width, height: r.height,
+            background: "rgba(59,130,246,.28)",
+            boxShadow: "0 0 0 1px rgba(59,130,246,.45)",
+            transition: "opacity .3s",
+          }}
+        />
+      ))}
       {aiGlowRects.map((r, i) => (
         <div
           key={i}

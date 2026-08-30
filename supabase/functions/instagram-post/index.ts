@@ -18,6 +18,9 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 interface ActiveGenCfg {
   model: string; width: number; height: number; steps: number | null;
   fallback_model: string | null; fallback_width: number | null; fallback_height: number | null;
+  // Instagram-specific size. Chapter art stays portrait for the books, so this
+  // is separate rather than overloading width/height.
+  ig_width: number | null; ig_height: number | null;
 }
 let __cfgCache: ActiveGenCfg | null | undefined;
 async function getActiveGenConfig(): Promise<ActiveGenCfg | null> {
@@ -348,11 +351,15 @@ async function generateImage(prompt: string, matchedPersonas: Persona[], variety
   // Model/size come from the approved configuration when one exists.
   const __cfg = await getActiveGenConfig();
   const __m1 = __cfg?.model  || "black-forest-labs/FLUX.2-pro";
-  const __w1 = __cfg?.width  || 1088;
-  const __h1 = __cfg?.height || 1344;
+  // 16:9 landscape for Instagram (ig_width/ig_height), falling back to the shared
+  // portrait size when no Instagram size is configured.
+  const __w1 = __cfg?.ig_width  || __cfg?.width  || 1344;
+  const __h1 = __cfg?.ig_height || __cfg?.height || 768;
   const __m2 = __cfg?.fallback_model  || "black-forest-labs/FLUX.1.1-pro";
-  const __w2 = __cfg?.fallback_width  || 768;
-  const __h2 = __cfg?.fallback_height || 1024;
+  // Retry at 1024x576 — exactly 16:9 and both multiples of 64 — so a fallback
+  // never silently changes the crop the post was composed for.
+  const __w2 = __cfg?.ig_width ? 1024 : (__cfg?.fallback_width || 1024);
+  const __h2 = __cfg?.ig_height ? 576 : (__cfg?.fallback_height || 576);
   const attempts: Array<{ model: string; prompt: string; w: number; h: number; seed?: number }> = [
     { model: __m1, prompt: sanitized, w: __w1, h: __h1, seed },
     { model: __m2, prompt: sanitized, w: __w2, h: __h2, seed },
