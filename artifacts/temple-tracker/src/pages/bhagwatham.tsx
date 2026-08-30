@@ -3213,9 +3213,13 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
     );
   }
 
+  // Blank lines are kept as "" markers: they are the ONLY record of where real
+  // paragraphs end. Dropping them merged a whole purport into one run of lines,
+  // and since each line was rendered as its own <p>, prose could not reflow —
+  // at larger font sizes every print line wrapped and left an orphan fragment.
   const lines = cleanOcrText(text).split("\n")
-    .filter((l) => l.trim() && !isStandalonePageNumber(l))
-    .map((l) => stripLeadingPageNumber(l));
+    .map((l) => (l.trim() ? stripLeadingPageNumber(l) : ""))
+    .filter((l) => l === "" || !isStandalonePageNumber(l));
 
   type Section = { kind: "chapter" | "shlok" | "ref-shlok" | "shabdarth" | "anuvad" | "tatparya" | "text"; lines: string[]; chapterNum?: number };
   const sections: Section[] = [];
@@ -3297,7 +3301,13 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
 
   for (let i = 0; i < lines.length; i++) {
     const t = lines[i].trim();
-    if (!t) continue;
+    // A blank line closes the current paragraph: flush it as its own section of
+    // the SAME kind, so a multi-paragraph purport stays multi-paragraph while each
+    // paragraph can be rendered as one reflowing block.
+    if (!t) {
+      if (current.lines.length > 0) { const k = current.kind; flush(); current = { kind: k, lines: [] }; }
+      continue;
+    }
 
     if (isChapterHeading(t)) {
       flush();
@@ -3807,12 +3817,13 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
           case "anuvad": {
             // Hindi translation — same style as tatparya/body text, no separate label
             const isAnuvadContinuation = i === 0 && prevPageEndKind === "anuvad";
-            const renderedAnuvad = renderInlineBoldBlock(sec.lines); // bold state carries across lines
+            const renderedAnuvad = renderInlineBoldBlock([sec.lines.join(" ")])[0];
             return (
               <div key={i} data-section-type="anuvad" className={isAnuvadContinuation ? "" : "mt-3"}>
-                {sec.lines.map((l, j) => (
-                  <p key={j} className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>{renderedAnuvad[j]}</p>
-                ))}
+                {/* One paragraph, not one <p> per OCR line — the source breaks at
+                    PRINT line ends, which are meaningless on screen and left ragged
+                    orphans once the text wrapped. */}
+                <p className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>{renderedAnuvad}</p>
               </div>
             );
           }
@@ -3821,25 +3832,24 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             // Continuation if prev page ended in tatparya OR ref-shlok (ref-shlok is always inside tatparya)
             // Only the page-number divider is shown — no inline divider before tatparya
             const isContinuation = i === 0 && (prevPageEndKind === "tatparya" || prevPageEndKind === "ref-shlok");
-            const renderedTatparya = renderInlineBoldBlock(sec.lines); // bold state carries across lines
+            const renderedTatparya = renderInlineBoldBlock([sec.lines.join(" ")])[0];
+            // Each paragraph is now its own tatparya section, so the label must
+            // appear once at the top of the purport — not above every paragraph.
+            const showTatparyaLabel = !isContinuation && (i === 0 || sections[i - 1].kind !== "tatparya");
             return (
               <div key={i} data-section-type="tatparya" className={isContinuation ? "" : "mt-4 sm:mt-5"}>
-                {sec.lines.map((l, j) => (
-                  <p key={j} className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>
-                    {j === 0 && !isContinuation && <><span className="font-semibold">तात्पर्य :</span>{" "}</>}
-                    {renderedTatparya[j]}
-                  </p>
-                ))}
+                <p className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>
+                  {showTatparyaLabel && <><span className="font-semibold">तात्पर्य :</span>{" "}</>}
+                  {renderedTatparya}
+                </p>
               </div>
             );
           }
           default: {
-            const renderedText = renderInlineBoldBlock(sec.lines); // bold state carries across lines
+            const renderedText = renderInlineBoldBlock([sec.lines.join(" ")])[0];
             return (
               <div key={i} data-section-type="text">
-                {sec.lines.map((l, j) => (
-                  <p key={j} className={`leading-[1.8] ${t.text} mb-1`} style={{ fontSize: "1em" }}>{renderedText[j]}</p>
-                ))}
+                <p className={`leading-[1.8] ${t.text} mb-1`} style={{ fontSize: "1em" }}>{renderedText}</p>
               </div>
             );
           }

@@ -2546,9 +2546,11 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
     );
   }
 
+  // Blank lines are kept as "" markers — the only record of where real paragraphs
+  // end. See the Bhagavatam reader: dropping them meant prose could not reflow.
   const lines = cleanOcrText(text).split("\n")
-    .filter((l) => l.trim() && !isStandalonePageNumber(l))
-    .map((l) => stripLeadingPageNumber(l));
+    .map((l) => (l.trim() ? stripLeadingPageNumber(l) : ""))
+    .filter((l) => l === "" || !isStandalonePageNumber(l));
 
   type Section = { kind: "chapter" | "shlok" | "ref-shlok" | "shabdarth" | "anuvad" | "tatparya" | "text"; lines: string[] };
   const sections: Section[] = [];
@@ -2616,7 +2618,12 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
 
   for (let i = 0; i < lines.length; i++) {
     const t = lines[i].trim();
-    if (!t) continue;
+    // A blank line closes the paragraph: flush it as its own section of the same
+    // kind so multi-paragraph purports stay separated and each block can reflow.
+    if (!t) {
+      if (current.lines.length > 0) { const k = current.kind; flush(); current = { kind: k, lines: [] }; }
+      continue;
+    }
 
     if (isChapterHeading(t)) {
       flush();
@@ -2983,36 +2990,33 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
             );
           case "anuvad": {
             const isAnuvadContinuation = i === 0 && prevPageEndKind === "anuvad";
-            const renderedAnuvad = renderInlineBoldBlock(sec.lines); // bold state carries across lines
+            const renderedAnuvad = renderInlineBoldBlock([sec.lines.join(" ")])[0];
             return (
               <div key={i} data-section-type="anuvad" className={isAnuvadContinuation ? "" : "mt-3"}>
-                {sec.lines.map((l, j) => (
-                  <p key={j} className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>{renderedAnuvad[j]}</p>
-                ))}
+                {/* One reflowing paragraph — the OCR breaks at PRINT line ends. */}
+                <p className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>{renderedAnuvad}</p>
               </div>
             );
           }
           case "tatparya": {
             const isContinuation = i === 0 && (prevPageEndKind === "tatparya" || prevPageEndKind === "ref-shlok");
-            const renderedTatparya = renderInlineBoldBlock(sec.lines); // bold state carries across lines
+            const renderedTatparya = renderInlineBoldBlock([sec.lines.join(" ")])[0];
+            // Label belongs at the top of the purport, not above every paragraph.
+            const showTatparyaLabel = !isContinuation && (i === 0 || sections[i - 1].kind !== "tatparya");
             return (
               <div key={i} data-section-type="tatparya" className={isContinuation ? "" : "mt-4 sm:mt-5"}>
-                {sec.lines.map((l, j) => (
-                  <p key={j} className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>
-                    {j === 0 && !isContinuation && <><span className="font-semibold">तात्पर्य :</span>{" "}</>}
-                    {renderedTatparya[j]}
-                  </p>
-                ))}
+                <p className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>
+                  {showTatparyaLabel && <><span className="font-semibold">तात्पर्य :</span>{" "}</>}
+                  {renderedTatparya}
+                </p>
               </div>
             );
           }
           default: {
-            const renderedText = renderInlineBoldBlock(sec.lines); // bold state carries across lines
+            const renderedText = renderInlineBoldBlock([sec.lines.join(" ")])[0];
             return (
               <div key={i} data-section-type="text">
-                {sec.lines.map((l, j) => (
-                  <p key={j} className={`leading-[1.8] ${t.text} mb-1`} style={{ fontSize: "1em" }}>{renderedText[j]}</p>
-                ))}
+                <p className={`leading-[1.8] ${t.text} mb-1`} style={{ fontSize: "1em" }}>{renderedText}</p>
               </div>
             );
           }
