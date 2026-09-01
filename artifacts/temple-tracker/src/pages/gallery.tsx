@@ -1044,6 +1044,159 @@ function StoryScenesSection() {
   );
 }
 
+
+// ── Gita chapter-art review ──────────────────────────────────────────────────
+// The Gita had no review UI, so generated covers stayed `pending` forever and the
+// daily art post could only ever draw from Chaitanya. Self-contained (own fetch +
+// state) so it does not entangle the rest of the gallery.
+
+interface GitaArt {
+  id: number;
+  chapter_number: number;
+  chapter_title: string | null;
+  image_url: string | null;
+  prompt: string | null;
+  caption: string | null;
+  status: string;
+}
+
+function GitaArtSection() {
+  const [rows, setRows] = useState<GitaArt[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState<number | null>(null);
+  const [editId, setEditId] = useState<number | null>(null);
+  const [draft, setDraft] = useState("");
+  const [generating, setGenerating] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const r = await sbFetch("gita_chapter_art_review?select=*&status=eq.pending&order=chapter_number.asc");
+      setRows(r.ok ? await r.json() : []);
+    } catch { setRows([]); }
+    finally { setLoading(false); }
+  }, []);
+  useEffect(() => { void load(); }, [load]);
+
+  const review = useCallback(async (id: number, action: "approve" | "reject") => {
+    setBusy(id);
+    try {
+      const r = await sbFetch(`gita_chapter_art_review?id=eq.${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: action === "approve" ? "approved" : "rejected", reviewed_at: new Date().toISOString() }),
+      });
+      if (r.ok) setRows(prev => prev.filter(x => x.id !== id));
+      else alert(`Couldn't ${action}: ${await r.text().catch(() => r.statusText)}`);
+    } finally { setBusy(null); }
+  }, []);
+
+  const regenerate = useCallback(async (id: number) => {
+    if (!draft.trim()) return;
+    setGenerating(true);
+    try {
+      const r = await fetch(`${SUPABASE_URL}/functions/v1/regenerate-chapter-art`, {
+        method: "POST",
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ book: "gita", id, prompt: draft }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d?.ok) { alert(`Regenerate failed: ${d?.error || r.statusText}`); return; }
+      setRows(prev => prev.map(x => (x.id === id ? { ...x, image_url: `${d.image_url}?t=${Date.now()}`, prompt: draft } : x)));
+      setEditId(null);
+    } finally { setGenerating(false); }
+  }, [draft]);
+
+  const generateMissing = useCallback(async () => {
+    setGenerating(true);
+    try {
+      const r = await fetch(`${SUPABASE_URL}/functions/v1/generate-gita-chapter-art`, {
+        method: "POST",
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ missing: true, limit: 3 }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (d?.errors?.length) alert(`Some chapters failed: ${JSON.stringify(d.errors).slice(0, 200)}`);
+      await load();
+    } finally { setGenerating(false); }
+  }, [load]);
+
+  if (loading) return null;
+
+  return (
+    <div className="mb-6 bg-white border-2 border-indigo-200 rounded-2xl overflow-hidden">
+      <div className="flex items-center gap-3 p-4 border-b border-indigo-100">
+        <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0">
+          <BookOpen className="w-5 h-5 text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-serif font-bold text-indigo-900 text-sm">
+            Bhagavad-gita chapter covers {rows.length > 0 && `(${rows.length} awaiting review)`}
+          </h3>
+          <p className="text-[11px] text-indigo-700/80 mt-0.5">Approve to use as chapter art and for the daily social post · 18 chapters</p>
+        </div>
+        <button onClick={() => void generateMissing()} disabled={generating}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-[11px] font-bold hover:bg-indigo-700 disabled:opacity-50">
+          {generating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+          Generate missing
+        </button>
+        <button onClick={() => void load()} className="p-1.5 rounded-lg text-stone-400 hover:text-indigo-600" title="Refresh">
+          <RefreshCw className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {rows.length === 0 ? (
+        <p className="text-[11px] text-stone-400 py-6 text-center">
+          Nothing awaiting review. Use “Generate missing” to create covers for chapters that have none.
+        </p>
+      ) : (
+        <div className="p-4 space-y-4">
+          {rows.map(p => (
+            <div key={p.id} className="flex flex-col sm:flex-row gap-4">
+              {p.image_url && (
+                <a href={p.image_url} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                  <img src={p.image_url} alt="" loading="lazy" className="w-full sm:w-72 rounded-xl border border-stone-200" />
+                </a>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-indigo-600">Chapter {p.chapter_number}</p>
+                <h4 className="font-serif font-bold text-stone-800 text-sm mb-1">{p.chapter_title}</h4>
+                {p.caption && <p className="text-xs text-stone-600 leading-relaxed line-clamp-3 mb-2">{p.caption}</p>}
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => void review(p.id, "approve")} disabled={busy === p.id}
+                    className="flex items-center gap-1 text-xs font-bold text-white bg-green-600 hover:bg-green-700 disabled:bg-stone-300 px-3 py-1.5 rounded-lg">
+                    {busy === p.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />} Approve
+                  </button>
+                  <button onClick={() => void review(p.id, "reject")} disabled={busy === p.id}
+                    className="flex items-center gap-1 text-xs font-bold text-white bg-red-600 hover:bg-red-700 disabled:bg-stone-300 px-3 py-1.5 rounded-lg">
+                    <X className="w-3 h-3" /> Reject
+                  </button>
+                  <button onClick={() => { const open = editId === p.id; setEditId(open ? null : p.id); setDraft(p.prompt || ""); }}
+                    className="flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-100 hover:bg-purple-200 px-3 py-1.5 rounded-lg">
+                    <Sparkles className="w-3 h-3" /> {editId === p.id ? "Close" : "Edit prompt"}
+                  </button>
+                </div>
+                {editId === p.id && (
+                  <div className="mt-3 p-3 rounded-xl bg-purple-50 border border-purple-200">
+                    <textarea value={draft} onChange={e => setDraft(e.target.value)} rows={4}
+                      className="w-full px-2.5 py-2 rounded-lg border border-purple-300 text-[12px] focus:outline-none focus:ring-2 focus:ring-purple-200" />
+                    <div className="flex items-center gap-2 mt-2">
+                      <button onClick={() => void regenerate(p.id)} disabled={generating || !draft.trim()}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 disabled:opacity-50">
+                        {generating ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Regenerating…</> : <><RefreshCw className="w-3.5 h-3.5" /> Regenerate</>}
+                      </button>
+                      <button onClick={() => setEditId(null)} className="px-3 py-1.5 rounded-lg bg-white text-stone-600 text-xs font-semibold border border-stone-200">Cancel</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Gallery Page ─────────────────────────────────────────────────────────────
 
 export default function Gallery() {
@@ -2146,6 +2299,9 @@ export default function Gallery() {
               <>
             {/* ── Story Scenes (reader-saved passages) ────────────────────── */}
             <StoryScenesSection />
+
+            {/* ── Bhagavad-gita chapter covers ────────────────────────────── */}
+            <GitaArtSection />
 
             {/* ── Bulk image generator (for missing chapters) ─────────────── */}
             {bulkStatus && bulkStatus.missingCount > 0 && (
