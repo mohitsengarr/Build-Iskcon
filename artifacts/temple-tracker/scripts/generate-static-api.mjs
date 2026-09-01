@@ -22,7 +22,10 @@ console.log("✓ progress");
 // 2. Read all batch files
 const PAGES_DIR = path.join(DATA_DIR, "pages");
 const batchFiles = fs.readdirSync(PAGES_DIR)
-  .filter(f => f.startsWith("batch-") && f.endsWith(".json"))
+  // STRICT match. iCloud creates conflict copies named "batch-0001 3.json" beside
+  // the real file; a loose startsWith/endsWith swept those in, so every affected
+  // page was served twice (the Gita reported 1192 pages for a 772-page book).
+  .filter(f => /^batch-\d+\.json$/.test(f))
   .sort();
 
 const allBatches = batchFiles.map(f =>
@@ -437,7 +440,10 @@ const GITA_OUT_DIR = path.resolve(__dirname, "..", "public", "api", "gita");
 
 if (fs.existsSync(GITA_PAGES_DIR)) {
   const gitaBatchFiles = fs.readdirSync(GITA_PAGES_DIR)
-    .filter(f => f.startsWith("batch-") && f.endsWith(".json"))
+    // STRICT match. iCloud creates conflict copies named "batch-0001 3.json" beside
+  // the real file; a loose startsWith/endsWith swept those in, so every affected
+  // page was served twice (the Gita reported 1192 pages for a 772-page book).
+  .filter(f => /^batch-\d+\.json$/.test(f))
     .sort();
 
   if (gitaBatchFiles.length === 0) {
