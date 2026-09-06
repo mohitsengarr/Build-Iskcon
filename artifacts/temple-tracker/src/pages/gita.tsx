@@ -232,6 +232,15 @@ function stripLeadingPageNumber(line: string): string {
 
 function cleanOcrText(text: string): string {
   return text
+    // Repair decomposed vowels. The scan writes ऐ as ए + a combining "े" and औ as
+    // ओ + "ो"; a combining sign on an independent vowel has no base to attach to,
+    // so the font renders it on a dotted circle — "एेश्वर्य" instead of "ऐश्वर्य".
+    .replace(/\u090F[\u0946\u0947]/gu, "\u0910")   // ए + े  → ऐ
+    .replace(/\u0913[\u094A\u094B]/gu, "\u0914")   // ओ + ो  → औ
+    .replace(/\u0905\u093E/gu, "\u0906")           // अ + ा  → आ
+    // A combining mark with no consonant before it (after a space, hyphen or a
+    // zero-width joiner the OCR left behind) can only render as a dotted circle.
+    .replace(/(^|[\s\-\u200C\u200D])[\u093E-\u094D\u0955-\u0957\u0962\u0963]+/gmu, "$1")
     .replace(/^([\d\u0966-\u096F]{1,5}[\]\)]*)$/gmu, "")
     // Sarvam transcribes the danda as an ASCII pipe. Restore the real marks, or
     // verse detection (which looks for ॥) never fires and the text shows "||".
@@ -369,10 +378,10 @@ function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind
 
   // Sanskrit detection helpers
   const countHindiPostpositions = (line: string): number => {
-    const matches = line.match(/(?:^|\s)(?:का|की|के|को|में|पर|से|ने|और|या|भी|तो|ही|यह|वह|जो|कि|नहीं)(?:\s|[।,;:\)]|$)/gu);
+    const matches = line.match(/(?:^|\s)(?:का|की|के|को|में|पर|से|ने|और|या|भी|तो|ही|यह|वह|जो|कि|नहीं|इस|उस|जब|तब|तक|लिए|साथ|प्रति|इसलिए|जिससे|जिसमें|उन्हें|इन्हें|जिन्हें|उसे|इसे|मुझे|हमें|तुम्हें|उन्होंने|अपने|अपनी|अपना)(?:\s|[।,;:\)]|$)/gu);
     return matches ? matches.length : 0;
   };
-  const HINDI_VERB_RE = /(?:है[ँं]?|हैं|था|थे|थी|गया|गयी|किया|करें|रहा|सकता|चाहिए|हुई|हुए|होता|करते|करना|बताया|कहा|दिया|लिया)(?:\s|[।,;:\)]|$)/u;
+  const HINDI_VERB_RE = /(?:है[ँं]?|हैं|था|थे|थी|गया|गयी|किया|करें|रहा|सकता|चाहिए|हुई|हुए|होता|करते|करना|बताया|कहा|दिया|लिया|सकते|सकती|सके|सका|सकी|सकें|दिखा|दिखाया|पाया|पाये|पाई|पाते|लगा|लगे|लगी|हुआ|गए|गई|चाहा|रहे|रही|होते|होती|करता|जाता|जाते|कहते|देते|लेते)(?:\s|[।,;:\)]|$)/u;
 
   const isVerseLike = (line: string) => {
     if (line.length > 120 || line.length < 5) return false;

@@ -730,6 +730,16 @@ function cleanOcrText(text: string): string {
     }
   }
   result = result
+    // Repair decomposed vowels. The scan writes ऐ as ए + a combining "े" and औ as
+    // ओ + "ो"; a combining sign on an independent vowel has no base to attach to,
+    // so the font renders it on a dotted circle — "एेश्वर्य" instead of "ऐश्वर्य".
+    // Compose them back into the single letter they were meant to be.
+    .replace(/\u090F[\u0946\u0947]/gu, "\u0910")   // ए + े  → ऐ
+    .replace(/\u0913[\u094A\u094B]/gu, "\u0914")   // ओ + ो  → औ
+    .replace(/\u0905\u093E/gu, "\u0906")           // अ + ा  → आ
+    // A combining mark with no consonant before it (after a space, hyphen or a
+    // zero-width joiner the OCR left behind) can only render as a dotted circle.
+    .replace(/(^|[\s\-\u200C\u200D])[\u093E-\u094D\u0955-\u0957\u0962\u0963]+/gmu, "$1")
     // The OCR transcribes roughly a quarter of dandas as ASCII pipes, which render
     // as "|" and "|| १९ ||" instead of । and ॥. Restore the real marks.
     .replace(/\|\s*\|/g, "॥")
@@ -3276,10 +3286,10 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
   // Hindi prose uses postpositions like का, की, के, को, में, पर, से, ने as separate words.
   // If a line has 2+ Hindi postpositions, it's definitely prose.
   const countHindiPostpositions = (line: string): number => {
-    const matches = line.match(/(?:^|\s)(?:का|की|के|को|में|पर|से|ने|तक|और|या|भी|तो|ही|यह|वह|जो|इस|उस|कि|जब|तब|नहीं|प्रति|बिना|साथ|लिए|बारे|जैसे|क्योंकि|इसलिए|फिर|अभी|कभी|सभी|किसी|अपने|उनके|इनके|जिसमें|जिससे|जिसको)(?:\s|[।,;:\)]|$)/gu);
+    const matches = line.match(/(?:^|\s)(?:का|की|के|को|में|पर|से|ने|तक|और|या|भी|तो|ही|यह|वह|जो|इस|उस|कि|जब|तब|नहीं|प्रति|बिना|साथ|लिए|बारे|जैसे|क्योंकि|इसलिए|फिर|अभी|कभी|सभी|किसी|अपने|उनके|इनके|जिसमें|जिससे|जिसको|उन्हें|इन्हें|जिन्हें|उसे|इसे|मुझे|हमें|तुम्हें|उन्होंने|अपनी|अपना)(?:\s|[।,;:\)]|$)/gu);
     return matches ? matches.length : 0;
   };
-  const HINDI_VERB_RE = /(?:है[ँं]?|हैं|हैँ|था|थे|थी|गया|गयी|गई|किया|करें|करे|रहा|सकता|चाहिए|हुई|हुए|होता|होती|होते|करते|करता|करना|बताया|कहा|सुना|दिया|लिया|पड़ा|आया|चुके|चुका|रहे|रही|जाता|जाती|जाते|मिलता|रखा|बचा|डाला|बनाकर|कहलाता|कहलाती|सकती|सकते|देखे|लगती|लगते|भोगता|जानता|उठाते|करोगे|करेगा|करेगी|करेंगे|दिखाया|सुनाया|बैठकर|होकर|करके|लाकर|जाकर|दिखाते|चलाते|बताते|सुनाते|पालते|रहते|चलते|बनाते|मानते|जानते|कहते|देते|लेते|आते|होनी|चाहती|चाहते|पाते|दिखती|मिलती|बनती|चलती|आती|पाती)(?:\s|[।,;:\)]|$)/u;
+  const HINDI_VERB_RE = /(?:है[ँं]?|हैं|हैँ|था|थे|थी|गया|गयी|गई|किया|करें|करे|रहा|सकता|चाहिए|हुई|हुए|होता|होती|होते|करते|करता|करना|बताया|कहा|सुना|दिया|लिया|पड़ा|आया|चुके|चुका|रहे|रही|जाता|जाती|जाते|मिलता|रखा|बचा|डाला|बनाकर|कहलाता|कहलाती|सकती|सकते|देखे|लगती|लगते|भोगता|जानता|उठाते|करोगे|करेगा|करेगी|करेंगे|दिखाया|सुनाया|बैठकर|होकर|करके|लाकर|जाकर|दिखाते|चलाते|बताते|सुनाते|पालते|रहते|चलते|बनाते|मानते|जानते|कहते|देते|लेते|आते|होनी|चाहती|चाहते|पाते|दिखती|मिलती|बनती|चलती|आती|पाती|सके|सका|सकी|सकें|दिखा|पाया|पाये|पाई|लगा|लगे|लगी|हुआ|गए|चाहा)(?:\s|[।,;:\)]|$)/u;
 
   // ── Positive Sanskrit signals ──────────────────────────────────────────
   // Visarga (ः) count — strong Sanskrit marker, Hindi almost never uses it
