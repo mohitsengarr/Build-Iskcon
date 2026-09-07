@@ -227,7 +227,12 @@ function isStandalonePageNumber(line: string): boolean {
 }
 
 function stripLeadingPageNumber(line: string): string {
-  return line.replace(/^\d{2,5}[\]\)]*\s+/, "");
+  // A page whose printed number the scan mangled can leave a line that is nothing
+  // but a stray bracket or pipe (page 1935 begins with a bare "]"), which then
+  // renders as its own paragraph. Drop those outright.
+  return line
+    .replace(/^\d{2,5}[\]\)]*\s+/, "")
+    .replace(/^[\[\]()|{}<>*.,'"`~^_-]{1,3}\s*$/u, "");
 }
 
 function cleanOcrText(text: string): string {

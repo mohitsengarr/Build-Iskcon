@@ -650,7 +650,12 @@ function stripLeadingPageNumber(line: string): string {
   // Remove leading page numbers like "430 सूत उवाच" → "सूत उवाच", "422 तात्पर्यं" → "तात्पर्यं"
   // Only strip 2+ digit numbers to avoid stripping numbered lists like "1) श्रवण"
   // Also handles brackets: "42] दर्शन" → "दर्शन"
-  return line.replace(/^\d{2,5}[\]\)]*\s+/, "");
+  // A page whose printed number the scan mangled can leave a line that is nothing
+  // but a stray bracket or pipe (page 1935 begins with a bare "]"), which then
+  // renders as its own paragraph. Drop those outright.
+  return line
+    .replace(/^\d{2,5}[\]\)]*\s+/, "")
+    .replace(/^[\[\]()|{}<>*.,'"`~^_-]{1,3}\s*$/u, "");
 }
 
 // Inline markdown-bold renderer — converts **text** runs to <strong>.
@@ -1108,13 +1113,18 @@ function isHalfShlokaLine(line: string): boolean {
   if (/^(तात्पर्य|शब्दार्थ|अनुवाद|अध्याय|स्कन्ध|Chapter)/iu.test(body)) return false;
   // Must NOT be shabdarth (has dash + semicolon)
   if ((body.includes("—") || body.includes("--")) && body.includes(";")) return false;
+  // Chapter-end colophon ("इस प्रकार ... नामक सोलहवें अध्याय के ... तात्पर्य पूर्ण हुए।").
+  // It ends in a single danda like a half-shloka, and "अध्याय" ends in "ाय" which
+  // the case-ending test below counts as a Sanskrit signal — so one false signal
+  // outvoted the Hindi evidence and the sentence rendered as a verse.
+  if (/(?:^|\s)(?:इस प्रकार|नामक)(?:\s|$)/u.test(body) && /(?:अध्याय|स्कन्ध|पूर्ण हुए|समाप्त)/u.test(body)) return false;
   // Must have Sanskrit signals: visarga (ः) or Sanskrit case endings
   const visarga = (body.match(/ः/gu) || []).length;
   const sanskritEndings = (body.match(/(?:स्य|ेन|ाय|ात्|ेषु|ानाम्|ेभ्यः|ाभिः|म्\s|म्$)/gu) || []).length;
   const sanskritParticles = (body.match(/(?:^|\s)(?:च|एव|हि|तु|अपि|वै|यः|सः|यदा|तदा|तथा|इति|एषः)(?:\s|$)/gu) || []).length;
   // Hindi-prose disqualifiers
-  const hindiPP = (body.match(/(?:^|\s)(?:का|की|के|को|में|पर|से|ने|तक|और|कि|जब|तब|नहीं|प्रति|बिना|साथ|लिए|बारे|जैसे|क्योंकि|इसलिए)(?:\s|$)/gu) || []).length;
-  const hindiVerb = /(?:है[ँं]?|हैं|था|थे|थी|गया|गयी|किया|करें|रहा|सकता|चाहिए|होता|होती)(?:\s|।|$)/u.test(body);
+  const hindiPP = (body.match(/(?:^|\s)(?:का|की|के|को|में|पर|से|ने|तक|और|कि|जब|तब|नहीं|प्रति|बिना|साथ|लिए|बारे|जैसे|क्योंकि|इसलिए|द्वारा|वाला|वाले|वाली|अपने|अपनी|उन्हें|इन्हें|नामक|अन्तर्गत|अंतर्गत)(?:\s|$)/gu) || []).length;
+  const hindiVerb = /(?:है[ँं]?|हैं|था|थे|थी|गया|गयी|गई|गये|किया|करें|रहा|रहे|रही|सकता|सकते|सकती|सके|चाहिए|होता|होती|होते|हुआ|हुई|हुए|चले|दिया|लिया|कहा|पूर्ण हुए|समाप्त)(?:\s|।|$)/u.test(body);
   if (hindiPP >= 2) return false;
   if (hindiVerb && (visarga + sanskritEndings) < 2) return false;
   // Strong Sanskrit signal (one or more Sanskrit-only markers)
