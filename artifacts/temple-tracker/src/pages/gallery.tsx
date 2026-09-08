@@ -831,7 +831,9 @@ function StoryScenesSection() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await sbFetch("reader_scenes?select=*&order=created_at.desc&limit=200");
+      // Approved scenes have done their job — they now render inside the book, so
+      // they drop off this review queue instead of accumulating in it.
+      const res = await sbFetch("reader_scenes?select=*&approved=not.is.true&order=created_at.desc&limit=200");
       setScenes(res.ok ? await res.json() : []);
     } catch { setScenes([]); }
     finally { setLoading(false); }
@@ -855,7 +857,9 @@ function StoryScenesSection() {
         method: "PATCH",
         body: JSON.stringify({ approved: next, approved_at: next ? new Date().toISOString() : null }),
       });
-      if (res.ok) setScenes(prev => prev.map(s => (s.id === id ? { ...s, approved: next } : s)));
+      // Approving removes the card from this queue (the list only holds unapproved
+      // scenes); un-approving from elsewhere still updates in place.
+      if (res.ok) setScenes(prev => next ? prev.filter(s => s.id !== id) : prev.map(s => (s.id === id ? { ...s, approved: next } : s)));
       else alert(`Couldn't update: ${await res.text().catch(() => res.statusText)}`);
     } finally { setBusyId(null); }
   }, []);
@@ -1078,6 +1082,19 @@ function GitaArtSection() {
   }, []);
   useEffect(() => { void load(); }, [load]);
 
+  // Discard a Gita scene outright (the shared "reject" path regenerates it).
+  const rejectGitaScene = useCallback(async (id: number) => {
+    setBusy(id);
+    try {
+      const r = await sbFetch(`gita_chapter_art_review?id=eq.${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "rejected", reviewed_at: new Date().toISOString() }),
+      });
+      if (r.ok) setRows(prev => prev.filter(p => p.id !== id));
+      else alert(`Reject scene failed: ${await r.text().catch(() => r.statusText)}`);
+    } finally { setBusy(null); }
+  }, []);
+
   const review = useCallback(async (id: number, action: "approve" | "reject") => {
     setBusy(id);
     try {
@@ -1167,8 +1184,14 @@ function GitaArtSection() {
                     {busy === p.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />} Approve
                   </button>
                   <button onClick={() => void review(p.id, "reject")} disabled={busy === p.id}
+                    title="Keep this scene, render it again"
+                    className="flex items-center gap-1 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 disabled:bg-stone-300 px-3 py-1.5 rounded-lg">
+                    <RefreshCw className="w-3 h-3" /> Regenerate
+                  </button>
+                  <button onClick={() => void rejectGitaScene(p.id)} disabled={busy === p.id}
+                    title="Discard this scene — nothing is regenerated"
                     className="flex items-center gap-1 text-xs font-bold text-white bg-red-600 hover:bg-red-700 disabled:bg-stone-300 px-3 py-1.5 rounded-lg">
-                    <X className="w-3 h-3" /> Reject
+                    <X className="w-3 h-3" /> Reject scene
                   </button>
                   <button onClick={() => { const open = editId === p.id; setEditId(open ? null : p.id); setDraft(p.prompt || ""); }}
                     className="flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-100 hover:bg-purple-200 px-3 py-1.5 rounded-lg">
@@ -1553,6 +1576,27 @@ export default function Gallery() {
     }
   }, [chartBulkLimit, chartSampleApproved, fetchPendingChapterArt, refreshChartBulkStatus, startPoller]);
 
+  // Discard a scene outright. The edge function's "reject" always queues a
+  // regeneration of the SAME scene, which is right when only the rendering is
+  // wrong — but useless when the scene itself is a bad choice. This marks the row
+  // rejected directly so nothing is regenerated from it.
+  const rejectScene = useCallback(async (table: string, id: number) => {
+    setReviewingChapterArt(prev => new Set(prev).add(id));
+    try {
+      const r = await sbFetch(`${table}?id=eq.${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "rejected", reviewed_at: new Date().toISOString() }),
+      });
+      if (r.ok) {
+        setPendingChapterArt(prev => prev.filter(p => p.id !== id));
+      } else {
+        alert(`Reject scene failed: ${await r.text().catch(() => r.statusText)}`);
+      }
+    } finally {
+      setReviewingChapterArt(prev => { const n = new Set(prev); n.delete(id); return n; });
+    }
+  }, []);
+
   const reviewChapterArt = useCallback(async (id: number, action: "approve" | "reject") => {
     setReviewingChapterArt(prev => new Set(prev).add(id));
     try {
@@ -1705,6 +1749,22 @@ export default function Gallery() {
       setCcBulkAction("idle");
     }
   }, [ccBulkLimit, ccSampleApproved, fetchPendingChaitanya, refreshCcBulkStatus, startPoller]);
+
+  // Discard a Chaitanya scene outright — the edge function's "reject" regenerates
+  // the same scene, which is wrong when the scene itself is the problem.
+  const rejectChaitanyaScene = useCallback(async (id: number) => {
+    setReviewingChaitanya(prev => new Set(prev).add(id));
+    try {
+      const r = await sbFetch(`chaitanya_chapter_art_review?id=eq.${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "rejected", reviewed_at: new Date().toISOString() }),
+      });
+      if (r.ok) setPendingChaitanya(prev => prev.filter(p => p.id !== id));
+      else alert(`Reject scene failed: ${await r.text().catch(() => r.statusText)}`);
+    } finally {
+      setReviewingChaitanya(prev => { const n = new Set(prev); n.delete(id); return n; });
+    }
+  }, []);
 
   const reviewChaitanyaArt = useCallback(async (id: number, action: "approve" | "reject") => {
     setReviewingChaitanya(prev => new Set(prev).add(id));
@@ -2687,10 +2747,20 @@ export default function Gallery() {
                             <button
                               onClick={() => reviewChapterArt(p.id, "reject")}
                               disabled={isReviewing}
+                              title="Keep this scene, render it again"
+                              className="flex items-center gap-1 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 disabled:bg-stone-300 px-3 py-1.5 rounded-lg transition-colors"
+                            >
+                              {isReviewing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                              Regenerate
+                            </button>
+                            <button
+                              onClick={() => rejectScene("bhagavatam_chapter_art_review", p.id)}
+                              disabled={isReviewing}
+                              title="Discard this scene — nothing is regenerated"
                               className="flex items-center gap-1 text-xs font-bold text-white bg-red-600 hover:bg-red-700 disabled:bg-stone-300 px-3 py-1.5 rounded-lg transition-colors"
                             >
                               {isReviewing ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
-                              Reject
+                              Reject scene
                             </button>
                             <button
                               onClick={() => { const open = artEdit?.id === p.id; setArtEdit(open ? null : { book: "bhagavatam", id: p.id }); setArtDraft(p.prompt || p.scene_title || ""); }}
@@ -2908,10 +2978,20 @@ export default function Gallery() {
                             <button
                               onClick={() => reviewChaitanyaArt(p.id, "reject")}
                               disabled={isReviewing}
+                              title="Keep this scene, render it again"
+                              className="flex items-center gap-1 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 disabled:bg-stone-300 px-3 py-1.5 rounded-lg transition-colors"
+                            >
+                              {isReviewing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                              Regenerate
+                            </button>
+                            <button
+                              onClick={() => rejectChaitanyaScene(p.id)}
+                              disabled={isReviewing}
+                              title="Discard this scene — nothing is regenerated"
                               className="flex items-center gap-1 text-xs font-bold text-white bg-red-600 hover:bg-red-700 disabled:bg-stone-300 px-3 py-1.5 rounded-lg transition-colors"
                             >
                               {isReviewing ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
-                              Reject
+                              Reject scene
                             </button>
                             <button
                               onClick={() => { const open = artEdit?.id === p.id; setArtEdit(open ? null : { book: "chaitanya", id: p.id }); setArtDraft(p.prompt || p.scene_title || ""); }}
