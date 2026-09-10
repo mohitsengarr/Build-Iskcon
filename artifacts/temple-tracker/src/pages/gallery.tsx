@@ -1118,6 +1118,11 @@ function GitaArtSection() {
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d?.ok) { alert(`Regenerate failed: ${d?.error || r.statusText}`); return; }
+      // The backend caps the prompt (prompt_max_len). Say so plainly — a silently
+      // shortened prompt otherwise looks like the edit simply had no effect.
+      if (d?.prompt_truncated) {
+        alert(`Image regenerated, but your prompt was shortened to fit: ${d.sent_chars}/${d.prompt_chars} characters (limit ${d.max_len}). The end of the prompt was not sent — trim it, or raise the limit in the Image Playground.`);
+      }
       setRows(prev => prev.map(x => (x.id === id ? { ...x, image_url: `${d.image_url}?t=${Date.now()}`, prompt: draft } : x)));
       setEditId(null);
     } finally { setGenerating(false); }
@@ -1299,6 +1304,11 @@ export default function Gallery() {
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d?.ok) { alert(`Regenerate failed: ${d?.error || r.statusText}`); return; }
+      // The backend caps the prompt (prompt_max_len). Say so plainly — a silently
+      // shortened prompt otherwise looks like the edit simply had no effect.
+      if (d?.prompt_truncated) {
+        alert(`Image regenerated, but your prompt was shortened to fit: ${d.sent_chars}/${d.prompt_chars} characters (limit ${d.max_len}). The end of the prompt was not sent — trim it, or raise the limit in the Image Playground.`);
+      }
       onDone(`${d.image_url}?t=${Date.now()}`);
       setArtEdit(null);
     } catch (e) {
