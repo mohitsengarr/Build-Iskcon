@@ -22,7 +22,11 @@ const CORS = {
 };
 
 // Same sanitiser the production generator applies — FLUX rejects violent wording.
-const SANITISE_RE = /battle|war|fight|weapon|sword|arrow|kill|death|blood|burn|destroy|attack|strike|naked|nude/gi;
+// Whole words only (plus simple plural/tense endings). Without word boundaries
+// this rewrote "war" INSIDE other words: "warrior" became "blessingrior",
+// "battlefield" "blessingfield", "toward" "toblessingd", "warm" "blessingm" —
+// 14 stored prompts were sent to the image model with those corrupted words.
+const SANITISE_RE = /\b(?:battle|war|fight|weapon|sword|arrow|kill|death|blood|burn|destroy|attack|strike|naked|nude)(?:s|es|ed|ing)?\b/gi;
 
 interface Body {
   scene_prompt?: string;
