@@ -379,7 +379,50 @@ describe("getSceneResearch", () => {
     assert.ok(ms < 2500, `took ${ms}ms`);
   });
 
-  test("timeoutMs above 25000 is capped (returns promptly with no network)", async () => {
+  test("budget: Claude gets the reserve, no SDK retry, and a long page is cut to 6000 chars", async () => {
+    // Live run 2026-09-13: the old 25s cap aborted the Claude call and left no facts.
+    setKeys();
+    const tail = "TAIL-MARKER-PAST-6000";
+    const longPage = PAGE_TEXT + " " + "x".repeat(7000) + tail;
+    g.fetch = firecrawlFetch({ page: longPage });
+    // deno-lint-ignore no-explicit-any
+    let sent: any;
+    g.__anthropicCreate = async (params: unknown, reqOpts: unknown) => {
+      sent = { params, reqOpts };
+      return toolResponse([goodFact]);
+    };
+    const r = await io.getSceneResearch(makeSupabase(), {
+      key: "gita:ch8",
+      book: "gita",
+      sceneText: GITA_SCENE,
+      title: "Observing the Armies",
+      characters: ["Krishna", "Arjuna"],
+    });
+    assert.equal(r.status, "ok");
+    assert.equal(sent.reqOpts.maxRetries, 0);
+    assert.ok(sent.reqOpts.timeout >= 35_000, `claude timeout ${sent.reqOpts.timeout}ms`);
+    assert.ok(sent.reqOpts.timeout <= 60_000, `claude timeout ${sent.reqOpts.timeout}ms`);
+    assert.ok(sent.params.messages[0].content.includes(PAGE_TEXT), "page head reaches Claude");
+    assert.equal(sent.params.messages[0].content.includes(tail), false, "page tail past 6000 chars is cut");
+  });
+
+  test("budget: a caller timeout below the reserve still reaches Claude without scraping", async () => {
+    setKeys();
+    const f = firecrawlFetch();
+    g.fetch = f;
+    // deno-lint-ignore no-explicit-any
+    let sent: any;
+    g.__anthropicCreate = async (params: unknown, reqOpts: unknown) => {
+      sent = { params, reqOpts };
+      return toolResponse([]);
+    };
+    await io.getSceneResearch(makeSupabase(), { key: "gita:ch9", book: "gita", sceneText: GITA_SCENE }, { timeoutMs: 20_000 });
+    assert.equal(f.seen.scrape, 0, "no scrape when the window is inside the Claude reserve");
+    assert.ok(sent, "Claude still called");
+    assert.ok(sent.reqOpts.timeout > 15_000, `claude timeout ${sent.reqOpts.timeout}ms`);
+  });
+
+  test("timeoutMs above 60000 is capped (returns promptly with no network)", async () => {
     const r = await io.getSceneResearch(makeSupabase(), { key: "gita:ch7", book: "gita", sceneText: GITA_SCENE }, { timeoutMs: 999999 });
     assert.equal(r.status, "skipped");
   });

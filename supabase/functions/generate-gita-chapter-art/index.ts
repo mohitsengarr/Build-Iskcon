@@ -17,7 +17,7 @@
 // RESEARCH NETWORK: a single-chapter run ({ chapter }, or { missing: true } with
 // limit 1) may research on the web. A multi-chapter run ({ missing: true } with
 // limit > 1, or more than one target chapter) reads research from the cache only
-// (allowNetwork: false): chapters render one after another, and up to 25s of
+// (allowNetwork: false): chapters render one after another, and up to 60s of
 // network research per chapter would risk the wall-clock limit. researchMode.ts.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -214,7 +214,7 @@ async function tryGenerate(prompt, model, w, h, steps) {
 // The shared core treats a cache READ ERROR exactly like "no row". With the table
 // missing (migration not applied yet) or the database erroring, EVERY chapter
 // would spend 3 Firecrawl searches (a credit pool shared with the CRM crons), up
-// to 2 scrapes and an Opus call, cache nothing, and add up to 25s. So research
+// to 2 scrapes and an Opus call, cache nothing, and add up to 60s. So research
 // runs only when this read of the same table and row the core reads succeeds (a
 // row or no row). A read with no answer within CACHE_PROBE_TIMEOUT_MS counts as
 // failed, so a hung database cannot hold up the image either.
@@ -322,15 +322,17 @@ async function buildOne(ch, researchOptions) {
     ...cfgRow || {}
   };
   const brief = await writeSceneAndCaption(ch);
+  const research = await researchChapter(ch, brief, researchOptions);
   let scene = brief.imagePrompt;
   // Image models are poor at counting, and the renders kept coming back with two
   // or three horses. Restate the count in the image prompt itself whenever the
   // scene involves the chariot — the brief alone did not carry it through.
-  // Kept even when research supplies canon facts (belt and braces).
-  if (/chariot|horse|rein/i.test(scene)) {
+  // Skipped when a research fact already states it: the duplicate pushed the
+  // style negatives out of the 2000-char prompt (live run 2026-09-13).
+  const countStated = research.facts.some((f) => /\bfour\b[^.]*\bhorses\b/i.test(f));
+  if (/chariot|horse|rein/i.test(scene) && !countStated) {
     scene += ". The chariot is drawn by exactly four white horses — four horses, no more and no fewer — with a banner bearing Hanuman above it";
   }
-  const research = await researchChapter(ch, brief, researchOptions);
   const { prompt: sanitized, note } = buildImagePrompt(scene, research.facts, cfg);
   console.log(`[gita-art] research key=${research.key} status=${research.status} facts=${research.facts.length}${research.absent ? ` dropped_absent=${research.absent}` : ""} ms=${research.ms} network=${researchOptions?.allowNetwork === false ? "off" : "on"}${note}`);
   let b64 = null;

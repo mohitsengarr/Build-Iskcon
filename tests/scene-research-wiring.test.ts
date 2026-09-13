@@ -350,12 +350,12 @@ describe("edge function wiring (index.ts handlers)", () => {
       hashtags: "#BhagavadGita",
     };
 
-    function setup(chaptersWithArt: number[]) {
+    function setup(chaptersWithArt: number[], canon: unknown[] = CANON) {
       ENV.FIRECRAWL_API_KEY = "fc-test";
       const db = makeDb({
         image_gen_config: () => null,
         gita_chapter_art_review: (q) => (q.op === "insert" ? { id: 9 } : chaptersWithArt.map((n) => ({ chapter_number: n }))),
-        scene_visual_canon: () => CANON,
+        scene_visual_canon: () => canon,
         [RESEARCH_TABLE]: (q) => (q.op === "select" ? null : null),
       });
       const net = makeFetch({ claude: () => JSON.stringify(BRIEF) });
@@ -378,6 +378,30 @@ describe("edge function wiring (index.ts handlers)", () => {
       assert.equal(db.writes(RESEARCH_TABLE).length, 0);
       assert.equal(researchLines().length, 3);
       for (const l of researchLines()) assert.match(l, / status=skipped facts=[1-9]\d* .*network=off/, l);
+    });
+
+    const RESTATEMENT = "four horses, no more and no fewer";
+
+    test("a canon horse-count fact replaces the hardcoded restatement, so the count is stated once", async () => {
+      // Arrange
+      const { net } = setup([]);
+      // Act
+      const { status, json } = await call("generate-gita-chapter-art", { missing: true, limit: 1 });
+      // Assert
+      assert.equal(status, 200, JSON.stringify(json));
+      const prompt: string = net.seen.together[0].prompt;
+      assert.ok(prompt.includes("exactly four white horses"), prompt.slice(0, 400));
+      assert.equal(prompt.includes(RESTATEMENT), false, prompt.slice(0, 600));
+    });
+
+    test("with no canon fact the restatement is still added to a chariot scene", async () => {
+      // Arrange
+      const { net } = setup([], []);
+      // Act
+      const { status, json } = await call("generate-gita-chapter-art", { missing: true, limit: 1 });
+      // Assert
+      assert.equal(status, 200, JSON.stringify(json));
+      assert.ok(net.seen.together[0].prompt.includes(RESTATEMENT), net.seen.together[0].prompt.slice(0, 600));
     });
 
     test("{ chapter: 2 } keeps network research", async () => {

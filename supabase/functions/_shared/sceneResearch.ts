@@ -69,12 +69,18 @@ const CANON_TABLE = "scene_visual_canon";
 // Same endpoint and timeouts as the CRM's proven Firecrawl callers
 // (enrich-client-profile): real search latency can exceed 1-4s.
 const FIRECRAWL_API_BASE = "https://api.firecrawl.dev/v1";
-const FIRECRAWL_SEARCH_TIMEOUT_MS = 20_000;
-const FIRECRAWL_SCRAPE_TIMEOUT_MS = 25_000;
-const MAX_SCRAPE_CONTENT_CHARS = 15_000;
+const FIRECRAWL_SEARCH_TIMEOUT_MS = 10_000;
+const FIRECRAWL_SCRAPE_TIMEOUT_MS = 10_000;
+// Page text is only there to hold a verbatim quote; a smaller page keeps the
+// Claude call fast. Two 15k-char pages made it too slow for its window.
+const MAX_SCRAPE_CONTENT_CHARS = 6_000;
 
-const HARD_CAP_MS = 25_000;
-const CLAUDE_RESERVE_MS = 12_000;
+// Live run 2026-09-13 (gita:ch1): the old 25s cap left Claude ~12s to read two
+// 15k-char pages with thinking on; it was aborted at 25005ms and produced no
+// facts. Claude now gets a real reserve. Bulk and multi-chapter runs are
+// network-free, so this only affects single interactive or background misses.
+const HARD_CAP_MS = 60_000;
+const CLAUDE_RESERVE_MS = 35_000;
 const MIN_SCRAPE_WINDOW_MS = 4_000;
 const MIN_CLAUDE_WINDOW_MS = 3_000;
 const MAX_SEARCHES = 3;
@@ -97,7 +103,7 @@ export interface SceneResearchInput {
 }
 
 export interface SceneResearchOptions {
-  /** Total hard cap in ms (default and maximum 25000). */
+  /** Total hard cap in ms (default and maximum 60000). */
   timeoutMs?: number;
   /** Ignore a fresh cache row and research again. Has no effect when allowNetwork is false. */
   forceRefresh?: boolean;
@@ -292,7 +298,8 @@ async function proposeFacts(
         tool_choice: { type: "auto" },
         messages: [{ role: "user", content: userMessage }],
       },
-      { timeout: Math.max(1000, timeoutMs), maxRetries: 1, signal },
+      // No retry: inside a fixed deadline a second attempt can never finish.
+      { timeout: Math.max(1000, timeoutMs), maxRetries: 0, signal },
     );
     if (response.stop_reason === "refusal") return { candidates: [], outcome: "refusal" };
     const block = response.content.find((b) => b.type === "tool_use" && b.name === VISUAL_FACTS_TOOL_NAME);

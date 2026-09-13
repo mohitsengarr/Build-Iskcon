@@ -15,7 +15,7 @@
 //   cached row (e.g. from a pre-warm) plus canon, else canon only; never
 //   Firecrawl, Claude or a cache write. A bulk item is nearly always a cache
 //   miss, so network research could spend up to 250 Firecrawl requests per click
-//   from the credit pool shared with the CRM crons and add up to 25s per chapter
+//   from the credit pool shared with the CRM crons and add up to 60s per chapter
 //   to the waitUntil worker. Chapter and sample modes keep network research.
 //   See researchMode.ts.
 // - The last FLUX retry sends SAFE_FALLBACK, which carries no facts; that
@@ -437,7 +437,7 @@ async function generateOne(chapter: ChaitanyaChapter, opts: { networkResearch?: 
 
     // Scene research runs alongside the persona load, before the prompt is
     // built. researchScene never rejects, and getSceneResearch is hard-capped at
-    // 25s; on any failure it returns canon-only or no facts. In bulk mode it
+    // 60s; on any failure it returns canon-only or no facts. In bulk mode it
     // reads the cache only (see researchMode.ts). Note a reject moves to the NEXT
     // scene (new key), so the cache pays off for regenerates of the same scene,
     // not for rejects.

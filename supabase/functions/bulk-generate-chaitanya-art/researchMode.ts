@@ -6,7 +6,7 @@
 // to the NEXT scene (a new key), so a bulk item is nearly always a cache miss.
 // With network research one click could send up to 50 x (3 searches + 2 scrapes)
 // to the Firecrawl pool shared with the CRM crons, plus 50 Opus calls, and add up
-// to 25s per chapter inside the waitUntil worker. So bulk reads research from the
+// to 60s per chapter inside the waitUntil worker. So bulk reads research from the
 // cache only (allowNetwork: false): a fresh cached row (for example from a
 // pre-warm run) plus canon, otherwise canon only. It never calls Firecrawl or
 // Claude and never writes. Chapter and sample modes keep network research and

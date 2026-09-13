@@ -66,7 +66,7 @@ interface ResearchOutcome { key: string; status: string; facts: string[]; absent
 // The shared core treats a cache READ ERROR exactly like "no row". With the table
 // missing (migration not applied yet) or the database erroring, EVERY call would
 // spend 3 Firecrawl searches (a credit pool shared with the CRM crons), up to 2
-// scrapes and an Opus call, cache nothing, and add up to 25s. So research runs
+// scrapes and an Opus call, cache nothing, and add up to 60s. So research runs
 // only when this read of the same table and row the core reads succeeds (a row
 // or no row).
 // A read with no answer within CACHE_PROBE_TIMEOUT_MS counts as failed, so a

@@ -1,7 +1,7 @@
 // Research network policy for one generate-gita-chapter-art request.
 //
 // A request renders its target chapters one after another. Network research can
-// take up to 25s per chapter (Firecrawl + Claude), so a run of up to 18 chapters
+// take up to 60s per chapter (Firecrawl + Claude), so a run of up to 18 chapters
 // could add minutes of research in sequence and push the request past the edge
 // function's wall-clock limit. Multi-chapter runs therefore read research from
 // the cache only: allowNetwork: false serves a fresh cached row plus canon and
