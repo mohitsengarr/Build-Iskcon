@@ -6,21 +6,34 @@
 // approved in the Image Playground (public.image_gen_config, is_active = true).
 // The image is stored in the instagram-images bucket and the row is updated with
 // the public URL, so the Gallery flips it from "Not generated" to "Image generated".
+// Each render is checked by Claude vision against the research facts in its
+// prompt (_shared/visualCheck.ts) and re-rendered when a fact is clearly
+// contradicted; the outcome is stored in reader_scenes.visual_check.
 //
 // DEPLOY ORDER: apply supabase/migrations/20260913190000_scene_visual_research.sql
 // BEFORE deploying this function. Deployed first it is still safe (research is
 // skipped while scene_visual_research cannot be read), it just does no research.
+// Apply supabase/migrations/20260913230000_visual_check.sql (reader_scenes.visual_check)
+// first too. Deployed before it, the image is still stored, only without its check record.
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getSceneResearch, sha16 } from "../_shared/sceneResearch.ts";
 import { assemblePrompt, extractEntities, normalizeForMatch, readerKey, sanitizeForImageModel } from "../_shared/sceneResearchCore.ts";
+import { imagePayload, renderWithVisualCheck } from "../_shared/visualCheck.ts";
 
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
 const TOGETHER_KEY = Deno.env.get("TOGETHER_API_KEY") || "";
 const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY") || "";
 const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+
+// A sync request is cut by the platform at 150s. Checks and re-renders are
+// optional, so they must fit before request start + REQUEST_BUDGET_MS, which
+// leaves time to upload the image and save the row.
+const REQUEST_BUDGET_MS = 130_000;
+// One render plus up to two re-renders when a research fact is contradicted.
+const VISUAL_CHECK_MAX_ATTEMPTS = 3;
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -147,11 +160,26 @@ async function researchReaderScene(scene: { book?: string | null; selected_text?
   }
 }
 
+// The facts a prompt really carries, which is what the visual check verifies.
+// assemblePrompt sends a repeated fact once and names each fact it leaves out for
+// room as facts[i]; neither was asked for, so neither is checked.
+function factsKept(facts: string[], droppedParts: string[]): string[] {
+  const dropped = new Set(droppedParts);
+  const seen = new Set<string>();
+  return facts.filter((f, i) => {
+    const k = normalizeForMatch(sanitizeForImageModel(f));
+    if (!k || seen.has(k)) return false;
+    seen.add(k);
+    return !dropped.has(`facts[${i}]`);
+  });
+}
+
 // The image prompt. With no research facts this is byte-for-byte the prompt the
 // function built before research (visual, style, rules, cut to the limit,
 // sanitised). With facts, assemblePrompt puts them straight after the scene and
-// trims style (negatives first) rather than the scene or the facts.
-function buildImagePrompt(visual: string, facts: string[], cfg: typeof DEFAULTS): { prompt: string; note: string } {
+// trims style (negatives first) rather than the scene or the facts. factsUsed is
+// the facts the prompt carries ([] for the prompt without facts).
+function buildImagePrompt(visual: string, facts: string[], cfg: typeof DEFAULTS): { prompt: string; note: string; factsUsed: string[] } {
   const maxLen = cfg.prompt_max_len || 2000;
   if (facts.length > 0) {
     try {
@@ -163,7 +191,11 @@ function buildImagePrompt(visual: string, facts: string[], cfg: typeof DEFAULTS)
         extraRules: cfg.extra_rules,
       }, { maxLen });
       const dropped = report.droppedParts.length ? ` dropped=${report.droppedParts.join("|")}` : "";
-      return { prompt, note: ` sent=${report.sentChars}/${report.maxLen}${report.truncatedScene ? " scene_cut" : ""}${dropped}` };
+      return {
+        prompt,
+        note: ` sent=${report.sentChars}/${report.maxLen}${report.truncatedScene ? " scene_cut" : ""}${dropped}`,
+        factsUsed: factsKept(facts, report.droppedParts),
+      };
     } catch {
       // fall through to the pre-research prompt
     }
@@ -173,17 +205,20 @@ function buildImagePrompt(visual: string, facts: string[], cfg: typeof DEFAULTS)
   if (cfg.style_negatives) full += `, ${cfg.style_negatives}`;
   if (cfg.extra_rules) full += `. ${cfg.extra_rules}`;
   if (full.length > maxLen) full = full.slice(0, maxLen);
-  return { prompt: sanitizeForImageModel(full), note: "" };
+  return { prompt: sanitizeForImageModel(full), note: "", factsUsed: [] };
 }
 
-async function tryGenerate(prompt: string, model: string, w: number, h: number, steps: number | null) {
-  const payload: Record<string, unknown> = { model, prompt, width: w, height: h, n: 1, response_format: "b64_json" };
-  if (steps && steps > 0) payload.steps = steps;
+// imagePayload sends seed and steps only to black-forest-labs/ (FLUX) models:
+// openai/gpt-image-2 has neither parameter. signal ends a re-render the visual
+// check has abandoned.
+async function tryGenerate(prompt: string, model: string, w: number, h: number, steps: number | null, seed: number | null = null, signal?: AbortSignal) {
+  const payload = imagePayload(model, prompt, w, h, { seed, steps });
   try {
     const res = await fetch(TOGETHER_API, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${TOGETHER_KEY}` },
       body: JSON.stringify(payload),
+      signal,
     });
     if (!res.ok) { console.log(`[scene] ${model} HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`); return null; }
     return (await res.json())?.data?.[0]?.b64_json || null;
@@ -191,6 +226,7 @@ async function tryGenerate(prompt: string, model: string, w: number, h: number, 
 }
 
 Deno.serve(async (req: Request) => {
+  const startedAt = Date.now();
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return new Response(JSON.stringify({ error: "POST only" }), { status: 405, headers: CORS });
   if (!TOGETHER_KEY) return new Response(JSON.stringify({ error: "TOGETHER_API_KEY is not configured" }), { status: 500, headers: CORS });
@@ -210,22 +246,38 @@ Deno.serve(async (req: Request) => {
 
     const visual = await scenePromptFromText(scene.selected_text, scene.book);
     const research = await researchReaderScene(scene, visual);
-    const { prompt: sanitized, note } = buildImagePrompt(visual, research.facts, cfg);
+    const { prompt: sanitized, note, factsUsed } = buildImagePrompt(visual, research.facts, cfg);
     console.log(`[scene] research key=${research.key} status=${research.status} facts=${research.facts.length}${research.absent ? ` dropped_absent=${research.absent}` : ""} ms=${research.ms}${note}`);
 
     const attempts = [
       { m: cfg.model, w: cfg.width, h: cfg.height },
       { m: cfg.fallback_model || cfg.model, w: cfg.fallback_width || cfg.width, h: cfg.fallback_height || cfg.height },
     ];
-    let b64: string | null = null;
-    for (const a of attempts) {
-      b64 = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps);
-      if (b64) break;
-    }
-    if (!b64) {
+    // One render is the approved model, then the fallback model. The prompt stays
+    // the same on a re-render: the first render sends no seed, exactly as before,
+    // and a re-render sends FLUX a new random seed so it draws a different picture.
+    const render = async (attemptIndex: number, signal?: AbortSignal) => {
+      const seed = attemptIndex > 0 ? Math.floor(Math.random() * 2_147_483_647) : null;
+      for (const a of attempts) {
+        const out = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps, seed, signal);
+        if (out) return { b64: out, model: a.m };
+      }
+      return null;
+    };
+    // Only the facts the prompt carries are checked: one left out for room was
+    // never asked for. With none the check is skipped, so this is one render as before.
+    const chosen = await renderWithVisualCheck({
+      render,
+      facts: factsUsed,
+      maxAttempts: VISUAL_CHECK_MAX_ATTEMPTS,
+      deadlineAt: startedAt + REQUEST_BUDGET_MS,
+      tag: `scene ${scene_id}`,
+    });
+    if (!chosen) {
       await supabase.from("reader_scenes").update({ status: "failed", error_message: "All image attempts failed" }).eq("id", scene_id);
       return new Response(JSON.stringify({ error: "All image attempts failed" }), { status: 502, headers: CORS });
     }
+    const b64 = chosen.b64;
 
     const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
     const fn = `scene-${scene_id}-${Date.now()}.jpg`;
@@ -236,12 +288,20 @@ Deno.serve(async (req: Request) => {
     }
     const url = supabase.storage.from("instagram-images").getPublicUrl(fn).data.publicUrl;
 
-    await supabase.from("reader_scenes").update({
+    const saved = {
       image_generated: true, image_url: url, image_prompt: sanitized,
       status: "generated", generated_at: new Date().toISOString(), error_message: null,
-    }).eq("id", scene_id);
+    };
+    const { error: saveErr } = await supabase.from("reader_scenes").update({ ...saved, visual_check: chosen.record }).eq("id", scene_id);
+    if (saveErr) {
+      // Most likely the visual_check column does not exist yet (migration not
+      // applied). Save the image without the record rather than leave the scene
+      // stuck on "generating".
+      console.warn(`[scene] save with visual_check failed (${saveErr.message}); saving without it`);
+      await supabase.from("reader_scenes").update(saved).eq("id", scene_id);
+    }
 
-    return new Response(JSON.stringify({ ok: true, scene_id, image_url: url, image_prompt: sanitized, model_used: cfg.model }), { headers: CORS });
+    return new Response(JSON.stringify({ ok: true, scene_id, image_url: url, image_prompt: sanitized, model_used: cfg.model, visual_check: chosen.record }), { headers: CORS });
   } catch (err) {
     return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: CORS });
   }

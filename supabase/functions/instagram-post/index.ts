@@ -1,12 +1,14 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getSceneResearch, type SceneResearchInput } from "../_shared/sceneResearch.ts";
+import { imagePayload, renderWithVisualCheck, type VisualCheckRecord } from "../_shared/visualCheck.ts";
 import { type FluxAttempt, runFluxAttempts } from "./fluxAttempts.ts";
 import { inlineImagePrompt } from "./inlinePrompt.ts";
 import {
   assemblePrompt,
   DEFAULT_FACTS_MAX,
   inlineKey,
+  normalizeForMatch,
   type PromptParts,
   sanitizeForImageModel,
   sceneKey,
@@ -58,6 +60,13 @@ async function getActiveGenConfig(): Promise<ActiveGenCfg | null> {
 // v26: removed MAX_REJECTIONS cap; soft safety floor of 50.
 
 const SOFT_SAFETY_FLOOR = 50;
+
+// Visual check (_shared/visualCheck.ts): Claude vision checks each render against
+// the research facts and re-renders on a clear contradiction. The request is cut
+// at 150s, so a check or re-render only starts while it fits before request
+// start + 130s. One render plus up to two re-renders.
+const CHECK_DEADLINE_MS = 130_000;
+const CHECK_MAX_ATTEMPTS = 3;
 
 const GENDER_RULES = [
   "ABSOLUTE GENDER RULES (NEVER VIOLATE):",
@@ -331,13 +340,15 @@ async function generateScenePromptInline(
   return JSON.parse(m[0]);
 }
 
-async function tryGenerate(prompt: string, model: string, w: number, h: number, seed?: number): Promise<string | null> {
+async function tryGenerate(prompt: string, model: string, w: number, h: number, seed?: number, signal?: AbortSignal): Promise<string | null> {
   try {
-    const body: Record<string, unknown> = { model, prompt, width: w, height: h, n: 1, response_format: "b64_json" };
-    if (seed !== undefined) body.seed = seed;
+    // seed goes only to FLUX models; openai/gpt-image-2 has no seed parameter.
+    // signal ends a re-render the visual check has abandoned.
+    const body = imagePayload(model, prompt, w, h, { seed });
     const res = await fetch(TOGETHER_API, {
       method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${TOGETHER_KEY}` },
       body: JSON.stringify(body),
+      signal,
     });
     if (!res.ok) { console.log(`${model}: ${res.status}`); return null; }
     return (await res.json()).data?.[0]?.b64_json || null;
@@ -366,6 +377,23 @@ function cutAtWord(text: string, limit: number): string {
   return (end > 0 ? cut.slice(0, end) : cut).replace(/[\s,;:–—-]+$/, "");
 }
 
+// The facts an assembled prompt really carries, which is what the visual check
+// verifies: assemblePrompt sends a repeated fact once and names each fact it
+// leaves out for room as facts[i]. Neither was asked for, so neither is checked.
+function factsKept(facts: unknown[], droppedParts: string[]): string[] {
+  const dropped = new Set(droppedParts);
+  const seen = new Set<string>();
+  const out: string[] = [];
+  facts.forEach((f, i) => {
+    if (typeof f !== "string") return;
+    const k = normalizeForMatch(sanitizeForImageModel(f));
+    if (!k || seen.has(k)) return;
+    seen.add(k);
+    if (!dropped.has(`facts[${i}]`)) out.push(f);
+  });
+  return out;
+}
+
 // Assemble with the verified facts straight after the scene, within `limit`
 // chars. Facts only get the room the scene leaves (whole facts, at most
 // DEFAULT_FACTS_MAX chars), so they never cut the scene. Everything after them
@@ -384,12 +412,12 @@ function assembleWithFacts(parts: PromptParts, limit: number): FactsPrompt | nul
   if (report.truncatedScene || report.droppedParts.length > 0) {
     console.log(`[instagram-post] facts budget: limit=${limit} facts=${factCount - droppedFacts}/${factCount} truncatedScene=${report.truncatedScene} dropped=${report.droppedParts.join(",") || "none"}`);
   }
-  return { prompt, factsInPrompt: factCount - droppedFacts };
+  return { prompt, factsInPrompt: factCount - droppedFacts, factsUsed: factsKept(parts.facts ?? [], report.droppedParts) };
 }
 
-// An assembled prompt and how many research facts it carries (for the
-// SAFE_FALLBACK log line).
-interface FactsPrompt { prompt: string; factsInPrompt: number }
+// An assembled prompt, how many research facts it carries (for the
+// SAFE_FALLBACK log line) and which ones (what the visual check verifies).
+interface FactsPrompt { prompt: string; factsInPrompt: number; factsUsed: string[] }
 
 // Facts path. Today the scene and persona text share the first sceneCap (1100)
 // chars and the style and rule tail gets the rest. The facts' room comes out of
@@ -409,7 +437,17 @@ function buildPromptWithFacts(prompt: string, personaText: string, facts: string
   }, maxLen - 20);
 }
 
-async function generateImage(prompt: string, matchedPersonas: Persona[], varietySeed: number, facts: string[] = []): Promise<string> {
+// The chosen image and the visual_check record stored with it. safe_fallback is
+// true when the chain ended on SAFE_FALLBACK, a prompt that carries no facts.
+interface CheckedImage { b64: string; visualCheck: VisualCheckRecord & { safe_fallback: boolean } }
+
+async function generateImage(
+  prompt: string,
+  matchedPersonas: Persona[],
+  varietySeed: number,
+  facts: string[] = [],
+  deadlineAt: number = Date.now() + CHECK_DEADLINE_MS,
+): Promise<CheckedImage> {
   const personaText = matchedPersonas.map(p => p.short_description).join(". ");
   const personaInject = matchedPersonas.length > 0 ? PERSONA_INJECT_PREFIX + personaText : "";
   // Model/size come from the approved configuration when one exists (cached).
@@ -425,14 +463,19 @@ async function generateImage(prompt: string, matchedPersonas: Persona[], variety
   let fullPrompt: string | null = null;
   // How many research facts fullPrompt carries; SAFE_FALLBACK logs them as dropped.
   let factsInPrompt = 0;
+  // The facts fullPrompt carries, the only ones checked. Today's prompt has none.
+  let checkFacts: string[] = [];
   if (facts.length > 0) {
     try {
       const withFacts = buildPromptWithFacts(prompt, matchedPersonas.length > 0 ? personaText : "", facts, maxLen, sceneCap);
       fullPrompt = withFacts?.prompt ?? null;
       factsInPrompt = withFacts?.factsInPrompt ?? 0;
+      checkFacts = withFacts?.factsUsed ?? [];
     } catch (e) {
       console.warn(`[instagram-post] fact assembly failed, using the prompt without facts: ${e}`);
       fullPrompt = null;
+      factsInPrompt = 0;
+      checkFacts = [];
     }
   }
   if (fullPrompt === null) {
@@ -459,18 +502,36 @@ async function generateImage(prompt: string, matchedPersonas: Persona[], variety
   // never silently changes the crop the post was composed for.
   const __w2 = __cfg?.ig_width ? 1024 : (__cfg?.fallback_width || 1024);
   const __h2 = __cfg?.ig_height ? 576 : (__cfg?.fallback_height || 576);
-  const attempts: FluxAttempt[] = [
-    { model: __m1, prompt: sanitized, w: __w1, h: __h1, seed },
-    { model: __m2, prompt: sanitized, w: __w2, h: __h2, seed },
+  // A re-render keeps the prompt and moves the seed on by its attempt index, so
+  // attempt 0 sends exactly today's seed.
+  const attemptsFor = (attemptIndex: number): FluxAttempt[] => [
+    { model: __m1, prompt: sanitized, w: __w1, h: __h1, seed: seed + attemptIndex },
+    { model: __m2, prompt: sanitized, w: __w2, h: __h2, seed: seed + attemptIndex },
     { model: __m2, prompt: SAFE_FALLBACK, w: __w2, h: __h2, safeFallback: true },
   ];
-  // Same order and first-image-wins as before; the SAFE_FALLBACK attempt also
-  // logs how many research facts it drops.
-  const b64 = await runFluxAttempts(attempts, a => tryGenerate(a.prompt, a.model, a.w, a.h, a.seed), {
+  // Each render is the whole chain: same order and first-image-wins as before,
+  // and the SAFE_FALLBACK attempt still logs how many research facts it drops.
+  // A SAFE_FALLBACK image carries none of the facts, so it is kept unchecked
+  // (reason safe_fallback) and never re-rendered: the same prompt would only be
+  // refused again. The record says it was SAFE_FALLBACK.
+  const checked = await renderWithVisualCheck({
+    render: async (attemptIndex, signal) => {
+      const attempts = attemptsFor(attemptIndex);
+      const used: { attempt: FluxAttempt | null } = { attempt: null };
+      const b64 = await runFluxAttempts(attempts, a => {
+        used.attempt = a;
+        return tryGenerate(a.prompt, a.model, a.w, a.h, a.seed, signal);
+      }, { tag: "instagram-post", factsInPrompt, signal });
+      if (!b64) return null;
+      const safeFallback = used.attempt?.safeFallback === true;
+      return { b64, model: used.attempt?.model ?? null, safeFallback, skipCheck: safeFallback ? "safe_fallback" : null };
+    },
+    facts: checkFacts,
+    maxAttempts: CHECK_MAX_ATTEMPTS,
+    deadlineAt,
     tag: "instagram-post",
-    factsInPrompt,
   });
-  if (b64) return b64;
+  if (checked) return { b64: checked.b64, visualCheck: { ...checked.record, safe_fallback: checked.safeFallback === true } };
   throw new Error("All FLUX attempts failed");
 }
 
@@ -491,7 +552,9 @@ async function uploadImage(b64: string, ch: ChapterInfo): Promise<{ url: string;
   return { url: supabase.storage.from("instagram-images").getPublicUrl(fn).data.publicUrl, path: fn };
 }
 
-async function generateForChapter(chapterOverride: number | null): Promise<Record<string, unknown>> {
+// requestStart is when the HTTP request arrived: captions, research and verses all
+// spend from the same 150s, so the visual check deadline counts from there.
+async function generateForChapter(chapterOverride: number | null, requestStart: number = Date.now()): Promise<Record<string, unknown>> {
   const { chapter, text } = chapterOverride !== null
     ? await loadChapterByGlobalNumber(chapterOverride)
     : await getNextChapter();
@@ -562,35 +625,51 @@ async function generateForChapter(chapterOverride: number | null): Promise<Recor
     characters: characterNames,
   });
 
-  const b64 = await generateImage(imagePrompt, matched, varietySeed, facts);
+  // The Mahājana lookup and the verse (a Haiku call) run alongside the image, not
+  // after it: a check may run until request start + 130s, and the work after the
+  // image must still fit before the request is cut at 150s.
+  const mahajanPending = resolveMahajanKey(characterNames, matched);
+  // Awaited below, where a failure still fails the post; this only keeps it from
+  // counting as unhandled while the image renders.
+  mahajanPending.catch(() => {});
+  const versePending = extractVerse(chapter.title, text, usedSceneInfo?.title);
+
+  const { b64, visualCheck } = await generateImage(imagePrompt, matched, varietySeed, facts, requestStart + CHECK_DEADLINE_MS);
   const { url, path } = await uploadImage(b64, chapter);
 
   // Attribute to the Mahājana who speaks in / appears in this chapter (fail-soft null).
-  const mahajanKey = await resolveMahajanKey(characterNames, matched);
+  const mahajanKey = await mahajanPending;
   console.log(`Mahājana attribution: ${mahajanKey || "(none)"} — characters: ${characterNames.join(", ") || "?"}`);
 
   // Anchor Sanskrit śloka + Hindi for the Darshan card (fail-soft null).
-  const verse = await extractVerse(chapter.title, text, usedSceneInfo?.title);
+  const verse = await versePending;
   console.log(`Verse: ${verse.sanskrit ? "extracted" : "(none)"}`);
 
-  const { data: inserted, error: insErr } = await supabase
+  const pendingRow = {
+    chapter_global_number: chapter.globalNumber,
+    chapter_canto: chapter.skandh,
+    chapter_in_canto: chapter.number,
+    chapter_title: chapter.title,
+    image_url: url,
+    image_path: path,
+    caption,
+    hashtags,
+    status: "pending",
+    mahajan_key: mahajanKey,
+    shlok_sanskrit: verse.sanskrit,
+    anuvad_hindi: verse.hindi,
+  };
+  let { data: inserted, error: insErr } = await supabase
     .from("ig_pending_review")
-    .insert({
-      chapter_global_number: chapter.globalNumber,
-      chapter_canto: chapter.skandh,
-      chapter_in_canto: chapter.number,
-      chapter_title: chapter.title,
-      image_url: url,
-      image_path: path,
-      caption,
-      hashtags,
-      status: "pending",
-      mahajan_key: mahajanKey,
-      shlok_sanskrit: verse.sanskrit,
-      anuvad_hindi: verse.hindi,
-    })
+    .insert({ ...pendingRow, visual_check: visualCheck })
     .select("id")
     .single();
+  if (insErr && /visual_check/.test(insErr.message)) {
+    // The visual_check column is missing (migration not applied yet): keep the
+    // post and its paid renders, without the record.
+    console.warn(`[instagram-post] insert with visual_check failed (${insErr.message}); saving without it`);
+    ({ data: inserted, error: insErr } = await supabase.from("ig_pending_review").insert(pendingRow).select("id").single());
+  }
   if (insErr) throw new Error(`Pending insert: ${insErr.message}`);
 
   if (usedSceneInfo && sceneRow) {
@@ -625,6 +704,7 @@ async function generateForChapter(chapterOverride: number | null): Promise<Recor
     usedScene: usedSceneInfo,
     sceneSource: sceneRow ? "pre-extracted" : "inline-claude",
     rejectionsSoFar: rejectCount || 0,
+    visualCheck,
   };
 }
 
@@ -655,6 +735,7 @@ async function backfillVerses(limit: number): Promise<{ scanned: number; updated
 }
 
 Deno.serve(async (req: Request) => {
+  const requestStart = Date.now();
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, GET, OPTIONS", "Access-Control-Allow-Headers": "content-type, authorization, apikey" } });
   }
@@ -680,7 +761,7 @@ Deno.serve(async (req: Request) => {
   } catch { /* no body */ }
 
   try {
-    const result = await generateForChapter(chapterOverride);
+    const result = await generateForChapter(chapterOverride, requestStart);
     return new Response(JSON.stringify(result), { headers: { "Content-Type": "application/json" } });
   } catch (err) {
     console.error(err);

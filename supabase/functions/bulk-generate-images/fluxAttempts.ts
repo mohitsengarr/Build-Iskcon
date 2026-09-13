@@ -6,7 +6,8 @@
 // SAFE_FALLBACK carries no research facts, so an image made from it can get a
 // canonical detail wrong again. That attempt now logs one line saying how many
 // facts it dropped. Otherwise the loop is unchanged: attempts run in order and
-// the first image returned wins.
+// the first image returned wins. A render the visual check has abandoned
+// (opts.signal aborted) starts no further attempt.
 //
 // Pure: no Deno, no IO, so node tests import it directly.
 
@@ -27,14 +28,15 @@ export function safeFallbackFactsNote(tag: string, attemptNumber: number, factsI
   return `[${tag}] FLUX attempt ${attemptNumber} uses SAFE_FALLBACK: ${n} research fact${n === 1 ? "" : "s"} dropped for this attempt`;
 }
 
-/** Runs attempts in order and returns the first image, or null when every attempt fails. */
+/** Runs attempts in order and returns the first image, or null when every attempt fails or the signal is aborted. */
 export async function runFluxAttempts<A extends FluxAttempt>(
   attempts: readonly A[],
   generate: (attempt: A) => Promise<string | null>,
-  opts: { tag: string; factsInPrompt: number; log?: (line: string) => void },
+  opts: { tag: string; factsInPrompt: number; log?: (line: string) => void; signal?: AbortSignal },
 ): Promise<string | null> {
   const log = opts.log ?? ((line: string) => console.log(line));
   for (let i = 0; i < attempts.length; i++) {
+    if (opts.signal?.aborted) return null;
     const attempt = attempts[i];
     if (attempt.safeFallback) {
       const note = safeFallbackFactsNote(opts.tag, i + 1, opts.factsInPrompt);

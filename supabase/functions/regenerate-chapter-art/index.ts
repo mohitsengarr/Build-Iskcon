@@ -16,6 +16,13 @@
 // regenerate: if it fails, finds nothing, or no fact fits, the prompt is
 // assembled exactly as it was before research existed.
 //
+// Visual check: every render is checked by Claude vision (_shared/visualCheck.ts)
+// against the research facts the sent prompt carries, and re-rendered (up to 3
+// renders) when a fact is clearly contradicted, e.g. three horses where the
+// prompt said four. All of it must finish 130s after the request started. The
+// result is stored in the row's visual_check column and returned as visual_check.
+// No fact in the prompt means no check: one render, sent exactly as before.
+//
 // POST { book: "bhagavatam"|"chaitanya"|"gita", id: 45, prompt: "...", apply_style?: bool, apply_facts?: bool }
 //   apply_facts: false skips research for this request.
 
@@ -30,6 +37,11 @@ import {
   sanitizeForImageModel,
   sceneKey,
 } from "../_shared/sceneResearchCore.ts";
+import { imagePayload, renderWithVisualCheck } from "../_shared/visualCheck.ts";
+
+// A sync request is cut at 150s: checks and re-renders stop 130s after it started.
+const CHECK_DEADLINE_MS = 130_000;
+const CHECK_MAX_ATTEMPTS = 3;
 
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
 const TOGETHER_KEY = Deno.env.get("TOGETHER_API_KEY") || "";
@@ -59,13 +71,16 @@ const DEFAULTS = {
   fallback_model: "black-forest-labs/FLUX.1.1-pro", fallback_width: 1024, fallback_height: 832,
 };
 
-async function tryGenerate(prompt: string, model: string, w: number, h: number, steps: number | null) {
-  const payload: Record<string, unknown> = { model, prompt, width: w, height: h, n: 1, response_format: "b64_json" };
-  if (steps && steps > 0) payload.steps = steps;
+// No seed is sent, so each call is a new draw from the same prompt. steps goes
+// only to FLUX models: openai/gpt-image-2 has no such parameter. signal ends a
+// re-render the visual check has abandoned.
+async function tryGenerate(prompt: string, model: string, w: number, h: number, steps: number | null, signal?: AbortSignal) {
+  const payload = imagePayload(model, prompt, w, h, { steps });
   const res = await fetch(TOGETHER_API, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${TOGETHER_KEY}` },
     body: JSON.stringify(payload),
+    signal,
   });
   if (!res.ok) { console.log(`[regen-chapter] ${model} HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`); return null; }
   return (await res.json())?.data?.[0]?.b64_json || null;
@@ -120,6 +135,24 @@ function factsNotInDraft(facts: string[], draft: string): string[] {
     seen.add(k);
     return true;
   });
+}
+
+// The research facts the sent prompt really carries, which is what the visual
+// check verifies: facts added above, and facts already written into the draft (a
+// Gita draft pre-filled from a stored prompt that was made with them). A fact
+// left out for room, or cut off with the draft, was never asked for.
+function factsInSentPrompt(facts: unknown[], sent: string): string[] {
+  const hay = ` ${normalizeForMatch(sent)} `;
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const f of facts) {
+    if (typeof f !== "string") continue;
+    const k = normalizeForMatch(sanitizeForImageModel(f));
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    if (hay.includes(` ${k} `)) out.push(f.trim());
+  }
+  return out;
 }
 
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -244,6 +277,7 @@ async function researchRow(book: string, row: Record<string, unknown>, draft: st
 }
 
 Deno.serve(async (req: Request) => {
+  const deadlineAt = Date.now() + CHECK_DEADLINE_MS;
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return new Response(JSON.stringify({ error: "POST only" }), { status: 405, headers: CORS });
   if (!TOGETHER_KEY) return new Response(JSON.stringify({ error: "TOGETHER_API_KEY is not configured" }), { status: 500, headers: CORS });
@@ -289,15 +323,34 @@ Deno.serve(async (req: Request) => {
     const w2 = cfg.cover_width ? 1024 : (cfg.fallback_width  || 1024);
     const h2 = cfg.cover_height ? 832  : (cfg.fallback_height || 832);
 
-    let b64: string | null = null;
-    for (const a of [
-      { m: cfg.model, w: w1, h: h1 },
-      { m: cfg.fallback_model || cfg.model, w: w2, h: h2 },
-    ]) {
-      b64 = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps);
-      if (b64) break;
-    }
-    if (!b64) return new Response(JSON.stringify({ error: "All image attempts failed" }), { status: 502, headers: CORS });
+    // One render is the model then its fallback, first image wins, as before.
+    // The check loop re-runs that pair while a fact is clearly contradicted.
+    let firstRenderError: unknown = null;
+    const checked = await renderWithVisualCheck({
+      facts: research ? factsInSentPrompt(research.facts, sanitized) : [],
+      maxAttempts: CHECK_MAX_ATTEMPTS,
+      deadlineAt,
+      tag: `regen-chapter ${book} #${id}`,
+      render: async (attempt, signal) => {
+        try {
+          for (const a of [
+            { m: cfg.model, w: w1, h: h1 },
+            { m: cfg.fallback_model || cfg.model, w: w2, h: h2 },
+          ]) {
+            const img = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps, signal);
+            if (img) return { b64: img, model: a.m };
+          }
+          return null;
+        } catch (e) {
+          if (attempt === 0) firstRenderError = e;
+          throw e;
+        }
+      },
+    });
+    // A first render that threw still answers 500 with its error, as before.
+    if (!checked && firstRenderError) throw firstRenderError;
+    if (!checked) return new Response(JSON.stringify({ error: "All image attempts failed" }), { status: 502, headers: CORS });
+    const b64 = checked.b64;
 
     const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
     const fn = `${b.prefix}-regen-${id}-${Date.now()}.jpg`;
@@ -310,9 +363,17 @@ Deno.serve(async (req: Request) => {
       try { await supabase.storage.from(b.bucket).remove([oldPath]); } catch { /* best effort */ }
     }
 
-    const { error: updErr } = await supabase.from(b.table)
-      .update({ image_url: url, image_path: fn, prompt: prompt.trim(), error_message: null })
+    const saved = { image_url: url, image_path: fn, prompt: prompt.trim(), error_message: null };
+    let { error: updErr } = await supabase.from(b.table)
+      .update({ ...saved, visual_check: checked.record })
       .eq("id", id);
+    if (updErr && /visual_check/.test(updErr.message)) {
+      // The visual_check column is missing (migration not applied yet). The old
+      // image is already removed, so save the new one without the record rather
+      // than leave the row pointing at a deleted file.
+      console.warn(`[regen-chapter] update with visual_check failed (${updErr.message}); saving without it`);
+      ({ error: updErr } = await supabase.from(b.table).update(saved).eq("id", id));
+    }
     if (updErr) return new Response(JSON.stringify({ error: `Update failed: ${updErr.message}` }), { status: 500, headers: CORS });
 
     // Report what was actually sent, so a silently-shortened prompt is visible
@@ -322,6 +383,7 @@ Deno.serve(async (req: Request) => {
       prompt_chars: prompt.trim().length, sent_chars: sanitized.length, max_len: maxLen,
       prompt_truncated: built.promptTruncated, style_applied: built.styleApplied, style_truncated: built.styleTruncated,
       research_key: research?.key ?? null, research_status: research?.status ?? "skipped", facts_included: built.factsIncluded,
+      visual_check: checked.record,
     }), { headers: CORS });
   } catch (err) {
     return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: CORS });

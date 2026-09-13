@@ -18,7 +18,14 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getSceneResearch } from "../_shared/sceneResearch.ts";
 import { assemblePrompt, inlineKey, normalizeForMatch, sanitizeForImageModel, sceneKey } from "../_shared/sceneResearchCore.ts";
+import { imagePayload, renderWithVisualCheck } from "../_shared/visualCheck.ts";
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
+// Visual check (_shared/visualCheck.ts): Claude vision checks the new render
+// against the research facts and re-renders on a clear contradiction. The
+// request is cut at 150s, so a check or re-render only starts while it fits
+// before request start + 130s. One render plus up to two re-renders.
+const CHECK_DEADLINE_MS = 130000;
+const CHECK_MAX_ATTEMPTS = 3;
 const TOGETHER_KEY = Deno.env.get("TOGETHER_API_KEY") || "";
 const supabase = createClient(Deno.env.get("SUPABASE_URL"), Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
 const CORS = {
@@ -42,16 +49,13 @@ const DEFAULTS = {
   fallback_width: 768,
   fallback_height: 1024
 };
-async function tryGenerate(prompt, model, w, h, steps) {
-  const payload = {
-    model,
-    prompt,
-    width: w,
-    height: h,
-    n: 1,
-    response_format: "b64_json"
-  };
-  if (steps && steps > 0) payload.steps = steps;
+async function tryGenerate(prompt, model, w, h, steps, seed, signal) {
+  // steps and seed go only to FLUX models; openai/gpt-image-2 has neither.
+  // signal ends a re-render the visual check has abandoned.
+  const payload = imagePayload(model, prompt, w, h, {
+    steps,
+    seed
+  });
   try {
     const res = await fetch(TOGETHER_API, {
       method: "POST",
@@ -59,7 +63,8 @@ async function tryGenerate(prompt, model, w, h, steps) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${TOGETHER_KEY}`
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal
     });
     if (!res.ok) {
       console.log(`[regen] ${model} HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
@@ -149,6 +154,22 @@ function promptWithFacts(prompt, researchText, facts, cfg, applyStyle) {
     factsIncluded
   } : null;
 }
+// The research facts the sent prompt really carries, which is what the visual
+// check verifies: facts added above, and facts already written into the draft.
+// A fact left out for room, or cut off with the draft, was never asked for.
+function factsInSentPrompt(facts, sent) {
+  const hay = ` ${normalizeForMatch(sent)} `;
+  const seen = new Set();
+  const out = [];
+  for (const f of facts){
+    if (typeof f !== "string") continue;
+    const k = normalizeForMatch(sanitizeForImageModel(f));
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    if (hay.includes(` ${k} `)) out.push(f.trim());
+  }
+  return out;
+}
 function wholeNumber(v, min) {
   const n = typeof v === "number" ? v : typeof v === "string" && /^\d+$/.test(v.trim()) ? Number(v) : NaN;
   return Number.isInteger(n) && n >= min ? n : null;
@@ -173,6 +194,7 @@ async function researchRow(row, draft) {
   }
 }
 Deno.serve(async (req)=>{
+  const requestStart = Date.now();
   if (req.method === "OPTIONS") return new Response("ok", {
     headers: CORS
   });
@@ -230,34 +252,51 @@ Deno.serve(async (req)=>{
     const factsIncluded = withFacts ? withFacts.factsIncluded : 0;
     const boilerplateChars = prompt.trim().length - researchText.length;
     console.log(research ? `[regen] research key=${research.key} status=${research.status} facts=${research.facts.length} used=${factsIncluded} ms=${research.ms} boilerplate_chars=${boilerplateChars}` : `[regen] research ${apply_facts === false ? "off" : !researchable ? "skipped (draft is only caption boilerplate)" : "skipped (no key for row)"} #${id}`);
-    let b64 = null;
     // These rows are Instagram posts, so they must regenerate at the Instagram
     // aspect from the approved config (ig_width/ig_height, 16:9). Using the
     // generic cfg.width/height produced a PORTRAIT replacement for a LANDSCAPE
     // original, so "Regenerate" silently changed the post's shape.
     const igW = cfg.ig_width || cfg.width;
     const igH = cfg.ig_height || cfg.height;
-    for (const a of [
-      {
-        m: cfg.model,
-        w: igW,
-        h: igH
+    // Each render is the whole model/fallback chain, first image wins. The check
+    // uses the research facts the sent prompt carries (added, or already in the
+    // draft); with none it is skipped after one render. This function has never sent a seed, so attempt 0 sends none; a
+    // re-render keeps the prompt and sends FLUX a new random seed.
+    const checked = await renderWithVisualCheck({
+      render: async (attemptIndex, signal)=>{
+        const seed = attemptIndex > 0 ? Math.floor(Math.random() * 1000000) : undefined;
+        for (const a of [
+          {
+            m: cfg.model,
+            w: igW,
+            h: igH
+          },
+          {
+            m: cfg.fallback_model || cfg.model,
+            w: 1024,
+            h: Math.round(1024 * igH / igW)
+          }
+        ]){
+          const out = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps, seed, signal);
+          if (out) return {
+            b64: out,
+            model: a.m
+          };
+        }
+        return null;
       },
-      {
-        m: cfg.fallback_model || cfg.model,
-        w: 1024,
-        h: Math.round(1024 * igH / igW)
-      }
-    ]){
-      b64 = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps);
-      if (b64) break;
-    }
-    if (!b64) return new Response(JSON.stringify({
+      facts: research ? factsInSentPrompt(research.facts, sanitized) : [],
+      maxAttempts: CHECK_MAX_ATTEMPTS,
+      deadlineAt: requestStart + CHECK_DEADLINE_MS,
+      tag: `regen #${id}`
+    });
+    if (!checked) return new Response(JSON.stringify({
       error: "All image attempts failed"
     }), {
       status: 502,
       headers: CORS
     });
+    const b64 = checked.b64;
     const bytes = Uint8Array.from(atob(b64), (c)=>c.charCodeAt(0));
     const fn = `pending-${id}-${Date.now()}.jpg`;
     const { error: upErr } = await supabase.storage.from("instagram-images").upload(fn, bytes, {
@@ -271,7 +310,30 @@ Deno.serve(async (req)=>{
       headers: CORS
     });
     const url = supabase.storage.from("instagram-images").getPublicUrl(fn).data.publicUrl;
-    // Remove the superseded image so the bucket does not accumulate drafts.
+    const saved = {
+      image_url: url,
+      image_path: fn,
+      image_prompt: prompt.trim(),
+      error_message: null
+    };
+    let { error: updErr } = await supabase.from("ig_pending_review").update({
+      ...saved,
+      visual_check: checked.record
+    }).eq("id", id);
+    if (updErr && /visual_check/.test(updErr.message)) {
+      // The visual_check column is missing (migration not applied yet): save the
+      // new image without the record rather than fail the regenerate.
+      console.warn(`[regen] update with visual_check failed (${updErr.message}); saving without it`);
+      ({ error: updErr } = await supabase.from("ig_pending_review").update(saved).eq("id", id));
+    }
+    if (updErr) return new Response(JSON.stringify({
+      error: `Update failed: ${updErr.message}`
+    }), {
+      status: 500,
+      headers: CORS
+    });
+    // Remove the superseded image so the bucket does not accumulate drafts. Only
+    // now: a failed update must never leave the row pointing at a deleted file.
     if (row.image_path && row.image_path !== fn) {
       try {
         await supabase.storage.from("instagram-images").remove([
@@ -279,18 +341,6 @@ Deno.serve(async (req)=>{
         ]);
       } catch  {}
     }
-    const { error: updErr } = await supabase.from("ig_pending_review").update({
-      image_url: url,
-      image_path: fn,
-      image_prompt: prompt.trim(),
-      error_message: null
-    }).eq("id", id);
-    if (updErr) return new Response(JSON.stringify({
-      error: `Update failed: ${updErr.message}`
-    }), {
-      status: 500,
-      headers: CORS
-    });
     return new Response(JSON.stringify({
       ok: true,
       id,
@@ -299,7 +349,8 @@ Deno.serve(async (req)=>{
       prompt_chars: sanitized.length,
       research_key: research?.key ?? null,
       research_status: research?.status ?? "skipped",
-      facts_included: factsIncluded
+      facts_included: factsIncluded,
+      visual_check: checked.record
     }), {
       headers: CORS
     });

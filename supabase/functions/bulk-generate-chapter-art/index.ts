@@ -1,4 +1,23 @@
-// Supabase Edge Function: bulk-generate-chapter-art (v5)
+// Supabase Edge Function: bulk-generate-chapter-art (v6)
+//
+// v6 changes (visual check):
+// - FLUX.2-pro drew three horses where the prompt said four. Each cover is now
+//   checked by Claude vision (_shared/visualCheck.ts) against the research facts
+//   that made it into its prompt, and the whole FLUX attempt chain re-runs with
+//   the next seed while a fact is clearly contradicted. The image with the
+//   fewest contradicted facts is kept.
+// - Chapter and sample modes: up to 3 renders, all done 130s after the request
+//   started. Bulk mode: up to 2 renders per chapter, and one deadline 360s after
+//   the invocation started, shared by every chapter in the waitUntil run.
+// - The result is stored in the review row's visual_check column and returned as
+//   visualCheck, with safe_fallback true when the stored image came from
+//   SAFE_FALLBACK. That image carries no facts, so it is kept unchecked (reason
+//   safe_fallback) and never re-rendered. No fact in the prompt means no check:
+//   one render, as before.
+//   Apply migrations/20260913230000_visual_check.sql first; until then the row
+//   is saved without the record.
+// - Together bodies come from imagePayload: seed goes only to FLUX models, since
+//   openai/gpt-image-2 has no seed parameter.
 //
 // v5 changes (scene research):
 // - Before the prompt is built, getSceneResearch (_shared/sceneResearch.ts)
@@ -42,7 +61,8 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getSceneResearch, type SceneResearchResult } from "../_shared/sceneResearch.ts";
-import { assemblePrompt, inlineKey, sceneKey } from "../_shared/sceneResearchCore.ts";
+import { assemblePrompt, inlineKey, normalizeForMatch, sanitizeForImageModel, sceneKey } from "../_shared/sceneResearchCore.ts";
+import { imagePayload, renderWithVisualCheck, type VisualCheckRecord } from "../_shared/visualCheck.ts";
 import { type FluxAttempt, runFluxAttempts } from "./fluxAttempts.ts";
 import { type ResearchFn, researchScene } from "./researchMode.ts";
 
@@ -102,6 +122,19 @@ const RESEARCH_BOOK = "bhagavatam";
 // exactly as before (no options).
 const runSceneResearch: ResearchFn = (input, opts) => getSceneResearch(supabase, input, opts);
 
+// ── Visual check: render limits per mode ─────────────────────────────────────
+// A sync request is cut at 150s, so chapter and sample modes stop checking and
+// re-rendering 130s after the request started. Bulk runs in waitUntil, which
+// shares the worker's wall clock: one deadline 360s after the invocation
+// started covers every chapter in the run.
+const SYNC_CHECK_DEADLINE_MS = 130_000;
+const SYNC_MAX_ATTEMPTS = 3;
+const BULK_CHECK_DEADLINE_MS = 360_000;
+const BULK_MAX_ATTEMPTS = 2;
+interface CheckPlan { deadlineAt: number; maxAttempts: number }
+// The stored visual_check: the loop's record plus safe_fallback, true when the
+// stored image came from SAFE_FALLBACK, a prompt that carries no facts.
+type StoredCheck = VisualCheckRecord & { safe_fallback: boolean };
 
 const GENDER_RULES = [
   "ABSOLUTE GENDER RULES (NEVER VIOLATE):",
@@ -230,14 +263,16 @@ async function resetSceneCycle(globalNumber: number, firstSceneIndex: number): P
     .eq("chapter_global_number", globalNumber);
 }
 
-async function tryGenerate(prompt: string, model: string, w: number, h: number, seed?: number): Promise<string | null> {
+async function tryGenerate(prompt: string, model: string, w: number, h: number, seed?: number, signal?: AbortSignal): Promise<string | null> {
   try {
-    const body: Record<string, unknown> = { model, prompt, width: w, height: h, n: 1, response_format: "b64_json" };
-    if (seed !== undefined) body.seed = seed;
+    // seed goes only to FLUX models (imagePayload). signal ends a re-render the
+    // visual check has abandoned.
+    const body = imagePayload(model, prompt, w, h, { seed });
     const res = await fetch(TOGETHER_API, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${TOGETHER_KEY}` },
       body: JSON.stringify(body),
+      signal,
     });
     if (!res.ok) { console.log(`${model}: ${res.status}`); return null; }
     return (await res.json()).data?.[0]?.b64_json || null;
@@ -254,7 +289,9 @@ function sanitizePrompt(text: string): string {
   return text.replace(SANITIZE_RE, "blessing");
 }
 
-interface BuiltPrompt { prompt: string; factsInPrompt: number; sceneCut: boolean }
+// factsUsed: the facts that made it into the prompt (none dropped for room, no
+// duplicates). These are what the visual check verifies.
+interface BuiltPrompt { prompt: string; factsInPrompt: number; sceneCut: boolean; factsUsed: string[] }
 
 // With no facts this is the v4 assembly, byte for byte. With facts, the head
 // (scene, then "Canonical details: ...", then whole persona descriptions) is
@@ -270,6 +307,7 @@ function buildPrompt(scenePrompt: string, matchedPersonas: Persona[], facts: str
   let fullPrompt = `${scenePrompt}${personaInject}, wide landscape composition, ${ART_STYLE}. ${GENDER_RULES} ${ANACHRONISM_RULES}`;
   let factsInPrompt = 0;
   let sceneCut = false;
+  let factsUsed: string[] = [];
   if (fullPrompt.length > maxLen || facts.length > 0) {
     const stylePositives = "museum-quality 19th-century Indian devotional OIL PAINTING on canvas, Raja Ravi Varma 1880-1900 aesthetic, VISIBLE oil-paint brushstrokes, warm saffron palette, WIDE landscape composition";
     const styleNegatives = "NOT cartoon, NOT anime, NOT CGI, NOT 3D render, NOT digital illustration, NOT Pixar style, NOT Midjourney style, NOT photo-realistic";
@@ -288,16 +326,32 @@ function buildPrompt(scenePrompt: string, matchedPersonas: Persona[], facts: str
       );
       factsInPrompt = Math.max(0, facts.length - report.droppedParts.filter(d => d.startsWith("facts[")).length);
       sceneCut = report.truncatedScene;
+      // assemblePrompt keeps the first of any duplicate facts (same text once
+      // sanitized) and names each fact it drops as facts[i].
+      const dropped = new Set(report.droppedParts);
+      const seen = new Set<string>();
+      factsUsed = facts.filter((f, i) => {
+        const k = normalizeForMatch(sanitizeForImageModel(sanitizePrompt(f)));
+        if (!k || seen.has(k)) return false;
+        seen.add(k);
+        return !dropped.has(`facts[${i}]`);
+      });
       fullPrompt = `${head}${/[.!?,;:]$/.test(head) ? " " : ", "}${tail}`;
     } else {
       fullPrompt = `${scenePrompt}${personaInject}`.substring(0, headMax) + `, ${tail}`;
     }
     if (fullPrompt.length > maxLen) fullPrompt = fullPrompt.substring(0, withConfigCap(PROMPT_CUT_LEN, cfg));
   }
-  return { prompt: sanitizePrompt(fullPrompt), factsInPrompt, sceneCut };
+  return { prompt: sanitizePrompt(fullPrompt), factsInPrompt, sceneCut, factsUsed };
 }
 
-async function generateImage(scenePrompt: string, matchedPersonas: Persona[], research: SceneResearchResult | null = null): Promise<string> {
+async function generateImage(
+  scenePrompt: string,
+  matchedPersonas: Persona[],
+  research: SceneResearchResult | null,
+  check: CheckPlan,
+  label: string,
+): Promise<{ b64: string; record: StoredCheck }> {
   // Model/size come from the approved configuration when one exists.
   const __cfg = await getActiveGenConfig();
   const rawFacts: unknown = research?.facts;
@@ -323,18 +377,41 @@ async function generateImage(scenePrompt: string, matchedPersonas: Persona[], re
   const __m2 = __cfg?.fallback_model  || "black-forest-labs/FLUX.1.1-pro";
   const __w2 = __cfg?.cover_width ? 1024 : (__cfg?.fallback_width || 1024);
   const __h2 = __cfg?.cover_height ? 832 : (__cfg?.fallback_height || 768);
-  const attempts: FluxAttempt[] = [
-    { model: __m1, prompt: sanitized, w: __w1, h: __h1, seed },
-    { model: __m2, prompt: sanitized, w: __w2, h: __h2, seed },
-    { model: __m2, prompt: SAFE_FALLBACK, w: __w2, h: __h2, safeFallback: true },
-  ];
-  // Same order and first-image-wins as before; the SAFE_FALLBACK attempt also
-  // logs how many research facts it drops.
-  const b64 = await runFluxAttempts(attempts, a => tryGenerate(a.prompt, a.model, a.w, a.h, a.seed), {
-    tag: "bulk-generate-chapter-art",
-    factsInPrompt: built.factsInPrompt,
+  // One render is the whole attempt chain below. The visual check re-runs it
+  // while a fact is clearly contradicted; renderIndex moves the seed so the same
+  // prompt draws a different picture (render 0 uses the seed as before).
+  const checked = await renderWithVisualCheck({
+    facts: built.factsUsed,
+    maxAttempts: check.maxAttempts,
+    deadlineAt: check.deadlineAt,
+    tag: label,
+    render: async (renderIndex, signal) => {
+      const attempts: FluxAttempt[] = [
+        { model: __m1, prompt: sanitized, w: __w1, h: __h1, seed: seed + renderIndex },
+        { model: __m2, prompt: sanitized, w: __w2, h: __h2, seed: seed + renderIndex },
+        { model: __m2, prompt: SAFE_FALLBACK, w: __w2, h: __h2, safeFallback: true },
+      ];
+      const used: { attempt: FluxAttempt | null } = { attempt: null };
+      // Same order and first-image-wins as before; the SAFE_FALLBACK attempt also
+      // logs how many research facts it drops.
+      const b64 = await runFluxAttempts(attempts, async a => {
+        const img = await tryGenerate(a.prompt, a.model, a.w, a.h, a.seed, signal);
+        if (img) used.attempt = a;
+        return img;
+      }, {
+        tag: "bulk-generate-chapter-art",
+        factsInPrompt: built.factsInPrompt,
+        signal,
+      });
+      if (!b64) return null;
+      // A SAFE_FALLBACK image carries none of the facts: it is kept unchecked
+      // and never re-rendered, since the same prompt would only be refused again.
+      const safeFallback = used.attempt?.safeFallback === true;
+      return { b64, model: used.attempt?.model ?? null, safeFallback, skipCheck: safeFallback ? "safe_fallback" : null };
+    },
   });
-  if (b64) return b64;
+  // The record says when the stored image came from SAFE_FALLBACK.
+  if (checked) return { b64: checked.b64, record: { ...checked.record, safe_fallback: checked.safeFallback === true } };
   throw new Error("All FLUX attempts failed");
 }
 
@@ -403,7 +480,12 @@ async function generatePromptInline(chapter: ChapterInfo): Promise<{ prompt: str
 }
 
 // opts.networkResearch defaults to true (chapter/sample modes); bulk passes false.
-async function generateOne(chapter: ChapterInfo, opts: { networkResearch?: boolean } = {}): Promise<{ ok: boolean; chapter: ChapterInfo; pendingId?: number; error?: string }> {
+// check carries the visual check's deadline and render limit for the request.
+async function generateCover(
+  chapter: ChapterInfo,
+  opts: { networkResearch?: boolean },
+  check: CheckPlan,
+): Promise<{ ok: boolean; chapter: ChapterInfo; pendingId?: number; visualCheck?: StoredCheck; error?: string }> {
   try {
     const sceneRow = await loadChapterScenes(chapter.globalNumber);
     let imagePrompt: string;
@@ -450,26 +532,33 @@ async function generateOne(chapter: ChapterInfo, opts: { networkResearch?: boole
     ]);
     const matched = matchPersonas(sceneCharacters, allPersonas);
 
-    const b64 = await generateImage(imagePrompt, matched, research);
+    const { b64, record } = await generateImage(imagePrompt, matched, research, check, `bulk-generate-chapter-art g${chapter.globalNumber}`);
     const { url, path } = await uploadImage(b64, chapter);
 
-    const { data: inserted, error } = await supabase
+    const row = {
+      chapter_global_number: chapter.globalNumber,
+      chapter_canto: chapter.skandh,
+      chapter_in_canto: chapter.number,
+      chapter_title: chapter.title,
+      image_url: url,
+      image_path: path,
+      prompt: imagePrompt.substring(0, 4000),
+      description_hi: descriptionHi.substring(0, 2000),
+      scene_index: sceneIndex,
+      scene_title: sceneTitle.substring(0, 400),
+      status: "pending",
+    };
+    let { data: inserted, error } = await supabase
       .from("bhagavatam_chapter_art_review")
-      .insert({
-        chapter_global_number: chapter.globalNumber,
-        chapter_canto: chapter.skandh,
-        chapter_in_canto: chapter.number,
-        chapter_title: chapter.title,
-        image_url: url,
-        image_path: path,
-        prompt: imagePrompt.substring(0, 4000),
-        description_hi: descriptionHi.substring(0, 2000),
-        scene_index: sceneIndex,
-        scene_title: sceneTitle.substring(0, 400),
-        status: "pending",
-      })
+      .insert({ ...row, visual_check: record })
       .select("id")
       .single();
+    if (error && /visual_check/.test(error.message)) {
+      // The visual_check column is missing (migration not applied yet): keep the
+      // cover rather than lose it, without the record.
+      console.warn(`[bulk-generate-chapter-art] insert with visual_check failed (${error.message}); saving without it`);
+      ({ data: inserted, error } = await supabase.from("bhagavatam_chapter_art_review").insert(row).select("id").single());
+    }
     if (error) throw new Error(error.message);
 
     // Advance the scene rotation only after a successful insert.
@@ -481,7 +570,7 @@ async function generateOne(chapter: ChapterInfo, opts: { networkResearch?: boole
       }
     }
 
-    return { ok: true, chapter, pendingId: inserted?.id };
+    return { ok: true, chapter, pendingId: inserted?.id, visualCheck: record };
   } catch (e) {
     return { ok: false, chapter, error: String(e) };
   }
@@ -506,6 +595,8 @@ async function runInParallel<T>(items: T[], concurrency: number, fn: (item: T) =
 }
 
 Deno.serve(async (req: Request) => {
+  const startedAt = Date.now();
+  const syncCheck: CheckPlan = { deadlineAt: startedAt + SYNC_CHECK_DEADLINE_MS, maxAttempts: SYNC_MAX_ATTEMPTS };
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "content-type, authorization, apikey" } });
   }
@@ -538,7 +629,7 @@ Deno.serve(async (req: Request) => {
       if (missing.length === 0) {
         return new Response(JSON.stringify({ error: "No missing chapters" }), { status: 404, headers: cors });
       }
-      const r = await generateOne(missing[0]);
+      const r = await generateCover(missing[0], {}, syncCheck);
       return new Response(JSON.stringify(r), { headers: cors });
     }
 
@@ -563,7 +654,7 @@ Deno.serve(async (req: Request) => {
       if (pendingRow) {
         return new Response(JSON.stringify({ ok: true, skipped: true, message: `Chapter ${v} already has a pending review row (id ${pendingRow.id})` }), { headers: cors });
       }
-      const r = await generateOne(chapter);
+      const r = await generateCover(chapter, {}, syncCheck);
       return new Response(JSON.stringify(r), { headers: cors });
     }
 
@@ -576,6 +667,9 @@ Deno.serve(async (req: Request) => {
       }
       // Bulk research reads the cache only: no Firecrawl or Claude calls and no
       // cache writes from this background worker (see researchMode.ts).
+      // Every chapter in the run shares one visual-check deadline.
+      const runCheck: CheckPlan = { deadlineAt: startedAt + BULK_CHECK_DEADLINE_MS, maxAttempts: BULK_MAX_ATTEMPTS };
+      const generateOne = (c: ChapterInfo, opts: { networkResearch?: boolean }) => generateCover(c, opts, runCheck);
       // @ts-ignore - EdgeRuntime is provided by Supabase
       EdgeRuntime.waitUntil(runInParallel(missing, concurrency, (c: ChapterInfo) => generateOne(c, { networkResearch: false })));
       return new Response(JSON.stringify({

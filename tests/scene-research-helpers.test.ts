@@ -256,6 +256,24 @@ for (const fn of SAFE_FALLBACK_FNS) {
       assert.equal(seen.length, 0);
     });
 
+    test("an aborted signal starts no further attempt and logs nothing", async () => {
+      // Arrange: the first attempt fails and the render is abandoned while it runs
+      const controller = new AbortController();
+      const seen: string[] = [];
+      const lines: string[] = [];
+      const generate = async (a: { model: string }) => {
+        seen.push(a.model);
+        controller.abort();
+        return null;
+      };
+      // Act
+      const b64 = await runFluxAttempts(ATTEMPTS, generate, { tag: fn, factsInPrompt: 4, log: (l: string) => lines.push(l), signal: controller.signal });
+      // Assert
+      assert.equal(b64, null);
+      assert.deepEqual(seen, ["flux-2"]);
+      assert.deepEqual(lines, [], "no SAFE_FALLBACK line for an attempt that never runs");
+    });
+
     test("a generate call that throws still rejects, as the old loop did", async () => {
       await assert.rejects(
         runFluxAttempts(ATTEMPTS, async () => {

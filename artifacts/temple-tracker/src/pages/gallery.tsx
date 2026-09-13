@@ -796,6 +796,84 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
 // until a version is approved.
 const CHAITANYA_IMAGE_GEN_PAUSED = false;
 
+// ── Image check ──────────────────────────────────────────────────────────────
+// Every generated image is checked by Claude vision against the research facts
+// that went into its prompt, and re-rendered when a fact is clearly contradicted
+// (e.g. three horses instead of four). The generator stores the result in the
+// row's visual_check column; the review cards show it under the image.
+//
+// visual-check-summary:start
+// tests/visual-check-migration.test.ts runs this block on its own: keep it free
+// of JSX and imports.
+interface VisualCheck {
+  status: "pass" | "fail" | "error" | "skipped";
+  attempts?: number;
+  chosen_attempt?: number;
+  failed?: Array<{ fact: string; observed: string }>;
+  unclear?: number;
+  reason?: string | null;
+  image_model?: string | null;
+  checked_at?: string | null;
+}
+
+interface VisualCheckSummary {
+  tone: "fail" | "pass" | "muted";
+  headline: string;
+  details: string[];
+}
+
+function visualCheckSummary(check: VisualCheck | null | undefined): VisualCheckSummary | null {
+  if (!check || typeof check !== "object") return null;
+  const attempts = Number(check.attempts);
+  // Render count is only worth saying when the image was re-rendered.
+  const renders = Number.isFinite(attempts) && attempts > 1 ? Math.floor(attempts) : 0;
+  if (check.status === "fail") {
+    const failed = Array.isArray(check.failed) ? check.failed : [];
+    const n = failed.length;
+    return {
+      tone: "fail",
+      headline: `Image check: ${n} detail${n === 1 ? "" : "s"} wrong${renders ? ` (best of ${renders} renders)` : ""}`,
+      details: failed.map(f => `expected: ${f?.fact ?? ""} — seen: ${f?.observed || "not described"}`),
+    };
+  }
+  if (check.status === "pass") {
+    // "unclear" never fails a check, so a pass can mean nothing was confirmed
+    // (horses out of frame, say). Only a pass with every detail seen is green.
+    const unclearCount = Number(check.unclear);
+    const unclear = Number.isFinite(unclearCount) && unclearCount > 0 ? Math.floor(unclearCount) : 0;
+    if (unclear > 0) {
+      return {
+        tone: "muted",
+        headline: `Image check passed, ${unclear} detail${unclear === 1 ? "" : "s"} unclear${renders ? ` (${renders} renders)` : ""}`,
+        details: [],
+      };
+    }
+    return { tone: "pass", headline: `Image check passed${renders ? ` (${renders} renders)` : ""}`, details: [] };
+  }
+  if (check.status === "error" || check.status === "skipped") {
+    const reason = typeof check.reason === "string" ? check.reason.replace(/_/g, " ").trim() : "";
+    return { tone: "muted", headline: `Image check not run${reason ? ` (${reason})` : ""}`, details: [] };
+  }
+  return null;
+}
+// visual-check-summary:end
+
+function VisualCheckNote({ check }: { check?: VisualCheck | null }) {
+  const summary = visualCheckSummary(check);
+  if (!summary) return null;
+  const color = summary.tone === "fail" ? "text-amber-700" : summary.tone === "pass" ? "text-green-700" : "text-stone-400";
+  return (
+    <div className={`mt-1.5 text-[10px] leading-snug ${color}`}>
+      <p className={summary.tone === "fail" ? "font-bold" : "font-medium"}>{summary.headline}</p>
+      {summary.details.length > 0 && (
+        <ul className="mt-0.5 space-y-0.5 text-red-700">
+          {summary.details.map((line, i) => <li key={i} className="break-words">{line}</li>)}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 // ── Story Scenes ─────────────────────────────────────────────────────────────
 // Passages a reader highlighted in the books and saved via "Add to scenes".
 // Unlike the AI-extracted chapter scenes, these are human-chosen text spans
@@ -813,6 +891,7 @@ interface ReaderScene {
   status: string;
   approved?: boolean;
   created_at: string;
+  visual_check?: VisualCheck | null;
 }
 
 const BOOK_LABEL: Record<string, string> = {
@@ -898,7 +977,7 @@ function StoryScenesSection() {
         return;
       }
       setScenes(prev => prev.map(s => (s.id === id
-        ? { ...s, image_generated: true, image_url: d.image_url, status: "generated" } : s)));
+        ? { ...s, image_generated: true, image_url: d.image_url, status: "generated", visual_check: d.visual_check ?? null } : s)));
     } catch (err) {
       alert(`Image generation failed: ${String(err)}`);
       setScenes(prev => prev.map(s => (s.id === id ? { ...s, status: "failed" } : s)));
@@ -954,9 +1033,10 @@ function StoryScenesSection() {
             <div className="space-y-2">
               {shown.map(s => (
                 <div key={s.id} className="flex gap-3 p-3 rounded-xl border border-stone-200 hover:border-pink-200 transition-colors">
+                  <div className="shrink-0 w-40 sm:w-56">
                   {s.image_generated && s.image_url ? (
                     // Big enough to actually judge the artwork; click opens full size.
-                    <a href={s.image_url} target="_blank" rel="noopener noreferrer" className="shrink-0 group/thumb relative">
+                    <a href={s.image_url} target="_blank" rel="noopener noreferrer" className="block shrink-0 group/thumb relative">
                       <img src={s.image_url} alt="" className="w-40 sm:w-56 rounded-xl object-cover border border-stone-200 group-hover/thumb:opacity-90 transition-opacity" loading="lazy" />
                       <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/60 text-white text-[9px] font-semibold opacity-0 group-hover/thumb:opacity-100 transition-opacity">
                         Open full size
@@ -967,6 +1047,8 @@ function StoryScenesSection() {
                       <ImageIcon className="w-6 h-6 text-stone-300" />
                     </div>
                   )}
+                  {s.image_generated && s.image_url && <VisualCheckNote check={s.visual_check} />}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded ${
@@ -1062,6 +1144,7 @@ interface GitaArt {
   prompt: string | null;
   caption: string | null;
   status: string;
+  visual_check?: VisualCheck | null;
 }
 
 function GitaArtSection() {
@@ -1123,7 +1206,7 @@ function GitaArtSection() {
       if (d?.prompt_truncated) {
         alert(`Image regenerated, but your prompt was shortened to fit: ${d.sent_chars}/${d.prompt_chars} characters (limit ${d.max_len}). The end of the prompt was not sent — trim it, or raise the limit in the Image Playground.`);
       }
-      setRows(prev => prev.map(x => (x.id === id ? { ...x, image_url: `${d.image_url}?t=${Date.now()}`, prompt: draft } : x)));
+      setRows(prev => prev.map(x => (x.id === id ? { ...x, image_url: `${d.image_url}?t=${Date.now()}`, prompt: draft, visual_check: d.visual_check ?? null } : x)));
       setEditId(null);
     } finally { setGenerating(false); }
   }, [draft]);
@@ -1175,9 +1258,12 @@ function GitaArtSection() {
           {rows.map(p => (
             <div key={p.id} className="flex flex-col sm:flex-row gap-4">
               {p.image_url && (
-                <a href={p.image_url} target="_blank" rel="noopener noreferrer" className="shrink-0">
-                  <img src={p.image_url} alt="" loading="lazy" className="w-full sm:w-72 rounded-xl border border-stone-200" />
-                </a>
+                <div className="shrink-0 w-full sm:w-72">
+                  <a href={p.image_url} target="_blank" rel="noopener noreferrer" className="block">
+                    <img src={p.image_url} alt="" loading="lazy" className="w-full sm:w-72 rounded-xl border border-stone-200" />
+                  </a>
+                  <VisualCheckNote check={p.visual_check} />
+                </div>
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-[11px] font-bold uppercase tracking-wide text-indigo-600">Chapter {p.chapter_number}</p>
@@ -1285,6 +1371,7 @@ export default function Gallery() {
     created_at: string;
     error_message: string | null;
     image_prompt?: string | null;
+    visual_check?: VisualCheck | null;
   }
   const [pending, setPending] = useState<PendingPost[]>([]);
   // Edit-the-prompt-and-re-render, so a near-miss image can be fixed on the card
@@ -1293,7 +1380,7 @@ export default function Gallery() {
   const [artEdit, setArtEdit] = useState<{ book: string; id: number } | null>(null);
   const [artDraft, setArtDraft] = useState("");
   const [artBusy, setArtBusy] = useState<number | null>(null);
-  const regenerateChapterArt = useCallback(async (book: string, id: number, onDone: (url: string) => void) => {
+  const regenerateChapterArt = useCallback(async (book: string, id: number, onDone: (url: string, check: VisualCheck | null) => void) => {
     if (!artDraft.trim()) return;
     setArtBusy(id);
     try {
@@ -1309,7 +1396,7 @@ export default function Gallery() {
       if (d?.prompt_truncated) {
         alert(`Image regenerated, but your prompt was shortened to fit: ${d.sent_chars}/${d.prompt_chars} characters (limit ${d.max_len}). The end of the prompt was not sent — trim it, or raise the limit in the Image Playground.`);
       }
-      onDone(`${d.image_url}?t=${Date.now()}`);
+      onDone(`${d.image_url}?t=${Date.now()}`, d.visual_check ?? null);
       setArtEdit(null);
     } catch (e) {
       alert(`Regenerate failed: ${String(e)}`);
@@ -1330,7 +1417,7 @@ export default function Gallery() {
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d?.ok) { alert(`Regenerate failed: ${d?.error || r.statusText}`); return; }
       setPending(prev => prev.map(x => (x.id === id
-        ? { ...x, image_url: `${d.image_url}?t=${Date.now()}`, image_prompt: promptDraft } : x)));
+        ? { ...x, image_url: `${d.image_url}?t=${Date.now()}`, image_prompt: promptDraft, visual_check: d.visual_check ?? null } : x)));
       setPromptEditId(null);
     } catch (e) {
       alert(`Regenerate failed: ${String(e)}`);
@@ -1488,6 +1575,7 @@ export default function Gallery() {
     status: "pending" | "approved" | "rejected";
     created_at: string;
     error_message: string | null;
+    visual_check?: VisualCheck | null;
   }
   interface ChapterArtBulkStatus {
     missingCount: number;
@@ -1662,6 +1750,7 @@ export default function Gallery() {
     status: "pending" | "approved" | "rejected";
     created_at: string;
     error_message: string | null;
+    visual_check?: VisualCheck | null;
   }
   interface ChaitanyaBulkStatus {
     missingCount: number;
@@ -2487,9 +2576,10 @@ export default function Gallery() {
                     };
                     return (
                       <div key={p.id} className="flex flex-col sm:flex-row gap-5 p-4">
+                        <div className="w-full sm:w-72 md:w-80 lg:w-96 shrink-0">
                         <button
                           onClick={openPreview}
-                          className="relative group/img w-full sm:w-72 md:w-80 lg:w-96 aspect-square shrink-0 rounded-xl overflow-hidden shadow-md cursor-zoom-in border border-amber-200"
+                          className="relative block group/img w-full aspect-square rounded-xl overflow-hidden shadow-md cursor-zoom-in border border-amber-200"
                           title="Click to view full size"
                           aria-label={`Preview ${p.chapter_title}`}
                         >
@@ -2503,6 +2593,8 @@ export default function Gallery() {
                             <Maximize2 className="w-7 h-7 text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow" />
                           </span>
                         </button>
+                        <VisualCheckNote check={p.visual_check} />
+                        </div>
                         <div className="flex-1 min-w-0 max-w-2xl">
                           <div className="flex items-start gap-2 mb-1">
                             <div className="flex-1 min-w-0">
@@ -2711,9 +2803,10 @@ export default function Gallery() {
                     };
                     return (
                       <div key={p.id} className="flex flex-col sm:flex-row gap-5 p-4">
+                        <div className="w-full sm:w-80 md:w-96 lg:w-[28rem] shrink-0">
                         <button
                           onClick={openPreview}
-                          className="relative group/img w-full sm:w-80 md:w-96 lg:w-[28rem] aspect-[4/3] shrink-0 rounded-xl overflow-hidden shadow-md cursor-zoom-in border border-cyan-200"
+                          className="relative block group/img w-full aspect-[4/3] rounded-xl overflow-hidden shadow-md cursor-zoom-in border border-cyan-200"
                           title="Click to view full size"
                           aria-label={`Preview ${p.chapter_title}`}
                         >
@@ -2727,6 +2820,8 @@ export default function Gallery() {
                             <Maximize2 className="w-6 h-6 text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow-md" />
                           </div>
                         </button>
+                        <VisualCheckNote check={p.visual_check} />
+                        </div>
                         <div className="flex-1 min-w-0 max-w-2xl">
                           <div className="flex items-baseline gap-2 mb-1">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-700">
@@ -2797,7 +2892,7 @@ export default function Gallery() {
                               />
                               <div className="flex items-center gap-2 mt-2">
                                 <button
-                                  onClick={() => void regenerateChapterArt("bhagavatam", p.id, (url) => setPendingChapterArt(prev => prev.map(x => x.id === p.id ? { ...x, image_url: url } : x)))}
+                                  onClick={() => void regenerateChapterArt("bhagavatam", p.id, (url, check) => setPendingChapterArt(prev => prev.map(x => x.id === p.id ? { ...x, image_url: url, visual_check: check } : x)))}
                                   disabled={artBusy === p.id || !artDraft.trim()}
                                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 disabled:opacity-50"
                                 >
@@ -2942,9 +3037,10 @@ export default function Gallery() {
                     };
                     return (
                       <div key={p.id} className="flex flex-col sm:flex-row gap-5 p-4">
+                        <div className="w-full sm:w-80 md:w-96 lg:w-[28rem] shrink-0">
                         <button
                           onClick={openPreview}
-                          className="relative group/img w-full sm:w-80 md:w-96 lg:w-[28rem] aspect-[4/3] shrink-0 rounded-xl overflow-hidden shadow-md cursor-zoom-in border border-violet-200"
+                          className="relative block group/img w-full aspect-[4/3] rounded-xl overflow-hidden shadow-md cursor-zoom-in border border-violet-200"
                           title="Click to view full size"
                           aria-label={`Preview ${p.chapter_title}`}
                         >
@@ -2958,6 +3054,8 @@ export default function Gallery() {
                             <Maximize2 className="w-6 h-6 text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow-md" />
                           </div>
                         </button>
+                        <VisualCheckNote check={p.visual_check} />
+                        </div>
                         <div className="flex-1 min-w-0 max-w-2xl">
                           <div className="flex items-baseline gap-2 mb-1">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-violet-700">
@@ -3024,7 +3122,7 @@ export default function Gallery() {
                                 placeholder="Describe the scene — who is present (label MALE/FEMALE), what they are doing, the setting…" />
                               <div className="flex items-center gap-2 mt-2">
                                 <button
-                                  onClick={() => void regenerateChapterArt("chaitanya", p.id, (url) => setPendingChaitanya(prev => prev.map(x => x.id === p.id ? { ...x, image_url: url } : x)))}
+                                  onClick={() => void regenerateChapterArt("chaitanya", p.id, (url, check) => setPendingChaitanya(prev => prev.map(x => x.id === p.id ? { ...x, image_url: url, visual_check: check } : x)))}
                                   disabled={artBusy === p.id || !artDraft.trim()}
                                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 disabled:opacity-50"
                                 >

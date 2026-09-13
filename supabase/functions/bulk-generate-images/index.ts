@@ -1,11 +1,13 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getSceneResearch, type SceneResearchInput } from "../_shared/sceneResearch.ts";
+import { imagePayload, renderWithVisualCheck, type VisualCheckRecord } from "../_shared/visualCheck.ts";
 import { type FluxAttempt, runFluxAttempts } from "./fluxAttempts.ts";
 import {
   assemblePrompt,
   DEFAULT_FACTS_MAX,
   inlineKey,
+  normalizeForMatch,
   type PromptParts,
   sanitizeForImageModel,
 } from "../_shared/sceneResearchCore.ts";
@@ -20,6 +22,17 @@ const TOGETHER_KEY = Deno.env.get("TOGETHER_API_KEY")!;
 const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+// Visual check (_shared/visualCheck.ts): Claude vision checks each render against
+// the research facts and re-renders on a clear contradiction. Sample mode is a
+// sync request cut at 150s: checks and re-renders only start before request
+// start + 130s, with up to two re-renders. Bulk mode runs in waitUntil, which
+// shares the worker's wall clock: every chapter of the run shares one deadline
+// of invocation start + 360s, with at most one re-render each.
+const SYNC_CHECK_DEADLINE_MS = 130_000;
+const SYNC_MAX_ATTEMPTS = 3;
+const BULK_CHECK_DEADLINE_MS = 360_000;
+const BULK_MAX_ATTEMPTS = 2;
 
 const MASCULINITY_RULE = "ALL adult male characters MUST look distinctly MASCULINE — NEVER androgynous, NEVER feminine, NEVER soft-featured. Male sages: elder MEN with thick grey/white beards reaching chest, weathered masculine face, sacred thread across bare chest. Male kings: muscular MEN with broad chests, strong square jaws, groomed dark beards. Male youths: clean-shaven athletic MEN with defined jawline, broad shoulders. Female characters keep feminine features but male characters MUST look VISIBLY DIFFERENT.";
 
@@ -100,19 +113,24 @@ Return JSON only (no fences):
 // Per-attempt request timeout (no hang) + surfaced HTTP status, so a slow or
 // rejected FLUX call fails fast and is visible in the function logs instead of
 // silently collapsing into "All FLUX attempts failed".
-async function tryGenerate(prompt: string, model: string, w: number, h: number): Promise<string | null> {
+async function tryGenerate(prompt: string, model: string, w: number, h: number, seed?: number, signal?: AbortSignal): Promise<string | null> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 90000);
+  // A re-render the visual check has abandoned aborts this request too.
+  const stop = () => ctrl.abort();
+  if (signal?.aborted) ctrl.abort();
+  else signal?.addEventListener("abort", stop);
   try {
     const res = await fetch(TOGETHER_API, {
       method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${TOGETHER_KEY}` },
-      body: JSON.stringify({ model, prompt, width: w, height: h, n: 1, response_format: "b64_json" }),
+      // seed goes only to FLUX models, and only on a re-render (see generateImage).
+      body: JSON.stringify(imagePayload(model, prompt, w, h, { seed })),
       signal: ctrl.signal,
     });
     if (!res.ok) { console.log(`[bulk-generate-images] ${model}: HTTP ${res.status} ${(await res.text().catch(() => "")).slice(0, 160)}`); return null; }
     return (await res.json()).data?.[0]?.b64_json || null;
   } catch (e) { console.log(`[bulk-generate-images] ${model} err: ${e}`); return null; }
-  finally { clearTimeout(timer); }
+  finally { clearTimeout(timer); signal?.removeEventListener("abort", stop); }
 }
 
 // The active configuration approved in the Image Playground (/image-playground).
@@ -157,6 +175,23 @@ function cutAtWord(text: string, limit: number): string {
   return (end > 0 ? cut.slice(0, end) : cut).replace(/[\s,;:–—-]+$/, "");
 }
 
+// The facts an assembled prompt really carries, which is what the visual check
+// verifies: assemblePrompt sends a repeated fact once and names each fact it
+// leaves out for room as facts[i]. Neither was asked for, so neither is checked.
+function factsKept(facts: unknown[], droppedParts: string[]): string[] {
+  const dropped = new Set(droppedParts);
+  const seen = new Set<string>();
+  const out: string[] = [];
+  facts.forEach((f, i) => {
+    if (typeof f !== "string") return;
+    const k = normalizeForMatch(sanitizeForImageModel(f));
+    if (!k || seen.has(k)) return;
+    seen.add(k);
+    if (!dropped.has(`facts[${i}]`)) out.push(f);
+  });
+  return out;
+}
+
 // Assemble with the verified facts straight after the scene, within `limit`
 // chars. Facts only get the room the scene leaves (whole facts, at most
 // DEFAULT_FACTS_MAX chars), so they never cut the scene. Everything after them
@@ -176,12 +211,12 @@ function assembleWithFacts(parts: PromptParts, limit: number): FactsPrompt | nul
   if (report.truncatedScene || report.droppedParts.length > 0) {
     console.log(`[bulk-generate-images] facts budget: limit=${limit} facts=${factCount - droppedFacts}/${factCount} truncatedScene=${report.truncatedScene} dropped=${report.droppedParts.join(",") || "none"}`);
   }
-  return { prompt, factsInPrompt: factCount - droppedFacts };
+  return { prompt, factsInPrompt: factCount - droppedFacts, factsUsed: factsKept(parts.facts ?? [], report.droppedParts) };
 }
 
-// An assembled prompt and how many research facts it carries (for the
-// SAFE_FALLBACK log line).
-interface FactsPrompt { prompt: string; factsInPrompt: number }
+// An assembled prompt, how many research facts it carries (for the
+// SAFE_FALLBACK log line) and which ones (what the visual check verifies).
+interface FactsPrompt { prompt: string; factsInPrompt: number; factsUsed: string[] }
 
 // Research never blocks generation: an assembly failure means today's prompt.
 function tryAssembleWithFacts(build: () => FactsPrompt | null): FactsPrompt | null {
@@ -202,11 +237,22 @@ function legacySanitize(text: string): string {
   return text.replace(LEGACY_SANITIZE_RE, "blessing");
 }
 
-async function generateImage(prompt: string, facts: string[] = []): Promise<string> {
+// The chosen image and the visual_check record stored with it. safe_fallback is
+// true when the chain ended on SAFE_FALLBACK, a prompt that carries no facts.
+interface CheckedImage { b64: string; visualCheck: VisualCheckRecord & { safe_fallback: boolean } }
+interface CheckBudget { deadlineAt: number; maxAttempts: number; tag: string }
+
+async function generateImage(
+  prompt: string,
+  facts: string[] = [],
+  check: CheckBudget = { deadlineAt: Date.now() + SYNC_CHECK_DEADLINE_MS, maxAttempts: SYNC_MAX_ATTEMPTS, tag: "bulk-generate-images" },
+): Promise<CheckedImage> {
   const cfg = await getActiveConfig();
   let fullPrompt: string;
   // How many research facts fullPrompt carries; SAFE_FALLBACK logs them as dropped.
   let factsInPrompt = 0;
+  // The facts fullPrompt carries, the only ones checked. Today's prompt has none.
+  let checkFacts: string[] = [];
   if (cfg) {
     // Assemble exactly as the playground previews it, with canonical details
     // straight after the scene. The existing limit is unchanged; facts only use
@@ -219,6 +265,7 @@ async function generateImage(prompt: string, facts: string[] = []): Promise<stri
     const part = (s: unknown) => (withFacts ? legacySanitize(String(s)) : s);
     fullPrompt = withFacts?.prompt ?? prompt;
     factsInPrompt = withFacts?.factsInPrompt ?? 0;
+    checkFacts = withFacts?.factsUsed ?? [];
     if (cfg.style_positives) fullPrompt += `, ${part(cfg.style_positives)}`;
     if (cfg.style_negatives) fullPrompt += `, ${part(cfg.style_negatives)}`;
     if (cfg.extra_rules) fullPrompt += `. ${part(cfg.extra_rules)}`;
@@ -240,6 +287,7 @@ async function generateImage(prompt: string, facts: string[] = []): Promise<stri
     if (withFacts !== null) {
       fullPrompt = withFacts.prompt;
       factsInPrompt = withFacts.factsInPrompt;
+      checkFacts = withFacts.factsUsed;
     } else {
       fullPrompt = `${prompt}, ${ART_STYLE}. ${MASCULINITY_RULE} ${ANACHRONISM_RULES}`;
       if (fullPrompt.length > 2000) {
@@ -252,24 +300,46 @@ async function generateImage(prompt: string, facts: string[] = []): Promise<stri
   // byte. With facts, every other part was already sanitized that way, and the
   // facts (verified to hold no sanitizer word) are not rewritten inside words.
   const sanitized = factsInPrompt > 0 ? fullPrompt : legacySanitize(fullPrompt);
-  const attempts: FluxAttempt[] = cfg
-    ? [
-        { model: cfg.model, prompt: sanitized, w: cfg.width, h: cfg.height },
-        { model: cfg.fallback_model || cfg.model, prompt: sanitized, w: cfg.fallback_width || cfg.width, h: cfg.fallback_height || cfg.height },
-        { model: cfg.fallback_model || cfg.model, prompt: SAFE_FALLBACK, w: cfg.fallback_width || cfg.width, h: cfg.fallback_height || cfg.height, safeFallback: true },
-      ]
-    : [
-    { model: "black-forest-labs/FLUX.2-pro", prompt: sanitized, w: 1088, h: 1344 },
-    { model: "black-forest-labs/FLUX.1.1-pro", prompt: sanitized, w: 768, h: 1024 },
-    { model: "black-forest-labs/FLUX.1.1-pro", prompt: SAFE_FALLBACK, w: 768, h: 1024, safeFallback: true },
-  ];
-  // Same order and first-image-wins as before; the SAFE_FALLBACK attempt also
-  // logs how many research facts it drops.
-  const b64 = await runFluxAttempts(attempts, a => tryGenerate(a.prompt, a.model, a.w, a.h), {
-    tag: "bulk-generate-images",
-    factsInPrompt,
+  // This function has never sent a seed, so attempt 0 still sends none. A
+  // re-render keeps the prompt and sends a new random seed to FLUX, so it draws
+  // a different picture (gpt-image-2 gets no seed and varies on its own).
+  const attemptsFor = (attemptIndex: number): FluxAttempt[] => {
+    const seed = attemptIndex > 0 ? Math.floor(Math.random() * 1_000_000) : undefined;
+    return cfg
+      ? [
+          { model: cfg.model, prompt: sanitized, w: cfg.width, h: cfg.height, seed },
+          { model: cfg.fallback_model || cfg.model, prompt: sanitized, w: cfg.fallback_width || cfg.width, h: cfg.fallback_height || cfg.height, seed },
+          { model: cfg.fallback_model || cfg.model, prompt: SAFE_FALLBACK, w: cfg.fallback_width || cfg.width, h: cfg.fallback_height || cfg.height, safeFallback: true },
+        ]
+      : [
+          { model: "black-forest-labs/FLUX.2-pro", prompt: sanitized, w: 1088, h: 1344, seed },
+          { model: "black-forest-labs/FLUX.1.1-pro", prompt: sanitized, w: 768, h: 1024, seed },
+          { model: "black-forest-labs/FLUX.1.1-pro", prompt: SAFE_FALLBACK, w: 768, h: 1024, safeFallback: true },
+        ];
+  };
+  // Each render is the whole chain: same order and first-image-wins as before,
+  // and the SAFE_FALLBACK attempt still logs how many research facts it drops.
+  // A SAFE_FALLBACK image carries none of the facts, so it is kept unchecked
+  // (reason safe_fallback) and never re-rendered: the same prompt would only be
+  // refused again. The record says it was SAFE_FALLBACK.
+  const checked = await renderWithVisualCheck({
+    render: async (attemptIndex, signal) => {
+      const attempts = attemptsFor(attemptIndex);
+      const used: { attempt: FluxAttempt | null } = { attempt: null };
+      const b64 = await runFluxAttempts(attempts, a => {
+        used.attempt = a;
+        return tryGenerate(a.prompt, a.model, a.w, a.h, a.seed, signal);
+      }, { tag: "bulk-generate-images", factsInPrompt, signal });
+      if (!b64) return null;
+      const safeFallback = used.attempt?.safeFallback === true;
+      return { b64, model: used.attempt?.model ?? null, safeFallback, skipCheck: safeFallback ? "safe_fallback" : null };
+    },
+    facts: checkFacts,
+    maxAttempts: check.maxAttempts,
+    deadlineAt: check.deadlineAt,
+    tag: check.tag,
   });
-  if (b64) return b64;
+  if (checked) return { b64: checked.b64, visualCheck: { ...checked.record, safe_fallback: checked.safeFallback === true } };
   throw new Error("All FLUX attempts failed");
 }
 
@@ -333,7 +403,12 @@ async function getMissingChapters(): Promise<ChapterInfo[]> {
 }
 
 // opts.networkResearch defaults to true (sample mode); bulk mode passes false.
-async function generateOne(chapter: ChapterInfo, opts: { networkResearch?: boolean } = {}): Promise<{ ok: boolean; chapter: ChapterInfo; pendingId?: number; error?: string }> {
+// opts.deadlineAt and opts.maxAttempts bound the visual check; the defaults are
+// the sync ones, counted from now.
+async function generateOne(
+  chapter: ChapterInfo,
+  opts: { networkResearch?: boolean; deadlineAt?: number; maxAttempts?: number } = {},
+): Promise<{ ok: boolean; chapter: ChapterInfo; pendingId?: number; visualCheck?: VisualCheckRecord; error?: string }> {
   try {
     const text = await getChapterText(chapter);
     const { imagePrompt, caption, hashtags } = await generateScenePrompt(chapter, text);
@@ -343,18 +418,29 @@ async function generateOne(chapter: ChapterInfo, opts: { networkResearch?: boole
       book: "bhagavatam",
       sceneText: imagePrompt,
     }, opts.networkResearch !== false);
-    const b64 = await generateImage(imagePrompt, facts);
+    const { b64, visualCheck } = await generateImage(imagePrompt, facts, {
+      deadlineAt: opts.deadlineAt ?? Date.now() + SYNC_CHECK_DEADLINE_MS,
+      maxAttempts: opts.maxAttempts ?? SYNC_MAX_ATTEMPTS,
+      tag: `bulk-generate-images g${chapter.globalNumber}`,
+    });
     const { url, path } = await uploadImage(b64, chapter);
-    const { data: inserted, error } = await supabase.from("ig_pending_review").insert({
+    const row = {
       chapter_global_number: chapter.globalNumber,
       chapter_canto: chapter.skandh,
       chapter_in_canto: chapter.number,
       chapter_title: chapter.title,
       image_url: url, image_path: path,
       caption, hashtags, status: "pending",
-    }).select("id").single();
+    };
+    let { data: inserted, error } = await supabase.from("ig_pending_review").insert({ ...row, visual_check: visualCheck }).select("id").single();
+    if (error && /visual_check/.test(error.message)) {
+      // The visual_check column is missing (migration not applied yet): keep the
+      // image and its paid renders, without the record.
+      console.warn(`[bulk-generate-images] insert with visual_check failed (${error.message}); saving without it`);
+      ({ data: inserted, error } = await supabase.from("ig_pending_review").insert(row).select("id").single());
+    }
     if (error) throw new Error(error.message);
-    return { ok: true, chapter, pendingId: inserted?.id };
+    return { ok: true, chapter, pendingId: inserted?.id, visualCheck };
   } catch (e) { return { ok: false, chapter, error: String(e) }; }
 }
 
@@ -374,6 +460,7 @@ async function runInParallel<T>(items: T[], concurrency: number, fn: (item: T) =
 }
 
 Deno.serve(async (req: Request) => {
+  const startedAt = Date.now();
   if (req.method === "OPTIONS") return new Response("ok", { headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "content-type, authorization, apikey" } });
   const cors = { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" };
   try {
@@ -387,7 +474,7 @@ Deno.serve(async (req: Request) => {
     if (mode === "sample") {
       const missing = await getMissingChapters();
       if (missing.length === 0) return new Response(JSON.stringify({ error: "No missing chapters" }), { status: 404, headers: cors });
-      const r = await generateOne(missing[0]);
+      const r = await generateOne(missing[0], { deadlineAt: startedAt + SYNC_CHECK_DEADLINE_MS, maxAttempts: SYNC_MAX_ATTEMPTS });
       return new Response(JSON.stringify(r), { headers: cors });
     }
     if (mode === "bulk") {
@@ -396,8 +483,10 @@ Deno.serve(async (req: Request) => {
       const missing = (await getMissingChapters()).slice(0, limit);
       if (missing.length === 0) return new Response(JSON.stringify({ error: "No missing chapters" }), { status: 404, headers: cors });
       // Research in bulk is cache-only: no Firecrawl, Claude or cache write per chapter.
+      // One visual check deadline for the whole run (invocation start + 360s).
+      const bulkCheck = { networkResearch: false, deadlineAt: startedAt + BULK_CHECK_DEADLINE_MS, maxAttempts: BULK_MAX_ATTEMPTS };
       // @ts-ignore - EdgeRuntime is provided by Supabase
-      EdgeRuntime.waitUntil(runInParallel(missing, concurrency, (c: ChapterInfo) => generateOne(c, { networkResearch: false })));
+      EdgeRuntime.waitUntil(runInParallel(missing, concurrency, (c: ChapterInfo) => generateOne(c, bulkCheck)));
       return new Response(JSON.stringify({ started: true, queued: missing.length, concurrency, research: "cache-only", message: `Generating ${missing.length} images in parallel (${concurrency} at a time).` }), { headers: cors });
     }
     return new Response(JSON.stringify({ error: "Invalid mode" }), { status: 400, headers: cors });
