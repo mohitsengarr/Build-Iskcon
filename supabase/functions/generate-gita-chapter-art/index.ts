@@ -9,8 +9,21 @@
 //   { "chapter": 4 }        → that chapter
 //   { "missing": true }     → the next chapter with no pending/approved art
 //   { "missing": true, "limit": 5 } → up to N missing chapters in one run
+//
+// DEPLOY ORDER: apply supabase/migrations/20260913190000_scene_visual_research.sql
+// BEFORE deploying this function. Deployed first it is still safe (research is
+// skipped while scene_visual_research cannot be read), it just does no research.
+//
+// RESEARCH NETWORK: a single-chapter run ({ chapter }, or { missing: true } with
+// limit 1) may research on the web. A multi-chapter run ({ missing: true } with
+// limit > 1, or more than one target chapter) reads research from the cache only
+// (allowNetwork: false): chapters render one after another, and up to 25s of
+// network research per chapter would risk the wall-clock limit. researchMode.ts.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getSceneResearch } from "../_shared/sceneResearch.ts";
+import { gitaResearchOptions } from "./researchMode.ts";
+import { assemblePrompt, extractEntities, gitaChapterKey, normalizeForMatch, sanitizeForImageModel } from "../_shared/sceneResearchCore.ts";
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
 const TOGETHER_KEY = Deno.env.get("TOGETHER_API_KEY") || "";
@@ -22,11 +35,9 @@ const CORS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Content-Type": "application/json"
 };
-// Whole words only (plus simple plural/tense endings). Without word boundaries
-// this rewrote "war" INSIDE other words: "warrior" became "blessingrior",
-// "battlefield" "blessingfield", "toward" "toblessingd", "warm" "blessingm" —
-// 14 stored prompts were sent to the image model with those corrupted words.
-const SANITISE_RE = /\b(?:battle|war|fight|weapon|sword|arrow|kill|death|blood|burn|destroy|attack|strike|naked|nude)(?:s|es|ed|ing)?\b/gi;
+// Sanitising uses the shared sanitizeForImageModel: WHOLE words only (plus simple
+// plural/tense endings). Without word boundaries "war" was rewritten INSIDE other
+// words ("warrior" -> "blessingrior", "battlefield" -> "blessingfield").
 const CHAPTERS = [
   {
     n: 1,
@@ -200,25 +211,128 @@ async function tryGenerate(prompt, model, w, h, steps) {
   }
   return (await res.json())?.data?.[0]?.b64_json || null;
 }
-async function buildOne(ch) {
+// The shared core treats a cache READ ERROR exactly like "no row". With the table
+// missing (migration not applied yet) or the database erroring, EVERY chapter
+// would spend 3 Firecrawl searches (a credit pool shared with the CRM crons), up
+// to 2 scrapes and an Opus call, cache nothing, and add up to 25s. So research
+// runs only when this read of the same table and row the core reads succeeds (a
+// row or no row). A read with no answer within CACHE_PROBE_TIMEOUT_MS counts as
+// failed, so a hung database cannot hold up the image either.
+const RESEARCH_CACHE_TABLE = "scene_visual_research";
+const CACHE_PROBE_TIMEOUT_MS = 5_000;
+async function researchCacheReadable(key) {
+  let timer;
+  const timedOut = new Promise((resolve)=>{
+    timer = setTimeout(()=>resolve(false), CACHE_PROBE_TIMEOUT_MS);
+  });
+  const read = (async ()=>{
+    const { error } = await supabase.from(RESEARCH_CACHE_TABLE).select("facts, status, expires_at, research_version, hit_count").eq("research_key", key).maybeSingle();
+    return !error;
+  })().catch(()=>false);
+  try {
+    return await Promise.race([
+      read,
+      timedOut
+    ]);
+  } finally{
+    clearTimeout(timer);
+  }
+}
+// A research fact must be about someone IN the scene. A fact that names people
+// (the shared built-in name list, aliases folded: Partha is Arjuna) is dropped
+// when NONE of them is named in the scene. Krishna and Arjuna always count as
+// present here, so the seeded chariot canon is unaffected; what this drops is,
+// e.g., a web fact naming only Garuda, Surya or Sanjaya when the brief shows none
+// of them. A fact naming nobody is kept. On any error: no facts.
+function factsAboutScenePeople(facts, sceneText) {
+  try {
+    const people = (text)=>extractEntities(text).characters.map((c)=>normalizeForMatch(c));
+    const present = new Set(people(sceneText));
+    const kept = facts.filter((f)=>{
+      const named = people(f);
+      return named.length === 0 || named.some((n)=>present.has(n));
+    });
+    return { kept, absent: facts.length - kept.length };
+  } catch {
+    return { kept: [], absent: facts.length };
+  }
+}
+// Verified canonical visual facts for this chapter (editor canon first, then
+// cached or freshly researched web facts). Additive to the CANONICAL ICONOGRAPHY
+// block in the brief and to the four-horses restatement, which both stay.
+// NEVER throws: on any failure there are no facts and the prompt is unchanged.
+// researchOptions comes from gitaResearchOptions for the whole run: cache only
+// ({ allowNetwork: false }) in a multi-chapter run, network allowed otherwise.
+async function researchChapter(ch, brief, researchOptions) {
+  const key = gitaChapterKey(ch.n);
+  const started = Date.now();
+  try {
+    if (!await researchCacheReadable(key)) {
+      console.warn(`[gita-art] research skipped: could not read ${RESEARCH_CACHE_TABLE} (migration 20260913190000 not applied, or a database error)`);
+      return { key, status: "skipped", facts: [], absent: 0, ms: Date.now() - started };
+    }
+    const sceneText = typeof brief?.imagePrompt === "string" ? brief.imagePrompt : "";
+    // The whole Gita is Krishna speaking to Arjuna on his chariot.
+    const characters = ["Krishna", "Arjuna"];
+    const r = await getSceneResearch(supabase, {
+      key,
+      book: "gita",
+      sceneText,
+      title: ch.en,
+      characters,
+    }, researchOptions);
+    const { kept, absent } = factsAboutScenePeople(Array.isArray(r.facts) ? r.facts : [], [ch.en, sceneText, ...characters].join(". "));
+    return { key: r.key, status: r.status, facts: kept, absent, ms: r.ms };
+  } catch {
+    return { key, status: "failed", facts: [], absent: 0, ms: 0 };
+  }
+}
+// The image prompt. With no research facts this is byte-for-byte the prompt the
+// function built before research (scene, style, rules, cut to the limit,
+// sanitised). With facts, assemblePrompt puts them straight after the scene and
+// trims style (negatives first) rather than the scene or the facts.
+function buildImagePrompt(scene, facts, cfg) {
+  const maxLen = cfg.prompt_max_len || 2000;
+  if (facts.length > 0) {
+    try {
+      const { prompt, report } = assemblePrompt({
+        scene,
+        facts,
+        stylePositives: cfg.style_positives,
+        styleNegatives: cfg.style_negatives,
+        extraRules: cfg.extra_rules
+      }, { maxLen });
+      const dropped = report.droppedParts.length ? ` dropped=${report.droppedParts.join("|")}` : "";
+      return { prompt, note: ` sent=${report.sentChars}/${report.maxLen}${report.truncatedScene ? " scene_cut" : ""}${dropped}` };
+    } catch {
+      // fall through to the pre-research prompt
+    }
+  }
+  let full = scene;
+  if (cfg.style_positives) full += `, ${cfg.style_positives}`;
+  if (cfg.style_negatives) full += `, ${cfg.style_negatives}`;
+  if (cfg.extra_rules) full += `. ${cfg.extra_rules}`;
+  if (full.length > maxLen) full = full.slice(0, maxLen);
+  return { prompt: sanitizeForImageModel(full), note: "" };
+}
+async function buildOne(ch, researchOptions) {
   const { data: cfgRow } = await supabase.from("image_gen_config").select("*").eq("is_active", true).limit(1).maybeSingle();
   const cfg = {
     ...DEFAULTS,
     ...cfgRow || {}
   };
   const brief = await writeSceneAndCaption(ch);
-  let full = brief.imagePrompt;
+  let scene = brief.imagePrompt;
   // Image models are poor at counting, and the renders kept coming back with two
   // or three horses. Restate the count in the image prompt itself whenever the
   // scene involves the chariot — the brief alone did not carry it through.
-  if (/chariot|horse|rein/i.test(full)) {
-    full += ". The chariot is drawn by exactly four white horses — four horses, no more and no fewer — with a banner bearing Hanuman above it";
+  // Kept even when research supplies canon facts (belt and braces).
+  if (/chariot|horse|rein/i.test(scene)) {
+    scene += ". The chariot is drawn by exactly four white horses — four horses, no more and no fewer — with a banner bearing Hanuman above it";
   }
-  if (cfg.style_positives) full += `, ${cfg.style_positives}`;
-  if (cfg.style_negatives) full += `, ${cfg.style_negatives}`;
-  if (cfg.extra_rules) full += `. ${cfg.extra_rules}`;
-  if (full.length > (cfg.prompt_max_len || 2000)) full = full.slice(0, cfg.prompt_max_len || 2000);
-  const sanitized = full.replace(SANITISE_RE, "blessing");
+  const research = await researchChapter(ch, brief, researchOptions);
+  const { prompt: sanitized, note } = buildImagePrompt(scene, research.facts, cfg);
+  console.log(`[gita-art] research key=${research.key} status=${research.status} facts=${research.facts.length}${research.absent ? ` dropped_absent=${research.absent}` : ""} ms=${research.ms} network=${researchOptions?.allowNetwork === false ? "off" : "on"}${note}`);
   let b64 = null;
   // Chapter COVERS are landscape everywhere else (Bhagavatam and Chaitanya both
   // use cover_width/cover_height). Using the generic cfg.width/height made the
@@ -309,11 +423,19 @@ Deno.serve(async (req)=>{
         headers: CORS
       });
     }
+    // One research policy for the whole run: cache only when it renders more
+    // than one chapter (researchMode.ts). Only the { missing: true } branch
+    // reaches here without body.chapter.
+    const researchOptions = gitaResearchOptions({
+      missingPath: !body.chapter && !!body.missing,
+      limit: body.limit,
+      targetCount: targets.length
+    });
     const generated = [];
     const errors = [];
     for (const ch of targets){
       try {
-        generated.push(await buildOne(ch));
+        generated.push(await buildOne(ch, researchOptions));
       } catch (e) {
         errors.push({
           chapter: ch.n,

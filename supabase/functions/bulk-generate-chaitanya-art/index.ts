@@ -1,4 +1,25 @@
-// Supabase Edge Function: bulk-generate-chaitanya-art (v3)
+// Supabase Edge Function: bulk-generate-chaitanya-art (v4)
+//
+// v4 changes (scene research):
+// - Before the prompt is built, getSceneResearch (_shared/sceneResearch.ts)
+//   returns verified, sourced VISUAL facts for the picked scene: canon first,
+//   then web facts. Key chaitanya:g<n>:s<i> for a scene row, or
+//   chaitanya:g<n>:inline when the chapter has no scene row.
+// - Facts sit straight after the scene, INSIDE the existing 1050-char
+//   scene+persona budget (assemblePrompt drops whole facts/personas), so the
+//   compressed style and rules keep exactly the room they had.
+// - Research never throws or blocks: with no facts the prompt is byte-for-byte
+//   the v3 prompt.
+// - cfg.prompt_max_len can LOWER the 2000/1980/1050 limits, never raise them.
+// - Bulk mode reads research from the cache only (allowNetwork: false): a fresh
+//   cached row (e.g. from a pre-warm) plus canon, else canon only; never
+//   Firecrawl, Claude or a cache write. A bulk item is nearly always a cache
+//   miss, so network research could spend up to 250 Firecrawl requests per click
+//   from the credit pool shared with the CRM crons and add up to 25s per chapter
+//   to the waitUntil worker. Chapter and sample modes keep network research.
+//   See researchMode.ts.
+// - The last FLUX retry sends SAFE_FALLBACK, which carries no facts; that
+//   attempt logs how many research facts it dropped (fluxAttempts.ts).
 //
 // v3 changes:
 // - SCENE CYCLING on regen via chaitanya_chapter_scenes.used_scene_indexes
@@ -23,6 +44,10 @@
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getSceneResearch, type SceneResearchResult } from "../_shared/sceneResearch.ts";
+import { assemblePrompt, inlineKey, sceneKey } from "../_shared/sceneResearchCore.ts";
+import { type FluxAttempt, runFluxAttempts } from "./fluxAttempts.ts";
+import { type ResearchFn, researchScene } from "./researchMode.ts";
 
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
@@ -44,6 +69,8 @@ interface ActiveGenCfg {
   // Chapter covers are wide landscape heroes — they must not inherit the portrait
   // scene size, or the model gets a landscape brief in a portrait frame.
   cover_width: number | null; cover_height: number | null;
+  // Only ever LOWERS this function's own prompt limits (see withConfigCap).
+  prompt_max_len?: number | null;
 }
 let __cfgCache: ActiveGenCfg | null | undefined;
 async function getActiveGenConfig(): Promise<ActiveGenCfg | null> {
@@ -54,6 +81,28 @@ async function getActiveGenConfig(): Promise<ActiveGenCfg | null> {
   } catch { __cfgCache = null; }
   return __cfgCache;
 }
+
+// Prompt limits, unchanged from v3: a full prompt over 2000 chars takes the
+// compressed branch, where scene+persona text (plus research facts) gets 1050
+// chars and the whole prompt is re-cut to 1980. Image models have token
+// ceilings, so the config may lower these but never raise them.
+const PROMPT_MAX_LEN = 2000;
+const PROMPT_CUT_LEN = 1980;
+const SCENE_HEAD_MAX_LEN = 1050;
+function withConfigCap(limit: number, cfg: ActiveGenCfg | null): number {
+  const v = Math.floor(Number(cfg?.prompt_max_len));
+  return Number.isFinite(v) && v > 0 ? Math.min(v, limit) : limit;
+}
+
+const RESEARCH_BOOK = "chaitanya";
+
+// ── Scene research: network for chapter/sample, cache only for bulk ──────────
+// researchScene (researchMode.ts) never rejects. Bulk passes networkResearch
+// false and gets getSceneResearch(..., { allowNetwork: false }): a fresh cached
+// row plus canon ("hit"), else canon only ("skipped"), with no Firecrawl, no
+// Claude and no cache write. Chapter and sample modes call getSceneResearch
+// exactly as before (no options).
+const runSceneResearch: ResearchFn = (input, opts) => getSceneResearch(supabase, input, opts);
 
 
 const GENDER_RULES = [
@@ -198,40 +247,99 @@ async function tryGenerate(prompt: string, model: string, w: number, h: number, 
   } catch (e) { console.log(`${model} err: ${e}`); return null; }
 }
 
-async function generateImage(scenePrompt: string, matchedPersonas: Persona[]): Promise<string> {
+// Word-boundary anchors are load-bearing: without \b the bare alternation
+// rewrote substrings inside ordinary words — "warm" → "blessingm",
+// "toward" → "toblessingd", even "firearms" inside ANACHRONISM_RULES —
+// corrupting every prompt sent to FLUX.
+// Kept as-is (it already has \b and covers more words than the shared
+// sanitizer, e.g. fire/defeat); assemblePrompt additionally applies the shared
+// sanitizeForImageModel to the scene/facts/persona head when facts are present.
+const SANITIZE_RE = /\b(battle|war|fight|weapon|sword|arrow|kill|death|blood|fire|burn|destroy|attack|strike|naked|nude|tattered|humiliating|shocking|disorder|defeat)\b/gi;
+function sanitizePrompt(text: string): string {
+  return text.replace(SANITIZE_RE, "blessing");
+}
+
+interface BuiltPrompt { prompt: string; factsInPrompt: number; sceneCut: boolean }
+
+// With no facts this is the v3 assembly, byte for byte. With facts, the head
+// (scene, then "Canonical details: ...", then whole persona descriptions) is
+// built by assemblePrompt inside the same 1050-char budget the v3 head had, and
+// the compressed style + rules tail follows unchanged. (The uncompressed branch
+// never fits in practice: ART_STYLE + GENDER_RULES + ANACHRONISM_RULES alone
+// exceed 2000, so facts always take the compressed layout.)
+function buildPrompt(scenePrompt: string, matchedPersonas: Persona[], facts: string[], cfg: ActiveGenCfg | null): BuiltPrompt {
+  const maxLen = withConfigCap(PROMPT_MAX_LEN, cfg);
   const personaInject = matchedPersonas.length > 0
     ? " Characters: " + matchedPersonas.map(p => p.short_description).join(". ")
     : "";
   let fullPrompt = `${scenePrompt}${personaInject}, wide landscape composition, ${ART_STYLE}. ${GENDER_RULES} ${ANACHRONISM_RULES}`;
-  if (fullPrompt.length > 2000) {
+  let factsInPrompt = 0;
+  let sceneCut = false;
+  if (fullPrompt.length > maxLen || facts.length > 0) {
     const stylePositives = "museum-quality 19th-century Indian devotional OIL PAINTING on canvas, Raja Ravi Varma aesthetic, VISIBLE oil-paint brushstrokes, warm saffron palette, WIDE landscape composition";
     const styleNegatives = "NOT cartoon, NOT anime, NOT CGI, NOT 3D render, NOT digital illustration, NOT Pixar style, NOT Midjourney style, NOT photo-realistic";
-    fullPrompt = `${scenePrompt}${personaInject}`.substring(0, 1050) + `, ${stylePositives}, ${styleNegatives}. ${GENDER_RULES.substring(0, 200)} ${ANACHRONISM_RULES.substring(0, 540)}`;
-    if (fullPrompt.length > 2000) fullPrompt = fullPrompt.substring(0, 1980);
+    const tail = `${stylePositives}, ${styleNegatives}. ${GENDER_RULES.substring(0, 200)} ${ANACHRONISM_RULES.substring(0, 540)}`;
+    const headMax = withConfigCap(SCENE_HEAD_MAX_LEN, cfg);
+    if (facts.length > 0) {
+      // Pre-sanitize with this function's regex so assemblePrompt measures the
+      // final text ("fire" -> "blessing" grows) and the head stays within headMax.
+      const { prompt: head, report } = assemblePrompt(
+        {
+          scene: sanitizePrompt(scenePrompt),
+          facts: facts.map(sanitizePrompt),
+          personas: matchedPersonas.map(p => sanitizePrompt(p.short_description)),
+        },
+        { maxLen: headMax, authorEdited: false },
+      );
+      factsInPrompt = Math.max(0, facts.length - report.droppedParts.filter(d => d.startsWith("facts[")).length);
+      sceneCut = report.truncatedScene;
+      fullPrompt = `${head}${/[.!?,;:]$/.test(head) ? " " : ", "}${tail}`;
+    } else {
+      fullPrompt = `${scenePrompt}${personaInject}`.substring(0, headMax) + `, ${tail}`;
+    }
+    if (fullPrompt.length > maxLen) fullPrompt = fullPrompt.substring(0, withConfigCap(PROMPT_CUT_LEN, cfg));
   }
-  // Word-boundary anchors are load-bearing: without \b the bare alternation
-  // rewrote substrings inside ordinary words — "warm" → "blessingm",
-  // "toward" → "toblessingd", even "firearms" inside ANACHRONISM_RULES —
-  // corrupting every prompt sent to FLUX.
-  const sanitized = fullPrompt.replace(/\b(battle|war|fight|weapon|sword|arrow|kill|death|blood|fire|burn|destroy|attack|strike|naked|nude|tattered|humiliating|shocking|disorder|defeat)\b/gi, "blessing");
-  const seed = Math.floor(Math.random() * 1_000_000);
+  return { prompt: sanitizePrompt(fullPrompt), factsInPrompt, sceneCut };
+}
+
+async function generateImage(scenePrompt: string, matchedPersonas: Persona[], research: SceneResearchResult | null = null): Promise<string> {
   // Model/size come from the approved configuration when one exists.
   const __cfg = await getActiveGenConfig();
+  const rawFacts: unknown = research?.facts;
+  const facts = Array.isArray(rawFacts)
+    ? rawFacts.filter((f): f is string => typeof f === "string" && f.trim().length > 0)
+    : [];
+  let built: BuiltPrompt;
+  try {
+    built = buildPrompt(scenePrompt, matchedPersonas, facts, __cfg);
+  } catch (e) {
+    // Research must never block generation: fall back to the no-facts prompt.
+    console.warn(`[bulk-generate-chaitanya-art] fact assembly failed, using prompt without facts: ${e}`);
+    built = buildPrompt(scenePrompt, matchedPersonas, [], __cfg);
+  }
+  if (research) {
+    console.log(`[bulk-generate-chaitanya-art] research ${research.key} status=${research.status} facts=${facts.length} inPrompt=${built.factsInPrompt} ${research.ms}ms${built.sceneCut ? " sceneCut" : ""}`);
+  }
+  const sanitized = built.prompt;
+  const seed = Math.floor(Math.random() * 1_000_000);
   const __m1 = __cfg?.model  || "black-forest-labs/FLUX.2-pro";
   const __w1 = __cfg?.cover_width  || __cfg?.width  || 1344;
   const __h1 = __cfg?.cover_height || __cfg?.height || 1088;
   const __m2 = __cfg?.fallback_model  || "black-forest-labs/FLUX.1.1-pro";
   const __w2 = __cfg?.cover_width ? 1024 : (__cfg?.fallback_width || 1024);
   const __h2 = __cfg?.cover_height ? 832 : (__cfg?.fallback_height || 768);
-  const attempts = [
+  const attempts: FluxAttempt[] = [
     { model: __m1, prompt: sanitized, w: __w1, h: __h1, seed },
     { model: __m2, prompt: sanitized, w: __w2, h: __h2, seed },
-    { model: __m2, prompt: SAFE_FALLBACK, w: __w2, h: __h2 },
+    { model: __m2, prompt: SAFE_FALLBACK, w: __w2, h: __h2, safeFallback: true },
   ];
-  for (const a of attempts) {
-    const b64 = await tryGenerate(a.prompt, a.model, a.w, a.h, a.seed);
-    if (b64) return b64;
-  }
+  // Same order and first-image-wins as before; the SAFE_FALLBACK attempt also
+  // logs how many research facts it drops.
+  const b64 = await runFluxAttempts(attempts, a => tryGenerate(a.prompt, a.model, a.w, a.h, a.seed), {
+    tag: "bulk-generate-chaitanya-art",
+    factsInPrompt: built.factsInPrompt,
+  });
+  if (b64) return b64;
   throw new Error("All FLUX attempts failed");
 }
 
@@ -295,7 +403,8 @@ async function generatePromptInline(chapter: ChaitanyaChapter): Promise<{ prompt
   };
 }
 
-async function generateOne(chapter: ChaitanyaChapter): Promise<{ ok: boolean; chapter: ChaitanyaChapter; pendingId?: number; personasUsed?: string[]; error?: string }> {
+// opts.networkResearch defaults to true (chapter/sample modes); bulk passes false.
+async function generateOne(chapter: ChaitanyaChapter, opts: { networkResearch?: boolean } = {}): Promise<{ ok: boolean; chapter: ChaitanyaChapter; pendingId?: number; personasUsed?: string[]; error?: string }> {
   try {
     const sceneRow = await loadChapterScenes(chapter.global_number);
     let imagePrompt: string;
@@ -321,10 +430,33 @@ async function generateOne(chapter: ChaitanyaChapter): Promise<{ ok: boolean; ch
       descriptionHi = inline.description;
     }
 
-    const allPersonas = await loadPersonas();
-    const matched = matchPersonas(sceneCharacters.length > 0 ? sceneCharacters : ["Sri Caitanya", "Nityananda", "Advaita"], allPersonas);
+    // The names personas are matched on (scene characters, else the Gaura-lila
+    // default trio). Research gets the same list, so facts are selected for the
+    // same people the prompt injects.
+    const personaNames = sceneCharacters.length > 0 ? sceneCharacters : ["Sri Caitanya", "Nityananda", "Advaita"];
 
-    const b64 = await generateImage(imagePrompt, matched);
+    // Scene research runs alongside the persona load, before the prompt is
+    // built. researchScene never rejects, and getSceneResearch is hard-capped at
+    // 25s; on any failure it returns canon-only or no facts. In bulk mode it
+    // reads the cache only (see researchMode.ts). Note a reject moves to the NEXT
+    // scene (new key), so the cache pays off for regenerates of the same scene,
+    // not for rejects.
+    const researchKey = sceneIndex !== null
+      ? sceneKey(RESEARCH_BOOK, chapter.global_number, sceneIndex)
+      : inlineKey(RESEARCH_BOOK, chapter.global_number);
+    const [allPersonas, research] = await Promise.all([
+      loadPersonas(),
+      researchScene(runSceneResearch, {
+        key: researchKey,
+        book: RESEARCH_BOOK,
+        sceneText: imagePrompt,
+        title: sceneTitle,
+        characters: personaNames,
+      }, opts.networkResearch !== false),
+    ]);
+    const matched = matchPersonas(personaNames, allPersonas);
+
+    const b64 = await generateImage(imagePrompt, matched, research);
     const { url, path } = await uploadImage(b64, chapter);
 
     const { data: inserted, error } = await supabase
@@ -424,9 +556,11 @@ Deno.serve(async (req: Request) => {
       const concurrency = Math.min(5, Math.max(1, Number(body.concurrency) || 4));
       const missing = (await getMissingChapters()).slice(0, limit);
       if (missing.length === 0) return new Response(JSON.stringify({ error: "No missing chapters" }), { status: 404, headers: cors });
+      // Bulk research reads the cache only: no Firecrawl or Claude calls and no
+      // cache writes from this background worker (see researchMode.ts).
       // @ts-ignore - EdgeRuntime is provided by Supabase
-      EdgeRuntime.waitUntil(runInParallel(missing, concurrency, generateOne));
-      return new Response(JSON.stringify({ started: true, queued: missing.length, concurrency, message: `Generating ${missing.length} Chaitanya art images in parallel (${concurrency} at a time).` }), { headers: cors });
+      EdgeRuntime.waitUntil(runInParallel(missing, concurrency, (c: ChaitanyaChapter) => generateOne(c, { networkResearch: false })));
+      return new Response(JSON.stringify({ started: true, queued: missing.length, concurrency, research: "cache-only", message: `Generating ${missing.length} Chaitanya art images in parallel (${concurrency} at a time).` }), { headers: cors });
     }
 
     return new Response(JSON.stringify({ error: "Invalid mode" }), { status: 400, headers: cors });

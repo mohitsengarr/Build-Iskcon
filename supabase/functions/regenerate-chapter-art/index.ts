@@ -9,10 +9,27 @@
 // PORTRAIT scene size, and regenerating at that size would silently change the
 // aspect of a cover relative to how bulk generation makes it.
 //
-// POST { book: "bhagavatam"|"chaitanya"|"gita", id: 45, prompt: "...", apply_style?: bool }
+// Scene research: before rendering, _shared/sceneResearch.ts supplies verified
+// canonical visual details for the row's scene (e.g. Arjuna's chariot is drawn
+// by exactly four white horses). They go straight after the reviewer's words,
+// which are never cut to make room for them. Research never blocks a
+// regenerate: if it fails, finds nothing, or no fact fits, the prompt is
+// assembled exactly as it was before research existed.
+//
+// POST { book: "bhagavatam"|"chaitanya"|"gita", id: 45, prompt: "...", apply_style?: bool, apply_facts?: bool }
+//   apply_facts: false skips research for this request.
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getSceneResearch, type SceneResearchResult } from "../_shared/sceneResearch.ts";
+import {
+  assemblePrompt,
+  gitaChapterKey,
+  inlineKey,
+  normalizeForMatch,
+  sanitizeForImageModel,
+  sceneKey,
+} from "../_shared/sceneResearchCore.ts";
 
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
 const TOGETHER_KEY = Deno.env.get("TOGETHER_API_KEY") || "";
@@ -25,16 +42,11 @@ const CORS = {
   "Content-Type": "application/json",
 };
 
-// Whole words only (plus simple plural/tense endings). Without word boundaries
-// this rewrote "war" INSIDE other words: "warrior" became "blessingrior",
-// "battlefield" "blessingfield", "toward" "toblessingd", "warm" "blessingm" —
-// 14 stored prompts were sent to the image model with those corrupted words.
-const SANITISE_RE = /\b(?:battle|war|fight|weapon|sword|arrow|kill|death|blood|burn|destroy|attack|strike|naked|nude)(?:s|es|ed|ing)?\b/gi;
-
-const BOOKS: Record<string, { table: string; bucket: string; prefix: string }> = {
-  bhagavatam: { table: "bhagavatam_chapter_art_review", bucket: "instagram-images",    prefix: "art" },
-  chaitanya:  { table: "chaitanya_chapter_art_review",  bucket: "chaitanya-art-images", prefix: "art-cc" },
-  gita:       { table: "gita_chapter_art_review",       bucket: "instagram-images",    prefix: "gita" },
+// `scenes` is where the pre-extracted scene behind a cover lives (Gita has none).
+const BOOKS: Record<string, { table: string; bucket: string; prefix: string; scenes: string | null }> = {
+  bhagavatam: { table: "bhagavatam_chapter_art_review", bucket: "instagram-images",    prefix: "art",    scenes: "bhagavatam_chapter_scenes" },
+  chaitanya:  { table: "chaitanya_chapter_art_review",  bucket: "chaitanya-art-images", prefix: "art-cc", scenes: "chaitanya_chapter_scenes" },
+  gita:       { table: "gita_chapter_art_review",       bucket: "instagram-images",    prefix: "gita",   scenes: null },
 };
 
 const DEFAULTS = {
@@ -59,14 +71,186 @@ async function tryGenerate(prompt: string, model: string, w: number, h: number, 
   return (await res.json())?.data?.[0]?.b64_json || null;
 }
 
+// ── Prompt assembly ──────────────────────────────────────────────────────────
+
+type BuiltPrompt = {
+  sent: string;
+  promptTruncated: boolean;
+  styleApplied: boolean;
+  styleTruncated: boolean;
+  factsIncluded: number;
+};
+
+// The assembly this function has always used. A regenerate that gets no
+// research fact sends exactly this. The edited prompt is the author's intent
+// and the style block is boilerplate, so the prompt gets the budget first and
+// style fills only the room that is left.
+function legacyPrompt(prompt: string, cfg: typeof DEFAULTS, applyStyle: boolean, maxLen: number): BuiltPrompt {
+  let base = prompt.trim();
+  let style = "";
+  if (applyStyle) {
+    if (cfg.style_positives) style += `, ${cfg.style_positives}`;
+    if (cfg.style_negatives) style += `, ${cfg.style_negatives}`;
+    if (cfg.extra_rules) style += `. ${cfg.extra_rules}`;
+  }
+  let promptTruncated = false;
+  if (base.length > maxLen) {
+    // Cut on a word boundary so the tail is not left mid-word.
+    const cut = base.slice(0, maxLen);
+    const sp = cut.lastIndexOf(" ");
+    base = sp > maxLen * 0.8 ? cut.slice(0, sp) : cut;
+    promptTruncated = true;
+  }
+  const room = maxLen - base.length;
+  const styleApplied = style.length > 0 && room > 0;
+  const styleTruncated = styleApplied && style.length > room;
+  const full = styleApplied ? base + style.slice(0, room) : base;
+  // Whole words only: "warrior", "warm" and "toward" pass through untouched.
+  return { sent: sanitizeForImageModel(full), promptTruncated, styleApplied, styleTruncated, factsIncluded: 0 };
+}
+
+// Facts already written into the draft (a stored prompt generated with them)
+// are not sent a second time, and duplicates collapse to one.
+function factsNotInDraft(facts: string[], draft: string): string[] {
+  const hay = ` ${normalizeForMatch(sanitizeForImageModel(draft))} `;
+  const seen = new Set<string>();
+  return facts.filter((f) => {
+    const k = normalizeForMatch(sanitizeForImageModel(f));
+    if (!k || seen.has(k) || hay.includes(` ${k} `)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// Gita drafts are pre-filled from the stored prompt, which already carries the
+// house style, and some reviewer drafts start with it. Style is re-applied at
+// its own priority, so whole, unedited copies are taken out of the draft rather
+// than sent twice as uncuttable author text that leaves the facts no room.
+function withoutStyleCopies(draft: string, styles: unknown[]): string {
+  let out = draft.replace(/\s+/g, " ");
+  for (const raw of styles) {
+    if (typeof raw !== "string") continue;
+    const s = raw.replace(/\s+/g, " ").trim().replace(/[\s,;:.]+$/, "");
+    if (s.length < 20) continue;
+    for (const variant of new Set([s, sanitizeForImageModel(s)])) {
+      out = out.replace(new RegExp(`[\\s,;:.]*(?<=^|[\\s,;:.])${escapeRegExp(variant)}(?=$|[\\s,;:.])`, "g"), "");
+    }
+  }
+  out = out.replace(/^[\s,;:.]+/, "").trim();
+  return out.length >= 3 ? out : draft;
+}
+
+// Reviewer's words first, never cut unless they alone exceed maxLen; facts take
+// the room after them, then rules and style. Null when no fact fits, so the
+// caller sends the legacy prompt unchanged.
+function promptWithFacts(
+  prompt: string,
+  facts: string[],
+  cfg: typeof DEFAULTS,
+  applyStyle: boolean,
+  maxLen: number,
+): BuiltPrompt | null {
+  const draft = prompt.trim();
+  const fresh = factsNotInDraft(facts, draft);
+  if (fresh.length === 0) return null;
+  const style = applyStyle
+    ? { extraRules: cfg.extra_rules, stylePositives: cfg.style_positives, styleNegatives: cfg.style_negatives }
+    : {};
+  const scene = applyStyle ? withoutStyleCopies(draft, [cfg.style_positives, cfg.style_negatives, cfg.extra_rules]) : draft;
+  const { prompt: sent, report } = assemblePrompt({ scene, facts: fresh, ...style }, { maxLen, authorEdited: true });
+  const factsIncluded = fresh.length - report.droppedParts.filter((d) => d.startsWith("facts[")).length;
+  if (factsIncluded <= 0) return null;
+  const labels = Object.entries(style).filter(([, v]) => typeof v === "string" && v.trim()).map(([k]) => k);
+  const lost = labels.filter((l) => report.droppedParts.includes(l)).length;
+  const partial = labels.some((l) => report.droppedParts.includes(`${l} (partial)`));
+  const styleApplied = labels.length > lost;
+  return {
+    sent,
+    promptTruncated: report.truncatedScene,
+    styleApplied,
+    styleTruncated: styleApplied && (lost > 0 || partial),
+    factsIncluded,
+  };
+}
+
+// ── Scene research ───────────────────────────────────────────────────────────
+
+type ResearchTarget = { key: string; title: string | null; characters: string[] | null };
+
+function wholeNumber(v: unknown, min: number): number | null {
+  const n = typeof v === "number" ? v : typeof v === "string" && /^\d+$/.test(v.trim()) ? Number(v) : NaN;
+  return Number.isInteger(n) && n >= min ? n : null;
+}
+
+function nonEmpty(v: unknown): string | null {
+  return typeof v === "string" && v.trim() ? v.trim() : null;
+}
+
+async function loadScene(
+  table: string | null,
+  globalNumber: number,
+  index: number,
+): Promise<{ title: string | null; characters: string[] | null }> {
+  const none = { title: null, characters: null };
+  if (!table) return none;
+  try {
+    const { data, error } = await supabase.from(table).select("scenes").eq("chapter_global_number", globalNumber).maybeSingle();
+    const scene = !error && Array.isArray(data?.scenes) ? data.scenes[index] : null;
+    if (!scene || typeof scene !== "object") return none;
+    const characters = Array.isArray(scene.characters)
+      ? scene.characters.filter((c: unknown) => typeof c === "string" && c.trim())
+      : [];
+    return { title: nonEmpty(scene.title), characters: characters.length > 0 ? characters : null };
+  } catch {
+    return none;
+  }
+}
+
+// Keyed from the row's own columns, the same keys the generators use:
+// '<book>:g<n>:s<i>' for a cover made from a pre-extracted scene,
+// '<book>:g<n>:inline' when it had none, 'gita:ch<n>' for the Gita.
+async function researchTarget(book: string, row: Record<string, unknown>): Promise<ResearchTarget | null> {
+  if (book === "gita") {
+    const n = wholeNumber(row.chapter_number, 1);
+    // Every Gita chapter is Krishna's dialogue with Arjuna.
+    return n === null ? null : { key: gitaChapterKey(n), title: nonEmpty(row.chapter_title), characters: ["Krishna", "Arjuna"] };
+  }
+  const g = wholeNumber(row.chapter_global_number, 1);
+  if (g === null) return null;
+  const idx = wholeNumber(row.scene_index, 0);
+  if (idx === null) return { key: inlineKey(book, g), title: nonEmpty(row.scene_title), characters: null };
+  // The scene's characters let trigger matching see what the cover was made from.
+  const scene = await loadScene(BOOKS[book].scenes, g, idx);
+  return { key: sceneKey(book, g, idx), title: nonEmpty(row.scene_title) ?? scene.title, characters: scene.characters };
+}
+
+// Never throws: any failure means no research, and the regenerate goes ahead.
+async function researchRow(book: string, row: Record<string, unknown>, draft: string): Promise<SceneResearchResult | null> {
+  try {
+    const target = await researchTarget(book, row);
+    if (!target) return null;
+    return await getSceneResearch(supabase, {
+      key: target.key,
+      book,
+      sceneText: draft,
+      title: target.title,
+      characters: target.characters,
+    });
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return new Response(JSON.stringify({ error: "POST only" }), { status: 405, headers: CORS });
   if (!TOGETHER_KEY) return new Response(JSON.stringify({ error: "TOGETHER_API_KEY is not configured" }), { status: 500, headers: CORS });
 
   try {
-    const { book, id, prompt, apply_style } = await req.json() as
-      { book: string; id: number; prompt: string; apply_style?: boolean };
+    const { book, id, prompt, apply_style, apply_facts } = await req.json() as
+      { book: string; id: number; prompt: string; apply_style?: boolean; apply_facts?: boolean };
     const b = BOOKS[book];
     if (!b) return new Response(JSON.stringify({ error: `book must be one of ${Object.keys(BOOKS).join(", ")}` }), { status: 400, headers: CORS });
     if (!id || !prompt || prompt.trim().length < 3) {
@@ -79,32 +263,25 @@ Deno.serve(async (req: Request) => {
     const { data: cfgRow } = await supabase.from("image_gen_config").select("*").eq("is_active", true).limit(1).maybeSingle();
     const cfg = { ...DEFAULTS, ...(cfgRow || {}) } as typeof DEFAULTS;
 
-    // The edited prompt is the author's intent; the style block is boilerplate.
-    // Appending style and THEN slicing spent the budget on boilerplate and cut the
-    // author's own words off the end — a 2504-char prompt lost ~500 characters
-    // silently, and the style never survived either. Spend the budget on the
-    // prompt first, then add only as much style as still fits.
     const maxLen = cfg.prompt_max_len || 2000;
-    let base = prompt.trim();
-    let style = "";
-    if (apply_style !== false) {
-      if (cfg.style_positives) style += `, ${cfg.style_positives}`;
-      if (cfg.style_negatives) style += `, ${cfg.style_negatives}`;
-      if (cfg.extra_rules) style += `. ${cfg.extra_rules}`;
+    const applyStyle = apply_style !== false;
+
+    // Verified canonical details for this row's scene. With no fact (research
+    // failed, found nothing, or none fits) the prompt is exactly the legacy one.
+    const research = apply_facts === false ? null : await researchRow(book, row, prompt.trim());
+    let withFacts: BuiltPrompt | null = null;
+    if (research && research.facts.length > 0) {
+      try {
+        withFacts = promptWithFacts(prompt, research.facts, cfg, applyStyle, maxLen);
+      } catch {
+        withFacts = null;
+      }
     }
-    let promptTruncated = false;
-    if (base.length > maxLen) {
-      // Cut on a word boundary so the tail is not left mid-word.
-      const cut = base.slice(0, maxLen);
-      const sp = cut.lastIndexOf(" ");
-      base = sp > maxLen * 0.8 ? cut.slice(0, sp) : cut;
-      promptTruncated = true;
-    }
-    const room = maxLen - base.length;
-    const styleApplied = style.length > 0 && room > 0;
-    const styleTruncated = styleApplied && style.length > room;
-    const full = styleApplied ? base + style.slice(0, room) : base;
-    const sanitized = full.replace(SANITISE_RE, "blessing");
+    const built = withFacts ?? legacyPrompt(prompt, cfg, applyStyle, maxLen);
+    console.log(research
+      ? `[regen-chapter] research key=${research.key} status=${research.status} facts=${research.facts.length} used=${built.factsIncluded} ms=${research.ms}`
+      : `[regen-chapter] research ${apply_facts === false ? "off" : "skipped (no key for row)"} ${book} #${id}`);
+    const sanitized = built.sent;
 
     // Covers are wide landscape — match how bulk generation makes them.
     const w1 = cfg.cover_width  || cfg.width  || 1344;
@@ -143,7 +320,8 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify({
       ok: true, book, id, image_url: url, model_used: cfg.model, size: `${w1}x${h1}`,
       prompt_chars: prompt.trim().length, sent_chars: sanitized.length, max_len: maxLen,
-      prompt_truncated: promptTruncated, style_applied: styleApplied, style_truncated: styleTruncated,
+      prompt_truncated: built.promptTruncated, style_applied: built.styleApplied, style_truncated: built.styleTruncated,
+      research_key: research?.key ?? null, research_status: research?.status ?? "skipped", facts_included: built.factsIncluded,
     }), { headers: CORS });
   } catch (err) {
     return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: CORS });

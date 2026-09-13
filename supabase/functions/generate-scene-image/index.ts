@@ -6,9 +6,15 @@
 // approved in the Image Playground (public.image_gen_config, is_active = true).
 // The image is stored in the instagram-images bucket and the row is updated with
 // the public URL, so the Gallery flips it from "Not generated" to "Image generated".
+//
+// DEPLOY ORDER: apply supabase/migrations/20260913190000_scene_visual_research.sql
+// BEFORE deploying this function. Deployed first it is still safe (research is
+// skipped while scene_visual_research cannot be read), it just does no research.
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getSceneResearch, sha16 } from "../_shared/sceneResearch.ts";
+import { assemblePrompt, extractEntities, normalizeForMatch, readerKey, sanitizeForImageModel } from "../_shared/sceneResearchCore.ts";
 
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
@@ -23,11 +29,9 @@ const CORS = {
   "Content-Type": "application/json",
 };
 
-// Whole words only (plus simple plural/tense endings). Without word boundaries
-// this rewrote "war" INSIDE other words: "warrior" became "blessingrior",
-// "battlefield" "blessingfield", "toward" "toblessingd", "warm" "blessingm" —
-// 14 stored prompts were sent to the image model with those corrupted words.
-const SANITISE_RE = /\b(?:battle|war|fight|weapon|sword|arrow|kill|death|blood|burn|destroy|attack|strike|naked|nude)(?:s|es|ed|ing)?\b/gi;
+// Sanitising uses the shared sanitizeForImageModel: WHOLE words only (plus simple
+// plural/tense endings). Without word boundaries "war" was rewritten INSIDE other
+// words ("warrior" -> "blessingrior", "warm" -> "blessingm").
 
 // Defaults used only when no configuration has been approved yet.
 const DEFAULTS = {
@@ -55,6 +59,121 @@ async function scenePromptFromText(passage: string, book: string): Promise<strin
     const t = j?.content?.[0]?.text;
     return (typeof t === "string" && t.trim()) ? t.trim() : passage.slice(0, 400);
   } catch { return passage.slice(0, 400); }
+}
+
+interface ResearchOutcome { key: string; status: string; facts: string[]; absent: number; ms: number }
+
+// The shared core treats a cache READ ERROR exactly like "no row". With the table
+// missing (migration not applied yet) or the database erroring, EVERY call would
+// spend 3 Firecrawl searches (a credit pool shared with the CRM crons), up to 2
+// scrapes and an Opus call, cache nothing, and add up to 25s. So research runs
+// only when this read of the same table and row the core reads succeeds (a row
+// or no row).
+// A read with no answer within CACHE_PROBE_TIMEOUT_MS counts as failed, so a
+// hung database cannot hold up the image either.
+const RESEARCH_CACHE_TABLE = "scene_visual_research";
+const CACHE_PROBE_TIMEOUT_MS = 5_000;
+
+async function researchCacheReadable(key: string): Promise<boolean> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timedOut = new Promise<boolean>((resolve) => {
+    timer = setTimeout(() => resolve(false), CACHE_PROBE_TIMEOUT_MS);
+  });
+  const read = (async () => {
+    const { error } = await supabase
+      .from(RESEARCH_CACHE_TABLE)
+      .select("facts, status, expires_at, research_version, hit_count")
+      .eq("research_key", key)
+      .maybeSingle();
+    return !error;
+  })().catch(() => false);
+  try {
+    return await Promise.race([read, timedOut]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// A research fact must be about someone IN the scene. A fact that names people
+// (the shared built-in name list, aliases folded: Partha is Arjuna) is dropped
+// when NONE of them is named in the scene. This keeps the Arjuna's-chariot canon
+// off Karna's or Bhishma's chariot at Kurukshetra, which its seeded
+// "kurukshetra+chariot" trigger matches, and a web fact about Garuda off a scene
+// without Garuda. A fact naming nobody ("four white horses") is kept, and so is
+// one naming at least one person present, so "a banner bearing Hanuman flies
+// above Arjuna's chariot" stays in an Arjuna scene. On any error: no facts.
+function factsAboutScenePeople(facts: string[], sceneText: string): { kept: string[]; absent: number } {
+  try {
+    const people = (text: string) => extractEntities(text).characters.map((c) => normalizeForMatch(c));
+    const present = new Set(people(sceneText));
+    const kept = facts.filter((f) => {
+      const named = people(f);
+      return named.length === 0 || named.some((n) => present.has(n));
+    });
+    return { kept, absent: facts.length - kept.length };
+  } catch {
+    return { kept: [], absent: facts.length };
+  }
+}
+
+// Verified canonical visual facts for this passage (cache first, then the web).
+// NEVER throws: any failure, including computing the key, yields no facts, and
+// the prompt is then exactly the one this function sent before research existed.
+async function researchReaderScene(scene: { book?: string | null; selected_text?: string | null }, visual: string): Promise<ResearchOutcome> {
+  let key = "";
+  const started = Date.now();
+  try {
+    const passage = String(scene.selected_text ?? "");
+    key = readerKey(String(scene.book ?? ""), await sha16(passage));
+    // When Claude could not write the English visual prompt, `visual` is the raw
+    // (Hindi) passage. It names no English entity, so research could only cache
+    // an "empty" row under this passage's key for 30 days. Canon triggers are
+    // English words too, so skipping loses nothing.
+    if (visual === passage.slice(0, 400)) return { key, status: "not_run", facts: [], absent: 0, ms: 0 };
+    if (!(await researchCacheReadable(key))) {
+      console.warn(`[scene] research skipped: could not read ${RESEARCH_CACHE_TABLE} (migration 20260913190000 not applied, or a database error)`);
+      return { key, status: "skipped", facts: [], absent: 0, ms: Date.now() - started };
+    }
+    const r = await getSceneResearch(supabase, {
+      key,
+      book: String(scene.book ?? ""),
+      sceneText: visual,
+      characters: extractEntities(visual).characters,
+    });
+    const { kept, absent } = factsAboutScenePeople(Array.isArray(r.facts) ? r.facts : [], visual);
+    return { key: r.key, status: r.status, facts: kept, absent, ms: r.ms };
+  } catch {
+    return { key, status: "failed", facts: [], absent: 0, ms: 0 };
+  }
+}
+
+// The image prompt. With no research facts this is byte-for-byte the prompt the
+// function built before research (visual, style, rules, cut to the limit,
+// sanitised). With facts, assemblePrompt puts them straight after the scene and
+// trims style (negatives first) rather than the scene or the facts.
+function buildImagePrompt(visual: string, facts: string[], cfg: typeof DEFAULTS): { prompt: string; note: string } {
+  const maxLen = cfg.prompt_max_len || 2000;
+  if (facts.length > 0) {
+    try {
+      const { prompt, report } = assemblePrompt({
+        scene: visual,
+        facts,
+        stylePositives: cfg.style_positives,
+        styleNegatives: cfg.style_negatives,
+        extraRules: cfg.extra_rules,
+      }, { maxLen });
+      const dropped = report.droppedParts.length ? ` dropped=${report.droppedParts.join("|")}` : "";
+      return { prompt, note: ` sent=${report.sentChars}/${report.maxLen}${report.truncatedScene ? " scene_cut" : ""}${dropped}` };
+    } catch {
+      // fall through to the pre-research prompt
+    }
+  }
+  let full = visual;
+  if (cfg.style_positives) full += `, ${cfg.style_positives}`;
+  if (cfg.style_negatives) full += `, ${cfg.style_negatives}`;
+  if (cfg.extra_rules) full += `. ${cfg.extra_rules}`;
+  if (full.length > maxLen) full = full.slice(0, maxLen);
+  return { prompt: sanitizeForImageModel(full), note: "" };
 }
 
 async function tryGenerate(prompt: string, model: string, w: number, h: number, steps: number | null) {
@@ -90,12 +209,9 @@ Deno.serve(async (req: Request) => {
     const cfg = { ...DEFAULTS, ...(cfgRow || {}) } as typeof DEFAULTS;
 
     const visual = await scenePromptFromText(scene.selected_text, scene.book);
-    let full = visual;
-    if (cfg.style_positives) full += `, ${cfg.style_positives}`;
-    if (cfg.style_negatives) full += `, ${cfg.style_negatives}`;
-    if (cfg.extra_rules) full += `. ${cfg.extra_rules}`;
-    if (full.length > (cfg.prompt_max_len || 2000)) full = full.slice(0, cfg.prompt_max_len || 2000);
-    const sanitized = full.replace(SANITISE_RE, "blessing");
+    const research = await researchReaderScene(scene, visual);
+    const { prompt: sanitized, note } = buildImagePrompt(visual, research.facts, cfg);
+    console.log(`[scene] research key=${research.key} status=${research.status} facts=${research.facts.length}${research.absent ? ` dropped_absent=${research.absent}` : ""} ms=${research.ms}${note}`);
 
     const attempts = [
       { m: cfg.model, w: cfg.width, h: cfg.height },

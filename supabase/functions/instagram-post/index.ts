@@ -1,5 +1,16 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getSceneResearch, type SceneResearchInput } from "../_shared/sceneResearch.ts";
+import { type FluxAttempt, runFluxAttempts } from "./fluxAttempts.ts";
+import { inlineImagePrompt } from "./inlinePrompt.ts";
+import {
+  assemblePrompt,
+  DEFAULT_FACTS_MAX,
+  inlineKey,
+  type PromptParts,
+  sanitizeForImageModel,
+  sceneKey,
+} from "../_shared/sceneResearchCore.ts";
 
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
@@ -21,6 +32,8 @@ interface ActiveGenCfg {
   // Instagram-specific size. Chapter art stays portrait for the books, so this
   // is separate rather than overloading width/height.
   ig_width: number | null; ig_height: number | null;
+  // Read only to LOWER the existing 2000-char limit, never to raise it.
+  prompt_max_len?: number | null;
 }
 let __cfgCache: ActiveGenCfg | null | undefined;
 async function getActiveGenConfig(): Promise<ActiveGenCfg | null> {
@@ -289,7 +302,7 @@ async function generateScenePromptInline(
   matchedPersonas: Persona[],
   varietySeed: number,
   prevRejectedPrompts: string[],
-): Promise<{ prompt: string; caption: string; hashtags: string }> {
+): Promise<{ imagePrompt?: unknown; prompt?: unknown; caption: string; hashtags: string }> {
   const chapterLabel = `Canto ${chapter.skandh}, Chapter ${chapter.number}`;
   const personaBlock = matchedPersonas.length > 0
     ? `\n\nCHARACTER DESCRIPTIONS (use these EXACT visual details):\n${matchedPersonas.map(p => `• ${p.short_description}`).join("\n\n")}\n`
@@ -331,25 +344,111 @@ async function tryGenerate(prompt: string, model: string, w: number, h: number, 
   } catch (e) { console.log(`${model} err: ${e}`); return null; }
 }
 
-async function generateImage(prompt: string, matchedPersonas: Persona[], varietySeed: number): Promise<string> {
-  const personaInject = matchedPersonas.length > 0
-    ? " Characters: " + matchedPersonas.map(p => p.short_description).join(". ")
-    : "";
-  // Build order: scene prompt → persona injection → ART_STYLE → gender → anachronism.
-  let fullPrompt = `${prompt}${personaInject}, ${ART_STYLE}. ${GENDER_RULES} ${ANACHRONISM_RULES}`;
-  if (fullPrompt.length > 2000) {
-    const styleNegatives = "NOT cartoon, NOT anime, NOT CGI, NOT 3D render, NOT digital illustration, NOT Pixar style, NOT Midjourney style, NOT plastic shiny skin, NOT photo-realistic";
-    const stylePositives = "museum-quality 19th-century Indian devotional OIL PAINTING on canvas, Raja Ravi Varma 1880-1900 aesthetic, VISIBLE oil-paint brushstrokes, warm saffron palette, soft golden-hour lighting";
-    const ruleBlock = `${GENDER_RULES.substring(0, 200)} ${ANACHRONISM_RULES.substring(0, 540)}`;
-    fullPrompt = `${prompt}${personaInject}`.substring(0, 1100) + `, ${stylePositives}, ${styleNegatives}. ${ruleBlock}`;
-    if (fullPrompt.length > 2000) fullPrompt = fullPrompt.substring(0, 1980);
+// The compressed layout every prompt uses today: ART_STYLE + GENDER_RULES +
+// ANACHRONISM_RULES alone are over 2000 chars, so the full layout never fits.
+const COMPRESSED_STYLE_NEGATIVES = "NOT cartoon, NOT anime, NOT CGI, NOT 3D render, NOT digital illustration, NOT Pixar style, NOT Midjourney style, NOT plastic shiny skin, NOT photo-realistic";
+const COMPRESSED_STYLE_POSITIVES = "museum-quality 19th-century Indian devotional OIL PAINTING on canvas, Raja Ravi Varma 1880-1900 aesthetic, VISIBLE oil-paint brushstrokes, warm saffron palette, soft golden-hour lighting";
+const COMPRESSED_RULES = [GENDER_RULES.substring(0, 200), ANACHRONISM_RULES.substring(0, 540)];
+const PERSONA_INJECT_PREFIX = " Characters: ";
+
+// The same rule text split into numbered items ("2) ...", "3) ..."; each
+// header stays with its rule 1), so a lack of room drops whole rules from the
+// end instead of the whole block.
+const COMPRESSED_RULE_ITEMS = COMPRESSED_RULES.flatMap(r => r.split(/\s+(?=[2-9]\)\s)/));
+
+// Cut at a word boundary to at most `limit` chars (a hard cut only when there is
+// no space at all), without a trailing separator.
+function cutAtWord(text: string, limit: number): string {
+  if (text.length <= limit) return text;
+  if (limit <= 0) return "";
+  const cut = text.slice(0, limit);
+  const end = /\s/.test(text.charAt(limit)) ? limit : cut.search(/\s\S*$/);
+  return (end > 0 ? cut.slice(0, end) : cut).replace(/[\s,;:–—-]+$/, "");
+}
+
+// Assemble with the verified facts straight after the scene, within `limit`
+// chars. Facts only get the room the scene leaves (whole facts, at most
+// DEFAULT_FACTS_MAX chars), so they never cut the scene. Everything after them
+// is kept or trimmed lowest priority first: style negatives, then style
+// positives, then rule items, then personas. Returns null when no fact fits,
+// and the caller then sends today's prompt unchanged.
+function assembleWithFacts(parts: PromptParts, limit: number): FactsPrompt | null {
+  const factCount = parts.facts?.length ?? 0;
+  if (factCount === 0 || !(limit > 0)) return null;
+  const sceneChars = sanitizeForImageModel(parts.scene).replace(/\s+/g, " ").trim().length;
+  const factsMax = Math.min(DEFAULT_FACTS_MAX, limit - sceneChars - 2);
+  if (factsMax <= 0) return null;
+  const { prompt, report } = assemblePrompt(parts, { maxLen: limit, factsMax });
+  const droppedFacts = report.droppedParts.filter(d => d.startsWith("facts[")).length;
+  if (droppedFacts >= factCount) return null;
+  if (report.truncatedScene || report.droppedParts.length > 0) {
+    console.log(`[instagram-post] facts budget: limit=${limit} facts=${factCount - droppedFacts}/${factCount} truncatedScene=${report.truncatedScene} dropped=${report.droppedParts.join(",") || "none"}`);
+  }
+  return { prompt, factsInPrompt: factCount - droppedFacts };
+}
+
+// An assembled prompt and how many research facts it carries (for the
+// SAFE_FALLBACK log line).
+interface FactsPrompt { prompt: string; factsInPrompt: number }
+
+// Facts path. Today the scene and persona text share the first sceneCap (1100)
+// chars and the style and rule tail gets the rest. The facts' room comes out of
+// that tail, not out of the scene: the scene and persona text keep exactly the
+// share they have today, and the tail is trimmed lowest priority first.
+function buildPromptWithFacts(prompt: string, personaText: string, facts: string[], maxLen: number, sceneCap: number): FactsPrompt | null {
+  if (typeof prompt !== "string" || !prompt.trim()) return null;
+  const personaRoom = sceneCap - prompt.length - PERSONA_INJECT_PREFIX.length;
+  const persona = personaText && personaRoom > 0 ? cutAtWord(personaText, personaRoom) : "";
+  return assembleWithFacts({
+    scene: cutAtWord(prompt, sceneCap),
+    facts,
+    personas: persona ? [persona] : [],
+    rules: COMPRESSED_RULE_ITEMS,
+    stylePositives: COMPRESSED_STYLE_POSITIVES,
+    styleNegatives: COMPRESSED_STYLE_NEGATIVES,
+  }, maxLen - 20);
+}
+
+async function generateImage(prompt: string, matchedPersonas: Persona[], varietySeed: number, facts: string[] = []): Promise<string> {
+  const personaText = matchedPersonas.map(p => p.short_description).join(". ");
+  const personaInject = matchedPersonas.length > 0 ? PERSONA_INJECT_PREFIX + personaText : "";
+  // Model/size come from the approved configuration when one exists (cached).
+  const __cfg = await getActiveGenConfig();
+  // The existing 2000-char limit (cut to 1980). An approved prompt_max_len can
+  // only lower it. With the active config (2000) every cut below is unchanged.
+  const __cfgMax = Number(__cfg?.prompt_max_len);
+  const maxLen = Number.isFinite(__cfgMax) && __cfgMax > 0 ? Math.min(2000, Math.floor(__cfgMax)) : 2000;
+  const sceneCap = Math.max(0, Math.min(1100, maxLen - 20));
+  // Verified canonical details (e.g. four white horses) go straight after the
+  // scene. Research never blocks generation: any failure here, or no fact that
+  // fits, means today's prompt.
+  let fullPrompt: string | null = null;
+  // How many research facts fullPrompt carries; SAFE_FALLBACK logs them as dropped.
+  let factsInPrompt = 0;
+  if (facts.length > 0) {
+    try {
+      const withFacts = buildPromptWithFacts(prompt, matchedPersonas.length > 0 ? personaText : "", facts, maxLen, sceneCap);
+      fullPrompt = withFacts?.prompt ?? null;
+      factsInPrompt = withFacts?.factsInPrompt ?? 0;
+    } catch (e) {
+      console.warn(`[instagram-post] fact assembly failed, using the prompt without facts: ${e}`);
+      fullPrompt = null;
+    }
+  }
+  if (fullPrompt === null) {
+    // Today's prompt, byte for byte.
+    // Build order: scene prompt → persona injection → ART_STYLE → gender → anachronism.
+    fullPrompt = `${prompt}${personaInject}, ${ART_STYLE}. ${GENDER_RULES} ${ANACHRONISM_RULES}`;
+    if (fullPrompt.length > maxLen) {
+      const ruleBlock = COMPRESSED_RULES.join(" ");
+      fullPrompt = `${prompt}${personaInject}`.substring(0, sceneCap) + `, ${COMPRESSED_STYLE_POSITIVES}, ${COMPRESSED_STYLE_NEGATIVES}. ${ruleBlock}`;
+      if (fullPrompt.length > maxLen) fullPrompt = fullPrompt.substring(0, maxLen - 20);
+    }
   }
   // Word-boundary anchors are load-bearing: without \b the alternation
   // rewrote substrings inside ordinary words ("warm" → "blessingm").
   const sanitized = fullPrompt.replace(/\b(battle|war|fight|weapon|sword|arrow|kill|death|blood|fire|burn|destroy|attack|strike|naked|nude)\b/gi, "blessing");
   const seed = varietySeed > 0 ? varietySeed : Math.floor(Math.random() * 1_000_000);
-  // Model/size come from the approved configuration when one exists.
-  const __cfg = await getActiveGenConfig();
   const __m1 = __cfg?.model  || "black-forest-labs/FLUX.2-pro";
   // 16:9 landscape for Instagram (ig_width/ig_height), falling back to the shared
   // portrait size when no Instagram size is configured.
@@ -360,16 +459,28 @@ async function generateImage(prompt: string, matchedPersonas: Persona[], variety
   // never silently changes the crop the post was composed for.
   const __w2 = __cfg?.ig_width ? 1024 : (__cfg?.fallback_width || 1024);
   const __h2 = __cfg?.ig_height ? 576 : (__cfg?.fallback_height || 576);
-  const attempts: Array<{ model: string; prompt: string; w: number; h: number; seed?: number }> = [
+  const attempts: FluxAttempt[] = [
     { model: __m1, prompt: sanitized, w: __w1, h: __h1, seed },
     { model: __m2, prompt: sanitized, w: __w2, h: __h2, seed },
-    { model: __m2, prompt: SAFE_FALLBACK, w: __w2, h: __h2 },
+    { model: __m2, prompt: SAFE_FALLBACK, w: __w2, h: __h2, safeFallback: true },
   ];
-  for (const a of attempts) {
-    const b64 = await tryGenerate(a.prompt, a.model, a.w, a.h, a.seed);
-    if (b64) return b64;
-  }
+  // Same order and first-image-wins as before; the SAFE_FALLBACK attempt also
+  // logs how many research facts it drops.
+  const b64 = await runFluxAttempts(attempts, a => tryGenerate(a.prompt, a.model, a.w, a.h, a.seed), {
+    tag: "instagram-post",
+    factsInPrompt,
+  });
+  if (b64) return b64;
   throw new Error("All FLUX attempts failed");
+}
+
+// getSceneResearch never rejects; the catch is a second guard so research can
+// never block generation. Any failure means no facts.
+async function researchFacts(input: SceneResearchInput): Promise<string[]> {
+  const r = await getSceneResearch(supabase, input).catch(() => null);
+  const facts = Array.isArray(r?.facts) ? r.facts : [];
+  console.log(`[instagram-post] research key=${input.key} status=${r?.status ?? "failed"} facts=${facts.length} ms=${r?.ms ?? -1}`);
+  return facts;
 }
 
 async function uploadImage(b64: string, ch: ChapterInfo): Promise<{ url: string; path: string }> {
@@ -430,12 +541,28 @@ async function generateForChapter(chapterOverride: number | null): Promise<Recor
       .limit(3);
     const prevPrompts = (prevRejected || []).map((r) => r.caption || "").filter(Boolean);
     const inline = await generateScenePromptInline(chapter, text, matched, varietySeed, prevPrompts);
-    imagePrompt = inline.prompt;
+    // Claude returns imagePrompt. Reading .prompt (never set) sent the text
+    // "undefined" as the scene of every inline image prompt.
+    imagePrompt = inlineImagePrompt(inline, chapter.title);
     caption = inline.caption;
     hashtags = inline.hashtags;
   }
 
-  const b64 = await generateImage(imagePrompt, matched, varietySeed);
+  // Verified, sourced visual facts for this scene. A pre-extracted scene shares
+  // its row with the Bhagavatam cover for the same scene; the inline fallback
+  // shares bhagavatam:g<N>:inline with bulk-generate-images. Research never
+  // throws; with no facts the image prompt is built exactly as before.
+  const facts = await researchFacts({
+    key: usedSceneInfo
+      ? sceneKey("bhagavatam", chapter.globalNumber, usedSceneInfo.index)
+      : inlineKey("bhagavatam", chapter.globalNumber),
+    book: "bhagavatam",
+    sceneText: imagePrompt,
+    title: usedSceneInfo?.title ?? null,
+    characters: characterNames,
+  });
+
+  const b64 = await generateImage(imagePrompt, matched, varietySeed, facts);
   const { url, path } = await uploadImage(b64, chapter);
 
   // Attribute to the Mahājana who speaks in / appears in this chapter (fail-soft null).

@@ -1,14 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { getSceneResearch, type SceneResearchInput } from "../_shared/sceneResearch.ts";
-import { type FluxAttempt, runFluxAttempts } from "./fluxAttempts.ts";
-import {
-  assemblePrompt,
-  DEFAULT_FACTS_MAX,
-  inlineKey,
-  type PromptParts,
-  sanitizeForImageModel,
-} from "../_shared/sceneResearchCore.ts";
 
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
@@ -134,158 +125,43 @@ async function getActiveConfig(): Promise<ActiveGenConfig | null> {
   return activeCfgCache;
 }
 
-// The compressed layout the no-config prompt uses today: ART_STYLE +
-// MASCULINITY_RULE + ANACHRONISM_RULES alone are over 2000 chars.
-const COMPRESSED_STYLE_POSITIVES = "museum-quality 19th-century Indian devotional OIL PAINTING on canvas, Raja Ravi Varma 1880-1900 aesthetic, VISIBLE oil-paint brushstrokes, warm saffron palette, soft golden-hour lighting";
-const COMPRESSED_STYLE_NEGATIVES = "NOT cartoon, NOT anime, NOT CGI, NOT 3D render, NOT digital illustration, NOT Pixar style, NOT Midjourney style, NOT plastic shiny skin, NOT photo-realistic";
-const COMPRESSED_RULES = [MASCULINITY_RULE.substring(0, 180), ANACHRONISM_RULES.substring(0, 540)];
-const COMPRESSED_SCENE_MAX = 1050;
-const COMPRESSED_CUT_LEN = 1980;
-
-// The same rule text split into numbered items ("2) ...", "3) ..."; each
-// header stays with its rule 1), so a lack of room drops whole rules from the
-// end instead of the whole block.
-const COMPRESSED_RULE_ITEMS = COMPRESSED_RULES.flatMap(r => r.split(/\s+(?=[2-9]\)\s)/));
-
-// Cut at a word boundary to at most `limit` chars (a hard cut only when there is
-// no space at all), without a trailing separator.
-function cutAtWord(text: string, limit: number): string {
-  if (text.length <= limit) return text;
-  if (limit <= 0) return "";
-  const cut = text.slice(0, limit);
-  const end = /\s/.test(text.charAt(limit)) ? limit : cut.search(/\s\S*$/);
-  return (end > 0 ? cut.slice(0, end) : cut).replace(/[\s,;:–—-]+$/, "");
-}
-
-// Assemble with the verified facts straight after the scene, within `limit`
-// chars. Facts only get the room the scene leaves (whole facts, at most
-// DEFAULT_FACTS_MAX chars), so they never cut the scene. Everything after them
-// is kept or trimmed lowest priority first: style negatives, then style
-// positives, then rule items. Returns null when there are no facts or none
-// fits, and the caller then builds today's prompt unchanged.
-function assembleWithFacts(parts: PromptParts, limit: number): FactsPrompt | null {
-  const factCount = parts.facts?.length ?? 0;
-  if (factCount === 0 || !(limit > 0)) return null;
-  if (typeof parts.scene !== "string" || !parts.scene.trim()) return null;
-  const sceneChars = sanitizeForImageModel(parts.scene).replace(/\s+/g, " ").trim().length;
-  const factsMax = Math.min(DEFAULT_FACTS_MAX, limit - sceneChars - 2);
-  if (factsMax <= 0) return null;
-  const { prompt, report } = assemblePrompt(parts, { maxLen: limit, factsMax });
-  const droppedFacts = report.droppedParts.filter(d => d.startsWith("facts[")).length;
-  if (droppedFacts >= factCount) return null;
-  if (report.truncatedScene || report.droppedParts.length > 0) {
-    console.log(`[bulk-generate-images] facts budget: limit=${limit} facts=${factCount - droppedFacts}/${factCount} truncatedScene=${report.truncatedScene} dropped=${report.droppedParts.join(",") || "none"}`);
-  }
-  return { prompt, factsInPrompt: factCount - droppedFacts };
-}
-
-// An assembled prompt and how many research facts it carries (for the
-// SAFE_FALLBACK log line).
-interface FactsPrompt { prompt: string; factsInPrompt: number }
-
-// Research never blocks generation: an assembly failure means today's prompt.
-function tryAssembleWithFacts(build: () => FactsPrompt | null): FactsPrompt | null {
-  try {
-    return build();
-  } catch (e) {
-    console.warn(`[bulk-generate-images] fact assembly failed, using the prompt without facts: ${e}`);
-    return null;
-  }
-}
-
-// The sanitizer this function has always applied: a bare alternation, so it also
-// rewrites inside words ("warm" -> "blessingm", "warriors" -> "blessingriors",
-// "fire" -> "blessing"). Kept byte for byte, so a prompt with no research facts is
-// exactly today's. Moving to whole words is a separate change to approve.
-const LEGACY_SANITIZE_RE = /battle|war|fight|weapon|sword|arrow|kill|death|blood|fire|burn|destroy|attack|strike|naked|nude/gi;
-function legacySanitize(text: string): string {
-  return text.replace(LEGACY_SANITIZE_RE, "blessing");
-}
-
-async function generateImage(prompt: string, facts: string[] = []): Promise<string> {
+async function generateImage(prompt: string): Promise<string> {
   const cfg = await getActiveConfig();
   let fullPrompt: string;
-  // How many research facts fullPrompt carries; SAFE_FALLBACK logs them as dropped.
-  let factsInPrompt = 0;
   if (cfg) {
-    // Assemble exactly as the playground previews it, with canonical details
-    // straight after the scene. The existing limit is unchanged; facts only use
-    // the room the scene leaves, and the appended style is still cut first.
-    // With facts, every non-fact part gets legacySanitize before it is joined.
+    // Assemble exactly as the playground previews it.
+    fullPrompt = prompt;
+    if (cfg.style_positives) fullPrompt += `, ${cfg.style_positives}`;
+    if (cfg.style_negatives) fullPrompt += `, ${cfg.style_negatives}`;
+    if (cfg.extra_rules) fullPrompt += `. ${cfg.extra_rules}`;
     const max = cfg.prompt_max_len || 2000;
-    const withFacts = facts.length > 0 && typeof prompt === "string"
-      ? tryAssembleWithFacts(() => assembleWithFacts({ scene: legacySanitize(prompt), facts }, max))
-      : null;
-    const part = (s: unknown) => (withFacts ? legacySanitize(String(s)) : s);
-    fullPrompt = withFacts?.prompt ?? prompt;
-    factsInPrompt = withFacts?.factsInPrompt ?? 0;
-    if (cfg.style_positives) fullPrompt += `, ${part(cfg.style_positives)}`;
-    if (cfg.style_negatives) fullPrompt += `, ${part(cfg.style_negatives)}`;
-    if (cfg.extra_rules) fullPrompt += `. ${part(cfg.extra_rules)}`;
     if (fullPrompt.length > max) fullPrompt = fullPrompt.slice(0, max);
   } else {
-    // With facts, the scene keeps today's 1050-char share and the facts' room
-    // comes out of the style and rule tail (style negatives, then style
-    // positives, then rules from the end). No facts, or none fits: today's prompt.
-    // Every non-fact part gets legacySanitize before it is measured.
-    const withFacts = facts.length > 0 && typeof prompt === "string"
-      ? tryAssembleWithFacts(() => assembleWithFacts({
-          scene: legacySanitize(cutAtWord(prompt, COMPRESSED_SCENE_MAX)),
-          facts,
-          rules: COMPRESSED_RULE_ITEMS.map((r) => legacySanitize(r)),
-          stylePositives: legacySanitize(COMPRESSED_STYLE_POSITIVES),
-          styleNegatives: legacySanitize(COMPRESSED_STYLE_NEGATIVES),
-        }, COMPRESSED_CUT_LEN))
-      : null;
-    if (withFacts !== null) {
-      fullPrompt = withFacts.prompt;
-      factsInPrompt = withFacts.factsInPrompt;
-    } else {
-      fullPrompt = `${prompt}, ${ART_STYLE}. ${MASCULINITY_RULE} ${ANACHRONISM_RULES}`;
-      if (fullPrompt.length > 2000) {
-        fullPrompt = `${prompt}`.substring(0, COMPRESSED_SCENE_MAX) + `, ${COMPRESSED_STYLE_POSITIVES}, ${COMPRESSED_STYLE_NEGATIVES}. ${COMPRESSED_RULES.join(" ")}`;
-        if (fullPrompt.length > 2000) fullPrompt = fullPrompt.substring(0, COMPRESSED_CUT_LEN);
-      }
+    fullPrompt = `${prompt}, ${ART_STYLE}. ${MASCULINITY_RULE} ${ANACHRONISM_RULES}`;
+    if (fullPrompt.length > 2000) {
+      const stylePositives = "museum-quality 19th-century Indian devotional OIL PAINTING on canvas, Raja Ravi Varma 1880-1900 aesthetic, VISIBLE oil-paint brushstrokes, warm saffron palette, soft golden-hour lighting";
+      const styleNegatives = "NOT cartoon, NOT anime, NOT CGI, NOT 3D render, NOT digital illustration, NOT Pixar style, NOT Midjourney style, NOT plastic shiny skin, NOT photo-realistic";
+      fullPrompt = `${prompt}`.substring(0, 1050) + `, ${stylePositives}, ${styleNegatives}. ${MASCULINITY_RULE.substring(0, 180)} ${ANACHRONISM_RULES.substring(0, 540)}`;
+      if (fullPrompt.length > 2000) fullPrompt = fullPrompt.substring(0, 1980);
     }
   }
-  // No facts in the prompt: today's text through today's sanitizer, byte for
-  // byte. With facts, every other part was already sanitized that way, and the
-  // facts (verified to hold no sanitizer word) are not rewritten inside words.
-  const sanitized = factsInPrompt > 0 ? fullPrompt : legacySanitize(fullPrompt);
-  const attempts: FluxAttempt[] = cfg
+  const sanitized = fullPrompt.replace(/battle|war|fight|weapon|sword|arrow|kill|death|blood|fire|burn|destroy|attack|strike|naked|nude/gi, "blessing");
+  const attempts = cfg
     ? [
         { model: cfg.model, prompt: sanitized, w: cfg.width, h: cfg.height },
         { model: cfg.fallback_model || cfg.model, prompt: sanitized, w: cfg.fallback_width || cfg.width, h: cfg.fallback_height || cfg.height },
-        { model: cfg.fallback_model || cfg.model, prompt: SAFE_FALLBACK, w: cfg.fallback_width || cfg.width, h: cfg.fallback_height || cfg.height, safeFallback: true },
+        { model: cfg.fallback_model || cfg.model, prompt: SAFE_FALLBACK, w: cfg.fallback_width || cfg.width, h: cfg.fallback_height || cfg.height },
       ]
     : [
     { model: "black-forest-labs/FLUX.2-pro", prompt: sanitized, w: 1088, h: 1344 },
     { model: "black-forest-labs/FLUX.1.1-pro", prompt: sanitized, w: 768, h: 1024 },
-    { model: "black-forest-labs/FLUX.1.1-pro", prompt: SAFE_FALLBACK, w: 768, h: 1024, safeFallback: true },
+    { model: "black-forest-labs/FLUX.1.1-pro", prompt: SAFE_FALLBACK, w: 768, h: 1024 },
   ];
-  // Same order and first-image-wins as before; the SAFE_FALLBACK attempt also
-  // logs how many research facts it drops.
-  const b64 = await runFluxAttempts(attempts, a => tryGenerate(a.prompt, a.model, a.w, a.h), {
-    tag: "bulk-generate-images",
-    factsInPrompt,
-  });
-  if (b64) return b64;
+  for (const a of attempts) {
+    const b64 = await tryGenerate(a.prompt, a.model, a.w, a.h);
+    if (b64) return b64;
+  }
   throw new Error("All FLUX attempts failed");
-}
-
-// getSceneResearch never rejects; the catch is a second guard so research can
-// never fail a chapter. Any failure means no facts. networkResearch=false (bulk
-// mode) serves a fresh cached row plus canon and never calls Firecrawl or Claude
-// or writes the cache: a bulk run only picks chapters with no review row, so
-// every one of up to 50 chapters would otherwise be a paid cache miss.
-async function researchFacts(input: SceneResearchInput, networkResearch: boolean): Promise<string[]> {
-  const pending = networkResearch
-    ? getSceneResearch(supabase, input)
-    : getSceneResearch(supabase, input, { allowNetwork: false });
-  const r = await pending.catch(() => null);
-  const facts = Array.isArray(r?.facts) ? r.facts : [];
-  console.log(`[bulk-generate-images] research key=${input.key} status=${r?.status ?? "failed"} facts=${facts.length} ms=${r?.ms ?? -1} network=${networkResearch ? "on" : "off"}`);
-  return facts;
 }
 
 async function uploadImage(b64: string, ch: ChapterInfo) {
@@ -332,18 +208,11 @@ async function getMissingChapters(): Promise<ChapterInfo[]> {
   return all.filter(c => !existing.has(c.skandh * 1000 + c.number));
 }
 
-// opts.networkResearch defaults to true (sample mode); bulk mode passes false.
-async function generateOne(chapter: ChapterInfo, opts: { networkResearch?: boolean } = {}): Promise<{ ok: boolean; chapter: ChapterInfo; pendingId?: number; error?: string }> {
+async function generateOne(chapter: ChapterInfo): Promise<{ ok: boolean; chapter: ChapterInfo; pendingId?: number; error?: string }> {
   try {
     const text = await getChapterText(chapter);
     const { imagePrompt, caption, hashtags } = await generateScenePrompt(chapter, text);
-    // Same research row as instagram-post's inline path (bhagavatam:g<N>:inline).
-    const facts = await researchFacts({
-      key: inlineKey("bhagavatam", chapter.globalNumber),
-      book: "bhagavatam",
-      sceneText: imagePrompt,
-    }, opts.networkResearch !== false);
-    const b64 = await generateImage(imagePrompt, facts);
+    const b64 = await generateImage(imagePrompt);
     const { url, path } = await uploadImage(b64, chapter);
     const { data: inserted, error } = await supabase.from("ig_pending_review").insert({
       chapter_global_number: chapter.globalNumber,
@@ -395,10 +264,9 @@ Deno.serve(async (req: Request) => {
       const concurrency = Math.min(5, Math.max(1, Number(body.concurrency) || 4));
       const missing = (await getMissingChapters()).slice(0, limit);
       if (missing.length === 0) return new Response(JSON.stringify({ error: "No missing chapters" }), { status: 404, headers: cors });
-      // Research in bulk is cache-only: no Firecrawl, Claude or cache write per chapter.
       // @ts-ignore - EdgeRuntime is provided by Supabase
-      EdgeRuntime.waitUntil(runInParallel(missing, concurrency, (c: ChapterInfo) => generateOne(c, { networkResearch: false })));
-      return new Response(JSON.stringify({ started: true, queued: missing.length, concurrency, research: "cache-only", message: `Generating ${missing.length} images in parallel (${concurrency} at a time).` }), { headers: cors });
+      EdgeRuntime.waitUntil(runInParallel(missing, concurrency, generateOne));
+      return new Response(JSON.stringify({ started: true, queued: missing.length, concurrency, message: `Generating ${missing.length} images in parallel (${concurrency} at a time).` }), { headers: cors });
     }
     return new Response(JSON.stringify({ error: "Invalid mode" }), { status: 400, headers: cors });
   } catch (err) { console.error(err); return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: cors }); }
