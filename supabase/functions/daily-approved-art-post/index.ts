@@ -22,6 +22,9 @@ const BUFFER_API = "https://api.buffer.com";
 const BUFFER_KEY = Deno.env.get("BUFFER_API_KEY") || "";
 const IG_CHANNEL = Deno.env.get("BUFFER_INSTAGRAM_CHANNEL_ID") || "69db52a5031bfa423cf5dd46";
 const TH_CHANNEL = Deno.env.get("BUFFER_THREADS_CHANNEL_ID") || "69db52c2031bfa423cf5ddc7";
+// Threads image posts are ON HOLD unless THREADS_IMAGE_POSTS_ENABLED is "true"
+// (held 2026-09-13 at the owner's request); Instagram still posts daily.
+const THREADS_IMAGE_POSTS_ENABLED = Deno.env.get("THREADS_IMAGE_POSTS_ENABLED") === "true";
 const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
 const CORS = {
@@ -116,10 +119,11 @@ Deno.serve(async (req: Request) => {
     // Per-channel and non-fatal: one failing must not block the other.
     const results: Record<string, string> = {};
     const errors: string[] = [];
-    for (const ch of [
+    const channels = [
       { id: IG_CHANNEL, name: "instagram", text: igText, ig: true },
       { id: TH_CHANNEL, name: "threads",   text: thText, ig: false },
-    ]) {
+    ].filter(ch => ch.name !== "threads" || THREADS_IMAGE_POSTS_ENABLED);
+    for (const ch of channels) {
       try { results[ch.name] = await createPost(ch.text, ch.id, imgUrl, ch.ig, !!body.draft); }
       catch (e) { errors.push(`${ch.name}: ${String(e).slice(0, 200)}`); }
     }
@@ -139,6 +143,7 @@ Deno.serve(async (req: Request) => {
       ok: Object.keys(results).length > 0,
       book: book.key, id: row.id, chapter: row.chapter_number,
       posted: results, errors, draft: !!body.draft,
+      threads_on_hold: !THREADS_IMAGE_POSTS_ENABLED,
     }), { headers: CORS });
   } catch (err) {
     return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: CORS });

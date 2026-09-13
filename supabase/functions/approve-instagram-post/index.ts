@@ -115,12 +115,17 @@ interface BufferChannel { id: string; service: string; name?: string }
 // but posts:write CAN publish to a channel BY ITS ID. So we address the channels
 // directly (ids overridable via secrets; defaults are the BuildIskcon channels:
 // IG "dailybhagwatham", Threads "buildiskcon").
+const THREADS_IMAGE_POSTS_ENABLED = Deno.env.get("THREADS_IMAGE_POSTS_ENABLED") === "true";
 const BUFFER_CHANNELS: BufferChannel[] = (() => {
   const list: BufferChannel[] = [];
   const ig = Deno.env.get("BUFFER_INSTAGRAM_CHANNEL_ID") || "69db52a5031bfa423cf5dd46";
   const th = Deno.env.get("BUFFER_THREADS_CHANNEL_ID") || "69db52c2031bfa423cf5ddc7";
   if (ig) list.push({ id: ig, service: "instagram" });
-  if (th) list.push({ id: th, service: "threads" });
+  // Threads image posts are ON HOLD unless THREADS_IMAGE_POSTS_ENABLED is "true"
+  // (held 2026-09-13 at the owner's request). Instagram and the Threads text
+  // quotes (daily-gita-quote) are unaffected. Resume with:
+  //   supabase secrets set THREADS_IMAGE_POSTS_ENABLED=true
+  if (th && THREADS_IMAGE_POSTS_ENABLED) list.push({ id: th, service: "threads" });
   return list;
 })();
 
@@ -131,7 +136,10 @@ async function queueToBuffer(imgUrl: string, caption: string, hashtags: string, 
   // while the others published: re-running every channel would double-post the
   // ones that already succeeded.
   const chs = onlyService ? BUFFER_CHANNELS.filter(c => c.service === onlyService) : BUFFER_CHANNELS;
-  if (chs.length === 0) throw new Error("No Buffer channel ids configured (set BUFFER_INSTAGRAM_CHANNEL_ID / BUFFER_THREADS_CHANNEL_ID)");
+  if (chs.length === 0) {
+    if (onlyService === "threads" && !THREADS_IMAGE_POSTS_ENABLED) throw new Error("Threads image posts are on hold (set THREADS_IMAGE_POSTS_ENABLED=true to resume)");
+    throw new Error("No Buffer channel ids configured (set BUFFER_INSTAGRAM_CHANNEL_ID / BUFFER_THREADS_CHANNEL_ID)");
+  }
   const results: PubResult[] = [];
   const errors: Array<{ service: string; channelId: string; error: string }> = [];
   for (const ch of chs) {
