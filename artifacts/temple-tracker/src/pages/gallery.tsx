@@ -22,6 +22,10 @@ interface GalleryItem {
   // For Bhaktigram posts: numeric id from ig_pending_review. Used as the
   // foreign-key target for bhaktigram_comments.
   igPostId?: number;
+  // A pending Instagram post's lightbox preview: its ig_pending_review id and the
+  // image_path the preview shows, so the gallery knows which image the reviewer
+  // saw full size (createSeenImages).
+  pendingReview?: { id: number; imagePath: string | null };
   generatedAt: string;
   type: "chapter" | "instagram";
 }
@@ -546,7 +550,7 @@ function isDeletableGalleryItem(item: GalleryItem): boolean {
 
 // ── Lightbox ────────────────────────────────────────────────────────────────
 
-function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
+function Lightbox({ item, items, onClose, onNavigate, onDelete, onImageLoad }: {
   item: GalleryItem;
   items: GalleryItem[];
   onClose: () => void;
@@ -554,6 +558,8 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
   // Optional — when absent, Delete is never rendered. Per-item eligibility is
   // additionally enforced via isDeletableGalleryItem (see comment above).
   onDelete?: (item: GalleryItem) => void;
+  // Optional: the item's image has loaded, so it is on screen full size.
+  onImageLoad?: (item: GalleryItem) => void;
 }) {
   const currentIndex = items.findIndex(i => i.id === item.id);
   // Only legacy-manifest and approved-IG items may show Delete — synthetic
@@ -694,6 +700,7 @@ function Lightbox({ item, items, onClose, onNavigate, onDelete }: {
           initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2 }}
           src={item.url}
           alt={item.description}
+          onLoad={() => onImageLoad?.(item)}
           className={`object-contain shadow-2xl transition-all duration-300 cursor-zoom-in touch-pan-y select-none ${
             fullscreen
               ? "max-h-screen max-w-full rounded-none"
@@ -798,15 +805,18 @@ const CHAITANYA_IMAGE_GEN_PAUSED = false;
 
 // ── Image check ──────────────────────────────────────────────────────────────
 // Every generated image is checked by Claude vision against the research facts
-// that went into its prompt, and re-rendered when a fact is clearly contradicted
-// (e.g. three horses instead of four). The generator stores the result in the
-// row's visual_check column; the review cards show it under the image.
+// that went into its prompt (e.g. three horses instead of four). Supabase cuts a
+// request at 150s, so the generator stores the image with a "running" record and
+// checks it after its response: gallery-triggered generation only flags a wrong
+// image, and the daily Instagram post re-renders it and may replace it. The
+// result lands in the row's visual_check column; the review cards show it under
+// the image and re-read a check that is still running until it settles.
 //
 // visual-check-summary:start
 // tests/visual-check-migration.test.ts runs this block on its own: keep it free
 // of JSX and imports.
 interface VisualCheck {
-  status: "pass" | "fail" | "error" | "skipped";
+  status: "pass" | "fail" | "error" | "skipped" | "running";
   attempts?: number;
   chosen_attempt?: number;
   failed?: Array<{ fact: string; observed: string }>;
@@ -814,6 +824,9 @@ interface VisualCheck {
   reason?: string | null;
   image_model?: string | null;
   checked_at?: string | null;
+  // When the background check was queued (ISO). Records from bulk runs that
+  // check before the insert have none.
+  started_at?: string | null;
 }
 
 interface VisualCheckSummary {
@@ -822,8 +835,43 @@ interface VisualCheckSummary {
   details: string[];
 }
 
-function visualCheckSummary(check: VisualCheck | null | undefined): VisualCheckSummary | null {
+// Background work ends within 400s of the request (its worker is stopped 400s
+// after it started), so a check still running 10 minutes after started_at lost its
+// worker and will not finish.
+const VISUAL_CHECK_STALE_MS = 10 * 60 * 1000;
+// A card whose check may still change re-reads its row this often, until the check
+// settles or goes stale.
+const VISUAL_CHECK_POLL_MS = 10 * 1000;
+
+function checkStartedMs(check: VisualCheck): number {
+  return typeof check.started_at === "string" ? Date.parse(check.started_at) : NaN;
+}
+
+/** A running record that can still finish: started_at within 10 minutes, or unknown. */
+function isCheckRunning(check: VisualCheck | null | undefined, now: number): boolean {
+  if (!check || typeof check !== "object" || check.status !== "running") return false;
+  const started = checkStartedMs(check);
+  return !Number.isFinite(started) || now - started <= VISUAL_CHECK_STALE_MS;
+}
+
+/**
+ * A record the generator may still overwrite: running, or the interim result of
+ * the daily post's background re-render. That one is stored with each better
+ * image it swaps in (status fail, no reason yet, chosen_attempt 1 or more) and
+ * the re-render may swap again before it writes its final record.
+ */
+function isCheckPollable(check: VisualCheck | null | undefined, now: number): boolean {
+  if (isCheckRunning(check, now)) return true;
+  if (!check || typeof check !== "object" || check.status !== "fail" || check.reason != null) return false;
+  const started = checkStartedMs(check);
+  return Number(check.chosen_attempt) >= 1 && Number.isFinite(started) && now - started <= VISUAL_CHECK_STALE_MS;
+}
+
+function visualCheckSummary(check: VisualCheck | null | undefined, now: number = Date.now()): VisualCheckSummary | null {
   if (!check || typeof check !== "object") return null;
+  if (check.status === "running") {
+    return { tone: "muted", headline: isCheckRunning(check, now) ? "Checking image…" : "Image check did not finish", details: [] };
+  }
   const attempts = Number(check.attempts);
   // Render count is only worth saying when the image was re-rendered.
   const renders = Number.isFinite(attempts) && attempts > 1 ? Math.floor(attempts) : 0;
@@ -856,6 +904,255 @@ function visualCheckSummary(check: VisualCheck | null | undefined): VisualCheckS
   }
   return null;
 }
+
+// The fields a card's poll re-reads (reader_scenes has no image_path).
+interface CheckRow {
+  id: number;
+  image_url?: string | null;
+  image_path?: string | null;
+  visual_check?: VisualCheck | null;
+}
+
+/** "id:started_at": a regenerated image has a new started_at, so a new key. */
+function checkPollKey(row: CheckRow): string {
+  return `${row.id}:${row.visual_check?.started_at ?? ""}`;
+}
+
+/** Keys of the loaded rows whose check may still change. */
+function pollableCheckKeys(rows: CheckRow[], now: number): string[] {
+  return (Array.isArray(rows) ? rows : []).filter(r => r && isCheckPollable(r.visual_check, now)).map(checkPollKey);
+}
+
+/**
+ * The ids to re-read now: the rows whose check may still change. A record with a
+ * started_at is re-read until it settles or goes stale 10 minutes after started_at,
+ * which is always after the background work's last write, however late the page
+ * first saw it. A running record without one (no generator writes those) is
+ * re-read for 10 minutes after the page first saw it (firstSeen, by checkPollKey).
+ */
+function checkIdsToPoll(rows: CheckRow[], now: number, firstSeen: Map<string, number>): number[] {
+  const ids: number[] = [];
+  for (const r of Array.isArray(rows) ? rows : []) {
+    if (!r || !Number.isInteger(r.id) || !isCheckPollable(r.visual_check, now)) continue;
+    if (!Number.isFinite(checkStartedMs(r.visual_check as VisualCheck))) {
+      const seen = firstSeen.get(checkPollKey(r));
+      if (seen === undefined || now - seen >= VISUAL_CHECK_STALE_MS) continue;
+    }
+    if (!ids.includes(r.id)) ids.push(r.id);
+  }
+  return ids;
+}
+
+/** When the first record that may still change goes stale (epoch ms), or null when none has a started_at. */
+function nextCheckStaleAt(rows: CheckRow[], now: number): number | null {
+  let next: number | null = null;
+  for (const r of Array.isArray(rows) ? rows : []) {
+    if (!r || !isCheckPollable(r.visual_check, now)) continue;
+    const started = checkStartedMs(r.visual_check as VisualCheck);
+    if (!Number.isFinite(started)) continue;
+    const at = started + VISUAL_CHECK_STALE_MS + 1;
+    if (next === null || at < next) next = at;
+  }
+  return next;
+}
+
+/** The loaded URL shows the fresh image: equal, or equal but for one t= cache-buster added here. */
+function sameImageUrl(loaded: string | null | undefined, fresh: string): boolean {
+  return typeof loaded === "string" && (loaded === fresh || loaded.replace(/[?&]t=\d+$/, "") === fresh);
+}
+
+/**
+ * Merges re-read rows (id, visual_check, image_url, and image_path where the
+ * table has one) into the loaded rows. `sent` holds each row's visual_check as
+ * it was when the request went out: a row whose check changed since (a
+ * regenerate answered first) keeps its state. A replaced image gets its new URL
+ * with a t= so the browser loads it. Returns `rows` itself when nothing changed.
+ */
+function mergeCheckRows<T extends CheckRow>(rows: T[], fresh: unknown, sent: Map<number, unknown>, now: number): T[] {
+  if (!Array.isArray(rows) || !Array.isArray(fresh)) return rows;
+  const byId = new Map<number, Partial<CheckRow>>();
+  for (const f of fresh) {
+    if (f && typeof f === "object" && typeof f.id === "number") byId.set(f.id, f);
+  }
+  let changed = false;
+  const merged = rows.map(row => {
+    const f = row ? byId.get(row.id) : undefined;
+    if (!f || !sent.has(row.id) || sent.get(row.id) !== row.visual_check) return row;
+    const update: Partial<CheckRow> = {};
+    const check = f.visual_check ?? null;
+    if (JSON.stringify(check) !== JSON.stringify(row.visual_check ?? null)) update.visual_check = check;
+    if (typeof f.image_url === "string" && f.image_url.length > 0 && !sameImageUrl(row.image_url, f.image_url)) {
+      update.image_url = `${f.image_url}${f.image_url.includes("?") ? "&" : "?"}t=${now}`;
+    }
+    if ("image_path" in f && (f.image_path ?? null) !== (row.image_path ?? null)) update.image_path = f.image_path ?? null;
+    if (Object.keys(update).length === 0) return row;
+    changed = true;
+    return { ...row, ...update };
+  });
+  return changed ? merged : rows;
+}
+
+interface CheckPollerOptions<T extends CheckRow> {
+  table: string;
+  columns: string;
+  /** The JSON body of a GET of `path` (table?select=...), or null when the request failed. */
+  fetchRows: (path: string) => Promise<unknown>;
+  setRows: (update: (prev: T[]) => T[]) => void;
+  /** Renders the section again: a running check just went stale, so its card says it did not finish. */
+  onStale: () => void;
+  now: () => number;
+  setInterval: (tick: () => void, ms: number) => unknown;
+  clearInterval: (id: unknown) => void;
+  setTimeout: (run: () => void, ms: number) => unknown;
+  clearTimeout: (id: unknown) => void;
+}
+
+interface CheckPoller<T extends CheckRow> {
+  /** Hands over the section's rows after every change: starts, keeps or stops the poll. */
+  update: (rows: T[], enabled: boolean) => void;
+  /** Stops the poll and its stale timer (unmount). A later update starts it again. */
+  stop: () => void;
+}
+
+// A browser fires a timer with a longer delay at once.
+const MAX_TIMER_MS = 2_147_483_647;
+
+/**
+ * Re-reads the rows whose check may still change (checkIdsToPoll) every 10 seconds
+ * and merges the answer into them (mergeCheckRows). The timer starts again only when
+ * the set of such records changes, so a section reloading the same rows keeps it,
+ * and it stops once nothing is left to re-read. A re-read still waiting for its
+ * answer holds back the next tick. One more timer fires when the next running
+ * record goes stale, so its card can say the check did not finish. Clock, timers
+ * and fetch are passed in: it needs no React and no browser.
+ */
+function createCheckPoller<T extends CheckRow>(o: CheckPollerOptions<T>): CheckPoller<T> {
+  let rows: T[] = [];
+  let enabled = false;
+  // The records the running timer was started for (pollableCheckKeys, joined).
+  let key = "";
+  let interval: unknown = null;
+  let staleTimer: unknown = null;
+  let inFlight = false;
+  // Moved on by stop(): the answer to a re-read sent before it is dropped.
+  let generation = 0;
+  const firstSeen = new Map<string, number>();
+
+  const stopInterval = () => {
+    if (interval !== null) o.clearInterval(interval);
+    interval = null;
+  };
+  const stopStaleTimer = () => {
+    if (staleTimer !== null) o.clearTimeout(staleTimer);
+    staleTimer = null;
+  };
+
+  const tick = async () => {
+    if (inFlight) return;
+    const loaded = rows;
+    const ids = checkIdsToPoll(loaded, o.now(), firstSeen);
+    if (ids.length === 0) {
+      stopInterval();
+      return;
+    }
+    inFlight = true;
+    const sentIn = generation;
+    const sent = new Map(loaded.map((r): [number, unknown] => [r.id, r.visual_check]));
+    try {
+      const fresh = await o.fetchRows(`${o.table}?select=${o.columns}&id=in.(${ids.join(",")})`);
+      if (sentIn === generation && Array.isArray(fresh)) o.setRows(prev => mergeCheckRows(prev, fresh, sent, o.now()));
+    } catch { /* offline: the next tick tries again */ }
+    finally { inFlight = false; }
+  };
+
+  // Starts the timer again when the records that may still change are not the ones
+  // it was started for, and sets the stale timer for the next of them to go stale.
+  const apply = () => {
+    const now = o.now();
+    const keys = enabled ? pollableCheckKeys(rows, now) : [];
+    const nextKey = keys.join(",");
+    if (nextKey !== key) {
+      key = nextKey;
+      stopInterval();
+      if (key) {
+        for (const k of keys) if (!firstSeen.has(k)) firstSeen.set(k, now);
+        interval = o.setInterval(() => { void tick(); }, VISUAL_CHECK_POLL_MS);
+      }
+    }
+    stopStaleTimer();
+    const staleAt = enabled ? nextCheckStaleAt(rows, now) : null;
+    if (staleAt !== null) {
+      staleTimer = o.setTimeout(() => {
+        staleTimer = null;
+        apply();
+        o.onStale();
+      }, Math.min(MAX_TIMER_MS, Math.max(0, staleAt - now)));
+    }
+  };
+
+  return {
+    update(next, on) {
+      rows = Array.isArray(next) ? next : [];
+      enabled = on !== false;
+      apply();
+    },
+    stop() {
+      stopInterval();
+      stopStaleTimer();
+      key = "";
+      generation++;
+    },
+  };
+}
+
+/**
+ * The image each pending Instagram post's reviewer has seen. Approve and Reject name
+ * it, and approve-instagram-post acts only on that image or answers 409
+ * image_changed. The card's image_path alone is not it: the poll, a reload or a
+ * regenerate puts a new image_path on the card before the new image has loaded, and
+ * the lightbox covers the card with a snapshot of the image it was opened on.
+ * - The first image a card shows counts as seen.
+ * - An image the lightbox shows full size counts as seen: the reviewer inspected it.
+ * - Any other new image on the card counts as seen only once the reviewer knows it
+ *   is there, because they asked for it (a regenerate) or were told it replaced the
+ *   old one (409 image_changed), which accept() records, and the card shows it.
+ * - A post that has shown no image yet names its card's own image_path.
+ * No React: the gallery calls it from its image load events and review handlers.
+ */
+interface SeenImages {
+  /** A card's thumbnail finished loading the image at `path`. */
+  cardShown: (id: number, path: string | null) => void;
+  /** The lightbox finished loading the image at `path` full size. */
+  lightboxShown: (id: number, path: string | null) => void;
+  /** The reviewer asked for, or was told about, the image at `path`: it counts as seen once the card shows it. */
+  accept: (id: number, path: string | null) => void;
+  /** The image_path Approve and Reject send for a post whose card holds `cardPath`. */
+  pathToReview: (id: number, cardPath: string | null | undefined) => string | null;
+}
+
+function createSeenImages(): SeenImages {
+  // Per post id: the image the reviewer saw, the image the card shows, and the image
+  // the reviewer knows replaced it.
+  const seen = new Map<number, string | null>();
+  const onCard = new Map<number, string | null>();
+  const accepted = new Map<number, string | null>();
+  return {
+    cardShown(id, path) {
+      onCard.set(id, path);
+      if (!seen.has(id) || (accepted.has(id) && accepted.get(id) === path)) seen.set(id, path);
+    },
+    lightboxShown(id, path) {
+      seen.set(id, path);
+    },
+    accept(id, path) {
+      accepted.set(id, path);
+      if (onCard.has(id) && onCard.get(id) === path) seen.set(id, path);
+    },
+    pathToReview(id, cardPath) {
+      return seen.has(id) ? (seen.get(id) ?? null) : (cardPath ?? null);
+    },
+  };
+}
 // visual-check-summary:end
 
 function VisualCheckNote({ check }: { check?: VisualCheck | null }) {
@@ -872,6 +1169,46 @@ function VisualCheckNote({ check }: { check?: VisualCheck | null }) {
       )}
     </div>
   );
+}
+
+// Re-reads the loaded rows whose image check may still change and merges the
+// result into the cards (createCheckPoller): every 10 seconds, through the
+// section's own sbFetch, until each check settles or goes stale, and renders the
+// section again when a check goes stale so its card says it did not finish.
+// `columns` is id, visual_check, image_url, and image_path where the table has
+// one. The poller is stopped on unmount.
+function useVisualCheckPoll<T extends CheckRow>(
+  table: string,
+  columns: string,
+  rows: T[],
+  setRows: (update: (prev: T[]) => T[]) => void,
+  enabled = true,
+) {
+  const [, setStaleRenders] = useState(0);
+  // One poller per section: its table, columns and setRows never change.
+  const [poller] = useState(() =>
+    createCheckPoller<T>({
+      table,
+      columns,
+      fetchRows: async (path) => {
+        const res = await sbFetch(path);
+        return res.ok ? await res.json() : null;
+      },
+      setRows,
+      onStale: () => setStaleRenders(n => n + 1),
+      now: () => Date.now(),
+      setInterval: (tick, ms) => window.setInterval(tick, ms),
+      clearInterval: (id) => window.clearInterval(id as number),
+      setTimeout: (run, ms) => window.setTimeout(run, ms),
+      clearTimeout: (id) => window.clearTimeout(id as number),
+    }),
+  );
+  // Reloading the same rows (the bulk pollers refetch every few seconds) keeps the
+  // poller's timer: it starts again only when the records that may change differ.
+  useEffect(() => {
+    poller.update(rows, enabled);
+  }, [poller, rows, enabled]);
+  useEffect(() => () => poller.stop(), [poller]);
 }
 
 // ── Story Scenes ─────────────────────────────────────────────────────────────
@@ -918,6 +1255,8 @@ function StoryScenesSection() {
     finally { setLoading(false); }
   }, []);
   useEffect(() => { void load(); }, [load]);
+  // A new image is checked after the generator responds: re-read it until the check settles.
+  useVisualCheckPoll("reader_scenes", "id,visual_check,image_url", scenes, setScenes);
 
   const remove = useCallback(async (id: number) => {
     if (!window.confirm("Remove this scene from the list?")) return;
@@ -1141,6 +1480,7 @@ interface GitaArt {
   chapter_number: number;
   chapter_title: string | null;
   image_url: string | null;
+  image_path?: string | null;
   prompt: string | null;
   caption: string | null;
   status: string;
@@ -1164,6 +1504,7 @@ function GitaArtSection() {
     finally { setLoading(false); }
   }, []);
   useEffect(() => { void load(); }, [load]);
+  useVisualCheckPoll("gita_chapter_art_review", "id,visual_check,image_url,image_path", rows, setRows);
 
   // Discard a Gita scene outright (the shared "reject" path regenerates it).
   const rejectGitaScene = useCallback(async (id: number) => {
@@ -1371,9 +1712,13 @@ export default function Gallery() {
     created_at: string;
     error_message: string | null;
     image_prompt?: string | null;
+    image_path?: string | null;
     visual_check?: VisualCheck | null;
   }
   const [pending, setPending] = useState<PendingPost[]>([]);
+  // The image each pending post's reviewer has seen (createSeenImages): Approve and
+  // Reject send it, so an image that replaced it is never published or deleted unseen.
+  const [seenImages] = useState(() => createSeenImages());
   // Edit-the-prompt-and-re-render, so a near-miss image can be fixed on the card
   // instead of only Approve/Reject. Uses the playground's approved configuration.
   // Chapter-cover prompt editing (Bhagavatam / Chaitanya / Gita queues).
@@ -1404,10 +1749,12 @@ export default function Gallery() {
   }, [artDraft]);
   const [promptEditId, setPromptEditId] = useState<number | null>(null);
   const [promptDraft, setPromptDraft] = useState("");
-  const [regenBusy, setRegenBusy] = useState<number | null>(null);
+  // Per card, like `reviewing`: several cards can regenerate at once, and each keeps
+  // its Approve, Reject and Edit prompt disabled until its own request answers.
+  const [regeneratingPending, setRegeneratingPending] = useState<Set<number>>(new Set());
   const regeneratePending = useCallback(async (id: number) => {
     if (!promptDraft.trim()) return;
-    setRegenBusy(id);
+    setRegeneratingPending(prev => new Set(prev).add(id));
     try {
       const r = await fetch(`${SUPABASE_URL}/functions/v1/regenerate-pending-image`, {
         method: "POST",
@@ -1416,13 +1763,19 @@ export default function Gallery() {
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d?.ok) { alert(`Regenerate failed: ${d?.error || r.statusText}`); return; }
+      // The reviewer asked for this image: it counts as seen once the card shows it.
+      seenImages.accept(id, d.image_path ?? null);
+      // image_path too: Approve and Reject send the image the card shows.
       setPending(prev => prev.map(x => (x.id === id
-        ? { ...x, image_url: `${d.image_url}?t=${Date.now()}`, image_prompt: promptDraft, visual_check: d.visual_check ?? null } : x)));
-      setPromptEditId(null);
+        ? { ...x, image_url: `${d.image_url}?t=${Date.now()}`, image_path: d.image_path ?? x.image_path, image_prompt: promptDraft, visual_check: d.visual_check ?? null } : x)));
+      // Only this card's editor: another card's may be the open one by now.
+      setPromptEditId(cur => (cur === id ? null : cur));
     } catch (e) {
       alert(`Regenerate failed: ${String(e)}`);
-    } finally { setRegenBusy(null); }
-  }, [promptDraft]);
+    } finally {
+      setRegeneratingPending(prev => { const next = new Set(prev); next.delete(id); return next; });
+    }
+  }, [promptDraft, seenImages]);
   const [pendingExpanded, setPendingExpanded] = useState<number | null>(null);
   const [reviewing, setReviewing] = useState<Set<number>>(new Set());
   // Forward-ref to fetchAll so reviewPost (declared earlier in render order)
@@ -1476,6 +1829,9 @@ export default function Gallery() {
     if (isBhaktigramRoute) return;
     fetchPending();
   }, [fetchPending, isBhaktigramRoute]);
+  // A new image is checked after the generator responds, and the daily post may
+  // re-render and replace it: re-read running checks until they settle.
+  useVisualCheckPoll("ig_pending_review", "id,visual_check,image_url,image_path", pending, setPending, !isBhaktigramRoute);
 
   // ── Bulk generation for missing chapters ──────────────────────────────────
   interface BulkStatus { missingCount: number; pendingReviewCount: number; firstMissing: Array<{ canto: number; chapter: number; title: string }> }
@@ -1603,6 +1959,7 @@ export default function Gallery() {
     if (isBhaktigramRoute) return;
     fetchPendingChapterArt();
   }, [fetchPendingChapterArt, isBhaktigramRoute]);
+  useVisualCheckPoll("bhagavatam_chapter_art_review", "id,visual_check,image_url,image_path", pendingChapterArt, setPendingChapterArt, !isBhaktigramRoute);
 
   const refreshChartBulkStatus = useCallback(async () => {
     try {
@@ -1779,6 +2136,7 @@ export default function Gallery() {
     fetchPendingChaitanya();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchPendingChaitanya]);
+  useVisualCheckPoll("chaitanya_chapter_art_review", "id,visual_check,image_url,image_path", pendingChaitanya, setPendingChaitanya, !CHAITANYA_IMAGE_GEN_PAUSED && !isBhaktigramRoute);
 
   const refreshCcBulkStatus = useCallback(async () => {
     try {
@@ -1901,16 +2259,31 @@ export default function Gallery() {
     }
   }, [fetchPendingChaitanya, refreshCcBulkStatus, startPoller]);
 
-  const reviewPost = useCallback(async (id: number, action: "approve" | "reject") => {
+  const reviewPost = useCallback(async (id: number, action: "approve" | "reject", imagePath?: string | null) => {
     setReviewing(prev => new Set(prev).add(id));
     try {
       const res = await fetch(`https://etfmndcrchundvgtvmot.supabase.co/functions/v1/approve-instagram-post`, {
         method: "POST",
         headers: FN_HEADERS,
-        body: JSON.stringify({ id, action }),
+        // image_path: the image the reviewer saw on this post (seenImages). The
+        // function acts only on that image, and answers 409 image_changed when the
+        // post holds another one.
+        body: JSON.stringify({ id, action, image_path: imagePath || undefined }),
       });
       const data = await res.json();
-      if (!res.ok) {
+      if (res.status === 409 && data?.status === "image_changed") {
+        // The automatic image check swapped a new render in after this card showed
+        // its image, and nothing was published or deleted. Put the new image, its
+        // path and its check on the card, close a lightbox still showing the old
+        // image (it is a snapshot), and ask for a fresh review.
+        setPending(prev => mergeCheckRows(prev, [{ id, image_url: data.image_url, image_path: data.image_path ?? null, visual_check: data.visual_check ?? null }], new Map(prev.map((x): [number, unknown] => [x.id, x.visual_check])), Date.now()));
+        // The alert below tells the reviewer: the new image counts as seen once the card shows it.
+        seenImages.accept(id, data.image_path ?? null);
+        setLightboxItem(cur => (cur?.id === `pending-${id}` ? null : cur));
+        alert("The automatic image check replaced this post's image after you opened it. Nothing was published or deleted: review the new image, then approve or reject again.");
+      } else if (res.status === 409 && (data?.status === "publish_unknown" || data?.status === "claimed")) {
+        alert(data.error);
+      } else if (!res.ok) {
         alert(`${action === "approve" ? "Approve" : "Reject"} failed: ${data.error || data.msg || res.statusText || `HTTP ${res.status}`}`);
       } else {
         // Drop the reviewed post from the pending list immediately
@@ -1944,7 +2317,7 @@ export default function Gallery() {
     } finally {
       setReviewing(prev => { const next = new Set(prev); next.delete(id); return next; });
     }
-  }, [fetchPending, startPoller]);
+  }, [fetchPending, startPoller, seenImages]);
 
   // ── Fetch manifests ───────────────────────────────────────────────────────
   // Stored as a useCallback so reviewPost() can re-trigger after approve to
@@ -2558,11 +2931,13 @@ export default function Gallery() {
                   {pending.map((p) => {
                     const isExpanded = pendingExpanded === p.id;
                     const isReviewing = reviewing.has(p.id);
+                    const isRegenerating = regeneratingPending.has(p.id);
                     // Convert the pending row into a GalleryItem shape so the
                     // existing lightbox component can display it full-screen.
                     const openPreview = () => {
                       setLightboxItem({
                         id: `pending-${p.id}`,
+                        pendingReview: { id: p.id, imagePath: p.image_path ?? null },
                         chapterNumber: p.chapter_global_number,
                         chapterTitle: p.chapter_title || `Chapter ${p.chapter_global_number}`,
                         cantoNumber: p.chapter_canto ?? 0,
@@ -2588,6 +2963,7 @@ export default function Gallery() {
                             alt={p.chapter_title}
                             className="w-full h-full object-cover transition-transform group-hover/img:scale-105"
                             loading="lazy"
+                            onLoad={() => seenImages.cardShown(p.id, p.image_path ?? null)}
                           />
                           <span className="absolute inset-0 bg-black/0 group-hover/img:bg-black/30 transition-colors flex items-center justify-center">
                             <Maximize2 className="w-7 h-7 text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow" />
@@ -2606,9 +2982,10 @@ export default function Gallery() {
                               </p>
                             </div>
                             <div className="flex gap-1.5 shrink-0">
+                              {/* Both send the image the reviewer saw (seenImages), and wait while this card regenerates. */}
                               <button
-                                onClick={() => reviewPost(p.id, "approve")}
-                                disabled={isReviewing}
+                                onClick={() => reviewPost(p.id, "approve", seenImages.pathToReview(p.id, p.image_path))}
+                                disabled={isReviewing || isRegenerating}
                                 className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 disabled:bg-stone-300 disabled:cursor-not-allowed rounded-lg transition-colors"
                                 title="Publish this post to Instagram + Threads via Buffer"
                               >
@@ -2616,8 +2993,8 @@ export default function Gallery() {
                                 Approve
                               </button>
                               <button
-                                onClick={() => reviewPost(p.id, "reject")}
-                                disabled={isReviewing}
+                                onClick={() => reviewPost(p.id, "reject", seenImages.pathToReview(p.id, p.image_path))}
+                                disabled={isReviewing || isRegenerating}
                                 className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 disabled:bg-stone-300 disabled:cursor-not-allowed rounded-lg transition-colors"
                                 title="Discard this image (won't be published)"
                               >
@@ -2626,12 +3003,14 @@ export default function Gallery() {
                               </button>
                               <button
                                 onClick={() => { setPromptEditId(promptEditId === p.id ? null : p.id); setPromptDraft(p.image_prompt || p.caption || ""); }}
-                                disabled={regenBusy === p.id}
+                                disabled={isRegenerating}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-100 text-purple-700 text-xs font-bold hover:bg-purple-200 disabled:opacity-50"
                                 title="Edit the image prompt and re-render this artwork"
                               >
-                                <Sparkles className="w-3.5 h-3.5" />
-                                {promptEditId === p.id ? "Close" : "Edit prompt"}
+                                {/* A card regenerating while another card's editor is open still says so. */}
+                                {isRegenerating && promptEditId !== p.id
+                                  ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Regenerating…</>
+                                  : <><Sparkles className="w-3.5 h-3.5" /> {promptEditId === p.id ? "Close" : "Edit prompt"}</>}
                               </button>
                             </div>
                             {promptEditId === p.id && (
@@ -2650,10 +3029,10 @@ export default function Gallery() {
                                 <div className="flex items-center gap-2 mt-2">
                                   <button
                                     onClick={() => void regeneratePending(p.id)}
-                                    disabled={regenBusy === p.id || !promptDraft.trim()}
+                                    disabled={isRegenerating || !promptDraft.trim()}
                                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 disabled:opacity-50"
                                   >
-                                    {regenBusy === p.id
+                                    {isRegenerating
                                       ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Regenerating…</>
                                       : <><RefreshCw className="w-3.5 h-3.5" /> Regenerate image</>}
                                   </button>
@@ -3748,6 +4127,7 @@ export default function Gallery() {
             onClose={() => setLightboxItem(null)}
             onNavigate={setLightboxItem}
             onDelete={handleDeleteImage}
+            onImageLoad={(it) => { if (it.pendingReview) seenImages.lightboxShown(it.pendingReview.id, it.pendingReview.imagePath); }}
           />
         )}
       </AnimatePresence>

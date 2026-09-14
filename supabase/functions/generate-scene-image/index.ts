@@ -6,34 +6,42 @@
 // approved in the Image Playground (public.image_gen_config, is_active = true).
 // The image is stored in the instagram-images bucket and the row is updated with
 // the public URL, so the Gallery flips it from "Not generated" to "Image generated".
-// Each render is checked by Claude vision against the research facts in its
-// prompt (_shared/visualCheck.ts) and re-rendered when a fact is clearly
-// contradicted; the outcome is stored in reader_scenes.visual_check.
+//
+// Visual check (_shared/visualCheck.ts): the Gallery calls this function and
+// Supabase cuts a request at 150s, so the image is stored and returned first and
+// Claude vision checks it AFTER the response (EdgeRuntime.waitUntil) against the
+// research facts in its prompt. The check only flags: a clearly contradicted fact
+// shows on the card, and the image is never re-rendered or swapped under a
+// reviewer. The row is saved with a "running" record (skipped when there is
+// nothing to check or the check is off) and the check writes its result over it
+// in reader_scenes.visual_check, only while the scene still holds that image.
 //
 // DEPLOY ORDER: apply supabase/migrations/20260913190000_scene_visual_research.sql
 // BEFORE deploying this function. Deployed first it is still safe (research is
 // skipped while scene_visual_research cannot be read), it just does no research.
 // Apply supabase/migrations/20260913230000_visual_check.sql (reader_scenes.visual_check)
-// first too. Deployed before it, the image is still stored, only without its check record.
+// first too. Deployed before it, the image is still stored, only without its check
+// record, and no check runs.
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getSceneResearch, sha16 } from "../_shared/sceneResearch.ts";
 import { assemblePrompt, extractEntities, normalizeForMatch, readerKey, sanitizeForImageModel } from "../_shared/sceneResearchCore.ts";
-import { imagePayload, renderWithVisualCheck } from "../_shared/visualCheck.ts";
+import {
+  backgroundDeadline,
+  checkInBackground,
+  imagePayload,
+  initialRecord,
+  needsBackgroundCheck,
+  runInBackground,
+  type VisualCheckRecord,
+} from "../_shared/visualCheck.ts";
 
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
 const TOGETHER_KEY = Deno.env.get("TOGETHER_API_KEY") || "";
 const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY") || "";
 const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-
-// A sync request is cut by the platform at 150s. Checks and re-renders are
-// optional, so they must fit before request start + REQUEST_BUDGET_MS, which
-// leaves time to upload the image and save the row.
-const REQUEST_BUDGET_MS = 130_000;
-// One render plus up to two re-renders when a research fact is contradicted.
-const VISUAL_CHECK_MAX_ATTEMPTS = 3;
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -208,25 +216,61 @@ function buildImagePrompt(visual: string, facts: string[], cfg: typeof DEFAULTS)
   return { prompt: sanitizeForImageModel(full), note: "", factsUsed: [] };
 }
 
-// imagePayload sends seed and steps only to black-forest-labs/ (FLUX) models:
-// openai/gpt-image-2 has neither parameter. signal ends a re-render the visual
-// check has abandoned.
-async function tryGenerate(prompt: string, model: string, w: number, h: number, steps: number | null, seed: number | null = null, signal?: AbortSignal) {
-  const payload = imagePayload(model, prompt, w, h, { seed, steps });
+// imagePayload sends steps only to black-forest-labs/ (FLUX) models:
+// openai/gpt-image-2 has no such parameter. No seed is sent.
+async function tryGenerate(prompt: string, model: string, w: number, h: number, steps: number | null) {
+  const payload = imagePayload(model, prompt, w, h, { steps });
   try {
     const res = await fetch(TOGETHER_API, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${TOGETHER_KEY}` },
       body: JSON.stringify(payload),
-      signal,
     });
     if (!res.ok) { console.log(`[scene] ${model} HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`); return null; }
     return (await res.json())?.data?.[0]?.b64_json || null;
   } catch (e) { console.log(`[scene] ${model} error ${e}`); return null; }
 }
 
+// PostgREST PGRST204 or Postgres 42703: reader_scenes.visual_check does not exist
+// (migration 20260913230000 not applied).
+function visualCheckColumnMissing(error: { code?: string } | null | undefined): boolean {
+  return error?.code === "PGRST204" || error?.code === "42703";
+}
+
+// The background check's write: visual_check only, and only while the scene still
+// holds the checked image. Every upload has a new file name, so once a newer
+// generation has stored its image (and its own record) this updates nothing.
+// Never throws: a record that is not stored is logged and dropped.
+async function storeCheckRecord(sceneId: number, imageUrl: string, record: VisualCheckRecord): Promise<boolean> {
+  const notStored = `[scene] visual check for scene ${sceneId} not stored`;
+  try {
+    const { data, error } = await supabase
+      .from("reader_scenes")
+      .update({ visual_check: record })
+      .eq("id", sceneId)
+      .eq("image_url", imageUrl)
+      .select("id");
+    if (error) {
+      console.warn(visualCheckColumnMissing(error)
+        ? `${notStored}: reader_scenes.visual_check does not exist (migration 20260913230000 not applied)`
+        : `${notStored}: ${error.message}`);
+      return false;
+    }
+    if (!Array.isArray(data) || data.length === 0) {
+      console.log(`${notStored}: the scene was deleted or holds a newer image`);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.warn(`${notStored}: ${e}`);
+    return false;
+  }
+}
+
 Deno.serve(async (req: Request) => {
-  const startedAt = Date.now();
+  // The background check's deadline counts from here, or from when the worker
+  // started if it was already running (backgroundDeadline).
+  const invocationStart = Date.now();
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return new Response(JSON.stringify({ error: "POST only" }), { status: 405, headers: CORS });
   if (!TOGETHER_KEY) return new Response(JSON.stringify({ error: "TOGETHER_API_KEY is not configured" }), { status: 500, headers: CORS });
@@ -240,8 +284,10 @@ Deno.serve(async (req: Request) => {
 
     await supabase.from("reader_scenes").update({ status: "generating", error_message: null }).eq("id", scene_id);
 
-    // Use the configuration approved in the playground.
-    const { data: cfgRow } = await supabase.from("image_gen_config").select("*").eq("is_active", true).limit(1).maybeSingle();
+    // Use the configuration approved in the playground. DEFAULTS apply only when
+    // no active row can be read.
+    const { data: cfgRow, error: cfgErr } = await supabase.from("image_gen_config").select("*").eq("is_active", true).limit(1).maybeSingle();
+    if (!cfgRow) console.warn(`[scene] no active image_gen_config${cfgErr ? ` (${cfgErr.message})` : ""}; rendering with the built-in defaults`);
     const cfg = { ...DEFAULTS, ...(cfgRow || {}) } as typeof DEFAULTS;
 
     const visual = await scenePromptFromText(scene.selected_text, scene.book);
@@ -253,31 +299,18 @@ Deno.serve(async (req: Request) => {
       { m: cfg.model, w: cfg.width, h: cfg.height },
       { m: cfg.fallback_model || cfg.model, w: cfg.fallback_width || cfg.width, h: cfg.fallback_height || cfg.height },
     ];
-    // One render is the approved model, then the fallback model. The prompt stays
-    // the same on a re-render: the first render sends no seed, exactly as before,
-    // and a re-render sends FLUX a new random seed so it draws a different picture.
-    const render = async (attemptIndex: number, signal?: AbortSignal) => {
-      const seed = attemptIndex > 0 ? Math.floor(Math.random() * 2_147_483_647) : null;
-      for (const a of attempts) {
-        const out = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps, seed, signal);
-        if (out) return { b64: out, model: a.m };
-      }
-      return null;
-    };
-    // Only the facts the prompt carries are checked: one left out for room was
-    // never asked for. With none the check is skipped, so this is one render as before.
-    const chosen = await renderWithVisualCheck({
-      render,
-      facts: factsUsed,
-      maxAttempts: VISUAL_CHECK_MAX_ATTEMPTS,
-      deadlineAt: startedAt + REQUEST_BUDGET_MS,
-      tag: `scene ${scene_id}`,
-    });
-    if (!chosen) {
+    // One render: the approved model, then the fallback model. Nothing is
+    // re-rendered here, whatever the check finds.
+    let rendered: { b64: string; model: string } | null = null;
+    for (const a of attempts) {
+      const out = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps);
+      if (out) { rendered = { b64: out, model: a.m }; break; }
+    }
+    if (!rendered) {
       await supabase.from("reader_scenes").update({ status: "failed", error_message: "All image attempts failed" }).eq("id", scene_id);
       return new Response(JSON.stringify({ error: "All image attempts failed" }), { status: 502, headers: CORS });
     }
-    const b64 = chosen.b64;
+    const b64 = rendered.b64;
 
     const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
     const fn = `scene-${scene_id}-${Date.now()}.jpg`;
@@ -288,11 +321,17 @@ Deno.serve(async (req: Request) => {
     }
     const url = supabase.storage.from("instagram-images").getPublicUrl(fn).data.publicUrl;
 
+    // Only the facts the prompt carries are checked: one left out for room was
+    // never asked for. With none, or with the check off, the record is skipped and
+    // no check runs. This function has no SAFE_FALLBACK prompt. started_at is when
+    // the check is queued (now); its deadline counts from invocationStart.
+    const queuedAt = Date.now();
+    const visualCheck = initialRecord({ factsUsed, safeFallback: false, imageModel: rendered.model, startedAt: queuedAt });
     const saved = {
       image_generated: true, image_url: url, image_prompt: sanitized,
       status: "generated", generated_at: new Date().toISOString(), error_message: null,
     };
-    const { error: saveErr } = await supabase.from("reader_scenes").update({ ...saved, visual_check: chosen.record }).eq("id", scene_id);
+    const { error: saveErr } = await supabase.from("reader_scenes").update({ ...saved, visual_check: visualCheck }).eq("id", scene_id);
     if (saveErr) {
       // Most likely the visual_check column does not exist yet (migration not
       // applied). Save the image without the record rather than leave the scene
@@ -301,7 +340,25 @@ Deno.serve(async (req: Request) => {
       await supabase.from("reader_scenes").update(saved).eq("id", scene_id);
     }
 
-    return new Response(JSON.stringify({ ok: true, scene_id, image_url: url, image_prompt: sanitized, model_used: cfg.model, visual_check: chosen.record }), { headers: CORS });
+    if (needsBackgroundCheck(visualCheck)) {
+      if (visualCheckColumnMissing(saveErr)) {
+        // The result could not be stored anywhere, so no Claude call is spent on it.
+        console.warn("[scene] visual check not started: reader_scenes.visual_check does not exist (migration 20260913230000 not applied)");
+      } else {
+        // Handed to EdgeRuntime.waitUntil before the response, so it outlives it.
+        runInBackground(checkInBackground({
+          b64,
+          facts: factsUsed,
+          imageModel: rendered.model,
+          startedAt: queuedAt,
+          deadlineAt: backgroundDeadline(invocationStart),
+          writeRecord: (record) => storeCheckRecord(scene_id, url, record),
+          tag: `scene ${scene_id}`,
+        }));
+      }
+    }
+
+    return new Response(JSON.stringify({ ok: true, scene_id, image_url: url, image_prompt: sanitized, model_used: cfg.model, visual_check: visualCheck }), { headers: CORS });
   } catch (err) {
     return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: CORS });
   }

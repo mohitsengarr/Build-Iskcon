@@ -17,14 +17,20 @@
 // every insert writes gita_chapter_art_review.visual_check. Deployed first, a
 // chapter is still saved, only without its check record.
 //
-// VISUAL CHECK: Claude vision checks each render against the research facts that
-// went into its prompt (_shared/visualCheck.ts). A clearly contradicted fact (three
-// horses, Krishna holding the bow) gets a re-render, up to 3 renders. Only the
-// facts the prompt carries are checked. Checks and re-renders share one deadline,
-// request start + 130s, so in a multi-chapter run the later chapters skip them
-// once time is short. A later chapter is not started at all once it could not
-// finish by that deadline: it is listed in skipped, and the next run picks it up.
-// The outcome is stored in visual_check and summarised in the response.
+// VISUAL CHECK: Claude vision checks each chapter's image against the research
+// facts that went into its prompt (_shared/visualCheck.ts). Supabase cuts a request
+// at 150s, so the check runs after the response, in EdgeRuntime.waitUntil. Each
+// chapter is rendered once and stored with a visual_check record: "running" while
+// its check is still to come, skipped when the prompt carries no facts or the
+// check is off. The check starts as soon as the chapter's row is written, so it
+// runs while later chapters render. The gallery starts these runs and a reviewer
+// looks at the result, so the check only FLAGS a clearly contradicted fact (three
+// horses, Krishna holding the bow) on the row: the image is never swapped. Only
+// the facts the prompt carries are checked. Every check of a run shares one
+// deadline, 360s after the worker started (backgroundDeadline). A later chapter
+// is not started once it could not be stored before the request is cut: it is
+// listed in skipped, and the next run picks it up. The response carries each
+// chapter's stored record.
 //
 // RESEARCH NETWORK: a single-chapter run ({ chapter }, or { missing: true } with
 // limit 1) may research on the web. A multi-chapter run ({ missing: true } with
@@ -36,14 +42,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getSceneResearch } from "../_shared/sceneResearch.ts";
 import { gitaResearchOptions } from "./researchMode.ts";
 import { assemblePrompt, extractEntities, gitaChapterKey, normalizeForMatch, sanitizeForImageModel } from "../_shared/sceneResearchCore.ts";
-import { imagePayload, renderWithVisualCheck } from "../_shared/visualCheck.ts";
-// A request is cut at 150s. Checks and re-renders only start while they can
-// finish before request start + CHECK_BUDGET_MS, leaving time to store the row.
-const CHECK_BUDGET_MS = 130_000;
-const MAX_RENDER_ATTEMPTS = 3;
-// About one chapter's time: brief, cached research, one gpt-image-2 render and
-// the upload. A later chapter starts only while it can finish before the deadline.
-const CHAPTER_ESTIMATE_MS = 60_000;
+import { backgroundDeadline, checkInBackground, imagePayload, initialRecord, needsBackgroundCheck, runInBackground } from "../_shared/visualCheck.ts";
+import { fallbackSizeFor } from "../_shared/imageSizes.ts";
+// A request is cut at 150s, a streamed one too. A run plans to have its last
+// chapter stored by request start + REQUEST_BUDGET_MS, leaving time to respond.
+const REQUEST_BUDGET_MS = 140_000;
+// About one chapter's time now that the check runs after the response: the brief,
+// cached research, one ~10s FLUX.2-pro render (and the fallback model's when that
+// fails) and the upload. A later chapter starts only while it can be stored by
+// request start + REQUEST_BUDGET_MS.
+const CHAPTER_ESTIMATE_MS = 45_000;
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
 const TOGETHER_KEY = Deno.env.get("TOGETHER_API_KEY") || "";
@@ -207,19 +215,17 @@ async function writeSceneAndCaption(ch) {
   if (!m) throw new Error("Claude returned no JSON");
   return JSON.parse(m[0]);
 }
-// imagePayload sends seed and steps to FLUX (black-forest-labs/) models only:
-// OpenAI image models such as openai/gpt-image-2 have neither parameter.
-// signal ends a re-render the visual check has abandoned.
-async function tryGenerate(prompt, model, w, h, steps, seed, signal) {
-  const payload = imagePayload(model, prompt, w, h, { steps, seed });
+// imagePayload sends steps to FLUX (black-forest-labs/) models only: OpenAI image
+// models such as openai/gpt-image-2 do not take it.
+async function tryGenerate(prompt, model, w, h, steps) {
+  const payload = imagePayload(model, prompt, w, h, { steps });
   const res = await fetch(TOGETHER_API, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${TOGETHER_KEY}`
     },
-    body: JSON.stringify(payload),
-    signal
+    body: JSON.stringify(payload)
   });
   if (!res.ok) {
     console.log(`[gita-art] ${model} HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
@@ -345,8 +351,9 @@ function buildImagePrompt(scene, facts, cfg) {
   if (full.length > maxLen) full = full.slice(0, maxLen);
   return { prompt: sanitizeForImageModel(full), note: "", factsUsed: [] };
 }
-// The response carries the outcome only; the stored record also lists each
-// failed fact with what the painting showed.
+// The response carries the record the row was stored with, "running" while its
+// check is still to come; the check writes its outcome to the row, where each
+// failed fact is listed with what the painting showed.
 function visualCheckSummary(record) {
   return {
     status: record.status,
@@ -358,8 +365,30 @@ function visualCheckSummary(record) {
     image_model: record.image_model
   };
 }
-// requestStart is when the request began. Every chapter of a run shares the
-// check deadline built from it (the handler binds it once, as buildOne).
+// Writes the background check's record over the chapter's "running" one. A
+// compare-and-swap on the stored image: a row whose image was replaced since
+// (regenerate-chapter-art stores a new image_path with its own record) or that is
+// gone keeps what it has. A missing visual_check column or any other failure is
+// logged and left alone; the check is never retried.
+function recordWriter(id, imagePath, chapter) {
+  return async (record)=>{
+    const { data, error } = await supabase.from("gita_chapter_art_review").update({
+      visual_check: record
+    }).eq("id", id).eq("image_path", imagePath).select("id");
+    if (error) {
+      const missingColumn = error.code === "PGRST204" || error.code === "42703";
+      console.warn(`[gita-art] ch${chapter} visual_check not stored: ${missingColumn ? "the visual_check column is missing" : `update failed (${error.code} ${String(error.message).slice(0, 200)})`}`);
+      return false;
+    }
+    if (!Array.isArray(data) || data.length === 0) {
+      console.warn(`[gita-art] ch${chapter} visual_check not stored: the row no longer holds ${imagePath}`);
+      return false;
+    }
+    return true;
+  };
+}
+// requestStart is when the request began. Every chapter's background check
+// shares the deadline built from it (the handler binds it once, as buildOne).
 async function buildChapter(ch, researchOptions, requestStart) {
   const { data: cfgRow } = await supabase.from("image_gen_config").select("*").eq("is_active", true).limit(1).maybeSingle();
   const cfg = {
@@ -385,42 +414,27 @@ async function buildChapter(ch, researchOptions, requestStart) {
   // Gita the only book with portrait chapter art.
   const cw = cfg.cover_width || cfg.width;
   const chh = cfg.cover_height || cfg.height;
+  // The fallback model keeps the cover's shape at the scale of the configured
+  // fallback size (DEFAULTS only with no active row), the rule
+  // regenerate-chapter-art applies to this same queue.
+  const fallback = fallbackSizeFor(cw, chh, cfg.fallback_width, cfg.fallback_height);
   const chain = [
     { m: cfg.model, w: cw, h: chh },
-    { m: cfg.fallback_model || cfg.model, w: 1024, h: Math.round(1024 * chh / cw) },
+    { m: cfg.fallback_model || cfg.model, w: fallback.w, h: fallback.h },
   ];
-  // One render is the model, then the fallback model if that fails. Render 0
-  // sends the same request as before the check existed (no seed). A re-render
-  // gives FLUX a new random seed so it draws a different picture; imagePayload
-  // leaves the seed out for other models, which vary on their own. The prompt
-  // stays the same.
-  let renderError = null;
-  const render = async (attempt, signal) => {
-    const seed = attempt > 0 ? Math.floor(Math.random() * 2_147_483_647) : null;
-    try {
-      for (const a of chain) {
-        const b64 = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps, seed, signal);
-        if (b64) return { b64, model: a.m };
-      }
-      return null;
-    } catch (e) {
-      // A first render that throws fails the chapter with its own error, as before.
-      if (attempt === 0) renderError = e;
-      throw e;
+  // One render: the model, then the fallback model if that fails, each sending
+  // the request made before the visual check existed (no seed). A Together
+  // request that throws fails the chapter with its own error.
+  let image = null;
+  for (const a of chain) {
+    const b64 = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps);
+    if (b64) {
+      image = { b64, model: a.m };
+      break;
     }
-  };
-  // Only the facts the prompt carries are checked: one left out for room was
-  // never asked for. With none, this is one render and a record with status "skipped".
-  const checked = await renderWithVisualCheck({
-    render,
-    facts: factsUsed,
-    maxAttempts: MAX_RENDER_ATTEMPTS,
-    deadlineAt: requestStart + CHECK_BUDGET_MS,
-    tag: `gita-art ch${ch.n}`
-  });
-  if (!checked) throw renderError || new Error(`All image attempts failed for chapter ${ch.n}`);
-  const b64 = checked.b64;
-  const bytes = Uint8Array.from(atob(b64), (c)=>c.charCodeAt(0));
+  }
+  if (!image) throw new Error(`All image attempts failed for chapter ${ch.n}`);
+  const bytes = Uint8Array.from(atob(image.b64), (c)=>c.charCodeAt(0));
   const fn = `gita-ch${ch.n}-${Date.now()}.jpg`;
   const { error: upErr } = await supabase.storage.from("instagram-images").upload(fn, bytes, {
     contentType: "image/jpeg",
@@ -439,26 +453,45 @@ async function buildChapter(ch, researchOptions, requestStart) {
     hashtags: brief.hashtags,
     status: "pending"
   };
+  // Stored with the image: "running" while its check is still to come, skipped
+  // when the prompt carries no facts or the check is off. Only the facts the
+  // prompt carries are checked: one left out for room was never asked for.
+  const queuedAt = Date.now();
+  const record = initialRecord({ factsUsed, imageModel: image.model, startedAt: queuedAt });
   let { data: row, error: insErr } = await supabase.from("gita_chapter_art_review").insert({
     ...saved,
-    visual_check: checked.record
+    visual_check: record
   }).select("id").single();
   if (insErr && /visual_check/.test(insErr.message)) {
     // The visual_check column is missing (migration not applied yet): keep the
-    // chapter and its paid renders, without the record.
+    // chapter and its paid render, without the record.
     console.warn(`[gita-art] insert with visual_check failed (${insErr.message}); saving without it`);
     ({ data: row, error: insErr } = await supabase.from("gita_chapter_art_review").insert(saved).select("id").single());
   }
   if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
+  if (needsBackgroundCheck(record)) {
+    // Flag only, after the response: a wrong image is marked on the row for the
+    // reviewer, never replaced. Handed over now, before the handler returns.
+    runInBackground(checkInBackground({
+      b64: image.b64,
+      facts: factsUsed,
+      imageModel: image.model,
+      startedAt: queuedAt,
+      deadlineAt: backgroundDeadline(requestStart),
+      writeRecord: recordWriter(row?.id, fn, ch.n),
+      tag: `gita-art ch${ch.n}`
+    }));
+  }
   return {
     chapter: ch.n,
     id: row?.id,
     image_url: url,
-    visual_check: visualCheckSummary(checked.record)
+    visual_check: visualCheckSummary(record)
   };
 }
 Deno.serve(async (req)=>{
-  // The check deadline counts from here, before any chapter work.
+  // The check deadline counts from here, before any chapter work, or from when the
+  // worker started if it was already running (backgroundDeadline).
   const requestStart = Date.now();
   if (req.method === "OPTIONS") return new Response("ok", {
     headers: CORS
@@ -517,16 +550,16 @@ Deno.serve(async (req)=>{
       limit: body.limit,
       targetCount: targets.length
     });
-    // One check deadline for the whole run: a later chapter skips its checks
-    // and re-renders once the earlier ones have used the time.
+    // One background deadline for the whole run: every chapter's check stops
+    // starting 360s after the worker started (backgroundDeadline).
     const buildOne = (ch, options)=>buildChapter(ch, options, requestStart);
     const generated = [];
     const errors = [];
     // Chapters not started because the request would be cut at 150s before they
-    // could finish. They are still missing, so the next run picks them up.
+    // could be stored. They are still missing, so the next run picks them up.
     const skipped = [];
     for (const [i, ch] of targets.entries()){
-      if (i > 0 && Date.now() > requestStart + CHECK_BUDGET_MS - CHAPTER_ESTIMATE_MS) {
+      if (i > 0 && Date.now() > requestStart + REQUEST_BUDGET_MS - CHAPTER_ESTIMATE_MS) {
         skipped.push({
           chapter: ch.n,
           reason: "deadline"

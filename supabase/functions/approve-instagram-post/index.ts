@@ -1,4 +1,35 @@
-// Supabase Edge Function: approve-instagram-post (v10)
+// Supabase Edge Function: approve-instagram-post (v12)
+//
+// v12 changes:
+// - THE IMAGE THE REVIEWER SAW: the gallery sends image_path, the image its card
+//   shows, and both claims require the row to still hold it. A render the
+//   background check swapped in after the reviewer looked is never published or
+//   deleted: the request gets 409 image_changed with the new image to review. A
+//   request without image_path (an older gallery) claims whatever image the row
+//   holds, as in v11.
+// - PRECISE 409s: when no claim matches, the row is read again and the answer says
+//   why: already_<status>, image_changed, claimed (a fresh claim: try again in a
+//   few minutes) or publish_unknown (below). A claim or re-read error is 503.
+// - PUBLISH MARKER: approve sets publish_started_at on its own claim right before
+//   it calls Meta, Buffer or the channel, and publishes nothing when that fails. A
+//   stale claim with the marker is never taken over (publish_unknown: check
+//   Instagram first), so a request that died after it started publishing is never
+//   repeated. A marker update that errors releases the claim and clears any marker
+//   it wrote, since nothing was published: the post is not left with a dead claim
+//   that blocks a regenerate, or with a marker that reads as publish_unknown. The
+//   final approve update is retried once; if it still fails, the 500 says the post
+//   was published and must not be approved again. The claim is never released once
+//   publishing started.
+// - REJECT MARKS FIRST: reject marks the row rejected on its own claim before it
+//   deletes the image; a failed update releases the claim and deletes nothing.
+//
+// v11 changes:
+// - CLAIM BEFORE PUBLISHING: instagram-post now checks each new post after it
+//   responds and can swap a better render into a pending post in the background.
+//   Approve and reject first claim the post (reviewed_at stamped on a pending,
+//   unclaimed row, in one compare-and-swap) and then work only from the row the
+//   claim returned, so the image they publish or delete cannot change under them.
+//   A second request for the same post gets 409 while the claim is fresh.
 //
 // v10 changes:
 // - CROSS-POST TO THE IN-APP BHĀGAVATAM CHANNEL: on Approve, the artwork is also
@@ -252,6 +283,122 @@ async function regenInBackground(rejectedId: number, chapterGlobalNumber: number
   }
 }
 
+// ── Claim the post before publishing or deleting its image (v11) ─────────────
+// instagram-post re-renders a post whose image contradicts the scene's facts in
+// the background, after it has responded, and swaps a better render into the row
+// only while the post is still pending AND unclaimed (reviewed_at is null);
+// regenerate-pending-image saves over the image only under the same condition.
+// Approve and reject claim the post by stamping reviewed_at on a pending,
+// unclaimed row in one compare-and-swap, then use the row that claim returns: no
+// swap can change the image they publish or delete after that. When the request
+// names the image the reviewer saw (image_path), both claims also need the row to
+// still hold that image, so a render swapped in after the reviewer looked is never
+// published or deleted (explainClaimMiss answers image_changed). A claim older
+// than CLAIM_STALE_MS was left by a request that died and can be taken over, but
+// only while publish_started_at is null: approve sets it on its own claim right
+// before it publishes, and a request that died after that may already have posted
+// (explainClaimMiss answers publish_unknown). regenerate-pending-image treats a
+// stale claim without the marker as dead too. A claim is released only when nothing
+// was published or deleted under it (releaseClaim), and never after publishing
+// starts: a second approval would post twice.
+const CLAIM_STALE_MS = 10 * 60 * 1000;
+
+async function claimPending(id: number, imagePath: string | null): Promise<{ row: any | null; stamp: string; error: string | null }> {
+  const stamp = new Date().toISOString();
+  const claim = () => {
+    const q = supabase.from("ig_pending_review").update({ reviewed_at: stamp }).eq("id", id).eq("status", "pending");
+    return imagePath ? q.eq("image_path", imagePath) : q;
+  };
+  const fresh = await claim().is("reviewed_at", null).select("*");
+  if (fresh.error) return { row: null, stamp, error: fresh.error.message };
+  if (Array.isArray(fresh.data) && fresh.data.length === 1) return { row: fresh.data[0], stamp, error: null };
+  const cutoff = new Date(Date.now() - CLAIM_STALE_MS).toISOString();
+  const stale = await claim().lt("reviewed_at", cutoff).is("publish_started_at", null).select("*");
+  if (stale.error) return { row: null, stamp, error: stale.error.message };
+  if (Array.isArray(stale.data) && stale.data.length === 1) return { row: stale.data[0], stamp, error: null };
+  return { row: null, stamp, error: null };
+}
+
+// Neither claim matched: read the row again and answer precisely why, so the
+// gallery can show a changed image or the right message. A read error is 503.
+async function explainClaimMiss(id: number, imagePath: string | null): Promise<{ status: number; body: Record<string, unknown> }> {
+  const { data: row, error } = await supabase.from("ig_pending_review")
+    .select("id,status,reviewed_at,image_url,image_path,publish_started_at,visual_check")
+    .eq("id", id).maybeSingle();
+  if (error) return { status: 503, body: { error: `Could not read post ${id} after its claim missed: ${error.message}` } };
+  if (!row) return { status: 404, body: { error: `Pending post ${id} not found` } };
+  if (row.status !== "pending") return { status: 409, body: { error: `Already ${row.status}`, status: `already_${row.status}` } };
+  if (row.reviewed_at) {
+    const claimedAt = Date.parse(row.reviewed_at);
+    if (!Number.isFinite(claimedAt) || Date.now() - claimedAt <= CLAIM_STALE_MS) {
+      return { status: 409, body: { error: `Post ${id} is already being approved or rejected. Try again in a few minutes.`, status: "claimed" } };
+    }
+    if (row.publish_started_at) {
+      return {
+        status: 409,
+        body: {
+          error: `An earlier approval of post ${id} started publishing at ${row.publish_started_at} and did not finish. Check Instagram before approving again.`,
+          status: "publish_unknown",
+          publish_started_at: row.publish_started_at,
+        },
+      };
+    }
+  }
+  if (imagePath && row.image_path !== imagePath) {
+    return {
+      status: 409,
+      body: {
+        error: `Post ${id} now holds a different image than the one you reviewed. Review the new image, then approve or reject again.`,
+        status: "image_changed",
+        id,
+        image_url: row.image_url,
+        image_path: row.image_path,
+        visual_check: row.visual_check ?? null,
+      },
+    };
+  }
+  // Nothing explains the miss any more: a claim was released or taken in between.
+  return { status: 409, body: { error: `Post ${id} was being approved or rejected by another request. Try again in a few minutes.`, status: "claimed" } };
+}
+
+// Gives back this request's own claim (reviewed_at still its stamp) when nothing was
+// published or deleted under it: a reject whose update failed, or an approval whose
+// publish marker could not be written. The post can then be approved, rejected or
+// regenerated at once instead of waiting out a dead claim. It also clears
+// publish_started_at: while this claim holds, only this request's failed marker
+// update can have set it (a stale claim is taken over only without the marker), and
+// a marker left behind would make a later claim that dies before its own marker look
+// like one that started publishing (publish_unknown). Best effort: a claim left
+// behind goes stale after CLAIM_STALE_MS.
+async function releaseClaim(id: number, stamp: string): Promise<void> {
+  try {
+    const { error } = await supabase.from("ig_pending_review").update({ reviewed_at: null, publish_started_at: null }).eq("id", id).eq("reviewed_at", stamp);
+    if (error) console.error(`Could not release the claim on post ${id}: ${error.message}`);
+  } catch (err) {
+    console.error(`Could not release the claim on post ${id}: ${err}`);
+  }
+}
+
+// The approve update after publishing, retried once on error: it writes the same
+// values again, so repeating it is safe. Returns the last error, or null once it
+// succeeded.
+const APPROVE_UPDATE_TRIES = 2;
+
+async function markApproved(id: number, values: Record<string, unknown>): Promise<string | null> {
+  let lastError = "unknown error";
+  for (let attempt = 1; attempt <= APPROVE_UPDATE_TRIES; attempt++) {
+    try {
+      const { error } = await supabase.from("ig_pending_review").update(values).eq("id", id);
+      if (!error) return null;
+      lastError = error.message;
+    } catch (err) {
+      lastError = String(err);
+    }
+    console.error(`Approve update for post ${id} failed (try ${attempt} of ${APPROVE_UPDATE_TRIES}): ${lastError}`);
+  }
+  return lastError;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "content-type, authorization, apikey" } });
@@ -260,10 +407,13 @@ Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: corsHeaders });
 
   try {
-    const { id, action, service } = await req.json() as { id: number; action: "approve" | "reject" | "republish"; service?: string };
+    const { id, action, service, image_path } = await req.json() as { id: number; action: "approve" | "reject" | "republish"; service?: string; image_path?: string | null };
     if (!id || (action !== "approve" && action !== "reject" && action !== "republish")) {
       return new Response(JSON.stringify({ error: "Missing id or invalid action" }), { status: 400, headers: corsHeaders });
     }
+    // The image the reviewer saw (v12). A request without it (an older gallery)
+    // claims whatever image the row holds.
+    const seenPath = typeof image_path === "string" && image_path.length > 0 ? image_path : null;
 
     const { data: pending, error: fetchErr } = await supabase.from("ig_pending_review").select("*").eq("id", id).single();
     if (fetchErr || !pending) return new Response(JSON.stringify({ error: `Pending post ${id} not found: ${fetchErr?.message || "missing"}` }), { status: 404, headers: corsHeaders });
@@ -294,28 +444,68 @@ Deno.serve(async (req: Request) => {
 
     if (pending.status !== "pending") return new Response(JSON.stringify({ error: `Already ${pending.status}`, status: pending.status }), { status: 409, headers: corsHeaders });
 
+    // Claim the post (claimPending); everything below works from the claimed row.
+    const claim = await claimPending(id, seenPath);
+    if (claim.error) return new Response(JSON.stringify({ error: `Could not claim post ${id}: ${claim.error}` }), { status: 503, headers: corsHeaders });
+    if (!claim.row) {
+      const miss = await explainClaimMiss(id, seenPath);
+      return new Response(JSON.stringify(miss.body), { status: miss.status, headers: corsHeaders });
+    }
+    const post = claim.row;
+
     if (action === "reject") {
-      try { await supabase.storage.from("instagram-images").remove([pending.image_path]); } catch { /* best effort */ }
-      const { error: upErr } = await supabase.from("ig_pending_review").update({ status: "rejected", reviewed_at: new Date().toISOString() }).eq("id", id);
-      if (upErr) throw new Error(`Reject update: ${upErr.message}`);
+      // Mark the post rejected on this request's own claim first, and delete its
+      // image only after that: a failed update must never leave a pending post whose
+      // file is gone. When the update fails nothing is deleted and the claim is
+      // released, so the post can be reviewed again at once.
+      const { data: rejected, error: rejectErr } = await supabase.from("ig_pending_review")
+        .update({ status: "rejected", reviewed_at: new Date().toISOString() })
+        .eq("id", id).eq("reviewed_at", claim.stamp).select("id");
+      if (rejectErr || !Array.isArray(rejected) || rejected.length !== 1) {
+        await releaseClaim(id, claim.stamp);
+        if (rejectErr) return new Response(JSON.stringify({ error: `Reject update: ${rejectErr.message}. Nothing was deleted; try again.` }), { status: 500, headers: corsHeaders });
+        return new Response(JSON.stringify({ error: `Post ${id} was claimed by another request before it could be rejected. Nothing was deleted.`, status: "claimed" }), { status: 409, headers: corsHeaders });
+      }
+      if (post.image_path) {
+        try { await supabase.storage.from("instagram-images").remove([post.image_path]); } catch { /* best effort */ }
+      }
       // @ts-ignore - EdgeRuntime is provided by Supabase
-      EdgeRuntime.waitUntil(regenInBackground(id, pending.chapter_global_number));
+      EdgeRuntime.waitUntil(regenInBackground(id, post.chapter_global_number));
       return new Response(JSON.stringify({ success: true, status: "rejected", id, regeneration: { ok: true, detail: "Regeneration running in background — a new pending post will appear in ~30-60s." }, message: "Rejected. New attempt queued — will appear in pending review shortly." }), { headers: corsHeaders });
     }
 
-    // action === "approve" — publish to Instagram (Meta) primary; Buffer fallback.
+    // action === "approve". Record that publishing starts, on this request's own
+    // claim, before any Meta, Buffer or channel call: a stale claim with this marker
+    // is never taken over, so a request that dies from here on is never repeated.
+    // Nothing is published unless the marker was written. An error releases this
+    // request's claim, and any marker the failed update did write (releaseClaim):
+    // nothing was published under it. No row means another request took the claim
+    // over, and it is left alone. Once the marker is written the claim is never
+    // released.
+    const { data: marked, error: markErr } = await supabase.from("ig_pending_review")
+      .update({ publish_started_at: new Date().toISOString() })
+      .eq("id", id).eq("reviewed_at", claim.stamp).select("id");
+    if (markErr) {
+      await releaseClaim(id, claim.stamp);
+      return new Response(JSON.stringify({ error: `Could not mark post ${id} as publishing: ${markErr.message}. Nothing was published; try again.` }), { status: 503, headers: corsHeaders });
+    }
+    if (!Array.isArray(marked) || marked.length !== 1) {
+      return new Response(JSON.stringify({ error: `Post ${id} was claimed by another request before publishing started. Nothing was published.`, status: "claimed" }), { status: 409, headers: corsHeaders });
+    }
+
+    // Publish to Instagram (Meta) primary; Buffer fallback.
     let results: PubResult[] = [];
     let publishErrors: PubError[] = [];
     let topLevelError: string | null = null;
     let via = "meta";
 
     if (IG_USER_ID && META_TOKEN) {
-      const r = await publishToInstagram(pending.image_url, pending.caption, pending.hashtags);
+      const r = await publishToInstagram(post.image_url, post.caption, post.hashtags);
       results = r.results; publishErrors = r.errors;
     } else {
       via = "buffer";
       try {
-        const r = await queueToBuffer(pending.image_url, pending.caption, pending.hashtags);
+        const r = await queueToBuffer(post.image_url, post.caption, post.hashtags);
         results = r.results;
         publishErrors = r.errors.map(e => ({ service: e.service, error: e.error }));
       } catch (err) {
@@ -324,7 +514,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Cross-post the artwork into the in-app Bhāgavatam channel (decoupled, non-fatal).
-    const channel = await crossPostToBhagavatamChannel(pending);
+    const channel = await crossPostToBhagavatamChannel(post);
 
     // Ask Buffer what it actually did, so an expired channel surfaces here rather
     // than as silence on the feed.
@@ -337,13 +527,24 @@ Deno.serve(async (req: Request) => {
     if (!channel.ok) notes.push(`bhagavatam-channel: ${channel.error}`);
     const publishNote = notes.length > 0 ? notes.join(" | ") : null;
 
-    const { error: upErr } = await supabase.from("ig_pending_review").update({
+    // Retried once (markApproved). When it still fails the post has gone out: say
+    // so, and keep the claim and the marker so no later request publishes it again.
+    const approveErr = await markApproved(id, {
       status: "approved",
       buffer_post_ids: results,
       reviewed_at: new Date().toISOString(),
       error_message: publishNote,
-    }).eq("id", id);
-    if (upErr) throw new Error(`Approve update: ${upErr.message}`);
+    });
+    if (approveErr) {
+      const sent = published
+        ? `Post ${id} was published to Instagram${channel.ok ? " and the Bhāgavatam channel" : ""}`
+        : `Post ${id} was sent for publishing${channel.ok ? " and posted to the Bhāgavatam channel" : ""} (${publishNote || "no channel accepted it"})`;
+      return new Response(JSON.stringify({
+        success: false, id, published, via, buffer: results, publishNote,
+        channelPosted: channel.ok, partialErrors: publishErrors, bufferProblems, doNotRepeat: true,
+        error: `Approve update: ${approveErr}. ${sent}, but it could not be marked approved. Do not approve it again: check Instagram first.`,
+      }), { status: 500, headers: corsHeaders });
+    }
 
     return new Response(JSON.stringify({
       success: true, status: "approved", id, published, via, buffer: results,

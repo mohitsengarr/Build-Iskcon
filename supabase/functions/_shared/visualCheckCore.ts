@@ -8,12 +8,15 @@
 // Why: FLUX.2-pro drew Gita chapter 1 with three horses and Krishna holding the
 // bow, although the prompt said "exactly four white horses" and put the Gandiva
 // in Arjuna's hands. Prompt text cannot fix counts. Each render is now checked by
-// Claude vision against the same research facts that went into its prompt, and
-// re-rendered when a fact is clearly contradicted.
+// Claude vision against the same research facts that went into its prompt.
+// Supabase cuts a request at 150s, so a request stores its image with a "running"
+// record and the check runs after the response: gallery-triggered generation only
+// flags a contradicted fact, unattended generation re-renders the image.
 //
-// The IO wrapper (visualCheck.ts) makes the Claude call and runs the render and
-// retry loop; everything that decides what is sent, how the answer is read and
-// whether to spend another render lives here so it can be tested offline.
+// The IO wrapper (visualCheck.ts) makes the Claude call and runs the render loops
+// and the background work; everything that decides what is sent, how the answer
+// is read, which record a new image starts with and whether to spend another
+// render lives here so it can be tested offline.
 
 export const VISUAL_CHECK_TOOL_NAME = "record_visual_check";
 export const VISUAL_CHECK_MODEL = "claude-opus-5";
@@ -300,7 +303,9 @@ export function imagePayload(
 
 // ── Stored record ────────────────────────────────────────────────────────────
 
-export type VisualCheckStatus = "pass" | "fail" | "error" | "skipped";
+/** "running": the image is stored and its check has not finished (it runs after the response). */
+export type VisualCheckStatus = "pass" | "fail" | "error" | "skipped" | "running";
+export const VISUAL_CHECK_STATUSES: VisualCheckStatus[] = ["pass", "fail", "error", "skipped", "running"];
 
 export interface VisualCheckRecord {
   status: VisualCheckStatus;
@@ -311,9 +316,18 @@ export interface VisualCheckRecord {
   reason: string | null;
   image_model: string | null;
   checked_at: string | null;
+  /**
+   * When the background check was queued (ISO). Only records built with a
+   * startedAt carry the key: the in-request loop's records keep their shape.
+   */
+  started_at?: string | null;
 }
 
-/** The plain JSON stored in the visual_check jsonb column. checkedAt is passed in, never computed here. */
+/**
+ * The plain JSON stored in the visual_check jsonb column. checkedAt and startedAt
+ * are passed in, never computed here. started_at is stored whenever the input has
+ * a startedAt key, as null when it is not a non-empty string.
+ */
 export function visualCheckRecord(input: {
   status: VisualCheckStatus;
   attempts: number;
@@ -323,9 +337,11 @@ export function visualCheckRecord(input: {
   reason?: string | null;
   imageModel?: string | null;
   checkedAt?: string | null;
+  startedAt?: string | null;
 }): VisualCheckRecord {
   const count = (v: unknown) => (Number.isFinite(Number(v)) ? Math.max(0, Math.floor(Number(v))) : 0);
-  return {
+  const text = (v: unknown) => (typeof v === "string" && v.length > 0 ? v : null);
+  const record: VisualCheckRecord = {
     status: input.status,
     attempts: count(input.attempts),
     chosen_attempt: count(input.chosenAttempt),
@@ -334,8 +350,87 @@ export function visualCheckRecord(input: {
       observed: String(f?.observed ?? ""),
     })),
     unclear: count(input.unclear),
-    reason: typeof input.reason === "string" && input.reason.length > 0 ? input.reason : null,
-    image_model: typeof input.imageModel === "string" && input.imageModel.length > 0 ? input.imageModel : null,
-    checked_at: typeof input.checkedAt === "string" && input.checkedAt.length > 0 ? input.checkedAt : null,
+    reason: text(input.reason),
+    image_model: text(input.imageModel),
+    checked_at: text(input.checkedAt),
   };
+  if ("startedAt" in input) record.started_at = text(input.startedAt);
+  return record;
+}
+
+// ── Background check ─────────────────────────────────────────────────────────
+
+/**
+ * Work handed to EdgeRuntime.waitUntil outlives the response (the response itself
+ * is cut at 150s) until the worker is stopped, 400s of wall clock after it
+ * started on the Pro plan, whichever request it is serving. Background checks and
+ * re-renders stop 360s after that start, leaving time to store the result.
+ */
+export const BACKGROUND_BUDGET_MS = 360_000;
+
+/**
+ * Epoch ms after which background work starts no check or render, counted from
+ * `invocationStart`. The IO wrapper's backgroundDeadline passes the worker's start
+ * instead when the worker started earlier. NaN when the start is not a finite
+ * number: the image is then still checked once (bounded by the check timeout) but
+ * never re-rendered.
+ */
+export function backgroundDeadline(invocationStart: number): number {
+  return typeof invocationStart === "number" && Number.isFinite(invocationStart)
+    ? invocationStart + BACKGROUND_BUDGET_MS
+    : Number.NaN;
+}
+
+/** The record stored with an image whose check is still to come. */
+export function runningRecord(input: { imageModel?: string | null; startedAt?: string | null }): VisualCheckRecord {
+  return visualCheckRecord({
+    status: "running",
+    attempts: 1,
+    chosenAttempt: 0,
+    imageModel: input?.imageModel,
+    checkedAt: null,
+    startedAt: input?.startedAt ?? null,
+  });
+}
+
+/**
+ * The record stored with a new image, before any check. In this order:
+ * - skipped/no_facts: no research fact reached the prompt, so nothing can be checked
+ *   (blank and non-string facts do not count);
+ * - skipped/safe_fallback: the image came from SAFE_FALLBACK, a prompt with none of the facts;
+ * - skipped/disabled: the check cannot run (the IO side sets disabled when
+ *   VISUAL_CHECK_ENABLED is off or ANTHROPIC_API_KEY is missing);
+ * - otherwise running: the background check is still to come.
+ * checkedAt (skipped records only) and startedAt are passed in.
+ */
+export function initialRecordFor(input: {
+  factsUsed?: unknown;
+  safeFallback?: unknown;
+  imageModel?: string | null;
+  startedAt?: string | null;
+  disabled?: boolean;
+  checkedAt?: string | null;
+}): VisualCheckRecord {
+  const startedAt = input?.startedAt ?? null;
+  const list = input?.factsUsed;
+  const facts = Array.isArray(list) ? list.filter((f) => typeof f === "string" && f.trim().length > 0) : [];
+  const skipped = (reason: string) =>
+    visualCheckRecord({
+      status: "skipped",
+      attempts: 1,
+      chosenAttempt: 0,
+      reason,
+      imageModel: input?.imageModel,
+      checkedAt: input?.checkedAt,
+      startedAt,
+    });
+  if (facts.length === 0) return skipped("no_facts");
+  if (input?.safeFallback) return skipped("safe_fallback");
+  if (input?.disabled) return skipped("disabled");
+  return runningRecord({ imageModel: input?.imageModel, startedAt });
+}
+
+/** True only for a running record: its image still needs the background check. */
+export function needsBackgroundCheck(record: unknown): boolean {
+  return !!record && typeof record === "object" && (record as { status?: unknown }).status === "running";
 }

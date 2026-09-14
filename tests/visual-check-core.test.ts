@@ -4,16 +4,22 @@ import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
+  BACKGROUND_BUDGET_MS,
+  backgroundDeadline,
   buildVisualCheckParams,
   detectImageMediaType,
   imagePayload,
+  initialRecordFor,
   MAX_CHECK_IMAGE_B64_CHARS,
   MAX_OBSERVED_CHARS,
+  needsBackgroundCheck,
   parseVisualCheck,
   pickBest,
   RETRY_MARGIN_MS,
+  runningRecord,
   shouldRetry,
   verdictFor,
+  VISUAL_CHECK_STATUSES,
   VISUAL_CHECK_TOOL,
   visualCheckRecord,
 } from "../supabase/functions/_shared/visualCheckCore.ts";
@@ -23,6 +29,11 @@ const FACTS = [
   "Arjuna holds the Gandiva bow",
   "Krishna holds the reins",
 ];
+const FLUX2 = "black-forest-labs/FLUX.2-pro";
+const STARTED_AT = "2026-09-14T10:00:00.000Z";
+const CHECKED_AT = "2026-09-14T10:00:12.000Z";
+/** The keys every record has, in the order they are written. */
+const RECORD_KEYS = ["status", "attempts", "chosen_attempt", "failed", "unclear", "reason", "image_model", "checked_at"];
 
 const b64 = (bytes: number[]) => Buffer.from(bytes).toString("base64");
 const PNG_B64 = b64([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52]);
@@ -453,6 +464,190 @@ describe("visualCheckRecord", () => {
     assert.equal(rec.attempts, 0);
     assert.equal(rec.chosen_attempt, 0);
     assert.equal(rec.unclear, 0);
+  });
+});
+
+describe("VISUAL_CHECK_STATUSES", () => {
+  test("running joins pass, fail, error and skipped, and a record can carry it", () => {
+    // Arrange / Act
+    const rec = visualCheckRecord({ status: "running", attempts: 1, chosenAttempt: 0 });
+    // Assert
+    assert.deepEqual(VISUAL_CHECK_STATUSES, ["pass", "fail", "error", "skipped", "running"]);
+    assert.equal(rec.status, "running");
+  });
+});
+
+describe("visualCheckRecord started_at", () => {
+  test("a record built with startedAt stores it as started_at, after the original keys", () => {
+    // Arrange / Act
+    const rec = visualCheckRecord({ status: "pass", attempts: 1, chosenAttempt: 0, checkedAt: CHECKED_AT, startedAt: STARTED_AT });
+    // Assert
+    assert.equal(rec.started_at, STARTED_AT);
+    assert.equal(rec.checked_at, CHECKED_AT);
+    assert.deepEqual(Object.keys(rec), [...RECORD_KEYS, "started_at"]);
+  });
+
+  test("boundary: a startedAt key that is null, undefined, empty or not a string stores started_at null", () => {
+    const withStart = (startedAt: unknown) =>
+      // deno-lint-ignore no-explicit-any
+      visualCheckRecord({ status: "running", attempts: 1, chosenAttempt: 0, startedAt: startedAt as any });
+    for (const v of [null, undefined, "", 1_757_844_000_000]) {
+      const rec = withStart(v);
+      assert.ok("started_at" in rec, `key kept for ${String(v)}`);
+      assert.equal(rec.started_at, null, String(v));
+    }
+  });
+
+  test("negative: without a startedAt key the record keeps its original eight keys (the in-request loop's shape)", () => {
+    // Arrange / Act
+    const rec = visualCheckRecord({ status: "fail", attempts: 2, chosenAttempt: 1, failed: [{ fact: "f", observed: "o" }] });
+    // Assert
+    assert.equal("started_at" in rec, false);
+    assert.deepEqual(Object.keys(rec), RECORD_KEYS);
+  });
+});
+
+describe("runningRecord", () => {
+  test("status running, one attempt, attempt 0, nothing failed, not checked yet, with the model and start time", () => {
+    // Arrange / Act
+    const rec = runningRecord({ imageModel: FLUX2, startedAt: STARTED_AT });
+    // Assert
+    assert.deepEqual(rec, {
+      status: "running",
+      attempts: 1,
+      chosen_attempt: 0,
+      failed: [],
+      unclear: 0,
+      reason: null,
+      image_model: FLUX2,
+      checked_at: null,
+      started_at: STARTED_AT,
+    });
+    assert.deepEqual(Object.keys(rec), [...RECORD_KEYS, "started_at"]);
+    assert.deepEqual(JSON.parse(JSON.stringify(rec)), rec);
+  });
+
+  test("boundary: no model and no start time -> image_model null and started_at null, with the key kept", () => {
+    const rec = runningRecord({});
+    assert.equal(rec.image_model, null);
+    assert.equal(rec.started_at, null);
+    assert.ok("started_at" in rec);
+  });
+
+  test("negative: a null input does not throw", () => {
+    // deno-lint-ignore no-explicit-any
+    const rec = runningRecord(null as any);
+    assert.equal(rec.status, "running");
+    assert.equal(rec.started_at, null);
+  });
+});
+
+describe("initialRecordFor", () => {
+  const base = { factsUsed: FACTS, safeFallback: false, imageModel: FLUX2, startedAt: STARTED_AT, disabled: false, checkedAt: CHECKED_AT };
+  const skipped = (reason: string) => ({
+    status: "skipped",
+    attempts: 1,
+    chosen_attempt: 0,
+    failed: [],
+    unclear: 0,
+    reason,
+    image_model: FLUX2,
+    checked_at: CHECKED_AT,
+    started_at: STARTED_AT,
+  });
+
+  test("facts reached the prompt, no fallback and the check can run -> the running record", () => {
+    // Arrange / Act
+    const rec = initialRecordFor(base);
+    // Assert
+    assert.deepEqual(rec, runningRecord({ imageModel: FLUX2, startedAt: STARTED_AT }));
+    assert.equal(rec.checked_at, null, "a running image has not been checked, whatever checkedAt says");
+    assert.equal(needsBackgroundCheck(rec), true);
+  });
+
+  test("no fact reached the prompt -> skipped/no_facts, stamped with checkedAt and startedAt", () => {
+    const rec = initialRecordFor({ ...base, factsUsed: [] });
+    assert.deepEqual(rec, skipped("no_facts"));
+    assert.equal(needsBackgroundCheck(rec), false);
+  });
+
+  test("the image came from SAFE_FALLBACK -> skipped/safe_fallback", () => {
+    const rec = initialRecordFor({ ...base, safeFallback: true });
+    assert.deepEqual(rec, skipped("safe_fallback"));
+    assert.equal(needsBackgroundCheck(rec), false);
+  });
+
+  test("the check cannot run (disabled) -> skipped/disabled", () => {
+    const rec = initialRecordFor({ ...base, disabled: true });
+    assert.deepEqual(rec, skipped("disabled"));
+    assert.equal(needsBackgroundCheck(rec), false);
+  });
+
+  test("order: no_facts before safe_fallback before disabled", () => {
+    assert.equal(initialRecordFor({ ...base, factsUsed: [], safeFallback: true, disabled: true }).reason, "no_facts");
+    assert.equal(initialRecordFor({ ...base, safeFallback: true, disabled: true }).reason, "safe_fallback");
+  });
+
+  test("boundary: blank and non-string facts do not count; one real fact is enough to check", () => {
+    assert.equal(initialRecordFor({ ...base, factsUsed: ["", "   ", null, 7] }).reason, "no_facts");
+    assert.equal(initialRecordFor({ ...base, factsUsed: ["", "Krishna holds the reins"] }).status, "running");
+  });
+
+  test("negative: facts that are not an array, a missing field or a null input -> skipped/no_facts, never throws", () => {
+    assert.equal(initialRecordFor({ ...base, factsUsed: "four white horses" }).reason, "no_facts");
+    assert.equal(initialRecordFor({ ...base, factsUsed: undefined }).reason, "no_facts");
+    // deno-lint-ignore no-explicit-any
+    const bare = initialRecordFor(null as any);
+    assert.deepEqual(bare, { ...skipped("no_facts"), image_model: null, checked_at: null, started_at: null });
+  });
+});
+
+describe("needsBackgroundCheck", () => {
+  test("true for a running record", () => {
+    // Arrange
+    const rec = runningRecord({ imageModel: FLUX2, startedAt: STARTED_AT });
+    // Act / Assert
+    assert.equal(needsBackgroundCheck(rec), true);
+    assert.equal(needsBackgroundCheck({ status: "running" }), true);
+  });
+
+  test("every finished status -> false", () => {
+    for (const status of ["pass", "fail", "error", "skipped"] as const) {
+      assert.equal(needsBackgroundCheck(visualCheckRecord({ status, attempts: 1, chosenAttempt: 0, startedAt: STARTED_AT })), false, status);
+    }
+  });
+
+  test("negative: null, undefined, a string, an array, no status or another case -> false", () => {
+    for (const v of [null, undefined, "running", ["running"], {}, { status: "RUNNING" }]) {
+      assert.equal(needsBackgroundCheck(v), false, JSON.stringify(v));
+    }
+  });
+});
+
+describe("backgroundDeadline", () => {
+  test("is the invocation start plus 360s", () => {
+    // Arrange
+    const invocationStart = 1_757_844_000_000;
+    // Act
+    const deadline = backgroundDeadline(invocationStart);
+    // Assert
+    assert.equal(BACKGROUND_BUDGET_MS, 360_000);
+    assert.equal(deadline, 1_757_844_360_000);
+  });
+
+  test("boundary: the budget ends inside the 400s of wall clock that waitUntil work gets; a start of 0 is a real start", () => {
+    assert.ok(BACKGROUND_BUDGET_MS < 400_000);
+    assert.equal(backgroundDeadline(0), 360_000);
+  });
+
+  test("negative: a missing or non-finite start -> NaN, so no re-render is ever started", () => {
+    // deno-lint-ignore no-explicit-any
+    for (const v of [undefined, null, Number.NaN, Infinity, "1757844000000"] as any[]) {
+      assert.ok(Number.isNaN(backgroundDeadline(v)), String(v));
+    }
+    // deno-lint-ignore no-explicit-any
+    const deadlineAt = backgroundDeadline(undefined as any);
+    assert.equal(shouldRetry({ attemptsSoFar: 1, maxAttempts: 3, now: 0, deadlineAt, lastRenderMs: 0, lastCheckMs: 0 }), false);
   });
 });
 

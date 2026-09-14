@@ -1,7 +1,17 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getSceneResearch, type SceneResearchInput } from "../_shared/sceneResearch.ts";
-import { imagePayload, renderWithVisualCheck, type VisualCheckRecord } from "../_shared/visualCheck.ts";
+import {
+  backgroundDeadline,
+  checkInBackground,
+  imagePayload,
+  initialRecord,
+  needsBackgroundCheck,
+  renderWithVisualCheck,
+  runInBackground,
+  type VisualCheckRecord,
+} from "../_shared/visualCheck.ts";
+import { fallbackSizeFor } from "../_shared/imageSizes.ts";
 import { type FluxAttempt, runFluxAttempts } from "./fluxAttempts.ts";
 import {
   assemblePrompt,
@@ -23,15 +33,14 @@ const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-// Visual check (_shared/visualCheck.ts): Claude vision checks each render against
-// the research facts and re-renders on a clear contradiction. Sample mode is a
-// sync request cut at 150s: checks and re-renders only start before request
-// start + 130s, with up to two re-renders. Bulk mode runs in waitUntil, which
-// shares the worker's wall clock: every chapter of the run shares one deadline
-// of invocation start + 360s, with at most one re-render each.
-const SYNC_CHECK_DEADLINE_MS = 130_000;
-const SYNC_MAX_ATTEMPTS = 3;
-const BULK_CHECK_DEADLINE_MS = 360_000;
+// Visual check (_shared/visualCheck.ts): Claude vision checks each image against
+// the research facts in its prompt. Sample mode is the gallery's sync request,
+// cut at 150s: the image is stored after one render and the check runs after the
+// response (EdgeRuntime.waitUntil, until backgroundDeadline: 360s after the worker
+// started), only flagging a wrong image on its card. Bulk mode already runs in
+// waitUntil, which shares the worker's wall clock: it checks before each insert
+// and re-renders on a clear contradiction, every chapter of the run sharing that
+// one deadline, with at most one re-render each.
 const BULK_MAX_ATTEMPTS = 2;
 
 const MASCULINITY_RULE = "ALL adult male characters MUST look distinctly MASCULINE — NEVER androgynous, NEVER feminine, NEVER soft-featured. Male sages: elder MEN with thick grey/white beards reaching chest, weathered masculine face, sacred thread across bare chest. Male kings: muscular MEN with broad chests, strong square jaws, groomed dark beards. Male youths: clean-shaven athletic MEN with defined jawline, broad shoulders. Female characters keep feminine features but male characters MUST look VISIBLY DIFFERENT.";
@@ -113,7 +122,7 @@ Return JSON only (no fences):
 // Per-attempt request timeout (no hang) + surfaced HTTP status, so a slow or
 // rejected FLUX call fails fast and is visible in the function logs instead of
 // silently collapsing into "All FLUX attempts failed".
-async function tryGenerate(prompt: string, model: string, w: number, h: number, seed?: number, signal?: AbortSignal): Promise<string | null> {
+async function tryGenerate(prompt: string, model: string, w: number, h: number, steps: number | null, seed?: number, signal?: AbortSignal): Promise<string | null> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 90000);
   // A re-render the visual check has abandoned aborts this request too.
@@ -123,8 +132,9 @@ async function tryGenerate(prompt: string, model: string, w: number, h: number, 
   try {
     const res = await fetch(TOGETHER_API, {
       method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${TOGETHER_KEY}` },
-      // seed goes only to FLUX models, and only on a re-render (see generateImage).
-      body: JSON.stringify(imagePayload(model, prompt, w, h, { seed })),
+      // seed goes only to FLUX models, and only on a re-render (see generateImage);
+      // the configuration's steps go only to FLUX models too.
+      body: JSON.stringify(imagePayload(model, prompt, w, h, { seed, steps })),
       signal: ctrl.signal,
     });
     if (!res.ok) { console.log(`[bulk-generate-images] ${model}: HTTP ${res.status} ${(await res.text().catch(() => "")).slice(0, 160)}`); return null; }
@@ -134,22 +144,47 @@ async function tryGenerate(prompt: string, model: string, w: number, h: number, 
 }
 
 // The active configuration approved in the Image Playground (/image-playground).
-// Fetched once per run; if the table is empty or unreachable we fall back to the
+// Read once per request (a bulk run shares one read) and never cached across
+// requests, so an approved change reaches the next run and a failed read is not
+// remembered. With no active row, or an unreachable table, we fall back to the
 // hard-coded values below, so generation never depends on it being present.
 interface ActiveGenConfig {
   model: string; width: number; height: number; steps: number | null;
   style_positives: string; style_negatives: string; extra_rules: string | null;
   prompt_max_len: number;
   fallback_model: string | null; fallback_width: number | null; fallback_height: number | null;
+  // These rows are Instagram posts: the Instagram size (width/height when unset).
+  ig_width?: number | null; ig_height?: number | null;
 }
-let activeCfgCache: ActiveGenConfig | null | undefined;
 async function getActiveConfig(): Promise<ActiveGenConfig | null> {
-  if (activeCfgCache !== undefined) return activeCfgCache;
   try {
-    const { data } = await supabase.from("image_gen_config").select("*").eq("is_active", true).limit(1).maybeSingle();
-    activeCfgCache = (data as ActiveGenConfig) || null;
-  } catch { activeCfgCache = null; }
-  return activeCfgCache;
+    const { data, error } = await supabase.from("image_gen_config").select("*").eq("is_active", true).limit(1).maybeSingle();
+    if (error) console.warn(`[bulk-generate-images] image_gen_config read failed (${error.message}); using the built-in defaults`);
+    return (data as ActiveGenConfig) || null;
+  } catch (e) {
+    console.warn(`[bulk-generate-images] image_gen_config read threw (${e}); using the built-in defaults`);
+    return null;
+  }
+}
+
+// Instagram posts render at the configuration's Instagram size (ig_width x
+// ig_height), or its width x height when no Instagram size is set. A fallback at
+// the Instagram size keeps the post's shape at the scale of the configured fallback
+// size (fallbackSizeFor: its long side, the other side from the post's
+// proportions): the configuration has no Instagram fallback size, and
+// fallback_width x fallback_height used as it is (the portrait size) would change
+// the crop. regenerate-pending-image renders these posts at the same sizes.
+function instagramSizes(cfg: ActiveGenConfig): { w: number; h: number; fw: number; fh: number } {
+  if (cfg.ig_width && cfg.ig_height) {
+    const fallback = fallbackSizeFor(cfg.ig_width, cfg.ig_height, cfg.fallback_width, cfg.fallback_height);
+    return { w: cfg.ig_width, h: cfg.ig_height, fw: fallback.w, fh: fallback.h };
+  }
+  return { w: cfg.width, h: cfg.height, fw: cfg.fallback_width || cfg.width, fh: cfg.fallback_height || cfg.height };
+}
+
+// The visual_check column is missing (migration not applied): PGRST204 or 42703.
+function missingColumn(error: { code?: string; message?: string } | null): boolean {
+  return !!error && (error.code === "PGRST204" || error.code === "42703" || /visual_check/.test(error.message ?? ""));
 }
 
 // The compressed layout the no-config prompt uses today: ART_STYLE +
@@ -237,17 +272,20 @@ function legacySanitize(text: string): string {
   return text.replace(LEGACY_SANITIZE_RE, "blessing");
 }
 
-// The chosen image and the visual_check record stored with it. safe_fallback is
-// true when the chain ended on SAFE_FALLBACK, a prompt that carries no facts.
-interface CheckedImage { b64: string; visualCheck: VisualCheckRecord & { safe_fallback: boolean } }
+// The stored image. model drew it, safeFallback is true when the chain ended on
+// SAFE_FALLBACK (a prompt that carries no facts), and checkFacts are the facts
+// the prompt carries, the only ones checked. record is the checked record when a
+// check budget is given (bulk mode) and null otherwise (sample mode: the caller
+// stores the initial record and checks after the response).
+interface GeneratedImage { b64: string; model: string | null; safeFallback: boolean; checkFacts: string[]; record: VisualCheckRecord | null }
 interface CheckBudget { deadlineAt: number; maxAttempts: number; tag: string }
 
 async function generateImage(
   prompt: string,
-  facts: string[] = [],
-  check: CheckBudget = { deadlineAt: Date.now() + SYNC_CHECK_DEADLINE_MS, maxAttempts: SYNC_MAX_ATTEMPTS, tag: "bulk-generate-images" },
-): Promise<CheckedImage> {
-  const cfg = await getActiveConfig();
+  facts: string[],
+  cfg: ActiveGenConfig | null,
+  check: CheckBudget | null,
+): Promise<GeneratedImage> {
   let fullPrompt: string;
   // How many research facts fullPrompt carries; SAFE_FALLBACK logs them as dropped.
   let factsInPrompt = 0;
@@ -303,13 +341,17 @@ async function generateImage(
   // This function has never sent a seed, so attempt 0 still sends none. A
   // re-render keeps the prompt and sends a new random seed to FLUX, so it draws
   // a different picture (gpt-image-2 gets no seed and varies on its own).
+  // Model, sizes and steps from the configuration (fallback model: its model when
+  // none is set); the hard-coded chain only when there is no configuration.
+  const steps = cfg?.steps ?? null;
+  const size = cfg ? instagramSizes(cfg) : null;
   const attemptsFor = (attemptIndex: number): FluxAttempt[] => {
     const seed = attemptIndex > 0 ? Math.floor(Math.random() * 1_000_000) : undefined;
-    return cfg
+    return cfg && size
       ? [
-          { model: cfg.model, prompt: sanitized, w: cfg.width, h: cfg.height, seed },
-          { model: cfg.fallback_model || cfg.model, prompt: sanitized, w: cfg.fallback_width || cfg.width, h: cfg.fallback_height || cfg.height, seed },
-          { model: cfg.fallback_model || cfg.model, prompt: SAFE_FALLBACK, w: cfg.fallback_width || cfg.width, h: cfg.fallback_height || cfg.height, safeFallback: true },
+          { model: cfg.model, prompt: sanitized, w: size.w, h: size.h, seed },
+          { model: cfg.fallback_model || cfg.model, prompt: sanitized, w: size.fw, h: size.fh, seed },
+          { model: cfg.fallback_model || cfg.model, prompt: SAFE_FALLBACK, w: size.fw, h: size.fh, safeFallback: true },
         ]
       : [
           { model: "black-forest-labs/FLUX.2-pro", prompt: sanitized, w: 1088, h: 1344, seed },
@@ -322,25 +364,29 @@ async function generateImage(
   // A SAFE_FALLBACK image carries none of the facts, so it is kept unchecked
   // (reason safe_fallback) and never re-rendered: the same prompt would only be
   // refused again. The record says it was SAFE_FALLBACK.
-  const checked = await renderWithVisualCheck({
-    render: async (attemptIndex, signal) => {
-      const attempts = attemptsFor(attemptIndex);
-      const used: { attempt: FluxAttempt | null } = { attempt: null };
-      const b64 = await runFluxAttempts(attempts, a => {
-        used.attempt = a;
-        return tryGenerate(a.prompt, a.model, a.w, a.h, a.seed, signal);
-      }, { tag: "bulk-generate-images", factsInPrompt, signal });
-      if (!b64) return null;
-      const safeFallback = used.attempt?.safeFallback === true;
-      return { b64, model: used.attempt?.model ?? null, safeFallback, skipCheck: safeFallback ? "safe_fallback" : null };
-    },
-    facts: checkFacts,
-    maxAttempts: check.maxAttempts,
-    deadlineAt: check.deadlineAt,
-    tag: check.tag,
-  });
-  if (checked) return { b64: checked.b64, visualCheck: { ...checked.record, safe_fallback: checked.safeFallback === true } };
-  throw new Error("All FLUX attempts failed");
+  const render = async (attemptIndex: number, signal?: AbortSignal) => {
+    // A re-render never ends on SAFE_FALLBACK: that image carries none of the
+    // facts, so the check loop would only discard it after paying for it.
+    const attempts = attemptsFor(attemptIndex).filter(a => attemptIndex === 0 || !a.safeFallback);
+    const used: { attempt: FluxAttempt | null } = { attempt: null };
+    const b64 = await runFluxAttempts(attempts, a => {
+      used.attempt = a;
+      return tryGenerate(a.prompt, a.model, a.w, a.h, steps, a.seed, signal);
+    }, { tag: "bulk-generate-images", factsInPrompt, signal });
+    if (!b64) return null;
+    const safeFallback = used.attempt?.safeFallback === true;
+    return { b64, model: used.attempt?.model ?? null, safeFallback, skipCheck: safeFallback ? "safe_fallback" : null };
+  };
+  if (check) {
+    // Bulk mode: checked, and re-rendered on a clear contradiction, before the insert.
+    const checked = await renderWithVisualCheck({ render, facts: checkFacts, maxAttempts: check.maxAttempts, deadlineAt: check.deadlineAt, tag: check.tag });
+    if (!checked) throw new Error("All FLUX attempts failed");
+    return { b64: checked.b64, model: checked.model, safeFallback: checked.safeFallback === true, checkFacts, record: checked.record };
+  }
+  // Sample mode: one render, checked after the response.
+  const first = await render(0);
+  if (!first) throw new Error("All FLUX attempts failed");
+  return { b64: first.b64, model: first.model, safeFallback: first.safeFallback, checkFacts, record: null };
 }
 
 // getSceneResearch never rejects; the catch is a second guard so research can
@@ -364,6 +410,39 @@ async function uploadImage(b64: string, ch: ChapterInfo) {
   const { error } = await supabase.storage.from("instagram-images").upload(fn, bytes, { contentType: "image/jpeg", upsert: true });
   if (error) throw new Error(error.message);
   return { url: supabase.storage.from("instagram-images").getPublicUrl(fn).data.publicUrl, path: fn };
+}
+
+// Sample mode, flag only: checks the stored image once after the response and
+// writes the result by a compare-and-swap on its file, so a regenerate that
+// replaced the image never gets this image's record. A missing visual_check
+// column or a row that moved on is logged and ignored. Call it before returning.
+function checkAfterResponse(o: { id: number | string; path: string; image: GeneratedImage; record: VisualCheckRecord; invocationStart: number }): void {
+  const tag = `[bulk-generate-images] #${o.id}`;
+  runInBackground(checkInBackground({
+    b64: o.image.b64,
+    facts: o.image.checkFacts,
+    imageModel: o.image.model,
+    startedAt: o.record.started_at ?? null,
+    deadlineAt: backgroundDeadline(o.invocationStart),
+    writeRecord: async (checked) => {
+      const { data, error } = await supabase
+        .from("ig_pending_review")
+        .update({ visual_check: { ...checked, safe_fallback: o.image.safeFallback } })
+        .eq("id", o.id)
+        .eq("image_path", o.path)
+        .select("id");
+      if (error) {
+        console.warn(`${tag} visual_check not stored: ${missingColumn(error) ? "the visual_check column is missing" : error.message}`);
+        return false;
+      }
+      if (!Array.isArray(data) || data.length === 0) {
+        console.log(`${tag} visual_check not stored: the post no longer holds ${o.path}`);
+        return false;
+      }
+      return true;
+    },
+    tag: `bulk-generate-images #${o.id}`,
+  }));
 }
 
 async function listExistingChapters(): Promise<Set<number>> {
@@ -403,11 +482,13 @@ async function getMissingChapters(): Promise<ChapterInfo[]> {
 }
 
 // opts.networkResearch defaults to true (sample mode); bulk mode passes false.
-// opts.deadlineAt and opts.maxAttempts bound the visual check; the defaults are
-// the sync ones, counted from now.
+// opts.cfg is the active configuration, read once per request. opts.check (bulk
+// mode) bounds the check and re-renders made before the insert. Without it
+// (sample mode) the image is stored after one render and checked after the
+// response, flag only, until backgroundDeadline(opts.invocationStart).
 async function generateOne(
   chapter: ChapterInfo,
-  opts: { networkResearch?: boolean; deadlineAt?: number; maxAttempts?: number } = {},
+  opts: { networkResearch?: boolean; cfg?: ActiveGenConfig | null; check?: { deadlineAt: number; maxAttempts: number }; invocationStart?: number } = {},
 ): Promise<{ ok: boolean; chapter: ChapterInfo; pendingId?: number; visualCheck?: VisualCheckRecord; error?: string }> {
   try {
     const text = await getChapterText(chapter);
@@ -418,12 +499,21 @@ async function generateOne(
       book: "bhagavatam",
       sceneText: imagePrompt,
     }, opts.networkResearch !== false);
-    const { b64, visualCheck } = await generateImage(imagePrompt, facts, {
-      deadlineAt: opts.deadlineAt ?? Date.now() + SYNC_CHECK_DEADLINE_MS,
-      maxAttempts: opts.maxAttempts ?? SYNC_MAX_ATTEMPTS,
-      tag: `bulk-generate-images g${chapter.globalNumber}`,
-    });
-    const { url, path } = await uploadImage(b64, chapter);
+    const image = await generateImage(
+      imagePrompt,
+      facts,
+      opts.cfg ?? null,
+      opts.check ? { ...opts.check, tag: `bulk-generate-images g${chapter.globalNumber}` } : null,
+    );
+    const { url, path } = await uploadImage(image.b64, chapter);
+    // Bulk mode stores the checked record. Sample mode stores the initial record:
+    // skipped when nothing can be checked, otherwise "running" until the
+    // background check writes its result. safe_fallback says the image came from
+    // SAFE_FALLBACK.
+    const visualCheck = {
+      ...(image.record ?? initialRecord({ factsUsed: image.checkFacts, safeFallback: image.safeFallback, imageModel: image.model, startedAt: Date.now() })),
+      safe_fallback: image.safeFallback,
+    };
     const row = {
       chapter_global_number: chapter.globalNumber,
       chapter_canto: chapter.skandh,
@@ -433,13 +523,25 @@ async function generateOne(
       caption, hashtags, status: "pending",
     };
     let { data: inserted, error } = await supabase.from("ig_pending_review").insert({ ...row, visual_check: visualCheck }).select("id").single();
+    let recordStored = true;
     if (error && /visual_check/.test(error.message)) {
       // The visual_check column is missing (migration not applied yet): keep the
       // image and its paid renders, without the record.
       console.warn(`[bulk-generate-images] insert with visual_check failed (${error.message}); saving without it`);
+      recordStored = false;
       ({ data: inserted, error } = await supabase.from("ig_pending_review").insert(row).select("id").single());
     }
     if (error) throw new Error(error.message);
+    // Sample mode: started here, before the response; the check runs after it.
+    // With no visual_check column there is nowhere to keep a result.
+    if (needsBackgroundCheck(visualCheck)) {
+      const id = inserted?.id;
+      if (recordStored && (typeof id === "number" || typeof id === "string")) {
+        checkAfterResponse({ id, path, image, record: visualCheck, invocationStart: Number(opts.invocationStart) });
+      } else {
+        console.warn(`[bulk-generate-images] visual check not started: ${recordStored ? "no review row id" : "the visual_check column is missing"}`);
+      }
+    }
     return { ok: true, chapter, pendingId: inserted?.id, visualCheck };
   } catch (e) { return { ok: false, chapter, error: String(e) }; }
 }
@@ -460,7 +562,7 @@ async function runInParallel<T>(items: T[], concurrency: number, fn: (item: T) =
 }
 
 Deno.serve(async (req: Request) => {
-  const startedAt = Date.now();
+  const invocationStart = Date.now();
   if (req.method === "OPTIONS") return new Response("ok", { headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "content-type, authorization, apikey" } });
   const cors = { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" };
   try {
@@ -474,7 +576,8 @@ Deno.serve(async (req: Request) => {
     if (mode === "sample") {
       const missing = await getMissingChapters();
       if (missing.length === 0) return new Response(JSON.stringify({ error: "No missing chapters" }), { status: 404, headers: cors });
-      const r = await generateOne(missing[0], { deadlineAt: startedAt + SYNC_CHECK_DEADLINE_MS, maxAttempts: SYNC_MAX_ATTEMPTS });
+      // One render; the check runs after this response and only flags the image.
+      const r = await generateOne(missing[0], { cfg: await getActiveConfig(), invocationStart });
       return new Response(JSON.stringify(r), { headers: cors });
     }
     if (mode === "bulk") {
@@ -483,10 +586,16 @@ Deno.serve(async (req: Request) => {
       const missing = (await getMissingChapters()).slice(0, limit);
       if (missing.length === 0) return new Response(JSON.stringify({ error: "No missing chapters" }), { status: 404, headers: cors });
       // Research in bulk is cache-only: no Firecrawl, Claude or cache write per chapter.
-      // One visual check deadline for the whole run (invocation start + 360s).
-      const bulkCheck = { networkResearch: false, deadlineAt: startedAt + BULK_CHECK_DEADLINE_MS, maxAttempts: BULK_MAX_ATTEMPTS };
+      // One configuration read and one visual check deadline for the whole run
+      // (backgroundDeadline: 360s after the worker started, or the invocation when
+      // the worker is new).
+      const bulkRun = {
+        networkResearch: false,
+        cfg: await getActiveConfig(),
+        check: { deadlineAt: backgroundDeadline(invocationStart), maxAttempts: BULK_MAX_ATTEMPTS },
+      };
       // @ts-ignore - EdgeRuntime is provided by Supabase
-      EdgeRuntime.waitUntil(runInParallel(missing, concurrency, (c: ChapterInfo) => generateOne(c, bulkCheck)));
+      EdgeRuntime.waitUntil(runInParallel(missing, concurrency, (c: ChapterInfo) => generateOne(c, bulkRun)));
       return new Response(JSON.stringify({ started: true, queued: missing.length, concurrency, research: "cache-only", message: `Generating ${missing.length} images in parallel (${concurrency} at a time).` }), { headers: cors });
     }
     return new Response(JSON.stringify({ error: "Invalid mode" }), { status: 400, headers: cors });

@@ -1,7 +1,18 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getSceneResearch, type SceneResearchInput } from "../_shared/sceneResearch.ts";
-import { imagePayload, renderWithVisualCheck, type VisualCheckRecord } from "../_shared/visualCheck.ts";
+import {
+  backgroundDeadline,
+  imagePayload,
+  type IndexedRender,
+  initialRecord,
+  needsBackgroundCheck,
+  redoInBackground,
+  type RenderOutput,
+  runInBackground,
+  type VisualCheckRecord,
+} from "../_shared/visualCheck.ts";
+import { fallbackSizeFor } from "../_shared/imageSizes.ts";
 import { type FluxAttempt, runFluxAttempts } from "./fluxAttempts.ts";
 import { inlineImagePrompt } from "./inlinePrompt.ts";
 import {
@@ -26,25 +37,47 @@ const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 // ── Approved image configuration (Image Playground) ──────────────────────────
-// One set of settings drives every generator; falls back to the values below if
-// no configuration has been approved or the table is unreachable.
+// The active configuration drives every render: model, fallback model, size,
+// steps, style, rules and prompt limit. The values in this file are used only
+// when no configuration is active or the table is unreachable.
 interface ActiveGenCfg {
   model: string; width: number; height: number; steps: number | null;
   fallback_model: string | null; fallback_width: number | null; fallback_height: number | null;
   // Instagram-specific size. Chapter art stays portrait for the books, so this
   // is separate rather than overloading width/height.
   ig_width: number | null; ig_height: number | null;
-  // Read only to LOWER the existing 2000-char limit, never to raise it.
+  style_positives?: string | null; style_negatives?: string | null; extra_rules?: string | null;
   prompt_max_len?: number | null;
 }
-let __cfgCache: ActiveGenCfg | null | undefined;
+// Read on every request, never cached: a configuration approved in the
+// playground reaches the next post, and a failed read is not remembered.
 async function getActiveGenConfig(): Promise<ActiveGenCfg | null> {
-  if (__cfgCache !== undefined) return __cfgCache;
   try {
-    const { data } = await supabase.from("image_gen_config").select("*").eq("is_active", true).limit(1).maybeSingle();
-    __cfgCache = (data as ActiveGenCfg) || null;
-  } catch { __cfgCache = null; }
-  return __cfgCache;
+    const { data, error } = await supabase.from("image_gen_config").select("*").eq("is_active", true).limit(1).maybeSingle();
+    if (error) console.warn(`[instagram-post] image_gen_config read failed (${error.message}); using the built-in defaults`);
+    return (data as ActiveGenCfg) || null;
+  } catch (e) {
+    console.warn(`[instagram-post] image_gen_config read threw (${e}); using the built-in defaults`);
+    return null;
+  }
+}
+
+// Instagram size: the configuration's ig_width x ig_height, or its width x height
+// when no Instagram size is set. A fallback render at the Instagram size keeps the
+// post's shape at the scale of the configured fallback size (fallbackSizeFor: its
+// long side, the other side from the post's proportions): the configuration has no
+// Instagram fallback size, and fallback_width x fallback_height used as it is (the
+// portrait book size) would change the crop. With no configuration, 1344x768 and a
+// 1024x576 fallback as before.
+function instagramSizes(cfg: ActiveGenCfg | null): { w: number; h: number; fw: number; fh: number } {
+  if (!cfg) return { w: 1344, h: 768, fw: 1024, fh: 576 };
+  if (cfg.ig_width && cfg.ig_height) {
+    const fallback = fallbackSizeFor(cfg.ig_width, cfg.ig_height, cfg.fallback_width, cfg.fallback_height);
+    return { w: cfg.ig_width, h: cfg.ig_height, fw: fallback.w, fh: fallback.h };
+  }
+  const w = cfg.width || 1344;
+  const h = cfg.height || 768;
+  return { w, h, fw: cfg.fallback_width || w, fh: cfg.fallback_height || h };
 }
 
 
@@ -61,11 +94,13 @@ async function getActiveGenConfig(): Promise<ActiveGenCfg | null> {
 
 const SOFT_SAFETY_FLOOR = 50;
 
-// Visual check (_shared/visualCheck.ts): Claude vision checks each render against
-// the research facts and re-renders on a clear contradiction. The request is cut
-// at 150s, so a check or re-render only starts while it fits before request
-// start + 130s. One render plus up to two re-renders.
-const CHECK_DEADLINE_MS = 130_000;
+// Visual check (_shared/visualCheck.ts): Claude vision checks the image against
+// the research facts in its prompt. The request is cut at 150s, so the post is
+// stored after one render and the check runs after the response, in
+// EdgeRuntime.waitUntil. This is unattended generation: while a fact is clearly
+// contradicted the image is re-rendered, and a better render replaces the stored
+// one only while the post is still pending with that image. One render plus up
+// to two re-renders, none started more than 360s after the worker started.
 const CHECK_MAX_ATTEMPTS = 3;
 
 const GENDER_RULES = [
@@ -340,11 +375,11 @@ async function generateScenePromptInline(
   return JSON.parse(m[0]);
 }
 
-async function tryGenerate(prompt: string, model: string, w: number, h: number, seed?: number, signal?: AbortSignal): Promise<string | null> {
+async function tryGenerate(prompt: string, model: string, w: number, h: number, steps: number | null, seed?: number, signal?: AbortSignal): Promise<string | null> {
   try {
-    // seed goes only to FLUX models; openai/gpt-image-2 has no seed parameter.
+    // seed and steps go only to FLUX models; openai/gpt-image-2 has neither.
     // signal ends a re-render the visual check has abandoned.
-    const body = imagePayload(model, prompt, w, h, { seed });
+    const body = imagePayload(model, prompt, w, h, { seed, steps });
     const res = await fetch(TOGETHER_API, {
       method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${TOGETHER_KEY}` },
       body: JSON.stringify(body),
@@ -366,6 +401,30 @@ const PERSONA_INJECT_PREFIX = " Characters: ";
 // header stays with its rule 1), so a lack of room drops whole rules from the
 // end instead of the whole block.
 const COMPRESSED_RULE_ITEMS = COMPRESSED_RULES.flatMap(r => r.split(/\s+(?=[2-9]\)\s)/));
+
+// The style and rule text after the scene. With an active configuration it is
+// exactly the configuration's style_positives, style_negatives and extra_rules,
+// joined the way the Image Playground joins them; with none, today's text. full
+// is tried first and compressed when full does not fit; parts is what
+// assemblePrompt trims when facts are added.
+interface PromptTail {
+  full: string;
+  compressed: string;
+  parts: Pick<PromptParts, "rules" | "stylePositives" | "styleNegatives" | "extraRules">;
+}
+const DEFAULT_TAIL: PromptTail = {
+  full: `, ${ART_STYLE}. ${GENDER_RULES} ${ANACHRONISM_RULES}`,
+  compressed: `, ${COMPRESSED_STYLE_POSITIVES}, ${COMPRESSED_STYLE_NEGATIVES}. ${COMPRESSED_RULES.join(" ")}`,
+  parts: { rules: COMPRESSED_RULE_ITEMS, stylePositives: COMPRESSED_STYLE_POSITIVES, styleNegatives: COMPRESSED_STYLE_NEGATIVES },
+};
+function configTail(cfg: ActiveGenCfg): PromptTail {
+  const text = (v: unknown) => (typeof v === "string" ? v : "");
+  const positives = text(cfg.style_positives);
+  const negatives = text(cfg.style_negatives);
+  const rules = text(cfg.extra_rules);
+  const joined = `${positives ? `, ${positives}` : ""}${negatives ? `, ${negatives}` : ""}${rules ? `. ${rules}` : ""}`;
+  return { full: joined, compressed: joined, parts: { stylePositives: positives, styleNegatives: negatives, extraRules: rules } };
+}
 
 // Cut at a word boundary to at most `limit` chars (a hard cut only when there is
 // no space at all), without a trailing separator.
@@ -419,11 +478,11 @@ function assembleWithFacts(parts: PromptParts, limit: number): FactsPrompt | nul
 // SAFE_FALLBACK log line) and which ones (what the visual check verifies).
 interface FactsPrompt { prompt: string; factsInPrompt: number; factsUsed: string[] }
 
-// Facts path. Today the scene and persona text share the first sceneCap (1100)
-// chars and the style and rule tail gets the rest. The facts' room comes out of
-// that tail, not out of the scene: the scene and persona text keep exactly the
-// share they have today, and the tail is trimmed lowest priority first.
-function buildPromptWithFacts(prompt: string, personaText: string, facts: string[], maxLen: number, sceneCap: number): FactsPrompt | null {
+// Facts path. The scene and persona text share the first sceneCap (1100) chars
+// and the style and rule tail gets the rest. The facts' room comes out of that
+// tail, not out of the scene: the scene and persona text keep exactly the share
+// they have without facts, and the tail is trimmed lowest priority first.
+function buildPromptWithFacts(prompt: string, personaText: string, facts: string[], maxLen: number, sceneCap: number, tail: PromptTail): FactsPrompt | null {
   if (typeof prompt !== "string" || !prompt.trim()) return null;
   const personaRoom = sceneCap - prompt.length - PERSONA_INJECT_PREFIX.length;
   const persona = personaText && personaRoom > 0 ? cutAtWord(personaText, personaRoom) : "";
@@ -431,32 +490,39 @@ function buildPromptWithFacts(prompt: string, personaText: string, facts: string
     scene: cutAtWord(prompt, sceneCap),
     facts,
     personas: persona ? [persona] : [],
-    rules: COMPRESSED_RULE_ITEMS,
-    stylePositives: COMPRESSED_STYLE_POSITIVES,
-    styleNegatives: COMPRESSED_STYLE_NEGATIVES,
+    ...tail.parts,
   }, maxLen - 20);
 }
 
-// The chosen image and the visual_check record stored with it. safe_fallback is
-// true when the chain ended on SAFE_FALLBACK, a prompt that carries no facts.
-interface CheckedImage { b64: string; visualCheck: VisualCheckRecord & { safe_fallback: boolean } }
+// The image a request stores, before any check. model is the model that drew it,
+// safeFallback is true when the chain ended on SAFE_FALLBACK (a prompt that
+// carries no facts), and checkFacts are the facts the prompt carries, the only
+// ones checked. render(i) draws attempt i again through the same chain: the same
+// prompt, the seed moved on by i.
+interface RenderedImage {
+  b64: string;
+  model: string | null;
+  safeFallback: boolean;
+  checkFacts: string[];
+  render: (attemptIndex: number, signal?: AbortSignal) => Promise<RenderOutput | null>;
+}
 
 async function generateImage(
   prompt: string,
   matchedPersonas: Persona[],
   varietySeed: number,
   facts: string[] = [],
-  deadlineAt: number = Date.now() + CHECK_DEADLINE_MS,
-): Promise<CheckedImage> {
+): Promise<RenderedImage> {
   const personaText = matchedPersonas.map(p => p.short_description).join(". ");
   const personaInject = matchedPersonas.length > 0 ? PERSONA_INJECT_PREFIX + personaText : "";
-  // Model/size come from the approved configuration when one exists (cached).
+  // Everything below comes from the active configuration when there is one.
   const __cfg = await getActiveGenConfig();
-  // The existing 2000-char limit (cut to 1980). An approved prompt_max_len can
-  // only lower it. With the active config (2000) every cut below is unchanged.
-  const __cfgMax = Number(__cfg?.prompt_max_len);
-  const maxLen = Number.isFinite(__cfgMax) && __cfgMax > 0 ? Math.min(2000, Math.floor(__cfgMax)) : 2000;
+  // The configuration's prompt_max_len; 2000 (cut to 1980) with none.
+  const __cfgMax = Math.floor(Number(__cfg?.prompt_max_len));
+  const maxLen = Number.isFinite(__cfgMax) && __cfgMax > 0 ? __cfgMax : 2000;
   const sceneCap = Math.max(0, Math.min(1100, maxLen - 20));
+  // The style and rule text after the scene: the configuration's, or with none today's.
+  const tail = __cfg ? configTail(__cfg) : DEFAULT_TAIL;
   // Verified canonical details (e.g. four white horses) go straight after the
   // scene. Research never blocks generation: any failure here, or no fact that
   // fits, means today's prompt.
@@ -467,7 +533,7 @@ async function generateImage(
   let checkFacts: string[] = [];
   if (facts.length > 0) {
     try {
-      const withFacts = buildPromptWithFacts(prompt, matchedPersonas.length > 0 ? personaText : "", facts, maxLen, sceneCap);
+      const withFacts = buildPromptWithFacts(prompt, matchedPersonas.length > 0 ? personaText : "", facts, maxLen, sceneCap, tail);
       fullPrompt = withFacts?.prompt ?? null;
       factsInPrompt = withFacts?.factsInPrompt ?? 0;
       checkFacts = withFacts?.factsUsed ?? [];
@@ -479,12 +545,11 @@ async function generateImage(
     }
   }
   if (fullPrompt === null) {
-    // Today's prompt, byte for byte.
-    // Build order: scene prompt → persona injection → ART_STYLE → gender → anachronism.
-    fullPrompt = `${prompt}${personaInject}, ${ART_STYLE}. ${GENDER_RULES} ${ANACHRONISM_RULES}`;
+    // With no configuration, today's prompt byte for byte.
+    // Build order: scene prompt → persona injection → style → rules.
+    fullPrompt = `${prompt}${personaInject}${tail.full}`;
     if (fullPrompt.length > maxLen) {
-      const ruleBlock = COMPRESSED_RULES.join(" ");
-      fullPrompt = `${prompt}${personaInject}`.substring(0, sceneCap) + `, ${COMPRESSED_STYLE_POSITIVES}, ${COMPRESSED_STYLE_NEGATIVES}. ${ruleBlock}`;
+      fullPrompt = `${prompt}${personaInject}`.substring(0, sceneCap) + tail.compressed;
       if (fullPrompt.length > maxLen) fullPrompt = fullPrompt.substring(0, maxLen - 20);
     }
   }
@@ -492,47 +557,46 @@ async function generateImage(
   // rewrote substrings inside ordinary words ("warm" → "blessingm").
   const sanitized = fullPrompt.replace(/\b(battle|war|fight|weapon|sword|arrow|kill|death|blood|fire|burn|destroy|attack|strike|naked|nude)\b/gi, "blessing");
   const seed = varietySeed > 0 ? varietySeed : Math.floor(Math.random() * 1_000_000);
-  const __m1 = __cfg?.model  || "black-forest-labs/FLUX.2-pro";
-  // 16:9 landscape for Instagram (ig_width/ig_height), falling back to the shared
-  // portrait size when no Instagram size is configured.
-  const __w1 = __cfg?.ig_width  || __cfg?.width  || 1344;
-  const __h1 = __cfg?.ig_height || __cfg?.height || 768;
-  const __m2 = __cfg?.fallback_model  || "black-forest-labs/FLUX.1.1-pro";
-  // Retry at 1024x576 — exactly 16:9 and both multiples of 64 — so a fallback
-  // never silently changes the crop the post was composed for.
-  const __w2 = __cfg?.ig_width ? 1024 : (__cfg?.fallback_width || 1024);
-  const __h2 = __cfg?.ig_height ? 576 : (__cfg?.fallback_height || 576);
+  const __m1 = __cfg?.model || "black-forest-labs/FLUX.2-pro";
+  // The configuration's fallback model (its model when none is set); FLUX.1.1-pro
+  // with no configuration. The SAFE_FALLBACK attempt renders with it too.
+  const __m2 = __cfg ? (__cfg.fallback_model || __m1) : "black-forest-labs/FLUX.1.1-pro";
+  const __steps = __cfg?.steps ?? null;
+  const __size = instagramSizes(__cfg);
   // A re-render keeps the prompt and moves the seed on by its attempt index, so
   // attempt 0 sends exactly today's seed.
   const attemptsFor = (attemptIndex: number): FluxAttempt[] => [
-    { model: __m1, prompt: sanitized, w: __w1, h: __h1, seed: seed + attemptIndex },
-    { model: __m2, prompt: sanitized, w: __w2, h: __h2, seed: seed + attemptIndex },
-    { model: __m2, prompt: SAFE_FALLBACK, w: __w2, h: __h2, safeFallback: true },
+    { model: __m1, prompt: sanitized, w: __size.w, h: __size.h, seed: seed + attemptIndex },
+    { model: __m2, prompt: sanitized, w: __size.fw, h: __size.fh, seed: seed + attemptIndex },
+    { model: __m2, prompt: SAFE_FALLBACK, w: __size.fw, h: __size.fh, safeFallback: true },
   ];
-  // Each render is the whole chain: same order and first-image-wins as before,
+  // One render is the whole chain: same order and first-image-wins as before,
   // and the SAFE_FALLBACK attempt still logs how many research facts it drops.
   // A SAFE_FALLBACK image carries none of the facts, so it is kept unchecked
-  // (reason safe_fallback) and never re-rendered: the same prompt would only be
-  // refused again. The record says it was SAFE_FALLBACK.
-  const checked = await renderWithVisualCheck({
-    render: async (attemptIndex, signal) => {
-      const attempts = attemptsFor(attemptIndex);
-      const used: { attempt: FluxAttempt | null } = { attempt: null };
-      const b64 = await runFluxAttempts(attempts, a => {
-        used.attempt = a;
-        return tryGenerate(a.prompt, a.model, a.w, a.h, a.seed, signal);
-      }, { tag: "instagram-post", factsInPrompt, signal });
-      if (!b64) return null;
-      const safeFallback = used.attempt?.safeFallback === true;
-      return { b64, model: used.attempt?.model ?? null, safeFallback, skipCheck: safeFallback ? "safe_fallback" : null };
-    },
-    facts: checkFacts,
-    maxAttempts: CHECK_MAX_ATTEMPTS,
-    deadlineAt,
-    tag: "instagram-post",
-  });
-  if (checked) return { b64: checked.b64, visualCheck: { ...checked.record, safe_fallback: checked.safeFallback === true } };
-  throw new Error("All FLUX attempts failed");
+  // (reason safe_fallback) and never re-rendered or swapped in: the same prompt
+  // would only be refused again.
+  const render = async (attemptIndex: number, signal?: AbortSignal): Promise<RenderOutput | null> => {
+    // A re-render never ends on SAFE_FALLBACK: that image carries none of the facts,
+    // so the redo could never swap it in and would only pay for it.
+    const attempts = attemptsFor(attemptIndex).filter(a => attemptIndex === 0 || !a.safeFallback);
+    const used: { attempt: FluxAttempt | null } = { attempt: null };
+    const b64 = await runFluxAttempts(attempts, a => {
+      used.attempt = a;
+      return tryGenerate(a.prompt, a.model, a.w, a.h, __steps, a.seed, signal);
+    }, { tag: "instagram-post", factsInPrompt, signal });
+    if (!b64) return null;
+    const safeFallback = used.attempt?.safeFallback === true;
+    return { b64, model: used.attempt?.model ?? null, safeFallback, skipCheck: safeFallback ? "safe_fallback" : null };
+  };
+  const first = await render(0);
+  if (!first) throw new Error("All FLUX attempts failed");
+  return {
+    b64: first.b64,
+    model: typeof first.model === "string" ? first.model : null,
+    safeFallback: first.safeFallback === true,
+    checkFacts,
+    render,
+  };
 }
 
 // getSceneResearch never rejects; the catch is a second guard so research can
@@ -544,17 +608,168 @@ async function researchFacts(input: SceneResearchInput): Promise<string[]> {
   return facts;
 }
 
-async function uploadImage(b64: string, ch: ChapterInfo): Promise<{ url: string; path: string }> {
+// suffix names a background re-render's file ("-r1"): always a new file beside the
+// stored one, never an overwrite of it.
+async function uploadImage(b64: string, ch: ChapterInfo, suffix = ""): Promise<{ url: string; path: string }> {
   const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-  const fn = `ig-canto${ch.skandh}-ch${ch.number}-${Date.now()}.jpg`;
-  const { error } = await supabase.storage.from("instagram-images").upload(fn, bytes, { contentType: "image/jpeg", upsert: true });
+  const fn = `ig-canto${ch.skandh}-ch${ch.number}-${Date.now()}${suffix}.jpg`;
+  const { error } = await supabase.storage.from("instagram-images").upload(fn, bytes, { contentType: "image/jpeg", upsert: !suffix });
   if (error) throw new Error(`Upload: ${error.message}`);
   return { url: supabase.storage.from("instagram-images").getPublicUrl(fn).data.publicUrl, path: fn };
 }
 
-// requestStart is when the HTTP request arrived: captions, research and verses all
-// spend from the same 150s, so the visual check deadline counts from there.
-async function generateForChapter(chapterOverride: number | null, requestStart: number = Date.now()): Promise<Record<string, unknown>> {
+// Never fails the caller: a file left behind only costs storage.
+async function removeImage(path: string): Promise<void> {
+  try {
+    const { error } = await supabase.storage.from("instagram-images").remove([path]);
+    if (error) console.warn(`[instagram-post] could not delete ${path}: ${error.message}`);
+  } catch (e) {
+    console.warn(`[instagram-post] could not delete ${path}: ${e}`);
+  }
+}
+
+// The row's image_path: null when it has none, undefined when the row could not be read.
+async function storedImagePath(id: number | string): Promise<string | null | undefined> {
+  try {
+    const { data, error } = await supabase.from("ig_pending_review").select("image_path").eq("id", id).maybeSingle();
+    if (error) return undefined;
+    return typeof data?.image_path === "string" ? data.image_path : null;
+  } catch {
+    return undefined;
+  }
+}
+
+// The visual_check column is missing (migration not applied): PGRST204 or 42703.
+function missingColumn(error: { code?: string; message?: string } | null): boolean {
+  return !!error && (error.code === "PGRST204" || error.code === "42703" || /visual_check/.test(error.message ?? ""));
+}
+
+// Unattended generation. The post was stored after one render; this checks it
+// after the response, in EdgeRuntime.waitUntil. While a fact is clearly
+// contradicted the image is re-rendered, and a strictly better render replaces the
+// stored one by a compare-and-swap: the row must still be pending and still hold
+// the image this run stored, and unclaimed (reviewed_at null: approve-instagram-post
+// stamps it before it publishes or deletes the image), so a reviewer's decision,
+// an approval in progress or a regenerate is never overwritten. The run also asks that (stillCurrent) before each re-render and its
+// check, so a post reviewed meanwhile costs no further render or check. A render
+// that is not swapped in is deleted; the replaced file is kept.
+// approve-instagram-post claims the post (stamps reviewed_at) before it publishes
+// its image_url or, on reject, marks it rejected and only then deletes the file, so
+// no swap lands once either has started. The row's prompt, caption and every other
+// field stay as inserted. Call it before the handler returns.
+function redoAfterResponse(o: {
+  id: number | string;
+  chapter: ChapterInfo;
+  image: RenderedImage;
+  stored: { url: string; path: string };
+  record: VisualCheckRecord;
+  invocationStart: number;
+}): void {
+  const tag = `[instagram-post] #${o.id}`;
+  // The file the row holds: the compare-and-swap target, moved on by each swap.
+  let current = o.stored;
+  const flagged = (record: VisualCheckRecord, image?: RenderOutput) => ({ ...record, safe_fallback: image?.safeFallback === true });
+
+  const swap = async (attempt: IndexedRender, record: VisualCheckRecord): Promise<boolean> => {
+    let next: { url: string; path: string };
+    try {
+      next = await uploadImage(attempt.b64, o.chapter, `-r${attempt.index}`);
+    } catch (e) {
+      console.warn(`${tag} re-render ${attempt.index} not stored: ${e}`);
+      return false;
+    }
+    let result: { data: unknown; error: { message: string } | null };
+    try {
+      result = await supabase
+        .from("ig_pending_review")
+        .update({ image_url: next.url, image_path: next.path, visual_check: flagged(record, attempt) })
+        .eq("id", o.id)
+        .eq("status", "pending")
+        .eq("image_path", current.path)
+        .is("reviewed_at", null)
+        .select("id");
+    } catch (e) {
+      result = { data: null, error: { message: String(e) } };
+    }
+    let swapped = !result.error && Array.isArray(result.data) && result.data.length === 1;
+    if (result.error) {
+      // An error can hide an update that was applied (a lost response): ask the
+      // row before deleting a file it may hold.
+      const held = await storedImagePath(o.id);
+      if (held === undefined) {
+        console.warn(`${tag} re-render ${attempt.index}: update failed (${result.error.message}) and the row could not be read; both files kept`);
+        return false;
+      }
+      swapped = held === next.path;
+    }
+    if (swapped) {
+      const replaced = current.path;
+      current = next;
+      // Kept, not deleted: an approval that read the post before this swap may
+      // still be publishing the replaced file.
+      console.log(`${tag} re-render ${attempt.index} replaced ${replaced} with ${next.path}; ${replaced} is kept in storage`);
+      return true;
+    }
+    console.log(`${tag} re-render ${attempt.index} not swapped in: ${result.error ? result.error.message : "the post is no longer pending with the stored image"}`);
+    await removeImage(next.path);
+    return false;
+  };
+
+  // Whether the post is still pending with the image this run stored. A read that
+  // fails counts as still current: the swap's compare-and-swap still guards it.
+  const stillCurrent = async (): Promise<boolean> => {
+    const { data, error } = await supabase
+      .from("ig_pending_review")
+      .select("id")
+      .eq("id", o.id)
+      .eq("status", "pending")
+      .eq("image_path", current.path)
+      .is("reviewed_at", null);
+    if (error) {
+      console.warn(`${tag} could not read the post (${error.message}); carrying on`);
+      return true;
+    }
+    return Array.isArray(data) && data.length === 1;
+  };
+
+  // The final record, for whichever image the row holds. Zero rows (the post
+  // moved on) or a missing visual_check column is logged and ignored.
+  const writeRecord = async (record: VisualCheckRecord, stored?: IndexedRender): Promise<boolean> => {
+    const { data, error } = await supabase
+      .from("ig_pending_review")
+      .update({ visual_check: flagged(record, stored) })
+      .eq("id", o.id)
+      .eq("image_path", current.path)
+      .select("id");
+    if (error) {
+      console.warn(`${tag} visual_check not stored: ${missingColumn(error) ? "the visual_check column is missing" : error.message}`);
+      return false;
+    }
+    if (!Array.isArray(data) || data.length === 0) {
+      console.log(`${tag} visual_check not stored: the post no longer holds ${current.path}`);
+      return false;
+    }
+    return true;
+  };
+
+  runInBackground(redoInBackground({
+    first: { b64: o.image.b64, model: o.image.model, safeFallback: o.image.safeFallback },
+    facts: o.image.checkFacts,
+    render: o.image.render,
+    maxAttempts: CHECK_MAX_ATTEMPTS,
+    deadlineAt: backgroundDeadline(o.invocationStart),
+    swap,
+    stillCurrent,
+    writeRecord,
+    startedAt: o.record.started_at ?? null,
+    tag: `instagram-post #${o.id}`,
+  }));
+}
+
+// invocationStart is when the handler started: the background check and its
+// re-renders start nothing 360s after it, or after the worker started when that
+// was earlier (backgroundDeadline).
+async function generateForChapter(chapterOverride: number | null, invocationStart: number = Date.now()): Promise<Record<string, unknown>> {
   const { chapter, text } = chapterOverride !== null
     ? await loadChapterByGlobalNumber(chapterOverride)
     : await getNextChapter();
@@ -626,16 +841,16 @@ async function generateForChapter(chapterOverride: number | null, requestStart: 
   });
 
   // The Mahājana lookup and the verse (a Haiku call) run alongside the image, not
-  // after it: a check may run until request start + 130s, and the work after the
-  // image must still fit before the request is cut at 150s.
+  // after it: everything before the post is stored must fit before the request
+  // is cut at 150s.
   const mahajanPending = resolveMahajanKey(characterNames, matched);
   // Awaited below, where a failure still fails the post; this only keeps it from
   // counting as unhandled while the image renders.
   mahajanPending.catch(() => {});
   const versePending = extractVerse(chapter.title, text, usedSceneInfo?.title);
 
-  const { b64, visualCheck } = await generateImage(imagePrompt, matched, varietySeed, facts, requestStart + CHECK_DEADLINE_MS);
-  const { url, path } = await uploadImage(b64, chapter);
+  const image = await generateImage(imagePrompt, matched, varietySeed, facts);
+  const { url, path } = await uploadImage(image.b64, chapter);
 
   // Attribute to the Mahājana who speaks in / appears in this chapter (fail-soft null).
   const mahajanKey = await mahajanPending;
@@ -645,6 +860,14 @@ async function generateForChapter(chapterOverride: number | null, requestStart: 
   const verse = await versePending;
   console.log(`Verse: ${verse.sanskrit ? "extracted" : "(none)"}`);
 
+  // Stored with the post before any check: skipped when nothing can be checked
+  // (no fact in the prompt, SAFE_FALLBACK, check off), otherwise "running" until
+  // the background check writes its result. safe_fallback says the image came
+  // from SAFE_FALLBACK.
+  const visualCheck = {
+    ...initialRecord({ factsUsed: image.checkFacts, safeFallback: image.safeFallback, imageModel: image.model, startedAt: Date.now() }),
+    safe_fallback: image.safeFallback,
+  };
   const pendingRow = {
     chapter_global_number: chapter.globalNumber,
     chapter_canto: chapter.skandh,
@@ -664,13 +887,27 @@ async function generateForChapter(chapterOverride: number | null, requestStart: 
     .insert({ ...pendingRow, visual_check: visualCheck })
     .select("id")
     .single();
+  let recordStored = true;
   if (insErr && /visual_check/.test(insErr.message)) {
     // The visual_check column is missing (migration not applied yet): keep the
     // post and its paid renders, without the record.
     console.warn(`[instagram-post] insert with visual_check failed (${insErr.message}); saving without it`);
+    recordStored = false;
     ({ data: inserted, error: insErr } = await supabase.from("ig_pending_review").insert(pendingRow).select("id").single());
   }
   if (insErr) throw new Error(`Pending insert: ${insErr.message}`);
+
+  // The post exists now, so its check starts here, before the response; the
+  // check and any re-render run after it. With no visual_check column there is
+  // nowhere to keep a result, so nothing is started.
+  if (needsBackgroundCheck(visualCheck)) {
+    const id = inserted?.id;
+    if (recordStored && (typeof id === "number" || typeof id === "string")) {
+      redoAfterResponse({ id, chapter, image, stored: { url, path }, record: visualCheck, invocationStart });
+    } else {
+      console.warn(`[instagram-post] visual check not started: ${recordStored ? "no review row id" : "the visual_check column is missing"}`);
+    }
+  }
 
   if (usedSceneInfo && sceneRow) {
     if (usedSceneInfo.cycleReset) {
@@ -735,7 +972,7 @@ async function backfillVerses(limit: number): Promise<{ scanned: number; updated
 }
 
 Deno.serve(async (req: Request) => {
-  const requestStart = Date.now();
+  const invocationStart = Date.now();
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, GET, OPTIONS", "Access-Control-Allow-Headers": "content-type, authorization, apikey" } });
   }
@@ -761,7 +998,7 @@ Deno.serve(async (req: Request) => {
   } catch { /* no body */ }
 
   try {
-    const result = await generateForChapter(chapterOverride, requestStart);
+    const result = await generateForChapter(chapterOverride, invocationStart);
     return new Response(JSON.stringify(result), { headers: { "Content-Type": "application/json" } });
   } catch (err) {
     console.error(err);

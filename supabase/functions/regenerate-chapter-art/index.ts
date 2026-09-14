@@ -7,7 +7,8 @@
 // Uses the configuration approved in the Image Playground. Covers take
 // cover_width/cover_height (wide landscape): the shared width/height is the
 // PORTRAIT scene size, and regenerating at that size would silently change the
-// aspect of a cover relative to how bulk generation makes it.
+// aspect of a cover relative to how bulk generation makes it. The fallback
+// render keeps the cover's shape too (fallbackSizeFor, _shared/imageSizes.ts).
 //
 // Scene research: before rendering, _shared/sceneResearch.ts supplies verified
 // canonical visual details for the row's scene (e.g. Arjuna's chariot is drawn
@@ -16,12 +17,17 @@
 // regenerate: if it fails, finds nothing, or no fact fits, the prompt is
 // assembled exactly as it was before research existed.
 //
-// Visual check: every render is checked by Claude vision (_shared/visualCheck.ts)
-// against the research facts the sent prompt carries, and re-rendered (up to 3
-// renders) when a fact is clearly contradicted, e.g. three horses where the
-// prompt said four. All of it must finish 130s after the request started. The
-// result is stored in the row's visual_check column and returned as visual_check.
-// No fact in the prompt means no check: one render, sent exactly as before.
+// Visual check: Supabase cuts a request at 150s (a streamed response too), and
+// only EdgeRuntime.waitUntil work outlives the response. So the cover is rendered
+// once and saved with a "running" visual_check record, which the response
+// returns, and Claude vision (_shared/visualCheck.ts) checks it after the
+// response against the research facts the sent prompt carries. The check only
+// flags a clearly contradicted fact (e.g. three horses where the prompt said
+// four) on the row: nothing is re-rendered under a reviewer. Its record replaces
+// the running one only while the row still holds this cover (a compare-and-swap
+// on id + image_path), so a later regenerate keeps its own. No fact in the
+// prompt means no check: the record says skipped (no_facts), as it does
+// (disabled) when the check is switched off.
 //
 // POST { book: "bhagavatam"|"chaitanya"|"gita", id: 45, prompt: "...", apply_style?: bool, apply_facts?: bool }
 //   apply_facts: false skips research for this request.
@@ -37,11 +43,16 @@ import {
   sanitizeForImageModel,
   sceneKey,
 } from "../_shared/sceneResearchCore.ts";
-import { imagePayload, renderWithVisualCheck } from "../_shared/visualCheck.ts";
-
-// A sync request is cut at 150s: checks and re-renders stop 130s after it started.
-const CHECK_DEADLINE_MS = 130_000;
-const CHECK_MAX_ATTEMPTS = 3;
+import {
+  backgroundDeadline,
+  checkInBackground,
+  imagePayload,
+  initialRecord,
+  needsBackgroundCheck,
+  runInBackground,
+  type VisualCheckRecord,
+} from "../_shared/visualCheck.ts";
+import { fallbackSizeFor } from "../_shared/imageSizes.ts";
 
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
 const TOGETHER_KEY = Deno.env.get("TOGETHER_API_KEY") || "";
@@ -72,18 +83,39 @@ const DEFAULTS = {
 };
 
 // No seed is sent, so each call is a new draw from the same prompt. steps goes
-// only to FLUX models: openai/gpt-image-2 has no such parameter. signal ends a
-// re-render the visual check has abandoned.
-async function tryGenerate(prompt: string, model: string, w: number, h: number, steps: number | null, signal?: AbortSignal) {
+// only to FLUX models: openai/gpt-image-2 has no such parameter.
+async function tryGenerate(prompt: string, model: string, w: number, h: number, steps: number | null) {
   const payload = imagePayload(model, prompt, w, h, { steps });
   const res = await fetch(TOGETHER_API, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${TOGETHER_KEY}` },
     body: JSON.stringify(payload),
-    signal,
   });
   if (!res.ok) { console.log(`[regen-chapter] ${model} HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`); return null; }
   return (await res.json())?.data?.[0]?.b64_json || null;
+}
+
+// Writes the background check's record over the running one, only while the row
+// still holds the cover that was checked: .eq("image_path") makes the update a
+// compare-and-swap, so a cover replaced meanwhile keeps its own record. A missing
+// visual_check column, an error or a row that no longer matches is logged and
+// not retried.
+async function storeVisualCheck(table: string, id: number, imagePath: string, record: VisualCheckRecord): Promise<boolean> {
+  const { data, error } = await supabase.from(table)
+    .update({ visual_check: record })
+    .eq("id", id)
+    .eq("image_path", imagePath)
+    .select("id");
+  if (error) {
+    const missing = error.code === "PGRST204" || error.code === "42703" || /visual_check/.test(error.message);
+    console.warn(`[regen-chapter] ${table} #${id} visual_check not stored: ${missing ? "the visual_check column is missing" : error.message}`);
+    return false;
+  }
+  if (!Array.isArray(data) || data.length === 0) {
+    console.log(`[regen-chapter] ${table} #${id} visual_check not stored: the row no longer holds ${imagePath}`);
+    return false;
+  }
+  return true;
 }
 
 // ── Prompt assembly ──────────────────────────────────────────────────────────
@@ -277,7 +309,7 @@ async function researchRow(book: string, row: Record<string, unknown>, draft: st
 }
 
 Deno.serve(async (req: Request) => {
-  const deadlineAt = Date.now() + CHECK_DEADLINE_MS;
+  const invocationStart = Date.now();
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return new Response(JSON.stringify({ error: "POST only" }), { status: 405, headers: CORS });
   if (!TOGETHER_KEY) return new Response(JSON.stringify({ error: "TOGETHER_API_KEY is not configured" }), { status: 500, headers: CORS });
@@ -317,40 +349,34 @@ Deno.serve(async (req: Request) => {
       : `[regen-chapter] research ${apply_facts === false ? "off" : "skipped (no key for row)"} ${book} #${id}`);
     const sanitized = built.sent;
 
-    // Covers are wide landscape — match how bulk generation makes them.
+    // Covers are wide landscape — match how bulk generation makes them. The
+    // fallback keeps that shape at the configured fallback size's scale
+    // (fallbackSizeFor: a 1344x1088 cover with a 768x1024 fallback size falls back
+    // at 1024x832); a configuration with no cover size renders at the scene size
+    // with its own fallback size, as before.
     const w1 = cfg.cover_width  || cfg.width  || 1344;
     const h1 = cfg.cover_height || cfg.height || 1088;
-    const w2 = cfg.cover_width ? 1024 : (cfg.fallback_width  || 1024);
-    const h2 = cfg.cover_height ? 832  : (cfg.fallback_height || 832);
+    const fallback = cfg.cover_width || cfg.cover_height
+      ? fallbackSizeFor(w1, h1, cfg.fallback_width, cfg.fallback_height)
+      : { w: cfg.fallback_width || 1024, h: cfg.fallback_height || 832 };
 
-    // One render is the model then its fallback, first image wins, as before.
-    // The check loop re-runs that pair while a fact is clearly contradicted.
-    let firstRenderError: unknown = null;
-    const checked = await renderWithVisualCheck({
-      facts: research ? factsInSentPrompt(research.facts, sanitized) : [],
-      maxAttempts: CHECK_MAX_ATTEMPTS,
-      deadlineAt,
-      tag: `regen-chapter ${book} #${id}`,
-      render: async (attempt, signal) => {
-        try {
-          for (const a of [
-            { m: cfg.model, w: w1, h: h1 },
-            { m: cfg.fallback_model || cfg.model, w: w2, h: h2 },
-          ]) {
-            const img = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps, signal);
-            if (img) return { b64: img, model: a.m };
-          }
-          return null;
-        } catch (e) {
-          if (attempt === 0) firstRenderError = e;
-          throw e;
-        }
-      },
-    });
-    // A first render that threw still answers 500 with its error, as before.
-    if (!checked && firstRenderError) throw firstRenderError;
-    if (!checked) return new Response(JSON.stringify({ error: "All image attempts failed" }), { status: 502, headers: CORS });
-    const b64 = checked.b64;
+    // One render: the model, then its fallback, first image wins, as before. A
+    // render that throws still answers 500 with its error.
+    let rendered: { b64: string; model: string } | null = null;
+    for (const a of [
+      { m: cfg.model, w: w1, h: h1 },
+      { m: cfg.fallback_model || cfg.model, w: fallback.w, h: fallback.h },
+    ]) {
+      const img = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps);
+      if (img) { rendered = { b64: img, model: a.m }; break; }
+    }
+    if (!rendered) return new Response(JSON.stringify({ error: "All image attempts failed" }), { status: 502, headers: CORS });
+    const { b64, model: imageModel } = rendered;
+
+    // The facts the sent prompt carries are the ones the check verifies. The row
+    // gets a running record, or a skipped one (no fact, or the check is off).
+    const facts = research ? factsInSentPrompt(research.facts, sanitized) : [];
+    const record = initialRecord({ factsUsed: facts, imageModel, startedAt: Date.now() });
 
     const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
     const fn = `${b.prefix}-regen-${id}-${Date.now()}.jpg`;
@@ -364,17 +390,35 @@ Deno.serve(async (req: Request) => {
     }
 
     const saved = { image_url: url, image_path: fn, prompt: prompt.trim(), error_message: null };
+    let recordSaved = true;
     let { error: updErr } = await supabase.from(b.table)
-      .update({ ...saved, visual_check: checked.record })
+      .update({ ...saved, visual_check: record })
       .eq("id", id);
     if (updErr && /visual_check/.test(updErr.message)) {
       // The visual_check column is missing (migration not applied yet). The old
       // image is already removed, so save the new one without the record rather
-      // than leave the row pointing at a deleted file.
+      // than leave the row pointing at a deleted file. The check then has nowhere
+      // to store its result, so it does not run.
       console.warn(`[regen-chapter] update with visual_check failed (${updErr.message}); saving without it`);
+      recordSaved = false;
       ({ error: updErr } = await supabase.from(b.table).update(saved).eq("id", id));
     }
     if (updErr) return new Response(JSON.stringify({ error: `Update failed: ${updErr.message}` }), { status: 500, headers: CORS });
+
+    // The check runs after the response, in waitUntil, so it is registered here,
+    // before the Response is returned. It never renders, and starts nothing after
+    // the invocation's background budget (backgroundDeadline).
+    if (recordSaved && needsBackgroundCheck(record)) {
+      runInBackground(checkInBackground({
+        b64,
+        facts,
+        imageModel,
+        startedAt: record.started_at,
+        deadlineAt: backgroundDeadline(invocationStart),
+        tag: `regen-chapter ${book} #${id}`,
+        writeRecord: (checkedRecord) => storeVisualCheck(b.table, id, fn, checkedRecord),
+      }));
+    }
 
     // Report what was actually sent, so a silently-shortened prompt is visible
     // in the UI instead of looking like the edit simply had no effect.
@@ -383,7 +427,7 @@ Deno.serve(async (req: Request) => {
       prompt_chars: prompt.trim().length, sent_chars: sanitized.length, max_len: maxLen,
       prompt_truncated: built.promptTruncated, style_applied: built.styleApplied, style_truncated: built.styleTruncated,
       research_key: research?.key ?? null, research_status: research?.status ?? "skipped", facts_included: built.factsIncluded,
-      visual_check: checked.record,
+      visual_check: record,
     }), { headers: CORS });
   } catch (err) {
     return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: CORS });
