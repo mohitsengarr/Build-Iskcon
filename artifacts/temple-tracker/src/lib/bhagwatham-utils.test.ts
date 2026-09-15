@@ -15,6 +15,8 @@ import {
   isVerseLike,
   parseSections,
   getPageEndKind,
+  numberedVerseHeadLength,
+  openVerseTailLength,
   buildChapterIndex,
   type PageContent,
 } from "./bhagwatham-utils";
@@ -616,5 +618,110 @@ describe("Integration: full page parsing", () => {
     const page2 = "उन्हें कोई खेद नहीं था क्योंकि वे माया के कार्यों को सर्वोपरि मानते थे।";
     const sections = parseSections(page2, endKind);
     expect(sections[0].kind).toBe("anuvad");
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 15. Verses split across a page break — numberedVerseHeadLength, openVerseTailLength
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// SB 3.19.32 as printed: its first three lines end page 1987 and its last line,
+// with the verse number, opens page 1988. Lines as the reader cleans them.
+const PAGE_1987_END = [
+  "भौतिक आकाश से ऊपर बहुत ऊँचाई पर है और वे उस उच्च पद से नीचे उतरते हैं; इसीलिए",
+  "अवतार कहलाते हैं ।",
+  "",
+  "मया यथानूक्तमवादि ते हरे:",
+  "कृतावतारस्य सुमित्र चेष्टितम्‌ ।",
+  "यथा हिरण्याक्ष उदारविक्रमो",
+];
+const PAGE_1988_START = ["", "महामृधे क्रीडनवच्निराकृत: ॥ ३२॥", "शब्दार्थ", "मया--मेरे द्वारा; यथा--जिस रूप में; अनूक्तम--कहा गया;"];
+
+describe("numberedVerseHeadLength", () => {
+  it("counts the closing line of a numbered verse at the top of a page", () => {
+    // Arrange / Act
+    const head = numberedVerseHeadLength(PAGE_1988_START);
+    // Assert
+    expect(head).toBe(1);
+  });
+
+  it("counts every verse line up to and including the numbered one", () => {
+    const lines = ["हो नृणां चालयतो विधातुः ।", "नान्योपलक्ष्यः पदवीं प्रसादा-", "-च्चरामि पश्यन् गतविस्मयोऽत्र ॥ ५ ॥"];
+    expect(numberedVerseHeadLength(lines)).toBe(3);
+  });
+
+  it("is 0 when the page opens with Hindi prose", () => {
+    const lines = ["भक्त, क्षत्ता ( विदुर) को कौषारव ( मैत्रेय ) मुनि के आधिकारिक स्त्रोत से पूर्ण", "पुरुषोत्तम भगवान्‌ की लीलाओं का वर्णन सुनकर ॥ ३४ ॥"];
+    expect(numberedVerseHeadLength(lines)).toBe(0);
+  });
+
+  it("is 0 when a speaker line opens the page, because that starts a new verse", () => {
+    const lines = ["सूत उवाच", "इति कौषारवाख्यातामाश्रुत्य भगवत्कथाम्‌ ।", "क्षत्तानन्दं परं लेभे महाभागवतो द्विज ॥ ३३॥"];
+    expect(numberedVerseHeadLength(lines)).toBe(0);
+  });
+
+  it("is 0 for an unnumbered ॥, which closes a quoted verse", () => {
+    expect(numberedVerseHeadLength(["गुणैः कर्माणि सर्वशः ॥"])).toBe(0);
+  });
+
+  it("is 0 when a section marker comes first", () => {
+    expect(numberedVerseHeadLength(["शब्दार्थ", "महामृधे क्रीडनवच्निराकृत: ॥ ३२॥"])).toBe(0);
+  });
+
+  it("is 0 when no number appears within maxLines lines", () => {
+    const lines = ["स वासुदेवानुचरं प्रशान्तं", "वृहस्पतेः प्राक्तनयं प्रतीतम्‌ ।", "आलिङ्ग्य गाढं प्रणयेन भद्रं", "स्वानामपृच्छद्भगवत्प्रजानाम्‌", "कुशलं ॥ २ ॥"];
+    expect(numberedVerseHeadLength(lines)).toBe(0);
+  });
+});
+
+describe("openVerseTailLength", () => {
+  it("takes the three opening lines that end page 1987 (SB 3.19.32)", () => {
+    // Arrange
+    const head = numberedVerseHeadLength(PAGE_1988_START);
+    // Act
+    const tail = openVerseTailLength(PAGE_1987_END, head);
+    // Assert
+    expect(tail).toBe(3);
+  });
+
+  it("keeps a line with the Sanskrit यथा, whose था is not the Hindi verb", () => {
+    expect(openVerseTailLength(["अवतार कहलाते हैं ।", "", "यथा हिरण्याक्ष उदारविक्रमो"], 1)).toBe(1);
+  });
+
+  it("is 0 when the next page does not close a verse", () => {
+    expect(openVerseTailLength(PAGE_1987_END, 0)).toBe(0);
+  });
+
+  it("is 0 for a Hindi line at the page end (page 7927)", () => {
+    expect(openVerseTailLength(["", "चटाई पर बैठ गये।"], 2)).toBe(0);
+  });
+
+  it("is 0 when the lines continue a prose paragraph with no blank line before them", () => {
+    expect(openVerseTailLength(["अवतार कहलाते हैं ।", "मया यथानूक्तमवादि ते हरे:"], 1)).toBe(0);
+  });
+
+  it("is 0 when the page already ends with a finished verse", () => {
+    expect(openVerseTailLength(["", "गतव्यथोऽयादुरु मानयानः ॥ १६ ॥"], 1)).toBe(0);
+  });
+
+  it("includes a speaker line that heads the opening", () => {
+    expect(openVerseTailLength(["", "मैत्रेय उवाच", "यदाभिषिक्तः पृथुरङ्ग विप्रै-"], 3)).toBe(2);
+  });
+
+  it("is 0 when a speaker line sits inside the paragraph", () => {
+    expect(openVerseTailLength(["", "मया यथानूक्तमवादि ते हरे:", "मैत्रेय उवाच", "यथा हिरण्याक्ष उदारविक्रमो"], 1)).toBe(0);
+  });
+
+  it("is 0 when both halves together would exceed four verse lines", () => {
+    expect(openVerseTailLength(PAGE_1987_END, 2)).toBe(0);
+  });
+
+  it("takes a verse that starts at the very top of the page", () => {
+    expect(openVerseTailLength(["वारुणीं मदिरां पीत्वा मदोन्मथितचेतसाम्‌ ।"], 1)).toBe(1);
+  });
+
+  it("is 0 for a chapter heading or a section marker", () => {
+    expect(openVerseTailLength(["", "अध्याय बीस"], 1)).toBe(0);
+    expect(openVerseTailLength(["", "तात्पर्य : यह व्याख्या है"], 1)).toBe(0);
   });
 });

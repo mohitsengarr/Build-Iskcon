@@ -396,6 +396,94 @@ export function getPageEndKind(text: string): string {
   return lastKind;
 }
 
+// ── Verses split across a page break ────────────────────────────────────────
+// A verse can start near the bottom of one page and close on the next, where its
+// last line carries the ॥ N ॥ number. The opening lines rarely all end in a
+// danda ("मया यथानूक्तमवादि ते हरे:", "यथा हिरण्याक्ष उदारविक्रमो"), so taken one at a
+// time they were classed as purport text, a quoted verse and a new purport
+// paragraph (SB 3.19.32 across pages 1987-1988). These two helpers find both
+// halves so the reader can render them as one verse.
+
+// A speaker line ("मैत्रेय उवाच") heads a verse; it is not one of the verse's lines.
+const SPEAKER_LINE_RE = /उवाच\s*[।:ः]?\s*$/u;
+const NUMBERED_VERSE_END_RE = /॥\s*[\d१२३४५६७८९०]+\s*॥/u;
+const SECTION_MARKER_RE = /^(तात्पर्य|शब्दार्थ|अनुवाद)/u;
+
+// HINDI_VERB_RE has no leading word boundary, so its "था" also matches inside the
+// Sanskrit "यथा" and "तथा" and a verse line reads as Hindi prose. Match whole words.
+const HINDI_VERB_WORD_RE = new RegExp(`(?:^|\\s)${HINDI_VERB_RE.source}`, "u");
+// Past and plural forms HINDI_VERB_RE lacks. "चटाई पर बैठ गये।" (page 7927) passed as
+// verse without them. Whole words, so no Sanskrit word is caught.
+const HINDI_PAST_WORD_RE = /(?:^|\s)(?:गये|गए|गयीं|गईं|बैठ|बैठे|बैठी|बैठा|लगे|आये|आए|दिये|किये|किए|हुआ|थीं)(?:\s|[।,;:\)]|$)/u;
+
+// isVerseLike's test with whole-word verbs, for the lines of a verse split across pages.
+function isOpenVerseLine(t: string): boolean {
+  if (t.length < 5 || t.length > 90) return false;
+  if (/॥/u.test(t) || SECTION_MARKER_RE.test(t) || isChapterHeading(t)) return false;
+  const dev = (t.match(/[\u0900-\u097F]/gu) || []).length;
+  const total = t.replace(/\s/g, "").length;
+  if (total === 0 || dev / total < 0.7) return false;
+  if ((t.includes("—") || t.includes("--")) && t.includes(";")) return false;
+  if (countHindiPostpositions(t) > 1) return false;
+  return !HINDI_VERB_WORD_RE.test(t) && !HINDI_PAST_WORD_RE.test(t);
+}
+
+/**
+ * How many lines at the top of a page close a numbered verse begun on the
+ * previous page: the lines up to and including the first `॥ N ॥` line. 0 when
+ * the page opens any other way, including with a speaker line, which starts a
+ * new verse. `lines` are the page's cleaned lines, "" for blank lines.
+ */
+export function numberedVerseHeadLength(lines: string[], maxLines = 4): number {
+  let count = 0;
+  for (const raw of lines) {
+    const t = raw.trim();
+    if (!t) {
+      if (count === 0) continue;
+      return 0;
+    }
+    count++;
+    if (NUMBERED_VERSE_END_RE.test(t)) {
+      return SECTION_MARKER_RE.test(t) || isChapterHeading(t) ? 0 : count;
+    }
+    if (count >= maxLines || SPEAKER_LINE_RE.test(t) || !isOpenVerseLine(t)) return 0;
+  }
+  return 0;
+}
+
+/**
+ * How many lines at the end of a page open the verse the next page closes, given
+ * that page's numberedVerseHeadLength. The opening must be a paragraph of its
+ * own (it starts the page, or follows a blank line or a line with ॥), every line
+ * of it must read as Sanskrit verse, a speaker line may only head it, and both
+ * halves together may not exceed maxVerseLines verse lines. 0 when the page ends
+ * in prose, a heading, a section marker or a finished verse.
+ */
+export function openVerseTailLength(lines: string[], nextPageHeadLength: number, maxVerseLines = 4): number {
+  if (!(nextPageHeadLength > 0)) return 0;
+  let end = lines.length - 1;
+  while (end >= 0 && !lines[end].trim()) end--;
+  if (end < 0) return 0;
+  let count = 0;
+  let verseLines = 0;
+  for (let j = end; j >= 0; j--) {
+    const t = lines[j].trim();
+    if (!t || /॥/u.test(t)) break;
+    if (SPEAKER_LINE_RE.test(t)) {
+      // Only the first line of the paragraph may name the speaker.
+      const before = j > 0 ? lines[j - 1].trim() : "";
+      if (before && !/॥/u.test(before)) return 0;
+      count++;
+      break;
+    }
+    if (!isOpenVerseLine(t)) return 0;
+    count++;
+    verseLines++;
+    if (verseLines + nextPageHeadLength > maxVerseLines) return 0;
+  }
+  return verseLines > 0 ? count : 0;
+}
+
 // ── Skandh (Canto) page-range anchors ─────────────────────────────────────
 // Derived from OCR title pages, colophons ("समाप्तः"), and "Chapter एक" markers.
 // Using page ranges is far more robust than detecting chapter-number resets,

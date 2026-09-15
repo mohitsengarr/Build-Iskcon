@@ -8,6 +8,7 @@ import { type AiFixArgs } from "@/components/SourceEditor";
 const SourceEditor = React.lazy(() => import("@/components/SourceEditor"));
 import { fadeInUp, fadeIn } from "@/lib/animations";
 import { applyTextCorrections } from "@/lib/bhagwatham-config";
+import { numberedVerseHeadLength, openVerseTailLength } from "@/lib/bhagwatham-utils";
 import {
   BookOpen, ChevronLeft, ChevronRight, Loader2,
   RefreshCw, Search, BookMarked, Sparkles,
@@ -1131,6 +1132,21 @@ function isHalfShlokaLine(line: string): boolean {
   return (visarga + sanskritEndings + sanskritParticles) >= 1;
 }
 
+// A page's lines exactly as RenderContent reads them: cleaned, page numbers
+// dropped, "" for blank lines. Cached by text: the page loop asks for the same
+// pages on every render.
+const pageLinesCache = new Map<string, string[]>();
+function pageLines(text: string): string[] {
+  const hit = pageLinesCache.get(text);
+  if (hit) return hit;
+  const result = cleanOcrText(text).split("\n")
+    .map((l) => (l.trim() ? stripLeadingPageNumber(l) : ""))
+    .filter((l) => l === "" || !isStandalonePageNumber(l));
+  if (pageLinesCache.size > 500) pageLinesCache.clear();
+  pageLinesCache.set(text, result);
+  return result;
+}
+
 // ── Determine what section kind a page ends with (for cross-page continuity) ──
 // Optional `nextPageText`: if supplied and the page would otherwise end in a
 // half-shloka classified as ref-shlok (because we were inside tatparya context),
@@ -1186,6 +1202,11 @@ function getPageEndKind(text: string, nextPageText?: string): string {
     if (endsAsHalf) {
       lastKind = "shlok";
     }
+  }
+  // A page ending with the opening lines of the verse the next page closes with
+  // ॥ N ॥ ends in that shlok, however the loop above classed those lines.
+  if (nextPageText && openVerseTailLength(pageLines(text), numberedVerseHeadLength(pageLines(nextPageText))) > 0) {
+    return "shlok";
   }
   return lastKind;
 }
@@ -3190,7 +3211,7 @@ function ShlokSpeaker({ text, themeKey }: { text: string; themeKey: string }) {
 
 // ── Content Renderer ───────────────────────────────────────────────────────────
 
-function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", onRegenerateImages, regeneratingChapters, queuedRegens, onDeleteImage, chapterNumMapper, pageNumber, overrides, onOverridesChange, prevPageEndKind, nextPageStartsNumberedShlok, unboldLines, sceneArt }: { text: string; textEn?: string; lang: "hi" | "en"; chapterImages?: Map<number, Array<{ url: string; description: string; sceneIndex?: number; isInstagram?: boolean }>>; themeKey?: Theme; onRegenerateImages?: (chapterNum: number) => void; regeneratingChapters?: Set<number>; queuedRegens?: Set<number>; onDeleteImage?: (chapterNum: number, sceneIndex: number) => void; chapterNumMapper?: (perSkandhNum: number) => number; pageNumber?: number; overrides?: SectionOverride[]; onOverridesChange?: (pageNum: number, overrides: SectionOverride[]) => void; prevPageEndKind?: string; nextPageStartsNumberedShlok?: boolean; unboldLines?: Set<string>; sceneArt?: Array<{ id: number; key: string; image_url: string }> }) {
+function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", onRegenerateImages, regeneratingChapters, queuedRegens, onDeleteImage, chapterNumMapper, pageNumber, overrides, onOverridesChange, prevPageEndKind, nextPageStartsNumberedShlok, nextPageVerseHeadLines, unboldLines, sceneArt }: { text: string; textEn?: string; lang: "hi" | "en"; chapterImages?: Map<number, Array<{ url: string; description: string; sceneIndex?: number; isInstagram?: boolean }>>; themeKey?: Theme; onRegenerateImages?: (chapterNum: number) => void; regeneratingChapters?: Set<number>; queuedRegens?: Set<number>; onDeleteImage?: (chapterNum: number, sceneIndex: number) => void; chapterNumMapper?: (perSkandhNum: number) => number; pageNumber?: number; overrides?: SectionOverride[]; onOverridesChange?: (pageNum: number, overrides: SectionOverride[]) => void; prevPageEndKind?: string; nextPageStartsNumberedShlok?: boolean; nextPageVerseHeadLines?: number; unboldLines?: Set<string>; sceneArt?: Array<{ id: number; key: string; image_url: string }> }) {
   const t = THEME_STYLES[themeKey];
 
   // ── Section Editor state ────────────────────────────────────────────
@@ -3531,6 +3552,37 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
       const endsAsHalf = /।\s*$/.test(lastLine) && !/॥/.test(lastLine);
       if (endsAsHalf) {
         last.kind = "shlok";
+      }
+    }
+  }
+
+  // ── Cross-page reconciliation: a verse opened at the page end ───────
+  // The next page's first lines close a numbered verse (॥ N ॥) and this page
+  // ends with that verse's opening lines. They rarely all end in a danda, so line
+  // by line they became purport text, a quoted verse and a fresh "तात्पर्य :"
+  // paragraph (SB 3.19.32, pages 1987-1988). Take the whole opening as one shlok;
+  // the next page then continues it (prevPageEndKind "shlok", see getPageEndKind).
+  // Guard: the trailing section lines must be exactly those page lines, else the
+  // sections are left as they are.
+  {
+    const tail = openVerseTailLength(lines, nextPageVerseHeadLines ?? 0);
+    if (tail > 0) {
+      const tailLines = lines.filter((l) => l.trim()).slice(-tail).map((l) => l.trim());
+      const trailing: string[] = [];
+      for (let si = sections.length - 1; si >= 0 && trailing.length < tail; si--) {
+        trailing.unshift(...sections[si].lines);
+      }
+      const matches = trailing.length >= tail && trailing.slice(-tail).every((l, k) => l === tailLines[k]);
+      if (matches) {
+        let remaining = tail;
+        while (remaining > 0 && sections.length > 0) {
+          const last = sections[sections.length - 1];
+          const take = Math.min(remaining, last.lines.length);
+          last.lines.splice(last.lines.length - take, take);
+          remaining -= take;
+          if (last.lines.length === 0) sections.pop();
+        }
+        sections.push({ kind: "shlok", lines: tailLines });
       }
     }
   }
@@ -5596,6 +5648,8 @@ export default function Bhagwatham() {
                     if (allIdx >= 0 && allIdx < allPages.length - 1) nextPage = allPages[allIdx + 1];
                   }
                   const nextPageStartsNumberedShlok = nextPage ? pageStartsWithNumberedShlokContinuation(nextPage.text) : false;
+                  // How many of the next page's first lines close a verse this page opens.
+                  const nextPageVerseHeadLines = nextPage ? numberedVerseHeadLength(pageLines(nextPage.text)) : 0;
                   // Hide the page number divider when a shloka or ref-shloka spans the page boundary —
                   // the verse should read as one continuous unit, not get visually broken.
                   const hidePageDivider = prevEndKind === "shlok" || prevEndKind === "ref-shlok";
@@ -5624,7 +5678,7 @@ export default function Bhagwatham() {
                       <p className={`text-[10px] ${theme.muted} font-medium text-right mt-1 mb-1 opacity-40`}>· {page.pageNumber} ·</p>
                     )}
                     {pageIdx === 0 && settings.showPageNumbers && <p className={`text-[10px] ${theme.muted} font-medium text-right mt-0 mb-2 opacity-40`}>· {page.pageNumber} ·</p>}
-                    <RenderContent text={page.text} textEn={page.textEn} lang={lang} chapterImages={chapterImages} themeKey={settings.theme} onRegenerateImages={(num: number) => handleRegenerateImages(num, 0)} regeneratingChapters={regeneratingChapters} queuedRegens={queuedRegens} onDeleteImage={isDevMode ? handleDeleteImage : undefined} pageNumber={page.pageNumber} overrides={sectionOverrides[page.pageNumber]} onOverridesChange={isDevMode ? handleOverridesChange : undefined} prevPageEndKind={prevEndKind} nextPageStartsNumberedShlok={nextPageStartsNumberedShlok} unboldLines={unboldLines} sceneArt={sceneArtByPage.get(page.pageNumber)} chapterNumMapper={(perSkandhNum: number) => {
+                    <RenderContent text={page.text} textEn={page.textEn} lang={lang} chapterImages={chapterImages} themeKey={settings.theme} onRegenerateImages={(num: number) => handleRegenerateImages(num, 0)} regeneratingChapters={regeneratingChapters} queuedRegens={queuedRegens} onDeleteImage={isDevMode ? handleDeleteImage : undefined} pageNumber={page.pageNumber} overrides={sectionOverrides[page.pageNumber]} onOverridesChange={isDevMode ? handleOverridesChange : undefined} prevPageEndKind={prevEndKind} nextPageStartsNumberedShlok={nextPageStartsNumberedShlok} nextPageVerseHeadLines={nextPageVerseHeadLines} unboldLines={unboldLines} sceneArt={sceneArtByPage.get(page.pageNumber)} chapterNumMapper={(perSkandhNum: number) => {
                       // Find which skandh this page belongs to based on surrounding chapters
                       const ch = chapters.find(c => c.number === perSkandhNum && c.pageNumber <= page.pageNumber);
                       // Pick the last matching chapter (closest to this page)
