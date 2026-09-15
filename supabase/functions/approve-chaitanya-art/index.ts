@@ -59,6 +59,30 @@ async function triggerRegenerate(chapterGlobalNumber: number, rowMeta?: RowMeta)
   }
 }
 
+// "Reject scene": remember the scene so rotation never picks it again. Scene
+// rotation cycles back to the top-ranked scene once every scene has been used,
+// which is how a rejected scene kept returning. used_scene_indexes gets it too, so
+// the regeneration that follows moves straight on to the next scene.
+async function rememberRejectedScene(globalNumber: number, sceneIndex: unknown): Promise<boolean> {
+  if (typeof sceneIndex !== "number") return false;
+  const { data, error } = await supabase
+    .from("chaitanya_chapter_scenes")
+    .select("used_scene_indexes, rejected_scene_indexes")
+    .eq("chapter_global_number", globalNumber)
+    .maybeSingle();
+  if (error || !data) {
+    console.warn(`rememberRejectedScene ${globalNumber}#${sceneIndex}: ${error?.message || "no scene row"}`);
+    return false;
+  }
+  const add = (list: unknown) => [...new Set([...(Array.isArray(list) ? list as number[] : []), sceneIndex])];
+  const { error: upErr } = await supabase
+    .from("chaitanya_chapter_scenes")
+    .update({ used_scene_indexes: add(data.used_scene_indexes), rejected_scene_indexes: add(data.rejected_scene_indexes) })
+    .eq("chapter_global_number", globalNumber);
+  if (upErr) console.warn(`rememberRejectedScene ${globalNumber}#${sceneIndex}: ${upErr.message}`);
+  return !upErr;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", {
@@ -75,8 +99,8 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { id, action } = await req.json() as { id: number; action: "approve" | "reject" };
-    if (!id || (action !== "approve" && action !== "reject")) {
+    const { id, action } = await req.json() as { id: number; action: "approve" | "reject" | "reject_scene" };
+    if (!id || (action !== "approve" && action !== "reject" && action !== "reject_scene")) {
       return new Response(JSON.stringify({ error: "Missing id or invalid action" }), { status: 400, headers: cors });
     }
 
@@ -92,13 +116,18 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: `Already ${row.status}`, status: row.status }), { status: 409, headers: cors });
     }
 
-    if (action === "reject") {
+    // reject: a new render, moving on to the next scene.
+    // reject_scene: the same, and the scene is never used again.
+    if (action === "reject" || action === "reject_scene") {
       try { await supabase.storage.from("chaitanya-art-images").remove([row.image_path]); } catch { /* best effort */ }
       const { error: upErr } = await supabase
         .from("chaitanya_chapter_art_review")
         .update({ status: "rejected", reviewed_at: new Date().toISOString() })
         .eq("id", id);
       if (upErr) throw new Error(`Reject update: ${upErr.message}`);
+      const sceneRemembered = action === "reject_scene"
+        ? await rememberRejectedScene(row.chapter_global_number, row.scene_index)
+        : false;
 
       // @ts-ignore - EdgeRuntime is provided by Supabase
       EdgeRuntime.waitUntil(triggerRegenerate(row.chapter_global_number, row));
@@ -107,6 +136,8 @@ Deno.serve(async (req: Request) => {
         success: true,
         status: "rejected",
         id,
+        scene_rejected: action === "reject_scene",
+        scene_remembered: sceneRemembered,
         regeneration: { ok: true, detail: "Regeneration started in background — a new pending row will appear in ~30s." },
         message: "Rejected. New attempt queued — will appear in pending review shortly.",
       }), { headers: cors });

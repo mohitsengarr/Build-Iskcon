@@ -1487,6 +1487,13 @@ interface GitaArt {
   visual_check?: VisualCheck | null;
 }
 
+// A Gita cover's stored prompt is the scene followed by its research facts, style
+// and rules. Re-rendering sends the scene alone; regenerate-chapter-art adds the
+// rest again, so nothing is doubled.
+function gitaSceneOnly(prompt: string): string {
+  return prompt.split(/\s*(?:Canonical details:|museum-quality|STRICTLY ANCIENT)/i)[0].trim() || prompt;
+}
+
 function GitaArtSection() {
   const [rows, setRows] = useState<GitaArt[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1494,6 +1501,9 @@ function GitaArtSection() {
   const [editId, setEditId] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
   const [generating, setGenerating] = useState(false);
+  // Cards re-rendering right now. Approve, Reject scene and Edit prompt stay
+  // disabled on a card until its own render answers.
+  const [regenerating, setRegenerating] = useState<Set<number>>(new Set());
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -1506,39 +1516,99 @@ function GitaArtSection() {
   useEffect(() => { void load(); }, [load]);
   useVisualCheckPoll("gita_chapter_art_review", "id,visual_check,image_url,image_path", rows, setRows);
 
-  // Discard a Gita scene outright (the shared "reject" path regenerates it).
-  const rejectGitaScene = useCallback(async (id: number) => {
-    setBusy(id);
-    try {
-      const r = await sbFetch(`gita_chapter_art_review?id=eq.${id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: "rejected", reviewed_at: new Date().toISOString() }),
-      });
-      if (r.ok) setRows(prev => prev.filter(p => p.id !== id));
-      else alert(`Reject scene failed: ${await r.text().catch(() => r.statusText)}`);
-    } finally { setBusy(null); }
+  // Review writes go through approve-gita-art with the service role, like the other
+  // books; the table does not take writes from the browser.
+  const callReview = useCallback(async (id: number, action: "approve" | "reject_scene") => {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/approve-gita-art`, {
+      method: "POST",
+      headers: FN_HEADERS,
+      body: JSON.stringify({ id, action }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data?.success) throw new Error(data?.error || res.statusText || `HTTP ${res.status}`);
   }, []);
 
-  const review = useCallback(async (id: number, action: "approve" | "reject") => {
-    setBusy(id);
-    try {
-      const r = await sbFetch(`gita_chapter_art_review?id=eq.${id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: action === "approve" ? "approved" : "rejected", reviewed_at: new Date().toISOString() }),
-      });
-      if (r.ok) setRows(prev => prev.filter(x => x.id !== id));
-      else alert(`Couldn't ${action}: ${await r.text().catch(() => r.statusText)}`);
-    } finally { setBusy(null); }
+  // The replacement after "Reject scene" is generated in the background. Reload the
+  // queue every 6s until each rejected chapter has a new card, for up to 3 minutes
+  // after the latest rejection (the generator's own budget is 140s). "Generate
+  // missing" waits meanwhile so it cannot start a second cover for the same chapter.
+  const pollRef = useRef<number | null>(null);
+  const awaitingRef = useRef<Array<{ id: number; chapter: number }>>([]);
+  const [waiting, setWaiting] = useState(false);
+  useEffect(() => () => { if (pollRef.current) window.clearInterval(pollRef.current); }, []);
+  const refreshForReplacements = useCallback(() => {
+    if (pollRef.current) window.clearInterval(pollRef.current);
+    const started = Date.now();
+    setWaiting(true);
+    const finish = async () => {
+      if (pollRef.current) window.clearInterval(pollRef.current);
+      pollRef.current = null;
+      setWaiting(false);
+      const left = awaitingRef.current;
+      awaitingRef.current = [];
+      if (!left.length) return;
+      // Say why nothing appeared. approve-gita-art records a failed replacement on
+      // the rejected row, and this queue only ever shows pending rows.
+      try {
+        const r = await sbFetch(`gita_chapter_art_review?select=id,error_message&id=in.(${left.map(x => x.id).join(",")})`);
+        const found: Array<{ id: number; error_message: string | null }> = r.ok ? await r.json() : [];
+        alert(left.map(x => {
+          const msg = found.find(row => row.id === x.id)?.error_message;
+          return msg
+            ? `Chapter ${x.chapter}: no replacement was generated (${msg}).`
+            : `Chapter ${x.chapter}: no replacement yet. Press refresh in a minute, or use Generate missing.`;
+        }).join("\n"));
+      } catch { /* refresh still shows whatever arrived */ }
+    };
+    pollRef.current = window.setInterval(async () => {
+      try {
+        const r = await sbFetch("gita_chapter_art_review?select=*&status=eq.pending&order=chapter_number.asc");
+        if (r.ok) {
+          const next: GitaArt[] = await r.json();
+          setRows(next);
+          awaitingRef.current = awaitingRef.current.filter(x => !next.some(row => row.chapter_number === x.chapter));
+          if (!awaitingRef.current.length) { void finish(); return; }
+        }
+      } catch { /* try again on the next tick */ }
+      if (Date.now() - started > 180_000) void finish();
+    }, 6000);
   }, []);
 
-  const regenerate = useCallback(async (id: number) => {
-    if (!draft.trim()) return;
-    setGenerating(true);
+  // Reject the scene itself: it is marked so the generator's brief avoids it, and a
+  // cover showing a different moment is generated.
+  const rejectGitaScene = useCallback(async (id: number, chapter: number) => {
+    setBusy(id);
+    try {
+      await callReview(id, "reject_scene");
+      setRows(prev => prev.filter(p => p.id !== id));
+      awaitingRef.current = [...awaitingRef.current.filter(x => x.chapter !== chapter), { id, chapter }];
+      refreshForReplacements();
+    } catch (e) {
+      alert(`Reject scene failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally { setBusy(null); }
+  }, [callReview, refreshForReplacements]);
+
+  const approve = useCallback(async (id: number) => {
+    setBusy(id);
+    try {
+      await callReview(id, "approve");
+      setRows(prev => prev.filter(x => x.id !== id));
+    } catch (e) {
+      alert(`Couldn't approve: ${e instanceof Error ? e.message : String(e)}`);
+    } finally { setBusy(null); }
+  }, [callReview]);
+
+  // promptOverride: the Regenerate button re-renders the scene from its stored
+  // prompt; the Edit prompt panel sends its draft.
+  const regenerate = useCallback(async (id: number, promptOverride?: string) => {
+    const promptText = (promptOverride ?? draft).trim();
+    if (!promptText) return;
+    setRegenerating(prev => new Set(prev).add(id));
     try {
       const r = await fetch(`${SUPABASE_URL}/functions/v1/regenerate-chapter-art`, {
         method: "POST",
         headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ book: "gita", id, prompt: draft }),
+        body: JSON.stringify({ book: "gita", id, prompt: promptText }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d?.ok) { alert(`Regenerate failed: ${d?.error || r.statusText}`); return; }
@@ -1547,9 +1617,11 @@ function GitaArtSection() {
       if (d?.prompt_truncated) {
         alert(`Image regenerated, but your prompt was shortened to fit: ${d.sent_chars}/${d.prompt_chars} characters (limit ${d.max_len}). The end of the prompt was not sent — trim it, or raise the limit in the Image Playground.`);
       }
-      setRows(prev => prev.map(x => (x.id === id ? { ...x, image_url: `${d.image_url}?t=${Date.now()}`, prompt: draft, visual_check: d.visual_check ?? null } : x)));
-      setEditId(null);
-    } finally { setGenerating(false); }
+      setRows(prev => prev.map(x => (x.id === id ? { ...x, image_url: `${d.image_url}?t=${Date.now()}`, prompt: promptText, visual_check: d.visual_check ?? null } : x)));
+      if (promptOverride === undefined) setEditId(null);
+    } finally {
+      setRegenerating(prev => { const n = new Set(prev); n.delete(id); return n; });
+    }
   }, [draft]);
 
   const generateMissing = useCallback(async () => {
@@ -1580,7 +1652,7 @@ function GitaArtSection() {
           </h3>
           <p className="text-[11px] text-indigo-700/80 mt-0.5">Approve to use as chapter art and for the daily social post · 18 chapters</p>
         </div>
-        <button onClick={() => void generateMissing()} disabled={generating}
+        <button onClick={() => void generateMissing()} disabled={generating || waiting}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-[11px] font-bold hover:bg-indigo-700 disabled:opacity-50">
           {generating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
           Generate missing
@@ -1611,22 +1683,23 @@ function GitaArtSection() {
                 <h4 className="font-serif font-bold text-stone-800 text-sm mb-1">{p.chapter_title}</h4>
                 {p.caption && <p className="text-xs text-stone-600 leading-relaxed line-clamp-3 mb-2">{p.caption}</p>}
                 <div className="flex flex-wrap gap-2">
-                  <button onClick={() => void review(p.id, "approve")} disabled={busy === p.id}
+                  <button onClick={() => void approve(p.id)} disabled={busy === p.id || regenerating.has(p.id)}
                     className="flex items-center gap-1 text-xs font-bold text-white bg-green-600 hover:bg-green-700 disabled:bg-stone-300 px-3 py-1.5 rounded-lg">
                     {busy === p.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />} Approve
                   </button>
-                  <button onClick={() => void review(p.id, "reject")} disabled={busy === p.id}
+                  <button onClick={() => { if (p.prompt) void regenerate(p.id, gitaSceneOnly(p.prompt)); }} disabled={busy === p.id || regenerating.has(p.id) || !p.prompt}
                     title="Keep this scene, render it again"
                     className="flex items-center gap-1 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 disabled:bg-stone-300 px-3 py-1.5 rounded-lg">
-                    <RefreshCw className="w-3 h-3" /> Regenerate
+                    {regenerating.has(p.id) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />} Regenerate
                   </button>
-                  <button onClick={() => void rejectGitaScene(p.id)} disabled={busy === p.id}
-                    title="Discard this scene — nothing is regenerated"
+                  <button onClick={() => void rejectGitaScene(p.id, p.chapter_number)} disabled={busy === p.id || regenerating.has(p.id)}
+                    title="Never use this scene again, and generate the chapter's next scene"
                     className="flex items-center gap-1 text-xs font-bold text-white bg-red-600 hover:bg-red-700 disabled:bg-stone-300 px-3 py-1.5 rounded-lg">
                     <X className="w-3 h-3" /> Reject scene
                   </button>
                   <button onClick={() => { const open = editId === p.id; setEditId(open ? null : p.id); setDraft(p.prompt || ""); }}
-                    className="flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-100 hover:bg-purple-200 px-3 py-1.5 rounded-lg">
+                    disabled={regenerating.has(p.id)}
+                    className="flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-100 hover:bg-purple-200 disabled:opacity-50 px-3 py-1.5 rounded-lg">
                     <Sparkles className="w-3 h-3" /> {editId === p.id ? "Close" : "Edit prompt"}
                   </button>
                 </div>
@@ -1635,9 +1708,9 @@ function GitaArtSection() {
                     <textarea value={draft} onChange={e => setDraft(e.target.value)} rows={4}
                       className="w-full px-2.5 py-2 rounded-lg border border-purple-300 text-[12px] focus:outline-none focus:ring-2 focus:ring-purple-200" />
                     <div className="flex items-center gap-2 mt-2">
-                      <button onClick={() => void regenerate(p.id)} disabled={generating || !draft.trim()}
+                      <button onClick={() => void regenerate(p.id)} disabled={regenerating.has(p.id) || !draft.trim()}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 disabled:opacity-50">
-                        {generating ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Regenerating…</> : <><RefreshCw className="w-3.5 h-3.5" /> Regenerate</>}
+                        {regenerating.has(p.id) ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Regenerating…</> : <><RefreshCw className="w-3.5 h-3.5" /> Regenerate</>}
                       </button>
                       <button onClick={() => setEditId(null)} className="px-3 py-1.5 rounded-lg bg-white text-stone-600 text-xs font-semibold border border-stone-200">Cancel</button>
                     </div>
@@ -1724,15 +1797,21 @@ export default function Gallery() {
   // Chapter-cover prompt editing (Bhagavatam / Chaitanya / Gita queues).
   const [artEdit, setArtEdit] = useState<{ book: string; id: number } | null>(null);
   const [artDraft, setArtDraft] = useState("");
-  const [artBusy, setArtBusy] = useState<number | null>(null);
-  const regenerateChapterArt = useCallback(async (book: string, id: number, onDone: (url: string, check: VisualCheck | null) => void) => {
-    if (!artDraft.trim()) return;
-    setArtBusy(id);
+  // Per card, like regeneratingPending: several covers can re-render at once, and
+  // each keeps Approve, Reject scene and Edit prompt disabled until its own finishes.
+  // Keyed "book:id": Bhagavatam and Chaitanya review ids overlap.
+  const [artBusy, setArtBusy] = useState<Set<string>>(new Set());
+  // promptOverride: the Regenerate button re-renders the scene from its stored
+  // prompt; without it this sends the Edit prompt draft.
+  const regenerateChapterArt = useCallback(async (book: string, id: number, onDone: (url: string, check: VisualCheck | null, sentPrompt: string) => void, promptOverride?: string) => {
+    const promptText = (promptOverride ?? artDraft).trim();
+    if (!promptText) return;
+    setArtBusy(prev => new Set(prev).add(`${book}:${id}`));
     try {
       const r = await fetch(`${SUPABASE_URL}/functions/v1/regenerate-chapter-art`, {
         method: "POST",
         headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ book, id, prompt: artDraft }),
+        body: JSON.stringify({ book, id, prompt: promptText }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d?.ok) { alert(`Regenerate failed: ${d?.error || r.statusText}`); return; }
@@ -1741,11 +1820,11 @@ export default function Gallery() {
       if (d?.prompt_truncated) {
         alert(`Image regenerated, but your prompt was shortened to fit: ${d.sent_chars}/${d.prompt_chars} characters (limit ${d.max_len}). The end of the prompt was not sent — trim it, or raise the limit in the Image Playground.`);
       }
-      onDone(`${d.image_url}?t=${Date.now()}`, d.visual_check ?? null);
-      setArtEdit(null);
+      onDone(`${d.image_url}?t=${Date.now()}`, d.visual_check ?? null, promptText);
+      if (promptOverride === undefined) setArtEdit(null);
     } catch (e) {
       alert(`Regenerate failed: ${String(e)}`);
-    } finally { setArtBusy(null); }
+    } finally { setArtBusy(prev => { const n = new Set(prev); n.delete(`${book}:${id}`); return n; }); }
   }, [artDraft]);
   const [promptEditId, setPromptEditId] = useState<number | null>(null);
   const [promptDraft, setPromptDraft] = useState("");
@@ -2031,26 +2110,34 @@ export default function Gallery() {
     }
   }, [chartBulkLimit, chartSampleApproved, fetchPendingChapterArt, refreshChartBulkStatus, startPoller]);
 
-  // Discard a scene outright. The edge function's "reject" always queues a
-  // regeneration of the SAME scene, which is right when only the rendering is
-  // wrong — but useless when the scene itself is a bad choice. This marks the row
-  // rejected directly so nothing is regenerated from it.
-  const rejectScene = useCallback(async (table: string, id: number) => {
+  // Reject the scene itself: approve-chapter-art marks the row rejected, records the
+  // scene so rotation never picks it again, and generates the chapter's next scene.
+  // This used to PATCH the table from the browser, which row-level security turns
+  // into a silent no-op: the card vanished and the same scene came back on reload.
+  const rejectScene = useCallback(async (id: number) => {
     setReviewingChapterArt(prev => new Set(prev).add(id));
     try {
-      const r = await sbFetch(`${table}?id=eq.${id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: "rejected", reviewed_at: new Date().toISOString() }),
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/approve-chapter-art`, {
+        method: "POST",
+        headers: FN_HEADERS,
+        body: JSON.stringify({ id, action: "reject_scene" }),
       });
-      if (r.ok) {
-        setPendingChapterArt(prev => prev.filter(p => p.id !== id));
-      } else {
-        alert(`Reject scene failed: ${await r.text().catch(() => r.statusText)}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.success) {
+        alert(`Reject scene failed: ${data?.error || res.statusText || `HTTP ${res.status}`}`);
+        return;
       }
+      if (data.scene_remembered === false) {
+        alert("This cover was not made from the chapter's scene list, so its scene could not be excluded for next time. A new cover is being generated.");
+      }
+      setPendingChapterArt(prev => prev.filter(p => p.id !== id));
+      startPoller("chart-regen", () => { void fetchPendingChapterArt(); refreshChartBulkStatus(); }, 5000, 150 * 1000);
+    } catch (err) {
+      alert(`Network error: ${String(err)}`);
     } finally {
       setReviewingChapterArt(prev => { const n = new Set(prev); n.delete(id); return n; });
     }
-  }, []);
+  }, [fetchPendingChapterArt, refreshChartBulkStatus, startPoller]);
 
   const reviewChapterArt = useCallback(async (id: number, action: "approve" | "reject") => {
     setReviewingChapterArt(prev => new Set(prev).add(id));
@@ -2207,21 +2294,32 @@ export default function Gallery() {
     }
   }, [ccBulkLimit, ccSampleApproved, fetchPendingChaitanya, refreshCcBulkStatus, startPoller]);
 
-  // Discard a Chaitanya scene outright — the edge function's "reject" regenerates
-  // the same scene, which is wrong when the scene itself is the problem.
+  // Reject the scene itself (see rejectScene): approve-chaitanya-art records it so it
+  // is never used again and generates the chapter's next scene.
   const rejectChaitanyaScene = useCallback(async (id: number) => {
     setReviewingChaitanya(prev => new Set(prev).add(id));
     try {
-      const r = await sbFetch(`chaitanya_chapter_art_review?id=eq.${id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: "rejected", reviewed_at: new Date().toISOString() }),
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/approve-chaitanya-art`, {
+        method: "POST",
+        headers: FN_HEADERS,
+        body: JSON.stringify({ id, action: "reject_scene" }),
       });
-      if (r.ok) setPendingChaitanya(prev => prev.filter(p => p.id !== id));
-      else alert(`Reject scene failed: ${await r.text().catch(() => r.statusText)}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.success) {
+        alert(`Reject scene failed: ${data?.error || res.statusText || `HTTP ${res.status}`}`);
+        return;
+      }
+      if (data.scene_remembered === false) {
+        alert("This cover was not made from the chapter's scene list, so its scene could not be excluded for next time. A new cover is being generated.");
+      }
+      setPendingChaitanya(prev => prev.filter(p => p.id !== id));
+      startPoller("cc-regen", () => { void fetchPendingChaitanya(); refreshCcBulkStatus(); }, 5000, 150 * 1000);
+    } catch (err) {
+      alert(`Network error: ${String(err)}`);
     } finally {
       setReviewingChaitanya(prev => { const n = new Set(prev); n.delete(id); return n; });
     }
-  }, []);
+  }, [fetchPendingChaitanya, refreshCcBulkStatus, startPoller]);
 
   const reviewChaitanyaArt = useCallback(async (id: number, action: "approve" | "reject") => {
     setReviewingChaitanya(prev => new Set(prev).add(id));
@@ -3222,38 +3320,40 @@ export default function Gallery() {
                           <div className="flex flex-wrap gap-2 mt-3">
                             <button
                               onClick={() => reviewChapterArt(p.id, "approve")}
-                              disabled={isReviewing}
+                              disabled={isReviewing || artBusy.has(`bhagavatam:${p.id}`)}
                               className="flex items-center gap-1 text-xs font-bold text-white bg-green-600 hover:bg-green-700 disabled:bg-stone-300 px-3 py-1.5 rounded-lg transition-colors"
                             >
                               {isReviewing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
                               Approve
                             </button>
                             <button
-                              onClick={() => reviewChapterArt(p.id, "reject")}
-                              disabled={isReviewing}
+                              onClick={() => p.prompt
+                                ? void regenerateChapterArt("bhagavatam", p.id, (url, check, sent) => setPendingChapterArt(prev => prev.map(x => x.id === p.id ? { ...x, image_url: url, visual_check: check, prompt: sent } : x)), p.prompt)
+                                : reviewChapterArt(p.id, "reject")}
+                              disabled={isReviewing || artBusy.has(`bhagavatam:${p.id}`)}
                               title="Keep this scene, render it again"
                               className="flex items-center gap-1 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 disabled:bg-stone-300 px-3 py-1.5 rounded-lg transition-colors"
                             >
-                              {isReviewing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                              {isReviewing || artBusy.has(`bhagavatam:${p.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
                               Regenerate
                             </button>
                             <button
-                              onClick={() => rejectScene("bhagavatam_chapter_art_review", p.id)}
-                              disabled={isReviewing}
-                              title="Discard this scene — nothing is regenerated"
+                              onClick={() => void rejectScene(p.id)}
+                              disabled={isReviewing || artBusy.has(`bhagavatam:${p.id}`)}
+                              title="Never use this scene again, and generate the chapter's next scene"
                               className="flex items-center gap-1 text-xs font-bold text-white bg-red-600 hover:bg-red-700 disabled:bg-stone-300 px-3 py-1.5 rounded-lg transition-colors"
                             >
                               {isReviewing ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
                               Reject scene
                             </button>
                             <button
-                              onClick={() => { const open = artEdit?.id === p.id; setArtEdit(open ? null : { book: "bhagavatam", id: p.id }); setArtDraft(p.prompt || p.scene_title || ""); }}
-                              disabled={artBusy === p.id}
+                              onClick={() => { const open = artEdit?.id === p.id && artEdit.book === "bhagavatam"; setArtEdit(open ? null : { book: "bhagavatam", id: p.id }); setArtDraft(p.prompt || p.scene_title || ""); }}
+                              disabled={artBusy.has(`bhagavatam:${p.id}`)}
                               className="flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-100 hover:bg-purple-200 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
                               title="Edit the image prompt and re-render this cover"
                             >
                               <Sparkles className="w-3 h-3" />
-                              {artEdit?.id === p.id ? "Close" : "Edit prompt"}
+                              {artEdit?.id === p.id && artEdit.book === "bhagavatam" ? "Close" : "Edit prompt"}
                             </button>
                           </div>
                           {artEdit?.id === p.id && artEdit.book === "bhagavatam" && (
@@ -3271,11 +3371,11 @@ export default function Gallery() {
                               />
                               <div className="flex items-center gap-2 mt-2">
                                 <button
-                                  onClick={() => void regenerateChapterArt("bhagavatam", p.id, (url, check) => setPendingChapterArt(prev => prev.map(x => x.id === p.id ? { ...x, image_url: url, visual_check: check } : x)))}
-                                  disabled={artBusy === p.id || !artDraft.trim()}
+                                  onClick={() => void regenerateChapterArt("bhagavatam", p.id, (url, check, sent) => setPendingChapterArt(prev => prev.map(x => x.id === p.id ? { ...x, image_url: url, visual_check: check, prompt: sent } : x)))}
+                                  disabled={artBusy.has(`bhagavatam:${p.id}`) || !artDraft.trim()}
                                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 disabled:opacity-50"
                                 >
-                                  {artBusy === p.id ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Regenerating…</> : <><RefreshCw className="w-3.5 h-3.5" /> Regenerate image</>}
+                                  {artBusy.has(`bhagavatam:${p.id}`) ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Regenerating…</> : <><RefreshCw className="w-3.5 h-3.5" /> Regenerate image</>}
                                 </button>
                                 <button onClick={() => setArtEdit(null)} className="px-3 py-1.5 rounded-lg bg-white text-stone-600 text-xs font-semibold border border-stone-200 hover:bg-stone-50">Cancel</button>
                                 <a href="/image-playground" className="ml-auto text-[10px] text-purple-600 hover:underline">Tune model &amp; style →</a>
@@ -3456,38 +3556,40 @@ export default function Gallery() {
                           <div className="flex flex-wrap gap-2 mt-3">
                             <button
                               onClick={() => reviewChaitanyaArt(p.id, "approve")}
-                              disabled={isReviewing}
+                              disabled={isReviewing || artBusy.has(`chaitanya:${p.id}`)}
                               className="flex items-center gap-1 text-xs font-bold text-white bg-green-600 hover:bg-green-700 disabled:bg-stone-300 px-3 py-1.5 rounded-lg transition-colors"
                             >
                               {isReviewing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
                               Approve
                             </button>
                             <button
-                              onClick={() => reviewChaitanyaArt(p.id, "reject")}
-                              disabled={isReviewing}
+                              onClick={() => p.prompt
+                                ? void regenerateChapterArt("chaitanya", p.id, (url, check, sent) => setPendingChaitanya(prev => prev.map(x => x.id === p.id ? { ...x, image_url: url, visual_check: check, prompt: sent } : x)), p.prompt)
+                                : reviewChaitanyaArt(p.id, "reject")}
+                              disabled={isReviewing || artBusy.has(`chaitanya:${p.id}`)}
                               title="Keep this scene, render it again"
                               className="flex items-center gap-1 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 disabled:bg-stone-300 px-3 py-1.5 rounded-lg transition-colors"
                             >
-                              {isReviewing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                              {isReviewing || artBusy.has(`chaitanya:${p.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
                               Regenerate
                             </button>
                             <button
-                              onClick={() => rejectChaitanyaScene(p.id)}
-                              disabled={isReviewing}
-                              title="Discard this scene — nothing is regenerated"
+                              onClick={() => void rejectChaitanyaScene(p.id)}
+                              disabled={isReviewing || artBusy.has(`chaitanya:${p.id}`)}
+                              title="Never use this scene again, and generate the chapter's next scene"
                               className="flex items-center gap-1 text-xs font-bold text-white bg-red-600 hover:bg-red-700 disabled:bg-stone-300 px-3 py-1.5 rounded-lg transition-colors"
                             >
                               {isReviewing ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
                               Reject scene
                             </button>
                             <button
-                              onClick={() => { const open = artEdit?.id === p.id; setArtEdit(open ? null : { book: "chaitanya", id: p.id }); setArtDraft(p.prompt || p.scene_title || ""); }}
-                              disabled={artBusy === p.id}
+                              onClick={() => { const open = artEdit?.id === p.id && artEdit.book === "chaitanya"; setArtEdit(open ? null : { book: "chaitanya", id: p.id }); setArtDraft(p.prompt || p.scene_title || ""); }}
+                              disabled={artBusy.has(`chaitanya:${p.id}`)}
                               className="flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-100 hover:bg-purple-200 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
                               title="Edit the image prompt and re-render this cover"
                             >
                               <Sparkles className="w-3 h-3" />
-                              {artEdit?.id === p.id ? "Close" : "Edit prompt"}
+                              {artEdit?.id === p.id && artEdit.book === "chaitanya" ? "Close" : "Edit prompt"}
                             </button>
                           </div>
                           {artEdit?.id === p.id && artEdit.book === "chaitanya" && (
@@ -3501,11 +3603,11 @@ export default function Gallery() {
                                 placeholder="Describe the scene — who is present (label MALE/FEMALE), what they are doing, the setting…" />
                               <div className="flex items-center gap-2 mt-2">
                                 <button
-                                  onClick={() => void regenerateChapterArt("chaitanya", p.id, (url, check) => setPendingChaitanya(prev => prev.map(x => x.id === p.id ? { ...x, image_url: url, visual_check: check } : x)))}
-                                  disabled={artBusy === p.id || !artDraft.trim()}
+                                  onClick={() => void regenerateChapterArt("chaitanya", p.id, (url, check, sent) => setPendingChaitanya(prev => prev.map(x => x.id === p.id ? { ...x, image_url: url, visual_check: check, prompt: sent } : x)))}
+                                  disabled={artBusy.has(`chaitanya:${p.id}`) || !artDraft.trim()}
                                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 disabled:opacity-50"
                                 >
-                                  {artBusy === p.id ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Regenerating…</> : <><RefreshCw className="w-3.5 h-3.5" /> Regenerate image</>}
+                                  {artBusy.has(`chaitanya:${p.id}`) ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Regenerating…</> : <><RefreshCw className="w-3.5 h-3.5" /> Regenerate image</>}
                                 </button>
                                 <button onClick={() => setArtEdit(null)} className="px-3 py-1.5 rounded-lg bg-white text-stone-600 text-xs font-semibold border border-stone-200 hover:bg-stone-50">Cancel</button>
                                 <a href="/image-playground" className="ml-auto text-[10px] text-purple-600 hover:underline">Tune model &amp; style →</a>

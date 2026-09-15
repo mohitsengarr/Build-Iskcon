@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { Fragment, useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
@@ -7,7 +7,7 @@ import {
   BookOpen, ChevronLeft, ChevronRight, Loader2,
   Search, BookMarked, List, X, ChevronDown,
   Languages, Bookmark, Trash2, LogIn,
-  Settings, Sun, Moon, Minus, Plus, Maximize2,
+  Settings, Sun, Moon, Minus, Plus, Maximize2, ImagePlus, Check,
 } from "lucide-react";
 
 // ── Reading Settings ─────────────────────────────────────────────────────────
@@ -350,8 +350,74 @@ function getPageEndKind(text: string): string {
 
 // ── Content Renderer (BBT formatting) ─────────────────────────────────────────
 
-function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind }: {
-  text: string; textEn?: string; lang: "hi" | "en"; themeKey?: Theme; prevPageEndKind?: string;
+// ── Story scenes ─────────────────────────────────────────────────────────────
+// Approved reader-scene illustrations are keyed by the opening of the passage the
+// reader highlighted, so the artwork can sit directly above that passage.
+type SceneArt = { id: number; key: string; image_url: string };
+
+function sceneMatchText(text: string): string {
+  // Letters, marks and digits only: a stored highlight and the page text differ in
+  // spacing, line breaks, dashes, dandas and ** markers, so compare without them.
+  return text.replace(/\*\*/g, "").normalize("NFC").replace(/[^\p{L}\p{M}\p{N}]+/gu, "");
+}
+function sceneKeyOf(text: string): string {
+  return sceneMatchText(text).slice(0, 80);
+}
+
+// Which section each approved illustration sits above: the first section that
+// holds the start of its passage, probed from two points in case the very start
+// is a label the renderer adds. An illustration that matches nothing (its text was
+// edited, or the page re-OCR'd) goes above the page's first section rather than
+// silently disappearing.
+// Only images our own storage serves are shown: reader_scenes accepts writes from
+// the public key, so a row could otherwise point the book at any image.
+const SCENE_ART_PREFIX = "https://etfmndcrchundvgtvmot.supabase.co/storage/v1/object/public/";
+
+function placeSceneArt<T extends { key: string }>(sectionTexts: string[], art: T[] | undefined, fallbackIndex = 0, sectionKinds?: string[]): Map<number, T[]> {
+  const placed = new Map<number, T[]>();
+  if (!art?.length || sectionTexts.length === 0) return placed;
+  // Search every section as one string, so a highlight that starts near the end of
+  // a section or runs across two is still found, then map the hit to its section.
+  const starts: number[] = [];
+  let joined = "";
+  for (const t of sectionTexts) { starts.push(joined.length); joined += sceneMatchText(t); }
+  const sectionAt = (offset: number) => {
+    let i = 0;
+    while (i + 1 < starts.length && starts[i + 1] <= offset) i++;
+    return i;
+  };
+  // The word-by-word gloss (shabdarth) quotes phrases of the translation, so a
+  // short highlight often matches there first; prefer a hit in any other section.
+  const sectionOf = (needle: string) => {
+    let from = 0;
+    let gloss = -1;
+    for (;;) {
+      const hit = joined.indexOf(needle, from);
+      if (hit < 0) return gloss;
+      const sec = sectionAt(hit);
+      if (sectionKinds?.[sec] !== "shabdarth") return sec;
+      if (gloss < 0) gloss = sec;
+      from = hit + 1;
+    }
+  };
+  for (const a of art) {
+    // The whole stored key first (up to 80 letters), then two shorter probes in
+    // case the very start is a label the renderer adds.
+    let at = a.key.length >= 4 ? sectionOf(a.key) : -1;
+    for (const from of [0, 12]) {
+      if (at >= 0) break;
+      const probe = a.key.slice(from, from + 24);
+      if (probe.length < 4) break;
+      at = sectionOf(probe);
+    }
+    const slot = at >= 0 ? at : Math.min(Math.max(0, fallbackIndex), sectionTexts.length - 1);
+    placed.set(slot, [...(placed.get(slot) ?? []), a]);
+  }
+  return placed;
+}
+
+function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind, sceneArt }: {
+  text: string; textEn?: string; lang: "hi" | "en"; themeKey?: Theme; prevPageEndKind?: string; sceneArt?: SceneArt[];
 }) {
   const t = THEME_STYLES[themeKey];
 
@@ -487,10 +553,17 @@ function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind
   }
   flush();
 
+  // Where each approved scene illustration goes on this page.
+  // Art that matches nothing goes above the first section of this page's own text,
+  // not above the tail of a passage carried over from the previous page.
+  const artPlacement = placeSceneArt(sections.map(sec => sec.lines.join(" ")), sceneArt, sections.length > 1 && sections[0].kind === prevPageEndKind ? 1 : 0, sections.map(sec => sec.kind));
+
   // Render sections with BBT styling
   return (
     <div className="space-y-5">
       {sections.map((sec, i) => {
+        const arts = artPlacement.get(i);
+        const node = (() => {
         switch (sec.kind) {
           case "chapter":
             return (
@@ -573,6 +646,19 @@ function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind
               </div>
             );
         }
+        })();
+        // Approved illustrations render directly above the passage they depict.
+        return arts ? (
+          <Fragment key={i}>
+            {arts.map(art => (
+              <figure key={`art-${art.id}`} className="my-5">
+                <img src={art.image_url} alt="" loading="lazy"
+                  className="w-full max-w-md mx-auto rounded-xl border border-orange-200/60 shadow-sm" />
+              </figure>
+            ))}
+            {node}
+          </Fragment>
+        ) : node;
       })}
     </div>
   );
@@ -770,6 +856,136 @@ export default function GitaReader() {
   const PAGES_PER_VIEW = 20;
   const contentRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  // ── Story scenes: highlight a passage, "Add to scenes" ─────────────────────────
+  // Same as the Bhagavatam and Chaitanya readers: the passage is saved to
+  // reader_scenes, the gallery's Story Scenes section generates its artwork, and
+  // once approved the illustration shows here above that passage.
+  const [scenePick, setScenePick] = useState<{ text: string; page: number; top: number; left: number } | null>(null);
+  const [sceneSaving, setSceneSaving] = useState(false);
+  const [sceneSaved, setSceneSaved] = useState(false);
+  const [sceneArtByPage, setSceneArtByPage] = useState<Map<number, SceneArt[]>>(new Map());
+  // Scenes are matched against the Hindi text, so capture is offered in Hindi only.
+  const langRef = useRef(lang);
+  langRef.current = lang;
+  // Set while the button is being pressed: tapping it collapses the selection on
+  // phones, and that must not tear the button down before its click lands.
+  const pickPressRef = useRef(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await sbFetch("reader_scenes?select=id,page_number,selected_text,image_url&book=eq.gita&approved=is.true&image_generated=is.true");
+        if (!res.ok) return;
+        const rows = await res.json() as Array<{ id: number; page_number: number | null; selected_text: string; image_url: string | null }>;
+        const byPage = new Map<number, SceneArt[]>();
+        for (const r of rows) {
+          if (!r.page_number || !r.image_url || !r.image_url.startsWith(SCENE_ART_PREFIX)) continue;
+          byPage.set(r.page_number, [...(byPage.get(r.page_number) ?? []), { id: r.id, key: sceneKeyOf(r.selected_text), image_url: r.image_url }]);
+        }
+        setSceneArtByPage(byPage);
+      } catch { /* illustrations are optional; the book reads fine without them */ }
+    })();
+  }, []);
+
+  useEffect(() => {
+    // Phones draw their own selection menu just above the highlight, so there the
+    // button goes below it; elsewhere above, unless there is no room.
+    const pickTop = (rect: DOMRect) => {
+      const coarse = typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches;
+      if (coarse) return rect.bottom + 52 <= window.innerHeight ? rect.bottom + 12 : Math.max(8, rect.top - 44);
+      return rect.top > 56 ? rect.top - 44 : rect.bottom + 8;
+    };
+    const read = () => {
+      if (pickPressRef.current) return;
+      if (langRef.current !== "hi") { setScenePick(null); return; }
+      const sel = window.getSelection();
+      const root = contentRef.current;
+      const text = sel && !sel.isCollapsed ? sel.toString().trim() : "";
+      if (!sel || !root || sel.rangeCount === 0 || text.length < 12) { setScenePick(null); return; }
+      const range = sel.getRangeAt(0);
+      const node = range.startContainer;
+      const start = node instanceof Element ? node : node.parentElement;
+      if (!start || !root.contains(start)) { setScenePick(null); return; }
+      // A highlight can start just outside a page block (a heading, the gap between
+      // pages); fall back to where it ends. No page means no art could ever show.
+      const endNode = range.endContainer;
+      const end = endNode instanceof Element ? endNode : endNode.parentElement;
+      const pageEl = start.closest("[data-page-num]") ?? end?.closest("[data-page-num]") ?? null;
+      const page = Number(pageEl?.getAttribute("data-page-num") || 0);
+      if (!page) { setScenePick(null); return; }
+      const rect = range.getBoundingClientRect();
+      setScenePick({
+        text,
+        page,
+        top: pickTop(rect),
+        left: Math.min(window.innerWidth - 168, Math.max(8, rect.left + rect.width / 2 - 80)),
+      });
+    };
+    // Ignore the tap on the button itself, or the button would be torn down before
+    // its click lands. The selection settles after mouseup/touchend on some browsers.
+    const onUp = (e: Event) => {
+      if ((e.target as Element | null)?.closest?.("[data-scene-pick]")) return;
+      window.setTimeout(read, 0);
+    };
+    // Phones adjust a selection with handles and fire no mouseup/touchend for it,
+    // so also follow selectionchange, debounced.
+    let selTimer = 0;
+    const onSelectionChange = () => {
+      window.clearTimeout(selTimer);
+      selTimer = window.setTimeout(read, 250);
+    };
+    // Scrolling moves the highlight: hide the button while it moves, and put it back
+    // where the highlight settles (read() leaves it hidden if the selection is gone).
+    let scrollTimer = 0;
+    const onScroll = () => {
+      if (!pickPressRef.current) setScenePick(prev => (prev ? null : prev));
+      window.clearTimeout(scrollTimer);
+      scrollTimer = window.setTimeout(read, 150);
+    };
+    document.addEventListener("mouseup", onUp);
+    document.addEventListener("touchend", onUp);
+    document.addEventListener("selectionchange", onSelectionChange);
+    window.addEventListener("scroll", onScroll, true);
+    return () => {
+      window.clearTimeout(selTimer);
+      window.clearTimeout(scrollTimer);
+      document.removeEventListener("mouseup", onUp);
+      document.removeEventListener("touchend", onUp);
+      document.removeEventListener("selectionchange", onSelectionChange);
+      window.removeEventListener("scroll", onScroll, true);
+    };
+  }, []);
+
+  const saveScene = useCallback(async () => {
+    if (!scenePick || sceneSaving) return;
+    setSceneSaving(true);
+    try {
+      const res = await sbFetch("reader_scenes", {
+        method: "POST",
+        body: JSON.stringify({
+          book: "gita",
+          page_number: scenePick.page,
+          selected_text: scenePick.text,
+          reader_id: readerId,
+        }),
+      });
+      if (!res.ok) {
+        alert(`Couldn't save the scene.\n${await res.text().catch(() => res.statusText)}`);
+        return;
+      }
+      setSceneSaved(true);
+      window.setTimeout(() => {
+        setSceneSaved(false);
+        setScenePick(null);
+        window.getSelection()?.removeAllRanges();
+      }, 1000);
+    } catch (err) {
+      alert(`Couldn't save the scene.\n${String(err)}`);
+    } finally {
+      setSceneSaving(false);
+    }
+  }, [scenePick, sceneSaving, readerId]);
 
   // ── Data fetching ──────────────────────────────────────────────────────────
 
@@ -1220,6 +1436,7 @@ export default function GitaReader() {
                         lang={lang}
                         themeKey={settings.theme}
                         prevPageEndKind={prevEndKind}
+                        sceneArt={sceneArtByPage.get(page.pageNumber)}
                       />
                     </div>
                   );
@@ -1265,6 +1482,24 @@ export default function GitaReader() {
           )}
         </main>
       </div>
+      {scenePick && (
+        <button
+          type="button"
+          data-scene-pick="1"
+          onPointerDown={() => {
+            pickPressRef.current = true;
+            window.setTimeout(() => { pickPressRef.current = false; }, 800);
+          }}
+          onMouseDown={e => e.preventDefault()}
+          onClick={() => void saveScene()}
+          disabled={sceneSaving}
+          style={{ position: "fixed", top: scenePick.top, left: scenePick.left, zIndex: 60 }}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-stone-900 text-white text-xs font-semibold shadow-lg hover:bg-stone-800 disabled:opacity-70"
+        >
+          {sceneSaved ? <Check className="w-3.5 h-3.5 text-green-400" /> : sceneSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImagePlus className="w-3.5 h-3.5" />}
+          {sceneSaved ? "Added to scenes" : "Add to scenes"}
+        </button>
+      )}
     </Layout>
   );
 }

@@ -322,8 +322,65 @@ function saveUnboldLines(s: Set<string>) {
 
 // Approved reader-scene illustrations are keyed by the opening of the passage the
 // reader highlighted, so the artwork can be placed directly above that passage.
+function sceneMatchText(text: string): string {
+  // Letters, marks and digits only: a stored highlight and the page text differ in
+  // spacing, line breaks, dashes, dandas and ** markers, so compare without them.
+  return text.replace(/\*\*/g, "").normalize("NFC").replace(/[^\p{L}\p{M}\p{N}]+/gu, "");
+}
 function sceneKeyOf(text: string): string {
-  return text.replace(/\*\*/g, "").replace(/\s+/g, " ").trim().slice(0, 60);
+  return sceneMatchText(text).slice(0, 80);
+}
+
+// Which section each approved illustration sits above: the first section that
+// holds the start of its passage, probed from two points in case the very start
+// is a label the renderer adds. An illustration that matches nothing (its text was
+// edited, or the page re-OCR'd) goes above the page's first section rather than
+// silently disappearing.
+// Only images our own storage serves are shown: reader_scenes accepts writes from
+// the public key, so a row could otherwise point the book at any image.
+const SCENE_ART_PREFIX = "https://etfmndcrchundvgtvmot.supabase.co/storage/v1/object/public/";
+
+function placeSceneArt<T extends { key: string }>(sectionTexts: string[], art: T[] | undefined, fallbackIndex = 0, sectionKinds?: string[]): Map<number, T[]> {
+  const placed = new Map<number, T[]>();
+  if (!art?.length || sectionTexts.length === 0) return placed;
+  // Search every section as one string, so a highlight that starts near the end of
+  // a section or runs across two is still found, then map the hit to its section.
+  const starts: number[] = [];
+  let joined = "";
+  for (const t of sectionTexts) { starts.push(joined.length); joined += sceneMatchText(t); }
+  const sectionAt = (offset: number) => {
+    let i = 0;
+    while (i + 1 < starts.length && starts[i + 1] <= offset) i++;
+    return i;
+  };
+  // The word-by-word gloss (shabdarth) quotes phrases of the translation, so a
+  // short highlight often matches there first; prefer a hit in any other section.
+  const sectionOf = (needle: string) => {
+    let from = 0;
+    let gloss = -1;
+    for (;;) {
+      const hit = joined.indexOf(needle, from);
+      if (hit < 0) return gloss;
+      const sec = sectionAt(hit);
+      if (sectionKinds?.[sec] !== "shabdarth") return sec;
+      if (gloss < 0) gloss = sec;
+      from = hit + 1;
+    }
+  };
+  for (const a of art) {
+    // The whole stored key first (up to 80 letters), then two shorter probes in
+    // case the very start is a label the renderer adds.
+    let at = a.key.length >= 4 ? sectionOf(a.key) : -1;
+    for (const from of [0, 12]) {
+      if (at >= 0) break;
+      const probe = a.key.slice(from, from + 24);
+      if (probe.length < 4) break;
+      at = sectionOf(probe);
+    }
+    const slot = at >= 0 ? at : Math.min(Math.max(0, fallbackIndex), sectionTexts.length - 1);
+    placed.set(slot, [...(placed.get(slot) ?? []), a]);
+  }
+  return placed;
 }
 
 // BBT print-style section colors
@@ -3733,6 +3790,11 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
     );
   }
 
+  // Where each approved scene illustration goes on this page.
+  // Art that matches nothing goes above the first section of this page's own text,
+  // not above the tail of a passage carried over from the previous page.
+  const artPlacement = placeSceneArt(sections.map(sec => sec.lines.join(" ")), sceneArt, sections.length > 1 && sections[0].kind === prevPageEndKind ? 1 : 0, sections.map(sec => sec.kind));
+
   return (
     <div className="space-y-5 group/page relative">
       {/* Edit mode toggle — bottom-right to avoid overlapping speaker buttons */}
@@ -3746,17 +3808,14 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
         </button>
       )}
       {sections.map((sec, i) => {
-        // An approved illustration renders directly above the passage it depicts.
-        const art = sceneArt?.find(a => {
-          const body = sceneKeyOf(sec.lines.join(" "));
-          return body.length > 0 && (body.startsWith(a.key) || a.key.startsWith(body.slice(0, 40)));
-        });
-        const artEl = art ? (
+        // Approved illustrations render directly above the passage they depict.
+        const arts = artPlacement.get(i);
+        const artEl = arts ? arts.map(art => (
           <figure key={`art-${art.id}`} className="my-5">
             <img src={art.image_url} alt="" loading="lazy"
               className="w-full max-w-md mx-auto rounded-xl border border-orange-200/60 shadow-sm" />
           </figure>
-        ) : null;
+        )) : null;
         const withArt = (node: React.ReactNode) =>
           artEl ? <React.Fragment key={i}>{artEl}{node}</React.Fragment> : node;
         return withArt((() => {
@@ -4436,7 +4495,7 @@ export default function Bhagwatham() {
         const rows = await res.json() as Array<{ id: number; page_number: number | null; selected_text: string; image_url: string }>;
         const m = new Map<number, Array<{ id: number; key: string; image_url: string }>>();
         for (const r of rows) {
-          if (!r.page_number || !r.image_url) continue;
+          if (!r.page_number || !r.image_url || !r.image_url.startsWith(SCENE_ART_PREFIX)) continue;
           const list = m.get(r.page_number) || [];
           list.push({ id: r.id, key: sceneKeyOf(r.selected_text), image_url: r.image_url });
           m.set(r.page_number, list);

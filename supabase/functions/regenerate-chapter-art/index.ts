@@ -67,10 +67,18 @@ const CORS = {
 
 // `scenes` is where the pre-extracted scene behind a cover lives (Gita has none).
 const BOOKS: Record<string, { table: string; bucket: string; prefix: string; scenes: string | null }> = {
-  bhagavatam: { table: "bhagavatam_chapter_art_review", bucket: "instagram-images",    prefix: "art",    scenes: "bhagavatam_chapter_scenes" },
+  bhagavatam: { table: "bhagavatam_chapter_art_review", bucket: "chapter-art-images",  prefix: "art",    scenes: "bhagavatam_chapter_scenes" },
   chaitanya:  { table: "chaitanya_chapter_art_review",  bucket: "chaitanya-art-images", prefix: "art-cc", scenes: "chaitanya_chapter_scenes" },
   gita:       { table: "gita_chapter_art_review",       bucket: "instagram-images",    prefix: "gita",   scenes: null },
 };
+
+// The bucket a stored image lives in, read from its public URL. Bhagavatam covers
+// have been written to more than one bucket over time, so deleting from a fixed
+// bucket left files behind.
+function bucketOf(url: unknown): string | null {
+  const m = typeof url === "string" ? url.match(/\/storage\/v1\/object\/public\/([^/]+)\//) : null;
+  return m ? m[1] : null;
+}
 
 const DEFAULTS = {
   model: "black-forest-labs/FLUX.2-pro", width: 1088, height: 1344, steps: null as number | null,
@@ -325,6 +333,11 @@ Deno.serve(async (req: Request) => {
 
     const { data: row, error: fErr } = await supabase.from(b.table).select("*").eq("id", id).single();
     if (fErr || !row) return new Response(JSON.stringify({ error: `${book} #${id} not found` }), { status: 404, headers: CORS });
+    // Only a cover awaiting review is re-rendered. An approved Gita or Chaitanya
+    // cover is posted to Instagram as it stands, so it must not change unseen.
+    if (row.status !== "pending") {
+      return new Response(JSON.stringify({ error: `${book} #${id} is already ${row.status}; refresh the gallery` }), { status: 409, headers: CORS });
+    }
 
     const { data: cfgRow } = await supabase.from("image_gen_config").select("*").eq("is_active", true).limit(1).maybeSingle();
     const cfg = { ...DEFAULTS, ...(cfgRow || {}) } as typeof DEFAULTS;
@@ -384,26 +397,42 @@ Deno.serve(async (req: Request) => {
     if (upErr) return new Response(JSON.stringify({ error: `Upload failed: ${upErr.message}` }), { status: 500, headers: CORS });
     const url = supabase.storage.from(b.bucket).getPublicUrl(fn).data.publicUrl;
 
+    // The row is updated only while it is still pending and still holds the image
+    // the reviewer was looking at. An Approve (or another regenerate) that landed
+    // during the render would otherwise receive an image nobody reviewed. The old
+    // file is deleted only after that update succeeds.
     const oldPath = row.image_path as string | null;
-    if (oldPath && oldPath !== fn) {
-      try { await supabase.storage.from(b.bucket).remove([oldPath]); } catch { /* best effort */ }
-    }
+    const guardedUpdate = (fields: Record<string, unknown>) => {
+      let q = supabase.from(b.table).update(fields).eq("id", id).eq("status", "pending");
+      q = oldPath ? q.eq("image_path", oldPath) : q.is("image_path", null);
+      return q.select("id");
+    };
+    const discardNew = async () => {
+      try { await supabase.storage.from(b.bucket).remove([fn]); } catch { /* best effort */ }
+    };
 
     const saved = { image_url: url, image_path: fn, prompt: prompt.trim(), error_message: null };
     let recordSaved = true;
-    let { error: updErr } = await supabase.from(b.table)
-      .update({ ...saved, visual_check: record })
-      .eq("id", id);
+    let { data: updRows, error: updErr } = await guardedUpdate({ ...saved, visual_check: record });
     if (updErr && /visual_check/.test(updErr.message)) {
-      // The visual_check column is missing (migration not applied yet). The old
-      // image is already removed, so save the new one without the record rather
-      // than leave the row pointing at a deleted file. The check then has nowhere
-      // to store its result, so it does not run.
+      // The visual_check column is missing (migration not applied yet): save the new
+      // image without the record. The check then has nowhere to store its result,
+      // so it does not run.
       console.warn(`[regen-chapter] update with visual_check failed (${updErr.message}); saving without it`);
       recordSaved = false;
-      ({ error: updErr } = await supabase.from(b.table).update(saved).eq("id", id));
+      ({ data: updRows, error: updErr } = await guardedUpdate(saved));
     }
-    if (updErr) return new Response(JSON.stringify({ error: `Update failed: ${updErr.message}` }), { status: 500, headers: CORS });
+    if (updErr) {
+      await discardNew();
+      return new Response(JSON.stringify({ error: `Update failed: ${updErr.message}` }), { status: 500, headers: CORS });
+    }
+    if (!updRows || updRows.length === 0) {
+      await discardNew();
+      return new Response(JSON.stringify({ error: `${book} #${id} was reviewed or changed while it rendered; nothing was replaced. Refresh the gallery.` }), { status: 409, headers: CORS });
+    }
+    if (oldPath && oldPath !== fn) {
+      try { await supabase.storage.from(bucketOf(row.image_url) ?? b.bucket).remove([oldPath]); } catch { /* best effort */ }
+    }
 
     // The check runs after the response, in waitUntil, so it is registered here,
     // before the Response is returned. It never renders, and starts nothing after

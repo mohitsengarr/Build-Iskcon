@@ -171,11 +171,40 @@ const DEFAULTS = {
   fallback_width: 768,
   fallback_height: 1024
 };
-async function writeSceneAndCaption(ch) {
+// Scenes the editor turned down with "Reject scene" for this chapter
+// (approve-gita-art). The Gita has no extracted scene list to rotate through, so
+// the brief is told what was rejected and asked for a different moment; without
+// this the same central moment came straight back.
+async function rejectedScenes(chapterNumber) {
+  try {
+    const { data, error } = await supabase.from("gita_chapter_art_review").select("scene_title, prompt").eq("chapter_number", chapterNumber).eq("status", "rejected").eq("scene_rejected", true).order("created_at", {
+      ascending: false
+    }).limit(6);
+    if (error) return [];
+    return (data || []).map((r)=>(typeof r.scene_title === "string" && r.scene_title.trim()) || sceneGist(r.prompt)).filter(Boolean);
+  } catch  {
+    return [];
+  }
+}
+// For rows saved before scene_title existed. A stored prompt is the scene, then
+// facts, style and rules; and every scene restates the same chariot iconography,
+// so drop those sentences or the gist says nothing about the moment itself.
+const ICONOGRAPHY = /four white horses|holding the reins|banner (bearing|with) Hanuman|peacock feather|blue skin|pitambara/i;
+function sceneGist(prompt) {
+  if (typeof prompt !== "string") return "";
+  const scene = prompt.split(/Canonical details:|museum-quality|STRICTLY ANCIENT/i)[0];
+  return scene.split(/(?<=[.!?])\s+/).filter((sentence)=>!ICONOGRAPHY.test(sentence)).join(" ").replace(/\s+/g, " ").trim().slice(0, 300);
+}
+function avoidNote(avoid) {
+  if (!avoid.length) return "";
+  return "\n\nThe editor rejected these moments for this chapter. Keep the canonical iconography, but depict a clearly DIFFERENT moment (a different action, setting or composition), not a variation of any of them:\n" + avoid.map((a)=>`- ${a}`).join("\n");
+}
+async function writeSceneAndCaption(ch, avoid = []) {
   const sys = [
     "You write artwork briefs for chapters of the Bhagavad-gita As It Is.",
     "Return ONLY valid JSON, no markdown fence:",
-    '{"imagePrompt":"...","caption":"...","hashtags":"..."}',
+    '{"moment":"...","imagePrompt":"...","caption":"...","hashtags":"..."}',
+    "moment: the moment the painting shows, in under 12 words (e.g. 'Krishna reveals his universal form to Arjuna').",
     "imagePrompt: ONE English prompt for a devotional oil painting of this chapter's central moment.",
     "  Label every figure MALE or FEMALE. Krishna is a youthful MALE charioteer with blue skin and peacock feather;",
     "  Arjuna is a muscular MALE warrior. Say who is present, what they do, and the setting. Under 90 words.",
@@ -203,7 +232,7 @@ async function writeSceneAndCaption(ch) {
       messages: [
         {
           role: "user",
-          content: `Chapter ${ch.n}: ${ch.sa} — ${ch.en}`
+          content: `Chapter ${ch.n}: ${ch.sa} — ${ch.en}${avoidNote(avoid)}`
         }
       ]
     })
@@ -395,7 +424,7 @@ async function buildChapter(ch, researchOptions, requestStart) {
     ...DEFAULTS,
     ...cfgRow || {}
   };
-  const brief = await writeSceneAndCaption(ch);
+  const brief = await writeSceneAndCaption(ch, await rejectedScenes(ch.n));
   const research = await researchChapter(ch, brief, researchOptions);
   let scene = brief.imagePrompt;
   // Image models are poor at counting, and the renders kept coming back with two
@@ -451,6 +480,7 @@ async function buildChapter(ch, researchOptions, requestStart) {
     prompt: sanitized,
     caption,
     hashtags: brief.hashtags,
+    scene_title: typeof brief.moment === "string" && brief.moment.trim() ? brief.moment.trim().slice(0, 200) : null,
     status: "pending"
   };
   // Stored with the image: "running" while its check is still to come, skipped
@@ -467,6 +497,14 @@ async function buildChapter(ch, researchOptions, requestStart) {
     // chapter and its paid render, without the record.
     console.warn(`[gita-art] insert with visual_check failed (${insErr.message}); saving without it`);
     ({ data: row, error: insErr } = await supabase.from("gita_chapter_art_review").insert(saved).select("id").single());
+  }
+  if (insErr && insErr.code === "23505") {
+    // gita_chapter_art_review_one_pending: another run already put a cover for this
+    // chapter up for review while this one rendered. Keep that one.
+    try {
+      await supabase.storage.from("instagram-images").remove([fn]);
+    } catch  {}
+    return { chapter: ch.n, skipped: "pending" };
   }
   if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
   if (needsBackgroundCheck(record)) {
@@ -515,6 +553,24 @@ Deno.serve(async (req)=>{
         status: 400,
         headers: CORS
       });
+      // One cover awaiting review per chapter: a replacement requested while one
+      // is already pending (a double click, or "Generate missing" meanwhile) is a no-op.
+      const { data: pendingRow } = await supabase.from("gita_chapter_art_review").select("id").eq("chapter_number", c.n).eq("status", "pending").limit(1).maybeSingle();
+      if (pendingRow) {
+        return new Response(JSON.stringify({
+          ok: true,
+          generated: [],
+          errors: [],
+          skipped: [
+            {
+              chapter: c.n,
+              reason: "pending"
+            }
+          ]
+        }), {
+          headers: CORS
+        });
+      }
       targets = [
         c
       ];
@@ -567,7 +623,12 @@ Deno.serve(async (req)=>{
         continue;
       }
       try {
-        generated.push(await buildOne(ch, researchOptions));
+        const built = await buildOne(ch, researchOptions);
+        if (built.skipped) skipped.push({
+          chapter: ch.n,
+          reason: built.skipped
+        });
+        else generated.push(built);
       } catch (e) {
         errors.push({
           chapter: ch.n,

@@ -273,7 +273,7 @@ function matchPersonas(names: string[], personas: Persona[]): Persona[] {
 
 // Scene store with rotation state — same mechanism instagram-post uses, so a
 // rejected cover regenerates from the NEXT scene instead of repeating rank 1.
-async function loadChapterScenes(globalNumber: number): Promise<{ scenes: ChapterScene[]; usedIndexes: number[] } | null> {
+async function loadChapterScenes(globalNumber: number): Promise<{ scenes: ChapterScene[]; usedIndexes: number[]; rejectedIndexes: number[] } | null> {
   const { data, error } = await supabase
     .from("bhagavatam_chapter_scenes")
     .select("scenes, used_scene_indexes")
@@ -282,11 +282,26 @@ async function loadChapterScenes(globalNumber: number): Promise<{ scenes: Chapte
   if (error || !data) return null;
   const scenes = Array.isArray(data.scenes) ? (data.scenes as ChapterScene[]) : [];
   if (scenes.length === 0) return null;
-  return { scenes, usedIndexes: data.used_scene_indexes || [] };
+  // Scenes the editor turned down with "Reject scene" (approve-*-art). Read on its
+  // own so a database without the column still loads its scenes.
+  let rejectedIndexes: number[] = [];
+  const { data: rej, error: rejErr } = await supabase
+    .from("bhagavatam_chapter_scenes")
+    .select("rejected_scene_indexes")
+    .eq("chapter_global_number", globalNumber)
+    .maybeSingle();
+  if (!rejErr && Array.isArray(rej?.rejected_scene_indexes)) rejectedIndexes = rej.rejected_scene_indexes;
+  return { scenes, usedIndexes: data.used_scene_indexes || [], rejectedIndexes };
 }
 
-function pickScene(scenes: ChapterScene[], usedIndexes: number[]): { scene: ChapterScene; index: number; cycleReset: boolean } {
-  const sorted = scenes.map((s, idx) => ({ s, idx })).sort((a, b) => (a.s.rank || 99) - (b.s.rank || 99));
+// A rejected scene is never picked, not even when the cycle resets. null when every
+// scene has been rejected: the caller then writes a fresh scene instead.
+function pickScene(scenes: ChapterScene[], usedIndexes: number[], rejectedIndexes: number[] = []): { scene: ChapterScene; index: number; cycleReset: boolean } | null {
+  const sorted = scenes
+    .map((s, idx) => ({ s, idx }))
+    .filter(({ idx }) => !rejectedIndexes.includes(idx))
+    .sort((a, b) => (a.s.rank || 99) - (b.s.rank || 99));
+  if (sorted.length === 0) return null;
   for (const { s, idx } of sorted) {
     if (!usedIndexes.includes(idx)) return { scene: s, index: idx, cycleReset: false };
   }
@@ -614,8 +629,10 @@ async function generateCover(
     let sceneCharacters: string[] = [];
     let usedSceneInfo: { index: number; cycleReset: boolean } | null = null;
 
-    if (sceneRow) {
-      const { scene, index, cycleReset } = pickScene(sceneRow.scenes, sceneRow.usedIndexes);
+    const picked = sceneRow ? pickScene(sceneRow.scenes, sceneRow.usedIndexes, sceneRow.rejectedIndexes) : null;
+    if (sceneRow && !picked) console.log(`Chapter ${chapter.globalNumber}: every extracted scene was rejected — writing a fresh scene`);
+    if (sceneRow && picked) {
+      const { scene, index, cycleReset } = picked;
       console.log(`Chapter ${chapter.globalNumber}: scene #${index} (rank ${scene.rank}) "${scene.title}"${cycleReset ? " [cycle reset]" : ""}`);
       imagePrompt = scene.image_prompt;
       sceneTitle = scene.title;
