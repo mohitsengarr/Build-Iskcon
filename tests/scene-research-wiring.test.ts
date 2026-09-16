@@ -356,7 +356,16 @@ describe("edge function wiring (index.ts handlers)", () => {
       ENV.FIRECRAWL_API_KEY = "fc-test";
       const db = makeDb({
         image_gen_config: () => null,
-        gita_chapter_art_review: (q) => (q.op === "insert" ? { id: 9 } : chaptersWithArt.map((n) => ({ chapter_number: n }))),
+        // Since bd355c17 the review table answers three different reads. The two
+        // single-row ones must answer with a row or null, never a list: an empty
+        // list is truthy, and the one-pending-cover probe reading one would skip
+        // every chapter. Nothing is pending and no scene was rejected here.
+        gita_chapter_art_review: (q) => {
+          if (q.op === "insert") return { id: 9 };
+          if (q.single) return null;
+          if (q.filters.some(([column, value]) => column === "scene_rejected" && value === true)) return [];
+          return chaptersWithArt.map((n) => ({ chapter_number: n }));
+        },
         scene_visual_canon: () => canon,
         [RESEARCH_TABLE]: (q) => (q.op === "select" ? null : null),
       });

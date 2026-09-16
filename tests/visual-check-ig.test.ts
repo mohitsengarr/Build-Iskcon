@@ -367,6 +367,9 @@ function assertRecord(rec: Json, want: Record<string, unknown>, extraKeys: strin
 const ARJUNA_SCENE =
   "Wide shot of Arjuna, a MALE warrior prince, standing on his chariot beside Krishna, a youthful MALE with blue skin, on the plain of Kurukshetra";
 const DHRUVA_SCENE = "Wide shot of Dhruva, a young MALE prince, meditating alone in the forest of Madhuvana under golden light";
+const INLINE_SCENE = "Wide shot of Vyasadeva, an elderly MALE sage, dictating in a Himalayan hermitage at first light";
+/** What Claude answers when instagram-post has to write the post itself, with no usable stored scene. */
+const INLINE_POST = { imagePrompt: INLINE_SCENE, caption: "A caption", hashtags: "#SrimadBhagavatam" };
 const GITA_SCENE =
   "Krishna, a youthful MALE charioteer with blue skin, holds the reins of Arjuna's chariot on the plain of Kurukshetra while Arjuna, a MALE warrior, looks toward him";
 const WAR_SCENE =
@@ -532,6 +535,11 @@ describe("visual check wiring for ig_pending_review", () => {
         missingColumn?: boolean;
         verse?: string;
         rejected?: number;
+        /** The whole scene list, when a rotation test needs more than one. */
+        scenes?: unknown[];
+        usedScenes?: number[];
+        /** Scenes the editor turned down with "Reject scene" (bd355c17). */
+        rejectedScenes?: number[];
         /** How the swap's update fails: lost (applied, response lost), error (not applied), unreadable (not applied, row unreadable). */
         swapResult?: "lost" | "error" | "unreadable";
         /** The redo's stillCurrent read of the post fails. */
@@ -552,7 +560,14 @@ describe("visual check wiring for ig_pending_review", () => {
       const db = makeDb({
         image_gen_config: () => (o.cfgError ? { __error: o.cfgError } : (o.cfg ?? null)),
         bhagwatham_personas: () => [],
-        bhagavatam_chapter_scenes: (q) => (q.op === "select" ? { scenes: [scene], used_scene_indexes: [] } : null),
+        // Since bd355c17 the scene store is read twice: the scenes and the
+        // rotation state, then rejected_scene_indexes on its own (so a database
+        // without that column still loads its scenes).
+        bhagavatam_chapter_scenes: (q) => {
+          if (q.op !== "select") return null;
+          if (q.selected?.includes("rejected_scene_indexes")) return { rejected_scene_indexes: o.rejectedScenes ?? [] };
+          return { scenes: o.scenes ?? [scene], used_scene_indexes: o.usedScenes ?? [] };
+        },
         bhaktigram_mahajan_aliases: () => [],
         ig_cron_state: () => ({ total_posted: 1, next_chapter: 293 }),
         ig_pending_review: (q) => {
@@ -585,7 +600,15 @@ describe("visual check wiring for ig_pending_review", () => {
         scene_visual_research: () => null,
       });
       const net = makeNet({
-        claude: (body) => (body.max_tokens === 600 ? (o.verse ?? '{"sanskrit":null,"hindi":null}') : "caption text"),
+        // max_tokens tells the calls apart: 600 is the verse, 300 the character
+        // names and 1200 the inline scene — the last two only when no stored scene
+        // could be used.
+        claude: (body) => {
+          if (body.max_tokens === 600) return o.verse ?? '{"sanskrit":null,"hindi":null}';
+          if (body.max_tokens === 300) return '["Arjuna"]';
+          if (body.max_tokens === 1200) return JSON.stringify(INLINE_POST);
+          return "caption text";
+        },
         imageOk: o.imageOk,
         status: o.status,
         body: o.body,
@@ -643,6 +666,81 @@ describe("visual check wiring for ig_pending_review", () => {
       hold.open();
       await res.background;
       assert.equal(net.together.length, 2, "the re-render ran after the response");
+    });
+
+    // ── Scene rotation never picks a rejected scene (bd355c17) ──────────────
+    // instagram-post shares the Bhagavatam rotation with bulk-generate-chapter-art,
+    // so a scene the editor turned down on a chapter cover is skipped here too.
+    // It used to come back: rotation cycled to the top-ranked scene once every
+    // scene had been used.
+
+    describe("rejected scenes", () => {
+      const scenesOf = (...prompts: string[]) =>
+        prompts.map((image_prompt, i) => ({
+          title: `Scene ${i}`,
+          summary: "A summary",
+          characters: ["Arjuna"],
+          setting: "Kurukshetra",
+          mood: "grave",
+          image_prompt,
+          rank: i + 1,
+        }));
+      const sceneLine = () => logs.find((l) => l.startsWith("Using pre-extracted scene #")) ?? "";
+
+      test("a rejected scene is never picked: the post uses the next scene", async () => {
+        // Arrange: scene #0 was rejected, nothing has been used yet
+        const { net } = setup({ scenes: scenesOf(ARJUNA_SCENE, DHRUVA_SCENE), rejectedScenes: [0] });
+        visionQueue(["pass"]);
+        // Act
+        const res = await call("ig", { chapter_global_number: 293 });
+        // Assert
+        assert.equal(res.status, 200, JSON.stringify(res.json));
+        assert.match(sceneLine(), /^Using pre-extracted scene #1 \(rank 2\): "Scene 1"$/);
+        assert.ok(net.together[0].prompt.startsWith(DHRUVA_SCENE), net.together[0].prompt.slice(0, 160));
+        assert.equal(res.json.usedScene.index, 1);
+        assert.equal(res.json.sceneSource, "pre-extracted");
+      });
+
+      test("a rejected scene is not picked even when every scene has been used and the cycle resets", async () => {
+        // Arrange: both scenes used, so rotation resets — and scene #0 was rejected
+        const { net } = setup({ scenes: scenesOf(ARJUNA_SCENE, DHRUVA_SCENE), usedScenes: [0, 1], rejectedScenes: [0] });
+        visionQueue(["pass"]);
+        // Act
+        const res = await call("ig", { chapter_global_number: 293 });
+        // Assert
+        assert.match(sceneLine(), /^Using pre-extracted scene #1 \(rank 2\): "Scene 1" \[cycle reset\]$/);
+        assert.ok(net.together[0].prompt.startsWith(DHRUVA_SCENE), net.together[0].prompt.slice(0, 160));
+        assert.deepEqual(res.json.usedScene, { index: 1, title: "Scene 1", cycleReset: true });
+      });
+
+      test("the cycle still resets to the top-ranked scene when none was rejected", async () => {
+        // Arrange: the same exhausted rotation, with nothing rejected
+        const { net } = setup({ scenes: scenesOf(ARJUNA_SCENE, DHRUVA_SCENE), usedScenes: [0, 1], rejectedScenes: [] });
+        visionQueue(["pass"]);
+        // Act
+        const res = await call("ig", { chapter_global_number: 293 });
+        // Assert
+        assert.match(sceneLine(), /^Using pre-extracted scene #0 \(rank 1\): "Scene 0" \[cycle reset\]$/);
+        assert.ok(net.together[0].prompt.startsWith(ARJUNA_SCENE), net.together[0].prompt.slice(0, 160));
+        assert.equal(res.json.usedScene.index, 0);
+      });
+
+      test("every scene rejected: the post falls back to an inline scene, and sceneSource says so", async () => {
+        // Arrange
+        const { net } = setup({ scenes: scenesOf(ARJUNA_SCENE, DHRUVA_SCENE), rejectedScenes: [0, 1] });
+        visionQueue(["pass"]);
+        // Act
+        const res = await call("ig", { chapter_global_number: 293 });
+        // Assert
+        assert.equal(res.status, 200, JSON.stringify(res.json));
+        assert.equal(sceneLine(), "", "no stored scene was used");
+        assert.ok(logs.includes("Every extracted scene was rejected — falling back to inline Claude generation"), logs.join("\n"));
+        assert.equal(res.json.usedScene, null);
+        // Before bd355c17 this said "pre-extracted" whenever a scene row existed,
+        // even on the inline path.
+        assert.equal(res.json.sceneSource, "inline-claude");
+        assert.equal(net.together[0].prompt.startsWith(ARJUNA_SCENE), false, "no rejected scene is drawn");
+      });
     });
 
     test("the soft safety floor still answers success false and skipped true, with no render and no background work", async () => {

@@ -44,6 +44,13 @@ type Handler = (req: Request) => Promise<Response>;
 const FUNCTIONS = new URL("../supabase/functions/", import.meta.url);
 const CANON = seededCanon();
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
+const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
+/** What Claude answers when a bulk function has to write a scene itself. */
+const INLINE_BRIEF = {
+  sceneTitle: "A scene written fresh",
+  imagePrompt: "Vyasadeva, an elderly MALE sage, dictates in a Himalayan hermitage at first light",
+  descriptionHi: "एक दृश्य",
+};
 const FLUX2 = "black-forest-labs/FLUX.2-pro";
 const FLUX11 = "black-forest-labs/FLUX.1.1-pro";
 const GPT_IMAGE = "openai/gpt-image-2";
@@ -144,6 +151,8 @@ interface Query {
   filters: Array<[string, unknown]>;
   /** A write followed by .select(): the written rows come back. */
   returning: boolean;
+  /** The columns a read asked for: the scene store is read twice, for different columns. */
+  columns: string | null;
   /** .or() was called. */
   or: boolean;
   values?: Json;
@@ -152,16 +161,19 @@ type TableFn = (q: Query) => { data?: unknown; error?: { message: string } };
 
 function makeDb(tables: Record<string, TableFn>) {
   const queries: Query[] = [];
-  const uploads: Array<{ path: string; b64: string }> = [];
+  const uploads: Array<{ bucket: string; path: string; b64: string }> = [];
+  /** Every storage remove(), with the bucket it was addressed to. */
+  const removals: Array<{ bucket: string; path: string }> = [];
   return {
     queries,
     uploads,
     writes: (table: string, op: Query["op"]) => queries.filter((q) => q.table === table && q.op === op),
     from(table: string) {
-      const q: Query = { table, op: "select", single: false, filters: [], returning: false, or: false };
+      const q: Query = { table, op: "select", single: false, filters: [], returning: false, columns: null, or: false };
       const b: Json = {
-        select: () => {
+        select: (columns?: string) => {
           if (q.op !== "select") q.returning = true;
+          else q.columns = columns ?? "*";
           return b;
         },
         eq: (column: string, value: unknown) => {
@@ -169,7 +181,12 @@ function makeDb(tables: Record<string, TableFn>) {
           return b;
         },
         in: () => b,
-        is: () => b,
+        // .is(column, null) is a filter like any other here: it is how
+        // regenerate-chapter-art guards a row that holds no image yet.
+        is: (column: string, value: unknown) => {
+          q.filters.push([column, value]);
+          return b;
+        },
         or: () => {
           q.or = true;
           return b;
@@ -207,14 +224,21 @@ function makeDb(tables: Record<string, TableFn>) {
       };
       return b;
     },
+    removals,
     storage: {
-      from: () => ({
+      // The bucket is recorded: since bd355c17 a Bhagavatam cover is written to
+      // chapter-art-images, and an old file is deleted from whichever bucket its
+      // public URL names, so which bucket was addressed is part of the behaviour.
+      from: (bucket: string) => ({
         upload: async (path: string, bytes: Uint8Array) => {
-          uploads.push({ path, b64: Buffer.from(bytes).toString("base64") });
+          uploads.push({ bucket, path, b64: Buffer.from(bytes).toString("base64") });
           return { error: null };
         },
-        getPublicUrl: (path: string) => ({ data: { publicUrl: `https://storage.test/${path}` } }),
-        remove: async () => ({ error: null }),
+        getPublicUrl: (path: string) => ({ data: { publicUrl: `https://storage.test/storage/v1/object/public/${bucket}/${path}` } }),
+        remove: async (paths: string[]) => {
+          for (const path of paths) removals.push({ bucket, path });
+          return { error: null };
+        },
       }),
     },
   };
@@ -223,9 +247,11 @@ function makeDb(tables: Record<string, TableFn>) {
 /**
  * Applies an update to a stateful row when every .eq filter matches it, as
  * PostgREST does: a .select() gets the updated rows back, none when nothing matched.
+ * .is("image_path", null) is recorded as an ["image_path", null] filter, which
+ * matches the same way (regenerate-chapter-art guards a row with no image that way).
  */
 function applyUpdate(row: Json, q: Query) {
-  const match = q.filters.every(([column, value]) => row[column] === value);
+  const match = q.filters.every(([column, value]) => (row[column] ?? null) === value);
   if (match) Object.assign(row, q.values);
   return { data: q.returning ? (match ? [{ id: row.id }] : []) : null };
 }
@@ -249,6 +275,8 @@ interface NetOptions {
 
 function makeNet(opts: NetOptions = {}) {
   const together: Json[] = [];
+  /** The bodies sent to Claude for an inline scene, when no stored scene could be used. */
+  const inlineBriefs: Json[] = [];
   const fn = async (url: string | URL, init: RequestInit = {}) => {
     const u = String(url);
     if (u === TOGETHER_API) {
@@ -264,9 +292,16 @@ function makeNet(opts: NetOptions = {}) {
       return ok ? Response.json({ data: [{ b64_json: jpeg(n) }] }) : new Response("bad request", { status: 400 });
     }
     if (u.endsWith("/api/bhagwatham/chapter-index")) return Response.json({ chapters: CHAPTER_INDEX });
+    // The inline path both bulk functions fall back to when there is no usable
+    // scene: Claude writes the scene, and the Bhagavatam one reads the chapter text.
+    if (u.includes("/api/bhagwatham/batch/")) return Response.json({ pages: [{ text: "chapter text" }] });
+    if (u === ANTHROPIC_API) {
+      inlineBriefs.push(JSON.parse(String(init.body)));
+      return Response.json({ content: [{ type: "text", text: JSON.stringify(INLINE_BRIEF) }] });
+    }
     throw new Error(`unexpected fetch ${u}`);
   };
-  return { fn, together };
+  return { fn, together, inlineBriefs };
 }
 
 /** The numbered facts the check sent to Claude, in order. */
@@ -415,11 +450,20 @@ describe("chapter-art visual check wiring", () => {
       "Krishna, a youthful MALE charioteer with blue skin, holds the reins of Arjuna's chariot on the plain of Kurukshetra while Arjuna, a MALE prince, listens";
     const TABLE = "gita_chapter_art_review";
 
-    function setup(o: NetOptions & { cfg?: unknown; missingColumn?: boolean } = {}) {
+    function setup(o: NetOptions & { cfg?: unknown; missingColumn?: boolean; row?: Json } = {}) {
       // status and image_path are load-bearing since the Reject-scene work (bd355c17):
       // regenerate-chapter-art refuses a row that is not pending, and saves the new
       // cover with a compare-and-swap on both.
-      const row: Json = { id: 5, chapter_number: 1, chapter_title: "Observing the Armies", status: "pending", image_path: "gita-old.jpg", visual_check: null };
+      const row: Json = {
+        id: 5,
+        chapter_number: 1,
+        chapter_title: "Observing the Armies",
+        status: "pending",
+        image_path: "gita-old.jpg",
+        image_url: "https://storage.test/storage/v1/object/public/instagram-images/gita-old.jpg",
+        visual_check: null,
+        ...o.row,
+      };
       const db = makeDb({
         [TABLE]: (q) => {
           if (q.op === "select") return { data: { ...row } };
@@ -427,6 +471,12 @@ describe("chapter-art visual check wiring", () => {
           if (q.op === "update") return applyUpdate(row, q);
           return {};
         },
+        bhagavatam_chapter_art_review: (q) => {
+          if (q.op === "select") return { data: { ...row } };
+          if (q.op === "update") return applyUpdate(row, q);
+          return {};
+        },
+        bhagavatam_chapter_scenes: () => ({ data: null }),
         image_gen_config: () => ({ data: o.cfg ?? null }),
         scene_visual_canon: () => ({ data: CANON }),
       });
@@ -434,15 +484,19 @@ describe("chapter-art visual check wiring", () => {
       g.__sb = db;
       g.fetch = net.fn;
       const updates = () => db.writes(TABLE, "update");
+      // Both writes now end in .select("id") — since bd355c17 the request's own save
+      // is a compare-and-swap that has to see whether it changed a row — so they are
+      // told apart by what they write: the save replaces the cover, the check's write
+      // only stamps visual_check.
       return {
         db,
         net,
         row,
         updates,
         /** The request's own saves of the new image. */
-        saves: () => updates().filter((q) => !q.returning),
+        saves: () => updates().filter((q) => "image_path" in q.values),
         /** The background check's compare-and-swap writes. */
-        checkWrites: () => updates().filter((q) => q.returning),
+        checkWrites: () => updates().filter((q) => !("image_path" in q.values)),
       };
     }
     const requestBody = (extra: Record<string, unknown>) => ({ book: "gita", id: 5, prompt: DRAFT, ...extra });
@@ -829,6 +883,141 @@ describe("chapter-art visual check wiring", () => {
         assert.equal(json.visual_check.image_model, c.fallback.model);
       });
     }
+
+    // ── Only a cover still awaiting review is replaced (bd355c17) ────────────
+    // Regenerate used to overwrite the row whatever state it was in, so an
+    // approved Gita or Chaitanya cover — already on its way to Instagram — could
+    // be swapped for an image nobody had reviewed.
+
+    for (const status of ["approved", "rejected"]) {
+      test(`a cover that is already ${status} is not re-rendered: 409 before any render, nothing saved and no check`, async () => {
+        // Arrange
+        const { net, db, saves, checkWrites } = setup({ row: { status } });
+        const claude = makeClaude([0]);
+        // Act
+        const { status: code, json, registered } = await sendRegen();
+        await settle();
+        // Assert
+        assert.equal(code, 409);
+        assert.equal(json.error, `gita #5 is already ${status}; refresh the gallery`);
+        assert.equal(net.together.length, 0, "no render is paid for a cover that is not up for review");
+        assert.equal(db.uploads.length, 0);
+        assert.deepEqual(saves(), []);
+        assert.deepEqual(checkWrites(), []);
+        assert.equal(claude.length, 0);
+        assert.equal(registered, 0);
+      });
+    }
+
+    test("the save is a compare-and-swap on the row still being pending and still holding the image the reviewer saw", async () => {
+      // Arrange
+      const { db, row, saves } = setup();
+      makeClaude([0]);
+      // Act
+      const { status, json } = await regen();
+      // Assert
+      assert.equal(status, 200, JSON.stringify(json));
+      assert.equal(saves().length, 1);
+      assert.deepEqual(saves()[0].filters, [["id", 5], ["status", "pending"], ["image_path", "gita-old.jpg"]]);
+      assert.equal(saves()[0].returning, true, "the save reads back whether it changed a row");
+      assert.equal(row.image_path, db.uploads[0].path);
+    });
+
+    for (
+      const c of [
+        {
+          name: "approved while it rendered",
+          change: (row: Json) => (row.status = "approved"),
+        },
+        {
+          name: "replaced by another regenerate while it rendered",
+          change: (row: Json) => (row.image_path = "gita-someone-elses.jpg"),
+        },
+      ]
+    ) {
+      test(`a cover ${c.name} is not replaced: 409, the new image is deleted and no check starts`, async () => {
+        // Arrange: the row changes under the request while Together is drawing
+        const rowRef: { current: Json } = { current: null };
+        const { db, row, saves, checkWrites } = setup({ onRender: () => c.change(rowRef.current) });
+        rowRef.current = row;
+        const claude = makeClaude([0]);
+        // Act
+        const { status, json, registered } = await sendRegen();
+        await settle();
+        // Assert
+        assert.equal(status, 409);
+        assert.match(json.error, /gita #5 was reviewed or changed while it rendered; nothing was replaced/);
+        assert.equal(saves().length, 1, "the compare-and-swap was attempted");
+        assert.deepEqual(saves()[0].filters, [["id", 5], ["status", "pending"], ["image_path", "gita-old.jpg"]]);
+        assert.equal(registered, 0);
+        assert.equal(claude.length, 0);
+        assert.deepEqual(checkWrites(), []);
+        // The render that lost the race leaves no orphan file, and the image the
+        // reviewer saw is still the row's.
+        assert.deepEqual(db.removals, [{ bucket: "instagram-images", path: db.uploads[0].path }]);
+        assert.equal(row.image_path === db.uploads[0].path, false);
+      });
+    }
+
+    test("a row that holds no image yet is guarded on image_path being null instead", async () => {
+      // Arrange
+      const { saves } = setup({ row: { image_path: null, image_url: null } });
+      makeClaude([0]);
+      // Act
+      const { status, json } = await regen();
+      // Assert
+      assert.equal(status, 200, JSON.stringify(json));
+      assert.deepEqual(saves()[0].filters, [["id", 5], ["status", "pending"], ["image_path", null]]);
+    });
+
+    // ── Where the file goes, and which bucket the old one is deleted from ────
+    // Bhagavatam covers are written to chapter-art-images now; the old file is
+    // deleted from the bucket its own public URL names, because Bhagavatam covers
+    // were written to instagram-images before and deleting from a fixed bucket
+    // left those files behind.
+
+    test("a Bhagavatam cover is written to chapter-art-images, and the old file is deleted from the instagram-images bucket its URL names", async () => {
+      // Arrange
+      const { db, row } = setup({
+        row: {
+          id: 5,
+          chapter_global_number: 10,
+          scene_index: null,
+          image_path: "art-old.jpg",
+          image_url: "https://storage.test/storage/v1/object/public/instagram-images/art-old.jpg",
+        },
+      });
+      makeClaude([0]);
+      // Act
+      const { status, json } = await call("regen", { book: "bhagavatam", id: 5, prompt: DRAFT });
+      // Assert
+      assert.equal(status, 200, JSON.stringify(json));
+      assert.equal(db.uploads.length, 1);
+      assert.equal(db.uploads[0].bucket, "chapter-art-images");
+      assert.match(db.uploads[0].path, /^art-regen-5-\d+\.jpg$/);
+      assert.equal(row.image_path, db.uploads[0].path);
+      assert.match(row.image_url, /\/chapter-art-images\//);
+      assert.deepEqual(db.removals, [{ bucket: "instagram-images", path: "art-old.jpg" }]);
+    });
+
+    test("an old Bhagavatam cover already in chapter-art-images is deleted from there", async () => {
+      // Arrange
+      const { db } = setup({
+        row: {
+          id: 5,
+          chapter_global_number: 10,
+          scene_index: null,
+          image_path: "art-old.jpg",
+          image_url: "https://storage.test/storage/v1/object/public/chapter-art-images/art-old.jpg",
+        },
+      });
+      makeClaude([0]);
+      // Act
+      const { status } = await call("regen", { book: "bhagavatam", id: 5, prompt: DRAFT });
+      // Assert
+      assert.equal(status, 200);
+      assert.deepEqual(db.removals, [{ bucket: "chapter-art-images", path: "art-old.jpg" }]);
+    });
   });
 
   // ── bulk cover functions (chapter/sample: flag only after the response; bulk: checked before insert)
@@ -865,14 +1054,36 @@ describe("chapter-art visual check wiring", () => {
   for (const cover of COVERS) {
     describe(cover.fn, () => {
       function setup(
-        o: NetOptions & { scene?: unknown; variant?: Variant; missingColumn?: boolean; cfgResult?: { data?: unknown; error?: { message: string } } } = {},
+        o:
+          & NetOptions
+          & {
+            scene?: unknown;
+            /** The whole scene list, when a rotation test needs more than one. */
+            scenes?: unknown[];
+            used?: number[];
+            /** Scenes the editor turned down with "Reject scene" (bd355c17). */
+            rejected?: number[];
+            /** No scene row at all: the cover is written inline. */
+            noScenes?: boolean;
+            variant?: Variant;
+            missingColumn?: boolean;
+            cfgResult?: { data?: unknown; error?: { message: string } };
+          } = {},
       ) {
         const rows: Json[] = [];
         const db = makeDb({
           image_gen_config: () => o.cfgResult ?? { data: VARIANT_CFG[o.variant ?? ""] },
           bhagwatham_personas: () => ({ data: [] }),
           chaitanya_chapters: (q) => ({ data: q.single ? CHAITANYA_CHAPTERS[0] : CHAITANYA_CHAPTERS }),
-          [cover.scenesTable]: (q) => ({ data: q.op === "select" ? { scenes: [o.scene ?? CHARIOT_SCENE], used_scene_indexes: [] } : null }),
+          // Since bd355c17 the scene store is read twice: the scenes and the
+          // rotation state, then rejected_scene_indexes on its own (so a database
+          // without that column still loads its scenes).
+          [cover.scenesTable]: (q) => {
+            if (q.op !== "select") return { data: null };
+            if (q.columns?.includes("rejected_scene_indexes")) return { data: { rejected_scene_indexes: o.rejected ?? [] } };
+            if (o.noScenes) return { data: null };
+            return { data: { scenes: o.scenes ?? [o.scene ?? CHARIOT_SCENE], used_scene_indexes: o.used ?? [] } };
+          },
           [cover.reviewTable]: (q) => {
             if (q.op === "insert") {
               if (o.missingColumn && "visual_check" in q.values) return { error: MISSING_COLUMN };
@@ -907,6 +1118,72 @@ describe("chapter-art visual check wiring", () => {
         const line = logs.find((l) => l.startsWith(`[${cover.fn}] research `)) ?? "";
         return Number(/ inPrompt=(\d+) /.exec(line)?.[1] ?? NaN);
       };
+
+      // ── Scene rotation never picks a rejected scene (bd355c17) ────────────
+      // "Reject scene" writes the index into rejected_scene_indexes. Rotation
+      // used to cycle back to the top-ranked scene once every scene had been
+      // used, which is how a rejected scene kept coming back.
+      const SECOND_SCENE = { ...NARADA_SCENE, rank: 2 };
+      const TWO_SCENES = [CHARIOT_SCENE, SECOND_SCENE];
+      const sceneLine = () => logs.find((l) => /^Chapter \d+: scene #/.test(l)) ?? "";
+
+      test("a rejected scene is never picked: the next scene is used instead", async () => {
+        // Arrange: scene #0 was rejected, nothing has been used yet
+        const { net, inserts } = setup({ scenes: TWO_SCENES, used: [], rejected: [0] });
+        makeClaude([0]);
+        // Act
+        const { status, json } = await chapterMode();
+        // Assert
+        assert.equal(json.ok, true, JSON.stringify(json));
+        assert.equal(status, 200);
+        assert.match(sceneLine(), /scene #1 \(rank 2\) "Narada at the hermitage"$/);
+        assert.ok(net.together[0].prompt.includes(SECOND_SCENE.image_prompt), net.together[0].prompt);
+        assert.equal(net.together[0].prompt.includes(CHARIOT_SCENE.image_prompt), false, "the rejected scene must not be drawn");
+        assert.equal(inserts()[0].values.scene_index, 1);
+        assert.equal(inserts()[0].values.scene_title, SECOND_SCENE.title);
+      });
+
+      test("a rejected scene is not picked even when every scene has been used and the cycle resets", async () => {
+        // Arrange: both scenes used, so rotation resets — and scene #0 was rejected
+        const { net, inserts } = setup({ scenes: TWO_SCENES, used: [0, 1], rejected: [0] });
+        makeClaude([0]);
+        // Act
+        const { json } = await chapterMode();
+        // Assert
+        assert.equal(json.ok, true, JSON.stringify(json));
+        assert.match(sceneLine(), /scene #1 \(rank 2\) "Narada at the hermitage" \[cycle reset\]$/);
+        assert.ok(net.together[0].prompt.includes(SECOND_SCENE.image_prompt), net.together[0].prompt);
+        assert.equal(net.together[0].prompt.includes(CHARIOT_SCENE.image_prompt), false, "a cycle reset must not return to a rejected scene");
+        assert.equal(inserts()[0].values.scene_index, 1);
+      });
+
+      test("the cycle still resets to the top-ranked scene when none was rejected", async () => {
+        // Arrange: the same exhausted rotation, with nothing rejected
+        const { net, inserts } = setup({ scenes: TWO_SCENES, used: [0, 1], rejected: [] });
+        makeClaude([0]);
+        // Act
+        await chapterMode();
+        // Assert
+        assert.match(sceneLine(), /scene #0 \(rank 1\) "Arjuna's chariot" \[cycle reset\]$/);
+        assert.ok(net.together[0].prompt.includes(CHARIOT_SCENE.image_prompt), net.together[0].prompt);
+        assert.equal(inserts()[0].values.scene_index, 0);
+      });
+
+      test("every scene rejected: a fresh scene is written instead, and the cover carries no scene index", async () => {
+        // Arrange
+        const { net, inserts } = setup({ scenes: TWO_SCENES, used: [], rejected: [0, 1] });
+        makeClaude([0]);
+        // Act
+        const { json } = await chapterMode();
+        // Assert
+        assert.equal(json.ok, true, JSON.stringify(json));
+        assert.equal(sceneLine(), "", "no stored scene was used");
+        assert.ok(logs.some((l) => l.endsWith("every extracted scene was rejected — writing a fresh scene")), logs.join("\n"));
+        assert.equal(net.inlineBriefs.length, 1, "Claude was asked for a scene");
+        assert.ok(net.together[0].prompt.includes(INLINE_BRIEF.imagePrompt), net.together[0].prompt);
+        assert.equal(inserts()[0].values.scene_index, null);
+        assert.equal(inserts()[0].values.scene_title, INLINE_BRIEF.sceneTitle);
+      });
 
       test("chapter mode inserts the cover with a running record and returns that record as visualCheck", async () => {
         // Arrange

@@ -114,18 +114,42 @@ const missingColumnError = (code: string) => ({
 
 /**
  * gita_chapter_art_review rows live in `rows` (by id), as inserted and then
- * updated. An update changes every row its eq filters match; a write returns rows
- * only when it selects them. missingColumn fails every write that carries
- * visual_check: an insert with PGRST204, an update with that code.
+ * updated, and `seed` puts rows there before the request. An update changes every
+ * row its eq filters match; a write returns rows only when it selects them.
+ * missingColumn fails every write that carries visual_check: an insert with
+ * PGRST204, an update with that code. uniqueViolation fails the insert the way
+ * the one-pending-cover index does (23505).
+ *
+ * Reads of the review table answer each of the function's three queries in its
+ * own way, so .maybeSingle() gets a row or null rather than a list (before
+ * bd355c17 every read answered with the chaptersWithArt list, and an empty list
+ * is truthy — the one-pending-cover probe would have read it as "a cover is
+ * pending" and skipped every chapter):
+ *   status=pending  the one-pending-cover probe: that chapter's pending row, or null
+ *   scene_rejected  the rejected moments the brief is told to avoid
+ *   otherwise       the { missing: true } probe's list of chapters that have art
  */
-function makeDb(o: { canon?: unknown[]; cfg?: unknown; chaptersWithArt?: number[]; missingColumn?: string; updateError?: Json } = {}) {
+function makeDb(
+  o: {
+    canon?: unknown[];
+    cfg?: unknown;
+    chaptersWithArt?: number[];
+    missingColumn?: string;
+    updateError?: Json;
+    uniqueViolation?: boolean;
+    seed?: Json[];
+  } = {},
+) {
   const writes: Write[] = [];
   const uploads: Array<{ path: string; bytes: Uint8Array }> = [];
+  const removals: string[] = [];
   const rows = new Map<number, Json>();
   let nextId = 100;
+  for (const row of o.seed ?? []) rows.set(row.id, { ...row });
   return {
     writes,
     uploads,
+    removals,
     rows,
     inserts: () => writes.filter((w) => w.table === TABLE && w.op === "insert").map((w) => w.values),
     updates: () => writes.filter((w) => w.table === TABLE && w.op === "update"),
@@ -133,7 +157,10 @@ function makeDb(o: { canon?: unknown[]; cfg?: unknown; chaptersWithArt?: number[
       let op = "select";
       let values: Json;
       let selected = false;
+      let single = false;
       const filters: Filter[] = [];
+      const has = (col: string, v: unknown) => filters.some(([c, value]) => c === col && value === v);
+      const valueOf = (col: string) => filters.find(([c]) => c === col)?.[1];
       const b: Json = {
         select: () => ((selected = true), b),
         eq: (col: string, v: unknown) => (filters.push([col, v]), b),
@@ -141,8 +168,8 @@ function makeDb(o: { canon?: unknown[]; cfg?: unknown; chaptersWithArt?: number[
         is: () => b,
         order: () => b,
         limit: () => b,
-        maybeSingle: () => b,
-        single: () => b,
+        maybeSingle: () => ((single = true), b),
+        single: () => ((single = true), b),
         insert: (v: Json) => ((op = "insert"), (values = v), b),
         update: (v: Json) => ((op = "update"), (values = v), b),
         upsert: (v: Json) => ((op = "upsert"), (values = v), b),
@@ -155,7 +182,9 @@ function makeDb(o: { canon?: unknown[]; cfg?: unknown; chaptersWithArt?: number[
           else if (table === TABLE) {
             if (op === "insert") {
               if (o.missingColumn && "visual_check" in values) error = missingColumnError("PGRST204");
-              else {
+              else if (o.uniqueViolation) {
+                error = { code: "23505", message: 'duplicate key value violates unique constraint "gita_chapter_art_review_one_pending"' };
+              } else {
                 const id = nextId++;
                 rows.set(id, { id, ...values });
                 data = selected ? { id } : null;
@@ -168,6 +197,16 @@ function makeDb(o: { canon?: unknown[]; cfg?: unknown; chaptersWithArt?: number[
                 for (const r of hit) Object.assign(r, values);
                 data = selected ? hit.map((r) => ({ id: r.id })) : null;
               }
+            } else if (has("status", "pending")) {
+              const chapter = valueOf("chapter_number");
+              const pending = [...rows.values()].find((r) => r.chapter_number === chapter && r.status === "pending") ?? null;
+              data = single ? (pending && { id: pending.id }) : (pending ? [{ id: pending.id }] : []);
+            } else if (has("scene_rejected", true)) {
+              data = [...rows.values()]
+                .filter((r) => r.chapter_number === valueOf("chapter_number") && r.status === "rejected" && r.scene_rejected === true)
+                .reverse()
+                .slice(0, 6)
+                .map((r) => ({ scene_title: r.scene_title ?? null, prompt: r.prompt ?? null }));
             } else {
               data = (o.chaptersWithArt ?? []).map((n) => ({ chapter_number: n }));
             }
@@ -184,6 +223,9 @@ function makeDb(o: { canon?: unknown[]; cfg?: unknown; chaptersWithArt?: number[
           return { error: null };
         },
         getPublicUrl: (path: string) => ({ data: { publicUrl: `https://storage.test/${path}` } }),
+        // A cover the one-pending-cover index refused is deleted again, so the
+        // render that lost the race leaves no orphan file behind.
+        remove: async (paths: string[]) => (removals.push(...paths), { error: null }),
       }),
     },
   };
@@ -192,9 +234,12 @@ function makeDb(o: { canon?: unknown[]; cfg?: unknown; chaptersWithArt?: number[
 /**
  * Together answers render n (1-based request count) with image(n); null is an
  * HTTP 503. Each render moves the clock renderMs (a number, or a function of n).
+ * `brief` is what Claude answers the artwork brief with; the returned array also
+ * carries `briefs`, the request bodies it was asked with, so the rejected moments
+ * the brief is told to avoid can be read.
  */
-function makeFetch(o: { image?: (n: number) => string | null; renderMs?: number | ((n: number) => number) } = {}) {
-  const together: Array<{ raw: string; body: Json }> = [];
+function makeFetch(o: { image?: (n: number) => string | null; renderMs?: number | ((n: number) => number); brief?: Json } = {}) {
+  const together: Array<{ raw: string; body: Json }> & { briefs: Json[] } = Object.assign([], { briefs: [] as Json[] });
   const json = (v: unknown) => new Response(JSON.stringify(v), { status: 200, headers: { "content-type": "application/json" } });
   g.fetch = async (url: string | URL, init: RequestInit = {}) => {
     const u = String(url);
@@ -211,7 +256,8 @@ function makeFetch(o: { image?: (n: number) => string | null; renderMs?: number 
     }
     if (u === CLAUDE_RAW) {
       events.push("brief");
-      return json({ content: [{ type: "text", text: JSON.stringify(BRIEF) }] });
+      together.briefs.push(JSON.parse(String(init.body)));
+      return json({ content: [{ type: "text", text: JSON.stringify(o.brief ?? BRIEF) }] });
     }
     throw new Error(`unexpected fetch ${u}`);
   };
@@ -398,6 +444,198 @@ describe("generate-gita-chapter-art visual check", () => {
     const { checked_at: checkedAt, ...final } = db.rows.get(100).visual_check;
     assert.deepEqual(final, { status: "pass", attempts: 1, chosen_attempt: 0, failed: [], unclear: 0, reason: null, image_model: FLUX, started_at: startedAt });
     assert.match(checkedAt, ISO);
+  });
+
+  // ── One cover awaiting review per chapter (bd355c17) ───────────────────────
+  // Two covers for one chapter used to be able to sit in the gallery at once (a
+  // double click, or "Generate missing" landing during a replacement). The
+  // request is refused up front, and the partial unique index catches the race.
+
+  describe("one pending cover per chapter", () => {
+    const pendingCover = (chapter: number) => ({
+      id: 7,
+      chapter_number: chapter,
+      image_path: `gita-ch${chapter}-old.jpg`,
+      status: "pending",
+    });
+
+    test("{ chapter } while a cover for it is already awaiting review is a no-op: nothing is rendered and the chapter is reported skipped/pending", async () => {
+      // Arrange
+      const db = makeDb({ seed: [pendingCover(1)] });
+      g.__sb = db;
+      const together = makeFetch();
+      const checks = vision([allYes]);
+      // Act
+      const { status, json, queued } = await call({ chapter: 1 });
+      // Assert
+      assert.equal(status, 200, JSON.stringify(json));
+      assert.deepEqual(json, { ok: true, generated: [], errors: [], skipped: [{ chapter: 1, reason: "pending" }] });
+      assert.equal(together.length, 0, "no render is paid while a cover is already up for review");
+      assert.equal(together.briefs.length, 0, "and no brief either");
+      assert.equal(db.inserts().length, 0);
+      assert.equal(queued, 0);
+      assert.equal(checks.length, 0);
+    });
+
+    test("a cover pending for another chapter does not block this one", async () => {
+      // Arrange
+      const db = makeDb({ seed: [pendingCover(2)] });
+      g.__sb = db;
+      const together = makeFetch();
+      vision([allYes]);
+      // Act
+      const { json } = await call({ chapter: 1 });
+      // Assert
+      assert.deepEqual(json.generated.map((r: Json) => r.chapter), [1]);
+      assert.equal(together.length, 1);
+    });
+
+    for (const status of ["approved", "rejected"]) {
+      test(`a cover that was already ${status} does not block a new one`, async () => {
+        // Arrange
+        const db = makeDb({ seed: [{ ...pendingCover(1), status }] });
+        g.__sb = db;
+        const together = makeFetch();
+        vision([allYes]);
+        // Act
+        const { json } = await call({ chapter: 1 });
+        // Assert
+        assert.deepEqual(json.skipped ?? [], []);
+        assert.deepEqual(json.generated.map((r: Json) => r.chapter), [1]);
+        assert.equal(together.length, 1);
+      });
+    }
+
+    test("a cover that loses the race at insert (23505) is discarded: its file is removed and the chapter is reported skipped/pending, not as an error", async () => {
+      // Arrange: another run wrote its cover while this one rendered
+      const db = makeDb({ uniqueViolation: true });
+      g.__sb = db;
+      const together = makeFetch();
+      const checks = vision([allYes]);
+      // Act
+      const { status, json, queued } = await call({ chapter: 1 });
+      // Assert
+      assert.equal(status, 200, JSON.stringify(json));
+      assert.deepEqual(json.generated, []);
+      assert.deepEqual(json.errors, [], "losing the race is not a failure");
+      assert.deepEqual(json.skipped, [{ chapter: 1, reason: "pending" }]);
+      // ok is generated.length > 0, so a run whose only chapter was skipped
+      // answers false here — where the up-front probe answers ok true for the
+      // same outcome. approve-gita-art reads skipped before ok for that reason.
+      assert.equal(json.ok, false, JSON.stringify(json));
+      assert.equal(together.length, 1, "the render was already paid for");
+      assert.equal(db.uploads.length, 1);
+      assert.deepEqual(db.removals, [db.uploads[0].path], "the cover nobody will review leaves no orphan file");
+      assert.equal(db.rows.size, 0);
+      assert.equal(queued, 0, "no check is started for a cover that was not stored");
+      assert.equal(checks.length, 0);
+    });
+  });
+
+  // ── The rejected moments reach the brief (bd355c17) ────────────────────────
+  // The Gita has no extracted scene list to rotate through, so "Reject scene"
+  // marks the row (status rejected, scene_rejected) and the next brief is told
+  // which moments to avoid; without it the same central moment came straight back.
+
+  describe("rejected moments", () => {
+    const AVOID_HEADER = "The editor rejected these moments for this chapter.";
+    const rejectedRow = (id: number, fields: Json) => ({ id, chapter_number: 1, status: "rejected", scene_rejected: true, ...fields });
+    const briefText = (together: ReturnType<typeof makeFetch>) => String(together.briefs[0].messages[0].content);
+
+    test("no rejected row: the brief carries no avoid note", async () => {
+      // Arrange
+      const db = makeDb();
+      g.__sb = db;
+      const together = makeFetch();
+      vision([allYes]);
+      // Act
+      await call({ chapter: 1 });
+      // Assert
+      assert.equal(briefText(together).includes(AVOID_HEADER), false, briefText(together));
+    });
+
+    test("a rejected scene_title is listed in the brief, which is asked for a clearly different moment", async () => {
+      // Arrange
+      const db = makeDb({ seed: [rejectedRow(7, { scene_title: "Krishna reveals his universal form" })] });
+      g.__sb = db;
+      const together = makeFetch();
+      vision([allYes]);
+      // Act
+      const { json } = await call({ chapter: 1 });
+      // Assert
+      const text = briefText(together);
+      assert.ok(text.includes(AVOID_HEADER), text);
+      assert.ok(text.includes("- Krishna reveals his universal form"), text);
+      assert.match(text, /depict a clearly DIFFERENT moment/);
+      assert.deepEqual(json.generated.map((r: Json) => r.chapter), [1], "a replacement is still generated");
+    });
+
+    test("a row rejected before scene_title existed is summarised from its prompt, with the iconography every scene repeats left out", async () => {
+      // Arrange: the stored prompt is the scene, then the canonical details
+      const prompt =
+        "Arjuna lowers his bow on the field of Kurukshetra. Krishna has blue skin and a peacock feather. " +
+        "Canonical details: Arjuna's chariot is drawn by exactly four white horses.";
+      const db = makeDb({ seed: [rejectedRow(7, { scene_title: null, prompt })] });
+      g.__sb = db;
+      const together = makeFetch();
+      vision([allYes]);
+      // Act
+      await call({ chapter: 1 });
+      // Assert
+      const text = briefText(together);
+      assert.ok(text.includes("- Arjuna lowers his bow on the field of Kurukshetra."), text);
+      assert.equal(text.includes("peacock feather"), false, "the iconography sentence says nothing about the moment");
+      assert.equal(text.includes("Canonical details"), false, "and the facts block is not a moment either");
+    });
+
+    test("a chapter rejected many times lists only the six most recent moments, newest first", async () => {
+      // Arrange: eight rejections, oldest seeded first
+      const db = makeDb({ seed: Array.from({ length: 8 }, (_, i) => rejectedRow(10 + i, { scene_title: `Moment ${i}` })) });
+      g.__sb = db;
+      const together = makeFetch();
+      vision([allYes]);
+      // Act
+      await call({ chapter: 1 });
+      // Assert
+      const listed = [...briefText(together).matchAll(/^- (Moment \d)$/gm)].map((m) => m[1]);
+      assert.deepEqual(listed, ["Moment 7", "Moment 6", "Moment 5", "Moment 4", "Moment 3", "Moment 2"]);
+    });
+
+    test("a row rejected by the other Reject button (scene_rejected false) is not avoided", async () => {
+      // Arrange
+      const db = makeDb({ seed: [rejectedRow(7, { scene_rejected: false, scene_title: "Krishna reveals his universal form" })] });
+      g.__sb = db;
+      const together = makeFetch();
+      vision([allYes]);
+      // Act
+      await call({ chapter: 1 });
+      // Assert
+      assert.equal(briefText(together).includes(AVOID_HEADER), false, briefText(together));
+    });
+
+    test("the brief's moment is stored on the row as scene_title, so the next rejection can name it", async () => {
+      // Arrange
+      const db = makeDb();
+      g.__sb = db;
+      makeFetch({ brief: { ...BRIEF, moment: "Krishna takes up the reins for Arjuna" } });
+      vision([allYes]);
+      // Act
+      await call({ chapter: 1 });
+      // Assert
+      assert.equal(db.inserts()[0].scene_title, "Krishna takes up the reins for Arjuna");
+    });
+
+    test("a brief with no moment stores scene_title as null rather than a guess", async () => {
+      // Arrange
+      const db = makeDb();
+      g.__sb = db;
+      makeFetch();
+      vision([allYes]);
+      // Act
+      await call({ chapter: 1 });
+      // Assert
+      assert.equal(db.inserts()[0].scene_title, null);
+    });
   });
 
   test("a contradicted fact is flagged on the row and never re-rendered: status fail with the fact and what the painting shows", async () => {
