@@ -30,6 +30,10 @@ const { APIError }: any = await import("./helpers/anthropic-stub.mjs");
 // The same module instance the functions import: the tests set when the worker started.
 // deno-lint-ignore no-explicit-any
 const visualCheckIo: any = await import("../supabase/functions/_shared/visualCheck.ts");
+// The same module instance the functions import: the tests replace the retry wait,
+// so a rate-limited chain costs nothing and the waits it asked for are asserted.
+// deno-lint-ignore no-explicit-any
+const togetherRetry: any = await import("../supabase/functions/_shared/togetherRetry.ts");
 
 // deno-lint-ignore no-explicit-any
 const g = globalThis as any;
@@ -44,6 +48,12 @@ const FLUX2 = "black-forest-labs/FLUX.2-pro";
 const FLUX11 = "black-forest-labs/FLUX.1.1-pro";
 const GPT_IMAGE = "openai/gpt-image-2";
 const HORSES_FACT = "Arjuna's chariot is drawn by exactly four white horses, no more and no fewer";
+/** What Together answered on 2026-09-16 when a Regenerate landed during a bulk run. */
+const RATE_LIMIT_BODY = "HTTP 429: Too many requests in a short window. Our rate limits are dynamic.";
+const NSFW_BODY = "HTTP 422: image may contain NSFW content";
+const RATE_LIMITED_MESSAGE =
+  "Image generation is rate limited right now (Together HTTP 429): too many renders at once. Wait a minute and try again.";
+const REFUSED_MESSAGE = "The image model refused this prompt (content moderation). Edit the prompt and try again.";
 const MISSING_COLUMN = { message: "Could not find the 'visual_check' column in the schema cache" };
 const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 /** The keys of renderWithVisualCheck's records, which bulk mode stores as before (no started_at). */
@@ -228,6 +238,9 @@ const CHAPTER_INDEX = [
 interface NetOptions {
   /** Whether Together call n (1-based) returns an image; default every call. */
   imageOk?: (n: number) => boolean;
+  /** Answers call n with this HTTP status (and body) instead: how the 429 retry is tested. */
+  status?: (n: number) => number | null;
+  body?: (n: number) => string;
   /** Whether Together call n throws, as a dropped connection does. */
   throws?: (n: number) => boolean;
   /** Runs while Together call n is in flight, e.g. to move the clock forward. */
@@ -244,7 +257,11 @@ function makeNet(opts: NetOptions = {}) {
       opts.onRender?.(n);
       if (opts.throws?.(n)) throw new TypeError("network down");
       const ok = opts.imageOk ? opts.imageOk(n) : true;
-      return ok ? Response.json({ data: [{ b64_json: jpeg(n) }] }) : new Response("busy", { status: 503 });
+      const status = opts.status?.(n) ?? null;
+      if (status) return new Response(opts.body?.(n) ?? "busy", { status });
+      // The default failure is not re-posted: 429 and every 5xx now get another
+      // post (_shared/togetherRetry.ts), and these tests count one post per attempt.
+      return ok ? Response.json({ data: [{ b64_json: jpeg(n) }] }) : new Response("bad request", { status: 400 });
     }
     if (u.endsWith("/api/bhagwatham/chapter-index")) return Response.json({ chapters: CHAPTER_INDEX });
     throw new Error(`unexpected fetch ${u}`);
@@ -328,12 +345,19 @@ describe("chapter-art visual check wiring", () => {
   // Each request counts its background deadline from its own start, as on a fresh
   // worker; a test of an older worker sets the worker start itself.
   let workerStartBefore: unknown = null;
+  /** Every wait a rate-limited chain asked for, in order; none of them is spent. */
+  let sleeps: number[] = [];
+  let sleepBefore: unknown = null;
   before(() => {
     workerStartBefore = visualCheckIo.setWorkerStartedAt(null);
+    sleepBefore = togetherRetry.setSleepForTests(async (ms: number) => {
+      sleeps.push(ms);
+    });
   });
 
   after(() => {
     visualCheckIo.setWorkerStartedAt(workerStartBefore);
+    togetherRetry.setSleepForTests(sleepBefore);
     for (const k of SAVED_GLOBALS) g[k] = saved[k];
     Date.now = realNow;
   });
@@ -343,6 +367,7 @@ describe("chapter-art visual check wiring", () => {
     Object.assign(ENV, BASE_ENV);
     clockOffset = 0;
     waits = [];
+    sleeps = [];
     logs = [];
     order = [];
     g.__anthropicCreate = async () => {
@@ -391,7 +416,10 @@ describe("chapter-art visual check wiring", () => {
     const TABLE = "gita_chapter_art_review";
 
     function setup(o: NetOptions & { cfg?: unknown; missingColumn?: boolean } = {}) {
-      const row: Json = { id: 5, chapter_number: 1, chapter_title: "Observing the Armies", image_path: "gita-old.jpg", visual_check: null };
+      // status and image_path are load-bearing since the Reject-scene work (bd355c17):
+      // regenerate-chapter-art refuses a row that is not pending, and saves the new
+      // cover with a compare-and-swap on both.
+      const row: Json = { id: 5, chapter_number: 1, chapter_title: "Observing the Armies", status: "pending", image_path: "gita-old.jpg", visual_check: null };
       const db = makeDb({
         [TABLE]: (q) => {
           if (q.op === "select") return { data: { ...row } };
@@ -679,6 +707,53 @@ describe("chapter-art visual check wiring", () => {
       assert.equal("visual_check" in updates()[1].values, false);
       assert.equal(updates()[1].values.image_path, updates()[0].values.image_path);
       assert.ok(logs.some((l) => l.startsWith("WARN [regen-chapter] update with visual_check failed")), logs.join("\n"));
+    });
+
+    test("a 429 is re-sent: the same request goes through on the second post and that image is stored", async () => {
+      // Arrange: Together rate limits the first post, as it did when a Regenerate landed during a bulk run
+      const { db, net, saves } = setup({ status: (n) => (n === 1 ? 429 : null), body: () => RATE_LIMIT_BODY });
+      makeClaude([0]);
+      // Act
+      const { status, json } = await regen();
+      // Assert
+      assert.equal(status, 200, JSON.stringify(json));
+      assert.equal(net.together.length, 2);
+      assert.deepEqual(net.together[1], net.together[0], "the retry is the same request, not the fallback model");
+      assert.deepEqual(sleeps, [2500]);
+      assert.equal(db.uploads.length, 1);
+      assert.equal(db.uploads[0].b64, jpeg(2));
+      assert.equal(saves().length, 1);
+      assert.ok(
+        logs.some((l) => l.startsWith(`[regen-chapter] ${FLUX2} HTTP 429:`) && l.includes(RATE_LIMIT_BODY) && l.endsWith("(rate_limited, retrying)")),
+        logs.join("\n"),
+      );
+    });
+
+    test("a chain that is rate limited throughout answers with the rate-limit wording, not \"All image attempts failed\"", async () => {
+      // Arrange
+      const { net, saves } = setup({ status: () => 429, body: () => RATE_LIMIT_BODY });
+      // Act
+      const { status, json, registered } = await sendRegen();
+      // Assert
+      assert.equal(status, 502);
+      assert.equal(json.error, RATE_LIMITED_MESSAGE);
+      assert.equal(net.together.length, 6, "two models, three posts each");
+      assert.deepEqual(sleeps, [2500, 6000, 2500, 6000]);
+      assert.equal(saves().length, 0);
+      assert.equal(registered, 0);
+    });
+
+    test("a moderation refusal is not re-posted and says to edit the prompt", async () => {
+      // Arrange
+      const { net, saves } = setup({ status: () => 422, body: () => NSFW_BODY });
+      // Act
+      const { status, json } = await sendRegen();
+      // Assert
+      assert.equal(status, 502);
+      assert.equal(json.error, REFUSED_MESSAGE);
+      assert.equal(net.together.length, 2, "one post per model: the same prompt would only be refused again");
+      assert.deepEqual(sleeps, []);
+      assert.equal(saves().length, 0);
     });
 
     test("every image attempt failing answers 502, saves nothing and starts no check", async () => {
@@ -1163,6 +1238,35 @@ describe("chapter-art visual check wiring", () => {
           const expected = `${LONG_SCENE.image_prompt.substring(0, 1050)}, ${LONG_POSITIVES}, WIDE landscape composition, ${STYLE_CFG.style_negatives}. ${STYLE_CFG.extra_rules}. ${GENDER_RULES.substring(0, 200)} ${ANACHRONISM_RULES.substring(0, 540)}`;
           assert.equal(prompts["-long"], sanitize(expected));
         }
+      });
+
+      test("a 429 is re-sent: the same request goes through on the second post and that cover is stored", async () => {
+        // Arrange
+        const { db, net, inserts } = setup({ status: (n) => (n === 1 ? 429 : null), body: () => RATE_LIMIT_BODY });
+        makeClaude([0]);
+        // Act
+        const { status, json } = await chapterMode();
+        // Assert
+        assert.equal(status, 200, JSON.stringify(json));
+        assert.equal(json.ok, true, JSON.stringify(json));
+        assert.equal(net.together.length, 2);
+        assert.deepEqual(net.together[1], net.together[0], "the retry is the same request, not the fallback model");
+        assert.deepEqual(sleeps, [2500]);
+        assert.equal(db.uploads[0].b64, jpeg(2));
+        assert.equal(inserts().length, 1);
+      });
+
+      test("a chain that is rate limited throughout fails the chapter with the rate-limit wording", async () => {
+        // Arrange
+        const { net, inserts } = setup({ status: () => 429, body: () => RATE_LIMIT_BODY });
+        // Act
+        const { json } = await chapterMode();
+        // Assert
+        assert.equal(json.ok, false, JSON.stringify(json));
+        assert.equal(json.error, `Error: ${RATE_LIMITED_MESSAGE}`);
+        assert.equal(net.together.length, 9, "three attempts, three posts each");
+        assert.deepEqual(sleeps, [2500, 6000, 2500, 6000, 2500, 6000]);
+        assert.equal(inserts().length, 0);
       });
 
       test("bulk mode is unchanged: the cover is checked before its insert, stops at 2 renders when every check fails, and needs no compare-and-swap", async () => {

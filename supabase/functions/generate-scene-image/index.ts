@@ -36,6 +36,7 @@ import {
   runInBackground,
   type VisualCheckRecord,
 } from "../_shared/visualCheck.ts";
+import { renderFailureMessage, renderWithRetry, type TogetherFailure } from "../_shared/togetherRetry.ts";
 
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
@@ -217,18 +218,24 @@ function buildImagePrompt(visual: string, facts: string[], cfg: typeof DEFAULTS)
 }
 
 // imagePayload sends steps only to black-forest-labs/ (FLUX) models:
-// openai/gpt-image-2 has no such parameter. No seed is sent.
-async function tryGenerate(prompt: string, model: string, w: number, h: number, steps: number | null) {
+// openai/gpt-image-2 has no such parameter. No seed is sent. A rate-limited post
+// is re-sent by renderWithRetry before this attempt gives up, and why the
+// attempt failed goes into `failures` so the scene's error can name the cause.
+async function tryGenerate(prompt: string, model: string, w: number, h: number, steps: number | null, failures?: TogetherFailure[]) {
   const payload = imagePayload(model, prompt, w, h, { steps });
-  try {
-    const res = await fetch(TOGETHER_API, {
+  const { b64, failure } = await renderWithRetry({
+    request: () => fetch(TOGETHER_API, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${TOGETHER_KEY}` },
       body: JSON.stringify(payload),
-    });
-    if (!res.ok) { console.log(`[scene] ${model} HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`); return null; }
-    return (await res.json())?.data?.[0]?.b64_json || null;
-  } catch (e) { console.log(`[scene] ${model} error ${e}`); return null; }
+    }),
+    onFailure: (status, body, kind, willRetry) => {
+      console.log(`[scene] ${model} HTTP ${status}: ${body} (${kind}${willRetry ? ", retrying" : ""})`);
+    },
+    onError: (e) => { console.log(`[scene] ${model} error ${e}`); },
+  });
+  if (!b64 && failure) failures?.push(failure);
+  return b64;
 }
 
 // PostgREST PGRST204 or Postgres 42703: reader_scenes.visual_check does not exist
@@ -302,13 +309,18 @@ Deno.serve(async (req: Request) => {
     // One render: the approved model, then the fallback model. Nothing is
     // re-rendered here, whatever the check finds.
     let rendered: { b64: string; model: string } | null = null;
+    // Why each attempt failed, for this scene's chain only.
+    const failures: TogetherFailure[] = [];
     for (const a of attempts) {
-      const out = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps);
+      const out = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps, failures);
       if (out) { rendered = { b64: out, model: a.m }; break; }
     }
     if (!rendered) {
-      await supabase.from("reader_scenes").update({ status: "failed", error_message: "All image attempts failed" }).eq("id", scene_id);
-      return new Response(JSON.stringify({ error: "All image attempts failed" }), { status: 502, headers: CORS });
+      // The row and the answer carry the same sentence, and it says whether this
+      // was a rate limit (worth another click) or a refusal (edit the prompt).
+      const failed = renderFailureMessage(failures, "All image attempts failed");
+      await supabase.from("reader_scenes").update({ status: "failed", error_message: failed }).eq("id", scene_id);
+      return new Response(JSON.stringify({ error: failed }), { status: 502, headers: CORS });
     }
     const b64 = rendered.b64;
 

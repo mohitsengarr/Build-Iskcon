@@ -37,6 +37,10 @@ const { APIError }: any = await import("./helpers/anthropic-stub.mjs");
 // The same module instance the functions import: the tests set when the worker started.
 // deno-lint-ignore no-explicit-any
 const visualCheckIo: any = await import("../supabase/functions/_shared/visualCheck.ts");
+// The same module instance the functions import: the tests replace the retry wait,
+// so a rate-limited chain costs nothing and the waits it asked for are asserted.
+// deno-lint-ignore no-explicit-any
+const togetherRetry: any = await import("../supabase/functions/_shared/togetherRetry.ts");
 
 // deno-lint-ignore no-explicit-any
 const g = globalThis as any;
@@ -48,6 +52,10 @@ const FUNCTIONS = new URL("../supabase/functions/", import.meta.url);
 const BASELINE_BGI = new URL("./fixtures/baseline/bulk-generate-images.index.ts", import.meta.url).href;
 const CANON = seededCanon();
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
+/** What Together answered on 2026-09-16 when a Regenerate landed during a bulk run. */
+const RATE_LIMIT_BODY = "HTTP 429: Too many requests in a short window. Our rate limits are dynamic.";
+const RATE_LIMITED_MESSAGE =
+  "Image generation is rate limited right now (Together HTTP 429): too many renders at once. Wait a minute and try again.";
 const FLUX2 = "black-forest-labs/FLUX.2-pro";
 const FLUX11 = "black-forest-labs/FLUX.1.1-pro";
 const GPT = "openai/gpt-image-2";
@@ -239,10 +247,12 @@ const CHAPTER_INDEX = [
 ];
 
 /**
- * Together returns jpeg(n) for call n (or 503 when imageOk says no); each call moves
- * the clock on by renderMs. onTogether(n) runs while call n is in flight.
+ * Together returns jpeg(n) for call n (or, when imageOk says no, a 400 that is not
+ * re-posted); status(n) answers call n with that HTTP status and body(n) instead,
+ * which is how the 429 retry is tested. Each call moves the clock on by renderMs.
+ * onTogether(n) runs while call n is in flight.
  */
-function makeNet(o: { claude: (body: Json) => string; imageOk?: (n: number) => boolean; renderMs?: number; onTogether?: (n: number) => void }) {
+function makeNet(o: { claude: (body: Json) => string; imageOk?: (n: number) => boolean; renderMs?: number; onTogether?: (n: number) => void; status?: (n: number) => number | null; body?: (n: number) => string }) {
   const together: Json[] = [];
   /** The abort signal each Together request carried (undefined when none). */
   const signals: Array<AbortSignal | undefined> = [];
@@ -260,7 +270,11 @@ function makeNet(o: { claude: (body: Json) => string; imageOk?: (n: number) => b
       clock.offset += o.renderMs ?? 0;
       o.onTogether?.(n);
       const ok = o.imageOk ? o.imageOk(n) : true;
-      return ok ? json({ data: [{ b64_json: jpeg(n) }] }) : new Response("busy", { status: 503 });
+      const status = o.status?.(n) ?? null;
+      if (status) return new Response(o.body?.(n) ?? "busy", { status });
+      // The default failure is not re-posted: 429 and every 5xx now get another
+      // post (_shared/togetherRetry.ts), and these tests count one post per attempt.
+      return ok ? json({ data: [{ b64_json: jpeg(n) }] }) : new Response("bad request", { status: 400 });
     }
     if (u === "https://api.anthropic.com/v1/messages") {
       calls.push(`claude-${body?.max_tokens}`);
@@ -426,12 +440,19 @@ describe("visual check wiring for ig_pending_review", () => {
   // Each request counts its background deadline from its own start, as on a fresh
   // worker; a test of an older worker sets the worker start itself.
   let workerStartBefore: unknown = null;
+  /** Every wait a rate-limited chain asked for, in order; none of them is spent. */
+  let sleeps: number[] = [];
+  let sleepBefore: unknown = null;
   before(() => {
     workerStartBefore = visualCheckIo.setWorkerStartedAt(null);
+    sleepBefore = togetherRetry.setSleepForTests(async (ms: number) => {
+      sleeps.push(ms);
+    });
   });
 
   after(() => {
     visualCheckIo.setWorkerStartedAt(workerStartBefore);
+    togetherRetry.setSleepForTests(sleepBefore);
     for (const k of SAVED_GLOBALS) g[k] = saved[k];
   });
 
@@ -439,6 +460,7 @@ describe("visual check wiring for ig_pending_review", () => {
     for (const k of Object.keys(ENV)) delete ENV[k];
     Object.assign(ENV, BASE_ENV);
     waits = [];
+    sleeps = [];
     logs = [];
     clock.offset = 0;
     clock.fixed = null;
@@ -503,6 +525,9 @@ describe("visual check wiring for ig_pending_review", () => {
         scene?: string;
         canon?: unknown[];
         imageOk?: (n: number) => boolean;
+        /** Answers Together call n with this HTTP status (and body): how the 429 retry is tested. */
+        status?: (n: number) => number | null;
+        body?: (n: number) => string;
         renderMs?: number;
         missingColumn?: boolean;
         verse?: string;
@@ -562,6 +587,8 @@ describe("visual check wiring for ig_pending_review", () => {
       const net = makeNet({
         claude: (body) => (body.max_tokens === 600 ? (o.verse ?? '{"sanskrit":null,"hindi":null}') : "caption text"),
         imageOk: o.imageOk,
+        status: o.status,
+        body: o.body,
         renderMs: o.renderMs,
       });
       g.__sb = db;
@@ -1119,6 +1146,37 @@ describe("visual check wiring for ig_pending_review", () => {
       assertRecord(row.visual_check, { status: "pass", attempts: 2, chosen_attempt: 1, image_model: GPT }, IG_KEYS);
     });
 
+    test("a 429 is re-sent: the same request goes through on the second post and that image is stored", async () => {
+      // Arrange: Together rate limits the first post, as it did during the 2026-09-16 bulk run
+      const { db, net, row } = setup({ status: (n) => (n === 1 ? 429 : null), body: () => RATE_LIMIT_BODY });
+      visionQueue(["pass"]);
+      // Act
+      const res = await call("ig", { chapter_global_number: 293 });
+      // Assert
+      assert.equal(res.status, 200, JSON.stringify(res.json));
+      assert.equal(net.together.length, 2);
+      assert.deepEqual(net.together[1], net.together[0], "the retry is the same request, not the fallback model");
+      assert.deepEqual(sleeps, [2500]);
+      assert.equal(db.uploads.length, 1);
+      assert.equal(row.image_path, db.uploads[0].path);
+      assert.ok(logs.some((l) => l.startsWith(`${FLUX2}: 429 `) && l.endsWith("(rate_limited, retrying)")), logs.join("\n"));
+    });
+
+    test("a chain that is rate limited throughout fails the post with the rate-limit wording", async () => {
+      // Arrange
+      const { db, net } = setup({ status: () => 429, body: () => RATE_LIMIT_BODY });
+      const vision = visionQueue(["pass"]);
+      // Act
+      const res = await call("ig", { chapter_global_number: 293 });
+      // Assert
+      assert.equal(res.status, 500);
+      assert.equal(res.json.error, `Error: ${RATE_LIMITED_MESSAGE}`);
+      assert.equal(net.together.length, 9, "three attempts, three posts each");
+      assert.deepEqual(sleeps, [2500, 6000, 2500, 6000, 2500, 6000]);
+      assert.equal(vision.length, 0);
+      assert.equal(db.writes("ig_pending_review").length, 0);
+    });
+
     test("negative: every attempt failing still fails the post, with no check, no review row and no background work", async () => {
       // Arrange
       const { db, net } = setup({ imageOk: () => false });
@@ -1237,7 +1295,17 @@ describe("visual check wiring for ig_pending_review", () => {
   // ── bulk-generate-images ───────────────────────────────────────────────────
   describe("bulk-generate-images", () => {
     function setup(
-      o: { cfg?: unknown; imagePrompt?: string; canon?: unknown[]; imageOk?: (n: number) => boolean; renderMs?: number; missingColumn?: boolean } = {},
+      o: {
+        cfg?: unknown;
+        imagePrompt?: string;
+        canon?: unknown[];
+        imageOk?: (n: number) => boolean;
+        /** Answers Together call n with this HTTP status (and body): how the 429 retry is tested. */
+        status?: (n: number) => number | null;
+        body?: (n: number) => string;
+        renderMs?: number;
+        missingColumn?: boolean;
+      } = {},
     ) {
       /** The last review row inserted, as the database holds it. */
       const row: Json = {};
@@ -1259,6 +1327,8 @@ describe("visual check wiring for ig_pending_review", () => {
       const net = makeNet({
         claude: (body) => (body.max_tokens === 1200 ? JSON.stringify({ imagePrompt: o.imagePrompt ?? GITA_SCENE, caption: "c", hashtags: "#h" }) : "{}"),
         imageOk: o.imageOk,
+        status: o.status,
+        body: o.body,
         renderMs: o.renderMs,
       });
       g.__sb = db;
@@ -1266,6 +1336,40 @@ describe("visual check wiring for ig_pending_review", () => {
       return { db, net, row };
     }
     const inserts = (db: ReturnType<typeof makeDb>) => db.writes("ig_pending_review").filter((q) => q.op === "insert").map((q) => q.values);
+
+    test("sample mode: a 429 is re-sent and the same request goes through on the second post", async () => {
+      // Arrange
+      const { db, net } = setup({ status: (n) => (n === 1 ? 429 : null), body: () => RATE_LIMIT_BODY });
+      visionQueue(["pass"]);
+      // Act
+      const res = await call("bgi", { mode: "sample" });
+      // Assert
+      assert.equal(res.status, 200, JSON.stringify(res.json));
+      assert.equal(res.json.ok, true, JSON.stringify(res.json));
+      assert.equal(net.together.length, 2);
+      assert.deepEqual(net.together[1], net.together[0], "the retry is the same request, not the fallback model");
+      assert.deepEqual(sleeps, [2500]);
+      assert.equal(db.uploads.length, 1);
+      assert.ok(
+        logs.some((l) => l.startsWith(`[bulk-generate-images] ${FLUX2}: HTTP 429 `) && l.endsWith("(rate_limited, retrying)")),
+        logs.join("\n"),
+      );
+    });
+
+    test("sample mode: a chain that is rate limited throughout answers with the rate-limit wording", async () => {
+      // Arrange
+      const { db, net } = setup({ status: () => 429, body: () => RATE_LIMIT_BODY });
+      const vision = visionQueue(["pass"]);
+      // Act
+      const res = await call("bgi", { mode: "sample" });
+      // Assert
+      assert.equal(res.json.ok, false, JSON.stringify(res.json));
+      assert.equal(res.json.error, `Error: ${RATE_LIMITED_MESSAGE}`);
+      assert.equal(net.together.length, 9, "three attempts, three posts each");
+      assert.deepEqual(sleeps, [2500, 6000, 2500, 6000, 2500, 6000]);
+      assert.equal(vision.length, 0);
+      assert.equal(db.uploads.length, 0);
+    });
 
     test("sample mode: stored after one render with a running record; the check after the response writes pass by a compare-and-swap", async () => {
       // Arrange

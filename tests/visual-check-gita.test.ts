@@ -205,7 +205,9 @@ function makeFetch(o: { image?: (n: number) => string | null; renderMs?: number 
       events.push(`render ${n}`);
       clock.offset += typeof o.renderMs === "function" ? o.renderMs(n) : (o.renderMs ?? 0);
       const b64 = o.image ? o.image(n) : jpeg(n);
-      return b64 ? json({ data: [{ b64_json: b64 }] }) : new Response("busy", { status: 503 });
+      // A failure that is not re-posted: 429 and every 5xx now get another post
+      // (_shared/togetherRetry.ts), and these tests count one post per attempt.
+      return b64 ? json({ data: [{ b64_json: b64 }] }) : new Response("bad request", { status: 400 });
     }
     if (u === CLAUDE_RAW) {
       events.push("brief");

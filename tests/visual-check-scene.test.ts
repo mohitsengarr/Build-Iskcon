@@ -334,7 +334,9 @@ describe("generate-scene-image visual check", () => {
         signals.push(init.signal ?? undefined);
         clockOffset += o.renderMs ?? 0;
         const n = together.length;
-        if (o.imageOk && !o.imageOk(n)) return new Response("busy", { status: 503 });
+        // A failure that is not re-posted: 429 and every 5xx now get another post
+        // (_shared/togetherRetry.ts), and these tests count one post per attempt.
+        if (o.imageOk && !o.imageOk(n)) return new Response("bad request", { status: 400 });
         const b64 = jpeg(n);
         images.push(b64);
         return json({ data: [{ b64_json: b64 }] });

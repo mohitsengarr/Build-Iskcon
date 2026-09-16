@@ -53,6 +53,7 @@ import {
   type VisualCheckRecord,
 } from "../_shared/visualCheck.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
+import { renderFailureMessage, renderWithRetry, type TogetherFailure } from "../_shared/togetherRetry.ts";
 
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
 const TOGETHER_KEY = Deno.env.get("TOGETHER_API_KEY") || "";
@@ -91,16 +92,29 @@ const DEFAULTS = {
 };
 
 // No seed is sent, so each call is a new draw from the same prompt. steps goes
-// only to FLUX models: openai/gpt-image-2 has no such parameter.
-async function tryGenerate(prompt: string, model: string, w: number, h: number, steps: number | null) {
+// only to FLUX models: openai/gpt-image-2 has no such parameter. A rate-limited
+// post is re-sent by renderWithRetry before this attempt gives up — the reviewer
+// clicking Regenerate while a bulk run is going is exactly how the 429s came —
+// and why the attempt failed goes into `failures` for the reviewer's message.
+async function tryGenerate(prompt: string, model: string, w: number, h: number, steps: number | null, failures?: TogetherFailure[]) {
   const payload = imagePayload(model, prompt, w, h, { steps });
-  const res = await fetch(TOGETHER_API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${TOGETHER_KEY}` },
-    body: JSON.stringify(payload),
+  // A request that throws has always answered 500 with its own error. renderWithRetry
+  // never throws, so the error it hands to onError is rethrown here to keep that.
+  let thrown: unknown = null;
+  const { b64, failure } = await renderWithRetry({
+    request: () => fetch(TOGETHER_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${TOGETHER_KEY}` },
+      body: JSON.stringify(payload),
+    }),
+    onFailure: (status, body, kind, willRetry) => {
+      console.log(`[regen-chapter] ${model} HTTP ${status}: ${body} (${kind}${willRetry ? ", retrying" : ""})`);
+    },
+    onError: (e) => { thrown = e; },
   });
-  if (!res.ok) { console.log(`[regen-chapter] ${model} HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`); return null; }
-  return (await res.json())?.data?.[0]?.b64_json || null;
+  if (thrown) throw thrown;
+  if (!b64 && failure) failures?.push(failure);
+  return b64;
 }
 
 // Writes the background check's record over the running one, only while the row
@@ -376,14 +390,18 @@ Deno.serve(async (req: Request) => {
     // One render: the model, then its fallback, first image wins, as before. A
     // render that throws still answers 500 with its error.
     let rendered: { b64: string; model: string } | null = null;
+    // Why each attempt failed, for this card's chain only.
+    const failures: TogetherFailure[] = [];
     for (const a of [
       { m: cfg.model, w: w1, h: h1 },
       { m: cfg.fallback_model || cfg.model, w: fallback.w, h: fallback.h },
     ]) {
-      const img = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps);
+      const img = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps, failures);
       if (img) { rendered = { b64: img, model: a.m }; break; }
     }
-    if (!rendered) return new Response(JSON.stringify({ error: "All image attempts failed" }), { status: 502, headers: CORS });
+    // The gallery shows this sentence in its "Regenerate failed" alert, so it says
+    // whether to wait and click again or to edit the prompt.
+    if (!rendered) return new Response(JSON.stringify({ error: renderFailureMessage(failures, "All image attempts failed") }), { status: 502, headers: CORS });
     const { b64, model: imageModel } = rendered;
 
     // The facts the sent prompt carries are the ones the check verifies. The row

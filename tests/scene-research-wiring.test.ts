@@ -145,7 +145,9 @@ function makeFetch(opts: { claude: (body: Json) => string; imageOk?: (attempt: n
     if (u === "https://api.together.xyz/v1/images/generations") {
       seen.together.push(body);
       const ok = opts.imageOk ? opts.imageOk(seen.together.length) : true;
-      return ok ? json({ data: [{ b64_json: "eA==" }] }) : new Response("busy", { status: 503 });
+      // A failure that is not re-posted: 429 and every 5xx now get another post
+      // (_shared/togetherRetry.ts), and these tests count one post per attempt.
+      return ok ? json({ data: [{ b64_json: "eA==" }] }) : new Response("bad request", { status: 400 });
     }
     if (u === "https://api.anthropic.com/v1/messages") {
       seen.claude.push(body);

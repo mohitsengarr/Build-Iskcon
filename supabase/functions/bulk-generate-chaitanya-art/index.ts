@@ -101,6 +101,7 @@ import {
   type VisualCheckRecord,
 } from "../_shared/visualCheck.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
+import { renderFailureMessage, renderWithRetry, type TogetherFailure } from "../_shared/togetherRetry.ts";
 import { type FluxAttempt, runFluxAttempts } from "./fluxAttempts.ts";
 import { type ResearchFn, researchScene } from "./researchMode.ts";
 
@@ -327,20 +328,27 @@ async function resetSceneCycle(globalNumber: number, firstSceneIndex: number): P
     .eq("chapter_global_number", globalNumber);
 }
 
-async function tryGenerate(prompt: string, model: string, w: number, h: number, seed?: number, steps?: number | null, signal?: AbortSignal): Promise<string | null> {
-  try {
-    // seed and steps go only to FLUX models (imagePayload). signal ends a
-    // re-render the visual check has abandoned.
-    const body = imagePayload(model, prompt, w, h, { seed, steps });
-    const res = await fetch(TOGETHER_API, {
+async function tryGenerate(prompt: string, model: string, w: number, h: number, seed?: number, steps?: number | null, signal?: AbortSignal, failures?: TogetherFailure[]): Promise<string | null> {
+  // seed and steps go only to FLUX models (imagePayload). signal ends a
+  // re-render the visual check has abandoned. A rate-limited post is re-sent by
+  // renderWithRetry before this attempt gives up, and why the attempt failed
+  // goes into `failures` so the chapter's error can name the cause.
+  const body = imagePayload(model, prompt, w, h, { seed, steps });
+  const { b64, failure } = await renderWithRetry({
+    request: () => fetch(TOGETHER_API, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${TOGETHER_KEY}` },
       body: JSON.stringify(body),
       signal,
-    });
-    if (!res.ok) { console.log(`${model}: ${res.status}`); return null; }
-    return (await res.json()).data?.[0]?.b64_json || null;
-  } catch (e) { console.log(`${model} err: ${e}`); return null; }
+    }),
+    // The body snippet is new here: a bare status never said whether Together
+    // was busy or the prompt was refused.
+    onFailure: (status, text, kind, willRetry) => { console.log(`${model}: ${status} ${text} (${kind}${willRetry ? ", retrying" : ""})`); },
+    onError: (e) => { console.log(`${model} err: ${e}`); },
+    signal,
+  });
+  if (!b64 && failure) failures?.push(failure);
+  return b64;
 }
 
 // Word-boundary anchors are load-bearing: without \b the bare alternation
@@ -476,6 +484,9 @@ async function generateImage(
     ? fallbackSizeFor(__w1, __h1, __cfg?.fallback_width, __cfg?.fallback_height)
     : { w: __cfg?.fallback_width || 1024, h: __cfg?.fallback_height || 768 };
   const __steps = __cfg?.steps ?? null;
+  // Why each attempt failed, for this chapter's chain only: a bulk run calls
+  // generateImage per chapter, so concurrent chapters never share one array.
+  const failures: TogetherFailure[] = [];
   // One render is the whole attempt chain below. renderIndex moves the seed so a
   // re-render of the same prompt draws a different picture (render 0 uses the
   // seed as before).
@@ -492,7 +503,7 @@ async function generateImage(
     // Same order and first-image-wins as before; the SAFE_FALLBACK attempt also
     // logs how many research facts it drops.
     const b64 = await runFluxAttempts(attempts, async a => {
-      const img = await tryGenerate(a.prompt, a.model, a.w, a.h, a.seed, __steps, signal);
+      const img = await tryGenerate(a.prompt, a.model, a.w, a.h, a.seed, __steps, signal, failures);
       if (img) used.attempt = a;
       return img;
     }, {
@@ -512,7 +523,7 @@ async function generateImage(
     // (running, or skipped: no fact in the prompt, SAFE_FALLBACK, or the check
     // is off). generateCover starts the check once the row exists.
     const out = await render(0);
-    if (!out) throw new Error("All FLUX attempts failed");
+    if (!out) throw new Error(renderFailureMessage(failures, "All FLUX attempts failed"));
     const record = initialRecord({ factsUsed: built.factsUsed, safeFallback: out.safeFallback, imageModel: out.model, startedAt: Date.now() });
     return { b64: out.b64, record: { ...record, safe_fallback: out.safeFallback }, facts: built.factsUsed };
   }
@@ -527,7 +538,7 @@ async function generateImage(
   });
   // The record says when the stored image came from SAFE_FALLBACK.
   if (checked) return { b64: checked.b64, record: { ...checked.record, safe_fallback: checked.safeFallback === true }, facts: built.factsUsed };
-  throw new Error("All FLUX attempts failed");
+  throw new Error(renderFailureMessage(failures, "All FLUX attempts failed"));
 }
 
 async function uploadImage(b64: string, chapter: ChaitanyaChapter): Promise<{ url: string; path: string }> {

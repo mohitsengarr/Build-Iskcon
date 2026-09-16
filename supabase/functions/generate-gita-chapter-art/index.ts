@@ -44,6 +44,7 @@ import { gitaResearchOptions } from "./researchMode.ts";
 import { assemblePrompt, extractEntities, gitaChapterKey, normalizeForMatch, sanitizeForImageModel } from "../_shared/sceneResearchCore.ts";
 import { backgroundDeadline, checkInBackground, imagePayload, initialRecord, needsBackgroundCheck, runInBackground } from "../_shared/visualCheck.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
+import { renderFailureMessage, renderWithRetry } from "../_shared/togetherRetry.ts";
 // A request is cut at 150s, a streamed one too. A run plans to have its last
 // chapter stored by request start + REQUEST_BUDGET_MS, leaving time to respond.
 const REQUEST_BUDGET_MS = 140_000;
@@ -245,22 +246,34 @@ async function writeSceneAndCaption(ch, avoid = []) {
   return JSON.parse(m[0]);
 }
 // imagePayload sends steps to FLUX (black-forest-labs/) models only: OpenAI image
-// models such as openai/gpt-image-2 do not take it.
-async function tryGenerate(prompt, model, w, h, steps) {
+// models such as openai/gpt-image-2 do not take it. A rate-limited post is
+// re-sent by renderWithRetry before this attempt gives up, and the failure is
+// collected so the chapter's error can name the cause.
+async function tryGenerate(prompt, model, w, h, steps, failures) {
   const payload = imagePayload(model, prompt, w, h, { steps });
-  const res = await fetch(TOGETHER_API, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${TOGETHER_KEY}`
+  // This function has never caught a request that throws: it fails the chapter
+  // with its own error. renderWithRetry never throws, so the error it hands to
+  // onError is rethrown here to keep that.
+  let thrown = null;
+  const { b64, failure } = await renderWithRetry({
+    request: ()=>fetch(TOGETHER_API, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${TOGETHER_KEY}`
+        },
+        body: JSON.stringify(payload)
+      }),
+    onFailure: (status, body, kind, willRetry)=>{
+      console.log(`[gita-art] ${model} HTTP ${status}: ${body} (${kind}${willRetry ? ", retrying" : ""})`);
     },
-    body: JSON.stringify(payload)
+    onError: (e)=>{
+      thrown = e;
+    }
   });
-  if (!res.ok) {
-    console.log(`[gita-art] ${model} HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
-    return null;
-  }
-  return (await res.json())?.data?.[0]?.b64_json || null;
+  if (thrown) throw thrown;
+  if (!b64 && failure && failures) failures.push(failure);
+  return b64;
 }
 // The shared core treats a cache READ ERROR exactly like "no row". With the table
 // missing (migration not applied yet) or the database erroring, EVERY chapter
@@ -455,14 +468,17 @@ async function buildChapter(ch, researchOptions, requestStart) {
   // the request made before the visual check existed (no seed). A Together
   // request that throws fails the chapter with its own error.
   let image = null;
+  // Why each attempt failed, for this chapter's chain only: a bulk run has one
+  // array per chapter, so a rate-limited chapter never speaks for another.
+  const failures = [];
   for (const a of chain) {
-    const b64 = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps);
+    const b64 = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps, failures);
     if (b64) {
       image = { b64, model: a.m };
       break;
     }
   }
-  if (!image) throw new Error(`All image attempts failed for chapter ${ch.n}`);
+  if (!image) throw new Error(renderFailureMessage(failures, `All image attempts failed for chapter ${ch.n}`));
   const bytes = Uint8Array.from(atob(image.b64), (c)=>c.charCodeAt(0));
   const fn = `gita-ch${ch.n}-${Date.now()}.jpg`;
   const { error: upErr } = await supabase.storage.from("instagram-images").upload(fn, bytes, {

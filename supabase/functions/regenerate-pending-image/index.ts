@@ -27,6 +27,7 @@ import { getSceneResearch } from "../_shared/sceneResearch.ts";
 import { assemblePrompt, inlineKey, normalizeForMatch, sanitizeForImageModel, sceneKey } from "../_shared/sceneResearchCore.ts";
 import { backgroundDeadline, checkInBackground, imagePayload, initialRecord, needsBackgroundCheck, runInBackground } from "../_shared/visualCheck.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
+import { renderFailureMessage, renderWithRetry } from "../_shared/togetherRetry.ts";
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
 // Visual check (_shared/visualCheck.ts): the request is cut at 150s, so the new
 // image is stored after one render and Claude vision checks it against the
@@ -56,30 +57,32 @@ const DEFAULTS = {
   fallback_width: 768,
   fallback_height: 1024
 };
-async function tryGenerate(prompt, model, w, h, steps) {
+async function tryGenerate(prompt, model, w, h, steps, failures) {
   // steps goes only to FLUX models; openai/gpt-image-2 has no steps parameter.
-  // No seed is sent, as before: each regenerate is a new draw.
+  // No seed is sent, as before: each regenerate is a new draw. A rate-limited
+  // post is re-sent by renderWithRetry before this attempt gives up, and why the
+  // attempt failed goes into `failures` for the reviewer's message.
   const payload = imagePayload(model, prompt, w, h, {
     steps
   });
-  try {
-    const res = await fetch(TOGETHER_API, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${TOGETHER_KEY}`
-      },
-      body: JSON.stringify(payload)
-    });
-    if (!res.ok) {
-      console.log(`[regen] ${model} HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
-      return null;
+  const { b64, failure } = await renderWithRetry({
+    request: ()=>fetch(TOGETHER_API, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${TOGETHER_KEY}`
+        },
+        body: JSON.stringify(payload)
+      }),
+    onFailure: (status, body, kind, willRetry)=>{
+      console.log(`[regen] ${model} HTTP ${status}: ${body} (${kind}${willRetry ? ", retrying" : ""})`);
+    },
+    onError: (e)=>{
+      console.log(`[regen] ${model} error ${e}`);
     }
-    return (await res.json())?.data?.[0]?.b64_json || null;
-  } catch (e) {
-    console.log(`[regen] ${model} error ${e}`);
-    return null;
-  }
+  });
+  if (!b64 && failure && failures) failures.push(failure);
+  return b64;
 }
 // The assembly this function has always used; a regenerate that gets no
 // research fact sends exactly this.
@@ -416,6 +419,8 @@ Deno.serve(async (req)=>{
     // model, first image wins.
     const size = instagramSizes(cfg);
     let image = null;
+    // Why each attempt failed, for this card's chain only.
+    const failures = [];
     for (const a of [
       {
         m: cfg.model,
@@ -428,7 +433,7 @@ Deno.serve(async (req)=>{
         h: size.fh
       }
     ]){
-      const out = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps);
+      const out = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps, failures);
       if (out) {
         image = {
           b64: out,
@@ -437,8 +442,10 @@ Deno.serve(async (req)=>{
         break;
       }
     }
+    // The gallery shows this sentence in its "Regenerate failed" alert, so it says
+    // whether to wait and click again or to edit the prompt.
     if (!image) return new Response(JSON.stringify({
-      error: "All image attempts failed"
+      error: renderFailureMessage(failures, "All image attempts failed")
     }), {
       status: 502,
       headers: CORS

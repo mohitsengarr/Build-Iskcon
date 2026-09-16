@@ -13,6 +13,7 @@ import {
   type VisualCheckRecord,
 } from "../_shared/visualCheck.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
+import { renderFailureMessage, renderWithRetry, type TogetherFailure } from "../_shared/togetherRetry.ts";
 import { type FluxAttempt, runFluxAttempts } from "./fluxAttempts.ts";
 import { inlineImagePrompt } from "./inlinePrompt.ts";
 import {
@@ -390,19 +391,26 @@ async function generateScenePromptInline(
   return JSON.parse(m[0]);
 }
 
-async function tryGenerate(prompt: string, model: string, w: number, h: number, steps: number | null, seed?: number, signal?: AbortSignal): Promise<string | null> {
-  try {
-    // seed and steps go only to FLUX models; openai/gpt-image-2 has neither.
-    // signal ends a re-render the visual check has abandoned.
-    const body = imagePayload(model, prompt, w, h, { seed, steps });
-    const res = await fetch(TOGETHER_API, {
+async function tryGenerate(prompt: string, model: string, w: number, h: number, steps: number | null, seed?: number, signal?: AbortSignal, failures?: TogetherFailure[]): Promise<string | null> {
+  // seed and steps go only to FLUX models; openai/gpt-image-2 has neither.
+  // signal ends a re-render the visual check has abandoned. A rate-limited post
+  // is re-sent by renderWithRetry before this attempt gives up, and why the
+  // attempt failed goes into `failures` so the post's error can name the cause.
+  const body = imagePayload(model, prompt, w, h, { seed, steps });
+  const { b64, failure } = await renderWithRetry({
+    request: () => fetch(TOGETHER_API, {
       method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${TOGETHER_KEY}` },
       body: JSON.stringify(body),
       signal,
-    });
-    if (!res.ok) { console.log(`${model}: ${res.status}`); return null; }
-    return (await res.json()).data?.[0]?.b64_json || null;
-  } catch (e) { console.log(`${model} err: ${e}`); return null; }
+    }),
+    // The body snippet is new here: a bare status never said whether Together
+    // was busy or the prompt was refused.
+    onFailure: (status, text, kind, willRetry) => { console.log(`${model}: ${status} ${text} (${kind}${willRetry ? ", retrying" : ""})`); },
+    onError: (e) => { console.log(`${model} err: ${e}`); },
+    signal,
+  });
+  if (!b64 && failure) failures?.push(failure);
+  return b64;
 }
 
 // The compressed layout every prompt uses today: ART_STYLE + GENDER_RULES +
@@ -585,6 +593,9 @@ async function generateImage(
     { model: __m2, prompt: sanitized, w: __size.fw, h: __size.fh, seed: seed + attemptIndex },
     { model: __m2, prompt: SAFE_FALLBACK, w: __size.fw, h: __size.fh, safeFallback: true },
   ];
+  // Why each attempt failed, for this post's chain only: every post has its own
+  // generateImage call, so one post's rate limit never speaks for another's.
+  const failures: TogetherFailure[] = [];
   // One render is the whole chain: same order and first-image-wins as before,
   // and the SAFE_FALLBACK attempt still logs how many research facts it drops.
   // A SAFE_FALLBACK image carries none of the facts, so it is kept unchecked
@@ -597,14 +608,14 @@ async function generateImage(
     const used: { attempt: FluxAttempt | null } = { attempt: null };
     const b64 = await runFluxAttempts(attempts, a => {
       used.attempt = a;
-      return tryGenerate(a.prompt, a.model, a.w, a.h, __steps, a.seed, signal);
+      return tryGenerate(a.prompt, a.model, a.w, a.h, __steps, a.seed, signal, failures);
     }, { tag: "instagram-post", factsInPrompt, signal });
     if (!b64) return null;
     const safeFallback = used.attempt?.safeFallback === true;
     return { b64, model: used.attempt?.model ?? null, safeFallback, skipCheck: safeFallback ? "safe_fallback" : null };
   };
   const first = await render(0);
-  if (!first) throw new Error("All FLUX attempts failed");
+  if (!first) throw new Error(renderFailureMessage(failures, "All FLUX attempts failed"));
   return {
     b64: first.b64,
     model: typeof first.model === "string" ? first.model : null,

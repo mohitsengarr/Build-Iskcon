@@ -12,6 +12,7 @@ import {
   type VisualCheckRecord,
 } from "../_shared/visualCheck.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
+import { renderFailureMessage, renderWithRetry, type TogetherFailure } from "../_shared/togetherRetry.ts";
 import { type FluxAttempt, runFluxAttempts } from "./fluxAttempts.ts";
 import {
   assemblePrompt,
@@ -121,26 +122,42 @@ Return JSON only (no fences):
 
 // Per-attempt request timeout (no hang) + surfaced HTTP status, so a slow or
 // rejected FLUX call fails fast and is visible in the function logs instead of
-// silently collapsing into "All FLUX attempts failed".
-async function tryGenerate(prompt: string, model: string, w: number, h: number, steps: number | null, seed?: number, signal?: AbortSignal): Promise<string | null> {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 90000);
-  // A re-render the visual check has abandoned aborts this request too.
-  const stop = () => ctrl.abort();
-  if (signal?.aborted) ctrl.abort();
-  else signal?.addEventListener("abort", stop);
-  try {
-    const res = await fetch(TOGETHER_API, {
+// silently collapsing into "All FLUX attempts failed". A rate-limited post is
+// re-sent by renderWithRetry before this attempt gives up, and why the attempt
+// failed goes into `failures` so the run's error can name the cause.
+async function tryGenerate(prompt: string, model: string, w: number, h: number, steps: number | null, seed?: number, signal?: AbortSignal, failures?: TogetherFailure[]): Promise<string | null> {
+  // Every post gets its own 90s timeout, still covering the body read: the timer
+  // is cleared when the next post starts, or when the attempt is done.
+  let release = () => {};
+  const post = () => {
+    release();
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 90000);
+    // A re-render the visual check has abandoned aborts this request too.
+    const stop = () => ctrl.abort();
+    if (signal?.aborted) ctrl.abort();
+    else signal?.addEventListener("abort", stop);
+    release = () => { clearTimeout(timer); signal?.removeEventListener("abort", stop); };
+    return fetch(TOGETHER_API, {
       method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${TOGETHER_KEY}` },
       // seed goes only to FLUX models, and only on a re-render (see generateImage);
       // the configuration's steps go only to FLUX models too.
       body: JSON.stringify(imagePayload(model, prompt, w, h, { seed, steps })),
       signal: ctrl.signal,
     });
-    if (!res.ok) { console.log(`[bulk-generate-images] ${model}: HTTP ${res.status} ${(await res.text().catch(() => "")).slice(0, 160)}`); return null; }
-    return (await res.json()).data?.[0]?.b64_json || null;
-  } catch (e) { console.log(`[bulk-generate-images] ${model} err: ${e}`); return null; }
-  finally { clearTimeout(timer); signal?.removeEventListener("abort", stop); }
+  };
+  try {
+    const { b64, failure } = await renderWithRetry({
+      request: post,
+      onFailure: (status, text, kind, willRetry) => {
+        console.log(`[bulk-generate-images] ${model}: HTTP ${status} ${text.slice(0, 160)} (${kind}${willRetry ? ", retrying" : ""})`);
+      },
+      onError: (e) => { console.log(`[bulk-generate-images] ${model} err: ${e}`); },
+      signal,
+    });
+    if (!b64 && failure) failures?.push(failure);
+    return b64;
+  } finally { release(); }
 }
 
 // The active configuration approved in the Image Playground (/image-playground).
@@ -359,6 +376,9 @@ async function generateImage(
           { model: "black-forest-labs/FLUX.1.1-pro", prompt: SAFE_FALLBACK, w: 768, h: 1024, safeFallback: true },
         ];
   };
+  // Why each attempt failed, for this row's chain only: a bulk run calls
+  // generateImage per row, so one row's rate limit never speaks for another's.
+  const failures: TogetherFailure[] = [];
   // Each render is the whole chain: same order and first-image-wins as before,
   // and the SAFE_FALLBACK attempt still logs how many research facts it drops.
   // A SAFE_FALLBACK image carries none of the facts, so it is kept unchecked
@@ -371,7 +391,7 @@ async function generateImage(
     const used: { attempt: FluxAttempt | null } = { attempt: null };
     const b64 = await runFluxAttempts(attempts, a => {
       used.attempt = a;
-      return tryGenerate(a.prompt, a.model, a.w, a.h, steps, a.seed, signal);
+      return tryGenerate(a.prompt, a.model, a.w, a.h, steps, a.seed, signal, failures);
     }, { tag: "bulk-generate-images", factsInPrompt, signal });
     if (!b64) return null;
     const safeFallback = used.attempt?.safeFallback === true;
@@ -380,12 +400,12 @@ async function generateImage(
   if (check) {
     // Bulk mode: checked, and re-rendered on a clear contradiction, before the insert.
     const checked = await renderWithVisualCheck({ render, facts: checkFacts, maxAttempts: check.maxAttempts, deadlineAt: check.deadlineAt, tag: check.tag });
-    if (!checked) throw new Error("All FLUX attempts failed");
+    if (!checked) throw new Error(renderFailureMessage(failures, "All FLUX attempts failed"));
     return { b64: checked.b64, model: checked.model, safeFallback: checked.safeFallback === true, checkFacts, record: checked.record };
   }
   // Sample mode: one render, checked after the response.
   const first = await render(0);
-  if (!first) throw new Error("All FLUX attempts failed");
+  if (!first) throw new Error(renderFailureMessage(failures, "All FLUX attempts failed"));
   return { b64: first.b64, model: first.model, safeFallback: first.safeFallback, checkFacts, record: null };
 }
 
