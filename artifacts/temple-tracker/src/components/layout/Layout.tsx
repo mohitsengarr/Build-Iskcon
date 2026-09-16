@@ -286,10 +286,13 @@ export function Layout({ children }: { children: ReactNode }) {
       </nav>
       )}
 
-      {/* Main Content — pt-24 reserves room for the fixed top nav, pb-28 for
-          the mobile donate CTA. When either is hidden (e.g. /bhaktigram),
-          drop the corresponding reservation so there's no phantom gap. */}
-      <main id="main-content" className={`flex-1 w-full z-10 ${hideTopNav ? "pt-4" : "pt-24"} ${hideMobileCta ? "pb-8" : "pb-28 sm:pb-16"}`}>
+      {/* Main Content — pt-20 (80px) reserves room for the fixed top nav, which
+          measures 67px on desktop and 69px on mobile, plus a small gap under it.
+          pt-24 reserved 96px and left a ~28px empty band below the header on
+          every page. pb-28 reserves the mobile donate CTA. When either is hidden
+          (e.g. /bhaktigram), drop the corresponding reservation so there's no
+          phantom gap. */}
+      <main id="main-content" className={`flex-1 w-full z-10 ${hideTopNav ? "pt-4" : "pt-20"} ${hideMobileCta ? "pb-8" : "pb-28 sm:pb-16"}`}>
         {children}
       </main>
 
