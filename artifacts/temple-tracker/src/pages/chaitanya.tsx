@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, useLayoutEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
+import { ReaderAccountCard } from "@/components/ReaderAccountCard";
 import { SEOHead } from "@/components/SEOHead";
 import { type AiFixArgs } from "@/components/SourceEditor";
 // Lazy — CodeMirror only loads when a maintainer opens the editor.
@@ -3496,35 +3497,8 @@ function Sidebar({
         )}
 
         <div className="px-3 py-3 border-t border-stone-100 mt-2">
-          {readerId ? (
-            <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg bg-orange-50/60">
-              <div className="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
-                {(readerName || readerId).slice(0, 1).toUpperCase()}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-stone-700 truncate">
-                  {readerName || "Signed in"}
-                </p>
-                <p className="text-[10px] text-stone-500 truncate">
-                  {readerId}
-                </p>
-              </div>
-              <button
-                onClick={onLogout}
-                className="p-1.5 rounded-lg text-stone-400 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
-                title="Sign out"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={onLogin}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-xs font-semibold transition-colors"
-            >
-              <LogIn className="w-3.5 h-3.5" /> Sign in to save bookmarks
-            </button>
-          )}
+          {/* Sign out is a labelled button that asks first (ReaderAccountCard). */}
+          <ReaderAccountCard readerId={readerId} readerName={readerName} onLogin={onLogin} onLogout={onLogout} />
         </div>
 
         <div className="px-4 py-4 border-t border-stone-100">
