@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRoute, Link } from "wouter";
 import { supabase } from "@/lib/supabase";
+import { describeFailure } from "@/lib/requestError";
 import {
   ArrowLeft, Search, MoreVertical, Send, Smile, Paperclip, Camera, Mic,
   CheckCheck, MessageSquarePlus, Grid3x3, MessagesSquare, X,
@@ -400,7 +401,7 @@ function ChatRoom({ room }: { room: Room }) {
       });
       if (!r.ok) {
         const detail = await r.text().catch(() => "");
-        alert(`Message not sent: ${detail || r.statusText || `HTTP ${r.status}`}`);
+        alert(`Message not sent: ${describeFailure(r.status, detail)}`);
         setMessages(prev => prev.filter(m => m.id !== optimistic.id)); // roll back
         setDraft(body);
       } else {

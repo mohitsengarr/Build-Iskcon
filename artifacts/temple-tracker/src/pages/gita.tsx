@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
 import { fadeInUp, fadeIn } from "@/lib/animations";
+import { describeFailure } from "@/lib/requestError";
 import {
   BookOpen, ChevronLeft, ChevronRight, Loader2,
   Search, BookMarked, List, X, ChevronDown,
@@ -971,7 +972,7 @@ export default function GitaReader() {
         }),
       });
       if (!res.ok) {
-        alert(`Couldn't save the scene.\n${await res.text().catch(() => res.statusText)}`);
+        alert(`Couldn't save the scene.\n${describeFailure(res.status, await res.text().catch(() => ""))}`);
         return;
       }
       setSceneSaved(true);

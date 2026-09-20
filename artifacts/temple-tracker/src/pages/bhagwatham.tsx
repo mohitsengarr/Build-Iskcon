@@ -8,6 +8,7 @@ import { type AiFixArgs } from "@/components/SourceEditor";
 // so it never ships in the reader's critical path.
 const SourceEditor = React.lazy(() => import("@/components/SourceEditor"));
 import { fadeInUp, fadeIn } from "@/lib/animations";
+import { describeFailure } from "@/lib/requestError";
 import { applyTextCorrections } from "@/lib/bhagwatham-config";
 import { numberedVerseHeadLength, openVerseTailLength } from "@/lib/bhagwatham-utils";
 import {
@@ -2305,7 +2306,7 @@ function VoiceEditToolbar({ allPages, setAllPages, unboldLines, onUnboldChange }
         });
         if (!res.ok) {
           const data = await res.text().catch(() => "");
-          alert(`Save failed (page ${edit.pageNumber}): ${data || res.statusText}`);
+          alert(`Save failed (page ${edit.pageNumber}): ${describeFailure(res.status, data)}`);
         }
       } catch (err) {
         alert(`Save failed — could not reach Supabase.\n${String(err)}`);
@@ -2449,7 +2450,7 @@ function VoiceEditToolbar({ allPages, setAllPages, unboldLines, onUnboldChange }
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        alert(`AI suggest failed: ${err.error || res.statusText}`);
+        alert(`AI suggest failed: ${describeFailure(res.status, err)}`);
         return;
       }
       const data = await res.json();
@@ -2509,7 +2510,7 @@ function VoiceEditToolbar({ allPages, setAllPages, unboldLines, onUnboldChange }
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        console.warn("Quick AI fix failed:", err.error || res.statusText);
+        console.warn("Quick AI fix failed:", describeFailure(res.status, err));
         return;
       }
       const data = await res.json();
@@ -2738,7 +2739,7 @@ function VoiceEditToolbar({ allPages, setAllPages, unboldLines, onUnboldChange }
       });
       if (!res.ok) {
         const msg = await res.text().catch(() => "");
-        alert(`Couldn't save the scene.\n${msg || res.statusText}`);
+        alert(`Couldn't save the scene.\n${describeFailure(res.status, msg)}`);
         return;
       }
       setSceneSaved(true);
@@ -4491,7 +4492,7 @@ export default function Bhagwatham() {
       headers: { Prefer: "return=representation,resolution=merge-duplicates" },
       body: JSON.stringify({ page_number: pn, text: newText, edited_at: new Date().toISOString(), applied_to_git: false }),
     });
-    if (!res.ok) throw new Error((await res.text().catch(() => "")) || res.statusText);
+    if (!res.ok) throw new Error(describeFailure(res.status, await res.text().catch(() => "")));
   }, []);
   const runAiFixSpan = useCallback(async ({ selectedText, contextBefore, contextAfter, pageNumber }: AiFixArgs): Promise<string | null> => {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/bhagavatam-correct-text`, {
@@ -4501,7 +4502,7 @@ export default function Bhagwatham() {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({} as { error?: string }));
-      throw new Error(err.error || res.statusText);
+      throw new Error(describeFailure(res.status, err));
     }
     const data = await res.json();
     return ((data?.suggested_text as string) || "").trim() || null;

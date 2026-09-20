@@ -5,6 +5,8 @@ import { useLocation, Link } from "wouter";
 import { Layout } from "@/components/layout/Layout";
 import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, ChevronUp, ChevronLeft, Trash2, Maximize2, Minimize2, RefreshCw, Users, Crown, Sparkles, Shield, CheckSquare, Square, Check, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, BadgeCheck, BookOpen } from "lucide-react";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
+import { describeFailure, describeThrown } from "@/lib/requestError";
+import { renderQueue } from "@/lib/renderQueue";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -1278,7 +1280,7 @@ function StoryScenesSection() {
       // Approving removes the card from this queue (the list only holds unapproved
       // scenes); un-approving from elsewhere still updates in place.
       if (res.ok) setScenes(prev => next ? prev.filter(s => s.id !== id) : prev.map(s => (s.id === id ? { ...s, approved: next } : s)));
-      else alert(`Couldn't update: ${await res.text().catch(() => res.statusText)}`);
+      else alert(`Couldn't update: ${describeFailure(res.status, await res.text().catch(() => ""))}`);
     } finally { setBusyId(null); }
   }, []);
 
@@ -1295,7 +1297,7 @@ function StoryScenesSection() {
       if (res.ok) {
         setScenes(prev => prev.map(s => (s.id === id ? { ...s, selected_text: editText } : s)));
         setEditId(null);
-      } else alert(`Couldn't save: ${await res.text().catch(() => res.statusText)}`);
+      } else alert(`Couldn't save: ${describeFailure(res.status, await res.text().catch(() => ""))}`);
     } finally { setBusyId(null); }
   }, [editText]);
 
@@ -1311,7 +1313,7 @@ function StoryScenesSection() {
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok || !d?.ok) {
-        alert(`Image generation failed: ${d?.error || res.statusText}`);
+        alert(`Image generation failed: ${describeFailure(res.status, d)}`);
         setScenes(prev => prev.map(s => (s.id === id ? { ...s, status: "failed" } : s)));
         return;
       }
@@ -1525,7 +1527,7 @@ function GitaArtSection() {
       body: JSON.stringify({ id, action }),
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data?.success) throw new Error(data?.error || res.statusText || `HTTP ${res.status}`);
+    if (!res.ok || !data?.success) throw new Error(describeFailure(res.status, data));
   }, []);
 
   // The replacement after "Reject scene" is generated in the background. Reload the
@@ -1605,13 +1607,15 @@ function GitaArtSection() {
     if (!promptText) return;
     setRegenerating(prev => new Set(prev).add(id));
     try {
-      const r = await fetch(`${SUPABASE_URL}/functions/v1/regenerate-chapter-art`, {
-        method: "POST",
-        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ book: "gita", id, prompt: promptText }),
+      const { r, d } = await renderQueue.run(async () => {
+        const r = await fetch(`${SUPABASE_URL}/functions/v1/regenerate-chapter-art`, {
+          method: "POST",
+          headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ book: "gita", id, prompt: promptText }),
+        });
+        return { r, d: await r.json().catch(() => ({})) };
       });
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok || !d?.ok) { alert(`Regenerate failed: ${d?.error || r.statusText}`); return; }
+      if (!r.ok || !d?.ok) { alert(`Regenerate failed: ${describeFailure(r.status, d)}`); return; }
       // The backend caps the prompt (prompt_max_len). Say so plainly — a silently
       // shortened prompt otherwise looks like the edit simply had no effect.
       if (d?.prompt_truncated) {
@@ -1619,6 +1623,8 @@ function GitaArtSection() {
       }
       setRows(prev => prev.map(x => (x.id === id ? { ...x, image_url: `${d.image_url}?t=${Date.now()}`, prompt: promptText, visual_check: d.visual_check ?? null } : x)));
       if (promptOverride === undefined) setEditId(null);
+    } catch (e) {
+      alert(`Regenerate failed: ${describeThrown(e)}`);
     } finally {
       setRegenerating(prev => { const n = new Set(prev); n.delete(id); return n; });
     }
@@ -1808,13 +1814,15 @@ export default function Gallery() {
     if (!promptText) return;
     setArtBusy(prev => new Set(prev).add(`${book}:${id}`));
     try {
-      const r = await fetch(`${SUPABASE_URL}/functions/v1/regenerate-chapter-art`, {
-        method: "POST",
-        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ book, id, prompt: promptText }),
+      const { r, d } = await renderQueue.run(async () => {
+        const r = await fetch(`${SUPABASE_URL}/functions/v1/regenerate-chapter-art`, {
+          method: "POST",
+          headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ book, id, prompt: promptText }),
+        });
+        return { r, d: await r.json().catch(() => ({})) };
       });
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok || !d?.ok) { alert(`Regenerate failed: ${d?.error || r.statusText}`); return; }
+      if (!r.ok || !d?.ok) { alert(`Regenerate failed: ${describeFailure(r.status, d)}`); return; }
       // The backend caps the prompt (prompt_max_len). Say so plainly — a silently
       // shortened prompt otherwise looks like the edit simply had no effect.
       if (d?.prompt_truncated) {
@@ -1823,7 +1831,7 @@ export default function Gallery() {
       onDone(`${d.image_url}?t=${Date.now()}`, d.visual_check ?? null, promptText);
       if (promptOverride === undefined) setArtEdit(null);
     } catch (e) {
-      alert(`Regenerate failed: ${String(e)}`);
+      alert(`Regenerate failed: ${describeThrown(e)}`);
     } finally { setArtBusy(prev => { const n = new Set(prev); n.delete(`${book}:${id}`); return n; }); }
   }, [artDraft]);
   const [promptEditId, setPromptEditId] = useState<number | null>(null);
@@ -1835,13 +1843,15 @@ export default function Gallery() {
     if (!promptDraft.trim()) return;
     setRegeneratingPending(prev => new Set(prev).add(id));
     try {
-      const r = await fetch(`${SUPABASE_URL}/functions/v1/regenerate-pending-image`, {
-        method: "POST",
-        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ id, prompt: promptDraft }),
+      const { r, d } = await renderQueue.run(async () => {
+        const r = await fetch(`${SUPABASE_URL}/functions/v1/regenerate-pending-image`, {
+          method: "POST",
+          headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ id, prompt: promptDraft }),
+        });
+        return { r, d: await r.json().catch(() => ({})) };
       });
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok || !d?.ok) { alert(`Regenerate failed: ${d?.error || r.statusText}`); return; }
+      if (!r.ok || !d?.ok) { alert(`Regenerate failed: ${describeFailure(r.status, d)}`); return; }
       // The reviewer asked for this image: it counts as seen once the card shows it.
       seenImages.accept(id, d.image_path ?? null);
       // image_path too: Approve and Reject send the image the card shows.
@@ -1850,7 +1860,7 @@ export default function Gallery() {
       // Only this card's editor: another card's may be the open one by now.
       setPromptEditId(cur => (cur === id ? null : cur));
     } catch (e) {
-      alert(`Regenerate failed: ${String(e)}`);
+      alert(`Regenerate failed: ${describeThrown(e)}`);
     } finally {
       setRegeneratingPending(prev => { const next = new Set(prev); next.delete(id); return next; });
     }
@@ -1948,7 +1958,7 @@ export default function Gallery() {
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        setBulkMessage(`Sample failed: ${data.error || res.statusText}`);
+        setBulkMessage(`Sample failed: ${describeFailure(res.status, data)}`);
       } else {
         setBulkMessage(`✓ Sample generated for Canto ${data.chapter?.skandh}, Ch ${data.chapter?.number}. Review it below, then approve the style before bulk-generating.`);
         // Allow bulk-trigger once a sample exists
@@ -1977,7 +1987,7 @@ export default function Gallery() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setBulkMessage(`Bulk failed: ${data.error || res.statusText}`);
+        setBulkMessage(`Bulk failed: ${describeFailure(res.status, data)}`);
       } else {
         setBulkMessage(`🚀 ${data.message || `Queued ${data.queued} chapters for generation.`}`);
         // Pending review banner will populate as each image finishes; poll for
@@ -2068,7 +2078,7 @@ export default function Gallery() {
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        setChartBulkMessage(`Sample failed: ${data.error || res.statusText}`);
+        setChartBulkMessage(`Sample failed: ${describeFailure(res.status, data)}`);
       } else {
         setChartBulkMessage(`✓ Chapter-art sample generated for Canto ${data.chapter?.skandh}, Ch ${data.chapter?.number}. Review it below, then approve the style before bulk-generating.`);
         fetchPendingChapterArt();
@@ -2096,7 +2106,7 @@ export default function Gallery() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setChartBulkMessage(`Bulk failed: ${data.error || res.statusText}`);
+        setChartBulkMessage(`Bulk failed: ${describeFailure(res.status, data)}`);
       } else {
         setChartBulkMessage(`🚀 ${data.message || `Queued ${data.queued} chapter-art images for generation.`}`);
         // Registered poller — auto-stops after 5min, replaces any prior
@@ -2124,7 +2134,7 @@ export default function Gallery() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.success) {
-        alert(`Reject scene failed: ${data?.error || res.statusText || `HTTP ${res.status}`}`);
+        alert(`Reject scene failed: ${describeFailure(res.status, data)}`);
         return;
       }
       if (data.scene_remembered === false) {
@@ -2149,7 +2159,7 @@ export default function Gallery() {
       });
       const data = await res.json();
       if (!res.ok) {
-        alert(`${action === "approve" ? "Approve" : "Reject"} failed: ${data.error || data.msg || res.statusText || `HTTP ${res.status}`}`);
+        alert(`${action === "approve" ? "Approve" : "Reject"} failed: ${describeFailure(res.status, data)}`);
       } else {
         // Remove the reviewed row from the local pending list immediately.
         setPendingChapterArt(prev => prev.filter(p => p.id !== id));
@@ -2252,7 +2262,7 @@ export default function Gallery() {
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        setCcBulkMessage(`Sample failed: ${data.error || res.statusText}`);
+        setCcBulkMessage(`Sample failed: ${describeFailure(res.status, data)}`);
       } else {
         setCcBulkMessage(`✓ Chaitanya sample generated for ${data.chapter?.part}-lila Ch ${data.chapter?.number_in_part}. Review below, then approve the style before bulk-generating.`);
         fetchPendingChaitanya();
@@ -2280,7 +2290,7 @@ export default function Gallery() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setCcBulkMessage(`Bulk failed: ${data.error || res.statusText}`);
+        setCcBulkMessage(`Bulk failed: ${describeFailure(res.status, data)}`);
       } else {
         setCcBulkMessage(`🚀 ${data.message || `Queued ${data.queued} Chaitanya chapters for generation.`}`);
         // Registered poller — auto-stops after 5min, replaces any prior
@@ -2306,7 +2316,7 @@ export default function Gallery() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.success) {
-        alert(`Reject scene failed: ${data?.error || res.statusText || `HTTP ${res.status}`}`);
+        alert(`Reject scene failed: ${describeFailure(res.status, data)}`);
         return;
       }
       if (data.scene_remembered === false) {
@@ -2331,7 +2341,7 @@ export default function Gallery() {
       });
       const data = await res.json();
       if (!res.ok) {
-        alert(`${action === "approve" ? "Approve" : "Reject"} failed: ${data.error || data.msg || res.statusText || `HTTP ${res.status}`}`);
+        alert(`${action === "approve" ? "Approve" : "Reject"} failed: ${describeFailure(res.status, data)}`);
       } else {
         setPendingChaitanya(prev => prev.filter(p => p.id !== id));
         if (action === "approve") {
@@ -2382,7 +2392,7 @@ export default function Gallery() {
       } else if (res.status === 409 && (data?.status === "publish_unknown" || data?.status === "claimed")) {
         alert(data.error);
       } else if (!res.ok) {
-        alert(`${action === "approve" ? "Approve" : "Reject"} failed: ${data.error || data.msg || res.statusText || `HTTP ${res.status}`}`);
+        alert(`${action === "approve" ? "Approve" : "Reject"} failed: ${describeFailure(res.status, data)}`);
       } else {
         // Drop the reviewed post from the pending list immediately
         setPending(prev => prev.filter(p => p.id !== id));
@@ -2845,7 +2855,7 @@ export default function Gallery() {
       });
       if (!res.ok) {
         const errText = await res.text().catch(() => "");
-        alert(`Delete failed: ${errText || res.statusText}`);
+        alert(`Delete failed: ${describeFailure(res.status, errText)}`);
         return;
       }
     } catch (err) {
