@@ -11,12 +11,14 @@ import {
   Building2, IndianRupee, ChartBar, CheckCircle2,
   Globe, MapPin, Heart, Users, ChevronDown, ExternalLink,
   BookOpen, Utensils, GraduationCap, Tv, Youtube,
-  Shield, ArrowRight, Mail, Clock, Search, X,
+  Shield, ArrowRight, Mail, Clock, Search, X, ArrowDown, ArrowUp,
 } from "lucide-react";
 import {
   ISKCON_STATS, ISKCON_PROGRAMS, ISKCON_REGIONS, TOTAL_CATALOGUED,
 } from "@/data/iskcon-centers";
 import { TEMPLES, TEMPLE_STATS, fetchLiveTemples, computeStats, type Temple } from "@/data/temples";
+import { fundedPercent, sortByFunding, type Coords, type SortDirection } from "@/lib/templeSort";
+import { HOME_TITLE } from "@/lib/siteTitle";
 
 // ── Constants ───────────────────────────────────────────────────────────────
 
@@ -293,11 +295,12 @@ function TempleProjectsSection() {
   const [tablePage, setTablePage] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [userCoords, setUserCoords] = useState<Coords | null>(null);
+  const [fundingSort, setFundingSort] = useState<SortDirection>("desc");
   useEffect(() => { fetchLiveTemples().then(setTemples); }, []);
 
   // Request user's coarse location once (silently fails if denied). Used only
-  // to sort the temple list so the user's nearest temples surface first.
+  // to put the user's nearest temples first among equally funded ones.
   useEffect(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
@@ -312,8 +315,8 @@ function TempleProjectsSection() {
   const countries = new Set(temples.map(t => { const parts = t.location.split(","); return parts[parts.length - 1]?.trim(); }).filter(Boolean));
 
   // Filter + search the temple list. Matches against name, location, deity, description.
-  // When the browser shares the user's location, temples are also sorted by
-  // distance so the closest ones appear at the top of the table.
+  // Sorted by funding rate (the Funded column header flips the direction);
+  // among equally funded temples the user's nearest come first.
   const filteredTemples = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     const filtered = temples.filter(t => {
@@ -322,29 +325,11 @@ function TempleProjectsSection() {
       const haystack = [t.name, t.location, t.deity, t.description].join(" ").toLowerCase();
       return haystack.includes(q);
     });
-    if (!userCoords) return filtered;
-    // Haversine distance (km) — good enough for ranking.
-    const distKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-      const toRad = (d: number) => d * Math.PI / 180;
-      const R = 6371;
-      const dLat = toRad(lat2 - lat1);
-      const dLon = toRad(lon2 - lon1);
-      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-      return 2 * R * Math.asin(Math.sqrt(a));
-    };
-    return [...filtered].sort((a, b) => {
-      const da = a.latitude != null && a.longitude != null
-        ? distKm(userCoords.lat, userCoords.lon, a.latitude, a.longitude)
-        : Infinity;
-      const db = b.latitude != null && b.longitude != null
-        ? distKm(userCoords.lat, userCoords.lon, b.latitude, b.longitude)
-        : Infinity;
-      return da - db;
-    });
-  }, [temples, searchQuery, statusFilter, userCoords]);
+    return sortByFunding(filtered, fundingSort, userCoords);
+  }, [temples, searchQuery, statusFilter, userCoords, fundingSort]);
 
-  // Reset to page 0 whenever the filter/search changes
-  useEffect(() => { setTablePage(0); }, [searchQuery, statusFilter]);
+  // Reset to page 0 whenever the filter/search/sort changes
+  useEffect(() => { setTablePage(0); }, [searchQuery, statusFilter, fundingSort]);
 
   const totalPages = Math.max(1, Math.ceil(filteredTemples.length / TABLE_PAGE_SIZE));
   const pagedTemples = filteredTemples.slice(tablePage * TABLE_PAGE_SIZE, (tablePage + 1) * TABLE_PAGE_SIZE);
@@ -435,14 +420,24 @@ function TempleProjectsSection() {
               <th className="py-3 pr-4 font-bold">Temple</th>
               <th className="py-3 pr-4 font-bold hidden sm:table-cell">Location</th>
               <th className="py-3 pr-4 font-bold">Status</th>
-              <th className="py-3 pr-4 font-bold text-right">Funded</th>
+              <th className="py-3 pr-4 font-bold text-right" aria-sort={fundingSort === "desc" ? "descending" : "ascending"}>
+                <button
+                  type="button"
+                  onClick={() => setFundingSort(d => (d === "desc" ? "asc" : "desc"))}
+                  className="inline-flex items-center gap-1 uppercase tracking-widest font-bold hover:text-primary transition-colors"
+                  title={fundingSort === "desc" ? "Most funded first — click for least funded first" : "Least funded first — click for most funded first"}
+                >
+                  Funded
+                  {fundingSort === "desc" ? <ArrowDown className="w-3 h-3" /> : <ArrowUp className="w-3 h-3" />}
+                </button>
+              </th>
               <th className="py-3 pr-4 font-bold text-right hidden sm:table-cell">Needed</th>
               <th className="py-3 font-bold text-center">Donate</th>
             </tr>
           </thead>
           <tbody>
             {pagedTemples.map((t) => {
-              const pct = t.fundraisingGoal > 0 ? Math.round((t.fundraisingRaised / t.fundraisingGoal) * 100) : 0;
+              const pct = fundedPercent(t) ?? 0;
               const gap = Math.max(0, (t.fundraisingGoal - t.fundraisingRaised) / 1_000_000).toFixed(1);
               return (
                 <tr key={t.id} className="border-b border-outline-variant/10 hover:bg-surface-container-low/50 transition-colors">
@@ -1134,7 +1129,7 @@ export default function Home() {
   return (
     <Layout>
       <SEOHead
-        title={`Track ${liveStats.totalTemples} Active ISKCON Temple Construction Projects Worldwide`}
+        title={HOME_TITLE}
         description={`Help build ${liveStats.totalTemples}+ ISKCON temples across 15+ countries. The TOVP in Mayapur opens in 2027. Explore projects, donate directly to official ISKCON pages.`}
         canonicalPath="/"
         structuredData={[
