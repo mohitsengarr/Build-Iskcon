@@ -48,6 +48,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getSceneResearch } from "../_shared/sceneResearch.ts";
 import { gitaResearchOptions } from "./researchMode.ts";
 import { CHAPTERS, briefSystemPrompt, briefUserMessage, MAX_USED_ELSEWHERE } from "./chapterScenes.ts";
+import { factsAboutSceneObjects } from "./sceneFacts.ts";
 import { assemblePrompt, extractEntities, gitaChapterKey, normalizeForMatch, sanitizeForImageModel } from "../_shared/sceneResearchCore.ts";
 import { backgroundDeadline, checkInBackground, imagePayload, initialRecord, needsBackgroundCheck, runInBackground } from "../_shared/visualCheck.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
@@ -258,8 +259,19 @@ async function researchChapter(ch, brief, researchOptions) {
       return { key, status: "skipped", facts: [], absent: 0, ms: Date.now() - started };
     }
     const sceneText = typeof brief?.imagePrompt === "string" ? brief.imagePrompt : "";
-    // The whole Gita is Krishna speaking to Arjuna on his chariot.
-    const characters = ["Krishna", "Arjuna"];
+    // Who this chapter's painting actually shows. Hardcoding Krishna and Arjuna
+    // made Arjuna "present" in every scene, so his chariot and Gandiva facts
+    // passed the people filter into a painting of a yogi or a lotus pond.
+    const named = extractEntities([ch.subject, sceneText].join(". ")).characters;
+    const others = named.filter((n)=>n !== "Krishna");
+    // Krishna leads when he is there: the facts block is trimmed from the end for
+    // room, and his appearance is the one that must survive the trim.
+    const characters = others.length === named.length ? named.length ? named : [
+      "Krishna"
+    ] : [
+      "Krishna",
+      ...others
+    ];
     const r = await getSceneResearch(supabase, {
       key,
       book: "gita",
@@ -267,8 +279,13 @@ async function researchChapter(ch, brief, researchOptions) {
       title: ch.en,
       characters,
     }, researchOptions);
-    const { kept, absent } = factsAboutScenePeople(Array.isArray(r.facts) ? r.facts : [], [ch.en, sceneText, ...characters].join(". "));
-    return { key: r.key, status: r.status, facts: kept, absent, ms: r.ms };
+    // Two filters: a fact about people none of whom are here, and a fact about a
+    // thing the scene does not have. The research cache is per chapter and
+    // outlives the scene, so chapter 5's row still holds the four white horses
+    // it was filled with when that chapter's cover was the chariot.
+    const people = factsAboutScenePeople(Array.isArray(r.facts) ? r.facts : [], [ch.en, sceneText, ...characters].join(". "));
+    const objects = factsAboutSceneObjects(people.kept, [ch.subject, sceneText].join(". "));
+    return { key: r.key, status: r.status, facts: objects.kept, absent: people.absent + objects.absent, ms: r.ms };
   } catch {
     return { key, status: "failed", facts: [], absent: 0, ms: 0 };
   }
