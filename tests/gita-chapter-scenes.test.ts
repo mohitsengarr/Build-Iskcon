@@ -90,6 +90,19 @@ describe("briefSystemPrompt", () => {
     assert.match(sys, /WHEREVER KRISHNA APPEARS, in any chapter: blue skin, a peacock feather/);
   });
 
+  test("gives the blue skin to Krishna alone, so a chapter's farmer or yogi is not painted as him", () => {
+    // FLUX painted chapter 5's unattached worker as a blue-skinned potter in a peacock feather.
+    assert.match(sys, /Krishna ALONE is blue-skinned/);
+    assert.match(sys, /A farmer, a yogi, a sage or any other[\s\S]*ordinary human skin and no peacock feather/);
+  });
+
+  test("says the canvas is landscape, so a chapter does not come back as a strip with empty margins", () => {
+    // Chapter 4's lineage was written as "a vertical composition" and rendered as
+    // a tall panel with white bars down both sides of a 1344x1088 cover.
+    assert.match(sys, /THE CANVAS IS LANDSCAPE, wider than it is tall/);
+    assert.match(sys, /Never a tall stacked panel/);
+  });
+
   test("still asks for peaceful imagery and the same JSON shape", () => {
     assert.match(sys, /PEACEFUL imagery only/);
     assert.match(sys, /Never combat/);
