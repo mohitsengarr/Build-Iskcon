@@ -5,6 +5,12 @@
 // image is rendered with the configuration approved in the Image Playground, and
 // the result lands in gita_chapter_art_review as `pending` for approval.
 //
+// SUBJECTS: the whole Gita is spoken on one chariot, so a brief asked only for
+// "this chapter's central moment" returned that same chariot for every chapter.
+// chapterScenes.ts gives each chapter the subject its own verses give it, and the
+// chariot to the four chapters it belongs to; the brief also carries the moments
+// the other chapters' covers already show.
+//
 // POST body:
 //   { "chapter": 4 }        → that chapter
 //   { "missing": true }     → the next chapter with no pending/approved art
@@ -41,6 +47,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getSceneResearch } from "../_shared/sceneResearch.ts";
 import { gitaResearchOptions } from "./researchMode.ts";
+import { CHAPTERS, briefSystemPrompt, briefUserMessage, MAX_USED_ELSEWHERE } from "./chapterScenes.ts";
 import { assemblePrompt, extractEntities, gitaChapterKey, normalizeForMatch, sanitizeForImageModel } from "../_shared/sceneResearchCore.ts";
 import { backgroundDeadline, checkInBackground, imagePayload, initialRecord, needsBackgroundCheck, runInBackground } from "../_shared/visualCheck.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
@@ -67,98 +74,6 @@ const CORS = {
 // Sanitising uses the shared sanitizeForImageModel: WHOLE words only (plus simple
 // plural/tense endings). Without word boundaries "war" was rewritten INSIDE other
 // words ("warrior" -> "blessingrior", "battlefield" -> "blessingfield").
-const CHAPTERS = [
-  {
-    n: 1,
-    sa: "अर्जुनविषादयोग",
-    en: "Observing the Armies on the Battlefield of Kurukshetra"
-  },
-  {
-    n: 2,
-    sa: "सांख्ययोग",
-    en: "Contents of the Gita Summarized"
-  },
-  {
-    n: 3,
-    sa: "कर्मयोग",
-    en: "Karma-yoga"
-  },
-  {
-    n: 4,
-    sa: "ज्ञानकर्मसंन्यासयोग",
-    en: "Transcendental Knowledge"
-  },
-  {
-    n: 5,
-    sa: "कर्मसंन्यासयोग",
-    en: "Karma-yoga — Action in Krishna Consciousness"
-  },
-  {
-    n: 6,
-    sa: "ध्यानयोग",
-    en: "Dhyana-yoga"
-  },
-  {
-    n: 7,
-    sa: "ज्ञानविज्ञानयोग",
-    en: "Knowledge of the Absolute"
-  },
-  {
-    n: 8,
-    sa: "अक्षरब्रह्मयोग",
-    en: "Attaining the Supreme"
-  },
-  {
-    n: 9,
-    sa: "राजविद्याराजगुह्ययोग",
-    en: "The Most Confidential Knowledge"
-  },
-  {
-    n: 10,
-    sa: "विभूतियोग",
-    en: "The Opulence of the Absolute"
-  },
-  {
-    n: 11,
-    sa: "विश्वरूपदर्शनयोग",
-    en: "The Universal Form"
-  },
-  {
-    n: 12,
-    sa: "भक्तियोग",
-    en: "Devotional Service"
-  },
-  {
-    n: 13,
-    sa: "क्षेत्रक्षेत्रज्ञविभागयोग",
-    en: "Nature, the Enjoyer, and Consciousness"
-  },
-  {
-    n: 14,
-    sa: "गुणत्रयविभागयोग",
-    en: "The Three Modes of Material Nature"
-  },
-  {
-    n: 15,
-    sa: "पुरुषोत्तमयोग",
-    en: "The Yoga of the Supreme Person"
-  },
-  {
-    n: 16,
-    sa: "दैवासुरसम्पद्विभागयोग",
-    en: "The Divine and Demoniac Natures"
-  },
-  {
-    n: 17,
-    sa: "श्रद्धात्रयविभागयोग",
-    en: "The Divisions of Faith"
-  },
-  {
-    n: 18,
-    sa: "मोक्षसंन्यासयोग",
-    en: "Conclusion — The Perfection of Renunciation"
-  }
-];
 const DEFAULTS = {
   model: "black-forest-labs/FLUX.2-pro",
   width: 1088,
@@ -173,9 +88,9 @@ const DEFAULTS = {
   fallback_height: 1024
 };
 // Scenes the editor turned down with "Reject scene" for this chapter
-// (approve-gita-art). The Gita has no extracted scene list to rotate through, so
-// the brief is told what was rejected and asked for a different moment; without
-// this the same central moment came straight back.
+// (approve-gita-art). The chapter's subject stays; the brief is told which
+// compositions of it were rejected and asked for a different one. Without this
+// the same picture came straight back.
 async function rejectedScenes(chapterNumber) {
   try {
     const { data, error } = await supabase.from("gita_chapter_art_review").select("scene_title, prompt").eq("chapter_number", chapterNumber).eq("status", "rejected").eq("scene_rejected", true).order("created_at", {
@@ -196,29 +111,33 @@ function sceneGist(prompt) {
   const scene = prompt.split(/Canonical details:|museum-quality|STRICTLY ANCIENT/i)[0];
   return scene.split(/(?<=[.!?])\s+/).filter((sentence)=>!ICONOGRAPHY.test(sentence)).join(" ").replace(/\s+/g, " ").trim().slice(0, 300);
 }
-function avoidNote(avoid) {
-  if (!avoid.length) return "";
-  return "\n\nThe editor rejected these moments for this chapter. Keep the canonical iconography, but depict a clearly DIFFERENT moment (a different action, setting or composition), not a variation of any of them:\n" + avoid.map((a)=>`- ${a}`).join("\n");
+// The moments the OTHER chapters' covers already show (pending or approved), so
+// the brief can be told not to repeat one. Each chapter now carries its own
+// subject, but this keeps two neighbouring chapters from arriving at the same
+// composition. On any error: no list, and the brief is built without it.
+async function momentsUsedElsewhere(chapterNumber) {
+  try {
+    const { data, error } = await supabase.from("gita_chapter_art_review").select("chapter_number, scene_title, status").in("status", [
+      "pending",
+      "approved"
+    ]).neq("chapter_number", chapterNumber).order("created_at", {
+      ascending: false
+    }).limit(60);
+    if (error) return [];
+    const byChapter = new Map();
+    for (const r of data || []){
+      const title = typeof r.scene_title === "string" && r.scene_title.trim() ? r.scene_title.trim() : "";
+      if (title && !byChapter.has(r.chapter_number)) byChapter.set(r.chapter_number, `Chapter ${r.chapter_number}: ${title}`);
+    }
+    return [
+      ...byChapter.values()
+    ].slice(0, MAX_USED_ELSEWHERE);
+  } catch  {
+    return [];
+  }
 }
-async function writeSceneAndCaption(ch, avoid = []) {
-  const sys = [
-    "You write artwork briefs for chapters of the Bhagavad-gita As It Is.",
-    "Return ONLY valid JSON, no markdown fence:",
-    '{"moment":"...","imagePrompt":"...","caption":"...","hashtags":"..."}',
-    "moment: the moment the painting shows, in under 12 words (e.g. 'Krishna reveals his universal form to Arjuna').",
-    "imagePrompt: ONE English prompt for a devotional oil painting of this chapter's central moment.",
-    "  Label every figure MALE or FEMALE. Krishna is a youthful MALE charioteer with blue skin and peacock feather;",
-    "  Arjuna is a muscular MALE warrior. Say who is present, what they do, and the setting. Under 90 words.",
-    "CANONICAL ICONOGRAPHY — state these explicitly whenever the element appears, and never contradict them:",
-    "  - Arjuna's chariot is drawn by EXACTLY FOUR WHITE HORSES (say 'exactly four white horses'). Never two, never three.",
-    "  - Krishna stands at the FRONT of the chariot holding the reins as charioteer; Arjuna stands behind him with the Gandiva bow.",
-    "  - The chariot flies a banner bearing HANUMAN.",
-    "  - Krishna wears a peacock feather in his crown and yellow silk (pitambara); his skin is blue.",
-    "  - Kurukshetra is a flat open plain; the two armies are distant, never engaged in combat.",
-    "  PEACEFUL imagery only — dialogue, teaching, reverence. Never combat.",
-    "caption: 3-4 lines of plain English on what the chapter teaches. No hashtags inside it.",
-    "hashtags: one line of 8-10 relevant tags starting with #BhagavadGita."
-  ].join("\n");
+async function writeSceneAndCaption(ch, rejected = [], usedElsewhere = []) {
+  const sys = briefSystemPrompt();
   const r = await fetch(ANTHROPIC_API, {
     method: "POST",
     headers: {
@@ -233,7 +152,10 @@ async function writeSceneAndCaption(ch, avoid = []) {
       messages: [
         {
           role: "user",
-          content: `Chapter ${ch.n}: ${ch.sa} — ${ch.en}${avoidNote(avoid)}`
+          content: briefUserMessage(ch, {
+            rejected,
+            usedElsewhere
+          })
         }
       ]
     })
@@ -437,7 +359,7 @@ async function buildChapter(ch, researchOptions, requestStart) {
     ...DEFAULTS,
     ...cfgRow || {}
   };
-  const brief = await writeSceneAndCaption(ch, await rejectedScenes(ch.n));
+  const brief = await writeSceneAndCaption(ch, await rejectedScenes(ch.n), await momentsUsedElsewhere(ch.n));
   const research = await researchChapter(ch, brief, researchOptions);
   let scene = brief.imagePrompt;
   // Image models are poor at counting, and the renders kept coming back with two

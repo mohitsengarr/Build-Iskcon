@@ -31,6 +31,8 @@ import {
   VISUAL_CHECK_STATUSES,
   visualCheckRecord,
 } from "../supabase/functions/_shared/visualCheckCore.ts";
+import { describeFailure, describeThrown } from "../artifacts/temple-tracker/src/lib/requestError.ts";
+import { createQueue } from "../artifacts/temple-tracker/src/lib/renderQueue.ts";
 
 const MIGRATIONS_DIR = fileURLToPath(new URL("../supabase/migrations/", import.meta.url));
 const MIGRATION_FILE = "20260913230000_visual_check.sql";
@@ -1057,8 +1059,12 @@ describe("gallery review cards", { skip: GALLERY_SKIP }, () => {
 
   test("regenerating an image replaces the card's check with the one returned for the new image", () => {
     assert.equal((src.match(/visual_check: d\.visual_check \?\? null/g) ?? []).length, 3, "scene generate, Gita and Instagram regenerate");
-    assert.match(src, /onDone\(`\$\{d\.image_url\}\?t=\$\{Date\.now\(\)\}`, d\.visual_check \?\? null\)/);
-    assert.equal((src.match(/image_url: url, visual_check: check/g) ?? []).length, 2, "Bhagavatam and Chaitanya regenerate");
+    // The Gita card's onDone also takes the prompt it rendered with (the scene the
+    // reviewer keeps when they press Regenerate), so a third argument is allowed.
+    assert.match(src, /onDone\(`\$\{d\.image_url\}\?t=\$\{Date\.now\(\)\}`, d\.visual_check \?\? null(, promptText)?\)/);
+    // Two call sites per book since Edit prompt landed: Regenerate with the edited
+    // prompt, and Regenerate with the scene as stored.
+    assert.equal((src.match(/image_url: url, visual_check: check/g) ?? []).length, 4, "Bhagavatam and Chaitanya regenerate");
   });
 
   test("Story Scenes and every review section re-read their running checks, with the columns each table has", () => {
@@ -1374,7 +1380,7 @@ function loadCardSource(): Promise<CardSource> {
       [
         "export function render(react, env) {",
         "  const { useState, useCallback } = react;",
-        "  const { setPending, seenImages, fetch, alert, SUPABASE_URL, SUPABASE_ANON_KEY } = env;",
+        "  const { setPending, seenImages, fetch, alert, SUPABASE_URL, SUPABASE_ANON_KEY, describeFailure, describeThrown, renderQueue } = env;",
         hooks,
         `  return { ${[...stateNames, "regeneratePending"].join(", ")} };`,
         "}",
@@ -1445,6 +1451,14 @@ async function mountPendingCards(initialRows: Row[]): Promise<MountedCards> {
     alert: (message: unknown) => { alerts.push(String(message)); },
     SUPABASE_URL: "https://sb.test",
     SUPABASE_ANON_KEY: "anon-test",
+    // The handler's own helpers, the real ones: describeFailure/describeThrown
+    // build the failure message (requestError.ts) and renderQueue holds a burst
+    // of renders to two at a time (renderQueue.ts). The queue is a fresh one per
+    // mount rather than the module's singleton, so a test that leaves a request
+    // unanswered cannot hold a slot against the next test.
+    describeFailure,
+    describeThrown,
+    renderQueue: createQueue(2),
   };
   const evaluate = (expr: string, scope: Record<string, unknown>): AnyValue => {
     const names = Object.keys(scope);

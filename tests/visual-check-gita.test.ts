@@ -533,9 +533,9 @@ describe("generate-gita-chapter-art visual check", () => {
   });
 
   // ── The rejected moments reach the brief (bd355c17) ────────────────────────
-  // The Gita has no extracted scene list to rotate through, so "Reject scene"
-  // marks the row (status rejected, scene_rejected) and the next brief is told
-  // which moments to avoid; without it the same central moment came straight back.
+  // "Reject scene" marks the row (status rejected, scene_rejected) and the next
+  // brief is told which compositions to avoid; without it the same picture came
+  // straight back. The chapter's own subject (chapterScenes.ts) stays either way.
 
   describe("rejected moments", () => {
     const AVOID_HEADER = "The editor rejected these moments for this chapter.";
@@ -566,7 +566,8 @@ describe("generate-gita-chapter-art visual check", () => {
       const text = briefText(together);
       assert.ok(text.includes(AVOID_HEADER), text);
       assert.ok(text.includes("- Krishna reveals his universal form"), text);
-      assert.match(text, /depict a clearly DIFFERENT moment/);
+      assert.match(text, /depict a clearly DIFFERENT composition/);
+      assert.match(text, /SUBJECT TO PAINT: the chariot drawn up in the open space between the two distant armies/, "chapter 1 keeps its own subject");
       assert.deepEqual(json.generated.map((r: Json) => r.chapter), [1], "a replacement is still generated");
     });
 
