@@ -5,6 +5,10 @@ import { SEOHead } from "@/components/SEOHead";
 import { fadeInUp, fadeIn } from "@/lib/animations";
 import { describeFailure, describeThrown } from "@/lib/requestError";
 import { BOOKMARK_UPSERT_PREFER, anchorFor, bookmarkUpsertPath, findAnchoredParagraph, findTopmostVisible } from "@/lib/bookmarks";
+import { numberedVerseHeadLength, openVerseTailLength } from "@/lib/bhagwatham-utils";
+import { renderInlineBoldBlock } from "@/lib/inlineBold";
+import { normalizeBoldKey, normalizeDashKey } from "@/lib/readerText";
+import { VoiceEditToolbar } from "@/components/reader/VoiceEditToolbar";
 import {
   BookOpen, ChevronLeft, ChevronRight, Loader2,
   Search, BookMarked, List, X, ChevronDown,
@@ -191,6 +195,24 @@ const GITA_CHAPTERS: Record<number, { hi: string; en: string }> = {
 };
 
 const API_BASE = "/api/gita";
+const TBL_PAGE_EDITS = "gita_page_edits";
+
+// Verse and word-meaning lines are bold by design, so the toolbar's "Remove bold"
+// (which only strips ** markers) cannot lighten them. These overrides let a
+// maintainer mark specific lines to render at normal weight; device-local and
+// reversible, keyed by the normalized line so they survive re-pagination.
+function loadUnboldLines(): Set<string> {
+  try {
+    const raw = localStorage.getItem("gita_unbold_lines");
+    const arr = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch { return new Set(); }
+}
+function saveUnboldLines(s: Set<string>) {
+  try {
+    localStorage.setItem("gita_unbold_lines", JSON.stringify([...s]));
+  } catch { /* quota exceeded / private mode — override just won't persist */ }
+}
 
 // ── Supabase direct access (for bookmarks) ──────────────────────────────────
 
@@ -336,17 +358,101 @@ function buildChapterIndex(allPages: PageContent[]): ChapterEntry[] {
   return chapters.sort((a, b) => a.number - b.number);
 }
 
-// ── Determine what section kind a page ends with (for cross-page continuity) ──
+// ── Half-shloka: the opening half of a verse whose closer is on the next page ──
+// It ends in a single danda with no ॥, and must read as Sanskrit rather than
+// Hindi prose, or a sentence of the purport would be styled as a verse.
+function isHalfShlokaLine(line: string): boolean {
+  if (!/।\s*$/.test(line)) return false;
+  if (/॥/.test(line)) return false;
+  const body = line.replace(/।\s*$/, "").trim();
+  if (body.length < 5 || body.length > 120) return false;
+  const dev = (body.match(/[\u0900-\u097F]/gu) || []).length;
+  const total = body.replace(/\s/g, "").length;
+  if (total === 0 || dev / total < 0.7) return false;
+  if (/^(तात्पर्य|शब्दार्थ|अनुवाद|अध्याय|Chapter)/iu.test(body)) return false;
+  if ((body.includes("—") || body.includes("--")) && body.includes(";")) return false;
+  // The chapter-end colophon ends in a single danda like a half-shloka and its
+  // "अध्याय" carries a Sanskrit-looking ending, so it needs its own guard.
+  if (/(?:^|\s)(?:इस प्रकार|नामक)(?:\s|$)/u.test(body) && /(?:अध्याय|पूर्ण हुए|समाप्त)/u.test(body)) return false;
+  const visarga = (body.match(/ः/gu) || []).length;
+  const sanskritEndings = (body.match(/(?:स्य|ेन|ाय|ात्|ेषु|ानाम्|ेभ्यः|ाभिः|म्\s|म्$)/gu) || []).length;
+  const sanskritParticles = (body.match(/(?:^|\s)(?:च|एव|हि|तु|अपि|वै|यः|सः|यदा|तदा|तथा|इति|एषः)(?:\s|$)/gu) || []).length;
+  const hindiPP = (body.match(/(?:^|\s)(?:का|की|के|को|में|पर|से|ने|तक|और|कि|जब|तब|नहीं|प्रति|बिना|साथ|लिए|बारे|जैसे|क्योंकि|इसलिए|द्वारा|वाला|वाले|वाली|अपने|अपनी|उन्हें|इन्हें|नामक)(?:\s|$)/gu) || []).length;
+  const hindiVerb = /(?:है[ँं]?|हैं|था|थे|थी|गया|गयी|गई|गये|किया|करें|रहा|रहे|रही|सकता|सकते|सकती|सके|चाहिए|होता|होती|होते|हुआ|हुई|हुए|चले|दिया|लिया|कहा|पूर्ण हुए|समाप्त)(?:\s|।|$)/u.test(body);
+  if (hindiPP >= 2) return false;
+  if (hindiVerb && (visarga + sanskritEndings) < 2) return false;
+  return (visarga + sanskritEndings + sanskritParticles) >= 1;
+}
 
-function getPageEndKind(text: string): string {
+// The lines of a page exactly as RenderContent reads them: cleaned, page numbers
+// dropped, "" for blank lines. Cached by text: the page loop asks for the same
+// pages on every render.
+const pageLinesCache = new Map<string, string[]>();
+function pageLines(text: string): string[] {
+  const hit = pageLinesCache.get(text);
+  if (hit) return hit;
+  const result = cleanOcrText(text).split("\n")
+    .map((l) => (l.trim() ? stripLeadingPageNumber(l) : ""))
+    .filter((l) => l === "" || !isStandalonePageNumber(l));
+  if (pageLinesCache.size > 500) pageLinesCache.clear();
+  pageLinesCache.set(text, result);
+  return result;
+}
+
+// ── Peek next page: does it begin with the closing half of a numbered shlok? ──
+function pageStartsWithNumberedShlokContinuation(text: string): boolean {
+  if (!text) return false;
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean).filter(l => !isStandalonePageNumber(l));
+  let scanned = 0;
+  for (const line of lines) {
+    if (scanned > 3) return false;
+    if (/^(तात्पर्य|शब्दार्थ|अनुवाद)/u.test(line)) return false;
+    if (/^(अध्याय|Chapter)/iu.test(line)) return false;
+    if (isChapterHeading(line)) return false;
+    if (/(?:है[ँं]?|हैं|था|थी|गया|गयी|किया|रहा|होता|करता)(?:\s|।|$)/u.test(line)) return false;
+    if (/॥\s*[\d१२३४५६७८९०]+\s*॥/u.test(line)) return true;
+    if (/॥/u.test(line)) return false;
+    scanned++;
+  }
+  return false;
+}
+
+// ── Determine what section kind a page ends with (for cross-page continuity) ──
+// With `nextPageText`, a page that ends in the opening of a verse the next page
+// closes is reported as ending in that shlok, so the two halves render as one.
+function getPageEndKind(text: string, nextPageText?: string): string {
   if (!text) return "text";
   const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
   let lastKind = "text";
+  let insideTatparya = false;
   for (const line of lines) {
-    if (/^तात्पर्य/u.test(line)) lastKind = "tatparya";
-    else if (/^अनुवाद/u.test(line)) lastKind = "anuvad";
-    else if (/^शब्दार्थ/u.test(line)) lastKind = "shabdarth";
-    else if (/॥/u.test(line)) lastKind = "shlok";
+    if (/^तात्पर्य/u.test(line)) { lastKind = "tatparya"; insideTatparya = true; }
+    else if (/^अनुवाद/u.test(line)) { lastKind = "anuvad"; insideTatparya = false; }
+    else if (/^शब्दार्थ/u.test(line)) { lastKind = "shabdarth"; insideTatparya = false; }
+    else if (/॥/u.test(line)) {
+      if (insideTatparya) lastKind = "ref-shlok";
+      else { lastKind = "shlok"; insideTatparya = false; }
+    }
+    else if (isHalfShlokaLine(line)) {
+      lastKind = insideTatparya ? "ref-shlok" : "shlok";
+    }
+    else if (/^(अध्याय|Chapter)/iu.test(line)) { lastKind = "text"; insideTatparya = false; }
+    else if (lastKind === "shabdarth" && !(line.includes("—") || line.includes("--")) && !line.includes(";")) {
+      lastKind = "anuvad"; insideTatparya = false;
+    }
+    else if (lastKind === "ref-shlok" && insideTatparya) lastKind = "tatparya";
+    else if (lastKind === "shlok" && !/॥/u.test(line)) lastKind = "anuvad";
+  }
+  // A half-shloka classified as ref-shlok because of surrounding purport context
+  // is the first half of the numbered verse the next page closes.
+  if (lastKind === "ref-shlok" && nextPageText && pageStartsWithNumberedShlokContinuation(nextPageText)) {
+    const lastDevLine = [...lines].reverse().find(l => /[\u0900-\u097F]/.test(l)) || "";
+    if (/।\s*$/.test(lastDevLine) && !/॥/.test(lastDevLine)) lastKind = "shlok";
+  }
+  // A page ending with the opening lines of the verse the next page closes with
+  // ॥ N ॥ ends in that shlok, however the loop above classed those lines.
+  if (nextPageText && openVerseTailLength(pageLines(text), numberedVerseHeadLength(pageLines(nextPageText))) > 0) {
+    return "shlok";
   }
   return lastKind;
 }
@@ -419,8 +525,9 @@ function placeSceneArt<T extends { key: string }>(sectionTexts: string[], art: T
   return placed;
 }
 
-function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind, sceneArt }: {
-  text: string; textEn?: string; lang: "hi" | "en"; themeKey?: Theme; prevPageEndKind?: string; sceneArt?: SceneArt[];
+function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind, nextPageStartsNumberedShlok, nextPageVerseHeadLines, unboldLines, sceneArt }: {
+  text: string; textEn?: string; lang: "hi" | "en"; themeKey?: Theme; prevPageEndKind?: string;
+  nextPageStartsNumberedShlok?: boolean; nextPageVerseHeadLines?: number; unboldLines?: Set<string>; sceneArt?: SceneArt[];
 }) {
   const t = THEME_STYLES[themeKey];
 
@@ -438,15 +545,18 @@ function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind
     );
   }
 
-  // Hindi mode with BBT section detection
-  const lines = cleanOcrText(text).split("\n")
-    .filter((l) => l.trim() && !isStandalonePageNumber(l))
-    .map((l) => stripLeadingPageNumber(l));
+  // Hindi mode with BBT section detection.
+  // Blank lines are kept as "" markers: they are the ONLY record of where real
+  // paragraphs end. Dropping them merged a whole purport into one run of lines,
+  // and since each line was rendered as its own <p>, prose could not reflow —
+  // at larger font sizes every print line wrapped and left an orphan fragment.
+  const lines = pageLines(text);
 
-  type SectionKind = "chapter" | "shlok" | "shabdarth" | "anuvad" | "tatparya" | "text";
+  type SectionKind = "chapter" | "shlok" | "ref-shlok" | "shabdarth" | "anuvad" | "tatparya" | "text";
   type Section = { kind: SectionKind; lines: string[]; chapterNum?: number };
   const sections: Section[] = [];
-  const initialKind = (prevPageEndKind === "tatparya" || prevPageEndKind === "anuvad") ? prevPageEndKind as SectionKind : "text";
+  const continuableKinds = ["tatparya", "anuvad", "ref-shlok", "shlok", "shabdarth"];
+  const initialKind = (prevPageEndKind && continuableKinds.includes(prevPageEndKind)) ? prevPageEndKind as SectionKind : "text";
   let current: Section = { kind: initialKind, lines: [] };
   const flush = () => { if (current.lines.length > 0) sections.push(current); };
 
@@ -486,7 +596,13 @@ function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind
 
   for (let i = 0; i < lines.length; i++) {
     const lt = lines[i].trim();
-    if (!lt) continue;
+    // A blank line closes the current paragraph: flush it as its own section of
+    // the SAME kind, so a multi-paragraph purport stays multi-paragraph while each
+    // paragraph can be rendered as one reflowing block.
+    if (!lt) {
+      if (current.lines.length > 0) { const k = current.kind; flush(); current = { kind: k, lines: [] }; }
+      continue;
+    }
 
     if (isChapterHeading(lt)) {
       flush();
@@ -521,29 +637,57 @@ function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind
       continue;
     }
 
+    // A verse quoted inside a purport is a ref-shlok — unless it carries its own
+    // number (॥ ३१ ॥), which only a main verse of the chapter has.
     if (/॥/u.test(lt) && lt.length < 200) {
-      if (current.kind !== "shlok") { flush(); current = { kind: "shlok", lines: [] }; }
+      const hasVerseNumber = /॥\s*[\d१२३४५६७८९०]+\s*॥/u.test(lt);
+      const shlokKind: SectionKind = (!hasVerseNumber && (current.kind === "tatparya" || current.kind === "ref-shlok")) ? "ref-shlok" : "shlok";
+      if (current.kind !== "shlok" && current.kind !== "ref-shlok") {
+        flush();
+        current = { kind: shlokKind, lines: [] };
+      } else if (hasVerseNumber && current.kind === "ref-shlok") {
+        current.kind = "shlok";
+        if (sections.length > 0 && sections[sections.length - 1].kind === "ref-shlok") {
+          sections[sections.length - 1].kind = "shlok";
+        }
+      }
       current.lines.push(lt);
       continue;
     }
 
-    if (current.kind === "shlok" && isVerseLike(lt)) {
+    if ((current.kind === "shlok" || current.kind === "ref-shlok") && isVerseLike(lt)) {
       current.lines.push(lt);
       continue;
     }
 
-    if (current.kind !== "shlok" && isVerseLike(lt) && hasDoubleViramAhead(i + 1)) {
+    if (current.kind !== "shlok" && current.kind !== "ref-shlok" && isVerseLike(lt) && hasDoubleViramAhead(i + 1)) {
       flush();
-      current = { kind: "shlok", lines: [lt] };
+      current = { kind: current.kind === "tatparya" ? "ref-shlok" : "shlok", lines: [lt] };
       continue;
     }
 
-    if (current.kind === "shabdarth" && (lt.includes("—") || lt.includes("--")) && lt.includes(";")) {
-      current.lines.push(lt);
+    // Half-shloka at the page end — its closing half is on the next page. Open a
+    // shlok so prevPageEndKind carries the continuation forward.
+    if (current.kind !== "shlok" && current.kind !== "ref-shlok" && isHalfShlokaLine(lt)) {
+      flush();
+      current = { kind: current.kind === "tatparya" ? "ref-shlok" : "shlok", lines: [lt] };
       continue;
     }
 
-    if (current.kind === "shabdarth" && !(lt.includes("—") || lt.includes("--"))) {
+    if (current.kind === "shabdarth") {
+      const hasDash = lt.includes("—") || lt.includes("--") || /\S-\s/.test(lt);
+      const hasSemicolon = lt.includes(";");
+      if (hasDash || hasSemicolon) {
+        current.lines.push(lt);
+        // A gloss run that ends in a danda is finished; the translation follows.
+        if (/।\s*\.?\s*$/.test(lt)) { flush(); current = { kind: "anuvad", lines: [] }; }
+        continue;
+      }
+      // An "अनुवाद" label with more gloss under it is the edition's own noise.
+      if (/^अनुवाद/u.test(lt)) {
+        const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : "";
+        if (nextLine.includes("—") || nextLine.includes("--") || /\S-\s/.test(nextLine) || nextLine.includes(";")) continue;
+      }
       flush();
       current = { kind: "anuvad", lines: [lt] };
       continue;
@@ -551,10 +695,65 @@ function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind
 
     if (current.kind === "anuvad") { current.lines.push(lt); continue; }
     if (current.kind === "shlok") { flush(); current = { kind: "anuvad", lines: [lt] }; continue; }
+    // Prose after a quoted verse returns to the purport it was quoted in.
+    if (current.kind === "ref-shlok") { flush(); current = { kind: "tatparya", lines: [lt] }; continue; }
 
     current.lines.push(lt);
   }
   flush();
+
+  // ── Post-process: merge "text" sections that precede "shlok" into the shlok ──
+  // Fixes shloks split across pages or whose first lines lack ॥ markers.
+  for (let si = 0; si < sections.length - 1; si++) {
+    if (sections[si].kind === "text" && sections[si + 1].kind === "shlok") {
+      const textLines = sections[si].lines;
+      const hindiVerbRE = /(?:है|हैं|था|थी|थे|होता|करता|गया|किया|दिया|लिया|रहा)(?:\s|[।,]|$)/u;
+      if (textLines.every(l => !hindiVerbRE.test(l)) && textLines.every(l => l.length < 100)) {
+        sections[si + 1].lines = [...textLines, ...sections[si + 1].lines];
+        sections.splice(si, 1);
+        si--;
+      }
+    }
+  }
+
+  // ── Cross-page reconciliation: trailing ref-shlok → shlok ───────────
+  // The next page opens with the numbered closer (॥ ११ ॥), so a trailing
+  // half-shloka here is that verse's first half, not a quoted one.
+  if (nextPageStartsNumberedShlok && sections.length > 0) {
+    const last = sections[sections.length - 1];
+    if (last.kind === "ref-shlok") {
+      const lastLine = last.lines[last.lines.length - 1] || "";
+      if (/।\s*$/.test(lastLine) && !/॥/.test(lastLine)) last.kind = "shlok";
+    }
+  }
+
+  // ── Cross-page reconciliation: a verse opened at the page end ───────
+  // The next page's first lines close a numbered verse and this page ends with
+  // that verse's opening lines. They rarely all end in a danda, so line by line
+  // they became purport text, a quoted verse and a fresh "तात्पर्य :" paragraph.
+  // Take the whole opening as one shlok; the next page then continues it.
+  {
+    const tail = openVerseTailLength(lines, nextPageVerseHeadLines ?? 0);
+    if (tail > 0) {
+      const tailLines = lines.filter((l) => l.trim()).slice(-tail).map((l) => l.trim());
+      const trailing: string[] = [];
+      for (let si = sections.length - 1; si >= 0 && trailing.length < tail; si--) {
+        trailing.unshift(...sections[si].lines);
+      }
+      const matches = trailing.length >= tail && trailing.slice(-tail).every((l, k) => l === tailLines[k]);
+      if (matches) {
+        let remaining = tail;
+        while (remaining > 0 && sections.length > 0) {
+          const last = sections[sections.length - 1];
+          const take = Math.min(remaining, last.lines.length);
+          last.lines.splice(last.lines.length - take, take);
+          remaining -= take;
+          if (last.lines.length === 0) sections.pop();
+        }
+        sections.push({ kind: "shlok", lines: tailLines });
+      }
+    }
+  }
 
   // Where each approved scene illustration goes on this page.
   // Art that matches nothing goes above the first section of this page's own text,
@@ -570,7 +769,7 @@ function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind
         switch (sec.kind) {
           case "chapter":
             return (
-              <div key={i} id={`chapter-${sec.chapterNum}`} className="mt-6 mb-4 scroll-mt-20">
+              <div key={i} id={`chapter-${sec.chapterNum}`} data-section-type="chapter" className="mt-6 mb-4 scroll-mt-20">
                 <h3 className={`text-xl sm:text-2xl font-bold ${t.text} mb-1 pb-2 border-b-2 border-orange-300/50`} style={{ fontFamily: "var(--font-devanagari)" }}>
                   {sec.lines.join(" ")}
                 </h3>
@@ -580,27 +779,54 @@ function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind
               </div>
             );
 
-          case "shlok":
+          case "shlok": {
+            // A verse whose opening half is on the previous page flows straight on:
+            // no divider, no top margin, so the two halves read as one verse.
+            const isShlokContinuation = i === 0 && prevPageEndKind === "shlok";
+            const renderedShlok = renderInlineBoldBlock(sec.lines);
             return (
-              <div key={i} className="my-5">
+              <div key={i} data-section-type="shlok" className={isShlokContinuation ? "" : "my-5"}>
+                {!isShlokContinuation && i > 0 && sections[i - 1].kind !== "chapter" && (
+                  <div className={`mb-4 h-px ${themeKey === "dark" ? "bg-white/5" : themeKey === "sepia" ? "bg-amber-300/30" : "bg-orange-200/40"}`} />
+                )}
+                {sec.lines.map((l, j) => {
+                  // Verses are bold by design; "Remove bold" on the selection
+                  // lightens one through the un-bold override.
+                  const unbolded = unboldLines?.has(normalizeBoldKey(l));
+                  return (
+                    <p key={j} className={`${unbolded ? "" : "font-bold "}leading-[1.9] mb-0.5 ${themeKey === "dark" ? "text-amber-300" : themeKey === "sepia" ? "text-[#5a3010]" : "text-[#6b3a1a]"}`} style={{ fontSize: "1.15em", fontFamily: "var(--font-sanskrit)" }}>{renderedShlok[j]}</p>
+                  );
+                })}
+              </div>
+            );
+          }
+
+          case "ref-shlok": {
+            // A verse quoted inside a purport: smaller, indented, brown-tinted.
+            const isRefShlokContinuation = i === 0 && prevPageEndKind === "ref-shlok";
+            const renderedRefShlok = renderInlineBoldBlock(sec.lines);
+            return (
+              <div key={i} data-section-type="ref-shlok" className={isRefShlokContinuation ? "" : `pl-4 border-l-2 my-2 ${themeKey === "dark" ? "border-amber-800/40" : themeKey === "sepia" ? "border-[#c4ad80]" : "border-[#c4956a]/40"}`}>
                 {sec.lines.map((l, j) => (
-                  <p key={j} className={`text-[20px] sm:text-[22px] font-bold leading-[1.9] mb-0.5 ${themeKey === "dark" ? "text-amber-300" : themeKey === "sepia" ? "text-[#5a3010]" : "text-[#6b3a1a]"}`} style={{ fontFamily: "var(--font-sanskrit)" }}>{l}</p>
+                  <p key={j} className={`leading-[1.7] italic mb-0.5 ${isRefShlokContinuation ? "pl-4" : ""} ${themeKey === "dark" ? "text-amber-400/70" : themeKey === "sepia" ? "text-[#6b4020]" : "text-[#8b5a30]"}`} style={{ fontSize: "0.9em", fontFamily: "var(--font-sanskrit)" }}>{renderedRefShlok[j]}</p>
                 ))}
               </div>
             );
+          }
 
           case "shabdarth":
             return (
-              <div key={i} className="my-3">
-                <p className={`text-[13px] font-bold mb-2 text-center ${themeKey === "dark" ? "text-blue-400" : themeKey === "sepia" ? "text-[#1a3a6a]" : "text-[#1a4a8a]"}`} style={{ fontFamily: "var(--font-devanagari)" }}>शब्दार्थ</p>
+              <div key={i} data-section-type="shabdarth" className="my-3">
+                <p className={`font-bold mb-2 text-center ${themeKey === "dark" ? "text-blue-400" : themeKey === "sepia" ? "text-[#1a3a6a]" : "text-[#1a4a8a]"}`} style={{ fontSize: "0.85em", fontFamily: "var(--font-devanagari)" }}>शब्दार्थ</p>
                 {sec.lines.map((l, j) => {
                   const parts = l.split(/(—|--|-\s)/);
+                  const unbolded = unboldLines?.has(normalizeDashKey(l));
                   return (
-                    <p key={j} className={`text-[12px] sm:text-[13px] leading-[1.7] mb-0.5 ${themeKey === "dark" ? "text-blue-300/80" : themeKey === "sepia" ? "text-[#1a3a6a]" : "text-[#1a4a8a]"}`} style={{ fontFamily: "var(--font-devanagari)" }}>
+                    <p key={j} className={`leading-[1.7] mb-0.5 ${themeKey === "dark" ? "text-blue-300/80" : themeKey === "sepia" ? "text-[#1a3a6a]" : "text-[#1a4a8a]"}`} style={{ fontSize: "0.8em", fontFamily: "var(--font-devanagari)" }}>
                       {parts.map((part, k) => {
                         if (part === "—" || part === "--" || part === "- ") return <span key={k}>—</span>;
                         const isMeaning = k > 0 && (parts[k - 1] === "—" || parts[k - 1] === "--" || parts[k - 1] === "- ");
-                        return isMeaning
+                        return isMeaning && !unbolded
                           ? <strong key={k} className={themeKey === "dark" ? "text-blue-200 font-bold" : "text-[#0a2a5a] font-bold"}>{part}</strong>
                           : <span key={k}>{part}</span>;
                       })}
@@ -613,41 +839,47 @@ function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind
           case "anuvad": {
             const prevKind = i > 0 ? sections[i - 1].kind : null;
             const isContinuation = i === 0 && prevPageEndKind === "anuvad";
-            const showLabel = !isContinuation && (prevKind === "shlok" || prevKind === "shabdarth");
+            const showLabel = !isContinuation && (prevKind === "shlok" || prevKind === "ref-shlok" || prevKind === "shabdarth");
+            // One paragraph, not one <p> per OCR line — the source breaks at PRINT
+            // line ends, which are meaningless on screen and left ragged orphans
+            // once the text wrapped.
+            const renderedAnuvad = renderInlineBoldBlock([sec.lines.join(" ")])[0];
             return (
-              <div key={i} className={isContinuation ? "" : "mt-3"}>
-                {showLabel && <p className={`text-[14px] sm:text-[15px] font-bold mb-1 indent-8 ${themeKey === "dark" ? "text-stone-200" : "text-stone-800"}`} style={{ fontFamily: "var(--font-devanagari)" }}>अनुवाद :</p>}
-                {sec.lines.map((l, j) => (
-                  <p key={j} className={`text-[15px] sm:text-[16px] font-bold leading-[2] mb-1 ${j === 0 && !isContinuation ? "indent-8" : ""} ${themeKey === "dark" ? "text-stone-100" : "text-stone-900"}`} style={{ fontFamily: "var(--font-devanagari)" }}>
-                    {l}
-                  </p>
-                ))}
+              <div key={i} data-section-type="anuvad" className={isContinuation ? "" : "mt-3"}>
+                {showLabel && <p className={`font-bold mb-1 indent-8 ${themeKey === "dark" ? "text-stone-200" : "text-stone-800"}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>अनुवाद :</p>}
+                <p className={`font-bold leading-[2] mb-1 ${isContinuation ? "" : "indent-8"} ${themeKey === "dark" ? "text-stone-100" : "text-stone-900"}`} style={{ fontSize: "1em", fontFamily: "var(--font-devanagari)" }}>
+                  {renderedAnuvad}
+                </p>
               </div>
             );
           }
 
           case "tatparya": {
-            const isContinuation = i === 0 && prevPageEndKind === "tatparya";
+            // A purport carried over from the previous page, or one interrupted by
+            // a quoted verse, continues without the label or a fresh top margin.
+            const isContinuation = i === 0 && (prevPageEndKind === "tatparya" || prevPageEndKind === "ref-shlok");
+            const renderedTatparya = renderInlineBoldBlock([sec.lines.join(" ")])[0];
+            // Each paragraph is its own tatparya section, so the label belongs at
+            // the top of the purport — not above every paragraph.
+            const showTatparyaLabel = !isContinuation && (i === 0 || sections[i - 1].kind !== "tatparya");
             return (
-              <div key={i} className={isContinuation ? "" : "mt-3"}>
-                {sec.lines.map((l, j) => (
-                  <p key={j} className={`text-[14px] sm:text-[15px] leading-[2] mb-1 ${t.text}`} style={{ fontFamily: "var(--font-devanagari)" }}>
-                    {j === 0 && !isContinuation && <><span className="font-bold">तात्पर्य :</span>{" "}</>}
-                    {l}
-                  </p>
-                ))}
+              <div key={i} data-section-type="tatparya" className={isContinuation ? "" : "mt-4"}>
+                <p className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>
+                  {showTatparyaLabel && <><span className="font-bold">तात्पर्य :</span>{" "}</>}
+                  {renderedTatparya}
+                </p>
               </div>
             );
           }
 
-          default:
+          default: {
+            const renderedText = renderInlineBoldBlock([sec.lines.join(" ")])[0];
             return (
-              <div key={i}>
-                {sec.lines.map((l, j) => (
-                  <p key={j} className={`leading-[1.8] ${t.text} mb-1`}>{l}</p>
-                ))}
+              <div key={i} data-section-type="text">
+                <p className={`leading-[1.8] ${t.text} mb-1`} style={{ fontSize: "1em" }}>{renderedText}</p>
               </div>
             );
+          }
         }
         })();
         // Approved illustrations render directly above the passage they depict.
@@ -836,6 +1068,21 @@ function GitaSidebar({
 export default function GitaReader() {
   const [progress, setProgress] = useState<Progress | null>(null);
   const [allPages, setAllPages] = useState<PageContent[]>([]);
+  const [unboldLines, setUnboldLines] = useState<Set<string>>(loadUnboldLines);
+  const handleUnboldChange = useCallback((next: Set<string>) => {
+    setUnboldLines(next);
+    saveUnboldLines(next);
+  }, []);
+  // Corrections made in the reader, by page. Batches keep loading in the
+  // background, so every merge re-applies them or an edit would vanish from the
+  // screen until the next reload.
+  const editsByPageRef = useRef<Map<number, { text?: string; textEn?: string }>>(new Map());
+  const applyEdits = useCallback((pages: PageContent[]): PageContent[] => (
+    editsByPageRef.current.size === 0 ? pages : pages.map(p => {
+      const e = editsByPageRef.current.get(p.pageNumber);
+      return e ? { ...p, text: e.text ?? p.text, textEn: e.textEn ?? p.textEn } : p;
+    })
+  ), []);
   const [loading, setLoading] = useState(true);
   const [totalBatchCount, setTotalBatchCount] = useState(0);
   const [loadedBatches, setLoadedBatches] = useState<Set<number>>(new Set());
@@ -864,131 +1111,7 @@ export default function GitaReader() {
   // Same as the Bhagavatam and Chaitanya readers: the passage is saved to
   // reader_scenes, the gallery's Story Scenes section generates its artwork, and
   // once approved the illustration shows here above that passage.
-  const [scenePick, setScenePick] = useState<{ text: string; page: number; top: number; left: number } | null>(null);
-  const [sceneSaving, setSceneSaving] = useState(false);
-  const [sceneSaved, setSceneSaved] = useState(false);
   const [sceneArtByPage, setSceneArtByPage] = useState<Map<number, SceneArt[]>>(new Map());
-  // Scenes are matched against the Hindi text, so capture is offered in Hindi only.
-  const langRef = useRef(lang);
-  langRef.current = lang;
-  // Set while the button is being pressed: tapping it collapses the selection on
-  // phones, and that must not tear the button down before its click lands.
-  const pickPressRef = useRef(false);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await sbFetch("reader_scenes?select=id,page_number,selected_text,image_url&book=eq.gita&approved=is.true&image_generated=is.true");
-        if (!res.ok) return;
-        const rows = await res.json() as Array<{ id: number; page_number: number | null; selected_text: string; image_url: string | null }>;
-        const byPage = new Map<number, SceneArt[]>();
-        for (const r of rows) {
-          if (!r.page_number || !r.image_url || !r.image_url.startsWith(SCENE_ART_PREFIX)) continue;
-          byPage.set(r.page_number, [...(byPage.get(r.page_number) ?? []), { id: r.id, key: sceneKeyOf(r.selected_text), image_url: r.image_url }]);
-        }
-        setSceneArtByPage(byPage);
-      } catch { /* illustrations are optional; the book reads fine without them */ }
-    })();
-  }, []);
-
-  useEffect(() => {
-    // Phones draw their own selection menu just above the highlight, so there the
-    // button goes below it; elsewhere above, unless there is no room.
-    const pickTop = (rect: DOMRect) => {
-      const coarse = typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches;
-      if (coarse) return rect.bottom + 52 <= window.innerHeight ? rect.bottom + 12 : Math.max(8, rect.top - 44);
-      return rect.top > 56 ? rect.top - 44 : rect.bottom + 8;
-    };
-    const read = () => {
-      if (pickPressRef.current) return;
-      if (langRef.current !== "hi") { setScenePick(null); return; }
-      const sel = window.getSelection();
-      const root = contentRef.current;
-      const text = sel && !sel.isCollapsed ? sel.toString().trim() : "";
-      if (!sel || !root || sel.rangeCount === 0 || text.length < 12) { setScenePick(null); return; }
-      const range = sel.getRangeAt(0);
-      const node = range.startContainer;
-      const start = node instanceof Element ? node : node.parentElement;
-      if (!start || !root.contains(start)) { setScenePick(null); return; }
-      // A highlight can start just outside a page block (a heading, the gap between
-      // pages); fall back to where it ends. No page means no art could ever show.
-      const endNode = range.endContainer;
-      const end = endNode instanceof Element ? endNode : endNode.parentElement;
-      const pageEl = start.closest("[data-page-num]") ?? end?.closest("[data-page-num]") ?? null;
-      const page = Number(pageEl?.getAttribute("data-page-num") || 0);
-      if (!page) { setScenePick(null); return; }
-      const rect = range.getBoundingClientRect();
-      setScenePick({
-        text,
-        page,
-        top: pickTop(rect),
-        left: Math.min(window.innerWidth - 168, Math.max(8, rect.left + rect.width / 2 - 80)),
-      });
-    };
-    // Ignore the tap on the button itself, or the button would be torn down before
-    // its click lands. The selection settles after mouseup/touchend on some browsers.
-    const onUp = (e: Event) => {
-      if ((e.target as Element | null)?.closest?.("[data-scene-pick]")) return;
-      window.setTimeout(read, 0);
-    };
-    // Phones adjust a selection with handles and fire no mouseup/touchend for it,
-    // so also follow selectionchange, debounced.
-    let selTimer = 0;
-    const onSelectionChange = () => {
-      window.clearTimeout(selTimer);
-      selTimer = window.setTimeout(read, 250);
-    };
-    // Scrolling moves the highlight: hide the button while it moves, and put it back
-    // where the highlight settles (read() leaves it hidden if the selection is gone).
-    let scrollTimer = 0;
-    const onScroll = () => {
-      if (!pickPressRef.current) setScenePick(prev => (prev ? null : prev));
-      window.clearTimeout(scrollTimer);
-      scrollTimer = window.setTimeout(read, 150);
-    };
-    document.addEventListener("mouseup", onUp);
-    document.addEventListener("touchend", onUp);
-    document.addEventListener("selectionchange", onSelectionChange);
-    window.addEventListener("scroll", onScroll, true);
-    return () => {
-      window.clearTimeout(selTimer);
-      window.clearTimeout(scrollTimer);
-      document.removeEventListener("mouseup", onUp);
-      document.removeEventListener("touchend", onUp);
-      document.removeEventListener("selectionchange", onSelectionChange);
-      window.removeEventListener("scroll", onScroll, true);
-    };
-  }, []);
-
-  const saveScene = useCallback(async () => {
-    if (!scenePick || sceneSaving) return;
-    setSceneSaving(true);
-    try {
-      const res = await sbFetch("reader_scenes", {
-        method: "POST",
-        body: JSON.stringify({
-          book: "gita",
-          page_number: scenePick.page,
-          selected_text: scenePick.text,
-          reader_id: readerId,
-        }),
-      });
-      if (!res.ok) {
-        alert(`Couldn't save the scene.\n${describeFailure(res.status, await res.text().catch(() => ""))}`);
-        return;
-      }
-      setSceneSaved(true);
-      window.setTimeout(() => {
-        setSceneSaved(false);
-        setScenePick(null);
-        window.getSelection()?.removeAllRanges();
-      }, 1000);
-    } catch (err) {
-      alert(`Couldn't save the scene.\n${String(err)}`);
-    } finally {
-      setSceneSaving(false);
-    }
-  }, [scenePick, sceneSaving, readerId]);
 
   // ── Data fetching ──────────────────────────────────────────────────────────
 
@@ -1019,10 +1142,10 @@ export default function GitaReader() {
 
     const sortedBatches = [...batchCacheRef.current.entries()].sort((a, b) => a[0] - b[0]);
     const merged = sortedBatches.flatMap(([, pages]) => pages);
-    setAllPages(merged);
+    setAllPages(applyEdits(merged));
     setLoadedBatches(new Set(batchCacheRef.current.keys()));
     setLoadingMore(false);
-  }, []);
+  }, [applyEdits]);
 
   const fetchAllContent = useCallback(async () => {
     setLoading(true);
@@ -1052,10 +1175,10 @@ export default function GitaReader() {
       if (res.ok) {
         const data: ContentResponse = await res.json();
         const pages = data.batches.flatMap((b) => b.pages).filter((p) => !isGarbagePage(p.text));
-        if (pages.length > 0) setAllPages(pages);
+        if (pages.length > 0) setAllPages(applyEdits(pages));
       }
     } catch { /* empty */ } finally { setLoading(false); }
-  }, [fetchBatchRange]);
+  }, [fetchBatchRange, applyEdits]);
 
   const fetchProgress = useCallback(async () => {
     try { const res = await fetch(`${API_BASE}/progress`); if (res.ok) setProgress(await res.json()); } catch { /* retry */ }
@@ -1160,12 +1283,26 @@ export default function GitaReader() {
 
   // ── Init ─────────────────────────────────────────────────────────────────
 
+  // Corrections readers have already made, fetched before the content so the
+  // first paint is the corrected text.
+  const fetchPageEdits = useCallback(async () => {
+    try {
+      const res = await sbFetch(`${TBL_PAGE_EDITS}?select=page_number,text,text_en`);
+      if (!res.ok) return;
+      const rows: Array<{ page_number: number; text?: string; text_en?: string }> = await res.json();
+      for (const r of rows) {
+        editsByPageRef.current.set(r.page_number, { text: r.text || undefined, textEn: r.text_en || undefined });
+      }
+      setAllPages(prev => applyEdits(prev));
+    } catch { /* edits unavailable — the original text stands */ }
+  }, [applyEdits]);
+
   useEffect(() => {
-    fetchProgress(); fetchAllContent();
+    void fetchPageEdits().then(() => { fetchProgress(); fetchAllContent(); });
     if (readerId) fetchBookmarks();
     const interval = setInterval(fetchProgress, 60_000);
     return () => clearInterval(interval);
-  }, [fetchProgress, fetchAllContent, fetchBookmarks, readerId]);
+  }, [fetchPageEdits, fetchProgress, fetchAllContent, fetchBookmarks, readerId]);
 
   const chapters = useMemo(() => buildChapterIndex(allPages), [allPages]);
 
@@ -1457,7 +1594,17 @@ export default function GitaReader() {
                 {/* Render pages */}
                 {displayPages.map((page, idx) => {
                   const prevPage = idx > 0 ? displayPages[idx - 1] : (startIdx > 0 ? allPages[startIdx - 1] : null);
-                  const prevEndKind = prevPage ? getPageEndKind(prevPage.text) : undefined;
+                  // Each page is read with the page after it in hand: a verse that
+                  // opens at the foot of this page is closed on the next one, and
+                  // both halves have to be classed as one verse to render as one.
+                  const prevEndKind = prevPage ? getPageEndKind(prevPage.text, page.text) : undefined;
+                  let nextPage: PageContent | null = idx < displayPages.length - 1 ? displayPages[idx + 1] : null;
+                  if (!nextPage && !searchQuery.trim()) {
+                    const allIdx = allPages.findIndex(p => p.pageNumber === page.pageNumber);
+                    if (allIdx >= 0 && allIdx < allPages.length - 1) nextPage = allPages[allIdx + 1];
+                  }
+                  const nextPageStartsNumberedShlok = nextPage ? pageStartsWithNumberedShlokContinuation(nextPage.text) : false;
+                  const nextPageVerseHeadLines = nextPage ? numberedVerseHeadLength(pageLines(nextPage.text)) : 0;
                   return (
                     <div key={page.pageNumber} data-page-num={page.pageNumber} className="mb-8">
                       <RenderContent
@@ -1466,6 +1613,9 @@ export default function GitaReader() {
                         lang={lang}
                         themeKey={settings.theme}
                         prevPageEndKind={prevEndKind}
+                        nextPageStartsNumberedShlok={nextPageStartsNumberedShlok}
+                        nextPageVerseHeadLines={nextPageVerseHeadLines}
+                        unboldLines={unboldLines}
                         sceneArt={sceneArtByPage.get(page.pageNumber)}
                       />
                     </div>
@@ -1512,24 +1662,18 @@ export default function GitaReader() {
           )}
         </main>
       </div>
-      {scenePick && (
-        <button
-          type="button"
-          data-scene-pick="1"
-          onPointerDown={() => {
-            pickPressRef.current = true;
-            window.setTimeout(() => { pickPressRef.current = false; }, 800);
-          }}
-          onMouseDown={e => e.preventDefault()}
-          onClick={() => void saveScene()}
-          disabled={sceneSaving}
-          style={{ position: "fixed", top: scenePick.top, left: scenePick.left, zIndex: 60 }}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-stone-900 text-white text-xs font-semibold shadow-lg hover:bg-stone-800 disabled:opacity-70"
-        >
-          {sceneSaved ? <Check className="w-3.5 h-3.5 text-green-400" /> : sceneSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImagePlus className="w-3.5 h-3.5" />}
-          {sceneSaved ? "Added to scenes" : "Add to scenes"}
-        </button>
-      )}
+      <VoiceEditToolbar
+        book={{ key: "gita", pageEditsTable: TBL_PAGE_EDITS }}
+        allPages={allPages}
+        setAllPages={setAllPages}
+        unboldLines={unboldLines}
+        onUnboldChange={handleUnboldChange}
+        onEdited={(edits) => {
+          for (const e of edits) {
+            editsByPageRef.current.set(e.pageNumber, { ...editsByPageRef.current.get(e.pageNumber), text: e.text });
+          }
+        }}
+      />
     </Layout>
   );
 }
