@@ -7,6 +7,7 @@ import { type AiFixArgs } from "@/components/SourceEditor";
 // Lazy — CodeMirror only loads when a maintainer opens the editor.
 const SourceEditor = React.lazy(() => import("@/components/SourceEditor"));
 import { fadeInUp } from "@/lib/animations";
+import { BOOKMARK_UPSERT_PREFER, bookmarkUpsertPath, findTopmostVisible } from "@/lib/bookmarks";
 import { describeFailure } from "@/lib/requestError";
 import { applyTextCorrections } from "@/lib/bhagwatham-config";
 import {
@@ -199,20 +200,7 @@ interface BookmarkEntry {
 
 /** Find the topmost <p> element visible inside a given page container. */
 function findTopmostVisibleParagraph(pageEl: HTMLElement): HTMLParagraphElement | null {
-  const ps = pageEl.querySelectorAll("p");
-  const headerBuffer = 90;
-  let best: HTMLParagraphElement | null = null;
-  let bestTop = Infinity;
-  for (const p of ps) {
-    const rect = (p as HTMLElement).getBoundingClientRect();
-    if (!(p as HTMLElement).textContent?.trim()) continue;
-    const distFromHeader = rect.top - headerBuffer;
-    if (rect.bottom > headerBuffer && distFromHeader < bestTop && distFromHeader > -rect.height) {
-      bestTop = distFromHeader;
-      best = p as HTMLParagraphElement;
-    }
-  }
-  return best;
+  return findTopmostVisible([...pageEl.querySelectorAll("p")]) as HTMLParagraphElement | null;
 }
 
 /** Manual section override — user marks line ranges with a specific type */
@@ -3891,9 +3879,9 @@ export default function Chaitanya() {
     } catch { /* */ }
 
     try {
-      const res = await sbFetch(TBL_BOOKMARKS, {
+      const res = await sbFetch(bookmarkUpsertPath(TBL_BOOKMARKS), {
         method: "POST",
-        headers: { Prefer: "return=representation,resolution=merge-duplicates" },
+        headers: { Prefer: BOOKMARK_UPSERT_PREFER },
         body: JSON.stringify({
           reader_id: readerId,
           reader_name: readerName,

@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
 import { fadeInUp, fadeIn } from "@/lib/animations";
-import { describeFailure } from "@/lib/requestError";
+import { describeFailure, describeThrown } from "@/lib/requestError";
+import { BOOKMARK_UPSERT_PREFER, anchorFor, bookmarkUpsertPath, findAnchoredParagraph, findTopmostVisible } from "@/lib/bookmarks";
 import {
   BookOpen, ChevronLeft, ChevronRight, Loader2,
   Search, BookMarked, List, X, ChevronDown,
@@ -155,6 +156,7 @@ interface BookmarkEntry {
   chapter_number?: number;
   chapter_title?: string;
   label?: string;
+  line_anchor?: string | null;
   created_at: string;
 }
 
@@ -1078,23 +1080,39 @@ export default function GitaReader() {
     const chapterList = buildChapterIndex(allPages);
     const currentChapter = chapterList.slice().reverse().find(ch => ch.pageNumber <= pageNum);
 
+    // Capture the topmost visible line so the bookmark comes back to the line,
+    // not just the page — the Bhagavatam and Chaitanya readers both do this.
+    let lineAnchor: string | null = null;
     try {
-      await sbFetch("gita_bookmarks", {
+      const pageEl = document.querySelector(`[data-page-num="${pageNum}"]`);
+      if (pageEl) lineAnchor = anchorFor(findTopmostVisible([...pageEl.querySelectorAll("p")])?.textContent);
+    } catch { /* fallback: no anchor */ }
+
+    try {
+      const res = await sbFetch(bookmarkUpsertPath("gita_bookmarks"), {
         method: "POST",
-        headers: { Prefer: "return=representation,resolution=merge-duplicates" },
+        headers: { Prefer: BOOKMARK_UPSERT_PREFER },
         body: JSON.stringify({
           reader_id: readerId,
           reader_name: readerName,
           page_number: pageNum,
           chapter_number: currentChapter?.number || null,
           chapter_title: currentChapter?.title || null,
+          line_anchor: lineAnchor,
           updated_at: new Date().toISOString(),
         }),
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        alert(`Bookmark could not be saved: ${describeFailure(res.status, body)}`);
+        return;
+      }
       await fetchBookmarks();
       setBookmarkSaved(true);
       setTimeout(() => setBookmarkSaved(false), 2000);
-    } catch { /* ignore */ }
+    } catch (e) {
+      alert(`Bookmark could not be saved: ${describeThrown(e)}`);
+    }
   }, [readerId, readerName, allPages, currentPage, visiblePageNum, fetchBookmarks]);
 
   const deleteBookmark = useCallback(async (b: BookmarkEntry) => {
@@ -1113,9 +1131,20 @@ export default function GitaReader() {
       const viewPage = Math.floor(pageIdx / PAGES_PER_VIEW) + 1;
       setCurrentPage(viewPage);
       setTimeout(() => {
-        const el = document.querySelector(`[data-page-num="${b.page_number}"]`);
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-        else window.scrollTo({ top: 0, behavior: "smooth" });
+        const pageEl = document.querySelector(`[data-page-num="${b.page_number}"]`);
+        if (!pageEl) { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+        // Back to the line the bookmark was saved on, with a moment of highlight
+        // so the reader can see where they were — as the other two readers do.
+        const match = findAnchoredParagraph([...pageEl.querySelectorAll("p")], b.line_anchor);
+        if (match) {
+          match.scrollIntoView({ behavior: "smooth", block: "start" });
+          match.style.transition = "background-color 0.4s";
+          const prevBg = match.style.backgroundColor;
+          match.style.backgroundColor = "rgba(251, 191, 36, 0.35)";
+          setTimeout(() => { match.style.backgroundColor = prevBg; }, 1500);
+          return;
+        }
+        pageEl.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 200);
     }
   }, [allPages]);

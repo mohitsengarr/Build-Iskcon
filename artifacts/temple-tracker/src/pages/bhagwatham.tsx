@@ -8,6 +8,7 @@ import { type AiFixArgs } from "@/components/SourceEditor";
 // so it never ships in the reader's critical path.
 const SourceEditor = React.lazy(() => import("@/components/SourceEditor"));
 import { fadeInUp, fadeIn } from "@/lib/animations";
+import { BOOKMARK_UPSERT_PREFER, bookmarkUpsertPath, findTopmostVisible } from "@/lib/bookmarks";
 import { describeFailure } from "@/lib/requestError";
 import { applyTextCorrections } from "@/lib/bhagwatham-config";
 import { numberedVerseHeadLength, openVerseTailLength } from "@/lib/bhagwatham-utils";
@@ -217,25 +218,7 @@ interface BookmarkEntry {
 
 /** Find the topmost <p> element visible inside a given page container. */
 function findTopmostVisibleParagraph(pageEl: HTMLElement): HTMLParagraphElement | null {
-  const ps = pageEl.querySelectorAll("p");
-  // headerBuffer accounts for the sticky top bar (~70px on most screens)
-  const headerBuffer = 90;
-  let best: HTMLParagraphElement | null = null;
-  let bestTop = Infinity;
-  for (const p of ps) {
-    const rect = (p as HTMLElement).getBoundingClientRect();
-    // Skip elements that have no content
-    if (!(p as HTMLElement).textContent?.trim()) continue;
-    // The paragraph is "visible at the top" if its top is just below the header
-    // and within the viewport. Prefer the one with the smallest positive distance
-    // from the header line.
-    const distFromHeader = rect.top - headerBuffer;
-    if (rect.bottom > headerBuffer && distFromHeader < bestTop && distFromHeader > -rect.height) {
-      bestTop = distFromHeader;
-      best = p as HTMLParagraphElement;
-    }
-  }
-  return best;
+  return findTopmostVisible([...pageEl.querySelectorAll("p")]) as HTMLParagraphElement | null;
 }
 
 /** Manual section override — user marks line ranges with a specific type */
@@ -5064,9 +5047,9 @@ export default function Bhagwatham() {
     } catch { /* fallback: no anchor */ }
 
     try {
-      const res = await sbFetch("bhagavatam_bookmarks", {
+      const res = await sbFetch(bookmarkUpsertPath("bhagavatam_bookmarks"), {
         method: "POST",
-        headers: { Prefer: "return=representation,resolution=merge-duplicates" },
+        headers: { Prefer: BOOKMARK_UPSERT_PREFER },
         body: JSON.stringify({
           reader_id: readerId,
           reader_name: readerName,
