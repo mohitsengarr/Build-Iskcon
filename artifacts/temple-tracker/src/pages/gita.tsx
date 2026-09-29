@@ -4,6 +4,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
 import { fadeInUp, fadeIn } from "@/lib/animations";
 import { describeFailure, describeThrown } from "@/lib/requestError";
+import { isStandalonePageNumber, stripRunningHead } from "@/lib/runningHead";
 import { BOOKMARK_UPSERT_PREFER, anchorFor, bookmarkUpsertPath, findAnchoredParagraph, findTopmostVisible } from "@/lib/bookmarks";
 import { numberedVerseHeadLength, openVerseTailLength } from "@/lib/bhagwatham-utils";
 import { renderInlineBoldBlock } from "@/lib/inlineBold";
@@ -245,11 +246,6 @@ function isGarbagePage(text: string): boolean {
   return false;
 }
 
-function isStandalonePageNumber(line: string): boolean {
-  // This edition prints its page numbers in Devanagari digits (९३), which the
-  // ASCII-only test missed — so they rendered as stray lines inside the text.
-  return /^[\d\u0966-\u096F]{1,5}[\]\)]*$/u.test(line.trim());
-}
 
 function stripLeadingPageNumber(line: string): string {
   // A page whose printed number the scan mangled can leave a line that is nothing
@@ -391,9 +387,15 @@ const pageLinesCache = new Map<string, string[]>();
 function pageLines(text: string): string[] {
   const hit = pageLinesCache.get(text);
   if (hit) return hit;
-  const result = cleanOcrText(text).split("\n")
-    .map((l) => (l.trim() ? stripLeadingPageNumber(l) : ""))
-    .filter((l) => l === "" || !isStandalonePageNumber(l));
+  // The head is read off the RAW page first: cleanOcrText strips short Latin
+  // runs, which takes the roman page number out of "परिचय xxi" and leaves a bare
+  // word the rule can no longer tell from a real heading. Then again after
+  // cleaning, for a head the scan mangled.
+  const result = stripRunningHead(
+    cleanOcrText(stripRunningHead(text.split("\n")).join("\n")).split("\n")
+      .map((l) => (l.trim() ? stripLeadingPageNumber(l) : ""))
+      .filter((l) => l === "" || !isStandalonePageNumber(l)),
+  );
   if (pageLinesCache.size > 500) pageLinesCache.clear();
   pageLinesCache.set(text, result);
   return result;
@@ -533,9 +535,11 @@ function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind
 
   // English mode
   if (lang === "en" && textEn) {
-    const enLines = textEn.split("\n")
-      .filter((l) => l.trim() && !isStandalonePageNumber(l))
-      .map((l) => stripLeadingPageNumber(l));
+    const enLines = stripRunningHead(
+      textEn.split("\n")
+        .filter((l) => l.trim() && !isStandalonePageNumber(l))
+        .map((l) => stripLeadingPageNumber(l)),
+    );
     return (
       <div className="space-y-4">
         {enLines.map((l, i) => (
@@ -1662,6 +1666,30 @@ export default function GitaReader() {
           )}
         </main>
       </div>
+      {/* Floating bookmark FAB — saves the current line within the visible page,
+          the same control the Bhagavatam and Chaitanya readers carry. */}
+      <motion.button
+        onClick={saveBookmark}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        title={readerId ? "Save bookmark for current line" : "Sign in to save bookmarks"}
+        className={`fixed right-4 sm:right-6 top-1/2 -translate-y-1/2 z-40 w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-colors ${
+          bookmarkSaved
+            ? "bg-orange-500 text-white"
+            : "bg-white text-orange-600 hover:bg-orange-50 border-2 border-orange-200"
+        }`}
+        aria-label="Bookmark this line"
+      >
+        {bookmarkSaved ? <Check className="w-5 h-5" /> : <Bookmark className={`w-5 h-5 ${bookmarkSaved ? "fill-white" : ""}`} />}
+        {bookmarkSaved && (
+          <motion.span
+            initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            className="absolute -top-9 right-0 whitespace-nowrap text-[11px] font-semibold bg-stone-800 text-white px-2.5 py-1 rounded-md shadow-lg"
+          >
+            Saved!
+          </motion.span>
+        )}
+      </motion.button>
       <VoiceEditToolbar
         book={{ key: "gita", pageEditsTable: TBL_PAGE_EDITS }}
         allPages={allPages}

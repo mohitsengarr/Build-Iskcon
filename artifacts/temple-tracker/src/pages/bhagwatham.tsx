@@ -12,6 +12,7 @@ import { BOOKMARK_UPSERT_PREFER, bookmarkUpsertPath, findTopmostVisible } from "
 import { escapeRegExp, locateSelectionInSource, normalizeBoldKey, normalizeDashKey, tidyAiText } from "@/lib/readerText";
 import { VoiceEditToolbar } from "@/components/reader/VoiceEditToolbar";
 import { describeFailure } from "@/lib/requestError";
+import { isStandalonePageNumber, stripRunningHead } from "@/lib/runningHead";
 import { applyTextCorrections } from "@/lib/bhagwatham-config";
 import { numberedVerseHeadLength, openVerseTailLength } from "@/lib/bhagwatham-utils";
 import {
@@ -644,10 +645,6 @@ function isGarbagePage(text: string): boolean {
   return false;
 }
 
-function isStandalonePageNumber(line: string): boolean {
-  // Lines that are just a number or number with bracket (OCR page numbers like "43", "430", "42]")
-  return /^\d{1,5}[\]\)]*$/.test(line.trim());
-}
 
 function stripLeadingPageNumber(line: string): string {
   // Remove leading page numbers like "430 सूत उवाच" → "सूत उवाच", "422 तात्पर्यं" → "तात्पर्यं"
@@ -1141,9 +1138,15 @@ const pageLinesCache = new Map<string, string[]>();
 function pageLines(text: string): string[] {
   const hit = pageLinesCache.get(text);
   if (hit) return hit;
-  const result = cleanOcrText(text).split("\n")
-    .map((l) => (l.trim() ? stripLeadingPageNumber(l) : ""))
-    .filter((l) => l === "" || !isStandalonePageNumber(l));
+  // The head is read off the RAW page first: cleanOcrText strips short Latin
+  // runs, which takes the roman page number out of "परिचय xxi" and leaves a bare
+  // word the rule can no longer tell from a real heading. Then again after
+  // cleaning, for a head the scan mangled.
+  const result = stripRunningHead(
+    cleanOcrText(stripRunningHead(text.split("\n")).join("\n")).split("\n")
+      .map((l) => (l.trim() ? stripLeadingPageNumber(l) : ""))
+      .filter((l) => l === "" || !isStandalonePageNumber(l)),
+  );
   if (pageLinesCache.size > 500) pageLinesCache.clear();
   pageLinesCache.set(text, result);
   return result;
@@ -1346,9 +1349,11 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
       }
     }
 
-    const enLines = textEn.split("\n")
-      .filter((l) => l.trim() && !isStandalonePageNumber(l))
-      .map((l) => stripLeadingPageNumber(l));
+    const enLines = stripRunningHead(
+      textEn.split("\n")
+        .filter((l) => l.trim() && !isStandalonePageNumber(l))
+        .map((l) => stripLeadingPageNumber(l)),
+    );
     return (
       <div className="space-y-4">
         {chapterAnchors.map((ch) => {
@@ -1409,9 +1414,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
   // paragraphs end. Dropping them merged a whole purport into one run of lines,
   // and since each line was rendered as its own <p>, prose could not reflow —
   // at larger font sizes every print line wrapped and left an orphan fragment.
-  const lines = cleanOcrText(text).split("\n")
-    .map((l) => (l.trim() ? stripLeadingPageNumber(l) : ""))
-    .filter((l) => l === "" || !isStandalonePageNumber(l));
+  const lines = pageLines(text);
 
   type Section = { kind: "chapter" | "shlok" | "ref-shlok" | "shabdarth" | "anuvad" | "tatparya" | "text"; lines: string[]; chapterNum?: number };
   const sections: Section[] = [];

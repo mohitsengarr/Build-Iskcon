@@ -11,6 +11,7 @@ import { BOOKMARK_UPSERT_PREFER, bookmarkUpsertPath, findTopmostVisible } from "
 import { escapeRegExp, locateSelectionInSource, normalizeBoldKey, normalizeDashKey, tidyAiText } from "@/lib/readerText";
 import { VoiceEditToolbar } from "@/components/reader/VoiceEditToolbar";
 import { describeFailure } from "@/lib/requestError";
+import { isStandalonePageNumber, stripRunningHead } from "@/lib/runningHead";
 import { applyTextCorrections } from "@/lib/bhagwatham-config";
 import { numberedVerseHeadLength, openVerseTailLength } from "@/lib/bhagwatham-utils";
 import {
@@ -541,9 +542,6 @@ function isGarbagePage(text: string): boolean {
   return false;
 }
 
-function isStandalonePageNumber(line: string): boolean {
-  return /^\d{1,5}[\]\)]*$/.test(line.trim());
-}
 
 function stripLeadingPageNumber(line: string): string {
   // A page whose printed number the scan mangled can leave a line that is nothing
@@ -687,9 +685,15 @@ const pageLinesCache = new Map<string, string[]>();
 function pageLines(text: string): string[] {
   const hit = pageLinesCache.get(text);
   if (hit) return hit;
-  const result = cleanOcrText(text).split("\n")
-    .map((l) => (l.trim() ? stripLeadingPageNumber(l) : ""))
-    .filter((l) => l === "" || !isStandalonePageNumber(l));
+  // The head is read off the RAW page first: cleanOcrText strips short Latin
+  // runs, which takes the roman page number out of "परिचय xxi" and leaves a bare
+  // word the rule can no longer tell from a real heading. Then again after
+  // cleaning, for a head the scan mangled.
+  const result = stripRunningHead(
+    cleanOcrText(stripRunningHead(text.split("\n")).join("\n")).split("\n")
+      .map((l) => (l.trim() ? stripLeadingPageNumber(l) : ""))
+      .filter((l) => l === "" || !isStandalonePageNumber(l)),
+  );
   if (pageLinesCache.size > 500) pageLinesCache.clear();
   pageLinesCache.set(text, result);
   return result;
@@ -923,9 +927,11 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
   const [selEnd, setSelEnd] = useState<number | null>(null);
 
   if (lang === "en" && textEn) {
-    const enLines = textEn.split("\n")
-      .filter((l) => l.trim() && !isStandalonePageNumber(l))
-      .map((l) => stripLeadingPageNumber(l));
+    const enLines = stripRunningHead(
+      textEn.split("\n")
+        .filter((l) => l.trim() && !isStandalonePageNumber(l))
+        .map((l) => stripLeadingPageNumber(l)),
+    );
     const renderedEnLines = renderInlineBoldBlock(enLines); // bold state carries across lines
     return (
       <div className="space-y-4">
@@ -938,9 +944,7 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
 
   // Blank lines are kept as "" markers — the only record of where real paragraphs
   // end. See the Bhagavatam reader: dropping them meant prose could not reflow.
-  const lines = cleanOcrText(text).split("\n")
-    .map((l) => (l.trim() ? stripLeadingPageNumber(l) : ""))
-    .filter((l) => l === "" || !isStandalonePageNumber(l));
+  const lines = pageLines(text);
 
   type Section = { kind: "chapter" | "shlok" | "ref-shlok" | "shabdarth" | "anuvad" | "tatparya" | "text"; lines: string[] };
   const sections: Section[] = [];
