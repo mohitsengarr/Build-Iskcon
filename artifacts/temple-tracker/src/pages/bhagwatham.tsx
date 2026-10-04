@@ -12,6 +12,7 @@ import { BOOKMARK_UPSERT_PREFER, anchorFor, bookmarkUpsertPath, findAnchoredPara
 import { escapeRegExp, locateSelectionInSource, normalizeBoldKey, normalizeDashKey, tidyAiText } from "@/lib/readerText";
 import { VoiceEditToolbar } from "@/components/reader/VoiceEditToolbar";
 import { ReaderPagesFrame, type KindlePagerHandle, type KindlePagerProps, type KindlePlace } from "@/components/reader/KindlePager";
+import { WordLookupCard } from "@/components/reader/WordLookupCard";
 import {
   KINDLE_MODE_KEY, KINDLE_POSITION_KEY, chapterForPage, kindleKeyAction, pagesLeftInChapter,
   parseKindleMode, parseStoredPosition, serialisePosition,
@@ -3346,12 +3347,26 @@ export default function Bhagwatham() {
     setVisiblePageNum(place.pageNumber);
     const ch = chapterForPage(chapters, place.pageNumber);
     if (ch) { setScrollChapter(ch.title); setActiveChapter(ch.globalNumber); }
-    // While a jump is still pending the screen showing is not the reader's place.
-    if (kindlePendingRef.current) return;
+    // Only a place the reader went to is remembered: not the screen the pager
+    // opened on, nor one passed through on the way to a pending jump.
+    if (!place.byReader || kindlePendingRef.current) return;
     try {
       localStorage.setItem(KINDLE_POSITION_KEY, serialisePosition(place.anchorPage ?? place.pageNumber, place.anchorText));
     } catch { /* private mode: the place just won't be remembered */ }
   }, [chapters]);
+
+  // If the pager is ever mounted afresh with nowhere to go, it returns to the
+  // remembered place rather than staying on the first screen it opened on.
+  const kindleWasActiveRef = useRef(false);
+  useEffect(() => {
+    if (kindleActive && !kindleWasActiveRef.current && !kindlePendingRef.current) {
+      try {
+        const stored = parseStoredPosition(localStorage.getItem(KINDLE_POSITION_KEY));
+        if (stored) setKindlePending(stored);
+      } catch { /* nothing remembered */ }
+    }
+    kindleWasActiveRef.current = kindleActive;
+  }, [kindleActive]);
 
   const enterKindle = () => {
     // Open on the line being read in the scrolling reader.
@@ -3657,6 +3672,8 @@ export default function Bhagwatham() {
         <main ref={contentRef} className={`flex-1 min-w-0 ${theme.bg} transition-colors duration-300`}>
           {/* Voice edit toolbar — appears when text is selected */}
           <VoiceEditToolbar book={{ key: "bhagavatam", pageEditsTable: "bhagavatam_page_edits" }} allPages={allPages} setAllPages={setAllPages} unboldLines={unboldLines} onUnboldChange={handleUnboldChange} />
+          {/* Dictionary card — appears under a single selected word */}
+          <WordLookupCard />
           {/* Source editor (CodeMirror) — dev-gated full-screen raw-text editor */}
           {editSourcePage != null && (() => {
             const pg = allPages.find(p => p.pageNumber === editSourcePage);

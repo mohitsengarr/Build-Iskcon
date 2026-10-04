@@ -206,7 +206,7 @@ describe("Bhagwatham reader wiring", () => {
   });
 
   it("remembers the place across visits, but not while a jump is still on its way", () => {
-    expect(READER).toMatch(/if \(kindlePendingRef\.current\) return;\s*try \{\s*localStorage\.setItem\(KINDLE_POSITION_KEY, serialisePosition\(place\.anchorPage \?\? place\.pageNumber, place\.anchorText\)\);/);
+    expect(READER).toMatch(/if \(!place\.byReader \|\| kindlePendingRef\.current\) return;\s*try \{\s*localStorage\.setItem\(KINDLE_POSITION_KEY, serialisePosition\(place\.anchorPage \?\? place\.pageNumber, place\.anchorText\)\);/);
     expect(READER).toContain("return loadKindleMode() ? parseStoredPosition(localStorage.getItem(KINDLE_POSITION_KEY)) : null;");
   });
 

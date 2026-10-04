@@ -35,6 +35,11 @@ export interface KindlePlace {
   /** The first line on the screen and the printed page that line is on. */
   anchorText: string | null;
   anchorPage: number | null;
+  /**
+   * Whether the reader went there: a page turn, a jump, a search. False when
+   * the pager only opened, or re-set the same text at a new size.
+   */
+  byReader: boolean;
 }
 
 export interface KindleTheme { bg: string; text: string; border: string; muted: string }
@@ -143,6 +148,8 @@ export const KindlePager = forwardRef<KindlePagerHandle, KindlePagerProps & { ch
   const layoutSigRef = useRef("");
   // The reader turned, jumped or landed somewhere: their line is to be taken afresh.
   const movedRef = useRef(true);
+  // The next place reported is one the reader went to (see KindlePlace.byReader).
+  const byReaderRef = useRef(false);
   const reportedPlaceRef = useRef("");
   // The printed page a jump was aimed at: it is the page being read even when
   // it starts part-way down the screen, under the end of the page before.
@@ -247,6 +254,7 @@ export const KindlePager = forwardRef<KindlePagerHandle, KindlePagerProps & { ch
     if (show && flow.contains(show)) {
       landRef.current = null;
       movedRef.current = true;
+      byReaderRef.current = true;
       target = screenOfColumn(columnOf(show), g.perScreen);
       jumpPageRef.current = pageNumberOf(show);
     } else if (landRef.current) {
@@ -300,7 +308,9 @@ export const KindlePager = forwardRef<KindlePagerHandle, KindlePagerProps & { ch
     const placeSig = `${screenSig}|${page}`;
     if (page != null && placeSig !== reportedPlaceRef.current) {
       reportedPlaceRef.current = placeSig;
-      latest.current.onPlaceChange({ pageNumber: page, ...anchorOf(anchorRef.current) });
+      const byReader = byReaderRef.current;
+      byReaderRef.current = false;
+      latest.current.onPlaceChange({ pageNumber: page, ...anchorOf(anchorRef.current), byReader });
     }
   }, [layoutKey, viewKey]);
 
@@ -338,7 +348,7 @@ export const KindlePager = forwardRef<KindlePagerHandle, KindlePagerProps & { ch
         const left = screenOffsetPx(next, a.geometry);
         expectedLeftRef.current = left;
         box.scrollLeft = left;
-        if (next !== screenRef.current) { movedRef.current = true; jumpPageRef.current = null; screenRef.current = next; setScreen(next); }
+        if (next !== screenRef.current) { movedRef.current = true; byReaderRef.current = true; jumpPageRef.current = null; screenRef.current = next; setScreen(next); }
       }, 90);
     };
     box.addEventListener("scroll", onScroll, { passive: true });
@@ -349,6 +359,7 @@ export const KindlePager = forwardRef<KindlePagerHandle, KindlePagerProps & { ch
   const go = useCallback((direction: 1 | -1) => {
     const l = latest.current;
     jumpPageRef.current = null;
+    byReaderRef.current = true;
     const t = turn(direction, screenRef.current, screensRef.current, l.hasPrevView, l.hasNextView);
     if (t.kind === "screen") { movedRef.current = true; screenRef.current = t.screen; setScreen(t.screen); }
     else if (t.kind === "next-view") { landRef.current = "start"; l.onNextView(); }
