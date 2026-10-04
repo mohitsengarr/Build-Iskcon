@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isRunningHead, isStandalonePageNumber, stripRunningHead } from "./runningHead";
+import { isHeadTail, isRunningHead, isStandalonePageNumber, stripRunningHead } from "./runningHead";
 
 describe("isRunningHead", () => {
   it("recognises the left-hand page's head, with a roman or Devanagari page number", () => {
@@ -61,6 +61,25 @@ describe("isStandalonePageNumber", () => {
   });
 });
 
+describe("isHeadTail", () => {
+  it("recognises the chapter title the scan left under a head", () => {
+    expect(isHeadTail("गुरुवर्ग")).toBe(true);
+    expect(isHeadTail("श्री चैतन्य महाप्रभु")).toBe(true);
+  });
+
+  it("refuses anything with sentence punctuation, digits or a section label", () => {
+    for (const no of ["यह एक वाक्य है ।", "श्लोक ७", "अनुवाद", "तात्पर्य", "अध्याय एक", "राधा—कृष्ण; प्रेम"]) {
+      expect(isHeadTail(no)).toBe(false);
+    }
+  });
+
+  it("refuses a long line or one that is not Devanagari", () => {
+    expect(isHeadTail("यह शीर्षक बहुत लम्बा है और इसलिए इसे शीर्षक नहीं माना जाएगा")).toBe(false);
+    expect(isHeadTail("Guru-varga")).toBe(false);
+    expect(isHeadTail("")).toBe(false);
+  });
+});
+
 describe("stripRunningHead", () => {
   it("drops the head from the top of the page", () => {
     const page = ["xxxiv श्रीचैतन्य-चरितामृत", "है। संकर्षण के बाद वे प्रद्युम्न रूप में प्रकट होते हैं।"];
@@ -75,6 +94,23 @@ describe("stripRunningHead", () => {
   it("stops after two lines, so a third head-looking line stays", () => {
     const page = ["xx श्रीचैतन्य-चरितामृत", "परिचय xxi", "xxii", "असली पाठ यहाँ से आरम्भ होता है ।"];
     expect(stripRunningHead(page)).toEqual(["xxii", "असली पाठ यहाँ से आरम्भ होता है ।"]);
+  });
+
+
+  it("takes the chapter title left under a broken head, but only after one", () => {
+    // The scan breaks "श्लोक ७ ] गुरुवर्ग ७" across three lines
+    expect(stripRunningHead(["श्लोक ७ ]", "", "गुरुवर्ग", "", "७", "", "वास्तविक पाठ"])).toEqual(["", "", "७", "", "वास्तविक पाठ"]);
+  });
+
+  it("leaves a bare title alone when no head came before it", () => {
+    const page = ["गुरुवर्ग", "पाठ की पंक्ति"];
+    expect(stripRunningHead(page)).toEqual(page);
+  });
+
+  it("leaves a short opening line alone when no page number follows it", () => {
+    // Without the page number this is prose, not the rest of a head
+    const page = ["२ श्रीचैतन्य-चरितामृत", "पहला अनुच्छेद", "", "दूसरा अनुच्छेद"];
+    expect(stripRunningHead(page)).toEqual(["पहला अनुच्छेद", "", "दूसरा अनुच्छेद"]);
   });
 
   it("keeps a real opening line", () => {

@@ -663,7 +663,9 @@ function isHalfShlokaLine(line: string): boolean {
   const total = body.replace(/\s/g, "").length;
   if (total === 0 || dev / total < 0.7) return false;
   if (/^(तात्पर्य|शब्दार्थ|अनुवाद|अध्याय|भाग|Chapter)/iu.test(body)) return false;
-  if ((body.includes("—") || body.includes("--")) && body.includes(";")) return false;
+  // A word-meaning line ends in a danda like a half-shloka and is dense in
+  // dashes; the press uses plain hyphens as well as em dashes.
+  if (body.includes(";") && ((body.match(/[-–—]/g) || []).length >= 2 || (body.match(/;/g) || []).length >= 3)) return false;
   const visarga = (body.match(/ः/gu) || []).length;
   const sanskritEndings = (body.match(/(?:स्य|ेन|ाय|ात्|ेषु|ानाम्|ेभ्यः|ाभिः|म्\s|म्$)/gu) || []).length;
   const sanskritParticles = (body.match(/(?:^|\s)(?:च|एव|हि|तु|अपि|वै|यः|सः|यदा|तदा|तथा|इति|एषः)(?:\s|$)/gu) || []).length;
@@ -946,7 +948,7 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
   // end. See the Bhagavatam reader: dropping them meant prose could not reflow.
   const lines = pageLines(text);
 
-  type Section = { kind: "chapter" | "shlok" | "ref-shlok" | "shabdarth" | "anuvad" | "tatparya" | "text"; lines: string[] };
+  type Section = { kind: "chapter" | "shlok" | "ref-shlok" | "bengali-shlok" | "shabdarth" | "anuvad" | "tatparya" | "text"; lines: string[] };
   const sections: Section[] = [];
   const continuableKinds = ["tatparya", "anuvad", "ref-shlok", "shlok", "shabdarth"];
   const initialKind = (prevPageEndKind && continuableKinds.includes(prevPageEndKind)) ? prevPageEndKind as Section["kind"] : "text";
@@ -983,7 +985,7 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
     const total = line.replace(/\s/g, "").length;
     if (total === 0 || dev / total < 0.7) return false;
     if (/^(तात्पर्य|शब्दार्थ|अनुवाद)/u.test(line)) return false;
-    if ((line.includes("—") || line.includes("--")) && line.includes(";")) return false;
+    if (isWordMeanings(line)) return false;
 
     const hindiPP = countHindiPostpositions(line);
     const hasHindiVerb = HINDI_VERB_RE.test(line);
@@ -997,6 +999,31 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
       return false;
     }
     return true;
+  };
+
+  // This edition prints every verse twice: first in BENGALI script, then in
+  // Devanagari. The Bengali half failed the Devanagari ratio test in
+  // isVerseLike, so the book's own verse rendered as a paragraph of prose.
+  const isBengaliVerseLine = (line: string) => {
+    const beng = (line.match(/[\u0980-\u09FF]/gu) || []).length;
+    const total = line.replace(/\s/g, "").length;
+    if (total < 5 || line.length > 160) return false;
+    return beng / total >= 0.6;
+  };
+
+  // The word-by-word meanings are printed with NO शब्दार्थ heading — a dense run
+  // of "term—meaning; term—meaning;". Without this they fell through as prose,
+  // which is why the glossary read as a wall of text.
+  const isWordMeanings = (line: string) => {
+    if (/^(तात्पर्य|अनुवाद)/u.test(line)) return false;
+    const semis = (line.match(/;/g) || []).length;
+    // The press separates term from meaning with a plain hyphen as often as with
+    // an em dash, so a gloss line reads as "term-meaning; term-meaning;". Only
+    // counting em dashes left the first and last line of each gloss looking like
+    // verse: dense in dashes, free of Hindi verbs.
+    const dashes = (line.match(/[-–—]/g) || []).length;
+    if (semis >= 3) return true;
+    return semis >= 1 && dashes >= 2;
   };
 
   const hasDoubleViramAhead = (fromIdx: number, maxLook: number = 3) => {
@@ -1055,6 +1082,20 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
           sections[sections.length - 1].kind = "shlok";
         }
       }
+      current.lines.push(t);
+      continue;
+    }
+
+    // A gloss line is recognised wherever it appears: it was being read as a
+    // verse (dashes, no Hindi verbs) and split across two section kinds.
+    if (isWordMeanings(t)) {
+      if (current.kind !== "shabdarth") { flush(); current = { kind: "shabdarth", lines: [] }; }
+      current.lines.push(t);
+      continue;
+    }
+
+    if (isBengaliVerseLine(t)) {
+      if (current.kind !== "bengali-shlok") { flush(); current = { kind: "bengali-shlok", lines: [] }; }
       current.lines.push(t);
       continue;
     }
@@ -1138,6 +1179,24 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
         sections.splice(si, 1);
         si--;
       }
+    }
+  }
+
+  // ── A section that is nothing but a label ───────────────────────────────
+  // "अनुवाद" / "शब्दार्थ" / "तात्पर्य" is printed on its own line with a blank
+  // line under it, and a blank line closes a section — so the word rendered as a
+  // paragraph of its own above the text it names. Fold it into what follows.
+  const LABEL_ONLY = /^(अनुवाद|शब्दार्थ|तात्पर्य)\s*[:：।-]?\s*$/u;
+  for (let si = sections.length - 1; si >= 0; si--) {
+    const sec = sections[si];
+    if (sec.lines.length !== 1 || !LABEL_ONLY.test(sec.lines[0].trim())) continue;
+    const label = sec.lines[0].trim().replace(/[:：।-]\s*$/u, "");
+    const next = sections[si + 1];
+    if (next && (next.kind === "anuvad" || next.kind === "tatparya" || next.kind === "text")) {
+      next.kind = label === "तात्पर्य" ? "tatparya" : label === "शब्दार्थ" ? "shabdarth" : "anuvad";
+      sections.splice(si, 1);
+    } else if (!next) {
+      sections.splice(si, 1);
     }
   }
 
@@ -1388,6 +1447,19 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
               <div key={i} data-section-type="ref-shlok" className={isRefShlokContinuation ? "" : `pl-4 border-l-2 my-2 ${themeKey === "dark" ? "border-amber-800/40" : themeKey === "sepia" ? "border-[#c4ad80]" : "border-[#c4956a]/40"}`}>
                 {sec.lines.map((l, j) => (
                   <p key={j} className={`leading-[1.7] italic mb-0.5 ${isRefShlokContinuation ? "pl-4" : ""} ${themeKey === "dark" ? "text-amber-400/70" : themeKey === "sepia" ? "text-[#6b4020]" : "text-[#8b5a30]"}`} style={{ fontSize: "0.9em", fontFamily: "var(--font-sanskrit)" }}>{renderedRefShlok[j]}</p>
+                ))}
+              </div>
+            );
+          }
+          case "bengali-shlok": {
+            // The verse as this edition prints it first, in Bengali script. Same
+            // weight as the Devanagari verse that follows it, a shade quieter so
+            // the two readings of one verse are not mistaken for two verses.
+            const renderedBengali = renderInlineBoldBlock(sec.lines);
+            return (
+              <div key={i} data-section-type="bengali-shlok" className="mt-5 mb-1">
+                {sec.lines.map((l, j) => (
+                  <p key={j} className={`font-semibold leading-[1.9] mb-0.5 ${themeKey === "dark" ? "text-amber-200/80" : themeKey === "sepia" ? "text-[#6b4a20]/90" : "text-[#7b4a2a]/90"}`} style={{ fontSize: "1.05em", fontFamily: "var(--font-bengali), var(--font-sanskrit)" }}>{renderedBengali[j]}</p>
                 ))}
               </div>
             );

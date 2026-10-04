@@ -46,6 +46,21 @@ export function isStandalonePageNumber(line: string): boolean {
   return new RegExp(`^${NUM}{1,5}[\\]\\)]*$`, "u").test(line.trim());
 }
 
+/**
+ * The tail of a head the scan broke in two: the chapter's title, standing alone
+ * under "श्लोक ७ ]". Deliberately narrow — a short run of words with no sentence
+ * punctuation, no digits and no section label — because this only runs on a line
+ * that directly follows a head that was already removed.
+ */
+export function isHeadTail(line: unknown): boolean {
+  const t = typeof line === "string" ? line.trim() : "";
+  if (!t || t.length > 45) return false;
+  if (/[।॥;:,—\-\d०-९()]/u.test(t)) return false;
+  if (/^(अनुवाद|शब्दार्थ|तात्पर्य|अध्याय|भाग|परिचय|भूमिका)/u.test(t)) return false;
+  if (!/^[\u0900-\u097F\s]+$/u.test(t)) return false;
+  return t.split(/\s+/).length <= 5;
+}
+
 /** Whether a line is the press's running head rather than the book's text. */
 export function isRunningHead(line: unknown): boolean {
   const t = typeof line === "string" ? line.trim() : "";
@@ -64,15 +79,34 @@ export const RUNNING_HEAD_SCAN_LINES = 2;
  * Blank lines are preserved (they mark paragraphs), and a page that is nothing
  * but running head is returned as it is rather than emptied.
  */
+/** The next line with text after `from`, or "" when the page ends there. */
+function nextTextLine(lines: string[], from: number): string {
+  for (let i = from + 1; i < lines.length; i++) {
+    const t = (lines[i] ?? "").trim();
+    if (t) return t;
+  }
+  return "";
+}
+
 export function stripRunningHead(lines: string[]): string[] {
   if (!Array.isArray(lines)) return [];
   const out = [...lines];
+  let tookHead = false;
   for (let removed = 0; removed < RUNNING_HEAD_SCAN_LINES; removed++) {
     const at = out.findIndex((l) => (l ?? "").trim());
     if (at === -1) break;
     const t = out[at].trim();
-    if (!isRunningHead(t) && !isStandalonePageNumber(t)) break;
-    out.splice(at, 1);
+    if (isRunningHead(t)) { tookHead = true; out.splice(at, 1); continue; }
+    if (isStandalonePageNumber(t)) { out.splice(at, 1); continue; }
+    // The scan often breaks the right-hand head in three: "श्लोक ७ ]", then the
+    // chapter's title, then the page number. The title alone is indistinguishable
+    // from a short opening line of prose, so it is only taken when the page
+    // number follows it — that is what makes it part of the head block.
+    if (tookHead && isHeadTail(t) && isStandalonePageNumber(nextTextLine(out, at))) {
+      out.splice(at, 1);
+      continue;
+    }
+    break;
   }
 
   // The foot of the page carries the number on a chapter's opening page (12 of
