@@ -4,6 +4,7 @@ import {
   cardPlacement, dictionaryPageUrl, dictionarySearchUrl, fetchDefinitions, findBookMeaning, lookupTarget,
   type DefinitionResult, type Sense, type WordMeaning,
 } from "@/lib/wordLookup";
+import { barReserve } from "@/lib/readerHighlights";
 
 // Select a word in the book and a card under it says what it means, the way a
 // Kindle does: the book's own word-for-word meaning when the verse has one,
@@ -282,7 +283,10 @@ export function WordLookupCard() {
     }).catch(() => { /* clipboard refused: nothing to show */ });
   };
   const width = Math.min(CARD_WIDTH, window.innerWidth - 16);
-  const place = cardPlacement(lookup.rect, { width: window.innerWidth, height: window.innerHeight }, { width, height });
+  const viewport = { width: window.innerWidth, height: window.innerHeight };
+  // The highlight bar sits right next to the selected word; the card keeps clear of it.
+  const coarse = typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches;
+  const place = cardPlacement(lookup.rect, viewport, { width, height }, barReserve(lookup.rect, viewport, coarse));
 
   return (
     <div

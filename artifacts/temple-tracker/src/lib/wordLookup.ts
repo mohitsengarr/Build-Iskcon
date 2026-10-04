@@ -279,18 +279,21 @@ export const CARD_MARGIN_PX = 8;
 
 /**
  * Where the card sits for a selected word: centred under it, kept inside the
- * window, and above it instead when there is no room below.
+ * window, and above it instead when there is no room below. `reserve` is room
+ * to leave next to the word on either side, for the highlight bar that sits
+ * there (see barReserve in lib/readerHighlights).
  */
 export function cardPlacement(
   word: { left: number; top: number; bottom: number; width: number },
   viewport: { width: number; height: number },
   card: { width: number; height: number },
+  reserve: { above: number; below: number } = { above: 0, below: 0 },
 ): CardPlacement {
   const maxLeft = Math.max(CARD_MARGIN_PX, viewport.width - card.width - CARD_MARGIN_PX);
   const left = Math.min(maxLeft, Math.max(CARD_MARGIN_PX, Math.round(word.left + word.width / 2 - card.width / 2)));
-  const below = word.bottom + CARD_GAP_PX;
+  const below = word.bottom + CARD_GAP_PX + reserve.below;
   const fitsBelow = below + card.height <= viewport.height - CARD_MARGIN_PX;
-  const above = word.top - CARD_GAP_PX - card.height;
+  const above = word.top - CARD_GAP_PX - reserve.above - card.height;
   if (fitsBelow || above < CARD_MARGIN_PX) {
     return { left, top: Math.round(Math.min(below, Math.max(CARD_MARGIN_PX, viewport.height - card.height - CARD_MARGIN_PX))), placement: "below" };
   }

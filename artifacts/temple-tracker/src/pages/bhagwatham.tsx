@@ -13,6 +13,8 @@ import { escapeRegExp, locateSelectionInSource, normalizeBoldKey, normalizeDashK
 import { VoiceEditToolbar } from "@/components/reader/VoiceEditToolbar";
 import { ReaderPagesFrame, type KindlePagerHandle, type KindlePagerProps, type KindlePlace } from "@/components/reader/KindlePager";
 import { WordLookupCard } from "@/components/reader/WordLookupCard";
+import { HighlightLayer, HighlightsPanel, useReaderHighlights } from "@/components/reader/ReaderHighlights";
+import type { ReaderHighlight } from "@/lib/readerHighlights";
 import {
   KINDLE_MODE_KEY, KINDLE_POSITION_KEY, chapterForPage, kindleKeyAction, pagesLeftInChapter,
   parseKindleMode, parseStoredPosition, serialisePosition,
@@ -2224,6 +2226,9 @@ function Sidebar({
   onLogin,
   onLogout,
   drawer = false,
+  highlights,
+  onHighlightJump,
+  onHighlightRemove,
 }: {
   chapters: ChapterEntry[];
   chapterImages: Map<number, Array<{ url: string; description: string; isInstagram?: boolean }>>;
@@ -2242,8 +2247,12 @@ function Sidebar({
   onLogout: () => void;
   /** Kindle mode covers the window, so Contents slides over it at every width instead of sitting beside the text. */
   drawer?: boolean;
+  /** The reader's highlights and notes (kept on this device), listed under the Notes tab. */
+  highlights: ReaderHighlight[];
+  onHighlightJump: (h: ReaderHighlight) => void;
+  onHighlightRemove: (id: string) => void;
 }) {
-  const [sidebarTab, setSidebarTab] = useState<"chapters" | "bookmarks">("chapters");
+  const [sidebarTab, setSidebarTab] = useState<"chapters" | "bookmarks" | "highlights">("chapters");
   const [sidebarSearch, setSidebarSearch] = useState("");
   // Track which cantos are expanded — default: only the active chapter's canto
   const activeSkandh = activeChapter
@@ -2307,22 +2316,35 @@ function Sidebar({
       `}>
         {/* Header with tabs */}
         <div className="sticky top-0 bg-white border-b border-stone-100 z-10">
-          <div className="px-4 py-2.5 flex items-center justify-between">
-            <div className="flex items-center gap-1 bg-stone-100 rounded-lg p-0.5">
+          <div className="px-2.5 py-2.5 flex items-center justify-between gap-1">
+            {/* Three tabs in an 18rem sidebar: the padding is tight and the icons
+                give way to the labels on the two that carry a count. */}
+            <div className="flex items-center gap-0.5 bg-stone-100 rounded-lg p-0.5 min-w-0">
               <button
                 onClick={() => setSidebarTab("chapters")}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${sidebarTab === "chapters" ? "bg-white text-orange-700 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
+                className={`px-1.5 py-1.5 rounded-md text-xs font-semibold transition-all ${sidebarTab === "chapters" ? "bg-white text-orange-700 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
               >
-                <span className="flex items-center gap-1.5"><BookMarked className="w-3.5 h-3.5" /> Contents</span>
+                <span className="flex items-center gap-1"><BookMarked className="w-3.5 h-3.5" /> Contents</span>
               </button>
               <button
                 data-tab="bookmarks"
                 onClick={() => setSidebarTab("bookmarks")}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${sidebarTab === "bookmarks" ? "bg-white text-orange-700 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
+                className={`px-1.5 py-1.5 rounded-md text-xs font-semibold transition-all ${sidebarTab === "bookmarks" ? "bg-white text-orange-700 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
               >
-                <span className="flex items-center gap-1.5">
-                  <Bookmark className="w-3.5 h-3.5" /> Bookmarks
+                <span className="flex items-center gap-1">
+                  Bookmarks
                   {bookmarks.length > 0 && <span className="bg-orange-500 text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center">{bookmarks.length}</span>}
+                </span>
+              </button>
+              <button
+                data-tab="highlights"
+                onClick={() => setSidebarTab("highlights")}
+                title="Highlights and notes"
+                className={`px-1.5 py-1.5 rounded-md text-xs font-semibold transition-all ${sidebarTab === "highlights" ? "bg-white text-orange-700 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
+              >
+                <span className="flex items-center gap-1">
+                  Notes
+                  {highlights.length > 0 && <span className="bg-orange-500 text-white text-[9px] rounded-full min-w-4 h-4 px-1 flex items-center justify-center">{highlights.length}</span>}
                 </span>
               </button>
             </div>
@@ -2335,7 +2357,9 @@ function Sidebar({
         {/* Progress bar removed — OCR complete */}
 
         {/* Tab content */}
-        {sidebarTab === "bookmarks" ? (
+        {sidebarTab === "highlights" ? (
+          <HighlightsPanel items={highlights} onJump={onHighlightJump} onRemove={onHighlightRemove} />
+        ) : sidebarTab === "bookmarks" ? (
           <div className="py-3">
             <BookmarkPanel
               bookmarks={bookmarks}
@@ -2615,6 +2639,8 @@ export default function Bhagwatham() {
   const kindlePendingRef = useRef(kindlePending);
   kindlePendingRef.current = kindlePending;
   const [vedabaseTitles, setVedabaseTitles] = useState<Map<string, string>>(new Map());
+  // Highlights and notes on the text (components/reader/ReaderHighlights). Kept on this device.
+  const highlights = useReaderHighlights("bhagavatam");
   const PAGES_PER_VIEW = 20;
   const contentRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -3199,7 +3225,7 @@ export default function Bhagwatham() {
     }
   }, [readerId]);
 
-  const handleBookmarkJump = useCallback((b: BookmarkEntry) => {
+  const handleBookmarkJump = useCallback((b: Pick<BookmarkEntry, "page_number" | "line_anchor">) => {
     // Sidebar stays open — user must close manually via X or Escape
     setSearchQuery("");
     if (kindleMode) {
@@ -3674,6 +3700,10 @@ export default function Bhagwatham() {
             setBookmarks([]);
           }}
           drawer={kindleActive}
+          highlights={highlights.items}
+          // A highlight is found again the way a bookmark's line is: by its opening words.
+          onHighlightJump={(h) => handleBookmarkJump({ page_number: h.page, line_anchor: h.text })}
+          onHighlightRemove={highlights.remove}
         />
 
         {/* ── Main content ── */}
@@ -3682,6 +3712,8 @@ export default function Bhagwatham() {
           <VoiceEditToolbar book={{ key: "bhagavatam", pageEditsTable: "bhagavatam_page_edits" }} allPages={allPages} setAllPages={setAllPages} unboldLines={unboldLines} onUnboldChange={handleUnboldChange} />
           {/* Dictionary card — appears under a single selected word */}
           <WordLookupCard />
+          {/* Highlight colours and notes — a bar next to any selected text */}
+          <HighlightLayer store={highlights} />
           {/* Source editor (CodeMirror) — dev-gated full-screen raw-text editor */}
           {editSourcePage != null && (() => {
             const pg = allPages.find(p => p.pageNumber === editSourcePage);
