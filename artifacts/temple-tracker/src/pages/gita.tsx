@@ -9,6 +9,7 @@ import { BOOKMARK_UPSERT_PREFER, anchorFor, bookmarkUpsertPath, findAnchoredPara
 import { numberedVerseHeadLength, openVerseTailLength } from "@/lib/bhagwatham-utils";
 import { renderInlineBoldBlock } from "@/lib/inlineBold";
 import { normalizeBoldKey, normalizeDashKey } from "@/lib/readerText";
+import { continuesGloss } from "@/lib/glossTail";
 import { VoiceEditToolbar } from "@/components/reader/VoiceEditToolbar";
 import {
   BookOpen, ChevronLeft, ChevronRight, Loader2,
@@ -687,6 +688,13 @@ function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind
         if (/।\s*\.?\s*$/.test(lt)) { flush(); current = { kind: "anuvad", lines: [] }; }
         continue;
       }
+      // The last entry's meaning, dropped to its own line by the measure. Without
+      // this it started the translation, and the "अनुवाद :" label went with it.
+      if (continuesGloss(current.lines[current.lines.length - 1], lt)) {
+        current.lines.push(lt);
+        continue;
+      }
+
       // An "अनुवाद" label with more gloss under it is the edition's own noise.
       if (/^अनुवाद/u.test(lt)) {
         const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : "";

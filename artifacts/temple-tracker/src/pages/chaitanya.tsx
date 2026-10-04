@@ -12,6 +12,7 @@ import { escapeRegExp, locateSelectionInSource, normalizeBoldKey, normalizeDashK
 import { VoiceEditToolbar } from "@/components/reader/VoiceEditToolbar";
 import { describeFailure } from "@/lib/requestError";
 import { isStandalonePageNumber, stripRunningHead } from "@/lib/runningHead";
+import { continuesGloss } from "@/lib/glossTail";
 import { applyTextCorrections } from "@/lib/bhagwatham-config";
 import { numberedVerseHeadLength, openVerseTailLength } from "@/lib/bhagwatham-utils";
 import {
@@ -1130,6 +1131,13 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
           flush();
           current = { kind: "anuvad", lines: [] };
         }
+        continue;
+      }
+
+      // The last entry's meaning, dropped to its own line by the measure. Without
+      // this it started the translation, and the "अनुवाद :" label went with it.
+      if (continuesGloss(current.lines[current.lines.length - 1], t)) {
+        current.lines.push(t);
         continue;
       }
 

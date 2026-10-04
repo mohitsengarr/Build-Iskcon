@@ -19,6 +19,7 @@ import {
 } from "@/lib/kindlePaging";
 import { describeFailure } from "@/lib/requestError";
 import { isStandalonePageNumber, stripRunningHead } from "@/lib/runningHead";
+import { continuesGloss } from "@/lib/glossTail";
 import { applyTextCorrections } from "@/lib/bhagwatham-config";
 import { numberedVerseHeadLength, openVerseTailLength } from "@/lib/bhagwatham-utils";
 import {
@@ -1604,6 +1605,13 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
       }
 
       // "अनुवाद" label inside shabdarth — check if next lines are still shabdarth
+      // The last entry's meaning, dropped to its own line by the measure. Without
+      // this it started the translation, and the "अनुवाद :" label went with it.
+      if (continuesGloss(current.lines[current.lines.length - 1], t)) {
+        current.lines.push(t);
+        continue;
+      }
+
       if (/^अनुवाद/u.test(t)) {
         const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : "";
         const nextHasDash = nextLine.includes("—") || nextLine.includes("--") || /\S-\s/.test(nextLine);
