@@ -8,9 +8,14 @@ import { type AiFixArgs } from "@/components/SourceEditor";
 // so it never ships in the reader's critical path.
 const SourceEditor = React.lazy(() => import("@/components/SourceEditor"));
 import { fadeInUp, fadeIn } from "@/lib/animations";
-import { BOOKMARK_UPSERT_PREFER, bookmarkUpsertPath, findTopmostVisible } from "@/lib/bookmarks";
+import { BOOKMARK_UPSERT_PREFER, anchorFor, bookmarkUpsertPath, findAnchoredParagraph, findTopmostVisible } from "@/lib/bookmarks";
 import { escapeRegExp, locateSelectionInSource, normalizeBoldKey, normalizeDashKey, tidyAiText } from "@/lib/readerText";
 import { VoiceEditToolbar } from "@/components/reader/VoiceEditToolbar";
+import { ReaderPagesFrame, type KindlePagerHandle, type KindlePagerProps, type KindlePlace } from "@/components/reader/KindlePager";
+import {
+  KINDLE_MODE_KEY, KINDLE_POSITION_KEY, chapterForPage, kindleKeyAction, pagesLeftInChapter,
+  parseKindleMode, parseStoredPosition, serialisePosition,
+} from "@/lib/kindlePaging";
 import { describeFailure } from "@/lib/requestError";
 import { isStandalonePageNumber, stripRunningHead } from "@/lib/runningHead";
 import { applyTextCorrections } from "@/lib/bhagwatham-config";
@@ -21,7 +26,7 @@ import {
   List, X, ChevronDown, ChevronUp, Image as ImageIcon, Languages,
   Download, Share2, Bookmark, Trash2, LogIn, Volume2, Square, Check,
   Settings, Sun, Moon, Type, Minus, Plus, Maximize2, Undo2, Pencil, Wand2, Send, Bold, Eraser, GripHorizontal,
-  CornerDownLeft, Combine, Keyboard, Delete,
+  CornerDownLeft, Combine, Keyboard, Delete, BookOpenText,
 } from "lucide-react";
 
 // ── Reading Settings ─────────────────────────────────────────────────────────
@@ -56,6 +61,11 @@ const THEME_STYLES: Record<Theme, { bg: string; text: string; surface: string; b
   dark: { bg: "bg-[#1a1a1a]", text: "text-stone-200", surface: "bg-[#1a1a1a]/95", border: "border-stone-700", muted: "text-stone-400", accent: "text-orange-400" },
   sepia: { bg: "bg-[#f4ecd8]", text: "text-[#5b4636]", surface: "bg-[#f4ecd8]/95", border: "border-[#d4c5a9]", muted: "text-[#8b7355]", accent: "text-orange-700" },
 };
+
+/** Whether the reader left Kindle mode on (see components/reader/KindlePager). */
+function loadKindleMode(): boolean {
+  try { return parseKindleMode(localStorage.getItem(KINDLE_MODE_KEY)); } catch { return false; }
+}
 
 // ── Reading Settings Panel ──────────────────────────────────────────────────
 
@@ -2204,6 +2214,7 @@ function Sidebar({
   readerName,
   onLogin,
   onLogout,
+  drawer = false,
 }: {
   chapters: ChapterEntry[];
   chapterImages: Map<number, Array<{ url: string; description: string; isInstagram?: boolean }>>;
@@ -2220,6 +2231,8 @@ function Sidebar({
   readerName: string | null;
   onLogin: () => void;
   onLogout: () => void;
+  /** Kindle mode covers the window, so Contents slides over it at every width instead of sitting beside the text. */
+  drawer?: boolean;
 }) {
   const [sidebarTab, setSidebarTab] = useState<"chapters" | "bookmarks">("chapters");
   const [sidebarSearch, setSidebarSearch] = useState("");
@@ -2270,7 +2283,7 @@ function Sidebar({
         {isOpen && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+            className={`fixed inset-0 bg-black/40 ${drawer ? "z-[48]" : "z-40 lg:hidden"}`}
             onClick={onClose}
           />
         )}
@@ -2280,7 +2293,7 @@ function Sidebar({
       <aside className={`
         fixed top-0 left-0 h-full w-[85vw] max-w-[18rem] sm:w-72 bg-white border-r border-stone-200 z-50
         transform transition-transform duration-300 ease-in-out overflow-y-auto
-        lg:sticky lg:top-20 lg:h-[calc(100vh-5rem)] lg:z-0
+        ${drawer ? "" : "lg:sticky lg:top-20 lg:h-[calc(100vh-5rem)] lg:z-0"}
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
       `}>
         {/* Header with tabs */}
@@ -2561,7 +2574,8 @@ export default function Bhagwatham() {
     const data = await res.json();
     return ((data?.suggested_text as string) || "").trim() || null;
   }, []);
-  const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1024);
+  // Kindle mode covers the window and Contents slides over it, so it starts closed there.
+  const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1024 && !loadKindleMode());
   const [activeChapter, setActiveChapter] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [lang, setLang] = useState<"hi" | "en">("hi");
@@ -2579,6 +2593,18 @@ export default function Bhagwatham() {
   const pageInputRef = useRef<HTMLInputElement>(null);
   const [showResume, setShowResume] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
+  // ── Kindle mode: the book a screen at a time (components/reader/KindlePager) ──
+  const [kindleMode, setKindleMode] = useState<boolean>(loadKindleMode);
+  const kindleRef = useRef<KindlePagerHandle>(null);
+  // The place Kindle mode still has to turn to. On a reload it is where the
+  // reader stopped; later it is a chapter, a bookmark or the progress slider.
+  const [kindlePending, setKindlePending] = useState<{ page: number; chapter?: number; anchor?: string | null } | null>(() => {
+    try {
+      return loadKindleMode() ? parseStoredPosition(localStorage.getItem(KINDLE_POSITION_KEY)) : null;
+    } catch { return null; }
+  });
+  const kindlePendingRef = useRef(kindlePending);
+  kindlePendingRef.current = kindlePending;
   const [vedabaseTitles, setVedabaseTitles] = useState<Map<string, string>>(new Map());
   const PAGES_PER_VIEW = 20;
   const contentRef = useRef<HTMLDivElement>(null);
@@ -3097,8 +3123,10 @@ export default function Bhagwatham() {
   const saveBookmark = useCallback(async () => {
     if (!readerId) { setShowIdentityModal(true); return; }
 
+    // Kindle mode: the line at the top of the screen and the page that line is on.
+    const kindlePlace = kindleRef.current?.anchor() ?? null;
     // Use the currently visible page from scroll tracking, fallback to view-page start
-    const pageNum = visiblePageNum || allPages[(currentPage - 1) * PAGES_PER_VIEW]?.pageNumber;
+    const pageNum = kindlePlace?.pageNumber || visiblePageNum || allPages[(currentPage - 1) * PAGES_PER_VIEW]?.pageNumber;
     if (!pageNum) return;
 
     // Find current chapter context
@@ -3106,8 +3134,8 @@ export default function Bhagwatham() {
     const currentChapter = chapterList.slice().reverse().find(ch => ch.pageNumber <= pageNum);
 
     // Capture the topmost-visible line on the page so we can scroll back to it
-    let lineAnchor: string | null = null;
-    try {
+    let lineAnchor: string | null = kindlePlace ? anchorFor(kindlePlace.text) : null;
+    if (!kindlePlace) try {
       const pageEl = document.querySelector(`[data-page-num="${pageNum}"]`);
       if (pageEl) {
         const topP = findTopmostVisibleParagraph(pageEl as HTMLElement);
@@ -3165,6 +3193,12 @@ export default function Bhagwatham() {
   const handleBookmarkJump = useCallback((b: BookmarkEntry) => {
     // Sidebar stays open — user must close manually via X or Escape
     setSearchQuery("");
+    if (kindleMode) {
+      // Kindle mode: Contents is a drawer over the page, so close it and turn to the line.
+      setSidebarOpen(false);
+      setKindlePending({ page: b.page_number, anchor: b.line_anchor });
+      return;
+    }
     const pageIdx = allPages.findIndex(p => p.pageNumber === b.page_number);
     if (pageIdx >= 0) {
       const viewPage = Math.floor(pageIdx / PAGES_PER_VIEW) + 1;
@@ -3208,7 +3242,7 @@ export default function Bhagwatham() {
       }, 250);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allPages]);
+  }, [allPages, kindleMode]);
 
   const handleIdentitySave = useCallback((id: string, name: string) => {
     localStorage.setItem("bhagwatham_reader_id", id);
@@ -3270,6 +3304,92 @@ export default function Bhagwatham() {
       })
     : visiblePages;
 
+  // ── Kindle mode ──────────────────────────────────────────────────────────
+  // The pager covers the window once there are pages to show; until then (and
+  // while a search is listing its results) the scrolling reader stays.
+  const kindleActive = kindleMode && !loading && !searchQuery.trim() && displayPages.length > 0;
+  const lastBookPage = allPages[allPages.length - 1]?.pageNumber ?? 0;
+
+  // Turn to the pending place once its page has loaded: first mount the set of
+  // pages it is in, then turn to the chapter heading, the line or the page.
+  const kindlePendingIdx = kindlePending ? allPages.findIndex(p => p.pageNumber >= kindlePending.page) : -1;
+  const kindlePendingView = kindlePendingIdx >= 0 ? Math.floor(kindlePendingIdx / PAGES_PER_VIEW) + 1 : null;
+  // The text stays hidden while a different set of pages is being mounted for
+  // the jump, so its first screen is never shown on the way to the right one.
+  const kindleCrossViewRef = useRef(false);
+  const kindleVeil = kindlePending != null && (kindlePendingView !== currentPage || kindleCrossViewRef.current);
+  useEffect(() => {
+    if (!kindleActive || !kindlePending) return;
+    if (kindlePendingIdx < 0 || kindlePendingView == null) {
+      // Not loaded yet. Once everything has loaded and it is still missing, stay put.
+      if (contentFullyLoaded.current) { kindleCrossViewRef.current = false; setKindlePending(null); }
+      return;
+    }
+    if (kindlePendingView !== currentPage) {
+      kindleCrossViewRef.current = true;
+      setCurrentPage(kindlePendingView);
+      return;
+    }
+    kindleCrossViewRef.current = false;
+    const pageEl = document.querySelector(`[data-page-num="${allPages[kindlePendingIdx].pageNumber}"]`);
+    const chapterEl = kindlePending.chapter != null ? document.getElementById(`chapter-${kindlePending.chapter}`) : null;
+    const lineEl = !chapterEl && pageEl && kindlePending.anchor
+      ? findAnchoredParagraph(pageEl.querySelectorAll("p"), kindlePending.anchor)
+      : null;
+    kindleRef.current?.showElement(chapterEl || lineEl || pageEl);
+    setKindlePending(null);
+  }, [kindleActive, kindlePending, kindlePendingIdx, kindlePendingView, currentPage, allPages]);
+
+  // The pager reports each screen it turns to: keep the page number, the
+  // chapter in the bar and the stored place in step with it.
+  const handleKindlePlace = useCallback((place: KindlePlace) => {
+    setVisiblePageNum(place.pageNumber);
+    const ch = chapterForPage(chapters, place.pageNumber);
+    if (ch) { setScrollChapter(ch.title); setActiveChapter(ch.globalNumber); }
+    // While a jump is still pending the screen showing is not the reader's place.
+    if (kindlePendingRef.current) return;
+    try {
+      localStorage.setItem(KINDLE_POSITION_KEY, serialisePosition(place.anchorPage ?? place.pageNumber, place.anchorText));
+    } catch { /* private mode: the place just won't be remembered */ }
+  }, [chapters]);
+
+  const enterKindle = () => {
+    // Open on the line being read in the scrolling reader.
+    const page = visiblePageNum || visiblePages[0]?.pageNumber || null;
+    let anchor: string | null = null;
+    try {
+      const pageEl = page ? document.querySelector(`[data-page-num="${page}"]`) : null;
+      if (pageEl) anchor = anchorFor(findTopmostVisibleParagraph(pageEl as HTMLElement)?.textContent);
+    } catch { /* no line: open at the top of the page */ }
+    setSearchQuery("");
+    setShowSettings(false);
+    setSidebarOpen(false);
+    setKindlePending(page ? { page, anchor } : null);
+    setKindleMode(true);
+    try { localStorage.setItem(KINDLE_MODE_KEY, "1"); } catch { /* private mode */ }
+  };
+
+  const exitKindle = () => {
+    const place = kindleRef.current?.anchor() ?? null;
+    const page = place?.pageNumber || visiblePageNum;
+    setKindleMode(false);
+    setKindlePending(null);
+    setShowSettings(false);
+    setSidebarOpen(window.innerWidth >= 1024);
+    try { localStorage.setItem(KINDLE_MODE_KEY, "0"); } catch { /* private mode */ }
+    if (!page) return;
+    // Once the scrolling reader is back on screen, return to the same line.
+    setTimeout(() => {
+      const pageEl = document.querySelector(`[data-page-num="${page}"]`);
+      const lineEl = pageEl && place?.text ? findAnchoredParagraph(pageEl.querySelectorAll("p"), place.text) : null;
+      (lineEl || pageEl)?.scrollIntoView({ block: "start" });
+    }, 120);
+  };
+  // The keydown listener below is bound once per page change; it calls through
+  // this ref so it always toggles with the current state.
+  const toggleKindleRef = useRef(() => {});
+  toggleKindleRef.current = kindleMode ? exitKindle : enterKindle;
+
   const triggerProcess = async () => {
     setIsProcessing(true);
     try {
@@ -3285,6 +3405,7 @@ export default function Bhagwatham() {
   };
 
   const goToPageNumber = (pageNum: number) => {
+    if (kindleMode) { setKindlePending({ page: pageNum }); return; }
     const pageIdx = allPages.findIndex(p => p.pageNumber >= pageNum);
     if (pageIdx >= 0) {
       const viewPage = Math.floor(pageIdx / PAGES_PER_VIEW) + 1;
@@ -3302,6 +3423,12 @@ export default function Bhagwatham() {
     // Sidebar stays open — user must close manually via X or Escape
     setSearchQuery("");
     setActiveChapter(ch.globalNumber);
+    if (kindleMode) {
+      // Kindle mode: Contents is a drawer over the page, so close it and turn to the chapter.
+      setSidebarOpen(false);
+      setKindlePending({ page: ch.pageNumber, chapter: ch.globalNumber });
+      return;
+    }
 
     // Find target page in loaded content
     const pageIdx = allPages.findIndex((p) => p.pageNumber >= ch.pageNumber);
@@ -3345,6 +3472,8 @@ export default function Bhagwatham() {
     const handler = (e: KeyboardEvent) => {
       // Don't trigger when typing in inputs
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      // Kindle mode turns a screen at a time: its pager owns the arrows, space and F.
+      if (kindleActive && kindleKeyAction(e.key, { shift: e.shiftKey, ctrl: e.ctrlKey, meta: e.metaKey, alt: e.altKey })) return;
 
       switch (e.key) {
         case "ArrowLeft":
@@ -3377,14 +3506,20 @@ export default function Bhagwatham() {
             saveBookmarkRef.current();
           }
           break;
+        case "k":
+          if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+            toggleKindleRef.current();
+          }
+          break;
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [currentPage, totalViewPages]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentPage, totalViewPages, kindleActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Scroll chapter tracking ────────────────────────────────────────────
   useEffect(() => {
+    if (kindleActive) return; // Kindle mode: the pager reports its place itself
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -3405,10 +3540,11 @@ export default function Bhagwatham() {
     const headings = document.querySelectorAll("[id^='chapter-']");
     headings.forEach(h => observer.observe(h));
     return () => observer.disconnect();
-  }, [displayPages, chapters]);
+  }, [displayPages, chapters, kindleActive]);
 
   // ── Scroll page tracking ──────────────────────────────────────────────
   useEffect(() => {
+    if (kindleActive) return; // Kindle mode: the pager reports its place itself
     const observer = new IntersectionObserver(
       (entries) => {
         // Pick the last intersecting entry (most recently scrolled into view)
@@ -3426,7 +3562,7 @@ export default function Bhagwatham() {
     const pageEls = document.querySelectorAll("[data-page-num]");
     pageEls.forEach(el => observer.observe(el));
     return () => observer.disconnect();
-  }, [displayPages]);
+  }, [displayPages, kindleActive]);
 
   // Theme
   const theme = THEME_STYLES[settings.theme];
@@ -3435,6 +3571,40 @@ export default function Bhagwatham() {
   const firstPageNum = visiblePages[0]?.pageNumber ?? (displayPages[0]?.pageNumber ?? 0);
   const lastPageNum = visiblePages[visiblePages.length - 1]?.pageNumber ?? (displayPages[displayPages.length - 1]?.pageNumber ?? 0);
   const currentVisiblePage = visiblePageNum || firstPageNum;
+
+  const kindleProps: KindlePagerProps | null = kindleActive ? {
+    viewKey: String(currentPage),
+    layoutKey: `${settings.fontSize}|${settings.lineHeight}|${settings.showPageNumbers}|${lang}`,
+    theme,
+    title: "श्रीमद्भागवतम्",
+    chapterTitle: scrollChapter,
+    veil: kindleVeil,
+    hasPrevView: currentPage > 1,
+    hasNextView: currentPage < totalViewPages,
+    onPrevView: () => setCurrentPage(p => Math.max(1, p - 1)),
+    onNextView: () => setCurrentPage(p => Math.min(totalViewPages, p + 1)),
+    onPlaceChange: handleKindlePlace,
+    pageNumber: currentVisiblePage || null,
+    pageIndex: Math.max(0, allPages.findIndex(p => p.pageNumber === currentVisiblePage)),
+    totalPages: allPages.length,
+    lastPageNumber: lastBookPage,
+    pageNumberAtIndex: (i: number) => allPages[i]?.pageNumber ?? null,
+    chapterPagesLeft: pagesLeftInChapter(chapters, currentVisiblePage || null, lastBookPage),
+    onJumpToIndex: (i: number) => { const p = allPages[i]; if (p) setKindlePending({ page: p.pageNumber }); },
+    onExit: exitKindle,
+    onOpenContents: () => setSidebarOpen(true),
+    onBookmark: saveBookmark,
+    bookmarkSaved,
+    langLabel: lang === "hi" ? "हि" : "EN",
+    onToggleLang: () => setLang(lang === "hi" ? "en" : "hi"),
+    settingsOpen: showSettings,
+    onToggleSettings: () => setShowSettings(v => !v),
+    settingsPanel: (
+      <AnimatePresence>
+        {showSettings && <ReadingSettingsPanel settings={settings} onChange={setSettings} onClose={() => setShowSettings(false)} />}
+      </AnimatePresence>
+    ),
+  } : null;
 
   return (
     <Layout>
@@ -3480,6 +3650,7 @@ export default function Bhagwatham() {
             setReaderName(null);
             setBookmarks([]);
           }}
+          drawer={kindleActive}
         />
 
         {/* ── Main content ── */}
@@ -3512,7 +3683,8 @@ export default function Bhagwatham() {
               </React.Suspense>
             );
           })()}
-          {/* Top bar */}
+          {/* Top bar — the scrolling reader's; Kindle mode draws its own */}
+          {!kindleActive && (
           <div className={`sticky top-14 z-30 ${theme.surface} backdrop-blur-sm border-b ${theme.border} px-2 sm:px-4 md:px-6 py-1.5 sm:py-2`}>
             <div className="max-w-3xl mx-auto flex items-center gap-1.5 sm:gap-2 md:gap-3">
               {/* Sidebar toggle (mobile) */}
@@ -3657,9 +3829,21 @@ export default function Bhagwatham() {
                 <Maximize2 className="w-4 h-4" />
               </button>
 
+              {/* Kindle mode — read a screen at a time, with page turns */}
+              <button
+                onClick={enterKindle}
+                className={`inline-flex items-center gap-1 px-1.5 sm:px-2 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold transition-all active:scale-95 shrink-0 hover:bg-stone-100 ${theme.muted} hover:text-orange-600`}
+                title="Kindle mode — turn pages instead of scrolling (K)"
+                aria-label="Kindle mode"
+              >
+                <BookOpenText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Kindle</span>
+              </button>
+
               {/* Process button removed — OCR runs automatically via cron */}
             </div>
           </div>
+          )}
 
           {/* Chapter context bar removed — info shown in top toolbar */}
 
@@ -3713,10 +3897,12 @@ export default function Bhagwatham() {
                 )}
               </div>
             ) : (
-              <div className="flex items-start">
-                {/* Step scroll indicator — sticky rail on the left */}
-                <StepScrollIndicator themeKey={settings.theme} />
-                <div className="flex-1 min-w-0">
+              <ReaderPagesFrame
+                ref={kindleRef}
+                kindle={kindleProps}
+                // Step scroll indicator — sticky rail on the left of the scrolling reader
+                rail={<StepScrollIndicator themeKey={settings.theme} />}
+              >
                 {displayPages.map((page, pageIdx) => {
                   // Determine the previous page's ending section kind for cross-page continuity
                   let prevPage = pageIdx > 0 ? displayPages[pageIdx - 1] : null;
@@ -3777,8 +3963,7 @@ export default function Bhagwatham() {
                   </div>
                   );
                 })}
-                </div>
-              </div>
+              </ReaderPagesFrame>
             )}
 
             {/* ── Pagination ── */}
@@ -4161,7 +4346,9 @@ export default function Bhagwatham() {
         )}
       </AnimatePresence>
 
-      {/* Floating bookmark FAB — saves the current line within the visible page */}
+      {/* Floating bookmark FAB — saves the current line within the visible page.
+          Kindle mode has its own bookmark button in its bar. */}
+      {!kindleActive && (
       <motion.button
         onClick={saveBookmark}
         whileHover={{ scale: 1.05 }}
@@ -4186,6 +4373,7 @@ export default function Bhagwatham() {
           </motion.span>
         )}
       </motion.button>
+      )}
 
       {/* Undo toast */}
       <AnimatePresence>
