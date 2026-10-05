@@ -329,6 +329,51 @@ export function pagesLeftInChapter(chapters: readonly ChapterStart[], pageNumber
 }
 
 /** "3 pages left in chapter" */
+// ── The chrome getting out of the way ────────────────────────────────────────
+//
+// While the reader is reading, the bars are furniture. They fade after a pause
+// and come back on the first sign of a reader: a tap, a key, a moved pointer.
+// They never fade while a menu is open — a panel with no bar above it is a
+// trap — nor while the reader is selecting words.
+
+/** How long the reader must be still before the bars fade. */
+export const IDLE_BEFORE_CHROME_HIDES_MS = 3000;
+
+export interface ChromeState {
+  /** Milliseconds since the reader last did anything. */
+  idleMs: number;
+  /** Settings, contents or any other panel is open. */
+  menuOpen?: boolean;
+  /** The reader is selecting text, so the toolbar is about to be wanted. */
+  selecting?: boolean;
+  /** The reader asked for the bars (tapped the middle of the page). */
+  pinned?: boolean;
+}
+
+/** Whether the bars should be out of the way right now. */
+export function shouldHideChrome(state: ChromeState): boolean {
+  if (!state || state.menuOpen || state.selecting || state.pinned) return false;
+  return state.idleMs >= IDLE_BEFORE_CHROME_HIDES_MS;
+}
+
+// ── How much reading is left ─────────────────────────────────────────────────
+
+/** Words a minute, for the "time left" estimate. Deliberately conservative. */
+export const READING_WORDS_PER_MINUTE = 160;
+
+/**
+ * "~4 min left in chapter", or "" when there is nothing worth saying. The tilde
+ * is not decoration: this is an estimate from a word count, not a measurement of
+ * how any one person reads.
+ */
+export function minutesLeftLabel(wordsLeft: number | null | undefined, wordsPerMinute = READING_WORDS_PER_MINUTE): string {
+  if (typeof wordsLeft !== "number" || !Number.isFinite(wordsLeft) || wordsLeft <= 0) return "";
+  if (!(wordsPerMinute > 0)) return "";
+  const minutes = Math.round(wordsLeft / wordsPerMinute);
+  if (minutes <= 0) return "under a minute left in chapter";
+  return minutes === 1 ? "~1 min left in chapter" : `~${minutes} min left in chapter`;
+}
+
 export function chapterLeftLabel(pagesLeft: number | null): string {
   if (pagesLeft == null) return "";
   if (pagesLeft <= 0) return "Last page of the chapter";

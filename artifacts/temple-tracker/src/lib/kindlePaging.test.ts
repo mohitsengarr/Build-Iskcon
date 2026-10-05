@@ -12,10 +12,62 @@ import {
   kindlePositionKey,
   KINDLE_MODE_KEY,
   KINDLE_POSITION_KEY,
-  KINDLE_COLUMNS_KEY,} from "./kindlePaging";
+  KINDLE_COLUMNS_KEY,
+  IDLE_BEFORE_CHROME_HIDES_MS,
+  shouldHideChrome,
+  minutesLeftLabel,
+  READING_WORDS_PER_MINUTE,} from "./kindlePaging";
 
 // Kindle mode reads the book a screen at a time. The browser lays the text out
 // in columns; these are the sums around that layout.
+
+describe("shouldHideChrome", () => {
+  it("fades the bars once the reader has been still", () => {
+    expect(shouldHideChrome({ idleMs: IDLE_BEFORE_CHROME_HIDES_MS })).toBe(true);
+    expect(shouldHideChrome({ idleMs: IDLE_BEFORE_CHROME_HIDES_MS + 5000 })).toBe(true);
+  });
+
+  it("keeps them while the reader is still doing something", () => {
+    expect(shouldHideChrome({ idleMs: 0 })).toBe(false);
+    expect(shouldHideChrome({ idleMs: IDLE_BEFORE_CHROME_HIDES_MS - 1 })).toBe(false);
+  });
+
+  it("never fades them out from under an open menu", () => {
+    expect(shouldHideChrome({ idleMs: 60_000, menuOpen: true })).toBe(false);
+  });
+
+  it("never fades them while the reader is selecting words", () => {
+    expect(shouldHideChrome({ idleMs: 60_000, selecting: true })).toBe(false);
+  });
+
+  it("keeps them when the reader asked for them", () => {
+    expect(shouldHideChrome({ idleMs: 60_000, pinned: true })).toBe(false);
+  });
+
+  it("survives rubbish state", () => {
+    expect(shouldHideChrome(undefined as unknown as { idleMs: number })).toBe(false);
+  });
+});
+
+describe("minutesLeftLabel", () => {
+  it("turns the words left into a reading time", () => {
+    expect(minutesLeftLabel(READING_WORDS_PER_MINUTE * 4)).toBe("~4 min left in chapter");
+    expect(minutesLeftLabel(READING_WORDS_PER_MINUTE)).toBe("~1 min left in chapter");
+  });
+
+  it("says plainly when there is less than a minute", () => {
+    expect(minutesLeftLabel(20)).toBe("under a minute left in chapter");
+  });
+
+  it("says nothing when there is nothing to say", () => {
+    for (const n of [0, -5, null, undefined, Number.NaN]) expect(minutesLeftLabel(n as number)).toBe("");
+  });
+
+  it("takes a different reading speed", () => {
+    expect(minutesLeftLabel(600, 300)).toBe("~2 min left in chapter");
+    expect(minutesLeftLabel(600, 0)).toBe("");
+  });
+});
 
 describe("per-book storage keys", () => {
   it("gives each book its own mode and place", () => {

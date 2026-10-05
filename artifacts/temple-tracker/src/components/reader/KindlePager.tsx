@@ -7,6 +7,7 @@ import {
   KINDLE_COLUMNS_KEY, TWO_COLUMN_FLOOR_WIDTH,
   anchorIndex, chapterLeftLabel, clampScreen, columnCount, columnOfOffset, isTap, kindleKeyAction,
   nextColumnPreference, pageArea, pageAtScreen, parseColumnPreference, percentRead, progressLabel,
+  IDLE_BEFORE_CHROME_HIDES_MS, minutesLeftLabel, shouldHideChrome,
   screenAfterForeignScroll, screenCount, screenOfColumn, screenOffsetPx, swipeDirection, tapZone, turn,
   type ColumnPreference, type PageArea, type PageStart,
 } from "@/lib/kindlePaging";
@@ -69,6 +70,8 @@ export interface KindlePagerProps {
   lastPageNumber: number;
   pageNumberAtIndex: (index: number) => number | null;
   chapterPagesLeft: number | null;
+  /** Words left in the chapter, for the reading-time estimate. */
+  chapterWordsLeft?: number | null;
   onJumpToIndex: (index: number) => void;
 
   onExit: () => void;
@@ -118,7 +121,7 @@ export const KindlePager = forwardRef<KindlePagerHandle, KindlePagerProps & { ch
   const {
     children, viewKey, layoutKey, theme, title, chapterTitle, veil,
     hasPrevView, hasNextView, onPrevView, onNextView, onPlaceChange,
-    pageNumber, pageIndex, totalPages, lastPageNumber, pageNumberAtIndex, chapterPagesLeft, onJumpToIndex,
+    pageNumber, pageIndex, totalPages, lastPageNumber, pageNumberAtIndex, chapterPagesLeft, chapterWordsLeft, onJumpToIndex,
     onExit, onOpenContents, onBookmark, bookmarkSaved, langLabel, onToggleLang,
     settingsOpen, onToggleSettings, settingsPanel,
   } = props;
@@ -133,6 +136,10 @@ export const KindlePager = forwardRef<KindlePagerHandle, KindlePagerProps & { ch
   const [screen, setScreen] = useState(0);
   const [screens, setScreens] = useState(1);
   const [fullscreen, setFullscreen] = useState(false);
+  // The bars are furniture while the reader is reading: they fade after a pause
+  // and return on the first sign of a reader (lib/kindlePaging shouldHideChrome).
+  const [chromeHidden, setChromeHidden] = useState(false);
+  const [chromePinned, setChromePinned] = useState(false);
   const [, setJumps] = useState(0);
 
   // What the event handlers and the imperative handle read: always the latest.
@@ -160,6 +167,33 @@ export const KindlePager = forwardRef<KindlePagerHandle, KindlePagerProps & { ch
   areaStateRef.current = area;
   screenRef.current = screen;
   screensRef.current = screens;
+
+  // Any sign of a reader wakes the bars; stillness puts them away again. A
+  // selection is the reader reaching for the toolbar, so the bars stay then.
+  useEffect(() => {
+    let idleSince = Date.now();
+    const selecting = () => !!window.getSelection()?.toString().trim();
+    const tick = () => {
+      setChromeHidden(shouldHideChrome({
+        idleMs: Date.now() - idleSince,
+        menuOpen: settingsOpen,
+        selecting: selecting(),
+        pinned: chromePinned,
+      }));
+    };
+    const wake = () => { idleSince = Date.now(); tick(); };
+    const id = window.setInterval(tick, 500);
+    for (const ev of ["pointermove", "pointerdown", "keydown", "wheel", "touchstart"]) {
+      window.addEventListener(ev, wake, { passive: true });
+    }
+    wake();
+    return () => {
+      window.clearInterval(id);
+      for (const ev of ["pointermove", "pointerdown", "keydown", "wheel", "touchstart"]) {
+        window.removeEventListener(ev, wake);
+      }
+    };
+  }, [settingsOpen, chromePinned]);
 
   // ── Take over the window while Kindle mode is open ─────────────────────────
   // The site's top bar and the mobile donate bar sit above the page content;
@@ -427,6 +461,9 @@ export const KindlePager = forwardRef<KindlePagerHandle, KindlePagerProps & { ch
     const zone = tapZone(end.clientX - rect.left, rect.width);
     if (zone === "next") go(1);
     else if (zone === "prev") go(-1);
+    // A tap in the middle is the reader asking for the bars — and asking again
+    // to be left alone with the page.
+    else setChromePinned(v => !v);
   };
 
   // ── The slider ─────────────────────────────────────────────────────────────
@@ -458,7 +495,10 @@ export const KindlePager = forwardRef<KindlePagerHandle, KindlePagerProps & { ch
       <style>{FLOW_CSS}</style>
 
       {/* Top bar */}
-      <div className={`relative z-20 flex items-center gap-0.5 sm:gap-1 h-11 px-1.5 sm:px-3 border-b ${theme.border} shrink-0 text-xs leading-normal`}>
+      <div
+        className={`relative z-20 flex items-center gap-0.5 sm:gap-1 h-11 px-1.5 sm:px-3 border-b ${theme.border} shrink-0 text-xs leading-normal transition-opacity duration-500 ${chromeHidden ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+        aria-hidden={chromeHidden}
+      >
         <button onClick={onExit} className={BAR_BUTTON} title="Back to the scrolling reader (K)" aria-label="Leave Kindle mode">
           <X className="w-4 h-4" />
           <span className="hidden sm:inline pr-1">Close</span>
@@ -534,7 +574,10 @@ export const KindlePager = forwardRef<KindlePagerHandle, KindlePagerProps & { ch
       </div>
 
       {/* Progress */}
-      <div className={`relative z-20 shrink-0 border-t ${theme.border} px-3 sm:px-6 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[11px] leading-normal`}>
+      <div
+        className={`relative z-20 shrink-0 border-t ${theme.border} px-3 sm:px-6 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[11px] leading-normal transition-opacity duration-500 ${chromeHidden ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+        aria-hidden={chromeHidden}
+      >
         <input
           type="range"
           min={0}
@@ -554,7 +597,7 @@ export const KindlePager = forwardRef<KindlePagerHandle, KindlePagerProps & { ch
           <span className="text-center tabular-nums">
             {progressLabel(shownPage, lastPageNumber, percentRead(shownIndex, totalPages))}
           </span>
-          <span className="hidden sm:block" />
+          <span className="hidden sm:block truncate text-right">{minutesLeftLabel(chapterWordsLeft)}</span>
         </div>
       </div>
     </div>

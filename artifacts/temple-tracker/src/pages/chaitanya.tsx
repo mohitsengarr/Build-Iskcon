@@ -22,6 +22,8 @@ import { describeFailure } from "@/lib/requestError";
 import { isStandalonePageNumber, stripRunningHead } from "@/lib/runningHead";
 import { continuesGloss } from "@/lib/glossTail";
 import { DEFAULT_TYPOGRAPHY, proseStyle, type ReadingFace } from "@/lib/readerTypography";
+import { findWhenReady } from "@/lib/awaitElement";
+import { fetchProgress as fetchTravelledPlace, resumeLabel, saveProgress, worthOffering, worthSaving, type ReaderPlace } from "@/lib/readerProgress";
 import { applyTextCorrections } from "@/lib/bhagwatham-config";
 import { numberedVerseHeadLength, openVerseTailLength } from "@/lib/bhagwatham-utils";
 import {
@@ -2087,6 +2089,11 @@ export default function Chaitanya() {
       return loadKindleMode() ? parseStoredPosition(localStorage.getItem(kindlePositionKey(BOOK_KEY))) : null;
     } catch { return null; }
   });
+  // The place this reader reached on whichever device they were last using. It
+  // is offered, never imposed: an auto-resume fights with wherever the reader
+  // has just scrolled to, which is why this reader stopped doing that.
+  const [travelledPlace, setTravelledPlace] = useState<ReaderPlace | null>(null);
+  const savedPlaceRef = useRef<ReaderPlace | null>(null);
   const kindlePendingRef = useRef(kindlePending);
   kindlePendingRef.current = kindlePending;
   // Highlights and notes on the text (components/reader/ReaderHighlights). Kept on this device.
@@ -2447,8 +2454,9 @@ export default function Chaitanya() {
         setActiveChapter(ch.globalNumber);
         setScrollChapter(ch.title);
       }
-      setTimeout(() => {
-        const pageEl = document.querySelector(`[data-page-num="${b.page_number}"]`);
+      // The page may still be mounting: choosing a view re-renders first, so a
+      // single timeout looked for it too early and the reader stayed put.
+      void findWhenReady(() => document.querySelector(`[data-page-num="${b.page_number}"]`)).then(pageEl => {
         if (!pageEl) { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
 
         if (b.line_anchor && b.line_anchor.length > 4) {
@@ -2472,10 +2480,25 @@ export default function Chaitanya() {
           }
         }
         pageEl.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 250);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allPages, chapters, kindleMode]);
+
+  // What this reader reached on another device. Asked for once the reader is
+  // known and the book has pages to compare against.
+  useEffect(() => {
+    if (!readerId || allPages.length === 0 || savedPlaceRef.current) return;
+    let cancelled = false;
+    void fetchTravelledPlace(BOOK_KEY, readerId).then(stored => {
+      if (cancelled || !stored) return;
+      savedPlaceRef.current = stored;
+      const here = visiblePageNum ?? allPages[0]?.pageNumber ?? null;
+      if (worthOffering(stored, here)) setTravelledPlace(stored);
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readerId, allPages.length]);
 
   const handleIdentitySave = useCallback((id: string, name: string) => {
     localStorage.setItem(`${BOOK_KEY}_reader_id`, id);
@@ -2566,7 +2589,17 @@ export default function Chaitanya() {
     try {
       localStorage.setItem(kindlePositionKey(BOOK_KEY), serialisePosition(place.anchorPage ?? place.pageNumber, place.anchorText));
     } catch { /* private mode: the place just won't be remembered */ }
-  }, [chapters]);
+    // The travelling copy, so the place is waiting on the reader's other device.
+    const travelling: ReaderPlace = {
+      pageNumber: place.anchorPage ?? place.pageNumber,
+      lineAnchor: place.anchorText ?? null,
+      percent: null,
+    };
+    if (readerId && worthSaving(travelling, savedPlaceRef.current)) {
+      savedPlaceRef.current = travelling;
+      void saveProgress(BOOK_KEY, readerId, travelling);
+    }
+  }, [chapters, readerId]);
 
   // If the pager is ever mounted afresh with nowhere to go, it returns to the
   // remembered place rather than staying on the first screen it opened on.
@@ -3433,6 +3466,29 @@ export default function Chaitanya() {
           </motion.span>
         )}
       </motion.button>
+      )}
+      {/* The place this reader reached elsewhere. Offered once, never imposed. */}
+      {travelledPlace && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 rounded-full bg-stone-900/95 text-white shadow-2xl pl-4 pr-1.5 py-1.5 text-xs">
+          <span className="font-semibold">{resumeLabel(travelledPlace)}</span>
+          <button
+            onClick={() => {
+              const place = travelledPlace;
+              setTravelledPlace(null);
+              if (place) handleBookmarkJump({ page_number: place.pageNumber, line_anchor: place.lineAnchor ?? null });
+            }}
+            className="rounded-full bg-white/15 hover:bg-white/25 px-3 py-1 font-semibold transition-colors"
+          >
+            Take me there
+          </button>
+          <button
+            onClick={() => setTravelledPlace(null)}
+            className="rounded-full hover:bg-white/15 p-1.5 transition-colors"
+            aria-label="Stay where I am"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
       )}
     </Layout>
   );
