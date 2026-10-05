@@ -8,10 +8,39 @@ import {
   screenAfterForeignScroll, screenCount, screenOfColumn, screenOffsetPx, serialisePosition, swipeDirection,
   tapZone, turn,
   type PageStart,
-} from "./kindlePaging";
+  kindleModeKey,
+  kindlePositionKey,
+  KINDLE_MODE_KEY,
+  KINDLE_POSITION_KEY,
+  KINDLE_COLUMNS_KEY,} from "./kindlePaging";
 
 // Kindle mode reads the book a screen at a time. The browser lays the text out
 // in columns; these are the sums around that layout.
+
+describe("per-book storage keys", () => {
+  it("gives each book its own mode and place", () => {
+    expect(kindleModeKey("gita")).toBe("gita_kindle_mode");
+    expect(kindlePositionKey("gita")).toBe("gita_kindle_position");
+    expect(kindleModeKey("chaitanya")).toBe("chaitanya_kindle_mode");
+    expect(kindlePositionKey("chaitanya")).toBe("chaitanya_kindle_position");
+  });
+
+  it("keeps the Bhagavatam's original spelling, so its readers keep the mode they had on", () => {
+    expect(kindleModeKey("bhagavatam")).toBe("bhagwatham_kindle_mode");
+    expect(kindlePositionKey("bhagavatam")).toBe("bhagwatham_kindle_position");
+    expect(KINDLE_MODE_KEY).toBe("bhagwatham_kindle_mode");
+    expect(KINDLE_POSITION_KEY).toBe("bhagwatham_kindle_position");
+  });
+
+  it("never returns a bare key for a missing book", () => {
+    expect(kindleModeKey("")).toBe("reader_kindle_mode");
+    expect(kindlePositionKey(undefined as unknown as string)).toBe("reader_kindle_position");
+  });
+
+  it("keeps one column choice for every book: it is a display preference", () => {
+    expect(KINDLE_COLUMNS_KEY).toBe("bhagwatham_kindle_columns");
+  });
+});
 
 describe("what the reader chose, as stored in the browser", () => {
   it("Kindle mode is on only for the stored \"1\"", () => {

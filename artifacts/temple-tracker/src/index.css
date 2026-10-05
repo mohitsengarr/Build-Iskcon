@@ -37,6 +37,8 @@
   --font-serif: 'Noto Serif', serif;
   --font-sanskrit: 'Tiro Devanagari Sanskrit', 'Noto Serif', serif;
   --font-devanagari: 'Noto Sans Devanagari', 'Inter', sans-serif;
+  /* The reading face for prose when the reader asks for a book look. */
+  --font-devanagari-serif: 'Noto Serif Devanagari', 'Noto Serif', serif;
   /* Chaitanya-charitamrta prints each verse in Bengali before the Devanagari. */
   --font-bengali: 'Noto Serif Bengali', 'Noto Serif', serif;
 

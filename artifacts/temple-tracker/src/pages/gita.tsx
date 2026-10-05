@@ -10,9 +10,18 @@ import { numberedVerseHeadLength, openVerseTailLength } from "@/lib/bhagwatham-u
 import { renderInlineBoldBlock } from "@/lib/inlineBold";
 import { normalizeBoldKey, normalizeDashKey } from "@/lib/readerText";
 import { continuesGloss } from "@/lib/glossTail";
+import { DEFAULT_TYPOGRAPHY, proseStyle, type ReadingFace } from "@/lib/readerTypography";
 import { VoiceEditToolbar } from "@/components/reader/VoiceEditToolbar";
+import { ReaderPagesFrame, type KindlePagerHandle, type KindlePagerProps, type KindlePlace } from "@/components/reader/KindlePager";
+import { WordLookupCard } from "@/components/reader/WordLookupCard";
+import { HighlightLayer, HighlightsPanel, useReaderHighlights } from "@/components/reader/ReaderHighlights";
+import type { ReaderHighlight } from "@/lib/readerHighlights";
 import {
-  BookOpen, ChevronLeft, ChevronRight, Loader2,
+  chapterForPage, kindleKeyAction, kindleModeKey, kindlePositionKey, pagesLeftInChapter,
+  parseKindleMode, parseStoredPosition, serialisePosition,
+} from "@/lib/kindlePaging";
+import {
+  BookOpen, BookOpenText, ChevronLeft, ChevronRight, Loader2,
   Search, BookMarked, List, X, ChevronDown,
   Languages, Bookmark, Trash2, LogIn,
   Settings, Sun, Moon, Minus, Plus, Maximize2, ImagePlus, Check,
@@ -27,9 +36,16 @@ interface ReadingSettings {
   lineHeight: number;
   maxWidth: number;
   theme: Theme;
+  /** The face the prose is set in; verses keep their own Sanskrit face. */
+  face: ReadingFace;
+  /** Prose justified to both margins, as a book sets it. */
+  justify: boolean;
 }
 
-const DEFAULT_SETTINGS: ReadingSettings = { fontSize: 15, lineHeight: 1.8, maxWidth: 768, theme: "light" };
+const DEFAULT_SETTINGS: ReadingSettings = {
+  fontSize: 15, lineHeight: 1.8, maxWidth: 768, theme: "light",
+  face: DEFAULT_TYPOGRAPHY.face, justify: DEFAULT_TYPOGRAPHY.justify,
+};
 
 function loadSettings(): ReadingSettings {
   try {
@@ -47,6 +63,16 @@ const THEME_STYLES: Record<Theme, { bg: string; text: string; surface: string; b
   dark: { bg: "bg-[#1a1a1a]", text: "text-stone-200", surface: "bg-[#1a1a1a]/95", border: "border-stone-700", muted: "text-stone-400", accent: "text-orange-400" },
   sepia: { bg: "bg-[#f4ecd8]", text: "text-[#5b4636]", surface: "bg-[#f4ecd8]/95", border: "border-[#d4c5a9]", muted: "text-[#8b7355]", accent: "text-orange-700" },
 };
+
+// Each book remembers its own Kindle mode and its own place, so the Gita's keys
+// are its own and not the Bhagavatam's.
+const GITA_KINDLE_MODE_KEY = kindleModeKey("gita");
+const GITA_KINDLE_POSITION_KEY = kindlePositionKey("gita");
+
+/** Whether the reader left Kindle mode on (see components/reader/KindlePager). */
+function loadKindleMode(): boolean {
+  try { return parseKindleMode(localStorage.getItem(GITA_KINDLE_MODE_KEY)); } catch { return false; }
+}
 
 // ── Reading Settings Panel ──────────────────────────────────────────────────
 
@@ -112,6 +138,37 @@ function ReadingSettingsPanel({ settings, onChange, onClose }: {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* How the prose is set */}
+      <div className="mb-3">
+        <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5 block">Reading Face</label>
+        <div className="flex gap-1.5">
+          {([["serif", "Book"], ["sans", "Screen"]] as const).map(([f, label]) => (
+            <button key={f} onClick={() => update({ face: f })}
+              className={`flex-1 py-1.5 rounded-lg text-[10px] font-semibold border transition-all ${
+                settings.face === f ? "bg-orange-100 border-orange-300 text-orange-700" : "border-stone-200 text-stone-500 hover:bg-stone-50"
+              }`}
+              style={{ fontFamily: f === "serif" ? "var(--font-devanagari-serif)" : "var(--font-devanagari)" }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-3">
+        <button
+          onClick={() => update({ justify: !settings.justify })}
+          className={`w-full flex items-center justify-between py-2 px-3 rounded-lg text-[11px] font-semibold border transition-all ${
+            settings.justify ? "bg-orange-100 border-orange-300 text-orange-700" : "border-stone-200 text-stone-500 hover:bg-stone-50"
+          }`}
+        >
+          <span>{settings.justify ? "Justified" : "Ragged right"}</span>
+          <span className={`relative inline-block w-8 h-4 rounded-full transition-colors ${settings.justify ? "bg-orange-400" : "bg-stone-300"}`}>
+            <span className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all ${settings.justify ? "left-4" : "left-0.5"}`} />
+          </span>
+        </button>
       </div>
 
       {/* Theme */}
@@ -528,10 +585,13 @@ function placeSceneArt<T extends { key: string }>(sectionTexts: string[], art: T
   return placed;
 }
 
-function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind, nextPageStartsNumberedShlok, nextPageVerseHeadLines, unboldLines, sceneArt }: {
-  text: string; textEn?: string; lang: "hi" | "en"; themeKey?: Theme; prevPageEndKind?: string;
+function RenderContent({ text, textEn, lang, themeKey = "light", prose, prevPageEndKind, nextPageStartsNumberedShlok, nextPageVerseHeadLines, unboldLines, sceneArt }: {
+  text: string; textEn?: string; lang: "hi" | "en"; themeKey?: Theme; prose?: ReturnType<typeof proseStyle>; prevPageEndKind?: string;
   nextPageStartsNumberedShlok?: boolean; nextPageVerseHeadLines?: number; unboldLines?: Set<string>; sceneArt?: SceneArt[];
 }) {
+  // The translation, the purport and plain prose are set the way the reader asked;
+  // verses and word-meanings keep their own faces and alignment.
+  const proseCss = prose ?? proseStyle();
   const t = THEME_STYLES[themeKey];
 
   // English mode
@@ -544,7 +604,7 @@ function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind
     return (
       <div className="space-y-4">
         {enLines.map((l, i) => (
-          <p key={i} className={`leading-[1.8] ${t.text} mb-1`}>{l}</p>
+          <p key={i} className={`leading-[1.8] ${t.text} mb-1`} style={{ textAlign: proseCss.textAlign }}>{l}</p>
         ))}
       </div>
     );
@@ -859,7 +919,7 @@ function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind
             return (
               <div key={i} data-section-type="anuvad" className={isContinuation ? "" : "mt-3"}>
                 {showLabel && <p className={`font-bold mb-1 indent-8 ${themeKey === "dark" ? "text-stone-200" : "text-stone-800"}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>अनुवाद :</p>}
-                <p className={`font-bold leading-[2] mb-1 ${isContinuation ? "" : "indent-8"} ${themeKey === "dark" ? "text-stone-100" : "text-stone-900"}`} style={{ fontSize: "1em", fontFamily: "var(--font-devanagari)" }}>
+                <p className={`font-bold leading-[2] mb-1 ${isContinuation ? "" : "indent-8"} ${themeKey === "dark" ? "text-stone-100" : "text-stone-900"}`} style={{ fontSize: "1em", ...proseCss }}>
                   {renderedAnuvad}
                 </p>
               </div>
@@ -876,7 +936,7 @@ function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind
             const showTatparyaLabel = !isContinuation && (i === 0 || sections[i - 1].kind !== "tatparya");
             return (
               <div key={i} data-section-type="tatparya" className={isContinuation ? "" : "mt-4"}>
-                <p className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>
+                <p className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", ...proseCss }}>
                   {showTatparyaLabel && <><span className="font-bold">तात्पर्य :</span>{" "}</>}
                   {renderedTatparya}
                 </p>
@@ -888,7 +948,7 @@ function RenderContent({ text, textEn, lang, themeKey = "light", prevPageEndKind
             const renderedText = renderInlineBoldBlock([sec.lines.join(" ")])[0];
             return (
               <div key={i} data-section-type="text">
-                <p className={`leading-[1.8] ${t.text} mb-1`} style={{ fontSize: "1em" }}>{renderedText}</p>
+                <p className={`leading-[1.8] ${t.text} mb-1`} style={{ fontSize: "1em", ...proseCss }}>{renderedText}</p>
               </div>
             );
           }
@@ -923,6 +983,10 @@ function GitaSidebar({
   bookmarks,
   onBookmarkJump,
   onBookmarkDelete,
+  drawer = false,
+  highlights,
+  onHighlightJump,
+  onHighlightRemove,
 }: {
   chapters: ChapterEntry[];
   activeChapter: number | null;
@@ -933,8 +997,14 @@ function GitaSidebar({
   bookmarks: BookmarkEntry[];
   onBookmarkJump: (b: BookmarkEntry) => void;
   onBookmarkDelete: (b: BookmarkEntry) => void;
+  /** Kindle mode covers the window, so Contents slides over it at every width instead of sitting beside the text. */
+  drawer?: boolean;
+  /** The reader's highlights and notes (kept on this device), listed under the Notes tab. */
+  highlights: ReaderHighlight[];
+  onHighlightJump: (h: ReaderHighlight) => void;
+  onHighlightRemove: (id: string) => void;
 }) {
-  const [sidebarTab, setSidebarTab] = useState<"chapters" | "bookmarks">("chapters");
+  const [sidebarTab, setSidebarTab] = useState<"chapters" | "bookmarks" | "highlights">("chapters");
   const percent = progress && progress.totalPagesInPdf > 0
     ? (progress.totalPagesProcessed / progress.totalPagesInPdf) * 100 : 0;
 
@@ -945,7 +1015,7 @@ function GitaSidebar({
         {isOpen && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+            className={`fixed inset-0 bg-black/40 ${drawer ? "z-[48]" : "z-40 lg:hidden"}`}
             onClick={onClose}
           />
         )}
@@ -954,30 +1024,42 @@ function GitaSidebar({
       <aside className={`
         fixed top-0 left-0 h-full w-72 bg-white border-r border-stone-200 z-50
         transform transition-transform duration-300 ease-in-out overflow-y-auto
-        lg:sticky lg:top-20 lg:h-[calc(100vh-5rem)] lg:transform-none lg:z-0
-        ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+        ${drawer ? "" : "lg:sticky lg:top-20 lg:h-[calc(100vh-5rem)] lg:transform-none lg:z-0"}
+        ${isOpen ? "translate-x-0" : drawer ? "-translate-x-full" : "-translate-x-full lg:translate-x-0"}
       `}>
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-stone-100 z-10">
-          <div className="px-4 py-2.5 flex items-center justify-between">
-            <div className="flex items-center gap-1 bg-stone-100 rounded-lg p-0.5">
+          <div className="px-2.5 py-2.5 flex items-center justify-between gap-1">
+            {/* Three tabs in an 18rem sidebar: the padding is tight and the icons
+                give way to the labels on the two that carry a count. */}
+            <div className="flex items-center gap-0.5 bg-stone-100 rounded-lg p-0.5 min-w-0">
               <button
                 onClick={() => setSidebarTab("chapters")}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${sidebarTab === "chapters" ? "bg-white text-orange-700 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
+                className={`px-1.5 py-1.5 rounded-md text-xs font-semibold transition-all ${sidebarTab === "chapters" ? "bg-white text-orange-700 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
               >
-                <span className="flex items-center gap-1.5"><BookMarked className="w-3.5 h-3.5" /> Chapters</span>
+                <span className="flex items-center gap-1"><BookMarked className="w-3.5 h-3.5" /> Chapters</span>
               </button>
               <button
                 onClick={() => setSidebarTab("bookmarks")}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${sidebarTab === "bookmarks" ? "bg-white text-orange-700 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
+                className={`px-1.5 py-1.5 rounded-md text-xs font-semibold transition-all ${sidebarTab === "bookmarks" ? "bg-white text-orange-700 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
               >
-                <span className="flex items-center gap-1.5">
-                  <Bookmark className="w-3.5 h-3.5" /> Bookmarks
+                <span className="flex items-center gap-1">
+                  Bookmarks
                   {bookmarks.length > 0 && <span className="bg-orange-500 text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center">{bookmarks.length}</span>}
                 </span>
               </button>
+              <button
+                onClick={() => setSidebarTab("highlights")}
+                title="Highlights and notes"
+                className={`px-1.5 py-1.5 rounded-md text-xs font-semibold transition-all ${sidebarTab === "highlights" ? "bg-white text-orange-700 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
+              >
+                <span className="flex items-center gap-1">
+                  Notes
+                  {highlights.length > 0 && <span className="bg-orange-500 text-white text-[9px] rounded-full min-w-4 h-4 px-1 flex items-center justify-center">{highlights.length}</span>}
+                </span>
+              </button>
             </div>
-            <button onClick={onClose} className="lg:hidden p-1 hover:bg-stone-100 rounded">
+            <button onClick={onClose} className={`${drawer ? "" : "lg:hidden"} p-1 hover:bg-stone-100 rounded`}>
               <X className="w-4 h-4 text-stone-500" />
             </button>
           </div>
@@ -997,7 +1079,9 @@ function GitaSidebar({
         )}
 
         {/* Tab content */}
-        {sidebarTab === "bookmarks" ? (
+        {sidebarTab === "highlights" ? (
+          <HighlightsPanel items={highlights} onJump={onHighlightJump} onRemove={onHighlightRemove} />
+        ) : sidebarTab === "bookmarks" ? (
           <div className="py-3 px-2">
             {bookmarks.length === 0 ? (
               <div className="px-4 py-6 text-center">
@@ -1101,7 +1185,8 @@ export default function GitaReader() {
   const [loadingMore, setLoadingMore] = useState(false);
   const batchCacheRef = useRef<Map<number, PageContent[]>>(new Map());
   const [searchQuery, setSearchQuery] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Kindle mode covers the window and Contents slides over it, so it starts closed there.
+  const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1024 && !loadKindleMode());
   const [activeChapter, setActiveChapter] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [lang, setLang] = useState<"hi" | "en">("hi");
@@ -1115,6 +1200,20 @@ export default function GitaReader() {
   const [scrollChapter, setScrollChapter] = useState<string | null>(null);
   const [visiblePageNum, setVisiblePageNum] = useState<number | null>(null);
   const [focusMode, setFocusMode] = useState(false);
+  // ── Kindle mode: the book a screen at a time (components/reader/KindlePager) ──
+  const [kindleMode, setKindleMode] = useState<boolean>(loadKindleMode);
+  const kindleRef = useRef<KindlePagerHandle>(null);
+  // The place Kindle mode still has to turn to. On a reload it is where the
+  // reader stopped; later it is a chapter, a bookmark or the progress slider.
+  const [kindlePending, setKindlePending] = useState<{ page: number; chapter?: number; anchor?: string | null } | null>(() => {
+    try {
+      return loadKindleMode() ? parseStoredPosition(localStorage.getItem(GITA_KINDLE_POSITION_KEY)) : null;
+    } catch { return null; }
+  });
+  const kindlePendingRef = useRef(kindlePending);
+  kindlePendingRef.current = kindlePending;
+  // Highlights and notes on the text (components/reader/ReaderHighlights). Kept on this device.
+  const highlights = useReaderHighlights("gita");
   const PAGES_PER_VIEW = 20;
   const contentRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -1210,15 +1309,17 @@ export default function GitaReader() {
 
   const saveBookmark = useCallback(async () => {
     if (!readerId) { setShowIdentityModal(true); return; }
-    const pageNum = visiblePageNum || allPages[(currentPage - 1) * PAGES_PER_VIEW]?.pageNumber;
+    // Kindle mode: the line at the top of the screen and the page that line is on.
+    const kindlePlace = kindleRef.current?.anchor() ?? null;
+    const pageNum = kindlePlace?.pageNumber || visiblePageNum || allPages[(currentPage - 1) * PAGES_PER_VIEW]?.pageNumber;
     if (!pageNum) return;
     const chapterList = buildChapterIndex(allPages);
     const currentChapter = chapterList.slice().reverse().find(ch => ch.pageNumber <= pageNum);
 
     // Capture the topmost visible line so the bookmark comes back to the line,
     // not just the page — the Bhagavatam and Chaitanya readers both do this.
-    let lineAnchor: string | null = null;
-    try {
+    let lineAnchor: string | null = kindlePlace ? anchorFor(kindlePlace.text) : null;
+    if (!kindlePlace) try {
       const pageEl = document.querySelector(`[data-page-num="${pageNum}"]`);
       if (pageEl) lineAnchor = anchorFor(findTopmostVisible([...pageEl.querySelectorAll("p")])?.textContent);
     } catch { /* fallback: no anchor */ }
@@ -1258,9 +1359,14 @@ export default function GitaReader() {
     } catch { /* ignore */ }
   }, [readerId]);
 
-  const handleBookmarkJump = useCallback((b: BookmarkEntry) => {
+  const handleBookmarkJump = useCallback((b: Pick<BookmarkEntry, "page_number" | "line_anchor">) => {
     setSidebarOpen(false);
     setSearchQuery("");
+    if (kindleMode) {
+      // Kindle mode: Contents is a drawer over the page, so close it and turn to the line.
+      setKindlePending({ page: b.page_number, anchor: b.line_anchor });
+      return;
+    }
     const pageIdx = allPages.findIndex(p => p.pageNumber === b.page_number);
     if (pageIdx >= 0) {
       const viewPage = Math.floor(pageIdx / PAGES_PER_VIEW) + 1;
@@ -1282,7 +1388,7 @@ export default function GitaReader() {
         pageEl.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 200);
     }
-  }, [allPages]);
+  }, [allPages, kindleMode]);
 
   const handleIdentitySave = useCallback((id: string, name: string) => {
     localStorage.setItem("gita_reader_id", id);
@@ -1337,6 +1443,109 @@ export default function GitaReader() {
     ? allPages.filter((p) => p.text.toLowerCase().includes(searchQuery.toLowerCase()))
     : visiblePages;
 
+  // ── Kindle mode ──────────────────────────────────────────────────────────
+  // The pager covers the window once there are pages to show; until then (and
+  // while a search is listing its results) the scrolling reader stays.
+  const kindleActive = kindleMode && !loading && !searchQuery.trim() && displayPages.length > 0;
+  const lastBookPage = allPages[allPages.length - 1]?.pageNumber ?? 0;
+  // Batches keep arriving in the background, so a page that is missing may still
+  // turn up; once nothing more is loading, it never will.
+  const contentFullyLoaded = !loadingMore && (totalBatchCount === 0 || loadedBatches.size >= totalBatchCount);
+
+  // Turn to the pending place once its page has loaded: first mount the set of
+  // pages it is in, then turn to the chapter heading, the line or the page.
+  const kindlePendingIdx = kindlePending ? allPages.findIndex(p => p.pageNumber >= kindlePending.page) : -1;
+  const kindlePendingView = kindlePendingIdx >= 0 ? Math.floor(kindlePendingIdx / PAGES_PER_VIEW) + 1 : null;
+  // The text stays hidden while a different set of pages is being mounted for
+  // the jump, so its first screen is never shown on the way to the right one.
+  const kindleCrossViewRef = useRef(false);
+  const kindleVeil = kindlePending != null && (kindlePendingView !== currentPage || kindleCrossViewRef.current);
+  useEffect(() => {
+    if (!kindleActive || !kindlePending) return;
+    if (kindlePendingIdx < 0 || kindlePendingView == null) {
+      // Not loaded yet. Once everything has loaded and it is still missing, stay put.
+      if (contentFullyLoaded) { kindleCrossViewRef.current = false; setKindlePending(null); }
+      return;
+    }
+    if (kindlePendingView !== currentPage) {
+      kindleCrossViewRef.current = true;
+      setCurrentPage(kindlePendingView);
+      return;
+    }
+    kindleCrossViewRef.current = false;
+    const pageEl = document.querySelector(`[data-page-num="${allPages[kindlePendingIdx].pageNumber}"]`);
+    const chapterEl = kindlePending.chapter != null ? document.getElementById(`chapter-${kindlePending.chapter}`) : null;
+    const lineEl = !chapterEl && pageEl && kindlePending.anchor
+      ? findAnchoredParagraph([...pageEl.querySelectorAll("p")], kindlePending.anchor)
+      : null;
+    kindleRef.current?.showElement(chapterEl || lineEl || pageEl);
+    setKindlePending(null);
+  }, [kindleActive, kindlePending, kindlePendingIdx, kindlePendingView, currentPage, allPages, contentFullyLoaded]);
+
+  // The pager reports each screen it turns to: keep the page number, the
+  // chapter in the bar and the stored place in step with it.
+  const handleKindlePlace = useCallback((place: KindlePlace) => {
+    setVisiblePageNum(place.pageNumber);
+    const ch = chapterForPage(chapters, place.pageNumber);
+    if (ch) { setScrollChapter(ch.title); setActiveChapter(ch.number); }
+    // Only a place the reader went to is remembered: not the screen the pager
+    // opened on, nor one passed through on the way to a pending jump.
+    if (!place.byReader || kindlePendingRef.current) return;
+    try {
+      localStorage.setItem(GITA_KINDLE_POSITION_KEY, serialisePosition(place.anchorPage ?? place.pageNumber, place.anchorText));
+    } catch { /* private mode: the place just won't be remembered */ }
+  }, [chapters]);
+
+  // If the pager is ever mounted afresh with nowhere to go, it returns to the
+  // remembered place rather than staying on the first screen it opened on.
+  const kindleWasActiveRef = useRef(false);
+  useEffect(() => {
+    if (kindleActive && !kindleWasActiveRef.current && !kindlePendingRef.current) {
+      try {
+        const stored = parseStoredPosition(localStorage.getItem(GITA_KINDLE_POSITION_KEY));
+        if (stored) setKindlePending(stored);
+      } catch { /* nothing remembered */ }
+    }
+    kindleWasActiveRef.current = kindleActive;
+  }, [kindleActive]);
+
+  const enterKindle = () => {
+    // Open on the line being read in the scrolling reader.
+    const page = visiblePageNum || visiblePages[0]?.pageNumber || null;
+    let anchor: string | null = null;
+    try {
+      const pageEl = page ? document.querySelector(`[data-page-num="${page}"]`) : null;
+      if (pageEl) anchor = anchorFor(findTopmostVisible([...pageEl.querySelectorAll("p")])?.textContent);
+    } catch { /* no line: open at the top of the page */ }
+    setSearchQuery("");
+    setShowSettings(false);
+    setSidebarOpen(false);
+    setKindlePending(page ? { page, anchor } : null);
+    setKindleMode(true);
+    try { localStorage.setItem(GITA_KINDLE_MODE_KEY, "1"); } catch { /* private mode */ }
+  };
+
+  const exitKindle = () => {
+    const place = kindleRef.current?.anchor() ?? null;
+    const page = place?.pageNumber || visiblePageNum;
+    setKindleMode(false);
+    setKindlePending(null);
+    setShowSettings(false);
+    setSidebarOpen(window.innerWidth >= 1024);
+    try { localStorage.setItem(GITA_KINDLE_MODE_KEY, "0"); } catch { /* private mode */ }
+    if (!page) return;
+    // Once the scrolling reader is back on screen, return to the same line.
+    setTimeout(() => {
+      const pageEl = document.querySelector(`[data-page-num="${page}"]`);
+      const lineEl = pageEl && place?.text ? findAnchoredParagraph([...pageEl.querySelectorAll("p")], place.text) : null;
+      (lineEl || pageEl)?.scrollIntoView({ block: "start" });
+    }, 120);
+  };
+  // The keydown listener below is bound once per page change; it calls through
+  // this ref so it always toggles with the current state.
+  const toggleKindleRef = useRef(() => {});
+  toggleKindleRef.current = kindleMode ? exitKindle : enterKindle;
+
   const goToPage = (page: number) => {
     setCurrentPage(page);
     contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
@@ -1346,6 +1555,12 @@ export default function GitaReader() {
   const handleChapterClick = (ch: ChapterEntry) => {
     setSidebarOpen(false);
     setSearchQuery("");
+    if (kindleMode) {
+      // Kindle mode: Contents is a drawer over the page, so close it and turn to the chapter.
+      setActiveChapter(ch.number);
+      setKindlePending({ page: ch.pageNumber, chapter: ch.number });
+      return;
+    }
     const pageIdx = allPages.findIndex((p) => p.pageNumber === ch.pageNumber);
     if (pageIdx >= 0) {
       const viewPage = Math.floor(pageIdx / PAGES_PER_VIEW) + 1;
@@ -1402,6 +1617,7 @@ export default function GitaReader() {
   // ── Scroll chapter tracking ─────────────────────────────────────────────
 
   useEffect(() => {
+    if (kindleActive) return; // Kindle mode: the pager reports its place itself
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -1418,10 +1634,11 @@ export default function GitaReader() {
     const headings = document.querySelectorAll("[id^='chapter-']");
     headings.forEach(h => observer.observe(h));
     return () => observer.disconnect();
-  }, [displayPages, chapters]);
+  }, [displayPages, chapters, kindleActive]);
 
   // Scroll page tracking
   useEffect(() => {
+    if (kindleActive) return; // Kindle mode: the pager reports its place itself
     const observer = new IntersectionObserver(
       (entries) => {
         let latestNum = 0;
@@ -1438,27 +1655,65 @@ export default function GitaReader() {
     const pageEls = document.querySelectorAll("[data-page-num]");
     pageEls.forEach(el => observer.observe(el));
     return () => observer.disconnect();
-  }, [displayPages]);
+  }, [displayPages, kindleActive]);
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      // Kindle mode turns a screen at a time: its pager owns the arrows, space and F.
+      if (kindleActive && kindleKeyAction(e.key, { shift: e.shiftKey, ctrl: e.ctrlKey, meta: e.metaKey, alt: e.altKey })) return;
       switch (e.key) {
         case "ArrowLeft": e.preventDefault(); if (currentPage > 1) goToPage(currentPage - 1); break;
         case "ArrowRight": e.preventDefault(); if (currentPage < totalViewPages) goToPage(currentPage + 1); break;
         case "/": e.preventDefault(); searchRef.current?.focus(); break;
         case "Escape": setSidebarOpen(false); setShowSettings(false); setSearchQuery(""); break;
         case "b": if (!e.ctrlKey && !e.metaKey) saveBookmark(); break;
+        case "k": if (!e.ctrlKey && !e.metaKey && !e.altKey) toggleKindleRef.current(); break;
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [currentPage, totalViewPages]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentPage, totalViewPages, kindleActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const theme = THEME_STYLES[settings.theme];
+  const proseCss = useMemo(() => proseStyle(settings), [settings.face, settings.justify]); // eslint-disable-line react-hooks/exhaustive-deps
   const currentVisiblePage = visiblePageNum || displayPages[0]?.pageNumber || 0;
+
+  const kindleProps: KindlePagerProps | null = kindleActive ? {
+    viewKey: String(currentPage),
+    layoutKey: `${settings.fontSize}|${settings.lineHeight}|${lang}`,
+    theme,
+    title: "भगवद्गीता यथारूप",
+    chapterTitle: scrollChapter,
+    veil: kindleVeil,
+    hasPrevView: currentPage > 1,
+    hasNextView: currentPage < totalViewPages,
+    onPrevView: () => setCurrentPage(p => Math.max(1, p - 1)),
+    onNextView: () => setCurrentPage(p => Math.min(totalViewPages, p + 1)),
+    onPlaceChange: handleKindlePlace,
+    pageNumber: currentVisiblePage || null,
+    pageIndex: Math.max(0, allPages.findIndex(p => p.pageNumber === currentVisiblePage)),
+    totalPages: allPages.length,
+    lastPageNumber: lastBookPage,
+    pageNumberAtIndex: (i: number) => allPages[i]?.pageNumber ?? null,
+    chapterPagesLeft: pagesLeftInChapter(chapters, currentVisiblePage || null, lastBookPage),
+    onJumpToIndex: (i: number) => { const p = allPages[i]; if (p) setKindlePending({ page: p.pageNumber }); },
+    onExit: exitKindle,
+    onOpenContents: () => setSidebarOpen(true),
+    onBookmark: saveBookmark,
+    bookmarkSaved,
+    langLabel: lang === "hi" ? "हि" : "EN",
+    onToggleLang: () => setLang(lang === "hi" ? "en" : "hi"),
+    settingsOpen: showSettings,
+    onToggleSettings: () => setShowSettings(v => !v),
+    settingsPanel: (
+      <AnimatePresence>
+        {showSettings && <ReadingSettingsPanel settings={settings} onChange={setSettings} onClose={() => setShowSettings(false)} />}
+      </AnimatePresence>
+    ),
+  } : null;
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -1502,11 +1757,21 @@ export default function GitaReader() {
           bookmarks={bookmarks}
           onBookmarkJump={handleBookmarkJump}
           onBookmarkDelete={deleteBookmark}
+          drawer={kindleActive}
+          highlights={highlights.items}
+          // A highlight is found again the way a bookmark's line is: by its opening words.
+          onHighlightJump={(h) => handleBookmarkJump({ page_number: h.page, line_anchor: h.text })}
+          onHighlightRemove={highlights.remove}
         />
 
         {/* Main content */}
         <main ref={contentRef} className={`flex-1 min-w-0 ${theme.bg} transition-colors duration-300`}>
-          {/* Top bar */}
+          {/* Dictionary card — appears under a single selected word */}
+          <WordLookupCard />
+          {/* Highlight colours and notes — a bar next to any selected text */}
+          <HighlightLayer store={highlights} />
+          {/* Top bar — the scrolling reader's; Kindle mode draws its own */}
+          {!kindleActive && (
           <div className={`sticky top-14 z-30 ${theme.surface} backdrop-blur-sm border-b ${theme.border} px-4 sm:px-6 py-2`}>
             <div className="max-w-3xl mx-auto flex items-center gap-2 sm:gap-3">
               {!focusMode && (
@@ -1570,8 +1835,20 @@ export default function GitaReader() {
                   {showSettings && <ReadingSettingsPanel settings={settings} onChange={setSettings} onClose={() => setShowSettings(false)} />}
                 </AnimatePresence>
               </div>
+
+              {/* Kindle mode — read a screen at a time, with page turns */}
+              <button
+                onClick={enterKindle}
+                className={`inline-flex items-center gap-1 px-1.5 sm:px-2 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold transition-all active:scale-95 shrink-0 hover:bg-stone-100 ${theme.muted} hover:text-orange-600`}
+                title="Kindle mode — turn pages instead of scrolling (K)"
+                aria-label="Kindle mode"
+              >
+                <BookOpenText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Kindle</span>
+              </button>
             </div>
           </div>
+          )}
 
           {/* Content area */}
           <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8" style={{ maxWidth: `${settings.maxWidth}px`, fontSize: `${settings.fontSize}px`, lineHeight: settings.lineHeight }}>
@@ -1604,6 +1881,7 @@ export default function GitaReader() {
                 )}
 
                 {/* Render pages */}
+                <ReaderPagesFrame ref={kindleRef} kindle={kindleProps}>
                 {displayPages.map((page, idx) => {
                   const prevPage = idx > 0 ? displayPages[idx - 1] : (startIdx > 0 ? allPages[startIdx - 1] : null);
                   // Each page is read with the page after it in hand: a verse that
@@ -1624,6 +1902,7 @@ export default function GitaReader() {
                         textEn={page.textEn}
                         lang={lang}
                         themeKey={settings.theme}
+                        prose={proseCss}
                         prevPageEndKind={prevEndKind}
                         nextPageStartsNumberedShlok={nextPageStartsNumberedShlok}
                         nextPageVerseHeadLines={nextPageVerseHeadLines}
@@ -1633,6 +1912,7 @@ export default function GitaReader() {
                     </div>
                   );
                 })}
+                </ReaderPagesFrame>
 
                 {loadingMore && (
                   <div className="flex items-center justify-center py-6 gap-2">
@@ -1675,7 +1955,9 @@ export default function GitaReader() {
         </main>
       </div>
       {/* Floating bookmark FAB — saves the current line within the visible page,
-          the same control the Bhagavatam and Chaitanya readers carry. */}
+          the same control the Bhagavatam and Chaitanya readers carry.
+          Kindle mode has its own bookmark button in its bar. */}
+      {!kindleActive && (
       <motion.button
         onClick={saveBookmark}
         whileHover={{ scale: 1.05 }}
@@ -1698,6 +1980,7 @@ export default function GitaReader() {
           </motion.span>
         )}
       </motion.button>
+      )}
       <VoiceEditToolbar
         book={{ key: "gita", pageEditsTable: TBL_PAGE_EDITS }}
         allPages={allPages}

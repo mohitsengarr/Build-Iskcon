@@ -22,6 +22,7 @@ import {
 import { describeFailure } from "@/lib/requestError";
 import { isStandalonePageNumber, stripRunningHead } from "@/lib/runningHead";
 import { continuesGloss } from "@/lib/glossTail";
+import { DEFAULT_TYPOGRAPHY, proseStyle, type ReadingFace } from "@/lib/readerTypography";
 import { applyTextCorrections } from "@/lib/bhagwatham-config";
 import { numberedVerseHeadLength, openVerseTailLength } from "@/lib/bhagwatham-utils";
 import {
@@ -43,9 +44,13 @@ interface ReadingSettings {
   maxWidth: number;   // 640-960
   theme: Theme;
   showPageNumbers: boolean; // the · N · dividers between pages
+  /** The face the prose is set in; verses keep their own Sanskrit face. */
+  face: ReadingFace;
+  /** Prose justified to both margins, as a book sets it. */
+  justify: boolean;
 }
 
-const DEFAULT_SETTINGS: ReadingSettings = { fontSize: 15, lineHeight: 1.8, maxWidth: 768, theme: "light", showPageNumbers: true };
+const DEFAULT_SETTINGS: ReadingSettings = { fontSize: 15, lineHeight: 1.8, maxWidth: 768, theme: "light", showPageNumbers: true, face: DEFAULT_TYPOGRAPHY.face, justify: DEFAULT_TYPOGRAPHY.justify };
 
 function loadSettings(): ReadingSettings {
   try {
@@ -162,6 +167,37 @@ function ReadingSettingsPanel({ settings, onChange, onClose }: {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* How the prose is set */}
+      <div className="mb-3">
+        <label className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5 block">Reading Face</label>
+        <div className="flex gap-1.5">
+          {([["serif", "Book"], ["sans", "Screen"]] as const).map(([f, label]) => (
+            <button key={f} onClick={() => update({ face: f })}
+              className={`flex-1 py-1.5 rounded-lg text-[10px] font-semibold border transition-all ${
+                settings.face === f ? "bg-orange-100 border-orange-300 text-orange-700" : "border-stone-200 text-stone-500 hover:bg-stone-50"
+              }`}
+              style={{ fontFamily: f === "serif" ? "var(--font-devanagari-serif)" : "var(--font-devanagari)" }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-3">
+        <button
+          onClick={() => update({ justify: !settings.justify })}
+          className={`w-full flex items-center justify-between py-2 px-3 rounded-lg text-[11px] font-semibold border transition-all ${
+            settings.justify ? "bg-orange-100 border-orange-300 text-orange-700" : "border-stone-200 text-stone-500 hover:bg-stone-50"
+          }`}
+        >
+          <span>{settings.justify ? "Justified" : "Ragged right"}</span>
+          <span className={`relative inline-block w-8 h-4 rounded-full transition-colors ${settings.justify ? "bg-orange-400" : "bg-stone-300"}`}>
+            <span className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all ${settings.justify ? "left-4" : "left-0.5"}`} />
+          </span>
+        </button>
       </div>
 
       {/* Theme */}
@@ -1338,8 +1374,11 @@ function ShlokSpeaker({ text, themeKey }: { text: string; themeKey: string }) {
 
 // ── Content Renderer ───────────────────────────────────────────────────────────
 
-function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", onRegenerateImages, regeneratingChapters, queuedRegens, onDeleteImage, chapterNumMapper, pageNumber, overrides, onOverridesChange, prevPageEndKind, nextPageStartsNumberedShlok, nextPageVerseHeadLines, unboldLines, sceneArt }: { text: string; textEn?: string; lang: "hi" | "en"; chapterImages?: Map<number, Array<{ url: string; description: string; sceneIndex?: number; isInstagram?: boolean }>>; themeKey?: Theme; onRegenerateImages?: (chapterNum: number) => void; regeneratingChapters?: Set<number>; queuedRegens?: Set<number>; onDeleteImage?: (chapterNum: number, sceneIndex: number) => void; chapterNumMapper?: (perSkandhNum: number) => number; pageNumber?: number; overrides?: SectionOverride[]; onOverridesChange?: (pageNum: number, overrides: SectionOverride[]) => void; prevPageEndKind?: string; nextPageStartsNumberedShlok?: boolean; nextPageVerseHeadLines?: number; unboldLines?: Set<string>; sceneArt?: Array<{ id: number; key: string; image_url: string }> }) {
+function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", onRegenerateImages, regeneratingChapters, queuedRegens, onDeleteImage, chapterNumMapper, pageNumber, overrides, onOverridesChange, prevPageEndKind, nextPageStartsNumberedShlok, nextPageVerseHeadLines, unboldLines, sceneArt, prose }: { text: string; textEn?: string; lang: "hi" | "en"; chapterImages?: Map<number, Array<{ url: string; description: string; sceneIndex?: number; isInstagram?: boolean }>>; themeKey?: Theme; onRegenerateImages?: (chapterNum: number) => void; regeneratingChapters?: Set<number>; queuedRegens?: Set<number>; onDeleteImage?: (chapterNum: number, sceneIndex: number) => void; chapterNumMapper?: (perSkandhNum: number) => number; pageNumber?: number; overrides?: SectionOverride[]; onOverridesChange?: (pageNum: number, overrides: SectionOverride[]) => void; prevPageEndKind?: string; nextPageStartsNumberedShlok?: boolean; nextPageVerseHeadLines?: number; unboldLines?: Set<string>; sceneArt?: Array<{ id: number; key: string; image_url: string }>; prose?: ReturnType<typeof proseStyle> }) {
   const t = THEME_STYLES[themeKey];
+  // The translation, the purport and plain prose are set the way the reader
+  // asked; verses and word-meanings keep their own faces and alignment.
+  const proseCss = prose ?? proseStyle();
 
   // ── Section Editor state ────────────────────────────────────────────
   // Hooks MUST be declared unconditionally before the English-mode early
@@ -2072,7 +2111,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
                 {/* One paragraph, not one <p> per OCR line — the source breaks at
                     PRINT line ends, which are meaningless on screen and left ragged
                     orphans once the text wrapped. */}
-                <p className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>{renderedAnuvad}</p>
+                <p className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", ...proseCss }}>{renderedAnuvad}</p>
               </div>
             );
           }
@@ -2087,7 +2126,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             const showTatparyaLabel = !isContinuation && (i === 0 || sections[i - 1].kind !== "tatparya");
             return (
               <div key={i} data-section-type="tatparya" className={isContinuation ? "" : "mt-4 sm:mt-5"}>
-                <p className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", fontFamily: "var(--font-devanagari)" }}>
+                <p className={`leading-[2] mb-1 ${t.text}`} style={{ fontSize: "0.95em", ...proseCss }}>
                   {showTatparyaLabel && <><span className="font-semibold">तात्पर्य :</span>{" "}</>}
                   {renderedTatparya}
                 </p>
@@ -2098,7 +2137,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
             const renderedText = renderInlineBoldBlock([sec.lines.join(" ")])[0];
             return (
               <div key={i} data-section-type="text">
-                <p className={`leading-[1.8] ${t.text} mb-1`} style={{ fontSize: "1em" }}>{renderedText}</p>
+                <p className={`leading-[1.8] ${t.text} mb-1`} style={{ fontSize: "1em", ...proseCss }}>{renderedText}</p>
               </div>
             );
           }
@@ -3615,6 +3654,7 @@ export default function Bhagwatham() {
 
   // Theme
   const theme = THEME_STYLES[settings.theme];
+  const proseCss = useMemo(() => proseStyle(settings), [settings.face, settings.justify]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Page range display — use the first page of the current view as baseline
   const firstPageNum = visiblePages[0]?.pageNumber ?? (displayPages[0]?.pageNumber ?? 0);
@@ -3728,7 +3768,7 @@ export default function Bhagwatham() {
                   initialText={pg.text}
                   dark={settings.theme === "dark"}
                   renderPreview={(t) => (
-                    <RenderContent text={t} lang={lang} themeKey={settings.theme} pageNumber={editSourcePage ?? undefined} unboldLines={unboldLines} />
+                    <RenderContent text={t} lang={lang} themeKey={settings.theme} prose={proseCss} pageNumber={editSourcePage ?? undefined} unboldLines={unboldLines} />
                   )}
                   onSave={savePageSource}
                   requestAiFix={runAiFixSpan}
@@ -4009,7 +4049,7 @@ export default function Bhagwatham() {
                       <p className={`text-[10px] ${theme.muted} font-medium text-right mt-1 mb-1 opacity-40`}>· {page.pageNumber} ·</p>
                     )}
                     {pageIdx === 0 && settings.showPageNumbers && <p className={`text-[10px] ${theme.muted} font-medium text-right mt-0 mb-2 opacity-40`}>· {page.pageNumber} ·</p>}
-                    <RenderContent text={page.text} textEn={page.textEn} lang={lang} chapterImages={chapterImages} themeKey={settings.theme} onRegenerateImages={(num: number) => handleRegenerateImages(num, 0)} regeneratingChapters={regeneratingChapters} queuedRegens={queuedRegens} onDeleteImage={isDevMode ? handleDeleteImage : undefined} pageNumber={page.pageNumber} overrides={sectionOverrides[page.pageNumber]} onOverridesChange={isDevMode ? handleOverridesChange : undefined} prevPageEndKind={prevEndKind} nextPageStartsNumberedShlok={nextPageStartsNumberedShlok} nextPageVerseHeadLines={nextPageVerseHeadLines} unboldLines={unboldLines} sceneArt={sceneArtByPage.get(page.pageNumber)} chapterNumMapper={(perSkandhNum: number) => {
+                    <RenderContent text={page.text} textEn={page.textEn} lang={lang} chapterImages={chapterImages} themeKey={settings.theme} prose={proseCss} onRegenerateImages={(num: number) => handleRegenerateImages(num, 0)} regeneratingChapters={regeneratingChapters} queuedRegens={queuedRegens} onDeleteImage={isDevMode ? handleDeleteImage : undefined} pageNumber={page.pageNumber} overrides={sectionOverrides[page.pageNumber]} onOverridesChange={isDevMode ? handleOverridesChange : undefined} prevPageEndKind={prevEndKind} nextPageStartsNumberedShlok={nextPageStartsNumberedShlok} nextPageVerseHeadLines={nextPageVerseHeadLines} unboldLines={unboldLines} sceneArt={sceneArtByPage.get(page.pageNumber)} chapterNumMapper={(perSkandhNum: number) => {
                       // Find which skandh this page belongs to based on surrounding chapters
                       const ch = chapters.find(c => c.number === perSkandhNum && c.pageNumber <= page.pageNumber);
                       // Pick the last matching chapter (closest to this page)

@@ -9,9 +9,29 @@
 
 // ── What the reader chose, kept in the browser ───────────────────────────────
 
-export const KINDLE_MODE_KEY = "bhagwatham_kindle_mode";
+// Each book remembers its own mode and place; the column choice is a display
+// preference and is shared. The Bhagavatam's keys keep their original spelling
+// so a reader who already had Kindle mode on does not lose it.
+const STORAGE_PREFIX: Record<string, string> = { bhagavatam: "bhagwatham" };
+
+function prefixFor(book: string): string {
+  const key = String(book || "").trim() || "reader";
+  return STORAGE_PREFIX[key] ?? key;
+}
+
+/** Where this book's Kindle mode flag is kept. */
+export function kindleModeKey(book: string): string {
+  return `${prefixFor(book)}_kindle_mode`;
+}
+
+/** Where this book's reading place is kept. */
+export function kindlePositionKey(book: string): string {
+  return `${prefixFor(book)}_kindle_position`;
+}
+
+export const KINDLE_MODE_KEY = kindleModeKey("bhagavatam");
 export const KINDLE_COLUMNS_KEY = "bhagwatham_kindle_columns";
-export const KINDLE_POSITION_KEY = "bhagwatham_kindle_position";
+export const KINDLE_POSITION_KEY = kindlePositionKey("bhagavatam");
 
 /** One column, two, or two whenever the screen is wide enough. */
 export type ColumnPreference = "auto" | "one" | "two";
