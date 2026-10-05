@@ -15,7 +15,7 @@ import { WordLookupCard } from "@/components/reader/WordLookupCard";
 import { HighlightLayer, HighlightsPanel, useReaderHighlights } from "@/components/reader/ReaderHighlights";
 import type { ReaderHighlight } from "@/lib/readerHighlights";
 import {
-  kindleKeyAction, kindleModeKey, kindlePositionKey, pagesLeftInChapter,
+  kindleKeyAction, kindleModeKey, kindlePositionKey, pagesLeftInChapter, wordsLeftInChapter,
   parseKindleMode, parseStoredPosition, serialisePosition,
 } from "@/lib/kindlePaging";
 import { describeFailure } from "@/lib/requestError";
@@ -2865,6 +2865,7 @@ export default function Chaitanya() {
     lastPageNumber: kindleChapterLastPage,
     pageNumberAtIndex: (i: number) => (allPages[i] ? displayPageNum(allPages[i].pageNumber) : null),
     chapterPagesLeft: pagesLeftInChapter(kindleChapterStarts, kindlePageIndex + 1, allPages.length),
+    chapterWordsLeft: wordsLeftInChapter(allPages, Math.max(0, kindlePageIndex), pagesLeftInChapter(kindleChapterStarts, kindlePageIndex + 1, allPages.length)),
     onJumpToIndex: (i: number) => { const p = allPages[i]; if (p) setKindlePending({ page: p.pageNumber }); },
     onExit: exitKindle,
     onOpenContents: () => setSidebarOpen(true),

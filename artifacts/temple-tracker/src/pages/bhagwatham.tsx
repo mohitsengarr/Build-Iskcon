@@ -16,7 +16,7 @@ import { WordLookupCard } from "@/components/reader/WordLookupCard";
 import { HighlightLayer, HighlightsPanel, useReaderHighlights } from "@/components/reader/ReaderHighlights";
 import type { ReaderHighlight } from "@/lib/readerHighlights";
 import {
-  KINDLE_MODE_KEY, KINDLE_POSITION_KEY, chapterForPage, kindleKeyAction, pagesLeftInChapter,
+  KINDLE_MODE_KEY, KINDLE_POSITION_KEY, chapterForPage, kindleKeyAction, pagesLeftInChapter, wordsLeftInChapter,
   parseKindleMode, parseStoredPosition, serialisePosition,
 } from "@/lib/kindlePaging";
 import { describeFailure } from "@/lib/requestError";
@@ -3712,6 +3712,7 @@ export default function Bhagwatham() {
     lastPageNumber: lastBookPage,
     pageNumberAtIndex: (i: number) => allPages[i]?.pageNumber ?? null,
     chapterPagesLeft: pagesLeftInChapter(chapters, currentVisiblePage || null, lastBookPage),
+    chapterWordsLeft: wordsLeftInChapter(allPages, Math.max(0, allPages.findIndex(p => p.pageNumber === currentVisiblePage)), pagesLeftInChapter(chapters, currentVisiblePage || null, lastBookPage)),
     onJumpToIndex: (i: number) => { const p = allPages[i]; if (p) setKindlePending({ page: p.pageNumber }); },
     onExit: exitKindle,
     onOpenContents: () => setSidebarOpen(true),

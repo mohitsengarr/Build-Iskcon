@@ -358,6 +358,26 @@ export function shouldHideChrome(state: ChromeState): boolean {
 
 // ── How much reading is left ─────────────────────────────────────────────────
 
+/**
+ * The words still to come in the chapter: the pages from the one being read to
+ * the end of it. A page the reader is part-way down still counts whole — the
+ * estimate is in minutes, and half a page does not move it.
+ */
+export function wordsLeftInChapter(
+  pageTexts: ReadonlyArray<{ text?: string } | null | undefined>,
+  pageIndex: number,
+  pagesLeft: number | null,
+): number | null {
+  if (!Array.isArray(pageTexts) || !(pageIndex >= 0) || pagesLeft == null || !(pagesLeft >= 0)) return null;
+  const end = Math.min(pageTexts.length, pageIndex + pagesLeft + 1);
+  let words = 0;
+  for (let i = pageIndex; i < end; i++) {
+    const text = pageTexts[i]?.text;
+    if (typeof text === "string" && text) words += (text.match(/\S+/g) || []).length;
+  }
+  return words > 0 ? words : null;
+}
+
 /** Words a minute, for the "time left" estimate. Deliberately conservative. */
 export const READING_WORDS_PER_MINUTE = 160;
 

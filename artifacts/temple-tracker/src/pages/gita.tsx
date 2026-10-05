@@ -19,7 +19,7 @@ import { WordLookupCard } from "@/components/reader/WordLookupCard";
 import { HighlightLayer, HighlightsPanel, useReaderHighlights } from "@/components/reader/ReaderHighlights";
 import type { ReaderHighlight } from "@/lib/readerHighlights";
 import {
-  chapterForPage, kindleKeyAction, kindleModeKey, kindlePositionKey, pagesLeftInChapter,
+  chapterForPage, kindleKeyAction, kindleModeKey, kindlePositionKey, pagesLeftInChapter, wordsLeftInChapter,
   parseKindleMode, parseStoredPosition, serialisePosition,
 } from "@/lib/kindlePaging";
 import {
@@ -1732,6 +1732,7 @@ export default function GitaReader() {
     lastPageNumber: lastBookPage,
     pageNumberAtIndex: (i: number) => allPages[i]?.pageNumber ?? null,
     chapterPagesLeft: pagesLeftInChapter(chapters, currentVisiblePage || null, lastBookPage),
+    chapterWordsLeft: wordsLeftInChapter(allPages, Math.max(0, allPages.findIndex(p => p.pageNumber === currentVisiblePage)), pagesLeftInChapter(chapters, currentVisiblePage || null, lastBookPage)),
     onJumpToIndex: (i: number) => { const p = allPages[i]; if (p) setKindlePending({ page: p.pageNumber }); },
     onExit: exitKindle,
     onOpenContents: () => setSidebarOpen(true),

@@ -16,10 +16,44 @@ import {
   IDLE_BEFORE_CHROME_HIDES_MS,
   shouldHideChrome,
   minutesLeftLabel,
-  READING_WORDS_PER_MINUTE,} from "./kindlePaging";
+  READING_WORDS_PER_MINUTE,
+  wordsLeftInChapter,} from "./kindlePaging";
 
 // Kindle mode reads the book a screen at a time. The browser lays the text out
 // in columns; these are the sums around that layout.
+
+describe("wordsLeftInChapter", () => {
+  const pages = [
+    { text: "one two three" },      // 3
+    { text: "four five" },          // 2
+    { text: "six seven eight nine" }, // 4
+    { text: "ten" },                // 1
+  ];
+
+  it("counts the page being read and the pages left in the chapter", () => {
+    expect(wordsLeftInChapter(pages, 0, 1)).toBe(5);
+    expect(wordsLeftInChapter(pages, 1, 2)).toBe(7);
+  });
+
+  it("counts just this page when it is the chapter's last", () => {
+    expect(wordsLeftInChapter(pages, 2, 0)).toBe(4);
+  });
+
+  it("stops at the end of the book, however many pages were claimed", () => {
+    expect(wordsLeftInChapter(pages, 2, 99)).toBe(5);
+  });
+
+  it("says nothing when there is nothing to count", () => {
+    expect(wordsLeftInChapter(pages, 0, null)).toBeNull();
+    expect(wordsLeftInChapter(pages, -1, 2)).toBeNull();
+    expect(wordsLeftInChapter([], 0, 2)).toBeNull();
+    expect(wordsLeftInChapter([{ text: "" }], 0, 0)).toBeNull();
+  });
+
+  it("ignores pages with no text rather than failing", () => {
+    expect(wordsLeftInChapter([{ text: "a b" }, null, undefined, { text: "c" }] as never, 0, 3)).toBe(3);
+  });
+});
 
 describe("shouldHideChrome", () => {
   it("fades the bars once the reader has been still", () => {
