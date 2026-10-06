@@ -497,7 +497,10 @@ describe("buildChapterIndex", () => {
     const pages = makePages([
       { pageNumber: 1, text: "अध्याय एक\nप्रथम स्कन्ध का पहला अध्याय यहाँ प्रारम्भ होता है" },
       { pageNumber: 50, text: "अध्याय दो\nप्रथम स्कन्ध का दूसरा अध्याय यहाँ दिया गया है" },
-      { pageNumber: 100, text: "अध्याय एक\nद्वितीय स्कन्ध का पहला अध्याय शुरू होता है यहाँ" },
+      // Skandh 2 starts at page 874 (SKANDH_PAGE_RANGES), so the second
+      // "अध्याय एक" has to sit past that page to be a new skandh's first
+      // chapter rather than a duplicate of the first one.
+      { pageNumber: 900, text: "अध्याय एक\nद्वितीय स्कन्ध का पहला अध्याय शुरू होता है यहाँ" },
     ]);
     const chapters = buildChapterIndex(pages);
     expect(chapters.length).toBe(3);

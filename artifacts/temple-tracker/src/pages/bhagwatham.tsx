@@ -27,6 +27,8 @@ import { findWhenReady } from "@/lib/awaitElement";
 import { fetchProgress as fetchTravelledPlace, resumeLabel, saveProgress, worthOffering, worthSaving, type ReaderPlace } from "@/lib/readerProgress";
 import { applyTextCorrections } from "@/lib/bhagwatham-config";
 import { numberedVerseHeadLength, openVerseTailLength } from "@/lib/bhagwatham-utils";
+import { stripLatinNoise } from "@/lib/ocrLatinNoise";
+import { verseIsOpen } from "@/lib/readerSections";
 import {
   BookOpen, ChevronLeft, ChevronRight, Loader2,
   RefreshCw, Search, BookMarked, Sparkles,
@@ -803,9 +805,11 @@ function cleanOcrText(text: string): string {
     .replace(/(?<=[\u0900-\u097F\s])\|/gu, "।")
     // Remove standalone page number lines BEFORE collapsing whitespace
     // e.g., "6\n\nशब्दार्थं" → "\n\nशब्दार्थं" (prevents "6 शब्दार्थं" after collapse)
-    .replace(/^(\d{1,5}[\]\)]*)$/gmu, "")
-    .replace(/(?<=[\u0900-\u097F\s;,।:—\-\.])\s*\b[a-zA-Z]{1,5}\b\s*[:\|]?\s*(?=[\u0900-\u097F\s;,।:—\-\.])/gu, " ")
-    .replace(/(?<=[\u0900-\u097F])\s+[a-zA-Z]{1,4}\s+(?=[\u0900-\u097F])/gu, " ")
+    .replace(/^(\d{1,5}[\]\)]*)$/gmu, "");
+  // Hand the scan's Latin debris to stripLatinNoise, which removes it without
+  // taking the line breaks with it — the rules that used to live here matched
+  // \s, so a fragment opening a line glued that line onto the one before.
+  result = stripLatinNoise(result)
     .replace(/©/g, "")
     // Collapse multiple blank lines into one newline, but preserve single newlines
     .replace(/\n{3,}/g, "\n\n")
@@ -1555,6 +1559,11 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
     // the SAME kind, so a multi-paragraph purport stays multi-paragraph while each
     // paragraph can be rendered as one reflowing block.
     if (!t) {
+      // Part-way through a verse the blank line is the scan's line spacing
+      // between the halves of a shloka, not a paragraph break: closing there
+      // gave each half its own block, divider and all, so the verse read as
+      // two (Gita 2.3). Once the closing ॥ has arrived the blank line counts.
+      if (verseIsOpen(current.kind, current.lines)) continue;
       if (current.lines.length > 0) { const k = current.kind; flush(); current = { kind: k, lines: [] }; }
       continue;
     }

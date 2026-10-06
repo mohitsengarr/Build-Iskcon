@@ -3,6 +3,8 @@
  * Extracted from bhagwatham.tsx for testability.
  */
 
+import { stripLatinNoise } from "./ocrLatinNoise";
+
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 export interface PageContent {
@@ -158,9 +160,11 @@ export function cleanOcrText(text: string): string {
     }
   }
   result = result
-    .replace(/^(\d{1,5}[\]\)]*)$/gmu, "")
-    .replace(/(?<=[\u0900-\u097F\s;,।:—\-\.])\s*\b[a-zA-Z]{1,5}\b\s*[:\|]?\s*(?=[\u0900-\u097F\s;,।:—\-\.])/gu, " ")
-    .replace(/(?<=[\u0900-\u097F])\s+[a-zA-Z]{1,4}\s+(?=[\u0900-\u097F])/gu, " ")
+    .replace(/^(\d{1,5}[\]\)]*)$/gmu, "");
+  // Hand the scan's Latin debris to stripLatinNoise, which removes it without
+  // taking the line breaks with it — the rules that used to live here matched
+  // \s, so a fragment opening a line glued that line onto the one before.
+  result = stripLatinNoise(result)
     .replace(/©/g, "")
     .replace(/\n{3,}/g, "\n\n")
     .replace(/[^\S\n]{2,}/g, " ")
@@ -521,7 +525,10 @@ export function buildChapterIndex(allPages: PageContent[]): ChapterEntry[] {
   // Track last chapter number PER skandh to handle backward-jump rejection correctly
   const lastChapterPerSkandh = new Map<number, number>();
 
-  for (const page of allPages) {
+  // Read the book in page order. The backward-jump guard below only makes sense
+  // against the chapter seen on an EARLIER page, so a caller handing the pages
+  // over in any other order lost every chapter that arrived out of sequence.
+  for (const page of [...allPages].sort((a, b) => a.pageNumber - b.pageNumber)) {
     if (isGarbagePage(page.text)) continue;
 
     const skandh = getSkandh(page.pageNumber);

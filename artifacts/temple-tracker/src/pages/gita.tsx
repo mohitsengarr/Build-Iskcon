@@ -18,6 +18,8 @@ import { ReaderPagesFrame, type KindlePagerHandle, type KindlePagerProps, type K
 import { WordLookupCard } from "@/components/reader/WordLookupCard";
 import { HighlightLayer, HighlightsPanel, useReaderHighlights } from "@/components/reader/ReaderHighlights";
 import type { ReaderHighlight } from "@/lib/readerHighlights";
+import { stripLatinNoise } from "@/lib/ocrLatinNoise";
+import { verseIsOpen } from "@/lib/readerSections";
 import {
   chapterForPage, kindleKeyAction, kindleModeKey, kindlePositionKey, pagesLeftInChapter, wordsLeftInChapter,
   parseKindleMode, parseStoredPosition, serialisePosition,
@@ -317,7 +319,7 @@ function stripLeadingPageNumber(line: string): string {
 }
 
 function cleanOcrText(text: string): string {
-  return text
+  const repaired = text
     // Repair decomposed vowels. The scan writes ऐ as ए + a combining "े" and औ as
     // ओ + "ो"; a combining sign on an independent vowel has no base to attach to,
     // so the font renders it on a dotted circle — "एेश्वर्य" instead of "ऐश्वर्य".
@@ -331,12 +333,11 @@ function cleanOcrText(text: string): string {
     // Sarvam transcribes the danda as an ASCII pipe. Restore the real marks, or
     // verse detection (which looks for ॥) never fires and the text shows "||".
     .replace(/\|\s*\|/g, "॥")
-    .replace(/(?<=[\u0900-\u097F\s])\|/gu, "।")
-    // Lone Latin fragments on their own line are OCR noise (e.g. a garbled
-    // शब्दार्थ heading coming through as "WR").
-    .replace(/^[A-Za-z]{1,4}$/gmu, "")
-    .replace(/(?<=[\u0900-\u097F\s;,।:—\-\.])\s*\b[a-zA-Z]{1,5}\b\s*[:\|]?\s*(?=[\u0900-\u097F\s;,।:—\-\.])/gu, " ")
-    .replace(/(?<=[\u0900-\u097F])\s+[a-zA-Z]{1,4}\s+(?=[\u0900-\u097F])/gu, " ")
+    .replace(/(?<=[\u0900-\u097F\s])\|/gu, "।");
+  // Hand the scan's Latin debris to stripLatinNoise, which removes it without
+  // taking the line breaks with it — the rules that used to live here matched
+  // \s, so a fragment opening a line glued that line onto the one before.
+  return stripLatinNoise(repaired)
     .replace(/©/g, "")
     .replace(/\n{3,}/g, "\n\n")
     .replace(/[^\S\n]{2,}/g, " ")
@@ -667,6 +668,11 @@ function RenderContent({ text, textEn, lang, themeKey = "light", prose, prevPage
     // the SAME kind, so a multi-paragraph purport stays multi-paragraph while each
     // paragraph can be rendered as one reflowing block.
     if (!lt) {
+      // Part-way through a verse the blank line is the scan's line spacing
+      // between the halves of a shloka, not a paragraph break: closing there
+      // gave each half its own block, divider and all, so the verse read as
+      // two (Gita 2.3). Once the closing ॥ has arrived the blank line counts.
+      if (verseIsOpen(current.kind, current.lines)) continue;
       if (current.lines.length > 0) { const k = current.kind; flush(); current = { kind: k, lines: [] }; }
       continue;
     }
