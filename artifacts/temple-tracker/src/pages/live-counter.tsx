@@ -15,6 +15,16 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/sbRest";
 
 const POLL_MS = 20_000;
 
+// Bhaktigram went public on Google Play late on 6 October 2026, and the installs
+// start arriving at 02:00 UTC on the 7th. Everything before that line is the
+// closed test and our own devices — 45 profiles that are not devotees who found
+// the app (SEN-907). The counter therefore counts from launch, and says so, rather
+// than quietly inflating itself with its own test accounts.
+const LAUNCH_ISO = "2026-10-07T00:00:00Z";
+const LAUNCH_LABEL = "7 October 2026";
+
+const sinceLaunch = `&created_at=gte.${LAUNCH_ISO}`;
+
 /** Count rows matching a filter without fetching any of them. */
 async function countRows(filter = ""): Promise<number | null> {
   const r = await fetch(
@@ -35,7 +45,8 @@ async function countRows(filter = ""): Promise<number | null> {
 }
 
 const startOfTodayUtc = () => `${new Date().toISOString().slice(0, 10)}T00:00:00Z`;
-const sevenDaysAgo = () => new Date(Date.now() - 7 * 864e5).toISOString();
+const startOfYesterdayUtc = () =>
+  `${new Date(Date.now() - 864e5).toISOString().slice(0, 10)}T00:00:00Z`;
 
 /** Rolls the number up to a new value instead of snapping, so an arrival is felt. */
 function useCountUp(target: number | null) {
@@ -70,10 +81,10 @@ export default function LiveCounter() {
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
 
   const load = useCallback(async () => {
-    const [t, d, w] = await Promise.all([
-      countRows(),
+    const [t, d, y] = await Promise.all([
+      countRows(sinceLaunch),
       countRows(`&created_at=gte.${startOfTodayUtc()}`),
-      countRows(`&created_at=gte.${sevenDaysAgo()}`),
+      countRows(`&created_at=gte.${startOfYesterdayUtc()}&created_at=lt.${startOfTodayUtc()}`),
     ]);
     // A failed poll keeps the last good number on screen rather than flashing a
     // zero: a counter that drops to nothing reads as "the app lost its users".
@@ -81,7 +92,7 @@ export default function LiveCounter() {
     setFailed(false);
     setTotal(t);
     if (d != null) setToday(d);
-    if (w != null) setWeek(w);
+    if (y != null) setWeek(y);
     setUpdatedAt(new Date());
   }, []);
 
@@ -110,6 +121,7 @@ export default function LiveCounter() {
         <h1 className="font-serif text-3xl sm:text-4xl font-bold text-stone-800">
           Devotees who have joined
         </h1>
+        <p className="text-xs text-stone-400 mt-2">since Bhaktigram went live on Google Play, {LAUNCH_LABEL}</p>
 
         <div className="mt-10 mb-2 tabular-nums font-serif font-bold text-stone-800 text-7xl sm:text-8xl leading-none">
           {total == null && !failed ? (
@@ -139,7 +151,7 @@ export default function LiveCounter() {
             <div className="font-serif text-3xl font-bold text-stone-800 tabular-nums">
               {week ?? "—"}
             </div>
-            <div className="text-[11px] uppercase tracking-wider text-stone-400 mt-1">Past 7 days</div>
+            <div className="text-[11px] uppercase tracking-wider text-stone-400 mt-1">Joined yesterday</div>
           </div>
         </div>
 
@@ -158,7 +170,8 @@ export default function LiveCounter() {
         </a>
 
         <p className="mt-4 text-[11px] text-stone-400">
-          A devotee is counted once their profile is created in the app.
+          A devotee is counted once their profile is created in the app. Accounts from the
+          closed test, before launch, are not counted.
         </p>
       </div>
     </Layout>
