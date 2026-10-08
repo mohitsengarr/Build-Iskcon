@@ -23,7 +23,14 @@ const POLL_MS = 20_000;
 const LAUNCH_ISO = "2026-10-07T00:00:00Z";
 const LAUNCH_LABEL = "7 October 2026";
 
-const sinceLaunch = `&created_at=gte.${LAUNCH_ISO}`;
+// Our own devices, excluded by id as well as by date. dev_762f… is the emulator
+// this app is developed on — it identifies itself in the data as "Test Mohit" and
+// predates launch, but naming it here means a test install can never quietly
+// become a devotee in the count (Mohit, 8 Oct).
+const EXCLUDED_DEVICES = ["dev_762fbwdgbe3mtsqgeo3"];
+
+const notOurs = `&device_id=not.in.(${EXCLUDED_DEVICES.join(",")})`;
+const sinceLaunch = `&created_at=gte.${LAUNCH_ISO}${notOurs}`;
 
 /** Count rows matching a filter without fetching any of them. */
 async function countRows(filter = ""): Promise<number | null> {
@@ -83,8 +90,8 @@ export default function LiveCounter() {
   const load = useCallback(async () => {
     const [t, d, y] = await Promise.all([
       countRows(sinceLaunch),
-      countRows(`&created_at=gte.${startOfTodayUtc()}`),
-      countRows(`&created_at=gte.${startOfYesterdayUtc()}&created_at=lt.${startOfTodayUtc()}`),
+      countRows(`&created_at=gte.${startOfTodayUtc()}${notOurs}`),
+      countRows(`&created_at=gte.${startOfYesterdayUtc()}&created_at=lt.${startOfTodayUtc()}${notOurs}`),
     ]);
     // A failed poll keeps the last good number on screen rather than flashing a
     // zero: a counter that drops to nothing reads as "the app lost its users".
