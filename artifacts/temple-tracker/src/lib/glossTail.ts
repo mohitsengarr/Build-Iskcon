@@ -41,3 +41,42 @@ export function isGlossTail(line: unknown): boolean {
 export function continuesGloss(previousLine: unknown, line: unknown): boolean {
   return glossLineDangles(previousLine) && isGlossTail(line);
 }
+
+/**
+ * How far into the line the separator may sit and still read as "term — meaning".
+ * Measured over all 17,456 pages of the three books: in a gloss's own entries the
+ * separator lands at character 6 (median) and 17 at the 99th percentile, while a
+ * sentence of prose that merely contains a dash carries it at 38 or beyond. 20
+ * sits in that gap.
+ */
+export const MAX_GLOSS_SEPARATOR_OFFSET = 20;
+
+/**
+ * How many words a gloss term may run to. 2,604 of the 2,632 measured entries
+ * name their term in one or two words; the translation the gloss runs into opens
+ * "अर्जुन ने कहा - हे अच्युत!", which is three, so the count is what keeps the
+ * translation out of the glossary.
+ */
+export const MAX_GLOSS_TERM_WORDS = 2;
+
+/**
+ * Whether a line is one more entry of the word-meanings — "term — meaning".
+ *
+ * The gloss's LAST entry carries no semicolon and closes with a danda:
+ * "अपि - भी ।". That is also the exact shape of a half-shloka — short, almost
+ * all Devanagari, ending in a danda, often opening on a Sanskrit particle — and
+ * the verse rules run before the gloss branch, so they took it, gave it its own
+ * block with a divider above, and set it in verse type (CC Adi-lila 1.62).
+ */
+export function isGlossEntry(line: unknown): boolean {
+  const t = typeof line === "string" ? line.trim() : "";
+  if (!t || /^(तात्पर्य|अनुवाद|शब्दार्थ)/u.test(t)) return false;
+  const separator = /[-\u2013\u2014]/u.exec(t);
+  if (!separator || separator.index === 0) return false;
+  if (separator.index > MAX_GLOSS_SEPARATOR_OFFSET) return false;
+  // Nothing after the separator means the entry dangles into the next line;
+  // continuesGloss handles that case.
+  if (!/\S/.test(t.slice(separator.index + separator[0].length))) return false;
+  const term = t.slice(0, separator.index).trim();
+  return term.split(/\s+/).filter(Boolean).length <= MAX_GLOSS_TERM_WORDS;
+}

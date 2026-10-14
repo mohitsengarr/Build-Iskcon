@@ -9,7 +9,8 @@ import { BOOKMARK_UPSERT_PREFER, anchorFor, bookmarkUpsertPath, findAnchoredPara
 import { numberedVerseHeadLength, openVerseTailLength } from "@/lib/bhagwatham-utils";
 import { renderInlineBoldBlock } from "@/lib/inlineBold";
 import { normalizeBoldKey, normalizeDashKey } from "@/lib/readerText";
-import { continuesGloss } from "@/lib/glossTail";
+import { continuesGloss, isGlossEntry } from "@/lib/glossTail";
+import { ReaderAccountCard } from "@/components/ReaderAccountCard";
 import { DEFAULT_TYPOGRAPHY, proseStyle, type ReadingFace } from "@/lib/readerTypography";
 import { findWhenReady } from "@/lib/awaitElement";
 import { fetchProgress as fetchTravelledPlace, resumeLabel, saveProgress, worthOffering, worthSaving, type ReaderPlace } from "@/lib/readerProgress";
@@ -733,7 +734,13 @@ function RenderContent({ text, textEn, lang, themeKey = "light", prose, prevPage
       continue;
     }
 
-    if (current.kind !== "shlok" && current.kind !== "ref-shlok" && isVerseLike(lt) && hasDoubleViramAhead(i + 1)) {
+    // Inside the word-meanings, "term — meaning ।" is the gloss's last entry,
+    // not the opening half of a verse. It is short, nearly all Devanagari and
+    // ends in a danda, so the verse rules below would otherwise take it and
+    // set it in verse type under a divider (CC Adi-lila 1.62, "अपि - भी ।").
+    const inGloss = current.kind === "shabdarth" && isGlossEntry(lt);
+
+    if (!inGloss && current.kind !== "shlok" && current.kind !== "ref-shlok" && isVerseLike(lt) && hasDoubleViramAhead(i + 1)) {
       flush();
       current = { kind: current.kind === "tatparya" ? "ref-shlok" : "shlok", lines: [lt] };
       continue;
@@ -741,14 +748,14 @@ function RenderContent({ text, textEn, lang, themeKey = "light", prose, prevPage
 
     // Half-shloka at the page end — its closing half is on the next page. Open a
     // shlok so prevPageEndKind carries the continuation forward.
-    if (current.kind !== "shlok" && current.kind !== "ref-shlok" && isHalfShlokaLine(lt)) {
+    if (!inGloss && current.kind !== "shlok" && current.kind !== "ref-shlok" && isHalfShlokaLine(lt)) {
       flush();
       current = { kind: current.kind === "tatparya" ? "ref-shlok" : "shlok", lines: [lt] };
       continue;
     }
 
     if (current.kind === "shabdarth") {
-      const hasDash = lt.includes("—") || lt.includes("--") || /\S-\s/.test(lt);
+      const hasDash = isGlossEntry(lt) || lt.includes("—") || lt.includes("--") || /\S-\s/.test(lt);
       const hasSemicolon = lt.includes(";");
       if (hasDash || hasSemicolon) {
         current.lines.push(lt);
@@ -995,6 +1002,10 @@ function GitaSidebar({
   highlights,
   onHighlightJump,
   onHighlightRemove,
+  readerId,
+  readerName,
+  onLogin,
+  onLogout,
 }: {
   chapters: ChapterEntry[];
   activeChapter: number | null;
@@ -1011,6 +1022,10 @@ function GitaSidebar({
   highlights: ReaderHighlight[];
   onHighlightJump: (h: ReaderHighlight) => void;
   onHighlightRemove: (id: string) => void;
+  readerId: string | null;
+  readerName: string | null;
+  onLogin: () => void;
+  onLogout: () => void;
 }) {
   const [sidebarTab, setSidebarTab] = useState<"chapters" | "bookmarks" | "highlights">("chapters");
   const percent = progress && progress.totalPagesInPdf > 0
@@ -1030,7 +1045,7 @@ function GitaSidebar({
       </AnimatePresence>
 
       <aside className={`
-        fixed top-0 left-0 h-full w-72 bg-white border-r border-stone-200 z-50
+        fixed top-0 left-0 h-full w-[85vw] max-w-[18rem] sm:w-72 bg-white border-r border-stone-200 z-50
         transform transition-transform duration-300 ease-in-out overflow-y-auto
         ${drawer ? "" : "lg:sticky lg:top-20 lg:h-[calc(100vh-5rem)] lg:transform-none lg:z-0"}
         ${isOpen ? "translate-x-0" : drawer ? "-translate-x-full" : "-translate-x-full lg:translate-x-0"}
@@ -1156,11 +1171,21 @@ function GitaSidebar({
           </nav>
         )}
 
-        {/* Footer */}
-        <div className="px-4 py-4 border-t border-stone-100 mt-2">
-          <p className="text-[10px] text-stone-400 leading-relaxed">
+        {/* Identity / login footer */}
+        <div className="px-3 py-3 border-t border-stone-100 mt-2">
+          {/* Sign out is a labelled button that asks first (ReaderAccountCard). */}
+          <ReaderAccountCard readerId={readerId} readerName={readerName} onLogin={onLogin} onLogout={onLogout} />
+        </div>
+
+        {/* Footer credit */}
+        <div className="px-4 py-4 border-t border-stone-100 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:pb-4">
+          <p className="text-[10px] text-stone-400 leading-relaxed" style={{ fontFamily: "var(--font-devanagari)" }}>
             श्रील प्रभुपाद द्वारा हिंदी अनुवाद एवं तात्पर्य — BBT
           </p>
+          <a href="https://www.sarvam.ai" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 mt-2 text-[9px] text-stone-400 hover:text-stone-600 transition-colors">
+            Powered by
+            <img src="https://www.sarvam.ai/sarvam-logo.svg" alt="Sarvam AI" className="h-3 opacity-40" onError={(e) => { (e.target as HTMLImageElement).outerHTML = '<span class="font-semibold">Sarvam AI</span>'; }} />
+          </a>
         </div>
       </aside>
     </>
@@ -1802,6 +1827,16 @@ export default function GitaReader() {
           // A highlight is found again the way a bookmark's line is: by its opening words.
           onHighlightJump={(h) => handleBookmarkJump({ page_number: h.page, line_anchor: h.text })}
           onHighlightRemove={highlights.remove}
+          readerId={readerId}
+          readerName={readerName}
+          onLogin={() => setShowIdentityModal(true)}
+          onLogout={() => {
+            localStorage.removeItem("gita_reader_id");
+            localStorage.removeItem("gita_reader_name");
+            setReaderId(null);
+            setReaderName(null);
+            setBookmarks([]);
+          }}
         />
 
         {/* Main content */}

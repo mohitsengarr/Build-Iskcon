@@ -21,7 +21,7 @@ import {
 } from "@/lib/kindlePaging";
 import { describeFailure } from "@/lib/requestError";
 import { isStandalonePageNumber, stripRunningHead } from "@/lib/runningHead";
-import { continuesGloss } from "@/lib/glossTail";
+import { continuesGloss, isGlossEntry } from "@/lib/glossTail";
 import { DEFAULT_TYPOGRAPHY, proseStyle, type ReadingFace } from "@/lib/readerTypography";
 import { findWhenReady } from "@/lib/awaitElement";
 import { fetchProgress as fetchTravelledPlace, resumeLabel, saveProgress, worthOffering, worthSaving, type ReaderPlace } from "@/lib/readerProgress";
@@ -1624,7 +1624,13 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
     }
 
     // Not yet in shlok — check if this verse-like line has ॥ ahead (lookahead)
-    if (current.kind !== "shlok" && current.kind !== "ref-shlok" && isVerseLike(t) && hasDoubleViramAhead(i + 1)) {
+    // Inside the word-meanings, "term — meaning ।" is the gloss's last entry,
+    // not the opening half of a verse. It is short, nearly all Devanagari and
+    // ends in a danda, so the verse rules below would otherwise take it and
+    // set it in verse type under a divider (CC Adi-lila 1.62, "अपि - भी ।").
+    const inGloss = current.kind === "shabdarth" && isGlossEntry(t);
+
+    if (!inGloss && current.kind !== "shlok" && current.kind !== "ref-shlok" && isVerseLike(t) && hasDoubleViramAhead(i + 1)) {
       const shlokKind = current.kind === "tatparya" ? "ref-shlok" : "shlok";
       flush();
       current = { kind: shlokKind, lines: [t] };
@@ -1634,7 +1640,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
     // Half-shloka at end of page — verse-like line ending in single ।, no ॥ ahead
     // (because the closing half is on the next page). Open a shlok section so
     // prevPageEndKind="shlok" carries the continuation forward.
-    if (current.kind !== "shlok" && current.kind !== "ref-shlok" && isHalfShlokaLine(t)) {
+    if (!inGloss && current.kind !== "shlok" && current.kind !== "ref-shlok" && isHalfShlokaLine(t)) {
       const shlokKind = (current.kind === "tatparya") ? "ref-shlok" : "shlok";
       flush();
       current = { kind: shlokKind, lines: [t] };
@@ -1643,7 +1649,7 @@ function RenderContent({ text, textEn, lang, chapterImages, themeKey = "light", 
 
     if (current.kind === "shabdarth") {
       // Shabdarth lines have dashes (—, --, -) and/or semicolons
-      const hasDash = t.includes("—") || t.includes("--") || /\S-\s/.test(t);
+      const hasDash = isGlossEntry(t) || t.includes("—") || t.includes("--") || /\S-\s/.test(t);
       const hasSemicolon = t.includes(";");
       const endsWithDanda = /।\s*\.?\s*$/.test(t);
 
@@ -2563,7 +2569,7 @@ function Sidebar({
         </div>
 
         {/* Footer credit */}
-        <div className="px-4 py-4 border-t border-stone-100">
+        <div className="px-4 py-4 border-t border-stone-100 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:pb-4">
           <p className="text-[10px] text-stone-400 leading-relaxed">
             श्रील प्रभुपाद द्वारा हिंदी अनुवाद एवं तात्पर्य — BBT
           </p>

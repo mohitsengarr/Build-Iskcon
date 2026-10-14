@@ -20,7 +20,7 @@ import {
 } from "@/lib/kindlePaging";
 import { describeFailure } from "@/lib/requestError";
 import { isStandalonePageNumber, stripRunningHead } from "@/lib/runningHead";
-import { continuesGloss } from "@/lib/glossTail";
+import { continuesGloss, isGlossEntry } from "@/lib/glossTail";
 import { DEFAULT_TYPOGRAPHY, proseStyle, type ReadingFace } from "@/lib/readerTypography";
 import { findWhenReady } from "@/lib/awaitElement";
 import { fetchProgress as fetchTravelledPlace, resumeLabel, saveProgress, worthOffering, worthSaving, type ReaderPlace } from "@/lib/readerProgress";
@@ -1170,14 +1170,20 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
       continue;
     }
 
-    if (current.kind !== "shlok" && current.kind !== "ref-shlok" && isVerseLike(t) && hasDoubleViramAhead(i + 1)) {
+    // Inside the word-meanings, "term — meaning ।" is the gloss's last entry,
+    // not the opening half of a verse. It is short, nearly all Devanagari and
+    // ends in a danda, so the verse rules below would otherwise take it and
+    // set it in verse type under a divider (CC Adi-lila 1.62, "अपि - भी ।").
+    const inGloss = current.kind === "shabdarth" && isGlossEntry(t);
+
+    if (!inGloss && current.kind !== "shlok" && current.kind !== "ref-shlok" && isVerseLike(t) && hasDoubleViramAhead(i + 1)) {
       const shlokKind = current.kind === "tatparya" ? "ref-shlok" : "shlok";
       flush();
       current = { kind: shlokKind, lines: [t] };
       continue;
     }
 
-    if (current.kind !== "shlok" && current.kind !== "ref-shlok" && isHalfShlokaLine(t)) {
+    if (!inGloss && current.kind !== "shlok" && current.kind !== "ref-shlok" && isHalfShlokaLine(t)) {
       const shlokKind = (current.kind === "tatparya") ? "ref-shlok" : "shlok";
       flush();
       current = { kind: shlokKind, lines: [t] };
@@ -1185,7 +1191,7 @@ function RenderContent({ text, textEn, lang, themeKey = "light", pageNumber, ove
     }
 
     if (current.kind === "shabdarth") {
-      const hasDash = t.includes("—") || t.includes("--") || /\S-\s/.test(t);
+      const hasDash = isGlossEntry(t) || t.includes("—") || t.includes("--") || /\S-\s/.test(t);
       const hasSemicolon = t.includes(";");
       const endsWithDanda = /।\s*\.?\s*$/.test(t);
 
@@ -1980,7 +1986,7 @@ function Sidebar({
           <ReaderAccountCard readerId={readerId} readerName={readerName} onLogin={onLogin} onLogout={onLogout} />
         </div>
 
-        <div className="px-4 py-4 border-t border-stone-100">
+        <div className="px-4 py-4 border-t border-stone-100 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:pb-4">
           <p className="text-[10px] text-stone-400 leading-relaxed" style={{ fontFamily: "var(--font-devanagari)" }}>
             श्रील प्रभुपाद द्वारा हिंदी अनुवाद एवं तात्पर्य — BBT
           </p>
