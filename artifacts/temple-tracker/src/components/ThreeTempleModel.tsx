@@ -11,6 +11,9 @@ import {
 } from "@react-three/drei";
 import type { TempleStyle } from "@/lib/communityTemples";
 import { roughnessTile, TILE_SIZE } from "@/lib/surfaceNoise";
+import { Bloom, EffectComposer, N8AO, ToneMapping } from "@react-three/postprocessing";
+import { ToneMappingMode } from "postprocessing";
+import { fxSettings, initialFxLevel, stepDown, type FxLevel } from "@/lib/renderQuality";
 
 const MARBLE = "#f4eddf";
 const MARBLE_DK = "#e6dbc4";
@@ -393,6 +396,50 @@ function TempleLighting() {
   );
 }
 
+/**
+ * The finishing passes — igloo.inc's EffectComposer, scaled to a temple.
+ *
+ * Ambient occlusion first: the shadow that gathers where two surfaces meet —
+ * under the cornice, between the pillars, where the drum sits on its base. It is
+ * the cue the eye reads form by, and without it the temple read as parts stacked
+ * on each other rather than one building. A radius of 0.6 because N8AO's default
+ * of 5 is measured in world units and the whole temple is about three tall, and
+ * a warm brown rather than black so the crevices stay inside the palette.
+ *
+ * Keep distanceFalloff LOW. The contact-shadow plane does not write depth, so
+ * the pixels under the temple carry the far-plane depth; at falloff 1 the
+ * temple's occlusion bled across that gap and the plane's whole footprint went
+ * a flat grey. Low falloff means occlusion only from close surfaces — which is
+ * exactly the crevice shadow this is for.
+ *
+ * Bloom on the brightest things only. The threshold is 1.0 — HDR, above white —
+ * because at 0.9 the marble's clearcoat caught the key light and haloed the
+ * sunlit edge of the plinth onto the page. Only the metal, reflecting a
+ * Lightformer of intensity 3.4, gets that far, so it is the gold that glows.
+ *
+ * Tone mapping last, and not optional: the composer switches the renderer's own
+ * tone mapping off while it runs, so without this the ACES curve would quietly
+ * disappear and every highlight would clip.
+ */
+function TempleEffects({ level }: { level: FxLevel }) {
+  const fx = fxSettings(level);
+  if (!fx) return null;
+  return (
+    <EffectComposer multisampling={fx.multisampling}>
+      <N8AO
+        aoRadius={0.6}
+        distanceFalloff={0.5}
+        intensity={4}
+        color="#3a2414"
+        quality={fx.aoQuality}
+        halfRes={fx.aoHalfRes}
+      />
+      <Bloom mipmapBlur luminanceThreshold={1} luminanceSmoothing={0.12} intensity={0.9} />
+      <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+    </EffectComposer>
+  );
+}
+
 function Temple({ style }: { style: TempleStyle }) {
   const showCornerSpires = style === "tovp-dome" || style === "modern-vedic";
   return (
@@ -421,13 +468,18 @@ export default function ThreeTempleModel({
   interactive = true,
 }: ThreeTempleModelProps) {
   const [dpr, setDpr] = useState<number>(1.5);
+  const [fxLevel, setFxLevel] = useState<FxLevel>(() =>
+    typeof window === "undefined"
+      ? "lite"
+      : initialFxLevel({ width: window.innerWidth, dpr: window.devicePixelRatio }),
+  );
   return (
     <div className={className} style={{ width: "100%", height: "100%" }}>
       <Canvas
         shadows
         dpr={dpr}
         camera={{ position: [4.4, 2.7, 5.4], fov: 40 }}
-        gl={{ antialias: true, powerPreference: "high-performance" }}
+        gl={{ antialias: true, powerPreference: "high-performance", alpha: true }}
         // r3f already renders through ACES Filmic tone mapping; this only opens
         // the exposure a little, so the marble keeps its highlights.
         onCreated={({ gl }) => { gl.toneMappingExposure = 1.08; }}
@@ -436,11 +488,18 @@ export default function ThreeTempleModel({
             struggles: a soft-shadowed, environment-lit scene is heavier than
             what stood here before, and a phone should still turn smoothly. */}
         <PerformanceMonitor
-          onDecline={() => setDpr(1)}
+          flipflops={3}
+          onDecline={() => { setDpr(1); setFxLevel(stepDown); }}
           onIncline={() => setDpr(Math.min(1.75, window.devicePixelRatio))}
+          onFallback={() => setFxLevel("off")}
         />
         <AdaptiveDpr />
-        <color attach="background" args={["#fbf6ee"]} />
+        {/* No background of its own: the canvas is transparent and the page's card
+            shows through. Painting the cream here sent it through the composer's
+            ACES pass with everything else, and ACES pulls near-whites down to a
+            flat grey — (227, 226, 224) where the page is (251, 246, 238). Leaving
+            it to the page also means the temple matches whichever card it sits
+            in. Fog still fades distant geometry toward the same cream. */}
         <fog attach="fog" args={["#fbf6ee", 11, 24]} />
         {/* Percentage-closer soft shadows: the shadow softens with distance from
             whatever casts it, the way a real one does. */}
@@ -468,6 +527,7 @@ export default function ThreeTempleModel({
             <Temple style={style} />
           </Float>
           <ContactShadows position={[0, -1.2, 0]} opacity={0.45} scale={11} blur={2.9} far={4.8} resolution={1024} />
+          <TempleEffects level={fxLevel} />
         </Suspense>
         <OrbitControls
           enablePan={false}
