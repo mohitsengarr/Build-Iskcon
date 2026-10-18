@@ -3,7 +3,7 @@
 // Run: node --experimental-strip-types --test tests/
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { KEPT_PREFIX, keptMessage, mayReplace, replacementFields, sceneDraft } from "../supabase/functions/regenerate-chapter-art/approved.ts";
+import { KEPT_PREFIX, keptMessage, mayReplace, replacementFields, sceneDraft } from "../supabase/functions/_shared/approvedRedraw.ts";
 
 describe("sceneDraft", () => {
   test("keeps a scene stored on its own as it is", () => {

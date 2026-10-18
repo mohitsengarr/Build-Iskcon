@@ -1,7 +1,8 @@
-// The decisions regenerate-chapter-art makes when it redraws an APPROVED cover,
-// kept pure so node tests import them directly: the scene it redraws from,
-// whether the new image may replace the approved one with nobody looking, and
-// what changes on the row when it does.
+// The decisions made when an APPROVED image is redrawn — a chapter cover
+// (regenerate-chapter-art) or a published Instagram post (regenerate-pending-
+// image) — kept pure so node tests import them directly: the scene it redraws
+// from, whether the new image may replace the approved one with nobody looking,
+// and what changes on the row when it does.
 
 /**
  * The scene to redraw an approved cover from. A stored prompt may be the scene

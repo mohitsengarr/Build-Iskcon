@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { KEPT_PREFIX, bareUrl, redrawConfirmText, redrawOutcome, repostsOnSocial } from "./approvedRedraw";
+import { APPROVED_TABLES, KEPT_PREFIX, bareUrl, redrawConfirmText, redrawOutcome, redrawRequest, repostsOnSocial } from "./approvedRedraw";
 
 const START = "https://x.test/storage/v1/object/public/chapter-art-images/art-1.jpg";
 
@@ -40,6 +40,10 @@ describe("redrawConfirmText", () => {
     expect(redrawConfirmText("bhagavatam")).not.toMatch(/posted/);
   });
 
+  it("says a published Instagram post is posted again straight away", () => {
+    expect(redrawConfirmText("instagram")).toMatch(/posted to Instagram and Threads again straight away/);
+  });
+
   it("says the image is replaced only if the check passes", () => {
     expect(redrawConfirmText("bhagavatam")).toMatch(/only if the check passes/);
   });
@@ -49,5 +53,19 @@ describe("bareUrl", () => {
   it("drops the query and copes with nothing", () => {
     expect(bareUrl(`${START}?t=1`)).toBe(START);
     expect(bareUrl(null)).toBe("");
+  });
+});
+
+describe("redrawRequest", () => {
+  it("sends a chapter cover to regenerate-chapter-art with its book", () => {
+    expect(redrawRequest({ book: "gita", id: 7 })).toEqual({ fn: "regenerate-chapter-art", body: { book: "gita", id: 7, replace_approved: true } });
+  });
+
+  it("sends an Instagram post to regenerate-pending-image", () => {
+    expect(redrawRequest({ book: "instagram", id: 731 })).toEqual({ fn: "regenerate-pending-image", body: { id: 731, replace_approved: true } });
+  });
+
+  it("reads an Instagram post back from its own table", () => {
+    expect(APPROVED_TABLES.instagram).toBe("ig_pending_review");
   });
 });

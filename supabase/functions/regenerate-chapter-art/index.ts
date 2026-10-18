@@ -33,7 +33,7 @@
 //   apply_facts: false skips research for this request.
 //
 // Approved covers: { book, id, replace_approved: true } redraws a cover that is
-// already approved, from its stored scene (sceneDraft, ./approved.ts) unless a
+// already approved, from its stored scene (sceneDraft, _shared/approvedRedraw.ts) unless a
 // prompt is sent. Nobody reviews the result, so it is checked BEFORE it is
 // stored, with corrected re-renders like an unattended run, all after the
 // response (202): one render alone can outlast the request. Only an image whose
@@ -70,7 +70,7 @@ import {
   type VisualCheckRecord,
 } from "../_shared/visualCheck.ts";
 import { rowRedoHandlers } from "../_shared/rowRedo.ts";
-import { KEPT_PREFIX, keptMessage, mayReplace, replacementFields, sceneDraft } from "./approved.ts";
+import { KEPT_PREFIX, keptMessage, mayReplace, replacementFields, sceneDraft } from "../_shared/approvedRedraw.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
 import { renderFailureMessage, renderWithRetry, type TogetherFailure } from "../_shared/togetherRetry.ts";
 

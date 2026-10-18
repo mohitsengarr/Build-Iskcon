@@ -1,15 +1,25 @@
-// Regenerating an APPROVED cover from the gallery grid (regenerate-chapter-art
-// with replace_approved). The function answers at once and works after the
-// response: it replaces the image only if the new one passes its visual check,
-// and otherwise leaves a note on the row. The gallery waits for one or the other.
+// Regenerating an APPROVED image from the gallery grid: a chapter cover
+// (regenerate-chapter-art) or a published Instagram post (regenerate-pending-
+// image), both with replace_approved. The function answers at once and works
+// after the response: it replaces the image only if the new one passes its
+// visual check, and otherwise leaves a note on the row. The gallery waits for
+// one or the other.
 
-export type ApprovedBook = "bhagavatam" | "chaitanya" | "gita";
+export type ApprovedBook = "bhagavatam" | "chaitanya" | "gita" | "instagram";
 
 export const APPROVED_TABLES: Record<ApprovedBook, string> = {
   bhagavatam: "bhagavatam_chapter_art_review",
   chaitanya: "chaitanya_chapter_art_review",
   gita: "gita_chapter_art_review",
+  instagram: "ig_pending_review",
 };
+
+/** The edge function and request body that redraw an approved image. */
+export function redrawRequest(art: { book: ApprovedBook; id: number }): { fn: string; body: Record<string, unknown> } {
+  return art.book === "instagram"
+    ? { fn: "regenerate-pending-image", body: { id: art.id, replace_approved: true } }
+    : { fn: "regenerate-chapter-art", body: { book: art.book, id: art.id, replace_approved: true } };
+}
 
 /** How every note a redraw leaves begins (regenerate-chapter-art/approved.ts). */
 export const KEPT_PREFIX = "Regenerate kept the approved image";
@@ -18,13 +28,18 @@ export const REDRAW_POLL_MS = 15_000;
 /** A redraw has at most the worker's background budget (~6 min); a little more, then stop waiting. */
 export const REDRAW_GIVE_UP_MS = 8 * 60_000;
 
-/** The Gita and the Chaitanya Charitamrita are posted daily; Bhagavatam covers nowhere. */
+/**
+ * Instagram posts are posted again at once; Gita and Chaitanya covers with the
+ * next daily post; Bhagavatam covers are posted nowhere.
+ */
 export function repostsOnSocial(book: ApprovedBook): boolean {
   return book !== "bhagavatam";
 }
 
 export function redrawConfirmText(book: ApprovedBook): string {
-  const posting = repostsOnSocial(book)
+  const posting = book === "instagram"
+    ? " It is then posted to Instagram and Threads again straight away."
+    : repostsOnSocial(book)
     ? " It is then posted to Instagram and Threads again with the next daily post."
     : "";
   return "Regenerate this approved image?\n\nA new image is drawn from the same scene with the approved settings and checked. " +

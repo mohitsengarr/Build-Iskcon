@@ -258,6 +258,8 @@ function makeNet(o: { claude: (body: Json) => string; imageOk?: (n: number) => b
   const signals: Array<AbortSignal | undefined> = [];
   /** "together", or "claude-<max_tokens>" for a raw Claude call, in the order the requests started. */
   const calls: string[] = [];
+  /** The bodies sent to approve-instagram-post to post a replaced approved post again. */
+  const republished: Json[] = [];
   const json = (v: unknown) => new Response(JSON.stringify(v), { status: 200, headers: { "content-type": "application/json" } });
   const fn = async (url: string | URL, init: RequestInit = {}) => {
     const u = String(url);
@@ -282,9 +284,14 @@ function makeNet(o: { claude: (body: Json) => string; imageOk?: (n: number) => b
     }
     if (u.endsWith("/api/bhagwatham/chapter-index")) return json({ chapters: CHAPTER_INDEX });
     if (u.includes("/api/bhagwatham/batch/")) return json({ pages: [{ text: "Chapter text." }] });
+    // A replaced approved post is posted again, one channel per call.
+    if (u === "http://supabase.test/functions/v1/approve-instagram-post") {
+      republished.push(body);
+      return json({ success: true, id: body?.id, service: body?.service });
+    }
     throw new Error(`unexpected fetch ${u}`);
   };
-  return { fn, together, signals, calls };
+  return { fn, together, signals, calls, republished };
 }
 
 type Reply = "pass" | "fail" | "fail2" | "no_tool" | "refusal" | Error;
@@ -2311,6 +2318,139 @@ describe("visual check wiring for ig_pending_review", () => {
           assert.deepEqual(net.together.map((b) => [b.model, b.width, b.height, b.steps]), c.sent);
         });
       }
+    });
+
+    // ── An approved post (replace_approved): rendered, checked and corrected after
+    // the response, stored only when its check passed, then posted again.
+    describe("an approved post", () => {
+      const MANTRA_CAPTION = `${ARJUNA_SCENE}\n\n🙏 Hare Krishna Hare Krishna Krishna Krishna Hare Hare\nHare Rama Hare Rama Rama Rama Hare Hare\n\n📖 Srimad Bhagavatam — Canto 11, Chapter 1\n#SrimadBhagavatam #ISKCON`;
+      const approved = (extra: Json = {}) => ({ status: "approved", caption: MANTRA_CAPTION, image_prompt: null, reviewed_at: "2026-10-01T06:00:00.000Z", error_message: null, ...extra });
+
+      test("answers 202 before anything is stored, then a passing image replaces the post's and is posted again to each channel", async () => {
+        // Arrange
+        const { db, net, row } = setup({ row: approved() });
+        visionQueue(["pass"]);
+        // Act
+        const res = await start("regen", { id: 5, replace_approved: true });
+        const atResponse = row.image_path;
+        await res.background;
+        // Assert
+        assert.equal(res.status, 202, JSON.stringify(res.json));
+        assert.equal(res.json.queued, true);
+        assert.equal(atResponse, "old.jpg", "nothing replaced before the check");
+        assert.match(row.image_path, /^approved-5-\d+\.jpg$/);
+        assert.equal(row.image_url, `https://storage.test/${row.image_path}`);
+        assert.equal(row.status, "approved");
+        assert.equal(row.visual_check.status, "pass");
+        assert.equal(row.error_message, null);
+        assert.equal(db.removed.includes("old.jpg"), false, "the published post's file is kept");
+        assert.deepEqual(net.republished, [
+          { id: 5, action: "republish", service: "instagram" },
+          { id: 5, action: "republish", service: "threads" },
+        ]);
+      });
+
+      test("draws the caption's own story: the mantra, book reference and hashtags are not painted", async () => {
+        // Arrange
+        const { net, row } = setup({ row: approved() });
+        visionQueue(["pass"]);
+        // Act
+        await call("regen", { id: 5, replace_approved: true });
+        // Assert
+        const sent = String(net.together[0].prompt);
+        assert.ok(sent.startsWith(ARJUNA_SCENE), sent);
+        assert.equal(/Hare Rama|Srimad Bhagavatam — Canto|#ISKCON/.test(sent), false, sent);
+        assert.equal(row.image_prompt, ARJUNA_SCENE, "the next redraw starts from the same words");
+      });
+
+      test("an image_prompt from an earlier regenerate is what it redraws from", async () => {
+        // Arrange
+        const { net } = setup({ row: approved({ image_prompt: DHRUVA_SCENE }) });
+        visionQueue(["pass"]);
+        // Act
+        await call("regen", { id: 5, replace_approved: true });
+        // Assert
+        assert.ok(String(net.together[0].prompt).startsWith(DHRUVA_SCENE), String(net.together[0].prompt));
+      });
+
+      test("renders at the configuration's Instagram size", async () => {
+        // Arrange
+        const { net } = setup({ row: approved(), cfg: { model: "openai/gpt-image-2", width: 1088, height: 1344, ig_width: 1088, ig_height: 1344, fallback_model: FLUX11, fallback_width: 768, fallback_height: 1024, is_active: true } });
+        visionQueue(["pass"]);
+        // Act
+        const { json } = await call("regen", { id: 5, replace_approved: true });
+        // Assert
+        assert.equal(json.size, "1088x1344");
+        assert.deepEqual([net.together[0].width, net.together[0].height], [1088, 1344]);
+      });
+
+      test("a detail still wrong after the corrected attempts keeps the post's image, says why, and posts nothing", async () => {
+        // Arrange
+        const { db, net, row } = setup({ row: approved() });
+        visionQueue(["fail"]);
+        // Act
+        await call("regen", { id: 5, replace_approved: true });
+        // Assert
+        assert.equal(net.together.length, 3, "the first render and two corrected ones");
+        for (const t of net.together.slice(1)) assert.ok(String(t.prompt).startsWith("CORRECTION — the painting must clearly show:"), String(t.prompt));
+        assert.equal(row.image_path, "old.jpg");
+        assert.equal(row.error_message, "Regenerate kept the approved image: 1 detail still wrong after 3 attempts.");
+        assert.equal(db.uploads.length, 0);
+        assert.deepEqual(net.republished, []);
+      });
+
+      test("a change to the post during the redraw wins: nothing is replaced, the new file is deleted and nothing is posted", async () => {
+        // Arrange: the post is rejected while the check is answering
+        const { db, net, row } = setup({ row: approved() });
+        const hold = gate();
+        visionQueue(["pass"], { before: () => hold.opened });
+        // Act
+        const res = await start("regen", { id: 5, replace_approved: true });
+        row.status = "rejected";
+        hold.open();
+        await res.background;
+        // Assert
+        assert.equal(row.image_path, "old.jpg");
+        assert.equal(db.uploads.length, 1);
+        assert.deepEqual(db.removed, [db.uploads[0].path]);
+        assert.deepEqual(net.republished, []);
+      });
+
+      test("a note left by an earlier redraw is cleared before the response", async () => {
+        // Arrange
+        const { row } = setup({ row: approved({ error_message: "Regenerate kept the approved image: 1 detail still wrong after 3 attempts." }) });
+        const hold = gate();
+        visionQueue(["pass"], { before: () => hold.opened });
+        // Act
+        const res = await start("regen", { id: 5, replace_approved: true });
+        const atResponse = row.error_message;
+        hold.open();
+        await res.background;
+        // Assert
+        assert.equal(atResponse, null);
+      });
+
+      test("is refused for a post that is not approved, and an approved post is never redrawn without asking", async () => {
+        // Arrange
+        setup();
+        // Act
+        const pending = await call("regen", { id: 5, replace_approved: true });
+        setup({ row: approved() });
+        const unasked = await call("regen", { id: 5, prompt: ARJUNA_SCENE });
+        // Assert
+        assert.equal(pending.status, 409);
+        assert.equal(unasked.status, 409);
+      });
+
+      test("a post with no prompt and no caption asks for a prompt", async () => {
+        // Arrange
+        setup({ row: approved({ caption: "#only #tags" }) });
+        // Act
+        const { status, json } = await call("regen", { id: 5, replace_approved: true });
+        // Assert
+        assert.equal(status, 400);
+        assert.match(json.error, /no prompt or caption/);
+      });
     });
   });
 });

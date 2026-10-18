@@ -9,7 +9,7 @@ import { describeFailure, describeThrown } from "@/lib/requestError";
 import { renderQueue } from "@/lib/renderQueue";
 import { PRODUCTION_SIZES, aspectRatioCss } from "@/lib/imageGenConfig";
 import { BOOK_SECTIONS, GITA_SECTION, gitaCardDescription, sectionBadge } from "@/lib/gallerySections";
-import { APPROVED_TABLES, REDRAW_GIVE_UP_MS, REDRAW_POLL_MS, redrawConfirmText, redrawOutcome, type ApprovedBook } from "@/lib/approvedRedraw";
+import { APPROVED_TABLES, REDRAW_GIVE_UP_MS, REDRAW_POLL_MS, redrawConfirmText, redrawOutcome, redrawRequest, type ApprovedBook } from "@/lib/approvedRedraw";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -31,7 +31,7 @@ interface GalleryItem {
   // image_path the preview shows, so the gallery knows which image the reviewer
   // saw full size (createSeenImages).
   pendingReview?: { id: number; imagePath: string | null };
-  // An approved chapter cover: its review row, so the grid can regenerate it.
+  // An approved chapter cover or Instagram post: its row, so the grid can regenerate it.
   approvedArt?: { book: ApprovedBook; id: number };
   generatedAt: string;
   type: "chapter" | "instagram";
@@ -1795,10 +1795,11 @@ export default function Gallery() {
     setRedrawing(prev => new Set(prev).add(item.id));
     const done = () => setRedrawing(prev => { const n = new Set(prev); n.delete(item.id); return n; });
     try {
-      const r = await fetch(`${SUPABASE_URL}/functions/v1/regenerate-chapter-art`, {
+      const { fn, body } = redrawRequest(art);
+      const r = await fetch(`${SUPABASE_URL}/functions/v1/${fn}`, {
         method: "POST",
         headers: FN_HEADERS,
-        body: JSON.stringify({ book: art.book, id: art.id, replace_approved: true }),
+        body: JSON.stringify(body),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d?.ok) { alert(`Regenerate failed: ${describeFailure(r.status, d)}`); done(); return; }
@@ -2583,6 +2584,7 @@ export default function Gallery() {
               description: firstLine.substring(0, 200),
               fullCaption: r.caption || r.chapter_title || "",
               igPostId: r.id,
+              approvedArt: { book: "instagram", id: r.id },
               generatedAt: r.reviewed_at,
               type: "instagram",
             };
@@ -4295,7 +4297,7 @@ export default function Gallery() {
                                     <button
                                       type="button"
                                       onClick={e => { e.stopPropagation(); void redrawApproved(item); }}
-                                      className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-stone-800 shadow backdrop-blur-sm transition-opacity hover:bg-white sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100"
+                                      className="absolute top-2 left-2 z-10 inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-stone-800 shadow backdrop-blur-sm transition-opacity hover:bg-white sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100"
                                       title="Draw this approved image again with the approved settings"
                                     >
                                       <RefreshCw className="w-3 h-3" /> Regenerate
