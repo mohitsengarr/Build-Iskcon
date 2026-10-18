@@ -69,3 +69,19 @@ describe("redrawRequest", () => {
     expect(APPROVED_TABLES.instagram).toBe("ig_pending_review");
   });
 });
+
+describe("an older static image", () => {
+  it("is sent to regenerate-chapter-art by its manifest file name, to be adopted as a Bhagavatam cover", () => {
+    expect(redrawRequest({ legacyImage: "chapter-010.jpg" })).toEqual({
+      fn: "regenerate-chapter-art",
+      body: { book: "bhagavatam", legacy_image: "chapter-010.jpg", replace_approved: true },
+    });
+  });
+
+  it("asks first, saying it becomes the chapter's cover and is replaced only on a passing check, and posted nowhere", () => {
+    const text = redrawConfirmText("bhagavatam", { legacy: true });
+    expect(text).toMatch(/becomes this chapter's approved cover/);
+    expect(text).toMatch(/only if the check passes/);
+    expect(text).not.toMatch(/posted/);
+  });
+});

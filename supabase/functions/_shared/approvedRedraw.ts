@@ -64,3 +64,76 @@ export function keptMessage(
   const why = typeof record.reason === "string" && record.reason ? record.reason : String(record.status ?? "unknown");
   return `${KEPT_PREFIX}: the new image could not be checked (${why}).`;
 }
+
+// ── Older static images ──────────────────────────────────────────────────────
+// The first Bhagavatam chapter images are static files listed in the site's
+// /api/bhagwatham/image-manifest, with no review row. Redrawing one first adopts
+// it: the file is copied into storage as an approved cover row for its chapter
+// and the static copy is hidden (bhagavatam_image_deletes), so the chapter keeps
+// a database-backed image even when the redraw itself does not pass.
+
+export interface LegacyManifestEntry {
+  chapterNumber?: unknown;
+  cantoNumber?: unknown;
+  chapterTitle?: unknown;
+  imagePath?: unknown;
+  prompt?: unknown;
+  descriptionHi?: unknown;
+  sceneIndex?: unknown;
+}
+
+/** A manifest file name: one plain name, never a path. */
+export function isLegacyImageName(name: unknown): name is string {
+  return typeof name === "string" && /^[A-Za-z0-9][A-Za-z0-9._-]{0,120}\.(?:jpe?g|png|webp)$/i.test(name) && !name.includes("..");
+}
+
+/** Where an adopted static image is kept in the covers' bucket. */
+export function legacyStoragePath(name: string): string {
+  return `art-legacy-${name}`;
+}
+
+export function imageContentType(name: string): string {
+  return /\.png$/i.test(name) ? "image/png" : /\.webp$/i.test(name) ? "image/webp" : "image/jpeg";
+}
+
+const wholeAtLeast = (v: unknown, min: number): number | null =>
+  typeof v === "number" && Number.isInteger(v) && v >= min ? v : null;
+const text = (v: unknown): string | null => (typeof v === "string" && v.trim() ? v.trim() : null);
+
+/**
+ * The approved cover row an adopted static image becomes, or null when the
+ * manifest entry or the chapter index cannot place it. scene_index stays null:
+ * the manifest's scene numbers are not the pre-extracted scenes' indexes.
+ */
+export function legacyCoverRow(
+  entry: LegacyManifestEntry,
+  chapter: { number?: unknown; skandh?: unknown; title?: unknown } | null | undefined,
+  image: { url: string; path: string },
+  now: Date,
+) {
+  const g = wholeAtLeast(entry.chapterNumber, 1);
+  const inCanto = wholeAtLeast(chapter?.number, 1);
+  const canto = wholeAtLeast(chapter?.skandh, 1) ?? wholeAtLeast(entry.cantoNumber, 1);
+  if (g === null || inCanto === null || canto === null) return null;
+  return {
+    chapter_global_number: g,
+    chapter_canto: canto,
+    chapter_in_canto: inCanto,
+    chapter_title: text(entry.chapterTitle) ?? text(chapter?.title),
+    image_url: image.url,
+    image_path: image.path,
+    prompt: text(entry.prompt),
+    description_hi: text(entry.descriptionHi),
+    scene_index: null,
+    status: "approved",
+    reviewed_at: now.toISOString(),
+    error_message: null,
+  };
+}
+
+/** The gallery's key for a static image: what bhagavatam_image_deletes hides. */
+export function legacyHideKey(entry: LegacyManifestEntry): { chapter_number: number; scene_index: number } | null {
+  const g = wholeAtLeast(entry.chapterNumber, 1);
+  if (g === null) return null;
+  return { chapter_number: g, scene_index: wholeAtLeast(entry.sceneIndex, 0) ?? 0 };
+}

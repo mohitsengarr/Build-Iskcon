@@ -33,6 +33,9 @@ interface GalleryItem {
   pendingReview?: { id: number; imagePath: string | null };
   // An approved chapter cover or Instagram post: its row, so the grid can regenerate it.
   approvedArt?: { book: ApprovedBook; id: number };
+  // One of the older static chapter images: its manifest file name. Regenerate
+  // adopts it as an approved cover row first (regenerate-chapter-art).
+  legacyImage?: string;
   generatedAt: string;
   type: "chapter" | "instagram";
 }
@@ -1790,12 +1793,13 @@ export default function Gallery() {
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
   const redrawApproved = useCallback(async (item: GalleryItem) => {
-    const art = item.approvedArt;
-    if (!art || !window.confirm(redrawConfirmText(art.book))) return;
+    const legacy = !item.approvedArt && !!item.legacyImage;
+    const target = item.approvedArt ?? (item.legacyImage ? { legacyImage: item.legacyImage } : null);
+    if (!target || !window.confirm(redrawConfirmText(item.approvedArt?.book ?? "bhagavatam", { legacy }))) return;
     setRedrawing(prev => new Set(prev).add(item.id));
     const done = () => setRedrawing(prev => { const n = new Set(prev); n.delete(item.id); return n; });
     try {
-      const { fn, body } = redrawRequest(art);
+      const { fn, body } = redrawRequest(target);
       const r = await fetch(`${SUPABASE_URL}/functions/v1/${fn}`, {
         method: "POST",
         headers: FN_HEADERS,
@@ -1803,13 +1807,17 @@ export default function Gallery() {
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d?.ok) { alert(`Regenerate failed: ${describeFailure(r.status, d)}`); done(); return; }
+      // An older static image is now an approved cover row: the card follows that row.
+      const art = item.approvedArt ?? { book: "bhagavatam" as const, id: Number(d.id) };
+      const startUrl = legacy ? String(d.image_url ?? "") : item.url;
+      if (legacy) setAllItems(prev => prev.map(x => (x.id === item.id ? { ...x, approvedArt: art, legacyImage: undefined } : x)));
       const giveUpAt = Date.now() + REDRAW_GIVE_UP_MS;
       while (mountedRef.current && Date.now() < giveUpAt) {
         await new Promise(res => setTimeout(res, REDRAW_POLL_MS));
         const q = await sbFetch(`${APPROVED_TABLES[art.book]}?id=eq.${art.id}&select=image_url,error_message,status`).catch(() => null);
         const rows = q && q.ok ? await q.json().catch(() => null) : null;
         if (!Array.isArray(rows)) continue;
-        const outcome = redrawOutcome(item.url, rows[0]);
+        const outcome = redrawOutcome(startUrl, rows[0]);
         if (outcome.kind === "waiting") continue;
         if (outcome.kind === "replaced") {
           const url = `${outcome.url}?t=${Date.now()}`;
@@ -2514,6 +2522,7 @@ export default function Gallery() {
             const uniq = img.imagePath || String(idx);
             items.push({
               id: `ch-${img.chapterNumber}-${scene}-${uniq}`,
+              ...(img.imagePath ? { legacyImage: img.imagePath } : {}),
               chapterNumber: img.chapterNumber,
               chapterTitle: img.chapterTitle || `Chapter ${img.chapterNumber}`,
               cantoNumber: img.cantoNumber ?? 0,
@@ -4286,7 +4295,7 @@ export default function Gallery() {
                                 )}
 
                                 {/* Regenerate an approved cover: on hover, and kept in view while it runs */}
-                                {item.approvedArt && !selectMode && (
+                                {(item.approvedArt || item.legacyImage) && !selectMode && (
                                   redrawing.has(item.id) ? (
                                     <div className="absolute inset-0 z-10 bg-black/45 flex flex-col items-center justify-center gap-1.5 text-white" onClick={e => e.stopPropagation()}>
                                       <Loader2 className="w-6 h-6 animate-spin" />

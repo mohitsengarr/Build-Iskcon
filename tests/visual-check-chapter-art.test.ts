@@ -271,12 +271,18 @@ interface NetOptions {
   throws?: (n: number) => boolean;
   /** Runs while Together call n is in flight, e.g. to move the clock forward. */
   onRender?: (n: number) => void;
+  /** The site's image manifest of older static chapter images. */
+  manifest?: Json[];
+  /** Whether a static image is served; default every one. */
+  legacyImageOk?: (name: string) => boolean;
 }
 
 function makeNet(opts: NetOptions = {}) {
   const together: Json[] = [];
   /** The bodies sent to Claude for an inline scene, when no stored scene could be used. */
   const inlineBriefs: Json[] = [];
+  /** The static images fetched, by file name. */
+  const staticImages: string[] = [];
   const fn = async (url: string | URL, init: RequestInit = {}) => {
     const u = String(url);
     if (u === TOGETHER_API) {
@@ -292,6 +298,12 @@ function makeNet(opts: NetOptions = {}) {
       return ok ? Response.json({ data: [{ b64_json: jpeg(n) }] }) : new Response("bad request", { status: 400 });
     }
     if (u.endsWith("/api/bhagwatham/chapter-index")) return Response.json({ chapters: CHAPTER_INDEX });
+    if (u.endsWith("/api/bhagwatham/image-manifest")) return Response.json({ images: opts.manifest ?? [] });
+    const legacy = u.match(/\/api\/bhagwatham\/images\/([^/?]+)$/);
+    if (legacy) {
+      staticImages.push(legacy[1]);
+      return opts.legacyImageOk?.(legacy[1]) === false ? new Response("not found", { status: 404 }) : new Response(Buffer.from(jpeg(200), "base64"));
+    }
     // The inline path both bulk functions fall back to when there is no usable
     // scene: Claude writes the scene, and the Bhagavatam one reads the chapter text.
     if (u.includes("/api/bhagwatham/batch/")) return Response.json({ pages: [{ text: "chapter text" }] });
@@ -301,7 +313,7 @@ function makeNet(opts: NetOptions = {}) {
     }
     throw new Error(`unexpected fetch ${u}`);
   };
-  return { fn, together, inlineBriefs };
+  return { fn, together, inlineBriefs, staticImages };
 }
 
 /** The numbered facts the check sent to Claude, in order. */
@@ -1210,6 +1222,146 @@ describe("chapter-art visual check wiring", () => {
         // Assert
         assert.equal(status, 400);
         assert.match(json.error, /no stored prompt/);
+      });
+    });
+
+    // ── An older static image (legacy_image): adopted as an approved cover row,
+    // its static copy hidden, then redrawn on that row.
+    describe("an older static image", () => {
+      const ENTRY = {
+        chapterNumber: 10, cantoNumber: 1, chapterTitle: "Chapter Ten", imagePath: "chapter-010.jpg",
+        prompt: DRAFT, descriptionHi: "विवरण", sceneIndex: 0,
+      };
+      const ADOPTED = "art-legacy-chapter-010.jpg";
+      const BHAG = "bhagavatam_chapter_art_review";
+
+      function setupLegacy(o: NetOptions & { existing?: boolean } = {}) {
+        const rows: Json[] = o.existing
+          ? [{ id: 70, status: "approved", chapter_global_number: 10, image_path: ADOPTED, image_url: `https://storage.test/storage/v1/object/public/chapter-art-images/${ADOPTED}`, prompt: DRAFT, visual_check: null, error_message: null }]
+          : [];
+        const hides: Json[] = [];
+        const matching = (q: Query) => rows.filter((r) => q.filters.every(([c, v]) => (r[c] ?? null) === v));
+        const db = makeDb({
+          [BHAG]: (q) => {
+            if (q.op === "select") return { data: q.single ? (matching(q)[0] ? { ...matching(q)[0] } : null) : matching(q) };
+            if (q.op === "insert") {
+              const row = { id: 77, visual_check: null, ...q.values };
+              rows.push(row);
+              return { data: { id: 77 } };
+            }
+            if (q.op === "update") {
+              const hit = matching(q)[0];
+              if (hit) Object.assign(hit, q.values);
+              return { data: q.returning ? (hit ? [{ id: hit.id }] : []) : null };
+            }
+            return {};
+          },
+          bhagavatam_image_deletes: (q) => {
+            if (q.op === "upsert") hides.push(q.values);
+            return {};
+          },
+          bhagavatam_chapter_scenes: () => ({ data: null }),
+          image_gen_config: () => ({ data: null }),
+          scene_visual_canon: () => ({ data: CANON }),
+        });
+        const net = makeNet({ manifest: [ENTRY], ...o });
+        g.__sb = db;
+        g.fetch = net.fn;
+        return { db, net, rows, hides };
+      }
+      const redrawLegacy = (extra: Record<string, unknown> = {}) =>
+        send("regen", { book: "bhagavatam", legacy_image: "chapter-010.jpg", replace_approved: true, ...extra });
+
+      test("is adopted before the response: copied into storage as an approved cover for its chapter, and its static copy hidden", async () => {
+        // Arrange
+        const { db, rows, hides } = setupLegacy();
+        makeClaude([0]);
+        // Act
+        const sent = await redrawLegacy();
+        const atResponse = structuredClone(rows[0]);
+        await settle();
+        // Assert
+        assert.equal(sent.status, 202, JSON.stringify(sent.json));
+        assert.equal(sent.json.id, 77, "the gallery waits on this row");
+        assert.equal(atResponse.image_path, ADOPTED);
+        assert.equal(atResponse.status, "approved");
+        assert.equal(atResponse.chapter_global_number, 10);
+        assert.equal(atResponse.chapter_in_canto, 10);
+        assert.equal(atResponse.prompt, DRAFT);
+        assert.deepEqual(db.uploads[0], { bucket: "chapter-art-images", path: ADOPTED, b64: jpeg(200) });
+        assert.deepEqual(hides, [{ chapter_number: 10, scene_index: 0, requested_by: "regenerate-chapter-art: adopted as cover #77" }]);
+      });
+
+      test("is then redrawn on that row: a passing image replaces the adopted copy, which is kept", async () => {
+        // Arrange
+        const { db, rows } = setupLegacy();
+        makeClaude([0]);
+        // Act
+        await redrawLegacy();
+        await settle();
+        // Assert
+        assert.match(rows[0].image_path, /^art-approved-77-\d+\.jpg$/);
+        assert.equal(rows[0].visual_check.status === "pass" || rows[0].visual_check.status === "skipped", true, JSON.stringify(rows[0].visual_check));
+        assert.deepEqual(db.removals, [], "the adopted copy stays in storage");
+      });
+
+      test("a redraw that does not pass leaves the chapter its adopted copy, now database-backed, with a note", async () => {
+        // Arrange: every attempt gets the first fact wrong
+        const { rows, hides } = setupLegacy();
+        makeClaude([1]);
+        // Act
+        await redrawLegacy();
+        await settle();
+        // Assert
+        assert.equal(rows[0].image_path, ADOPTED);
+        assert.match(rows[0].error_message, /^Regenerate kept the approved image: /);
+        assert.equal(hides.length, 1, "the static copy stays hidden: the row shows the same picture");
+      });
+
+      test("an image adopted before is reused, never copied twice", async () => {
+        // Arrange
+        const { db, net, rows, hides } = setupLegacy({ existing: true });
+        makeClaude([0]);
+        // Act
+        const sent = await redrawLegacy();
+        await settle();
+        // Assert
+        assert.equal(sent.json.id, 70);
+        assert.equal(rows.length, 1);
+        assert.deepEqual(net.staticImages, []);
+        assert.equal(db.uploads.every((u) => u.path !== ADOPTED), true);
+        assert.deepEqual(hides, []);
+      });
+
+      test("a name the manifest does not list is refused, and nothing is written", async () => {
+        // Arrange
+        const { db, rows, hides } = setupLegacy({ manifest: [] });
+        // Act
+        const sent = await redrawLegacy();
+        // Assert
+        assert.equal(sent.status, 404);
+        assert.deepEqual([rows.length, hides.length, db.uploads.length], [0, 0, 0]);
+      });
+
+      test("a static image that cannot be fetched is not adopted", async () => {
+        // Arrange
+        const { rows, hides } = setupLegacy({ legacyImageOk: () => false });
+        // Act
+        const sent = await redrawLegacy();
+        // Assert
+        assert.equal(sent.status, 502);
+        assert.deepEqual([rows.length, hides.length], [0, 0]);
+      });
+
+      test("only a plain file name, only for the Bhagavatam, and only when replacing is asked for", async () => {
+        // Arrange
+        setupLegacy();
+        // Act
+        const path = await redrawLegacy({ legacy_image: "../chapter-010.jpg" });
+        const gita = await redrawLegacy({ book: "gita" });
+        const unasked = await redrawLegacy({ replace_approved: false });
+        // Assert
+        assert.deepEqual([path.status, gita.status, unasked.status], [400, 400, 400]);
       });
     });
   });

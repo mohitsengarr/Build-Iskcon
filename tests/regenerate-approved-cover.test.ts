@@ -3,7 +3,10 @@
 // Run: node --experimental-strip-types --test tests/
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { KEPT_PREFIX, keptMessage, mayReplace, replacementFields, sceneDraft } from "../supabase/functions/_shared/approvedRedraw.ts";
+import {
+  KEPT_PREFIX, imageContentType, isLegacyImageName, keptMessage, legacyCoverRow, legacyHideKey, legacyStoragePath, mayReplace,
+  replacementFields, sceneDraft,
+} from "../supabase/functions/_shared/approvedRedraw.ts";
 
 describe("sceneDraft", () => {
   test("keeps a scene stored on its own as it is", () => {
@@ -83,5 +86,60 @@ describe("keptMessage", () => {
 
   test("says when no image could be drawn at all", () => {
     assert.equal(keptMessage(null, false), "Regenerate kept the approved image: every image attempt failed.");
+  });
+});
+
+describe("older static images", () => {
+  const ENTRY = {
+    chapterNumber: 206, cantoNumber: 10, chapterTitle: "अध्याय एक", imagePath: "chapter-206.jpg",
+    prompt: "Vasudeva carries the infant Krishna across the Yamuna", descriptionHi: "विवरण", sceneIndex: 0,
+  };
+  const CHAPTER = { globalNumber: 206, number: 1, skandh: 10, title: "Chapter One" };
+  const IMAGE = { url: "https://x.test/chapter-art-images/art-legacy-chapter-206.jpg", path: "art-legacy-chapter-206.jpg" };
+  const NOW = new Date("2026-10-19T08:00:00.000Z");
+
+  test("a manifest file name is one plain image name, never a path", () => {
+    assert.equal(isLegacyImageName("chapter-001.jpg"), true);
+    assert.equal(isLegacyImageName("chapter-010-s1.webp"), true);
+    assert.equal(isLegacyImageName("../secrets.jpg"), false);
+    assert.equal(isLegacyImageName("a/b.jpg"), false);
+    assert.equal(isLegacyImageName("chapter-001.svg"), false);
+    assert.equal(isLegacyImageName(42), false);
+  });
+
+  test("the adopted file keeps its name under an art-legacy- prefix, with its own type", () => {
+    assert.equal(legacyStoragePath("chapter-001.jpg"), "art-legacy-chapter-001.jpg");
+    assert.equal(imageContentType("x.png"), "image/png");
+    assert.equal(imageContentType("x.jpeg"), "image/jpeg");
+  });
+
+  test("becomes an approved cover row for its chapter, placed by the chapter index", () => {
+    const row = legacyCoverRow(ENTRY, CHAPTER, IMAGE, NOW);
+    assert.deepEqual(row, {
+      chapter_global_number: 206,
+      chapter_canto: 10,
+      chapter_in_canto: 1,
+      chapter_title: "अध्याय एक",
+      image_url: IMAGE.url,
+      image_path: IMAGE.path,
+      prompt: ENTRY.prompt,
+      description_hi: "विवरण",
+      scene_index: null,
+      status: "approved",
+      reviewed_at: "2026-10-19T08:00:00.000Z",
+      error_message: null,
+    });
+  });
+
+  test("cannot be placed without its chapter in the index", () => {
+    assert.equal(legacyCoverRow(ENTRY, null, IMAGE, NOW), null);
+    assert.equal(legacyCoverRow({ ...ENTRY, chapterNumber: "206" }, CHAPTER, IMAGE, NOW), null);
+  });
+
+  test("is hidden by its chapter and scene, scene 0 when the manifest names none", () => {
+    assert.deepEqual(legacyHideKey(ENTRY), { chapter_number: 206, scene_index: 0 });
+    assert.deepEqual(legacyHideKey({ chapterNumber: 5, sceneIndex: 1 }), { chapter_number: 5, scene_index: 1 });
+    assert.deepEqual(legacyHideKey({ chapterNumber: 5 }), { chapter_number: 5, scene_index: 0 });
+    assert.equal(legacyHideKey({}), null);
   });
 });

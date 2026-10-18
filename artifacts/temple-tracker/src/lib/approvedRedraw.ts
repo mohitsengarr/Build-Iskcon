@@ -14,8 +14,18 @@ export const APPROVED_TABLES: Record<ApprovedBook, string> = {
   instagram: "ig_pending_review",
 };
 
+/**
+ * What a Regenerate redraws: an approved row, or one of the older static
+ * chapter images (by its manifest file name), which regenerate-chapter-art first
+ * adopts as an approved Bhagavatam cover row.
+ */
+export type RedrawTarget = { book: ApprovedBook; id: number } | { legacyImage: string };
+
 /** The edge function and request body that redraw an approved image. */
-export function redrawRequest(art: { book: ApprovedBook; id: number }): { fn: string; body: Record<string, unknown> } {
+export function redrawRequest(art: RedrawTarget): { fn: string; body: Record<string, unknown> } {
+  if ("legacyImage" in art) {
+    return { fn: "regenerate-chapter-art", body: { book: "bhagavatam", legacy_image: art.legacyImage, replace_approved: true } };
+  }
   return art.book === "instagram"
     ? { fn: "regenerate-pending-image", body: { id: art.id, replace_approved: true } }
     : { fn: "regenerate-chapter-art", body: { book: art.book, id: art.id, replace_approved: true } };
@@ -36,7 +46,11 @@ export function repostsOnSocial(book: ApprovedBook): boolean {
   return book !== "bhagavatam";
 }
 
-export function redrawConfirmText(book: ApprovedBook): string {
+export function redrawConfirmText(book: ApprovedBook, opts: { legacy?: boolean } = {}): string {
+  if (opts.legacy) {
+    return "Regenerate this image?\n\nIt becomes this chapter's approved cover, kept in the database. A new image is then drawn " +
+      "from the same scene with the approved settings and checked; it replaces this one only if the check passes — a few minutes.";
+  }
   const posting = book === "instagram"
     ? " It is then posted to Instagram and Threads again straight away."
     : repostsOnSocial(book)

@@ -42,6 +42,15 @@
 // a reviewer's change meanwhile wins; the old file is kept. A Gita or Chaitanya
 // cover then has posted_at cleared, so daily-approved-art-post posts it again.
 // Otherwise the approved image stays and error_message says why (keptMessage).
+//
+// Older static images: { book: "bhagavatam", legacy_image: "chapter-001.jpg",
+// replace_approved: true } redraws one of the first chapter images, the static
+// files in the site's image manifest, which have no review row. It is adopted
+// first (adoptLegacyImage): copied into storage as an approved cover row for its
+// chapter, and the static copy hidden through bhagavatam_image_deletes, as the
+// gallery's Delete does. The redraw then runs on that row as above, so the
+// chapter keeps a database-backed image even when the redraw does not pass. The
+// response names the row (id) the gallery then waits on.
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -70,12 +79,26 @@ import {
   type VisualCheckRecord,
 } from "../_shared/visualCheck.ts";
 import { rowRedoHandlers } from "../_shared/rowRedo.ts";
-import { KEPT_PREFIX, keptMessage, mayReplace, replacementFields, sceneDraft } from "../_shared/approvedRedraw.ts";
+import {
+  KEPT_PREFIX,
+  imageContentType,
+  isLegacyImageName,
+  keptMessage,
+  legacyCoverRow,
+  legacyHideKey,
+  legacyStoragePath,
+  mayReplace,
+  replacementFields,
+  sceneDraft,
+  type LegacyManifestEntry,
+} from "../_shared/approvedRedraw.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
 import { renderFailureMessage, renderWithRetry, type TogetherFailure } from "../_shared/togetherRetry.ts";
 
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
 const TOGETHER_KEY = Deno.env.get("TOGETHER_API_KEY") || "";
+/** The site whose image manifest and static images older chapter images come from. */
+const BUILDISKCON = "https://buildiskcon.com";
 const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
 const CORS = {
@@ -455,6 +478,50 @@ async function replaceApprovedCover(o: {
   console.log(`[regen-chapter] ${tag} replaced ${oldPath ?? "(none)"} with ${fn} (check ${checked.record.status}, ${checked.record.attempts} attempt(s))${b.reposts ? "; posted_at cleared, so it is posted again" : ""}`);
 }
 
+// Adopts one of the older static chapter images (see the header): the cover row
+// it becomes, or why it could not be adopted. A file adopted before (a double
+// click, or a retry) is reused, never copied twice.
+async function adoptLegacyImage(name: unknown): Promise<{ id: number } | { error: string; status: number }> {
+  if (!isLegacyImageName(name)) return { error: "legacy_image must be an image file name from the manifest", status: 400 };
+  const b = BOOKS.bhagavatam;
+  const path = legacyStoragePath(name);
+  const { data: existing } = await supabase.from(b.table).select("id").eq("image_path", path).maybeSingle();
+  if (existing?.id) return { id: existing.id };
+
+  let entry: LegacyManifestEntry | undefined;
+  let chapter: { globalNumber?: unknown; number?: unknown; skandh?: unknown; title?: unknown } | undefined;
+  try {
+    const manifest = await (await fetch(`${BUILDISKCON}/api/bhagwatham/image-manifest`)).json();
+    entry = (Array.isArray(manifest?.images) ? manifest.images : []).find((e: LegacyManifestEntry) => e?.imagePath === name);
+    if (!entry) return { error: `${name} is not in the image manifest`, status: 404 };
+    const index = await (await fetch(`${BUILDISKCON}/api/bhagwatham/chapter-index`)).json();
+    chapter = (Array.isArray(index?.chapters) ? index.chapters : []).find((c: { globalNumber?: unknown }) => c?.globalNumber === entry!.chapterNumber);
+  } catch (e) {
+    return { error: `The image manifest could not be read: ${e}`, status: 502 };
+  }
+
+  const url = supabase.storage.from(b.bucket).getPublicUrl(path).data.publicUrl;
+  const fields = legacyCoverRow(entry, chapter, { url, path }, new Date());
+  const hide = legacyHideKey(entry);
+  if (!fields || !hide) return { error: `${name}: its chapter is not in the chapter index`, status: 422 };
+
+  const res = await fetch(`${BUILDISKCON}/api/bhagwatham/images/${name}`);
+  if (!res.ok) return { error: `${name} could not be fetched (HTTP ${res.status})`, status: 502 };
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  const { error: upErr } = await supabase.storage.from(b.bucket).upload(path, bytes, { contentType: imageContentType(name), upsert: false });
+  // Already there: an earlier adoption copied it and then failed to insert its row.
+  if (upErr && !/exists|duplicate/i.test(upErr.message)) return { error: `${name} could not be stored: ${upErr.message}`, status: 500 };
+
+  const { data: inserted, error: insErr } = await supabase.from(b.table).insert(fields).select("id").single();
+  if (insErr || !inserted?.id) return { error: `${name} could not be adopted: ${insErr?.message ?? "no row"}`, status: 500 };
+  // The static copy is hidden only once its row exists, so the chapter never shows neither.
+  const { error: hideErr } = await supabase.from("bhagavatam_image_deletes")
+    .upsert({ ...hide, requested_by: `regenerate-chapter-art: adopted as cover #${inserted.id}` }, { onConflict: "chapter_number,scene_index", ignoreDuplicates: true });
+  if (hideErr) console.warn(`[regen-chapter] ${name} adopted as #${inserted.id} but its static copy is still shown: ${hideErr.message}`);
+  console.log(`[regen-chapter] ${name} adopted as bhagavatam cover #${inserted.id} (chapter ${fields.chapter_global_number})`);
+  return { id: inserted.id };
+}
+
 Deno.serve(async (req: Request) => {
   const invocationStart = Date.now();
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -462,11 +529,23 @@ Deno.serve(async (req: Request) => {
   if (!TOGETHER_KEY) return new Response(JSON.stringify({ error: "TOGETHER_API_KEY is not configured" }), { status: 500, headers: CORS });
 
   try {
-    const { book, id, prompt: sentPrompt, apply_style, apply_facts, replace_approved } = await req.json() as
-      { book: string; id: number; prompt?: string; apply_style?: boolean; apply_facts?: boolean; replace_approved?: boolean };
+    const body = await req.json() as
+      { book: string; id?: number; prompt?: string; apply_style?: boolean; apply_facts?: boolean; replace_approved?: boolean; legacy_image?: unknown };
+    const { book, prompt: sentPrompt, apply_style, apply_facts, replace_approved, legacy_image } = body;
     const b = Object.prototype.hasOwnProperty.call(BOOKS, book) ? BOOKS[book] : undefined;
     if (!b) return new Response(JSON.stringify({ error: `book must be one of ${Object.keys(BOOKS).join(", ")}` }), { status: 400, headers: CORS });
     const redrawApproved = replace_approved === true;
+    let adoptedId: number | null = null;
+    if (legacy_image !== undefined) {
+      // An older static image: adopted as a cover row first, then redrawn there.
+      if (book !== "bhagavatam" || !redrawApproved) {
+        return new Response(JSON.stringify({ error: "legacy_image needs book bhagavatam and replace_approved" }), { status: 400, headers: CORS });
+      }
+      const adopted = await adoptLegacyImage(legacy_image);
+      if ("error" in adopted) return new Response(JSON.stringify({ error: adopted.error }), { status: adopted.status, headers: CORS });
+      adoptedId = adopted.id;
+    }
+    const id = adoptedId ?? body.id;
     const hasPrompt = typeof sentPrompt === "string" && sentPrompt.trim().length >= 3;
     if (!id || (!hasPrompt && !redrawApproved)) {
       return new Response(JSON.stringify({ error: "id and prompt are required" }), { status: 400, headers: CORS });
