@@ -1,0 +1,17 @@
+Textures and sky for the 3D temple. All from Poly Haven, CC0 (public domain).
+
+textures/marble-white.jpg     marble_01 diffuse, desaturated and lifted to white marble
+textures/marble-beige.jpg     marble_01 diffuse          https://polyhaven.com/a/marble_01
+textures/marble-rough.jpg     marble_01 roughness, 512 px
+textures/sandstone.jpg        white_sandstone_blocks_02 diffuse   https://polyhaven.com/a/white_sandstone_blocks_02
+textures/sandstone-normal.jpg white_sandstone_blocks_02 normal (OpenGL)
+textures/sandstone-rough.jpg  white_sandstone_blocks_02 roughness, 512 px
+hdri/kloofendal-sky-512.hdr   kloofendal_48d_partly_cloudy_puresky, 1k halved to 512x256
+                              https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky
+                              The sun's 15 pixels are clamped to the sky around them (3.6):
+                              a sky file's sun lights everything but casts no shadow, so it is
+                              carried by a directional light instead, along the same direction
+                              (elevation 48.2 deg, azimuth 34.2 deg in three.js equirect terms)
+                              with the irradiance it had in the file: 4.38, colour (0.99, 1, 0.91).
+
+The JPEGs were re-encoded smaller (q80-85); the sky was box-filtered in float, energy kept.
