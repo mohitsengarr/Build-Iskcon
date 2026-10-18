@@ -1051,6 +1051,167 @@ describe("chapter-art visual check wiring", () => {
       assert.equal(status, 200);
       assert.deepEqual(db.removals, [{ bucket: "chapter-art-images", path: "art-old.jpg" }]);
     });
+
+    // ── An approved cover (replace_approved): rendered, checked and corrected after
+    // the response, and stored only when its check passed.
+    describe("an approved cover", () => {
+      const STORED = `${DRAFT}. Canonical details: an old detail. museum-quality 19th-century OIL PAINTING`;
+      const POSTED = "2026-10-01T06:00:00.000Z";
+      const approved = (extra: Json = {}) => ({ status: "approved", prompt: STORED, posted_at: POSTED, error_message: null, ...extra });
+      const redraw = (extra: Record<string, unknown> = {}) => send("regen", { book: "gita", id: 5, replace_approved: true, ...extra });
+
+      test("answers 202 before anything is stored, then a passing image replaces it and posted_at is cleared so it is posted again", async () => {
+        // Arrange
+        const { db, net, row } = setup({ row: approved() });
+        makeClaude([0]);
+        // Act
+        const sent = await redraw();
+        const atResponse = row.image_path;
+        await settle();
+        // Assert
+        assert.equal(sent.status, 202, JSON.stringify(sent.json));
+        assert.equal(sent.json.queued, true);
+        assert.equal(sent.registered, 1);
+        assert.equal(atResponse, "gita-old.jpg", "nothing replaced before the check");
+        assert.equal(net.together.length, 1);
+        assert.match(row.image_path, /^gita-approved-5-\d+\.jpg$/);
+        assert.equal(row.image_url, `https://storage.test/storage/v1/object/public/instagram-images/${row.image_path}`);
+        assert.equal(row.status, "approved");
+        assert.equal(row.posted_at, null);
+        assert.equal(row.error_message, null);
+        assert.equal(row.visual_check.status, "pass");
+        assert.deepEqual(db.removals, [], "the replaced file is kept: a published post links to it");
+      });
+
+      test("redraws from the stored scene alone: the old details and style are not sent twice", async () => {
+        // Arrange
+        const { net } = setup({ row: approved() });
+        makeClaude([0]);
+        // Act
+        await redraw();
+        await settle();
+        // Assert
+        const sentPrompt = String(net.together[0].prompt);
+        assert.ok(sentPrompt.startsWith(DRAFT), sentPrompt);
+        assert.equal(sentPrompt.includes("an old detail"), false, sentPrompt);
+      });
+
+      test("a detail still wrong after the corrected attempts keeps the approved image and says why", async () => {
+        // Arrange: every attempt gets the first fact wrong
+        const { db, net, row } = setup({ row: approved() });
+        makeClaude([1]);
+        // Act
+        await redraw();
+        await settle();
+        // Assert
+        assert.equal(net.together.length, 3, "the first render and two corrected ones");
+        for (const t of net.together.slice(1)) assert.ok(String(t.prompt).startsWith("CORRECTION — the painting must clearly show:"), String(t.prompt));
+        assert.equal(row.image_path, "gita-old.jpg");
+        assert.equal(row.posted_at, POSTED, "not posted again");
+        assert.equal(row.error_message, "Regenerate kept the approved image: 1 detail still wrong after 3 attempts.");
+        assert.equal(db.uploads.length, 0, "nothing stored");
+      });
+
+      test("a check that could not run keeps the approved image", async () => {
+        // Arrange
+        const { row } = setup({ row: approved() });
+        makeClaude(["api_error"]);
+        // Act
+        await redraw();
+        await settle();
+        // Assert
+        assert.equal(row.image_path, "gita-old.jpg");
+        assert.equal(row.error_message, "Regenerate kept the approved image: the new image could not be checked (api_error_529).");
+      });
+
+      test("a reviewer's change during the redraw wins: nothing is replaced and the new file is deleted", async () => {
+        // Arrange: the row is changed while Claude is still answering
+        const { db, row } = setup({ row: approved() });
+        const gate = deferred();
+        makeClaude([0], gate.promise);
+        // Act
+        try {
+          await redraw();
+          row.status = "pending";
+        } finally {
+          gate.release();
+          await settle();
+        }
+        // Assert
+        assert.equal(row.image_path, "gita-old.jpg");
+        assert.equal(db.uploads.length, 1);
+        assert.deepEqual(db.removals, [{ bucket: "instagram-images", path: db.uploads[0].path }]);
+      });
+
+      test("a Bhagavatam cover is posted nowhere: it is replaced with nothing about posting changed", async () => {
+        // Arrange: no research key for the row, so there is nothing to check
+        const { row, updates } = setup({
+          row: approved({ chapter_global_number: null, image_path: "art-old.jpg", image_url: "https://storage.test/storage/v1/object/public/chapter-art-images/art-old.jpg" }),
+        });
+        // Act
+        const sent = await redraw({ book: "bhagavatam" });
+        await settle();
+        // Assert
+        assert.equal(sent.status, 202);
+        assert.match(row.image_path, /^art-approved-5-\d+\.jpg$/);
+        assert.equal(row.visual_check.status, "skipped");
+        assert.equal(row.posted_at, POSTED);
+        assert.equal(updates().length, 0, "the Gita table is untouched");
+      });
+
+      test("is refused for a cover that is not approved, and an approved cover is never redrawn without asking", async () => {
+        // Arrange
+        setup({ row: { status: "pending", prompt: STORED } });
+        // Act
+        const pending = await call("regen", { book: "gita", id: 5, replace_approved: true });
+        setup({ row: approved() });
+        const unasked = await call("regen", { book: "gita", id: 5, prompt: DRAFT });
+        // Assert
+        assert.equal(pending.status, 409);
+        assert.equal(unasked.status, 409);
+      });
+
+      test("a note left by an earlier redraw is cleared before the response, so the gallery never takes it for this run's", async () => {
+        // Arrange: the last redraw kept the image; this one is held at the check
+        const earlier = "Regenerate kept the approved image: 1 detail still wrong after 3 attempts.";
+        const { row } = setup({ row: approved({ error_message: earlier }) });
+        const gate = deferred();
+        makeClaude([0], gate.promise);
+        let atResponse: unknown = "unset";
+        // Act
+        try {
+          await redraw();
+          atResponse = row.error_message;
+        } finally {
+          gate.release();
+          await settle();
+        }
+        // Assert
+        assert.equal(atResponse, null);
+        assert.match(row.image_path, /^gita-approved-5-/);
+      });
+
+      test("a poster's note on the row is left alone", async () => {
+        // Arrange
+        const { row } = setup({ row: approved({ error_message: "threads: media rejected" }) });
+        makeClaude([1]);
+        // Act
+        await redraw();
+        // Assert: at the response, before the background work
+        assert.equal(row.error_message, "threads: media rejected");
+        await settle();
+      });
+
+      test("a row with no stored prompt asks for one", async () => {
+        // Arrange
+        setup({ row: approved({ prompt: null }) });
+        // Act
+        const { status, json } = await call("regen", { book: "gita", id: 5, replace_approved: true });
+        // Assert
+        assert.equal(status, 400);
+        assert.match(json.error, /no stored prompt/);
+      });
+    });
   });
 
   // ── bulk cover functions (chapter/sample: flag only after the response; bulk: checked before insert)

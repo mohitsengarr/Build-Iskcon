@@ -27,9 +27,14 @@ export interface GenConfigDraft {
   notes?: string | null;
 }
 
-/** Landscape feed posts and landscape book covers, as every approved image so far. */
+/**
+ * Portrait feed posts and landscape book covers. A feed post is 4:5 (1088x1344),
+ * the tallest Instagram shows in the feed uncropped (a 9:16 image is cut to 4:5
+ * there); landscape 1344x768 posts were replaced on 2026-10-19 at the owner's
+ * request.
+ */
 export const PRODUCTION_SIZES = {
-  instagram: { w: 1344, h: 768 },
+  instagram: { w: 1088, h: 1344 },
   cover: { w: 1344, h: 1088 },
 } as const;
 

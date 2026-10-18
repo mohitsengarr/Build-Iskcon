@@ -255,9 +255,9 @@ export default function ImagePlayground() {
                       onChange={e => { const [w, h] = e.target.value.split("x").map(Number); set("ig_width", w); set("ig_height", h); }}
                       className={field}
                     >
-                      <option value="1344x768">1344×768 (landscape, production)</option>
-                      <option value="1088x1344">1088×1344 (portrait)</option>
+                      <option value="1088x1344">1088×1344 (portrait 4:5, production)</option>
                       <option value="1024x1024">1024×1024 (square)</option>
+                      <option value="1344x768">1344×768 (landscape)</option>
                     </select>
                   </div>
                   <div>

@@ -7,6 +7,7 @@ import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, C
 import { fadeInUp, staggerContainer } from "@/lib/animations";
 import { describeFailure, describeThrown } from "@/lib/requestError";
 import { renderQueue } from "@/lib/renderQueue";
+import { APPROVED_TABLES, REDRAW_GIVE_UP_MS, REDRAW_POLL_MS, redrawConfirmText, redrawOutcome, type ApprovedBook } from "@/lib/approvedRedraw";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -28,6 +29,8 @@ interface GalleryItem {
   // image_path the preview shows, so the gallery knows which image the reviewer
   // saw full size (createSeenImages).
   pendingReview?: { id: number; imagePath: string | null };
+  // An approved chapter cover: its review row, so the grid can regenerate it.
+  approvedArt?: { book: ApprovedBook; id: number };
   generatedAt: string;
   type: "chapter" | "instagram";
 }
@@ -1773,6 +1776,52 @@ export default function Gallery() {
   }, [filterType]);
   const [lightboxItem, setLightboxItem] = useState<GalleryItem | null>(null);
   const [collapsedCantos, setCollapsedCantos] = useState<Set<number>>(new Set());
+
+  // ── Regenerate an approved cover (hover button on the grid) ───────────────
+  // regenerate-chapter-art answers at once and redraws after the response; the
+  // card shows "Regenerating…" until the row holds a new image (swapped in place)
+  // or a note that the approved image was kept.
+  const [redrawing, setRedrawing] = useState<Set<string>>(new Set());
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+  const redrawApproved = useCallback(async (item: GalleryItem) => {
+    const art = item.approvedArt;
+    if (!art || !window.confirm(redrawConfirmText(art.book))) return;
+    setRedrawing(prev => new Set(prev).add(item.id));
+    const done = () => setRedrawing(prev => { const n = new Set(prev); n.delete(item.id); return n; });
+    try {
+      const r = await fetch(`${SUPABASE_URL}/functions/v1/regenerate-chapter-art`, {
+        method: "POST",
+        headers: FN_HEADERS,
+        body: JSON.stringify({ book: art.book, id: art.id, replace_approved: true }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d?.ok) { alert(`Regenerate failed: ${describeFailure(r.status, d)}`); done(); return; }
+      const giveUpAt = Date.now() + REDRAW_GIVE_UP_MS;
+      while (mountedRef.current && Date.now() < giveUpAt) {
+        await new Promise(res => setTimeout(res, REDRAW_POLL_MS));
+        const q = await sbFetch(`${APPROVED_TABLES[art.book]}?id=eq.${art.id}&select=image_url,error_message,status`).catch(() => null);
+        const rows = q && q.ok ? await q.json().catch(() => null) : null;
+        if (!Array.isArray(rows)) continue;
+        const outcome = redrawOutcome(item.url, rows[0]);
+        if (outcome.kind === "waiting") continue;
+        if (outcome.kind === "replaced") {
+          const url = `${outcome.url}?t=${Date.now()}`;
+          setAllItems(prev => prev.map(x => (x.id === item.id ? { ...x, url } : x)));
+          setLightboxItem(prev => (prev && prev.id === item.id ? { ...prev, url } : prev));
+        } else if (outcome.kind === "kept") {
+          alert(`${item.chapterTitle}: ${outcome.message}`);
+        }
+        done();
+        return;
+      }
+      if (mountedRef.current) alert(`${item.chapterTitle}: no new image yet. The approved image is unchanged so far; refresh the gallery in a few minutes.`);
+      done();
+    } catch (e) {
+      alert(`Regenerate failed: ${describeThrown(e)}`);
+      done();
+    }
+  }, []);
   const [personas, setPersonas] = useState<PersonaItem[]>([]);
   const [personasLoading, setPersonasLoading] = useState(false);
   const [expandedPersona, setExpandedPersona] = useState<string | null>(null);
@@ -2568,6 +2617,7 @@ export default function Gallery() {
             if (items.some(i => i.url === r.image_url)) continue;
             items.push({
               id: `chart-approved-${r.id}`,
+              approvedArt: { book: "bhagavatam", id: r.id },
               chapterNumber: r.chapter_global_number,
               chapterTitle: r.chapter_title || `Chapter ${r.chapter_global_number}`,
               cantoNumber: r.chapter_canto ?? 0,
@@ -2627,6 +2677,7 @@ export default function Gallery() {
             if (items.some(i => i.url === r.image_url)) continue;
             items.push({
               id: `chaitanya-chart-approved-${r.id}`,
+              approvedArt: { book: "chaitanya", id: r.id },
               chapterNumber: r.chapter_global_number,
               chapterTitle: r.chapter_title || `Chapter ${r.chapter_global_number}`,
               cantoNumber: partToCanto(r.chapter_part),
@@ -4189,6 +4240,26 @@ export default function Gallery() {
                                       : <Square className="w-5 h-5 text-stone-400" />
                                     }
                                   </div>
+                                )}
+
+                                {/* Regenerate an approved cover: on hover, and kept in view while it runs */}
+                                {item.approvedArt && !selectMode && (
+                                  redrawing.has(item.id) ? (
+                                    <div className="absolute inset-0 z-10 bg-black/45 flex flex-col items-center justify-center gap-1.5 text-white" onClick={e => e.stopPropagation()}>
+                                      <Loader2 className="w-6 h-6 animate-spin" />
+                                      <span className="text-[11px] font-semibold">Regenerating…</span>
+                                      <span className="text-[10px] text-white/75 px-3 text-center">Replaced only if the check passes</span>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={e => { e.stopPropagation(); void redrawApproved(item); }}
+                                      className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-stone-800 shadow backdrop-blur-sm transition-opacity hover:bg-white sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100"
+                                      title="Draw this approved image again with the approved settings"
+                                    >
+                                      <RefreshCw className="w-3 h-3" /> Regenerate
+                                    </button>
+                                  )
                                 )}
 
                                 {/* Hover overlay with story description */}

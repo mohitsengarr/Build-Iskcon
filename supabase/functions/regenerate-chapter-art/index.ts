@@ -31,6 +31,17 @@
 //
 // POST { book: "bhagavatam"|"chaitanya"|"gita", id: 45, prompt: "...", apply_style?: bool, apply_facts?: bool }
 //   apply_facts: false skips research for this request.
+//
+// Approved covers: { book, id, replace_approved: true } redraws a cover that is
+// already approved, from its stored scene (sceneDraft, ./approved.ts) unless a
+// prompt is sent. Nobody reviews the result, so it is checked BEFORE it is
+// stored, with corrected re-renders like an unattended run, all after the
+// response (202): one render alone can outlast the request. Only an image whose
+// check passed (or had nothing to check) replaces the approved one, by a
+// compare-and-swap on id + status approved + the image_path that was redrawn, so
+// a reviewer's change meanwhile wins; the old file is kept. A Gita or Chaitanya
+// cover then has posted_at cleared, so daily-approved-art-post posts it again.
+// Otherwise the approved image stays and error_message says why (keptMessage).
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -54,10 +65,12 @@ import {
   mergeFailed,
   needsBackgroundCheck,
   redoInBackground,
+  renderWithVisualCheck,
   runInBackground,
   type VisualCheckRecord,
 } from "../_shared/visualCheck.ts";
 import { rowRedoHandlers } from "../_shared/rowRedo.ts";
+import { KEPT_PREFIX, keptMessage, mayReplace, replacementFields, sceneDraft } from "./approved.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
 import { renderFailureMessage, renderWithRetry, type TogetherFailure } from "../_shared/togetherRetry.ts";
 
@@ -76,10 +89,12 @@ const CORS = {
 /** The reviewer's render plus up to two corrected re-renders. */
 const REDO_MAX_ATTEMPTS = 3;
 
-const BOOKS: Record<string, { table: string; bucket: string; prefix: string; scenes: string | null }> = {
-  bhagavatam: { table: "bhagavatam_chapter_art_review", bucket: "chapter-art-images",  prefix: "art",    scenes: "bhagavatam_chapter_scenes" },
-  chaitanya:  { table: "chaitanya_chapter_art_review",  bucket: "chaitanya-art-images", prefix: "art-cc", scenes: "chaitanya_chapter_scenes" },
-  gita:       { table: "gita_chapter_art_review",       bucket: "instagram-images",    prefix: "gita",   scenes: null },
+// `reposts`: daily-approved-art-post posts this book's approved covers, so a
+// replaced approved cover is posted again (Bhagavatam covers are posted nowhere).
+const BOOKS: Record<string, { table: string; bucket: string; prefix: string; scenes: string | null; reposts: boolean }> = {
+  bhagavatam: { table: "bhagavatam_chapter_art_review", bucket: "chapter-art-images",  prefix: "art",    scenes: "bhagavatam_chapter_scenes", reposts: false },
+  chaitanya:  { table: "chaitanya_chapter_art_review",  bucket: "chaitanya-art-images", prefix: "art-cc", scenes: "chaitanya_chapter_scenes",  reposts: true },
+  gita:       { table: "gita_chapter_art_review",       bucket: "instagram-images",    prefix: "gita",   scenes: null,                        reposts: true },
 };
 
 // The bucket a stored image lives in, read from its public URL. Bhagavatam covers
@@ -349,6 +364,97 @@ async function researchRow(
   }
 }
 
+// Redraws an approved cover after the response: renders, checks and re-renders
+// with the correction (renderWithVisualCheck), then replaces the approved image
+// only with one mayReplace accepts. Never throws (runInBackground logs a throw).
+async function replaceApprovedCover(o: {
+  book: string;
+  b: (typeof BOOKS)[string];
+  id: number;
+  row: Record<string, unknown>;
+  invocationStart: number;
+  /** The research facts the first prompt carries: what the check verifies. */
+  facts: string[];
+  /** Renders a prompt led by `lead` (none: the first prompt); null when every model failed. */
+  render: (lead: string) => Promise<{ b64: string; model: string } | null>;
+  /** The correction lead for the details the attempts so far got wrong. */
+  lead: (correction: FailedFact[]) => string;
+}): Promise<void> {
+  const { book, b, id, row } = o;
+  const tag = `regen-approved ${book} #${id}`;
+  const oldPath = typeof row.image_path === "string" && row.image_path ? row.image_path : null;
+  // Still approved, still the image that was redrawn: a reviewer's change wins.
+  // deno-lint-ignore no-explicit-any
+  const guarded = (q: any) => {
+    const out = q.eq("id", id).eq("status", "approved");
+    return oldPath ? out.eq("image_path", oldPath) : out.is("image_path", null);
+  };
+  const keep = async (message: string) => {
+    try {
+      const { data, error } = await guarded(supabase.from(b.table).update({ error_message: message })).select("id");
+      const noted = error ? ` (not noted on the row: ${error.message})` : Array.isArray(data) && data.length > 0 ? "" : " (the row changed meanwhile)";
+      console.log(`[regen-chapter] ${tag} ${message}${noted}`);
+    } catch (e) {
+      console.log(`[regen-chapter] ${tag} ${message} (not noted on the row: ${e})`);
+    }
+  };
+
+  let rendered = false;
+  const checked = await renderWithVisualCheck({
+    render: async (_index, _signal, correction) => {
+      const lead = o.lead(correction ?? []);
+      if (lead && correction?.length) console.log(`[regen-chapter] ${tag} re-render corrected: ${lead}`);
+      try {
+        const out = await o.render(lead);
+        if (out) rendered = true;
+        return out;
+      } catch (e) {
+        console.log(`[regen-chapter] ${tag} render failed: ${e}`);
+        return null;
+      }
+    },
+    facts: o.facts,
+    maxAttempts: REDO_MAX_ATTEMPTS,
+    deadlineAt: backgroundDeadline(o.invocationStart),
+    tag,
+  });
+  if (!checked || !mayReplace(checked.record)) {
+    await keep(keptMessage(checked?.record ?? null, rendered && !!checked));
+    return;
+  }
+
+  const fn = `${b.prefix}-approved-${id}-${Date.now()}.jpg`;
+  const bytes = Uint8Array.from(atob(checked.b64), (c) => c.charCodeAt(0));
+  const { error: upErr } = await supabase.storage.from(b.bucket).upload(fn, bytes, { contentType: "image/jpeg", upsert: false });
+  if (upErr) {
+    await keep(`${KEPT_PREFIX}: the new image could not be stored (${upErr.message}).`);
+    return;
+  }
+  const url = supabase.storage.from(b.bucket).getPublicUrl(fn).data.publicUrl;
+  const fields = replacementFields(b.reposts, url, fn, checked.record as unknown as Record<string, unknown>);
+  let swapped = false;
+  let why = "the row was reviewed or its image replaced meanwhile";
+  try {
+    const { data, error } = await guarded(supabase.from(b.table).update(fields)).select("id");
+    swapped = !error && Array.isArray(data) && data.length === 1;
+    if (error) {
+      // An error can hide an update that was applied: ask the row before deleting.
+      why = error.message;
+      const { data: now } = await supabase.from(b.table).select("image_path").eq("id", id).maybeSingle();
+      swapped = now?.image_path === fn;
+    }
+  } catch (e) {
+    why = String(e);
+  }
+  if (!swapped) {
+    console.log(`[regen-chapter] ${tag} new image not stored: ${why}`);
+    try { await supabase.storage.from(b.bucket).remove([fn]); } catch { /* best effort */ }
+    return;
+  }
+  // The replaced file is kept: a post already published, or queued, links to it.
+  console.log(`[regen-chapter] ${tag} replaced ${oldPath ?? "(none)"} with ${fn} (check ${checked.record.status}, ${checked.record.attempts} attempt(s))${b.reposts ? "; posted_at cleared, so it is posted again" : ""}`);
+}
+
 Deno.serve(async (req: Request) => {
   const invocationStart = Date.now();
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -356,20 +462,27 @@ Deno.serve(async (req: Request) => {
   if (!TOGETHER_KEY) return new Response(JSON.stringify({ error: "TOGETHER_API_KEY is not configured" }), { status: 500, headers: CORS });
 
   try {
-    const { book, id, prompt, apply_style, apply_facts } = await req.json() as
-      { book: string; id: number; prompt: string; apply_style?: boolean; apply_facts?: boolean };
-    const b = BOOKS[book];
+    const { book, id, prompt: sentPrompt, apply_style, apply_facts, replace_approved } = await req.json() as
+      { book: string; id: number; prompt?: string; apply_style?: boolean; apply_facts?: boolean; replace_approved?: boolean };
+    const b = Object.prototype.hasOwnProperty.call(BOOKS, book) ? BOOKS[book] : undefined;
     if (!b) return new Response(JSON.stringify({ error: `book must be one of ${Object.keys(BOOKS).join(", ")}` }), { status: 400, headers: CORS });
-    if (!id || !prompt || prompt.trim().length < 3) {
+    const redrawApproved = replace_approved === true;
+    const hasPrompt = typeof sentPrompt === "string" && sentPrompt.trim().length >= 3;
+    if (!id || (!hasPrompt && !redrawApproved)) {
       return new Response(JSON.stringify({ error: "id and prompt are required" }), { status: 400, headers: CORS });
     }
 
     const { data: row, error: fErr } = await supabase.from(b.table).select("*").eq("id", id).single();
     if (fErr || !row) return new Response(JSON.stringify({ error: `${book} #${id} not found` }), { status: 404, headers: CORS });
-    // Only a cover awaiting review is re-rendered. An approved Gita or Chaitanya
-    // cover is posted to Instagram as it stands, so it must not change unseen.
-    if (row.status !== "pending") {
+    // A cover awaiting review is re-rendered onto the card. An approved one only
+    // when the request asks for it (replace_approved), and then only an image
+    // whose check passed replaces it: it is published as it stands.
+    if (redrawApproved ? row.status !== "approved" : row.status !== "pending") {
       return new Response(JSON.stringify({ error: `${book} #${id} is already ${row.status}; refresh the gallery` }), { status: 409, headers: CORS });
+    }
+    const prompt = hasPrompt ? (sentPrompt as string) : sceneDraft(row.prompt);
+    if (prompt.trim().length < 3) {
+      return new Response(JSON.stringify({ error: `${book} #${id} has no stored prompt to redraw from; send a prompt` }), { status: 400, headers: CORS });
     }
 
     const { data: cfgRow } = await supabase.from("image_gen_config").select("*").eq("is_active", true).limit(1).maybeSingle();
@@ -440,6 +553,28 @@ Deno.serve(async (req: Request) => {
       }
       return null;
     };
+    // An approved cover: everything after the response, and nothing stored
+    // unless its check passed (see the header).
+    if (redrawApproved) {
+      const checkFacts = factsInSentPrompt(facts, sanitized);
+      // A note left by an earlier redraw is cleared, so the gallery, which waits
+      // for a new image or a new note, never reads the old one as this run's.
+      if (typeof row.error_message === "string" && row.error_message.startsWith(KEPT_PREFIX)) {
+        await supabase.from(b.table).update({ error_message: null })
+          .eq("id", id).eq("status", "approved").eq("error_message", row.error_message);
+      }
+      runInBackground(replaceApprovedCover({
+        book, b, id, row, invocationStart, facts: checkFacts,
+        render: (lead) => renderText(lead ? buildFor(`${lead} ${prompt.trim()}`).sent : sanitized, []),
+        lead: (correction) => correctionLead(mergeFailed(storedCorrection, correction)),
+      }));
+      return new Response(JSON.stringify({
+        ok: true, queued: true, book, id, image_url: row.image_url, model_used: cfg.model, size: `${w1}x${h1}`,
+        sent_chars: sanitized.length, research_key: research?.key ?? null, research_status: research?.status ?? "skipped",
+        facts_included: built.factsIncluded, facts_checked: checkFacts.length, reposts: b.reposts,
+      }), { status: 202, headers: CORS });
+    }
+
     // Why each attempt failed, for this card's chain only.
     const failures: TogetherFailure[] = [];
     const rendered = await renderText(sanitized, failures);
