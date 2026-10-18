@@ -22,6 +22,10 @@ import TempleCommunity from "@/pages/temple-community";
 import Privacy from "@/pages/privacy";
 import Terms from "@/pages/terms";
 import PageNotFound from "@/pages/page-not-found";
+import Wallpaper from "@/pages/wallpaper";
+
+/** wall.bhagwatham.com is the Krishna wallpaper and nothing else, at any path. */
+const WALLPAPER_HOST = typeof window !== "undefined" && window.location.hostname.startsWith("wall.");
 
 const queryClient = new QueryClient();
 
@@ -30,6 +34,7 @@ function App() {
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
+          {WALLPAPER_HOST ? <Wallpaper /> : (
           <Switch>
             <Route path="/how-to-build-temple" component={HowToBuildTemple} />
             <Route path="/krishna-janmabhoomi" component={KrishnaJanmabhoomi} />
@@ -39,6 +44,7 @@ function App() {
             <Route path="/library" component={Library} />
             <Route path="/admin" component={Admin} />
             <Route path="/japa" component={JapaCounter} />
+            <Route path="/wall" component={Wallpaper} />
             {/* Live count of devotees who have joined Bhaktigram (SEN-907). */}
             <Route path="/livecounter" component={LiveCounter} />
             <Route path="/personas" component={PersonaGallery} />
@@ -65,6 +71,7 @@ function App() {
                 <Switch> it only renders when nothing above did. */}
             <Route component={PageNotFound} />
           </Switch>
+          )}
           <Toaster />
         </TooltipProvider>
       </QueryClientProvider>

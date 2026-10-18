@@ -67,6 +67,7 @@
     { "source": "/shrimad-bhagavatam/", "destination": "/shrimad-bhagavatam/index.html" },
     { "source": "/srimad-bhagavatam", "destination": "/srimad-bhagavatam/index.html" },
     { "source": "/srimad-bhagavatam/", "destination": "/srimad-bhagavatam/index.html" },
+    { "source": "/(.*)", "has": [{ "type": "host", "value": "wall.bhagwatham.com" }], "destination": "/wall/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
