@@ -4,6 +4,7 @@
 // localStorage (same key convention as the Bhaktigram web chat).
 
 import { supabase } from "./supabase";
+import type { TempleDesign } from "./templeDesign";
 
 const DEVICE_KEY = "in.iskcon.device_id";
 const AUTHOR_KEY = "in.iskcon.author";
@@ -37,16 +38,9 @@ export function setAuthorName(name: string): void {
   }
 }
 
+/** The four styles temples were saved with before designs (lib/templeDesign). */
 export type TempleStyle = "tovp-dome" | "north-shikhara" | "south-gopuram" | "modern-vedic";
 export type PostKind = "update" | "requirement" | "photo" | "milestone";
-
-/** Style catalogue (kept here, three-free, so importing it never pulls in three.js). */
-export const TEMPLE_STYLES: { key: TempleStyle; label: string; blurb: string }[] = [
-  { key: "tovp-dome", label: "Vedic Planetarium Dome", blurb: "TOVP-inspired grand dome on a drum" },
-  { key: "north-shikhara", label: "North-Indian Shikhara", blurb: "Tall curvilinear Nagara tower" },
-  { key: "south-gopuram", label: "South-Indian Gopuram", blurb: "Stepped Dravidian gateway tower" },
-  { key: "modern-vedic", label: "Modern Vedic", blurb: "Clean faceted contemporary dome" },
-];
 
 export interface CommunityTemple {
   id: number;
@@ -54,6 +48,8 @@ export interface CommunityTemple {
   name: string;
   deity: string | null;
   style: TempleStyle | null;
+  /** The design part by part, as the builder saved it (lib/templeDesign); null before designs. */
+  design: unknown | null;
   state: string | null;
   city: string | null;
   country: string | null;
@@ -105,6 +101,7 @@ export async function createTemple(input: {
   name: string;
   deity?: string;
   style?: TempleStyle;
+  design?: TempleDesign;
   state?: string;
   city?: string;
   lat?: number | null;
@@ -122,6 +119,7 @@ export async function createTemple(input: {
     p_description: input.description ?? null,
     p_device_id: getDeviceId(),
     p_creator_name: getAuthorName(),
+    p_design: input.design ?? null,
   });
   if (error) throw error;
   return data as CommunityTemple;

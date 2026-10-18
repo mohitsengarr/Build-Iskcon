@@ -14,6 +14,7 @@ import {
 } from "@react-three/drei";
 import type { BufferAttribute, Material } from "three";
 import type { TempleStyle } from "@/lib/communityTemples";
+import { designForStyle, type TempleDesign } from "@/lib/templeDesign";
 import { groundShadowTile } from "@/lib/groundShadow";
 import { sunDirection } from "@/lib/templeGeometry";
 import { Bloom, EffectComposer, N8AO, ToneMapping } from "@react-three/postprocessing";
@@ -117,8 +118,8 @@ function ShadowCatcher() {
 
 // ── The building ──────────────────────────────────────────────────────────────
 
-/** The saffron flag over the shikhara, rippling in the wind. */
-function Flag({ top, material }: { top: readonly [number, number, number]; material: Material }) {
+/** The saffron flag on the pinnacle, rippling in the wind, at the crown's scale. */
+function Flag({ top, scale, material }: { top: readonly [number, number, number]; scale: number; material: Material }) {
   const length = 0.42;
   const geo = useMemo(() => pennant(length, 0.24), []);
   const rest = useMemo(() => Float32Array.from(geo.getAttribute("position").array), [geo]);
@@ -134,20 +135,23 @@ function Flag({ top, material }: { top: readonly [number, number, number]; mater
     geo.computeVertexNormals();
   });
   return (
-    <mesh geometry={geo} material={material} position={[top[0], top[1] - 0.12, top[2]]} rotation-y={-0.6} castShadow />
+    <mesh geometry={geo} material={material} position={[top[0], top[1] - 0.12 * scale, top[2]]} rotation-y={-0.6} scale={scale} castShadow />
   );
 }
 
-function Temple({ style }: { style: TempleStyle }) {
-  const materials = useTempleMaterials();
-  const parts = useMemo(() => buildTemple(style), [style]);
+function Temple({ design }: { design: TempleDesign }) {
+  const materials = useTempleMaterials(design.stone, design.finish);
+  // Rebuilt only when a part changes, not on every render of the builder page.
+  const key = `${design.base}/${design.body}/${design.porch}/${design.crown}/${design.corners}/${design.finial}`;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const parts = useMemo(() => buildTemple(design), [key]);
   useEffect(() => () => { for (const [, g] of parts.meshes) g.dispose(); }, [parts]);
   return (
     <group position={[0, GROUND_Y, 0]}>
       {parts.meshes.map(([stuff, geo]) => (
         <mesh key={stuff} geometry={geo} material={materials[stuff]} castShadow receiveShadow />
       ))}
-      {parts.flag && <Flag top={parts.flag} material={materials.cloth} />}
+      {parts.flag && <Flag top={parts.flag.top} scale={parts.flag.scale} material={materials.cloth} />}
     </group>
   );
 }
@@ -242,7 +246,10 @@ function TempleEffects({ level, page }: { level: FxLevel; page: Rgb }) {
 }
 
 export interface ThreeTempleModelProps {
+  /** A temple saved before designs existed: shown as its style's family. */
   style?: TempleStyle;
+  /** The temple part by part; wins over `style`. */
+  design?: TempleDesign;
   className?: string;
   autoRotate?: boolean;
   interactive?: boolean;
@@ -250,6 +257,7 @@ export interface ThreeTempleModelProps {
 
 export default function ThreeTempleModel({
   style = "tovp-dome",
+  design,
   className,
   autoRotate = true,
   interactive = true,
@@ -318,7 +326,7 @@ export default function ThreeTempleModel({
         <Suspense fallback={null}>
           {/* The sky lights the scene but is not drawn: the page stays the backdrop. */}
           <Environment files={SKY_URL} environmentIntensity={EXPOSURE} />
-          <Temple style={style} />
+          <Temple design={design ?? designForStyle(style)} />
           <GroundShadow />
           <ShadowCatcher />
           <TempleEffects level={fxLevel} page={page} />

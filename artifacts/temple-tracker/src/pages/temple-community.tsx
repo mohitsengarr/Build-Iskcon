@@ -13,10 +13,11 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import ThreeTemple from "@/components/ThreeTemple";
+import { designForStyle, designLabel, normalizeDesign } from "@/lib/templeDesign";
 import {
   getTempleBySlug, listPosts, createPost, listMembers, joinTemple, isMember,
   listMessages, sendMessage, subscribeEmail, subscribeTempleRealtime, uploadTempleMedia,
-  templeCallUrl, getAuthorName, setAuthorName, TEMPLE_STYLES,
+  templeCallUrl, getAuthorName, setAuthorName,
   type CommunityTemple, type TemplePost, type TempleMember, type TempleMessage, type PostKind,
 } from "@/lib/communityTemples";
 
@@ -89,9 +90,14 @@ export default function TempleCommunity() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
+  // What the devotee built, or — for a temple from before designs — its style's family.
+  const templeDesign = useMemo(
+    () => (temple?.design ? normalizeDesign(temple.design, designForStyle(temple.style)) : designForStyle(temple?.style)),
+    [temple?.design, temple?.style],
+  );
   const styleLabel = useMemo(
-    () => TEMPLE_STYLES.find((s) => s.key === temple?.style)?.label ?? "Vedic",
-    [temple?.style],
+    () => (temple ? designLabel(templeDesign) : "Vedic"),
+    [temple, templeDesign],
   );
   const photos = useMemo(() => posts.flatMap((p) => p.media_urls || []), [posts]);
   const requirements = useMemo(() => posts.filter((p) => p.kind === "requirement"), [posts]);
@@ -214,7 +220,7 @@ export default function TempleCommunity() {
         </div>
         <div className="mx-auto max-w-6xl px-4 py-6 grid gap-6 md:grid-cols-[300px_1fr] items-center">
           <div className="h-[220px] rounded-2xl overflow-hidden border border-border bg-[#fbf6ee]">
-            <ThreeTemple style={temple.style ?? "tovp-dome"} autoRotate interactive={false} />
+            <ThreeTemple design={templeDesign} autoRotate interactive={false} />
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-2">

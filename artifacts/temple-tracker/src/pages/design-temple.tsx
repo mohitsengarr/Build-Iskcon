@@ -13,7 +13,9 @@ import { useToast } from "@/hooks/use-toast";
 import { fadeInUp } from "@/lib/animations";
 import { INDIA_STATES, CITIES_BY_STATE, INDIA_CITY_COUNT } from "@/data/india-cities";
 import ThreeTemple from "@/components/ThreeTemple";
-import { createTemple, getAuthorName, setAuthorName, TEMPLE_STYLES, type TempleStyle } from "@/lib/communityTemples";
+import { createTemple, getAuthorName, setAuthorName } from "@/lib/communityTemples";
+import { DEFAULT_DESIGN, designLabel, legacyStyleOf, type TempleDesign } from "@/lib/templeDesign";
+import { TempleDesigner } from "@/components/TempleDesigner";
 
 export default function DesignTemple() {
   const [, setLocation] = useLocation();
@@ -21,7 +23,8 @@ export default function DesignTemple() {
 
   const [state, setState] = useState<string>("");
   const [city, setCity] = useState<string>("");
-  const [style, setStyle] = useState<TempleStyle>("tovp-dome");
+  const [design, setDesign] = useState<TempleDesign>(DEFAULT_DESIGN);
+  const [basedOn, setBasedOn] = useState<string>(DEFAULT_DESIGN.preset!);
   const [name, setName] = useState("");
   const [deity, setDeity] = useState("");
   const [description, setDescription] = useState("");
@@ -44,7 +47,8 @@ export default function DesignTemple() {
       const temple = await createTemple({
         name: name.trim(),
         deity: deity.trim() || undefined,
-        style,
+        style: legacyStyleOf(design),
+        design,
         state,
         city,
         lat: selectedCity?.lat ?? null,
@@ -116,27 +120,11 @@ export default function DesignTemple() {
               </div>
             </div>
 
-            <div>
-              <Label className="mb-2 block">Architecture style</Label>
-              <div className="grid grid-cols-2 gap-3">
-                {TEMPLE_STYLES.map((s) => {
-                  const active = style === s.key;
-                  return (
-                    <button
-                      key={s.key}
-                      type="button"
-                      onClick={() => setStyle(s.key)}
-                      className={`text-left rounded-xl border p-3 transition ${
-                        active ? "border-primary ring-2 ring-primary/30 bg-primary/5" : "border-border hover:border-primary/50"
-                      }`}
-                    >
-                      <div className="text-sm font-semibold">{s.label}</div>
-                      <div className="text-xs text-on-surface-variant mt-0.5">{s.blurb}</div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            <TempleDesigner
+              design={design}
+              basedOn={basedOn}
+              onChange={(d, from) => { setDesign(d); setBasedOn(from); }}
+            />
 
             <div>
               <Label className="mb-1.5 block">Temple name</Label>
@@ -161,10 +149,10 @@ export default function DesignTemple() {
           </div>
 
           {/* live 3D preview */}
-          <div className="lg:sticky lg:top-24 h-fit">
+          <div className="order-first lg:order-none sticky top-16 z-10 lg:top-24 h-fit">
             <div className="rounded-2xl overflow-hidden border border-border bg-[#fbf6ee] shadow-sm">
-              <div className="h-[360px] md:h-[440px]">
-                <ThreeTemple style={style} autoRotate interactive />
+              <div className="h-[34vh] min-h-[220px] md:h-[440px]">
+                <ThreeTemple design={design} autoRotate interactive />
               </div>
               <div className="p-4 border-t border-border bg-surface">
                 <div className="flex items-center gap-2 text-sm">
@@ -172,7 +160,7 @@ export default function DesignTemple() {
                   <span className="font-medium">{city || "Your city"}{state ? `, ${state}` : ""}</span>
                 </div>
                 <div className="mt-1 text-xs text-on-surface-variant">
-                  {TEMPLE_STYLES.find((s) => s.key === style)?.label} · drag to rotate
+                  {designLabel(design, basedOn)} · drag to rotate
                 </div>
               </div>
             </div>
