@@ -26,17 +26,19 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getSceneResearch, sha16 } from "../_shared/sceneResearch.ts";
-import { assemblePrompt, extractEntities, normalizeForMatch, readerKey, sanitizeForImageModel } from "../_shared/sceneResearchCore.ts";
+import { assemblePrompt, extractEntities, factsForScene, normalizeForMatch, readerKey, sanitizeForImageModel } from "../_shared/sceneResearchCore.ts";
 import {
   backgroundDeadline,
-  checkInBackground,
+  correctionLead,
   imagePayload,
   initialRecord,
   needsBackgroundCheck,
+  redoInBackground,
   runInBackground,
   type VisualCheckRecord,
 } from "../_shared/visualCheck.ts";
 import { renderFailureMessage, renderWithRetry, type TogetherFailure } from "../_shared/togetherRetry.ts";
+import { rowRedoHandlers } from "../_shared/rowRedo.ts";
 
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
@@ -244,6 +246,7 @@ function visualCheckColumnMissing(error: { code?: string } | null | undefined): 
   return error?.code === "PGRST204" || error?.code === "42703";
 }
 
+
 // The background check's write: visual_check only, and only while the scene still
 // holds the checked image. Every upload has a new file name, so once a newer
 // generation has stored its image (and its own record) this updates nothing.
@@ -299,22 +302,27 @@ Deno.serve(async (req: Request) => {
 
     const visual = await scenePromptFromText(scene.selected_text, scene.book);
     const research = await researchReaderScene(scene, visual);
-    const { prompt: sanitized, note, factsUsed } = buildImagePrompt(visual, research.facts, cfg);
-    console.log(`[scene] research key=${research.key} status=${research.status} facts=${research.facts.length}${research.absent ? ` dropped_absent=${research.absent}` : ""} ms=${research.ms}${note}`);
+    // Only facts about the people and things this scene shows (factsForScene).
+    const facts = factsForScene(research.facts, visual);
+    const { prompt: sanitized, note, factsUsed } = buildImagePrompt(visual, facts, cfg);
+    console.log(`[scene] research key=${research.key} status=${research.status} facts=${facts.length}${research.absent ? ` dropped_absent=${research.absent}` : ""}${facts.length < research.facts.length ? ` off_scene=${research.facts.length - facts.length}` : ""} ms=${research.ms}${note}`);
 
     const attempts = [
       { m: cfg.model, w: cfg.width, h: cfg.height },
       { m: cfg.fallback_model || cfg.model, w: cfg.fallback_width || cfg.width, h: cfg.fallback_height || cfg.height },
     ];
-    // One render: the approved model, then the fallback model. Nothing is
-    // re-rendered here, whatever the check finds.
-    let rendered: { b64: string; model: string } | null = null;
+    // One render: the approved model, then the fallback model. A detail the check
+    // later finds clearly wrong is re-rendered with the correction (below).
+    const renderText = async (text: string, failures: TogetherFailure[]): Promise<{ b64: string; model: string } | null> => {
+      for (const a of attempts) {
+        const out = await tryGenerate(text, a.m, a.w, a.h, cfg.steps, failures);
+        if (out) return { b64: out, model: a.m };
+      }
+      return null;
+    };
     // Why each attempt failed, for this scene's chain only.
     const failures: TogetherFailure[] = [];
-    for (const a of attempts) {
-      const out = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps, failures);
-      if (out) { rendered = { b64: out, model: a.m }; break; }
-    }
+    const rendered = await renderText(sanitized, failures);
     if (!rendered) {
       // The row and the answer carry the same sentence, and it says whether this
       // was a rate limit (worth another click) or a refusal (edit the prompt).
@@ -357,15 +365,40 @@ Deno.serve(async (req: Request) => {
         // The result could not be stored anywhere, so no Claude call is spent on it.
         console.warn("[scene] visual check not started: reader_scenes.visual_check does not exist (migration 20260913230000 not applied)");
       } else {
-        // Handed to EdgeRuntime.waitUntil before the response, so it outlives it.
-        runInBackground(checkInBackground({
-          b64,
+        // Handed to EdgeRuntime.waitUntil before the response, so it outlives it. A
+        // clearly wrong detail is re-rendered with the correction; the better image
+        // replaces this one only while the scene is unapproved and still shows it.
+        const tag = `scene ${scene_id}`;
+        const handlers = rowRedoHandlers({
+          supabase,
+          table: "reader_scenes",
+          id: scene_id,
+          bucket: "instagram-images",
+          stored: { url, path: fn },
+          casColumn: "image_url",
+          requirePending: false,
+          guard: (q) => q.not("approved", "is", true),
+          fileName: (index) => `scene-${scene_id}-${Date.now()}-r${index}.jpg`,
+          tag,
+        });
+        runInBackground(redoInBackground({
+          first: { b64, model: rendered.model },
           facts: factsUsed,
-          imageModel: rendered.model,
+          render: async (_index, _signal, correction) => {
+            const lead = correctionLead(correction);
+            const text = lead ? buildImagePrompt(`${lead} ${visual}`, facts, cfg).prompt : sanitized;
+            if (lead) console.log(`[scene] ${tag} re-render corrected: ${lead}`);
+            return await renderText(text, []);
+          },
+          maxAttempts: 3,
           startedAt: queuedAt,
           deadlineAt: backgroundDeadline(invocationStart),
-          writeRecord: (record) => storeCheckRecord(scene_id, url, record),
-          tag: `scene ${scene_id}`,
+          swap: handlers.swap,
+          stillCurrent: handlers.stillCurrent,
+          // The record goes on whichever image the scene holds now: the one stored
+          // above, or a corrected re-render swapped in since.
+          writeRecord: (record) => storeCheckRecord(scene_id, handlers.current().url, record),
+          tag,
         }));
       }
     }

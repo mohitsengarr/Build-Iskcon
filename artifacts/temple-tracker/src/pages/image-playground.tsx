@@ -8,6 +8,7 @@
 // history and can be restored.
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { approvalRow, PRODUCTION_SIZES } from "@/lib/imageGenConfig";
 import { Layout } from "@/components/layout/Layout";
 import { SEOHead } from "@/components/SEOHead";
 import { Loader2, Sparkles, Check, RefreshCw, Clock, History, AlertCircle, ImageIcon } from "lucide-react";
@@ -43,6 +44,10 @@ interface GenConfig {
   fallback_model?: string | null;
   fallback_width?: number | null;
   fallback_height?: number | null;
+  ig_width?: number | null;
+  ig_height?: number | null;
+  cover_width?: number | null;
+  cover_height?: number | null;
   is_active?: boolean;
   notes?: string | null;
   created_at?: string;
@@ -158,14 +163,9 @@ export default function ImagePlayground() {
     if (!cfg || approving) return;
     setApproving(true);
     try {
-      const row = {
-        label: cfg.label || `Tuned ${new Date().toISOString().slice(0, 16).replace("T", " ")}`,
-        model: cfg.model, width: cfg.width, height: cfg.height, steps: cfg.steps ?? null,
-        style_positives: cfg.style_positives, style_negatives: cfg.style_negatives,
-        extra_rules: cfg.extra_rules || "", prompt_max_len: cfg.prompt_max_len,
-        fallback_model: cfg.fallback_model, fallback_width: cfg.fallback_width, fallback_height: cfg.fallback_height,
-        is_active: true, notes: cfg.notes || null,
-      };
+      // Instagram and cover sizes included: leaving them out once turned every
+      // feed post and book cover portrait (lib/imageGenConfig).
+      const row = approvalRow(cfg);
       const res = await sbFetch("image_gen_config", { method: "POST", body: JSON.stringify(row) });
       if (!res.ok) { alert(`Couldn't approve: ${describeFailure(res.status, await res.text().catch(() => ""))}`); return; }
       setApprovedFlash(true);
@@ -243,6 +243,32 @@ export default function ImagePlayground() {
                       className={field}
                     >
                       {SIZES.map(s => <option key={s.label} value={`${s.w}x${s.h}`}>{s.label}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={lbl}>Instagram post size</label>
+                    <select
+                      value={`${cfg.ig_width ?? PRODUCTION_SIZES.instagram.w}x${cfg.ig_height ?? PRODUCTION_SIZES.instagram.h}`}
+                      onChange={e => { const [w, h] = e.target.value.split("x").map(Number); set("ig_width", w); set("ig_height", h); }}
+                      className={field}
+                    >
+                      <option value="1344x768">1344×768 (landscape, production)</option>
+                      <option value="1088x1344">1088×1344 (portrait)</option>
+                      <option value="1024x1024">1024×1024 (square)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={lbl}>Book cover size</label>
+                    <select
+                      value={`${cfg.cover_width ?? PRODUCTION_SIZES.cover.w}x${cfg.cover_height ?? PRODUCTION_SIZES.cover.h}`}
+                      onChange={e => { const [w, h] = e.target.value.split("x").map(Number); set("cover_width", w); set("cover_height", h); }}
+                      className={field}
+                    >
+                      <option value="1344x1088">1344×1088 (landscape, production)</option>
+                      <option value="1088x1344">1088×1344 (portrait)</option>
                     </select>
                   </div>
                 </div>

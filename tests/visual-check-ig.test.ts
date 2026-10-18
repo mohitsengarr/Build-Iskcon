@@ -785,7 +785,7 @@ describe("visual check wiring for ig_pending_review", () => {
       assert.deepEqual(db.removed, []);
     });
 
-    test("fail then pass: the re-render (same prompt, next seed) replaces the stored image by a compare-and-swap, and the replaced file is kept", async () => {
+    test("fail then pass: the re-render (corrected prompt, next seed) replaces the stored image by a compare-and-swap, and the replaced file is kept", async () => {
       // Arrange: a fixed clock, so both uploads happen in the same millisecond
       clock.fixed = realNow.call(Date);
       const { db, net, row } = setup();
@@ -795,7 +795,12 @@ describe("visual check wiring for ig_pending_review", () => {
       // Assert: the re-render
       assert.equal(status, 200, JSON.stringify(json));
       assert.equal(net.together.length, 2);
-      assert.equal(net.together[1].prompt, net.together[0].prompt);
+      // The re-render is told what went wrong; the prompt that drew it is never resent.
+      const corrected = String(net.together[1].prompt);
+      assert.match(corrected, /^CORRECTION — the painting must clearly show: /);
+      assert.match(corrected, /The previous attempt was wrong: wrong detail 1\./);
+      assert.notEqual(corrected, net.together[0].prompt);
+      assert.equal(String(net.together[0].prompt).includes("CORRECTION"), false);
       assert.equal(net.together[1].model, FLUX2);
       assert.equal(net.together[1].seed, net.together[0].seed + 1);
       assert.equal(net.signals[0], undefined);
@@ -857,7 +862,9 @@ describe("visual check wiring for ig_pending_review", () => {
       const [s0, s1, s2] = net.together.map((b) => b.seed);
       assert.ok(Number.isInteger(s0), String(s0));
       assert.deepEqual([s1, s2], [s0 + 1, s0 + 2]);
-      for (const b of net.together) assert.equal(b.prompt, net.together[0].prompt);
+      // Both re-renders carry the correction; the same one fact was wrong both times.
+      assert.match(String(net.together[1].prompt), /^CORRECTION — the painting must clearly show: /);
+      assert.equal(net.together[2].prompt, net.together[1].prompt);
       assert.equal(db.uploads.length, 1, "a render that is not better is never stored");
       assert.deepEqual(db.removed, []);
       assert.deepEqual(updates(db).map((q) => q.eq), [[["id", 77], ["image_path", db.uploads[0].path]]]);
@@ -1497,7 +1504,7 @@ describe("visual check wiring for ig_pending_review", () => {
       assert.equal(row.visual_check.started_at, res.json.visualCheck.started_at);
     });
 
-    test("sample mode flags a failing image on its row and never re-renders it", async () => {
+    test("sample mode re-renders a failing image with the correction and swaps the corrected one onto its row", async () => {
       // Arrange
       const { db, net, row } = setup();
       const vision = visionQueue(["fail", "pass"]);
@@ -1505,13 +1512,14 @@ describe("visual check wiring for ig_pending_review", () => {
       const { status, json } = await call("bgi", { mode: "sample" });
       // Assert
       assert.equal(status, 200, JSON.stringify(json));
-      assert.equal(net.together.length, 1);
-      assert.equal(vision.length, 1);
-      assert.equal(db.uploads.length, 1);
-      assert.deepEqual(db.removed, []);
-      assert.equal(row.image_path, db.uploads[0].path);
-      assertRecord(row.visual_check, { status: "fail", attempts: 1, chosen_attempt: 0, reason: null, image_model: FLUX2, safe_fallback: false }, IG_KEYS);
-      assert.deepEqual(row.visual_check.failed.map((f: Json) => f.observed), ["wrong detail 1"]);
+      assert.equal(net.together.length, 2);
+      assert.match(String(net.together[1].prompt), /^CORRECTION — the painting must clearly show: /);
+      assert.equal(vision.length, 2);
+      assert.equal(db.uploads.length, 2);
+      assert.match(db.uploads[1].path, /^ig-canto\d+-ch\d+-\d+-r1\.jpg$/);
+      assert.deepEqual(db.removed, [], "the replaced file is kept: an approval may be publishing it");
+      assert.equal(row.image_path, db.uploads[1].path);
+      assertRecord(row.visual_check, { status: "pass", attempts: 2, chosen_attempt: 1, reason: null, image_model: FLUX2, safe_fallback: false }, IG_KEYS);
     });
 
     test("sample mode deadline: a render ending 345s after invocation start leaves no time for the check (skipped, reason deadline)", async () => {
@@ -1863,7 +1871,7 @@ describe("visual check wiring for ig_pending_review", () => {
       assert.equal(json.visual_check.status, "running");
     });
 
-    test("a failing check is flagged on the row: no re-render, no second upload, and the reviewer's new image stays", async () => {
+    test("a failing check is re-rendered with the correction, and the corrected image replaces the reviewer's new one", async () => {
       // Arrange
       const { db, net, row } = setup();
       const vision = visionQueue(["fail", "pass"]);
@@ -1871,13 +1879,16 @@ describe("visual check wiring for ig_pending_review", () => {
       const { status } = await call("regen", { id: 5, prompt: ARJUNA_SCENE });
       // Assert
       assert.equal(status, 200);
-      assert.equal(net.together.length, 1);
-      assert.equal(vision.length, 1);
-      assert.equal(db.uploads.length, 1);
-      assert.equal(row.image_path, db.uploads[0].path);
-      assert.deepEqual(db.removed, ["old.jpg"]);
-      assertRecord(row.visual_check, { status: "fail", attempts: 1, chosen_attempt: 0, reason: null, image_model: FLUX2 }, REGEN_KEYS);
-      assert.deepEqual(row.visual_check.failed.map((f: Json) => f.observed), ["wrong detail 1"]);
+      assert.equal(net.together.length, 2);
+      const corrected = String(net.together[1].prompt);
+      assert.match(corrected, /^CORRECTION — the painting must clearly show: /);
+      assert.match(corrected, /The previous attempt was wrong: wrong detail 1\./);
+      assert.equal(vision.length, 2);
+      assert.equal(db.uploads.length, 2);
+      assert.match(db.uploads[1].path, /^pending-5-\d+-r1\.jpg$/);
+      assert.equal(row.image_path, db.uploads[1].path);
+      assert.deepEqual(db.removed, ["old.jpg"], "the old image goes with the save; the replaced one is kept");
+      assertRecord(row.visual_check, { status: "pass", attempts: 2, chosen_attempt: 1, reason: null, image_model: FLUX2 }, REGEN_KEYS);
     });
 
     test("a later regenerate replaced the image before the check answered: that row never gets this image's record", async () => {

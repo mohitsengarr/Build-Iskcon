@@ -3,6 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getSceneResearch, type SceneResearchInput } from "../_shared/sceneResearch.ts";
 import {
   backgroundDeadline,
+  correctionLead,
+  type FailedFact,
   imagePayload,
   type IndexedRender,
   initialRecord,
@@ -19,6 +21,7 @@ import { inlineImagePrompt } from "./inlinePrompt.ts";
 import {
   assemblePrompt,
   DEFAULT_FACTS_MAX,
+  factsForScene,
   inlineKey,
   normalizeForMatch,
   type PromptParts,
@@ -548,37 +551,43 @@ async function generateImage(
   const tail = __cfg ? configTail(__cfg) : DEFAULT_TAIL;
   // Verified canonical details (e.g. four white horses) go straight after the
   // scene. Research never blocks generation: any failure here, or no fact that
-  // fits, means today's prompt.
-  let fullPrompt: string | null = null;
-  // How many research facts fullPrompt carries; SAFE_FALLBACK logs them as dropped.
-  let factsInPrompt = 0;
-  // The facts fullPrompt carries, the only ones checked. Today's prompt has none.
-  let checkFacts: string[] = [];
-  if (facts.length > 0) {
-    try {
-      const withFacts = buildPromptWithFacts(prompt, matchedPersonas.length > 0 ? personaText : "", facts, maxLen, sceneCap, tail);
-      fullPrompt = withFacts?.prompt ?? null;
-      factsInPrompt = withFacts?.factsInPrompt ?? 0;
-      checkFacts = withFacts?.factsUsed ?? [];
-    } catch (e) {
-      console.warn(`[instagram-post] fact assembly failed, using the prompt without facts: ${e}`);
-      fullPrompt = null;
-      factsInPrompt = 0;
-      checkFacts = [];
+  // fits, means today's prompt. build() assembles the prompt for a scene text:
+  // the scene itself, or, for a re-render after a failed check, the scene led by
+  // the correction (correctionLead).
+  const build = (sceneText: string): { sanitized: string; factsInPrompt: number; checkFacts: string[] } => {
+    let fullPrompt: string | null = null;
+    // How many research facts fullPrompt carries; SAFE_FALLBACK logs them as dropped.
+    let factsInPrompt = 0;
+    // The facts fullPrompt carries, the only ones checked. Today's prompt has none.
+    let checkFacts: string[] = [];
+    if (facts.length > 0) {
+      try {
+        const withFacts = buildPromptWithFacts(sceneText, matchedPersonas.length > 0 ? personaText : "", facts, maxLen, sceneCap, tail);
+        fullPrompt = withFacts?.prompt ?? null;
+        factsInPrompt = withFacts?.factsInPrompt ?? 0;
+        checkFacts = withFacts?.factsUsed ?? [];
+      } catch (e) {
+        console.warn(`[instagram-post] fact assembly failed, using the prompt without facts: ${e}`);
+        fullPrompt = null;
+        factsInPrompt = 0;
+        checkFacts = [];
+      }
     }
-  }
-  if (fullPrompt === null) {
-    // With no configuration, today's prompt byte for byte.
-    // Build order: scene prompt → persona injection → style → rules.
-    fullPrompt = `${prompt}${personaInject}${tail.full}`;
-    if (fullPrompt.length > maxLen) {
-      fullPrompt = `${prompt}${personaInject}`.substring(0, sceneCap) + tail.compressed;
-      if (fullPrompt.length > maxLen) fullPrompt = fullPrompt.substring(0, maxLen - 20);
+    if (fullPrompt === null) {
+      // With no configuration, today's prompt byte for byte.
+      // Build order: scene prompt → persona injection → style → rules.
+      fullPrompt = `${sceneText}${personaInject}${tail.full}`;
+      if (fullPrompt.length > maxLen) {
+        fullPrompt = `${sceneText}${personaInject}`.substring(0, sceneCap) + tail.compressed;
+        if (fullPrompt.length > maxLen) fullPrompt = fullPrompt.substring(0, maxLen - 20);
+      }
     }
-  }
-  // Word-boundary anchors are load-bearing: without \b the alternation
-  // rewrote substrings inside ordinary words ("warm" → "blessingm").
-  const sanitized = fullPrompt.replace(/\b(battle|war|fight|weapon|sword|arrow|kill|death|blood|fire|burn|destroy|attack|strike|naked|nude)\b/gi, "blessing");
+    // Word-boundary anchors are load-bearing: without \b the alternation
+    // rewrote substrings inside ordinary words ("warm" → "blessingm").
+    const sanitized = fullPrompt.replace(/\b(battle|war|fight|weapon|sword|arrow|kill|death|blood|fire|burn|destroy|attack|strike|naked|nude)\b/gi, "blessing");
+    return { sanitized, factsInPrompt, checkFacts };
+  };
+  const { sanitized, factsInPrompt, checkFacts } = build(prompt);
   const seed = varietySeed > 0 ? varietySeed : Math.floor(Math.random() * 1_000_000);
   const __m1 = __cfg?.model || "black-forest-labs/FLUX.2-pro";
   // The configuration's fallback model (its model when none is set); FLUX.1.1-pro
@@ -586,11 +595,11 @@ async function generateImage(
   const __m2 = __cfg ? (__cfg.fallback_model || __m1) : "black-forest-labs/FLUX.1.1-pro";
   const __steps = __cfg?.steps ?? null;
   const __size = instagramSizes(__cfg);
-  // A re-render keeps the prompt and moves the seed on by its attempt index, so
-  // attempt 0 sends exactly today's seed.
-  const attemptsFor = (attemptIndex: number): FluxAttempt[] => [
-    { model: __m1, prompt: sanitized, w: __size.w, h: __size.h, seed: seed + attemptIndex },
-    { model: __m2, prompt: sanitized, w: __size.fw, h: __size.fh, seed: seed + attemptIndex },
+  // A re-render moves the seed on by its attempt index (attempt 0 sends exactly
+  // today's seed) and sends the prompt it is given: the corrected one.
+  const attemptsFor = (attemptIndex: number, text: string): FluxAttempt[] => [
+    { model: __m1, prompt: text, w: __size.w, h: __size.h, seed: seed + attemptIndex },
+    { model: __m2, prompt: text, w: __size.fw, h: __size.fh, seed: seed + attemptIndex },
     { model: __m2, prompt: SAFE_FALLBACK, w: __size.fw, h: __size.fh, safeFallback: true },
   ];
   // Why each attempt failed, for this post's chain only: every post has its own
@@ -601,10 +610,15 @@ async function generateImage(
   // A SAFE_FALLBACK image carries none of the facts, so it is kept unchecked
   // (reason safe_fallback) and never re-rendered or swapped in: the same prompt
   // would only be refused again.
-  const render = async (attemptIndex: number, signal?: AbortSignal): Promise<RenderOutput | null> => {
+  const render = async (attemptIndex: number, signal?: AbortSignal, correction?: FailedFact[]): Promise<RenderOutput | null> => {
+    // A re-render after a failed check leads its prompt with what to fix; the
+    // prompt that drew the mistake is never sent again unchanged.
+    const lead = correctionLead(correction);
+    const text = lead ? build(`${lead} ${prompt}`).sanitized : sanitized;
+    if (lead) console.log(`[instagram-post] re-render ${attemptIndex} corrected: ${lead}`);
     // A re-render never ends on SAFE_FALLBACK: that image carries none of the facts,
     // so the redo could never swap it in and would only pay for it.
-    const attempts = attemptsFor(attemptIndex).filter(a => attemptIndex === 0 || !a.safeFallback);
+    const attempts = attemptsFor(attemptIndex, text).filter(a => attemptIndex === 0 || !a.safeFallback);
     const used: { attempt: FluxAttempt | null } = { attempt: null };
     const b64 = await runFluxAttempts(attempts, a => {
       used.attempt = a;
@@ -859,7 +873,7 @@ async function generateForChapter(chapterOverride: number | null, invocationStar
   // its row with the Bhagavatam cover for the same scene; the inline fallback
   // shares bhagavatam:g<N>:inline with bulk-generate-images. Research never
   // throws; with no facts the image prompt is built exactly as before.
-  const facts = await researchFacts({
+  const researched = await researchFacts({
     key: usedSceneInfo
       ? sceneKey("bhagavatam", chapter.globalNumber, usedSceneInfo.index)
       : inlineKey("bhagavatam", chapter.globalNumber),
@@ -868,6 +882,10 @@ async function generateForChapter(chapterOverride: number | null, invocationStar
     title: usedSceneInfo?.title ?? null,
     characters: characterNames,
   });
+  // Only facts about people this scene shows: a fact about anyone else would be
+  // painted in, or failed for being missing (factsForScene).
+  const facts = factsForScene(researched, `${usedSceneInfo?.title ?? ""} ${imagePrompt}`, characterNames);
+  if (facts.length < researched.length) console.log(`[instagram-post] ${researched.length - facts.length} research fact(s) left out: about people not in this scene`);
 
   // The Mahājana lookup and the verse (a Haiku call) run alongside the image, not
   // after it: everything before the post is stored must fit before the request

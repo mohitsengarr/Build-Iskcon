@@ -434,3 +434,46 @@ export function initialRecordFor(input: {
 export function needsBackgroundCheck(record: unknown): boolean {
   return !!record && typeof record === "object" && (record as { status?: unknown }).status === "running";
 }
+
+// ── Correcting the prompt after a failed check ───────────────────────────────
+
+/** Longest correction a re-render's prompt is given, so the scene keeps its room. */
+export const MAX_CORRECTION_CHARS = 420;
+
+/**
+ * What a re-render's prompt leads with after a check found details wrong: each
+ * detail it must show, and what the last image showed instead. A re-render that
+ * only moved the seed redrew the same mistake, because the prompt that caused it
+ * was sent again unchanged. Empty when nothing failed.
+ */
+export function correctionLead(failed: unknown): string {
+  const items = (Array.isArray(failed) ? failed : [])
+    .filter((f): f is FailedFact => !!f && typeof f === "object" && typeof (f as FailedFact).fact === "string" && (f as FailedFact).fact.trim().length > 0);
+  if (items.length === 0) return "";
+  const must = items.map((f) => oneLine(f.fact).replace(/[.;\s]+$/, ""));
+  const seen = items.map((f) => oneLine(f.observed ?? "").replace(/[.;\s]+$/, "")).filter(Boolean);
+  let lead = `CORRECTION — the painting must clearly show: ${must.join("; ")}.`;
+  if (seen.length > 0) lead += ` The previous attempt was wrong: ${seen.join("; ")}.`;
+  if (lead.length > MAX_CORRECTION_CHARS) {
+    const cut = lead.slice(0, MAX_CORRECTION_CHARS - 1);
+    lead = `${cut.slice(0, Math.max(cut.lastIndexOf(" "), MAX_CORRECTION_CHARS - 60)).replace(/[,;:\s]+$/, "")}.`;
+  }
+  return lead;
+}
+
+/**
+ * Every fact any attempt so far got wrong, once each, with the most recent
+ * observation of it: a re-render is told about all of them, not only the last
+ * attempt's, so fixing one mistake does not bring back another.
+ */
+export function mergeFailed(previous: unknown, latest: unknown): FailedFact[] {
+  const out = new Map<string, FailedFact>();
+  for (const list of [previous, latest]) {
+    for (const f of Array.isArray(list) ? list : []) {
+      if (!f || typeof f !== "object" || typeof (f as FailedFact).fact !== "string") continue;
+      const fact = (f as FailedFact).fact;
+      out.set(fact, { fact, observed: typeof (f as FailedFact).observed === "string" ? (f as FailedFact).observed : "" });
+    }
+  }
+  return [...out.values()];
+}

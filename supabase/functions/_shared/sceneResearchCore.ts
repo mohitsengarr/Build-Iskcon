@@ -2018,3 +2018,47 @@ export function buildResearchUserMessage(input: {
   lines.push("Call record_visual_facts now.");
   return lines.join("\n");
 }
+
+// ── Facts that belong to the scene ───────────────────────────────────────────
+
+/**
+ * Things that stand or fall together: a fact naming one belongs only in a scene
+ * that names one too. Only the chariot, as generate-gita-chapter-art's own
+ * object filter has it: a lotus-pond scene was painted with a chariot because
+ * the chapter's cached research described one.
+ */
+const SCENE_OBJECT_GROUPS: ReadonlyArray<RegExp> = [
+  /\b(chariot|chariots|rein|reins|horse|horses|banner|banners)\b/i,
+];
+
+/**
+ * Whether a research fact belongs in a picture of this scene. A fact about a
+ * named person (NAME_LEXICON, aliases included) belongs only where the scene
+ * names that person, and a fact about a chariot only where the scene has one:
+ * research keyed to a whole chapter carries Arjuna's bow and his chariot into
+ * every scene of a Gita chapter — the yogi alone in a cave of chapter 6
+ * included — and the painting then either grew a Krishna nobody asked for, or
+ * failed its check for missing an Arjuna who was never in it. A fact naming
+ * nobody and no such thing, or a scene with nothing to judge by, is kept.
+ */
+export function factFitsScene(fact: unknown, scene: unknown, characters?: unknown): boolean {
+  if (!isNonEmptyString(fact)) return false;
+  const sceneParts = [scene, ...(Array.isArray(characters) ? characters : [])].filter(isNonEmptyString);
+  if (sceneParts.length === 0) return true;
+  const rawScene = sceneParts.join(" ");
+  for (const group of SCENE_OBJECT_GROUPS) {
+    if (group.test(fact) && !group.test(rawScene)) return false;
+  }
+  const factText = padded(normalizeForMatch(fact));
+  const people = NAME_LEXICON.filter((e) => lexIndex(factText, e) >= 0);
+  if (people.length === 0) return true;
+  const sceneText = padded(normalizeForMatch(rawScene));
+  return people.some((e) => lexIndex(sceneText, e) >= 0);
+}
+
+/** The facts that belong to the scene (factFitsScene), in their order. */
+export function factsForScene(facts: unknown, scene: unknown, characters?: unknown): string[] {
+  return (Array.isArray(facts) ? facts : []).filter(
+    (f): f is string => isNonEmptyString(f) && factFitsScene(f, scene, characters),
+  );
+}

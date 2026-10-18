@@ -197,6 +197,11 @@ function makeDb(
                 for (const r of hit) Object.assign(r, values);
                 data = selected ? hit.map((r) => ({ id: r.id })) : null;
               }
+            } else if (valueOf("id") !== undefined) {
+              // A read of one row by id (the redo's "is this row still current?"):
+              // every filter applies, as PostgREST would apply them.
+              const hit = [...rows.values()].filter((r) => filters.every(([col, v]) => r[col] === v));
+              data = single ? (hit[0] ? { id: hit[0].id } : null) : hit.map((r) => ({ id: r.id }));
             } else if (has("status", "pending")) {
               const chapter = valueOf("chapter_number");
               const pending = [...rows.values()].find((r) => r.chapter_number === chapter && r.status === "pending") ?? null;
@@ -639,8 +644,8 @@ describe("generate-gita-chapter-art visual check", () => {
     });
   });
 
-  test("a contradicted fact is flagged on the row and never re-rendered: status fail with the fact and what the painting shows", async () => {
-    // Arrange
+  test("a contradicted fact is re-rendered with the correction leading the prompt, and the corrected image replaces the stored one", async () => {
+    // Arrange: three horses on the first painting, four on the corrected one
     const db = makeDb();
     g.__sb = db;
     const together = makeFetch();
@@ -648,22 +653,22 @@ describe("generate-gita-chapter-art visual check", () => {
     // Act
     const { json } = await call({ chapter: 1 });
     // Assert
-    assert.equal(together.length, 1, "flag only: no second render");
-    assert.equal(checks.length, 1);
-    assert.equal(db.uploads.length, 1);
+    assert.equal(together.length, 2, "one corrected re-render");
+    assert.equal(checks.length, 2);
+    const corrected = String(together[1].body.prompt);
+    assert.match(corrected, /^CORRECTION — the painting must clearly show: [^.]*four white horses/i);
+    assert.match(corrected, /The previous attempt was wrong: 3 horses counted\./);
+    assert.notEqual(corrected, String(together[0].body.prompt), "never the same prompt again");
+    assert.equal(db.uploads.length, 2);
     assert.equal(db.inserts().length, 1);
     const row = db.rows.get(json.generated[0].id);
-    assert.equal(row.image_path, db.inserts()[0].image_path, "the stored image stays");
+    assert.notEqual(row.image_path, db.inserts()[0].image_path, "the corrected image replaced the first");
+    assert.match(row.image_path, /^gita-ch1-\d+-r1\.jpg$/);
     const record = row.visual_check;
-    assert.equal(record.status, "fail");
-    assert.equal(record.attempts, 1);
-    assert.equal(record.chosen_attempt, 0);
-    assert.equal(record.reason, null);
-    assert.equal(record.failed.length, 1);
-    assert.match(record.failed[0].fact, HORSES);
-    assert.equal(record.failed[0].observed, "3 horses counted");
+    assert.equal(record.status, "pass");
+    assert.equal(record.attempts, 2);
+    assert.equal(record.chosen_attempt, 1);
     assert.equal(json.generated[0].visual_check.status, "running");
-    assert.ok(logs.some((l) => l.startsWith("[visual-check] gita-art ch1 background check status=fail failed=1")), logs.join("\n"));
   });
 
   test("the response does not wait for the check: it is sent while the check is still open, and the record lands when the check ends", async () => {
@@ -855,17 +860,25 @@ describe("generate-gita-chapter-art visual check", () => {
       assert.deepEqual(json.skipped, []);
       assert.equal(queued, 3);
       assert.deepEqual(json.generated.map((r: Json) => r.visual_check.status), ["running", "running", "running"]);
-      // Each check starts right after its own chapter is stored, before the next chapter's brief.
-      assert.deepEqual(events, ["brief", "render 1", "check 1", "brief", "render 2", "check 2", "brief", "render 3", "check 3"]);
-      assert.equal(checks.length, 3);
+      // Each check starts right after its own chapter is stored, before the next
+      // chapter's brief. Chapter 2's wrong horse count is then re-rendered with the
+      // correction (render 4) and checked again (check 4).
+      assert.deepEqual(events, ["brief", "render 1", "check 1", "brief", "render 2", "check 2", "brief", "render 3", "check 3", "render 4", "check 4"]);
+      assert.equal(checks.length, 4);
       const inserted = db.inserts();
-      json.generated.forEach((r: Json, i: number) => {
-        const update = db.updates().find((u) => u.filters[0][1] === r.id);
-        assert.deepEqual(update?.filters, [["id", r.id], ["image_path", inserted[i].image_path]], `chapter ${r.chapter}`);
+      json.generated.forEach((r: Json) => {
+        // The final record goes on whichever image the row holds: the stored one,
+        // or chapter 2's corrected re-render.
+        const write = db.updates().filter((u) => u.filters[0][1] === r.id && Object.keys(u.values).join() === "visual_check").at(-1);
+        assert.deepEqual(write?.filters, [["id", r.id], ["image_path", db.rows.get(r.id).image_path]], `chapter ${r.chapter}`);
       });
-      assert.deepEqual(json.generated.map((r: Json) => db.rows.get(r.id).visual_check.status), ["pass", "fail", "pass"]);
+      assert.equal(db.rows.get(json.generated[1].id).image_path === inserted[1].image_path, false, "chapter 2 holds its corrected image");
+      assert.deepEqual(json.generated.map((r: Json) => db.rows.get(r.id).visual_check.status), ["pass", "pass", "pass"]);
       const started = inserted.map((row: Json) => Date.parse(row.visual_check.started_at));
-      assert.deepEqual([started[1] - started[0], started[2] - started[1]], [25_000, 25_000], "each chapter keeps its own started_at");
+      // Each chapter keeps its own started_at. Chapter 2's corrected re-render runs
+      // in the background on the same (fake) clock, so chapter 3 can start later.
+      assert.equal(started[1] - started[0], 25_000, "each chapter keeps its own started_at");
+      assert.ok(started[2] - started[1] >= 25_000, "each chapter keeps its own started_at");
     });
 
     test("every check of a run shares request start + 360s: a chapter stored 345s in is marked skipped/deadline without a check", async () => {

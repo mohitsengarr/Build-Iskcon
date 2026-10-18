@@ -50,7 +50,8 @@ import { gitaResearchOptions } from "./researchMode.ts";
 import { CHAPTERS, briefSystemPrompt, briefUserMessage, MAX_USED_ELSEWHERE } from "./chapterScenes.ts";
 import { factsAboutSceneObjects } from "./sceneFacts.ts";
 import { assemblePrompt, extractEntities, gitaChapterKey, normalizeForMatch, sanitizeForImageModel } from "../_shared/sceneResearchCore.ts";
-import { backgroundDeadline, checkInBackground, imagePayload, initialRecord, needsBackgroundCheck, runInBackground } from "../_shared/visualCheck.ts";
+import { backgroundDeadline, correctionLead, imagePayload, initialRecord, needsBackgroundCheck, redoInBackground, runInBackground } from "../_shared/visualCheck.ts";
+import { rowRedoHandlers } from "../_shared/rowRedo.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
 import { renderFailureMessage, renderWithRetry } from "../_shared/togetherRetry.ts";
 // A request is cut at 150s, a streamed one too. A run plans to have its last
@@ -406,17 +407,17 @@ async function buildChapter(ch, researchOptions, requestStart) {
   // One render: the model, then the fallback model if that fails, each sending
   // the request made before the visual check existed (no seed). A Together
   // request that throws fails the chapter with its own error.
-  let image = null;
+  const renderText = async (text, failures)=>{
+    for (const a of chain) {
+      const b64 = await tryGenerate(text, a.m, a.w, a.h, cfg.steps, failures);
+      if (b64) return { b64, model: a.m };
+    }
+    return null;
+  };
   // Why each attempt failed, for this chapter's chain only: a bulk run has one
   // array per chapter, so a rate-limited chapter never speaks for another.
   const failures = [];
-  for (const a of chain) {
-    const b64 = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps, failures);
-    if (b64) {
-      image = { b64, model: a.m };
-      break;
-    }
-  }
+  const image = await renderText(sanitized, failures);
   if (!image) throw new Error(renderFailureMessage(failures, `All image attempts failed for chapter ${ch.n}`));
   const bytes = Uint8Array.from(atob(image.b64), (c)=>c.charCodeAt(0));
   const fn = `gita-ch${ch.n}-${Date.now()}.jpg`;
@@ -462,17 +463,38 @@ async function buildChapter(ch, researchOptions, requestStart) {
     return { chapter: ch.n, skipped: "pending" };
   }
   if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
-  if (needsBackgroundCheck(record)) {
-    // Flag only, after the response: a wrong image is marked on the row for the
-    // reviewer, never replaced. Handed over now, before the handler returns.
-    runInBackground(checkInBackground({
-      b64: image.b64,
+  if (needsBackgroundCheck(record) && row?.id != null) {
+    // After the response: a detail the check finds clearly wrong is re-rendered
+    // with the correction — never the same prompt again — and the better image
+    // replaces this one only while the cover is still pending with it
+    // (rowRedoHandlers). Handed over now, before the handler returns.
+    const tag = `gita-art ch${ch.n}`;
+    const handlers = rowRedoHandlers({
+      supabase,
+      table: "gita_chapter_art_review",
+      id: row.id,
+      bucket: "instagram-images",
+      stored: { url, path: fn },
+      fileName: (index)=>`gita-ch${ch.n}-${Date.now()}-r${index}.jpg`,
+      tag
+    });
+    runInBackground(redoInBackground({
+      first: { b64: image.b64, model: image.model },
       facts: factsUsed,
-      imageModel: image.model,
+      render: async (_index, _signal, correction)=>{
+        const lead = correctionLead(correction);
+        const text = lead ? buildImagePrompt(`${lead} ${scene}`, research.facts, cfg).prompt : sanitized;
+        if (lead) console.log(`[gita-art] ${tag} re-render corrected: ${lead}`);
+        return await renderText(text, []);
+      },
+      maxAttempts: 3,
       startedAt: queuedAt,
       deadlineAt: backgroundDeadline(requestStart),
-      writeRecord: recordWriter(row?.id, fn, ch.n),
-      tag: `gita-art ch${ch.n}`
+      swap: handlers.swap,
+      stillCurrent: handlers.stillCurrent,
+      // On whichever image the row holds now: this one, or a corrected re-render.
+      writeRecord: (checked)=>recordWriter(row.id, handlers.current().path, ch.n)(checked),
+      tag
     }));
   }
   return {

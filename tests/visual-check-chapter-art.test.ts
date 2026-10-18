@@ -444,7 +444,8 @@ describe("chapter-art visual check wiring", () => {
     return result;
   }
 
-  // ── regenerate-chapter-art (flag only: one render, checked after the response)
+  // ── regenerate-chapter-art (one render, checked after the response; a failed
+  // check is re-rendered with the correction)
   describe("regenerate-chapter-art", () => {
     const DRAFT =
       "Krishna, a youthful MALE charioteer with blue skin, holds the reins of Arjuna's chariot on the plain of Kurukshetra while Arjuna, a MALE prince, listens";
@@ -598,20 +599,52 @@ describe("chapter-art visual check wiring", () => {
       assert.ok(logs.some((l) => l.startsWith(`[regen-chapter] ${TABLE} #5 visual_check not stored: the row no longer holds gita-regen-5-`)), logs.join("\n"));
     });
 
-    test("a failed check only flags the row: no second render, and the contradicted fact is written", async () => {
-      // Arrange
+    test("a failed check is re-rendered with the correction leading the prompt, and the corrected cover replaces the stored one", async () => {
+      // Arrange: the first cover gets one fact wrong, the corrected one gets it right
       const { net, row } = setup();
-      const claude = makeClaude([1]);
+      const claude = makeClaude([1, 0]);
+      // Act
+      const { json } = await regen();
+      // Assert
+      assert.equal(net.together.length, 2, "one corrected re-render");
+      assert.equal(claude.length, 2);
+      const failedFact = factsSent(claude[0].params)[0];
+      const corrected = String(net.together[1].prompt);
+      assert.ok(corrected.startsWith(`CORRECTION — the painting must clearly show: ${failedFact}`), corrected);
+      assert.match(corrected, /The previous attempt was wrong: contradicted 1\./);
+      assert.ok(corrected.includes("Krishna, a youthful MALE charioteer"), "the reviewer's words follow the correction");
+      assert.notEqual(corrected, String(net.together[0].prompt), "never the same prompt again");
+      assert.equal(row.visual_check.status, "pass");
+      assert.equal(row.visual_check.attempts, 2);
+      assert.equal(row.visual_check.chosen_attempt, 1);
+      assert.notEqual(row.image_path, json.image_url.split("/").pop(), "the corrected cover replaced the first");
+      assert.match(row.image_path, /^gita-regen-5-\d+-r1\.jpg$/);
+    });
+
+    test("the card's stored failed check corrects the very first render of a Regenerate", async () => {
+      // Arrange: the card was flagged before; the reviewer clicks Regenerate
+      const earlier = { status: "fail", failed: [{ fact: "Arjuna's chariot is drawn by exactly four white horses, no more and no fewer", observed: "three horses" }] };
+      const { net } = setup({ row: { visual_check: earlier } });
+      makeClaude([0]);
       // Act
       await regen();
       // Assert
-      assert.equal(net.together.length, 1);
-      assert.equal(claude.length, 1);
-      assert.equal(row.visual_check.status, "fail");
-      assert.equal(row.visual_check.attempts, 1);
-      assert.equal(row.visual_check.chosen_attempt, 0);
-      assert.equal(row.visual_check.reason, null);
-      assert.deepEqual(row.visual_check.failed, [{ fact: factsSent(claude[0].params)[0], observed: "contradicted 1" }]);
+      const first = String(net.together[0].prompt);
+      assert.ok(first.startsWith("CORRECTION — the painting must clearly show: Arjuna's chariot is drawn by exactly four white horses"), first);
+      assert.match(first, /The previous attempt was wrong: three horses\./);
+    });
+
+    test("a stored failure about someone not in the scene is not asked for: the draft names no Arjuna", async () => {
+      // Arrange: chapter 6's yogi alone in a cave, flagged for missing Arjuna's bow
+      const earlier = { status: "fail", failed: [{ fact: "Arjuna holding Gandiva, a divine bow of Arjuna", observed: "no Arjuna" }] };
+      const { net } = setup({ row: { visual_check: earlier } });
+      makeClaude([0]);
+      // Act
+      await regen({ prompt: "A solitary MALE yogi in white cloth seated on kusa grass in a mountain cave. No other figures present." });
+      // Assert
+      const first = String(net.together[0].prompt);
+      assert.equal(first.includes("CORRECTION"), false, first);
+      assert.equal(/arjuna|gandiva/i.test(first), false, "no fact about Arjuna reaches a scene without him");
     });
 
     test("a check error is written as status error, with no second render", async () => {

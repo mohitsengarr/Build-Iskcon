@@ -24,8 +24,9 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getSceneResearch } from "../_shared/sceneResearch.ts";
-import { assemblePrompt, inlineKey, normalizeForMatch, sanitizeForImageModel, sceneKey } from "../_shared/sceneResearchCore.ts";
-import { backgroundDeadline, checkInBackground, imagePayload, initialRecord, needsBackgroundCheck, runInBackground } from "../_shared/visualCheck.ts";
+import { assemblePrompt, factFitsScene, factsForScene, inlineKey, normalizeForMatch, sanitizeForImageModel, sceneKey } from "../_shared/sceneResearchCore.ts";
+import { backgroundDeadline, correctionLead, imagePayload, initialRecord, mergeFailed, needsBackgroundCheck, redoInBackground, runInBackground } from "../_shared/visualCheck.ts";
+import { rowRedoHandlers } from "../_shared/rowRedo.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
 import { renderFailureMessage, renderWithRetry } from "../_shared/togetherRetry.ts";
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
@@ -317,34 +318,54 @@ async function saveOverStoredImage(id, values, read) {
     deadClaim = current.reviewed_at != null;
   }
 }
-// Flag only: checks the stored image once after the response and writes the
-// result by a compare-and-swap on its file, so a later regenerate that replaced
-// the image never gets this image's record. A missing visual_check column or a
-// row that moved on is logged and ignored. Call it before the handler returns.
-function checkAfterResponse({ id, path, image, facts, record, invocationStart }) {
-  runInBackground(checkInBackground({
-    b64: image.b64,
+// After the response: checks the new image and, while a detail is clearly
+// wrong, re-renders it with the correction. A better image replaces this one
+// only while the post is still pending, unclaimed and still holds it
+// (rowRedoHandlers): an Approve or Reject always wins. Call it before the
+// handler returns.
+function redoAfterResponse({ id, url, path, image, facts, record, invocationStart, render }) {
+  const tag = `regen #${id}`;
+  const handlers = rowRedoHandlers({
+    supabase,
+    table: "ig_pending_review",
+    id,
+    bucket: "instagram-images",
+    stored: { url, path },
+    fileName: (index)=>`pending-${id}-${Date.now()}-r${index}.jpg`,
+    guard: (q)=>q.is("reviewed_at", null),
+    tag
+  });
+  runInBackground(redoInBackground({
+    first: { b64: image.b64, model: image.model },
     facts,
-    imageModel: image.model,
+    render,
+    maxAttempts: REDO_MAX_ATTEMPTS,
     startedAt: record.started_at,
     deadlineAt: backgroundDeadline(invocationStart),
+    swap: handlers.swap,
+    stillCurrent: handlers.stillCurrent,
+    // The record goes on whichever image the post holds now: this one, or a
+    // corrected re-render swapped in since.
     writeRecord: async (checked)=>{
+      const current = handlers.current().path;
       const { data, error } = await supabase.from("ig_pending_review").update({
         visual_check: checked
-      }).eq("id", id).eq("image_path", path).select("id");
+      }).eq("id", id).eq("image_path", current).select("id");
       if (error) {
         console.warn(`[regen] visual_check not stored for #${id}: ${missingColumn(error) ? "the visual_check column is missing" : error.message}`);
         return false;
       }
       if (!Array.isArray(data) || data.length === 0) {
-        console.log(`[regen] visual_check not stored for #${id}: the post no longer holds ${path}`);
+        console.log(`[regen] visual_check not stored for #${id}: the post no longer holds ${current}`);
         return false;
       }
       return true;
     },
-    tag: `regen #${id}`
+    tag
   }));
 }
+/** The reviewer's render plus up to two corrected re-renders. */
+const REDO_MAX_ATTEMPTS = 3;
 Deno.serve(async (req)=>{
   const invocationStart = Date.now();
   if (req.method === "OPTIONS") return new Response("ok", {
@@ -403,45 +424,55 @@ Deno.serve(async (req)=>{
     const researchText = researchTextOf(prompt.trim());
     const researchable = hasResearchableText(researchText);
     const research = apply_facts === false || !researchable ? null : await researchRow(row, researchText);
-    let withFacts = null;
-    if (research && research.facts.length > 0) {
-      try {
-        withFacts = promptWithFacts(prompt, researchText, research.facts, cfg, applyStyle);
-      } catch  {
-        withFacts = null;
-      }
+    // Only facts about the people and things this scene shows (factsForScene).
+    const facts = research ? factsForScene(research.facts, researchText) : [];
+    if (research && facts.length < research.facts.length) {
+      console.log(`[regen] #${id}: ${research.facts.length - facts.length} research fact(s) left out: about people or things not in this scene`);
     }
-    const sanitized = withFacts ? withFacts.sent : legacyPrompt(prompt, cfg, applyStyle);
-    const factsIncluded = withFacts ? withFacts.factsIncluded : 0;
+    // The prompt for a draft: the edited words, then the facts that fit, then
+    // style. A re-render after a failed check gets the draft led by the correction.
+    const buildFor = (draft) => {
+      let withFacts = null;
+      if (facts.length > 0) {
+        try {
+          withFacts = promptWithFacts(draft, researchTextOf(draft.trim()), facts, cfg, applyStyle);
+        } catch  {
+          withFacts = null;
+        }
+      }
+      return withFacts ? { sent: withFacts.sent, factsIncluded: withFacts.factsIncluded } : { sent: legacyPrompt(draft, cfg, applyStyle), factsIncluded: 0 };
+    };
+    // The card's own check found details wrong: this render is told what they
+    // were, so a Regenerate never sends the prompt that drew the mistake
+    // unchanged. Only details that belong to the scene: asking for someone who is
+    // not in it would paint them in.
+    const storedCheck = row.visual_check;
+    const storedCorrection = storedCheck?.status === "fail" && Array.isArray(storedCheck.failed)
+      ? mergeFailed([], storedCheck.failed).filter((f)=>factFitsScene(f.fact, researchText))
+      : [];
+    const firstLead = correctionLead(storedCorrection);
+    if (firstLead) console.log(`[regen] #${id} corrected from its last check: ${firstLead}`);
+    const firstBuilt = buildFor(firstLead ? `${firstLead} ${prompt.trim()}` : prompt);
+    const sanitized = firstBuilt.sent;
+    const factsIncluded = firstBuilt.factsIncluded;
     const boilerplateChars = prompt.trim().length - researchText.length;
-    console.log(research ? `[regen] research key=${research.key} status=${research.status} facts=${research.facts.length} used=${factsIncluded} ms=${research.ms} boilerplate_chars=${boilerplateChars}` : `[regen] research ${apply_facts === false ? "off" : !researchable ? "skipped (draft is only caption boilerplate)" : "skipped (no key for row)"} #${id}`);
+    console.log(research ? `[regen] research key=${research.key} status=${research.status} facts=${facts.length} used=${factsIncluded} ms=${research.ms} boilerplate_chars=${boilerplateChars}` : `[regen] research ${apply_facts === false ? "off" : !researchable ? "skipped (draft is only caption boilerplate)" : "skipped (no key for row)"} #${id}`);
     // One render: the approved model at the Instagram size, then the fallback
     // model, first image wins.
     const size = instagramSizes(cfg);
-    let image = null;
+    const renderText = async (text, failures)=>{
+      for (const a of [
+        { m: cfg.model, w: size.w, h: size.h },
+        { m: cfg.fallback_model || cfg.model, w: size.fw, h: size.fh }
+      ]){
+        const out = await tryGenerate(text, a.m, a.w, a.h, cfg.steps, failures);
+        if (out) return { b64: out, model: a.m };
+      }
+      return null;
+    };
     // Why each attempt failed, for this card's chain only.
     const failures = [];
-    for (const a of [
-      {
-        m: cfg.model,
-        w: size.w,
-        h: size.h
-      },
-      {
-        m: cfg.fallback_model || cfg.model,
-        w: size.fw,
-        h: size.fh
-      }
-    ]){
-      const out = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps, failures);
-      if (out) {
-        image = {
-          b64: out,
-          model: a.m
-        };
-        break;
-      }
-    }
+    const image = await renderText(sanitized, failures);
     // The gallery shows this sentence in its "Regenerate failed" alert, so it says
     // whether to wait and click again or to edit the prompt.
     if (!image) return new Response(JSON.stringify({
@@ -452,7 +483,7 @@ Deno.serve(async (req)=>{
     });
     // The check uses the research facts the sent prompt carries (added, or
     // already in the draft); with none it is skipped.
-    const checkFacts = research ? factsInSentPrompt(research.facts, sanitized) : [];
+    const checkFacts = factsInSentPrompt(facts, sanitized);
     const b64 = image.b64;
     const bytes = Uint8Array.from(atob(b64), (c)=>c.charCodeAt(0));
     const fn = `pending-${id}-${Date.now()}.jpg`;
@@ -535,13 +566,20 @@ Deno.serve(async (req)=>{
     // Started before the response; the check runs after it. With no
     // visual_check column there is nowhere to keep a result.
     if (needsBackgroundCheck(visualCheck)) {
-      if (recordStored) checkAfterResponse({
+      if (recordStored) redoAfterResponse({
         id,
+        url,
         path: fn,
         image,
         facts: checkFacts,
         record: visualCheck,
-        invocationStart
+        invocationStart,
+        render: async (_index, _signal, correction)=>{
+          const lead = correctionLead(mergeFailed(storedCorrection, correction));
+          const text = lead ? buildFor(`${lead} ${prompt.trim()}`).sent : sanitized;
+          if (lead) console.log(`[regen] #${id} re-render corrected: ${lead}`);
+          return await renderText(text, []);
+        }
       });
       else console.warn(`[regen] visual check not started for #${id}: the visual_check column is missing`);
     }

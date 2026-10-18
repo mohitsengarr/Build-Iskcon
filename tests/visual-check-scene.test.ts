@@ -7,10 +7,10 @@
 // is a fake that collects the background work. The real _shared/sceneResearch.ts
 // and _shared/visualCheck.ts run. No network, no real keys, no paid calls.
 //
-// The Gallery calls this function, so the check only flags: one render, the image
-// stored and returned with a "running" (or skipped) record, then one vision check
-// after the response that writes its record over it while the scene still holds
-// that image. Nothing is ever re-rendered.
+// The Gallery calls this function: one render, the image stored and returned with
+// a "running" (or skipped) record, then a vision check after the response. A
+// clearly wrong detail is re-rendered with the correction, and a better image
+// replaces the stored one only while the scene still holds it.
 //
 // Research runs canon-only (no FIRECRAWL_API_KEY), so an Arjuna scene gets the
 // seeded chariot facts and a Dhruva scene gets none, and every SDK call seen
@@ -161,6 +161,8 @@ function makeDb(o: { cfg: unknown; cfgError?: Json; canon?: unknown[]; row?: Jso
           return b;
         },
         is: () => b,
+        // The redo's guard (not approved): this fake's row is never approved.
+        not: () => b,
         order: () => b,
         limit: () => b,
         maybeSingle: () => b,
@@ -185,7 +187,12 @@ function makeDb(o: { cfg: unknown; cfgError?: Json; canon?: unknown[]; row?: Jso
           queries.push(q);
           let data: unknown = null;
           let error: unknown = null;
-          if (table === "reader_scenes" && q.op === "select") data = { ...row };
+          if (table === "reader_scenes" && q.op === "select") {
+            // A read by id and image (the redo's "is the scene still current?") sees
+            // the row only while every filter matches, as PostgREST would.
+            const byId = q.filters.some(([col]) => col === "id");
+            data = !byId || q.filters.every(([col, v]) => row[col] === v) ? { ...row } : null;
+          }
           if (table === "image_gen_config") {
             data = o.cfgError ? null : o.cfg;
             error = o.cfgError ?? null;
@@ -214,6 +221,7 @@ function makeDb(o: { cfg: unknown; cfgError?: Json; canon?: unknown[]; row?: Jso
           return { error: null };
         },
         getPublicUrl: (path: string) => ({ data: { publicUrl: `https://storage.test/${path}` } }),
+        remove: async () => ({ error: null }),
       }),
     },
   };
@@ -628,31 +636,30 @@ describe("generate-scene-image visual check", () => {
       assert.equal(uploadedB64(db), images[0]);
     });
 
-    test("a clearly contradicted fact is flagged on the stored image: no re-render, no second upload, no seed", async () => {
-      // Arrange
-      const { db, together, signals, images } = setup({ visual: ARJUNA_VISUAL });
-      const calls = vision((_, n) => reply(n, 1));
+    test("a clearly contradicted fact is re-rendered with the correction, and the corrected image replaces the stored one", async () => {
+      // Arrange: the first painting gets one fact wrong, the corrected one gets it right
+      const { db, together, images } = setup({ visual: ARJUNA_VISUAL });
+      const calls = vision((call, n) => reply(n, call === 1 ? 1 : 0));
       // Act
       const { status, json } = await run();
       await settle();
       // Assert
       assert.equal(status, 200, JSON.stringify(json));
       assert.equal(json.visual_check.status, "running");
-      assert.equal(calls.length, 1);
-      assert.equal(together.length, 1, "never re-rendered");
+      assert.equal(calls.length, 2);
+      assert.equal(together.length, 2, "one corrected re-render");
+      const failedFact = checkedFacts(calls[0])[0];
+      assert.ok(String(together[1].prompt).startsWith(`CORRECTION — the painting must clearly show: ${failedFact}`), String(together[1].prompt));
+      assert.match(String(together[1].prompt), /The previous attempt was wrong: 3 horses counted \(1\)\./);
       assert.equal("seed" in together[0], false);
-      assert.equal(signals[0], undefined);
-      assert.equal(db.uploads.length, 1);
-      assert.equal(uploadedB64(db), images[0]);
-      assert.equal(db.row.image_url, json.image_url, "the stored image stays");
+      assert.equal(db.uploads.length, 2);
+      assert.equal(uploadedB64(db), images[1]);
+      assert.notEqual(db.row.image_url, json.image_url, "the corrected image replaced the first");
+      assert.match(db.row.image_url, /scene-7-\d+-r1\.jpg$/);
       const record = db.row.visual_check;
-      assert.equal(record.status, "fail");
-      assert.equal(record.attempts, 1);
-      assert.equal(record.chosen_attempt, 0);
-      assert.equal(record.reason, null);
-      assert.equal(record.failed.length, 1);
-      assert.equal(record.failed[0].fact, checkedFacts(calls[0])[0]);
-      assert.match(record.failed[0].observed, /3 horses counted/);
+      assert.equal(record.status, "pass");
+      assert.equal(record.attempts, 2);
+      assert.equal(record.chosen_attempt, 1);
       assert.equal(record.started_at, json.visual_check.started_at);
     });
 
@@ -751,10 +758,10 @@ describe("generate-scene-image visual check", () => {
       // Act
       const { status } = await run();
       await settle();
-      // Assert
+      // Assert: it is checked; the corrected re-renders then take the rest of the budget
       assert.equal(status, 200);
-      assert.equal(together.length, 1);
-      assert.equal(calls.length, 1);
+      assert.ok(calls.length >= 1, "checked");
+      assert.ok(together.length >= 1);
       assert.equal(db.row.visual_check.status, "fail");
       assert.equal(db.row.visual_check.failed.length, 1);
     });

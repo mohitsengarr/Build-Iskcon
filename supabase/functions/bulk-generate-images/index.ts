@@ -3,20 +3,25 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getSceneResearch, type SceneResearchInput } from "../_shared/sceneResearch.ts";
 import {
   backgroundDeadline,
-  checkInBackground,
+  correctionLead,
+  type FailedFact,
   imagePayload,
   initialRecord,
   needsBackgroundCheck,
+  redoInBackground,
+  type RenderOutput,
   renderWithVisualCheck,
   runInBackground,
   type VisualCheckRecord,
 } from "../_shared/visualCheck.ts";
+import { rowRedoHandlers } from "../_shared/rowRedo.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
 import { renderFailureMessage, renderWithRetry, type TogetherFailure } from "../_shared/togetherRetry.ts";
 import { type FluxAttempt, runFluxAttempts } from "./fluxAttempts.ts";
 import {
   assemblePrompt,
   DEFAULT_FACTS_MAX,
+  factsForScene,
   inlineKey,
   normalizeForMatch,
   type PromptParts,
@@ -199,10 +204,6 @@ function instagramSizes(cfg: ActiveGenConfig): { w: number; h: number; fw: numbe
   return { w: cfg.width, h: cfg.height, fw: cfg.fallback_width || cfg.width, fh: cfg.fallback_height || cfg.height };
 }
 
-// The visual_check column is missing (migration not applied): PGRST204 or 42703.
-function missingColumn(error: { code?: string; message?: string } | null): boolean {
-  return !!error && (error.code === "PGRST204" || error.code === "42703" || /visual_check/.test(error.message ?? ""));
-}
 
 // The compressed layout the no-config prompt uses today: ART_STYLE +
 // MASCULINITY_RULE + ANACHRONISM_RULES alone are over 2000 chars.
@@ -294,7 +295,11 @@ function legacySanitize(text: string): string {
 // the prompt carries, the only ones checked. record is the checked record when a
 // check budget is given (bulk mode) and null otherwise (sample mode: the caller
 // stores the initial record and checks after the response).
-interface GeneratedImage { b64: string; model: string | null; safeFallback: boolean; checkFacts: string[]; record: VisualCheckRecord | null }
+interface GeneratedImage {
+  b64: string; model: string | null; safeFallback: boolean; checkFacts: string[]; record: VisualCheckRecord | null;
+  /** Renders again; a re-render gets the check's correction (visualCheck.ts). */
+  render: (attemptIndex: number, signal?: AbortSignal, correction?: FailedFact[]) => Promise<RenderOutput | null>;
+}
 interface CheckBudget { deadlineAt: number; maxAttempts: number; tag: string }
 
 async function generateImage(
@@ -303,76 +308,82 @@ async function generateImage(
   cfg: ActiveGenConfig | null,
   check: CheckBudget | null,
 ): Promise<GeneratedImage> {
-  let fullPrompt: string;
-  // How many research facts fullPrompt carries; SAFE_FALLBACK logs them as dropped.
-  let factsInPrompt = 0;
-  // The facts fullPrompt carries, the only ones checked. Today's prompt has none.
-  let checkFacts: string[] = [];
-  if (cfg) {
-    // Assemble exactly as the playground previews it, with canonical details
-    // straight after the scene. The existing limit is unchanged; facts only use
-    // the room the scene leaves, and the appended style is still cut first.
-    // With facts, every non-fact part gets legacySanitize before it is joined.
-    const max = cfg.prompt_max_len || 2000;
-    const withFacts = facts.length > 0 && typeof prompt === "string"
-      ? tryAssembleWithFacts(() => assembleWithFacts({ scene: legacySanitize(prompt), facts }, max))
-      : null;
-    const part = (s: unknown) => (withFacts ? legacySanitize(String(s)) : s);
-    fullPrompt = withFacts?.prompt ?? prompt;
-    factsInPrompt = withFacts?.factsInPrompt ?? 0;
-    checkFacts = withFacts?.factsUsed ?? [];
-    if (cfg.style_positives) fullPrompt += `, ${part(cfg.style_positives)}`;
-    if (cfg.style_negatives) fullPrompt += `, ${part(cfg.style_negatives)}`;
-    if (cfg.extra_rules) fullPrompt += `. ${part(cfg.extra_rules)}`;
-    if (fullPrompt.length > max) fullPrompt = fullPrompt.slice(0, max);
-  } else {
-    // With facts, the scene keeps today's 1050-char share and the facts' room
-    // comes out of the style and rule tail (style negatives, then style
-    // positives, then rules from the end). No facts, or none fits: today's prompt.
-    // Every non-fact part gets legacySanitize before it is measured.
-    const withFacts = facts.length > 0 && typeof prompt === "string"
-      ? tryAssembleWithFacts(() => assembleWithFacts({
-          scene: legacySanitize(cutAtWord(prompt, COMPRESSED_SCENE_MAX)),
-          facts,
-          rules: COMPRESSED_RULE_ITEMS.map((r) => legacySanitize(r)),
-          stylePositives: legacySanitize(COMPRESSED_STYLE_POSITIVES),
-          styleNegatives: legacySanitize(COMPRESSED_STYLE_NEGATIVES),
-        }, COMPRESSED_CUT_LEN))
-      : null;
-    if (withFacts !== null) {
-      fullPrompt = withFacts.prompt;
-      factsInPrompt = withFacts.factsInPrompt;
-      checkFacts = withFacts.factsUsed;
+  // build() assembles the prompt for a scene text: the scene itself, or for a
+  // re-render after a failed check, the scene led by the correction.
+  const build = (sceneText: string): { sanitized: string; factsInPrompt: number; checkFacts: string[] } => {
+    let fullPrompt: string;
+    // How many research facts fullPrompt carries; SAFE_FALLBACK logs them as dropped.
+    let factsInPrompt = 0;
+    // The facts fullPrompt carries, the only ones checked. Today's prompt has none.
+    let checkFacts: string[] = [];
+    if (cfg) {
+      // Assemble exactly as the playground previews it, with canonical details
+      // straight after the scene. The existing limit is unchanged; facts only use
+      // the room the scene leaves, and the appended style is still cut first.
+      // With facts, every non-fact part gets legacySanitize before it is joined.
+      const max = cfg.prompt_max_len || 2000;
+      const withFacts = facts.length > 0 && typeof sceneText === "string"
+        ? tryAssembleWithFacts(() => assembleWithFacts({ scene: legacySanitize(sceneText), facts }, max))
+        : null;
+      const part = (s: unknown) => (withFacts ? legacySanitize(String(s)) : s);
+      fullPrompt = withFacts?.prompt ?? sceneText;
+      factsInPrompt = withFacts?.factsInPrompt ?? 0;
+      checkFacts = withFacts?.factsUsed ?? [];
+      if (cfg.style_positives) fullPrompt += `, ${part(cfg.style_positives)}`;
+      if (cfg.style_negatives) fullPrompt += `, ${part(cfg.style_negatives)}`;
+      if (cfg.extra_rules) fullPrompt += `. ${part(cfg.extra_rules)}`;
+      if (fullPrompt.length > max) fullPrompt = fullPrompt.slice(0, max);
     } else {
-      fullPrompt = `${prompt}, ${ART_STYLE}. ${MASCULINITY_RULE} ${ANACHRONISM_RULES}`;
-      if (fullPrompt.length > 2000) {
-        fullPrompt = `${prompt}`.substring(0, COMPRESSED_SCENE_MAX) + `, ${COMPRESSED_STYLE_POSITIVES}, ${COMPRESSED_STYLE_NEGATIVES}. ${COMPRESSED_RULES.join(" ")}`;
-        if (fullPrompt.length > 2000) fullPrompt = fullPrompt.substring(0, COMPRESSED_CUT_LEN);
+      // With facts, the scene keeps today's 1050-char share and the facts' room
+      // comes out of the style and rule tail (style negatives, then style
+      // positives, then rules from the end). No facts, or none fits: today's prompt.
+      // Every non-fact part gets legacySanitize before it is measured.
+      const withFacts = facts.length > 0 && typeof sceneText === "string"
+        ? tryAssembleWithFacts(() => assembleWithFacts({
+            scene: legacySanitize(cutAtWord(sceneText, COMPRESSED_SCENE_MAX)),
+            facts,
+            rules: COMPRESSED_RULE_ITEMS.map((r) => legacySanitize(r)),
+            stylePositives: legacySanitize(COMPRESSED_STYLE_POSITIVES),
+            styleNegatives: legacySanitize(COMPRESSED_STYLE_NEGATIVES),
+          }, COMPRESSED_CUT_LEN))
+        : null;
+      if (withFacts !== null) {
+        fullPrompt = withFacts.prompt;
+        factsInPrompt = withFacts.factsInPrompt;
+        checkFacts = withFacts.factsUsed;
+      } else {
+        fullPrompt = `${sceneText}, ${ART_STYLE}. ${MASCULINITY_RULE} ${ANACHRONISM_RULES}`;
+        if (fullPrompt.length > 2000) {
+          fullPrompt = `${sceneText}`.substring(0, COMPRESSED_SCENE_MAX) + `, ${COMPRESSED_STYLE_POSITIVES}, ${COMPRESSED_STYLE_NEGATIVES}. ${COMPRESSED_RULES.join(" ")}`;
+          if (fullPrompt.length > 2000) fullPrompt = fullPrompt.substring(0, COMPRESSED_CUT_LEN);
+        }
       }
     }
-  }
-  // No facts in the prompt: today's text through today's sanitizer, byte for
-  // byte. With facts, every other part was already sanitized that way, and the
-  // facts (verified to hold no sanitizer word) are not rewritten inside words.
-  const sanitized = factsInPrompt > 0 ? fullPrompt : legacySanitize(fullPrompt);
+    // No facts in the prompt: today's text through today's sanitizer, byte for
+    // byte. With facts, every other part was already sanitized that way, and the
+    // facts (verified to hold no sanitizer word) are not rewritten inside words.
+    return { sanitized: factsInPrompt > 0 ? fullPrompt : legacySanitize(fullPrompt), factsInPrompt, checkFacts };
+  };
+  const { sanitized, factsInPrompt, checkFacts } = build(prompt);
   // This function has never sent a seed, so attempt 0 still sends none. A
-  // re-render keeps the prompt and sends a new random seed to FLUX, so it draws
-  // a different picture (gpt-image-2 gets no seed and varies on its own).
+  // re-render sends a new random seed to FLUX (gpt-image-2 gets no seed and
+  // varies on its own) and the prompt it is given: after a failed check, the
+  // corrected one.
   // Model, sizes and steps from the configuration (fallback model: its model when
   // none is set); the hard-coded chain only when there is no configuration.
   const steps = cfg?.steps ?? null;
   const size = cfg ? instagramSizes(cfg) : null;
-  const attemptsFor = (attemptIndex: number): FluxAttempt[] => {
+  const attemptsFor = (attemptIndex: number, text: string): FluxAttempt[] => {
     const seed = attemptIndex > 0 ? Math.floor(Math.random() * 1_000_000) : undefined;
     return cfg && size
       ? [
-          { model: cfg.model, prompt: sanitized, w: size.w, h: size.h, seed },
-          { model: cfg.fallback_model || cfg.model, prompt: sanitized, w: size.fw, h: size.fh, seed },
+          { model: cfg.model, prompt: text, w: size.w, h: size.h, seed },
+          { model: cfg.fallback_model || cfg.model, prompt: text, w: size.fw, h: size.fh, seed },
           { model: cfg.fallback_model || cfg.model, prompt: SAFE_FALLBACK, w: size.fw, h: size.fh, safeFallback: true },
         ]
       : [
-          { model: "black-forest-labs/FLUX.2-pro", prompt: sanitized, w: 1088, h: 1344, seed },
-          { model: "black-forest-labs/FLUX.1.1-pro", prompt: sanitized, w: 768, h: 1024, seed },
+          { model: "black-forest-labs/FLUX.2-pro", prompt: text, w: 1088, h: 1344, seed },
+          { model: "black-forest-labs/FLUX.1.1-pro", prompt: text, w: 768, h: 1024, seed },
           { model: "black-forest-labs/FLUX.1.1-pro", prompt: SAFE_FALLBACK, w: 768, h: 1024, safeFallback: true },
         ];
   };
@@ -384,10 +395,15 @@ async function generateImage(
   // A SAFE_FALLBACK image carries none of the facts, so it is kept unchecked
   // (reason safe_fallback) and never re-rendered: the same prompt would only be
   // refused again. The record says it was SAFE_FALLBACK.
-  const render = async (attemptIndex: number, signal?: AbortSignal) => {
+  const render = async (attemptIndex: number, signal?: AbortSignal, correction?: FailedFact[]): Promise<RenderOutput | null> => {
+    // A re-render after a failed check leads its prompt with what to fix; the
+    // prompt that drew the mistake is never sent again unchanged.
+    const lead = correctionLead(correction);
+    const text = lead ? build(`${lead} ${prompt}`).sanitized : sanitized;
+    if (lead) console.log(`[bulk-generate-images] re-render ${attemptIndex} corrected: ${lead}`);
     // A re-render never ends on SAFE_FALLBACK: that image carries none of the
     // facts, so the check loop would only discard it after paying for it.
-    const attempts = attemptsFor(attemptIndex).filter(a => attemptIndex === 0 || !a.safeFallback);
+    const attempts = attemptsFor(attemptIndex, text).filter(a => attemptIndex === 0 || !a.safeFallback);
     const used: { attempt: FluxAttempt | null } = { attempt: null };
     const b64 = await runFluxAttempts(attempts, a => {
       used.attempt = a;
@@ -401,12 +417,12 @@ async function generateImage(
     // Bulk mode: checked, and re-rendered on a clear contradiction, before the insert.
     const checked = await renderWithVisualCheck({ render, facts: checkFacts, maxAttempts: check.maxAttempts, deadlineAt: check.deadlineAt, tag: check.tag });
     if (!checked) throw new Error(renderFailureMessage(failures, "All FLUX attempts failed"));
-    return { b64: checked.b64, model: checked.model, safeFallback: checked.safeFallback === true, checkFacts, record: checked.record };
+    return { b64: checked.b64, model: checked.model, safeFallback: checked.safeFallback === true, checkFacts, record: checked.record, render };
   }
   // Sample mode: one render, checked after the response.
   const first = await render(0);
   if (!first) throw new Error(renderFailureMessage(failures, "All FLUX attempts failed"));
-  return { b64: first.b64, model: first.model, safeFallback: first.safeFallback, checkFacts, record: null };
+  return { b64: first.b64, model: first.model ?? null, safeFallback: first.safeFallback === true, checkFacts, record: null, render };
 }
 
 // getSceneResearch never rejects; the catch is a second guard so research can
@@ -432,31 +448,53 @@ async function uploadImage(b64: string, ch: ChapterInfo) {
   return { url: supabase.storage.from("instagram-images").getPublicUrl(fn).data.publicUrl, path: fn };
 }
 
-// Sample mode, flag only: checks the stored image once after the response and
-// writes the result by a compare-and-swap on its file, so a regenerate that
-// replaced the image never gets this image's record. A missing visual_check
-// column or a row that moved on is logged and ignored. Call it before returning.
-function checkAfterResponse(o: { id: number | string; path: string; image: GeneratedImage; record: VisualCheckRecord; invocationStart: number }): void {
+// The visual_check column is missing (migration not applied): PGRST204 or 42703.
+function missingColumn(error: { code?: string; message?: string } | null): boolean {
+  return !!error && (error.code === "PGRST204" || error.code === "42703" || /visual_check/.test(error.message ?? ""));
+}
+
+// Sample mode: checks the stored image after the response and, while a detail is
+// clearly wrong, re-renders it with the correction. A better image replaces the
+// stored one only while the post is still pending, unclaimed (reviewed_at null)
+// and still holds this run's image (rowRedoHandlers). Call it before returning.
+function checkAfterResponse(o: { id: number | string; path: string; url: string; chapter: ChapterInfo; image: GeneratedImage; record: VisualCheckRecord; invocationStart: number }): void {
   const tag = `[bulk-generate-images] #${o.id}`;
-  runInBackground(checkInBackground({
-    b64: o.image.b64,
+  const handlers = rowRedoHandlers({
+    supabase,
+    table: "ig_pending_review",
+    id: o.id,
+    bucket: "instagram-images",
+    stored: { url: o.url, path: o.path },
+    fileName: (index) => `ig-canto${o.chapter.skandh}-ch${o.chapter.number}-${Date.now()}-r${index}.jpg`,
+    guard: (q) => q.is("reviewed_at", null),
+    recordValue: (r) => ({ ...r, safe_fallback: o.image.safeFallback }),
+    tag,
+  });
+  runInBackground(redoInBackground({
+    first: { b64: o.image.b64, model: o.image.model },
     facts: o.image.checkFacts,
-    imageModel: o.image.model,
+    render: o.image.render,
+    maxAttempts: SAMPLE_MAX_ATTEMPTS,
     startedAt: o.record.started_at ?? null,
     deadlineAt: backgroundDeadline(o.invocationStart),
+    swap: handlers.swap,
+    stillCurrent: handlers.stillCurrent,
+    // The record goes on whichever image the post holds now: this one, or a
+    // corrected re-render swapped in since.
     writeRecord: async (checked) => {
+      const path = handlers.current().path;
       const { data, error } = await supabase
         .from("ig_pending_review")
         .update({ visual_check: { ...checked, safe_fallback: o.image.safeFallback } })
         .eq("id", o.id)
-        .eq("image_path", o.path)
+        .eq("image_path", path)
         .select("id");
       if (error) {
         console.warn(`${tag} visual_check not stored: ${missingColumn(error) ? "the visual_check column is missing" : error.message}`);
         return false;
       }
       if (!Array.isArray(data) || data.length === 0) {
-        console.log(`${tag} visual_check not stored: the post no longer holds ${o.path}`);
+        console.log(`${tag} visual_check not stored: the post no longer holds ${path}`);
         return false;
       }
       return true;
@@ -464,6 +502,9 @@ function checkAfterResponse(o: { id: number | string; path: string; image: Gener
     tag: `bulk-generate-images #${o.id}`,
   }));
 }
+
+/** A sample post: the stored render plus up to two corrected re-renders. */
+const SAMPLE_MAX_ATTEMPTS = 3;
 
 async function listExistingChapters(): Promise<Set<number>> {
   const existing = new Set<number>();
@@ -514,11 +555,15 @@ async function generateOne(
     const text = await getChapterText(chapter);
     const { imagePrompt, caption, hashtags } = await generateScenePrompt(chapter, text);
     // Same research row as instagram-post's inline path (bhagavatam:g<N>:inline).
-    const facts = await researchFacts({
+    const researched = await researchFacts({
       key: inlineKey("bhagavatam", chapter.globalNumber),
       book: "bhagavatam",
       sceneText: imagePrompt,
     }, opts.networkResearch !== false);
+    // Only facts about people this scene shows: a fact about anyone else would be
+    // painted in, or failed for being missing (factsForScene).
+    const facts = factsForScene(researched, imagePrompt);
+    if (facts.length < researched.length) console.log(`[bulk-generate-images] g${chapter.globalNumber}: ${researched.length - facts.length} research fact(s) left out: about people not in this scene`);
     const image = await generateImage(
       imagePrompt,
       facts,
@@ -557,7 +602,7 @@ async function generateOne(
     if (needsBackgroundCheck(visualCheck)) {
       const id = inserted?.id;
       if (recordStored && (typeof id === "number" || typeof id === "string")) {
-        checkAfterResponse({ id, path, image, record: visualCheck, invocationStart: Number(opts.invocationStart) });
+        checkAfterResponse({ id, path, url, chapter, image, record: visualCheck, invocationStart: Number(opts.invocationStart) });
       } else {
         console.warn(`[bulk-generate-images] visual check not started: ${recordStored ? "no review row id" : "the visual_check column is missing"}`);
       }

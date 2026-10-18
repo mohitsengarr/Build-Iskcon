@@ -85,17 +85,21 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getSceneResearch, type SceneResearchResult } from "../_shared/sceneResearch.ts";
-import { assemblePrompt, inlineKey, normalizeForMatch, sanitizeForImageModel, sceneKey } from "../_shared/sceneResearchCore.ts";
+import { assemblePrompt, factsForScene, inlineKey, normalizeForMatch, sanitizeForImageModel, sceneKey } from "../_shared/sceneResearchCore.ts";
 import {
   backgroundDeadline,
-  checkInBackground,
+  correctionLead,
+  type FailedFact,
   imagePayload,
   initialRecord,
   needsBackgroundCheck,
+  redoInBackground,
+  type RenderOutput,
   renderWithVisualCheck,
   runInBackground,
   type VisualCheckRecord,
 } from "../_shared/visualCheck.ts";
+import { rowRedoHandlers } from "../_shared/rowRedo.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
 import { renderFailureMessage, renderWithRetry, type TogetherFailure } from "../_shared/togetherRetry.ts";
 import { type FluxAttempt, runFluxAttempts } from "./fluxAttempts.ts";
@@ -175,6 +179,10 @@ const runSceneResearch: ResearchFn = (input, opts) => getSceneResearch(supabase,
 // 2 renders, and one deadline 360s after the worker started (backgroundDeadline)
 // covers every chapter in the run.
 const BULK_MAX_ATTEMPTS = 2;
+/** A chapter or sample cover: the stored render plus up to two corrected re-renders. */
+const AFTER_RESPONSE_MAX_ATTEMPTS = 3;
+/** One render of the attempt chain; a re-render gets the check's correction (visualCheck.ts). */
+type RenderFn = (renderIndex: number, signal?: AbortSignal, correction?: FailedFact[]) => Promise<RenderOutput | null>;
 type CheckPlan =
   | { mode: "after_response"; invocationStart: number }
   | { mode: "before_insert"; deadlineAt: number; maxAttempts: number };
@@ -446,7 +454,7 @@ async function generateImage(
   research: SceneResearchResult | null,
   check: CheckPlan,
   label: string,
-): Promise<{ b64: string; record: StoredCheck; facts: string[] }> {
+): Promise<{ b64: string; record: StoredCheck; facts: string[]; model: string | null; render: RenderFn }> {
   // Models, sizes, steps, style and limits come from the approved configuration when one exists.
   const __cfg = await getActiveGenConfig();
   const rawFacts: unknown = research?.facts;
@@ -481,13 +489,17 @@ async function generateImage(
   // Why each attempt failed, for this chapter's chain only: a bulk run calls
   // generateImage per chapter, so concurrent chapters never share one array.
   const failures: TogetherFailure[] = [];
-  // One render is the whole attempt chain below. renderIndex moves the seed so a
-  // re-render of the same prompt draws a different picture (render 0 uses the
-  // seed as before).
-  const render = async (renderIndex: number, signal?: AbortSignal) => {
+  // One render is the whole attempt chain below. renderIndex moves the seed (render
+  // 0 uses the seed as before), and a re-render after a failed check leads its
+  // prompt with the correction: the prompt that drew the mistake is never sent
+  // again unchanged.
+  const render: RenderFn = async (renderIndex, signal, correction) => {
+    const lead = correctionLead(correction);
+    const text = lead ? buildPrompt(`${lead} ${scenePrompt}`, matchedPersonas, facts, __cfg).prompt : sanitized;
+    if (lead) console.log(`[bulk-generate-chapter-art] ${label} re-render ${renderIndex} corrected: ${lead}`);
     const chain: FluxAttempt[] = [
-      { model: __m1, prompt: sanitized, w: __w1, h: __h1, seed: seed + renderIndex },
-      { model: __m2, prompt: sanitized, w: __fb.w, h: __fb.h, seed: seed + renderIndex },
+      { model: __m1, prompt: text, w: __w1, h: __h1, seed: seed + renderIndex },
+      { model: __m2, prompt: text, w: __fb.w, h: __fb.h, seed: seed + renderIndex },
       { model: __m2, prompt: SAFE_FALLBACK, w: __fb.w, h: __fb.h, safeFallback: true },
     ];
     // A re-render never ends on SAFE_FALLBACK: that image carries none of the
@@ -519,7 +531,7 @@ async function generateImage(
     const out = await render(0);
     if (!out) throw new Error(renderFailureMessage(failures, "All FLUX attempts failed"));
     const record = initialRecord({ factsUsed: built.factsUsed, safeFallback: out.safeFallback, imageModel: out.model, startedAt: Date.now() });
-    return { b64: out.b64, record: { ...record, safe_fallback: out.safeFallback }, facts: built.factsUsed };
+    return { b64: out.b64, record: { ...record, safe_fallback: out.safeFallback }, facts: built.factsUsed, model: out.model ?? null, render };
   }
 
   // Bulk: the visual check re-runs the chain while a fact is clearly contradicted.
@@ -531,7 +543,7 @@ async function generateImage(
     render,
   });
   // The record says when the stored image came from SAFE_FALLBACK.
-  if (checked) return { b64: checked.b64, record: { ...checked.record, safe_fallback: checked.safeFallback === true }, facts: built.factsUsed };
+  if (checked) return { b64: checked.b64, record: { ...checked.record, safe_fallback: checked.safeFallback === true }, facts: built.factsUsed, model: checked.model, render };
   throw new Error(renderFailureMessage(failures, "All FLUX attempts failed"));
 }
 
@@ -567,6 +579,7 @@ async function storeVisualCheck(id: number, imagePath: string, record: VisualChe
   }
   return true;
 }
+
 
 async function listExistingChapters(): Promise<Set<number>> {
   const existing = new Set<number>();
@@ -678,9 +691,17 @@ async function generateCover(
       }, opts.networkResearch !== false),
     ]);
     const matched = matchPersonas(sceneCharacters, allPersonas);
+    // Only facts about people this scene shows: a fact about anyone else would be
+    // painted in, or failed for being missing (factsForScene).
+    const sceneFacts = research
+      ? { ...research, facts: factsForScene(research.facts, `${sceneTitle} ${imagePrompt}`, sceneCharacters) }
+      : null;
+    if (research && sceneFacts && sceneFacts.facts.length < (Array.isArray(research.facts) ? research.facts.length : 0)) {
+      console.log(`[bulk-generate-chapter-art] g${chapter.globalNumber}: ${research.facts.length - sceneFacts.facts.length} research fact(s) left out: about people not in this scene`);
+    }
 
     const label = `bulk-generate-chapter-art g${chapter.globalNumber}`;
-    const { b64, record, facts } = await generateImage(imagePrompt, matched, research, check, label);
+    const { b64, record, facts, model, render } = await generateImage(imagePrompt, matched, sceneFacts, check, label);
     const { url, path } = await uploadImage(b64, chapter);
 
     const row = {
@@ -712,19 +733,34 @@ async function generateCover(
     }
     if (error) throw new Error(error.message);
 
-    // Chapter and sample modes: the check runs after the response, in waitUntil.
-    // It is registered here, before the handler returns its Response, and only
-    // flags the row (storeVisualCheck).
+    // Chapter and sample modes: the check runs after the response, in waitUntil,
+    // registered here before the handler returns its Response. A clearly wrong
+    // detail is re-rendered with the correction and the better image swapped onto
+    // the row only while it is still pending with this cover (rowRedoHandlers).
     const pendingId = inserted?.id;
     if (check.mode === "after_response" && recordSaved && pendingId != null && needsBackgroundCheck(record)) {
-      runInBackground(checkInBackground({
-        b64,
-        facts,
-        imageModel: record.image_model,
-        startedAt: record.started_at,
-        deadlineAt: backgroundDeadline(check.invocationStart),
+      const handlers = rowRedoHandlers({
+        supabase,
+        table: "bhagavatam_chapter_art_review",
+        id: pendingId,
+        bucket: "chapter-art-images",
+        stored: { url, path },
+        fileName: (index) => `art-canto${chapter.skandh}-ch${chapter.number}-${Date.now()}-r${index}.jpg`,
+        recordValue: (r) => ({ ...r, safe_fallback: false }),
         tag: label,
-        writeRecord: (checkedRecord) => storeVisualCheck(pendingId, path, checkedRecord),
+      });
+      runInBackground(redoInBackground({
+        first: { b64, model },
+        facts,
+        render,
+        maxAttempts: AFTER_RESPONSE_MAX_ATTEMPTS,
+        deadlineAt: backgroundDeadline(check.invocationStart),
+        startedAt: record.started_at,
+        tag: label,
+        swap: handlers.swap,
+        stillCurrent: handlers.stillCurrent,
+        // On whichever cover the row holds now: this one, or a corrected re-render.
+        writeRecord: (checkedRecord) => storeVisualCheck(pendingId, handlers.current().path, checkedRecord),
       }));
     }
 

@@ -34,6 +34,11 @@
 // past the point where its check could still start: a slow one is abandoned and
 // the checked image kept.
 //
+// Every re-render is told what went wrong: render() gets, as its third argument,
+// each fact the attempts so far got wrong with what was seen instead, and the
+// caller leads the new prompt with it (correctionLead). Re-sending the prompt
+// that caused a mistake, with only the seed moved, drew the same mistake again.
+//
 // Kill switch: VISUAL_CHECK_ENABLED=false skips the check (and so every re-render).
 
 // Pinned: an unpinned specifier resolves to whatever is newest at deploy time,
@@ -46,6 +51,7 @@ import {
   type FailedFact,
   initialRecordFor,
   MAX_CHECK_IMAGE_B64_CHARS,
+  mergeFailed,
   parseVisualCheck,
   pickBest,
   shouldRetry,
@@ -105,9 +111,12 @@ export interface RenderWithVisualCheckInput {
   /**
    * Renders attempt `attemptIndex` (0, 1, 2 ...). null means the render failed.
    * A re-render (index > 0) gets `signal`, aborted when its time is up; pass it
-   * to fetch so the abandoned request stops too.
+   * to fetch so the abandoned request stops too. It also gets `correction`: every
+   * fact the attempts so far got wrong and what was seen instead. Lead the
+   * re-render's prompt with correctionLead(correction); never send the failed
+   * prompt again unchanged.
    */
-  render: (attemptIndex: number, signal?: AbortSignal) => Promise<RenderOutput | null>;
+  render: (attemptIndex: number, signal?: AbortSignal, correction?: FailedFact[]) => Promise<RenderOutput | null>;
   /** The exact research facts (prompt_text strings) that went into the prompt. */
   facts: string[];
   /** Total renders allowed, the first included. */
@@ -152,8 +161,12 @@ export interface RedoInBackgroundInput {
   first: RenderOutput;
   /** The exact facts that reached the prompt. */
   facts: string[];
-  /** Renders attempt 1, 2 ... (vary the seed by the index); null means the render failed. Pass `signal` to fetch. */
-  render: (attemptIndex: number, signal?: AbortSignal) => Promise<RenderOutput | null>;
+  /**
+   * Renders attempt 1, 2 ...; null means the render failed. Pass `signal` to fetch.
+   * `correction` is every fact the attempts so far got wrong and what was seen
+   * instead: lead the prompt with correctionLead(correction).
+   */
+  render: (attemptIndex: number, signal?: AbortSignal, correction?: FailedFact[]) => Promise<RenderOutput | null>;
   /** Total renders allowed, the stored first image included. */
   maxAttempts: number;
   /** Epoch ms after which no check or render may start: backgroundDeadline(invocationStart). */
@@ -402,7 +415,7 @@ export function runInBackground(work: unknown, log?: (line: string) => void): Pr
 
 // ── Render and check steps (shared by the loops) ─────────────────────────────
 
-type RenderFn = (attemptIndex: number, signal?: AbortSignal) => Promise<RenderOutput | null>;
+type RenderFn = (attemptIndex: number, signal?: AbortSignal, correction?: FailedFact[]) => Promise<RenderOutput | null>;
 
 interface LoopEnv {
   tag: string;
@@ -451,6 +464,7 @@ async function renderAttempt(
   render: RenderFn | undefined,
   index: number,
   stopAt?: number,
+  correction?: FailedFact[],
 ): Promise<{ out: RenderOutput | null; ms: number }> {
   const { now, log, tag } = loop;
   const t0 = now();
@@ -458,7 +472,7 @@ async function renderAttempt(
   try {
     let out: RenderOutput | null | "stopped";
     if (stopAt === undefined) {
-      out = await (render as RenderFn)(index);
+      out = await (render as RenderFn)(index, undefined, correction);
     } else {
       const controller = new AbortController();
       const stopped = new Promise<"stopped">((resolve) => {
@@ -467,7 +481,7 @@ async function renderAttempt(
           resolve("stopped");
         }, Math.max(0, stopAt - now()));
       });
-      const pending = (async () => await (render as RenderFn)(index, controller.signal))();
+      const pending = (async () => await (render as RenderFn)(index, controller.signal, correction))();
       // A render abandoned at stopAt may still settle later; that result is ignored.
       pending.catch(() => {});
       out = await Promise.race([pending, stopped]);
@@ -548,9 +562,11 @@ export async function renderWithVisualCheck(input: RenderWithVisualCheckInput): 
     return { ...out, b64: out.b64, model, record };
   };
 
+  // Every fact any attempt has got wrong so far: what each re-render is corrected by.
+  let failedSoFar: FailedFact[] = [];
   const renderAt = (index: number, stopAt?: number) => {
     renders++;
-    return renderAttempt(loop, input?.render, index, stopAt);
+    return renderAttempt(loop, input?.render, index, stopAt, index > 0 ? failedSoFar : undefined);
   };
 
   try {
@@ -567,6 +583,7 @@ export async function renderWithVisualCheck(input: RenderWithVisualCheckInput): 
     // pass, skipped or error: keep this image. A failed checker never costs a render.
     if (c0.check.status !== "fail") return result(r0.out, 0, c0.check.status, c0.check, c0.check.reason);
     checked.push({ index: 0, out: r0.out, verdict: c0.check });
+    failedSoFar = mergeFailed(failedSoFar, c0.check.failed);
 
     // Renders vary a lot (a gpt-image-2 call can take twice as long as the one
     // before), so the next one is predicted from the slowest so far.
@@ -609,6 +626,7 @@ export async function renderWithVisualCheck(input: RenderWithVisualCheckInput): 
         break;
       }
       checked.push({ index, out: r.out, verdict: c.check });
+      failedSoFar = mergeFailed(failedSoFar, c.check.failed);
     }
 
     const best = pickBest(checked) as Attempt;
@@ -770,6 +788,8 @@ export async function redoInBackground(input: RedoInBackgroundInput): Promise<Vi
     // pass, skipped or error: the stored image stays and nothing is rendered.
     if (c0.check.status !== "fail") return await finish(recordFor(stored, c0.check.status, c0.check, c0.check.reason));
     storedVerdict = c0.check;
+    // Every fact any attempt has got wrong so far: what each re-render is corrected by.
+    let failedSoFar = mergeFailed([], c0.check.failed);
 
     let longestRenderMs = RENDER_ESTIMATE_MS;
     let longestCheckMs = c0.ms;
@@ -789,7 +809,7 @@ export async function redoInBackground(input: RedoInBackgroundInput): Promise<Vi
       const index = renders;
       renders++;
       // Abandoned at deadlineAt - checkReserveMs, where its check could no longer start.
-      const r = await renderAttempt(loop, input?.render, index, deadlineAt - checkReserveMs);
+      const r = await renderAttempt(loop, input?.render, index, deadlineAt - checkReserveMs, failedSoFar);
       if (!r.out) {
         stop = "render_failed";
         break;
@@ -811,6 +831,7 @@ export async function redoInBackground(input: RedoInBackgroundInput): Promise<Vi
       }
       const c = await checkAttempt(loop, index, r.out.b64);
       longestCheckMs = Math.max(longestCheckMs, c.ms);
+      if (c.check.status === "fail") failedSoFar = mergeFailed(failedSoFar, c.check.failed);
       if (c.check.status !== "pass" && c.check.status !== "fail") {
         // Unchecked, so it cannot be compared with the stored image.
         stop = `check_${c.check.status}`;

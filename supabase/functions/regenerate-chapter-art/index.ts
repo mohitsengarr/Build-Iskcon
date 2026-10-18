@@ -37,6 +37,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getSceneResearch, type SceneResearchResult } from "../_shared/sceneResearch.ts";
 import {
   assemblePrompt,
+  factFitsScene,
+  factsForScene,
   gitaChapterKey,
   inlineKey,
   normalizeForMatch,
@@ -45,13 +47,17 @@ import {
 } from "../_shared/sceneResearchCore.ts";
 import {
   backgroundDeadline,
-  checkInBackground,
+  correctionLead,
+  type FailedFact,
   imagePayload,
   initialRecord,
+  mergeFailed,
   needsBackgroundCheck,
+  redoInBackground,
   runInBackground,
   type VisualCheckRecord,
 } from "../_shared/visualCheck.ts";
+import { rowRedoHandlers } from "../_shared/rowRedo.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
 import { renderFailureMessage, renderWithRetry, type TogetherFailure } from "../_shared/togetherRetry.ts";
 
@@ -67,6 +73,9 @@ const CORS = {
 };
 
 // `scenes` is where the pre-extracted scene behind a cover lives (Gita has none).
+/** The reviewer's render plus up to two corrected re-renders. */
+const REDO_MAX_ATTEMPTS = 3;
+
 const BOOKS: Record<string, { table: string; bucket: string; prefix: string; scenes: string | null }> = {
   bhagavatam: { table: "bhagavatam_chapter_art_review", bucket: "chapter-art-images",  prefix: "art",    scenes: "bhagavatam_chapter_scenes" },
   chaitanya:  { table: "chaitanya_chapter_art_review",  bucket: "chaitanya-art-images", prefix: "art-cc", scenes: "chaitanya_chapter_scenes" },
@@ -117,6 +126,21 @@ async function tryGenerate(prompt: string, model: string, w: number, h: number, 
   return b64;
 }
 
+
+// ── Prompt assembly ──────────────────────────────────────────────────────────
+
+type BuiltPrompt = {
+  sent: string;
+  promptTruncated: boolean;
+  styleApplied: boolean;
+  styleTruncated: boolean;
+  factsIncluded: number;
+};
+
+// The assembly this function has always used. A regenerate that gets no
+// research fact sends exactly this. The edited prompt is the author's intent
+// and the style block is boilerplate, so the prompt gets the budget first and
+// style fills only the room that is left.
 // Writes the background check's record over the running one, only while the row
 // still holds the cover that was checked: .eq("image_path") makes the update a
 // compare-and-swap, so a cover replaced meanwhile keeps its own record. A missing
@@ -140,20 +164,6 @@ async function storeVisualCheck(table: string, id: number, imagePath: string, re
   return true;
 }
 
-// ── Prompt assembly ──────────────────────────────────────────────────────────
-
-type BuiltPrompt = {
-  sent: string;
-  promptTruncated: boolean;
-  styleApplied: boolean;
-  styleTruncated: boolean;
-  factsIncluded: number;
-};
-
-// The assembly this function has always used. A regenerate that gets no
-// research fact sends exactly this. The edited prompt is the author's intent
-// and the style block is boilerplate, so the prompt gets the budget first and
-// style fills only the room that is left.
 function legacyPrompt(prompt: string, cfg: typeof DEFAULTS, applyStyle: boolean, maxLen: number): BuiltPrompt {
   let base = prompt.trim();
   let style = "";
@@ -301,8 +311,10 @@ async function loadScene(
 async function researchTarget(book: string, row: Record<string, unknown>): Promise<ResearchTarget | null> {
   if (book === "gita") {
     const n = wholeNumber(row.chapter_number, 1);
-    // Every Gita chapter is Krishna's dialogue with Arjuna.
-    return n === null ? null : { key: gitaChapterKey(n), title: nonEmpty(row.chapter_title), characters: ["Krishna", "Arjuna"] };
+    // Who the painting shows comes from the reviewer's words (factsForScene), not
+    // from the book: saying "Krishna and Arjuna" for every chapter put Arjuna's
+    // bow into chapter 6's yogi alone in a cave.
+    return n === null ? null : { key: gitaChapterKey(n), title: nonEmpty(row.chapter_title), characters: null };
   }
   const g = wholeNumber(row.chapter_global_number, 1);
   if (g === null) return null;
@@ -314,17 +326,24 @@ async function researchTarget(book: string, row: Record<string, unknown>): Promi
 }
 
 // Never throws: any failure means no research, and the regenerate goes ahead.
-async function researchRow(book: string, row: Record<string, unknown>, draft: string): Promise<SceneResearchResult | null> {
+// characters are the scene's own (pre-extracted scenes have them), for
+// factsForScene; null when the row has none.
+async function researchRow(
+  book: string,
+  row: Record<string, unknown>,
+  draft: string,
+): Promise<(SceneResearchResult & { characters: string[] | null }) | null> {
   try {
     const target = await researchTarget(book, row);
     if (!target) return null;
-    return await getSceneResearch(supabase, {
+    const r = await getSceneResearch(supabase, {
       key: target.key,
       book,
       sceneText: draft,
       title: target.title,
       characters: target.characters,
     });
+    return { ...r, characters: target.characters };
   } catch {
     return null;
   }
@@ -359,20 +378,42 @@ Deno.serve(async (req: Request) => {
     const maxLen = cfg.prompt_max_len || 2000;
     const applyStyle = apply_style !== false;
 
-    // Verified canonical details for this row's scene. With no fact (research
-    // failed, found nothing, or none fits) the prompt is exactly the legacy one.
+    // Verified canonical details for this row's scene, only those about the people
+    // and things the scene shows (factsForScene). With no fact (research failed,
+    // found nothing, or none fits) the prompt is exactly the legacy one.
     const research = apply_facts === false ? null : await researchRow(book, row, prompt.trim());
-    let withFacts: BuiltPrompt | null = null;
-    if (research && research.facts.length > 0) {
-      try {
-        withFacts = promptWithFacts(prompt, research.facts, cfg, applyStyle, maxLen);
-      } catch {
-        withFacts = null;
-      }
+    const sceneCharacters = research?.characters ?? null;
+    const facts = research ? factsForScene(research.facts, prompt, sceneCharacters) : [];
+    if (research && facts.length < research.facts.length) {
+      console.log(`[regen-chapter] ${book} #${id}: ${research.facts.length - facts.length} research fact(s) left out: about people or things not in this scene`);
     }
-    const built = withFacts ?? legacyPrompt(prompt, cfg, applyStyle, maxLen);
+    // The prompt for a draft: the reviewer's words, then the facts that fit, then
+    // style. A re-render after a failed check gets the same draft led by the
+    // correction (correctionLead).
+    const buildFor = (draft: string): BuiltPrompt => {
+      let withFacts: BuiltPrompt | null = null;
+      if (facts.length > 0) {
+        try {
+          withFacts = promptWithFacts(draft, facts, cfg, applyStyle, maxLen);
+        } catch {
+          withFacts = null;
+        }
+      }
+      return withFacts ?? legacyPrompt(draft, cfg, applyStyle, maxLen);
+    };
+    // The card's own check found details wrong: this render is told what they were,
+    // so a Regenerate never sends the prompt that drew the mistake unchanged. Only
+    // details that belong to the scene: one about someone not in it was never the
+    // painting's fault, and asking for it would paint them in.
+    const stored = row.visual_check as { status?: unknown; failed?: unknown } | null;
+    const storedCorrection: FailedFact[] = stored?.status === "fail" && Array.isArray(stored.failed)
+      ? mergeFailed([], stored.failed).filter((f) => factFitsScene(f.fact, prompt, sceneCharacters))
+      : [];
+    const firstLead = correctionLead(storedCorrection);
+    if (firstLead) console.log(`[regen-chapter] ${book} #${id} corrected from its last check: ${firstLead}`);
+    const built = buildFor(firstLead ? `${firstLead} ${prompt.trim()}` : prompt);
     console.log(research
-      ? `[regen-chapter] research key=${research.key} status=${research.status} facts=${research.facts.length} used=${built.factsIncluded} ms=${research.ms}`
+      ? `[regen-chapter] research key=${research.key} status=${research.status} facts=${facts.length} used=${built.factsIncluded} ms=${research.ms}`
       : `[regen-chapter] research ${apply_facts === false ? "off" : "skipped (no key for row)"} ${book} #${id}`);
     const sanitized = built.sent;
 
@@ -389,16 +430,19 @@ Deno.serve(async (req: Request) => {
 
     // One render: the model, then its fallback, first image wins, as before. A
     // render that throws still answers 500 with its error.
-    let rendered: { b64: string; model: string } | null = null;
+    const renderText = async (text: string, failures: TogetherFailure[]): Promise<{ b64: string; model: string } | null> => {
+      for (const a of [
+        { m: cfg.model, w: w1, h: h1 },
+        { m: cfg.fallback_model || cfg.model, w: fallback.w, h: fallback.h },
+      ]) {
+        const img = await tryGenerate(text, a.m, a.w, a.h, cfg.steps, failures);
+        if (img) return { b64: img, model: a.m };
+      }
+      return null;
+    };
     // Why each attempt failed, for this card's chain only.
     const failures: TogetherFailure[] = [];
-    for (const a of [
-      { m: cfg.model, w: w1, h: h1 },
-      { m: cfg.fallback_model || cfg.model, w: fallback.w, h: fallback.h },
-    ]) {
-      const img = await tryGenerate(sanitized, a.m, a.w, a.h, cfg.steps, failures);
-      if (img) { rendered = { b64: img, model: a.m }; break; }
-    }
+    const rendered = await renderText(sanitized, failures);
     // The gallery shows this sentence in its "Regenerate failed" alert, so it says
     // whether to wait and click again or to edit the prompt.
     if (!rendered) return new Response(JSON.stringify({ error: renderFailureMessage(failures, "All image attempts failed") }), { status: 502, headers: CORS });
@@ -406,8 +450,8 @@ Deno.serve(async (req: Request) => {
 
     // The facts the sent prompt carries are the ones the check verifies. The row
     // gets a running record, or a skipped one (no fact, or the check is off).
-    const facts = research ? factsInSentPrompt(research.facts, sanitized) : [];
-    const record = initialRecord({ factsUsed: facts, imageModel, startedAt: Date.now() });
+    const checkFacts = factsInSentPrompt(facts, sanitized);
+    const record = initialRecord({ factsUsed: checkFacts, imageModel, startedAt: Date.now() });
 
     const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
     const fn = `${b.prefix}-regen-${id}-${Date.now()}.jpg`;
@@ -453,17 +497,40 @@ Deno.serve(async (req: Request) => {
     }
 
     // The check runs after the response, in waitUntil, so it is registered here,
-    // before the Response is returned. It never renders, and starts nothing after
-    // the invocation's background budget (backgroundDeadline).
+    // before the Response is returned, and starts nothing after the invocation's
+    // background budget (backgroundDeadline). A detail it finds clearly wrong is
+    // re-rendered with the correction — every wrong detail so far, the card's
+    // earlier ones included — and the better image swapped onto the card only
+    // while it is still pending with this image: a reviewer's click always wins.
     if (recordSaved && needsBackgroundCheck(record)) {
-      runInBackground(checkInBackground({
-        b64,
-        facts,
-        imageModel,
+      const tag = `regen-chapter ${book} #${id}`;
+      const handlers = rowRedoHandlers({
+        supabase,
+        table: b.table,
+        id,
+        bucket: b.bucket,
+        stored: { url, path: fn },
+        fileName: (index) => `${b.prefix}-regen-${id}-${Date.now()}-r${index}.jpg`,
+        tag,
+      });
+      runInBackground(redoInBackground({
+        first: { b64, model: imageModel },
+        facts: checkFacts,
+        render: async (_index, _signal, correction) => {
+          const lead = correctionLead(mergeFailed(storedCorrection, correction));
+          const text = lead ? buildFor(`${lead} ${prompt.trim()}`).sent : sanitized;
+          if (lead) console.log(`[regen-chapter] ${tag} re-render corrected: ${lead}`);
+          const out = await renderText(text, []);
+          return out ? { b64: out.b64, model: out.model } : null;
+        },
+        maxAttempts: REDO_MAX_ATTEMPTS,
         startedAt: record.started_at,
         deadlineAt: backgroundDeadline(invocationStart),
-        tag: `regen-chapter ${book} #${id}`,
-        writeRecord: (checkedRecord) => storeVisualCheck(b.table, id, fn, checkedRecord),
+        tag,
+        swap: handlers.swap,
+        stillCurrent: handlers.stillCurrent,
+        // On whichever cover the row holds now: this one, or a corrected re-render.
+        writeRecord: (checkedRecord) => storeVisualCheck(b.table, id, handlers.current().path, checkedRecord),
       }));
     }
 
