@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Layout } from "@/components/layout/Layout";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/sbRest";
+import { JoinsChart } from "@/components/JoinsChart";
 
 // buildiskcon.com/livecounter — how many devotees have joined Bhaktigram, counted
 // live (SEN-907).
@@ -51,6 +52,27 @@ async function countRows(filter = ""): Promise<number | null> {
   return Number.isFinite(n) ? n : null;
 }
 
+/** How far back the chart can be asked to look. */
+const CHART_DAYS = 30;
+
+/**
+ * The arrival times behind the chart — created_at and nothing else, so the page
+ * still never pulls a devotee's profile into the browser. Only the window the
+ * chart can draw is fetched, clamped at launch, so this does not grow without
+ * bound as the app ages.
+ */
+async function fetchJoinTimes(): Promise<string[] | null> {
+  const windowStart = new Date(Date.now() - (CHART_DAYS - 1) * 864e5).toISOString();
+  const from = windowStart > LAUNCH_ISO ? windowStart : LAUNCH_ISO;
+  const r = await fetch(
+    `${SUPABASE_URL}/rest/v1/bhaktigram_profiles?select=created_at&created_at=gte.${from}${notOurs}&order=created_at.asc&limit=5000`,
+    { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } },
+  );
+  if (!r.ok) return null;
+  const rows = (await r.json()) as Array<{ created_at: string }>;
+  return Array.isArray(rows) ? rows.map((row) => row.created_at) : null;
+}
+
 const startOfTodayUtc = () => `${new Date().toISOString().slice(0, 10)}T00:00:00Z`;
 const startOfYesterdayUtc = () =>
   `${new Date(Date.now() - 864e5).toISOString().slice(0, 10)}T00:00:00Z`;
@@ -86,12 +108,14 @@ export default function LiveCounter() {
   const [week, setWeek] = useState<number | null>(null);
   const [failed, setFailed] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const [joinTimes, setJoinTimes] = useState<string[] | null>(null);
 
   const load = useCallback(async () => {
-    const [t, d, y] = await Promise.all([
+    const [t, d, y, times] = await Promise.all([
       countRows(sinceLaunch),
       countRows(`&created_at=gte.${startOfTodayUtc()}${notOurs}`),
       countRows(`&created_at=gte.${startOfYesterdayUtc()}&created_at=lt.${startOfTodayUtc()}${notOurs}`),
+      fetchJoinTimes(),
     ]);
     // A failed poll keeps the last good number on screen rather than flashing a
     // zero: a counter that drops to nothing reads as "the app lost its users".
@@ -100,6 +124,9 @@ export default function LiveCounter() {
     setTotal(t);
     if (d != null) setToday(d);
     if (y != null) setWeek(y);
+    // A failed chart read keeps the bars that are already drawn, for the same
+    // reason the count keeps its last good number.
+    if (times != null) setJoinTimes(times);
     setUpdatedAt(new Date());
   }, []);
 
@@ -161,6 +188,8 @@ export default function LiveCounter() {
             <div className="text-[11px] uppercase tracking-wider text-stone-400 mt-1">Joined yesterday</div>
           </div>
         </div>
+
+        <JoinsChart timestamps={joinTimes ?? []} since={LAUNCH_ISO} loaded={joinTimes != null} />
 
         <p className="mt-12 text-sm text-stone-500 leading-relaxed max-w-md mx-auto">
           Daily darshan with the shloka, the Bhagavatam and Chaitanya-charitamrita to read,
