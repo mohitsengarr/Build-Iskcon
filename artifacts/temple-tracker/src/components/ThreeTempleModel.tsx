@@ -3,10 +3,14 @@
 // four architectural styles. Used on the landing hero and as the live preview in
 // the "Design Your Temple" builder. Client-only (Vite SPA, no SSR).
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, ContactShadows, Float } from "@react-three/drei";
+import {
+  AdaptiveDpr, ContactShadows, Environment, Float, Lightformer,
+  OrbitControls, PerformanceMonitor, SoftShadows,
+} from "@react-three/drei";
 import type { TempleStyle } from "@/lib/communityTemples";
+import { roughnessTile, TILE_SIZE } from "@/lib/surfaceNoise";
 
 const MARBLE = "#f4eddf";
 const MARBLE_DK = "#e6dbc4";
@@ -15,17 +19,124 @@ const SAFFRON_DEEP = "#9a3412";
 const GOLD = "#dcae52";
 const STONE = "#e8dec8";
 
+// ── Surface detail ────────────────────────────────────────────────────────────
+// The grain itself lives in lib/surfaceNoise, seeded and tested. Here it is
+// only painted into a canvas once and handed to the materials as a roughness
+// map, so the stone keeps its colour and loses its glass-evenness.
+
+/** THREE.RepeatWrapping, by value — three ships no types in this install. */
+const REPEAT = 1000;
+
+const NOISE_TILE: HTMLCanvasElement | null = (() => {
+  if (typeof document === "undefined") return null;
+  const canvas = document.createElement("canvas");
+  canvas.width = TILE_SIZE;
+  canvas.height = TILE_SIZE;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  const grey = roughnessTile();
+  const image = ctx.createImageData(TILE_SIZE, TILE_SIZE);
+  for (let i = 0; i < grey.length; i++) {
+    const p = i * 4;
+    image.data[p] = image.data[p + 1] = image.data[p + 2] = grey[i];
+    image.data[p + 3] = 255;
+  }
+  ctx.putImageData(image, 0, 0);
+  return canvas;
+})();
+
+/** The shared noise, tiled for one surface. */
+function RoughnessNoise({ repeat = 3 }: { repeat?: number }) {
+  if (!NOISE_TILE) return null;
+  return (
+    <canvasTexture
+      attach="roughnessMap"
+      args={[NOISE_TILE]}
+      wrapS={REPEAT}
+      wrapT={REPEAT}
+      repeat={[repeat, repeat]}
+      anisotropy={8}
+    />
+  );
+}
+
+// ── Materials ─────────────────────────────────────────────────────────────────
+// Three families, so every mesh of a kind reads the same. They are physical
+// rather than standard materials because the scene now carries an environment:
+// metalness and clearcoat only mean anything when there is something to
+// reflect, which is why the gold read as flat mustard before.
+
+/** Polished gold — leaf over metal, so a true metal with a faint lacquer coat. */
+function GoldMat({ roughness = 0.22 }: { roughness?: number }) {
+  return (
+    <meshPhysicalMaterial
+      color={GOLD}
+      metalness={1}
+      roughness={roughness}
+      envMapIntensity={1.65}
+      clearcoat={0.35}
+      clearcoatRoughness={0.28}
+    >
+      {/* beaten leaf, not a mirror */}
+      <RoughnessNoise repeat={5} />
+    </meshPhysicalMaterial>
+  );
+}
+
+/** Dressed stone and marble: not shiny, but it catches the sky. */
+function StoneMat({ color = MARBLE, roughness = 0.7, flatShading = false }: {
+  color?: string; roughness?: number; flatShading?: boolean;
+}) {
+  return (
+    <meshPhysicalMaterial
+      color={color}
+      metalness={0}
+      roughness={roughness}
+      clearcoat={0.35}
+      clearcoatRoughness={0.65}
+      sheen={0.3}
+      sheenColor="#fff3dd"
+      sheenRoughness={0.85}
+      envMapIntensity={0.85}
+      flatShading={flatShading}
+    >
+      <RoughnessNoise repeat={4} />
+    </meshPhysicalMaterial>
+  );
+}
+
+/** Painted and pigmented surfaces — the saffron tiers and mouldings. */
+function PaintMat({ color = SAFFRON, roughness = 0.55, metalness = 0, flatShading = false }: {
+  color?: string; roughness?: number; metalness?: number; flatShading?: boolean;
+}) {
+  return (
+    <meshPhysicalMaterial
+      color={color}
+      metalness={metalness}
+      roughness={roughness}
+      clearcoat={0.5}
+      clearcoatRoughness={0.45}
+      sheen={0.25}
+      sheenColor="#ffd9b0"
+      envMapIntensity={1.0}
+      flatShading={flatShading}
+    >
+      <RoughnessNoise repeat={3} />
+    </meshPhysicalMaterial>
+  );
+}
+
 /** Gold finial (kalash) that crowns towers and spires. */
 function Kalash({ y, scale = 1 }: { y: number; scale?: number }) {
   return (
     <group position={[0, y, 0]} scale={scale}>
       <mesh castShadow>
         <sphereGeometry args={[0.15, 20, 20]} />
-        <meshStandardMaterial color={GOLD} metalness={0.9} roughness={0.22} />
+        <GoldMat roughness={0.22} />
       </mesh>
       <mesh castShadow position={[0, 0.26, 0]}>
         <coneGeometry args={[0.045, 0.36, 16]} />
-        <meshStandardMaterial color={GOLD} metalness={0.95} roughness={0.18} />
+        <GoldMat roughness={0.18} />
       </mesh>
     </group>
   );
@@ -37,15 +148,15 @@ function Pillar({ x, z, h = 1.1, r = 0.11 }: { x: number; z: number; h?: number;
     <group position={[x, h / 2 + 0.44, z]}>
       <mesh castShadow>
         <cylinderGeometry args={[r, r * 1.15, h, 12]} />
-        <meshStandardMaterial color={MARBLE} roughness={0.65} />
+        <StoneMat roughness={0.65} />
       </mesh>
       <mesh castShadow position={[0, h / 2 + 0.05, 0]}>
         <boxGeometry args={[r * 2.6, 0.1, r * 2.6]} />
-        <meshStandardMaterial color={MARBLE_DK} roughness={0.7} />
+        <StoneMat color={MARBLE_DK} roughness={0.7} />
       </mesh>
       <mesh castShadow position={[0, -h / 2 - 0.03, 0]}>
         <boxGeometry args={[r * 2.6, 0.08, r * 2.6]} />
-        <meshStandardMaterial color={MARBLE_DK} roughness={0.7} />
+        <StoneMat color={MARBLE_DK} roughness={0.7} />
       </mesh>
     </group>
   );
@@ -59,26 +170,26 @@ function Base() {
       {/* stepped jagati */}
       <mesh receiveShadow castShadow position={[0, 0.08, 0]}>
         <boxGeometry args={[3.7, 0.16, 3.7]} />
-        <meshStandardMaterial color={STONE} roughness={0.92} />
+        <StoneMat color={STONE} roughness={0.92} />
       </mesh>
       <mesh receiveShadow castShadow position={[0, 0.24, 0]}>
         <boxGeometry args={[3.3, 0.16, 3.3]} />
-        <meshStandardMaterial color={MARBLE_DK} roughness={0.85} />
+        <StoneMat color={MARBLE_DK} roughness={0.85} />
       </mesh>
       <mesh receiveShadow castShadow position={[0, 0.4, 0]}>
         <boxGeometry args={[2.95, 0.16, 2.95]} />
-        <meshStandardMaterial color={MARBLE} roughness={0.8} />
+        <StoneMat roughness={0.8} />
       </mesh>
 
       {/* sanctum */}
       <mesh castShadow position={[0, 1.2, 0]}>
         <boxGeometry args={[2.0, 1.4, 2.0]} />
-        <meshStandardMaterial color={MARBLE} roughness={0.68} />
+        <StoneMat roughness={0.68} />
       </mesh>
       {/* saffron cornice band */}
       <mesh castShadow position={[0, 1.98, 0]}>
         <boxGeometry args={[2.28, 0.2, 2.28]} />
-        <meshStandardMaterial color={SAFFRON} roughness={0.55} />
+        <PaintMat roughness={0.55} />
       </mesh>
       {/* corner pillars on the sanctum */}
       {[[0.86, 0.86], [-0.86, 0.86], [0.86, -0.86], [-0.86, -0.86]].map(([x, z], i) => (
@@ -89,24 +200,24 @@ function Base() {
       <group position={[0, 0, 1.35]}>
         <mesh receiveShadow castShadow position={[0, 0.56, 0]}>
           <boxGeometry args={[1.5, 0.12, 0.9]} />
-          <meshStandardMaterial color={MARBLE} roughness={0.8} />
+          <StoneMat roughness={0.8} />
         </mesh>
         <Pillar x={-0.55} z={0.32} h={0.9} r={0.09} />
         <Pillar x={0.55} z={0.32} h={0.9} r={0.09} />
         {/* porch roof */}
         <mesh castShadow position={[0, 1.5, 0.3]}>
           <boxGeometry args={[1.45, 0.14, 0.75]} />
-          <meshStandardMaterial color={SAFFRON_DEEP} roughness={0.6} />
+          <PaintMat color={SAFFRON_DEEP} roughness={0.6} />
         </mesh>
         {/* pyramidal porch cap */}
         <mesh castShadow position={[0, 1.75, 0.3]}>
           <coneGeometry args={[0.72, 0.5, 4]} />
-          <meshStandardMaterial color={SAFFRON} roughness={0.55} />
+          <PaintMat roughness={0.55} />
         </mesh>
         {/* doorway */}
         <mesh position={[0, 1.02, -0.34]}>
           <boxGeometry args={[0.5, 0.9, 0.05]} />
-          <meshStandardMaterial color={SAFFRON_DEEP} roughness={0.5} />
+          <PaintMat color={SAFFRON_DEEP} roughness={0.5} />
         </mesh>
       </group>
     </group>
@@ -121,7 +232,7 @@ function CornerSpires({ height = 0.85 }: { height?: number }) {
         <group key={i} position={[x, 0, z]}>
           <mesh castShadow>
             <cylinderGeometry args={[0.02, 0.26, height, 6]} />
-            <meshStandardMaterial color={SAFFRON_DEEP} roughness={0.6} />
+            <PaintMat color={SAFFRON_DEEP} roughness={0.6} />
           </mesh>
           <Kalash y={height / 2 + 0.04} scale={0.42} />
         </group>
@@ -138,7 +249,7 @@ function DomeCrown() {
       {/* drum */}
       <mesh castShadow position={[0, 0.32, 0]}>
         <cylinderGeometry args={[0.92, 1.02, 0.64, 32]} />
-        <meshStandardMaterial color={MARBLE} roughness={0.58} />
+        <StoneMat roughness={0.58} />
       </mesh>
       {/* lotus-petal ring at dome spring line */}
       {Array.from({ length: petals }).map((_, i) => {
@@ -146,28 +257,28 @@ function DomeCrown() {
         return (
           <mesh key={i} castShadow position={[Math.cos(a) * 0.9, 0.66, Math.sin(a) * 0.9]} rotation={[0, -a, 0.5]}>
             <coneGeometry args={[0.13, 0.34, 4]} />
-            <meshStandardMaterial color={GOLD} metalness={0.6} roughness={0.35} />
+            <GoldMat roughness={0.35} />
           </mesh>
         );
       })}
       {/* ribbed hemisphere dome */}
       <mesh castShadow position={[0, 0.68, 0]}>
         <sphereGeometry args={[0.95, 32, 20, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial color={SAFFRON} roughness={0.42} metalness={0.12} />
+        <PaintMat roughness={0.42} metalness={0.12} />
       </mesh>
       {Array.from({ length: 8 }).map((_, i) => {
         const a = (i / 8) * Math.PI * 2;
         return (
           <mesh key={i} castShadow position={[0, 0.68, 0]} rotation={[0, a, 0]}>
             <torusGeometry args={[0.955, 0.02, 6, 24, Math.PI]} />
-            <meshStandardMaterial color={SAFFRON_DEEP} roughness={0.5} />
+            <PaintMat color={SAFFRON_DEEP} roughness={0.5} />
           </mesh>
         );
       })}
       {/* neck + kalash */}
       <mesh castShadow position={[0, 1.66, 0]}>
         <cylinderGeometry args={[0.16, 0.26, 0.28, 16]} />
-        <meshStandardMaterial color={GOLD} metalness={0.85} roughness={0.28} />
+        <GoldMat roughness={0.28} />
       </mesh>
       <Kalash y={1.98} />
     </group>
@@ -188,19 +299,19 @@ function ShikharaCrown() {
         <group key={i}>
           <mesh castShadow position={[0, t.y, 0]}>
             <cylinderGeometry args={[t.r1, t.r0, t.h, 8]} />
-            <meshStandardMaterial color={i % 2 === 0 ? SAFFRON : SAFFRON_DEEP} roughness={0.6} />
+            <PaintMat color={i % 2 === 0 ? SAFFRON : SAFFRON_DEEP} roughness={0.6} />
           </mesh>
           {/* horizontal moulding band */}
           <mesh castShadow position={[0, t.y + t.h / 2, 0]}>
             <cylinderGeometry args={[t.r1 * 1.06, t.r1 * 1.06, 0.06, 8]} />
-            <meshStandardMaterial color={MARBLE} roughness={0.7} />
+            <StoneMat roughness={0.7} />
           </mesh>
         </group>
       ))}
       {/* amalaka (ribbed disc) */}
       <mesh castShadow position={[0, 2.6, 0]}>
         <torusGeometry args={[0.24, 0.11, 8, 16]} />
-        <meshStandardMaterial color={MARBLE_DK} roughness={0.6} />
+        <StoneMat color={MARBLE_DK} roughness={0.6} />
       </mesh>
       <Kalash y={2.86} />
     </group>
@@ -221,11 +332,11 @@ function GopuramCrown() {
         <group key={i}>
           <mesh castShadow position={[0, y, 0]}>
             <boxGeometry args={[w, h, w]} />
-            <meshStandardMaterial color={i % 2 === 0 ? MARBLE : SAFFRON} roughness={0.7} />
+            <StoneMat color={i % 2 === 0 ? MARBLE : SAFFRON} roughness={0.7} />
           </mesh>
           <mesh castShadow position={[0, y + h / 2, 0]}>
             <boxGeometry args={[w * 1.04, 0.07, w * 1.04]} />
-            <meshStandardMaterial color={SAFFRON_DEEP} roughness={0.6} />
+            <PaintMat color={SAFFRON_DEEP} roughness={0.6} />
           </mesh>
           {/* mini finials along each tier edge (front) */}
           <Kalash y={y + h / 2 + 0.02} scale={0.28} />
@@ -242,14 +353,43 @@ function ModernCrown() {
     <group position={[0, 2.08, 0]}>
       <mesh castShadow position={[0, 0.22, 0]}>
         <cylinderGeometry args={[1.05, 1.15, 0.36, 8]} />
-        <meshStandardMaterial color={MARBLE} roughness={0.5} />
+        <StoneMat roughness={0.5} />
       </mesh>
       <mesh castShadow position={[0, 0.95, 0]}>
         <icosahedronGeometry args={[1.0, 1]} />
-        <meshStandardMaterial color={SAFFRON} roughness={0.32} metalness={0.18} flatShading />
+        <PaintMat roughness={0.32} metalness={0.18} flatShading />
       </mesh>
       <Kalash y={2.08} />
     </group>
+  );
+}
+
+/**
+ * The light the temple sits in.
+ *
+ * An environment map, not just lamps. Metalness and clearcoat describe how a
+ * surface reflects its surroundings, so without one the gold had nothing to be
+ * gold with and came out flat mustard. This builds the surroundings out of
+ * Lightformers — emissive shapes rendered to a small cube map — rather than
+ * fetching an HDRI, so the page pulls nothing at runtime and works offline.
+ *
+ * Warm key from the upper right, cool sky fill, and a saffron rim behind, which
+ * is what separates the silhouette from a cream background.
+ */
+function TempleLighting() {
+  return (
+    <Environment resolution={256} frames={1}>
+      {/* the sky */}
+      <Lightformer intensity={0.9} rotation-x={Math.PI / 2} position={[0, 6, -3]} scale={[12, 12, 1]} color="#fff6e8" />
+      {/* warm key */}
+      <Lightformer form="rect" intensity={3.4} position={[5, 5, 2]} scale={[4, 6, 1]} color="#ffe6bd" target={[0, 0, 0]} />
+      {/* cool fill, so the shadow side is not dead */}
+      <Lightformer form="rect" intensity={1.1} position={[-6, 2, 3]} scale={[5, 5, 1]} color="#dfe9ff" target={[0, 0, 0]} />
+      {/* saffron rim */}
+      <Lightformer form="ring" intensity={2.2} position={[-3, 3, -5]} scale={3} color="#ff9a52" target={[0, 0, 0]} />
+      {/* ground bounce */}
+      <Lightformer intensity={0.5} rotation-x={-Math.PI / 2} position={[0, -3, 0]} scale={[10, 10, 1]} color="#f3e3c6" />
+    </Environment>
   );
 }
 
@@ -280,33 +420,54 @@ export default function ThreeTempleModel({
   autoRotate = true,
   interactive = true,
 }: ThreeTempleModelProps) {
+  const [dpr, setDpr] = useState<number>(1.5);
   return (
     <div className={className} style={{ width: "100%", height: "100%" }}>
       <Canvas
         shadows
-        dpr={[1, 1.75]}
+        dpr={dpr}
         camera={{ position: [4.4, 2.7, 5.4], fov: 40 }}
         gl={{ antialias: true, powerPreference: "high-performance" }}
+        // r3f already renders through ACES Filmic tone mapping; this only opens
+        // the exposure a little, so the marble keeps its highlights.
+        onCreated={({ gl }) => { gl.toneMappingExposure = 1.08; }}
       >
+        {/* Drop the pixel ratio rather than the frame rate when a device
+            struggles: a soft-shadowed, environment-lit scene is heavier than
+            what stood here before, and a phone should still turn smoothly. */}
+        <PerformanceMonitor
+          onDecline={() => setDpr(1)}
+          onIncline={() => setDpr(Math.min(1.75, window.devicePixelRatio))}
+        />
+        <AdaptiveDpr />
         <color attach="background" args={["#fbf6ee"]} />
         <fog attach="fog" args={["#fbf6ee", 11, 24]} />
-        <hemisphereLight args={["#fff6e6", "#d9c9a8", 0.55]} />
-        <ambientLight intensity={0.35} />
+        {/* Percentage-closer soft shadows: the shadow softens with distance from
+            whatever casts it, the way a real one does. */}
+        <SoftShadows size={26} samples={12} focus={0.7} />
+        <ambientLight intensity={0.22} />
         <directionalLight
           position={[5, 8, 4]}
-          intensity={1.7}
+          intensity={2.1}
           castShadow
-          shadow-mapSize-width={1024}
-          shadow-mapSize-height={1024}
+          shadow-mapSize-width={2048}
+          shadow-mapSize-height={2048}
+          shadow-bias={-0.0005}
+          shadow-normalBias={0.02}
           shadow-camera-near={0.5}
           shadow-camera-far={30}
+          shadow-camera-left={-6}
+          shadow-camera-right={6}
+          shadow-camera-top={6}
+          shadow-camera-bottom={-6}
         />
-        <directionalLight position={[-5, 3, -4]} intensity={0.45} color={SAFFRON} />
+        <directionalLight position={[-5, 3, -4]} intensity={0.5} color={SAFFRON} />
         <Suspense fallback={null}>
+          <TempleLighting />
           <Float speed={1.1} rotationIntensity={0.12} floatIntensity={0.3}>
             <Temple style={style} />
           </Float>
-          <ContactShadows position={[0, -1.2, 0]} opacity={0.38} scale={10} blur={2.6} far={4.5} />
+          <ContactShadows position={[0, -1.2, 0]} opacity={0.45} scale={11} blur={2.9} far={4.8} resolution={1024} />
         </Suspense>
         <OrbitControls
           enablePan={false}
