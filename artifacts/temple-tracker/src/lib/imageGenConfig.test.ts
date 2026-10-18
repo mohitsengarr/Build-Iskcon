@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PRODUCTION_SIZES, approvalRow, type GenConfigDraft } from "./imageGenConfig";
+import { PRODUCTION_SIZES, approvalRow, aspectRatioCss, type GenConfigDraft } from "./imageGenConfig";
 
 const base: GenConfigDraft = {
   label: "Tuned", model: "openai/gpt-image-2", width: 1088, height: 1344, steps: null,
@@ -48,5 +48,17 @@ describe("approvalRow", () => {
 
   it("names an unnamed configuration by when it was tuned", () => {
     expect(approvalRow({ ...base, label: "" }, new Date("2026-10-18T19:20:00Z")).label).toBe("Tuned 2026-10-18 19:20");
+  });
+});
+
+describe("aspectRatioCss", () => {
+  it("writes a size as a CSS aspect ratio, width first", () => {
+    expect(aspectRatioCss({ w: 1088, h: 1344 })).toBe("1088 / 1344");
+  });
+
+  it("gives the Instagram review frame the production post's portrait shape", () => {
+    const [w, h] = aspectRatioCss(PRODUCTION_SIZES.instagram).split(" / ").map(Number);
+    expect(h / w).toBeCloseTo(PRODUCTION_SIZES.instagram.h / PRODUCTION_SIZES.instagram.w);
+    expect(h).toBeGreaterThan(w);
   });
 });

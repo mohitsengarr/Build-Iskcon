@@ -38,6 +38,14 @@ export const PRODUCTION_SIZES = {
   cover: { w: 1344, h: 1088 },
 } as const;
 
+/**
+ * A size as a CSS aspect-ratio ("1088 / 1344"), so a frame shows the whole image
+ * at the shape it is made: the Instagram review card shows exactly what is posted.
+ */
+export function aspectRatioCss(size: { w: number; h: number }): string {
+  return `${size.w} / ${size.h}`;
+}
+
 const positive = (v: unknown): number | null => {
   const n = Number(v);
   return Number.isFinite(n) && n > 0 ? Math.round(n) : null;

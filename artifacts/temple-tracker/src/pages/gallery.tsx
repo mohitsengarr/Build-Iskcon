@@ -7,6 +7,7 @@ import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, C
 import { fadeInUp, staggerContainer } from "@/lib/animations";
 import { describeFailure, describeThrown } from "@/lib/requestError";
 import { renderQueue } from "@/lib/renderQueue";
+import { PRODUCTION_SIZES, aspectRatioCss } from "@/lib/imageGenConfig";
 import { BOOK_SECTIONS, GITA_SECTION, gitaCardDescription, sectionBadge } from "@/lib/gallerySections";
 import { APPROVED_TABLES, REDRAW_GIVE_UP_MS, REDRAW_POLL_MS, redrawConfirmText, redrawOutcome, type ApprovedBook } from "@/lib/approvedRedraw";
 
@@ -3152,7 +3153,8 @@ export default function Gallery() {
                         <div className="w-full sm:w-72 md:w-80 lg:w-96 shrink-0">
                         <button
                           onClick={openPreview}
-                          className="relative block group/img w-full aspect-square rounded-xl overflow-hidden shadow-md cursor-zoom-in border border-amber-200"
+                          className="relative block group/img w-full rounded-xl overflow-hidden shadow-md cursor-zoom-in border border-amber-200"
+                          style={{ aspectRatio: aspectRatioCss(PRODUCTION_SIZES.instagram) }}
                           title="Click to view full size"
                           aria-label={`Preview ${p.chapter_title}`}
                         >
