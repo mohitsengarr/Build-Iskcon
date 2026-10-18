@@ -3,16 +3,18 @@
 // four architectural styles. Used on the landing hero and as the live preview in
 // the "Design Your Temple" builder. Client-only (Vite SPA, no SSR).
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import {
-  AdaptiveDpr, ContactShadows, Environment, Float, Lightformer,
+  AdaptiveDpr, Environment, Float, Lightformer,
   OrbitControls, PerformanceMonitor, SoftShadows,
 } from "@react-three/drei";
 import type { TempleStyle } from "@/lib/communityTemples";
 import { roughnessTile, TILE_SIZE } from "@/lib/surfaceNoise";
+import { groundShadowTile } from "@/lib/groundShadow";
 import { Bloom, EffectComposer, N8AO, ToneMapping } from "@react-three/postprocessing";
-import { ToneMappingMode } from "postprocessing";
+import { BlendFunction, Effect, ToneMappingMode } from "postprocessing";
+import { DEFAULT_PAGE_RGB, opaqueBackgroundBehind, srgbToLinear, type Rgb } from "@/lib/colorSpace";
 import { fxSettings, initialFxLevel, stepDown, type FxLevel } from "@/lib/renderQuality";
 
 const MARBLE = "#f4eddf";
@@ -60,6 +62,59 @@ function RoughnessNoise({ repeat = 3 }: { repeat?: number }) {
       repeat={[repeat, repeat]}
       anisotropy={8}
     />
+  );
+}
+
+// ── The ground ────────────────────────────────────────────────────────────────
+// drei's ContactShadows used to ground the temple by rendering the scene from
+// below into a render target every frame. Through the post-processing pipeline
+// that plane came out far more opaque than it does on its own and drew a flat
+// grey floor across the canvas — switching it off left the floor clean, which
+// is how it was pinned. The ground is two plain transparent planes instead,
+// which composite like any other material: a soft rounded square under the
+// plinth, and a shadow catcher for the shadow the key light actually casts.
+
+const SHADOW_TILE: HTMLCanvasElement | null = (() => {
+  if (typeof document === "undefined") return null;
+  const size = 128;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  // The plinth is 3.7 wide on a 6-unit plane: half-width 0.31, fading over 0.6.
+  const alpha = groundShadowTile(size, { half: 0.31, falloff: 0.1, strength: 0.45 });
+  const image = ctx.createImageData(size, size);
+  for (let i = 0; i < alpha.length; i++) image.data[i * 4 + 3] = alpha[i];
+  ctx.putImageData(image, 0, 0);
+  return canvas;
+})();
+
+/** The soft shadow under the plinth, which grounds the temple from every side. */
+function GroundShadow() {
+  if (!SHADOW_TILE) return null;
+  return (
+    // Just above the shadow catcher, so the two never fight over the same depth.
+    <mesh rotation-x={-Math.PI / 2} position={[0, -1.195, 0]} renderOrder={-1}>
+      <planeGeometry args={[6, 6]} />
+      <meshBasicMaterial color="#000000" transparent depthWrite={false} toneMapped={false}>
+        <canvasTexture attach="map" args={[SHADOW_TILE]} />
+      </meshBasicMaterial>
+    </mesh>
+  );
+}
+
+/**
+ * Catches the key light's soft shadow and draws nothing else. It also writes
+ * depth, so the occlusion pass has a real floor to work against instead of a
+ * gap to the far plane.
+ */
+function ShadowCatcher() {
+  return (
+    <mesh rotation-x={-Math.PI / 2} position={[0, -1.2, 0]} receiveShadow>
+      <planeGeometry args={[40, 40]} />
+      <shadowMaterial transparent opacity={0.22} />
+    </mesh>
   );
 }
 
@@ -397,6 +452,47 @@ function TempleLighting() {
 }
 
 /**
+ * The last pass: composite the finished frame onto the page it sits on.
+ *
+ * The canvas is transparent so it can take its card's colour — but post effects
+ * over transparency are ill-defined at the edges. Bloom adds light to pixels
+ * whose alpha is zero, the browser composites those "brighter than their own
+ * alpha" pixels as extra light, and on a phone that drew a white halo off the
+ * sunlit plinth and a grey veil over the contact shadow's soft fringe. Doing the
+ * "over" here, after tone mapping, hands the browser opaque, correctly blended
+ * pixels, and the background comes out the exact colour of the card.
+ *
+ * The buffer is premultiplied — three blends onto a cleared target — so the
+ * operator is rgb + page × (1 − a). Effects run in linear light before the
+ * final sRGB encode, hence the page colour arrives in linear.
+ */
+/** The uniform type postprocessing's Effect expects — three's Uniform, which is
+ *  structurally just a value and a clone(). Derived rather than imported,
+ *  because three ships no types this package can see. */
+type EffectUniform = NonNullable<NonNullable<ConstructorParameters<typeof Effect>[2]>["uniforms"]> extends Map<string, infer U> ? U : never;
+
+function uniform(value: Rgb): EffectUniform {
+  return { value, clone: () => uniform([...value] as Rgb) };
+}
+
+class FlattenOntoPageEffect extends Effect {
+  constructor(pageLinear: Rgb) {
+    super(
+      "FlattenOntoPageEffect",
+      /* glsl */ `
+        uniform vec3 page;
+        void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
+          outputColor = vec4(inputColor.rgb + page * (1.0 - inputColor.a), 1.0);
+        }
+      `,
+      // SRC: the result replaces what came in. The default, SCREEN, would
+      // lighten the whole frame against itself.
+      { blendFunction: BlendFunction.SRC, uniforms: new Map([["page", uniform(pageLinear)]]) },
+    );
+  }
+}
+
+/**
  * The finishing passes — igloo.inc's EffectComposer, scaled to a temple.
  *
  * Ambient occlusion first: the shadow that gathers where two surfaces meet —
@@ -421,8 +517,10 @@ function TempleLighting() {
  * tone mapping off while it runs, so without this the ACES curve would quietly
  * disappear and every highlight would clip.
  */
-function TempleEffects({ level }: { level: FxLevel }) {
+function TempleEffects({ level, page }: { level: FxLevel; page: Rgb }) {
   const fx = fxSettings(level);
+  const flatten = useMemo(() => new FlattenOntoPageEffect(srgbToLinear(page)), [page]);
+  useEffect(() => () => flatten.dispose(), [flatten]);
   if (!fx) return null;
   return (
     <EffectComposer multisampling={fx.multisampling}>
@@ -436,6 +534,7 @@ function TempleEffects({ level }: { level: FxLevel }) {
       />
       <Bloom mipmapBlur luminanceThreshold={1} luminanceSmoothing={0.12} intensity={0.9} />
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+      <primitive object={flatten} />
     </EffectComposer>
   );
 }
@@ -468,13 +567,21 @@ export default function ThreeTempleModel({
   interactive = true,
 }: ThreeTempleModelProps) {
   const [dpr, setDpr] = useState<number>(1.5);
+  // The colour of the card the canvas sits in, read off the page so the
+  // flatten pass matches it on every page the temple appears on.
+  const frameRef = useRef<HTMLDivElement>(null);
+  const [page, setPage] = useState<Rgb>(DEFAULT_PAGE_RGB);
+  useEffect(() => {
+    const rgb = opaqueBackgroundBehind(frameRef.current, (el) => getComputedStyle(el as Element).backgroundColor);
+    setPage((prev) => (prev.every((v, i) => v === rgb[i]) ? prev : rgb));
+  }, []);
   const [fxLevel, setFxLevel] = useState<FxLevel>(() =>
     typeof window === "undefined"
       ? "lite"
       : initialFxLevel({ width: window.innerWidth, dpr: window.devicePixelRatio }),
   );
   return (
-    <div className={className} style={{ width: "100%", height: "100%" }}>
+    <div ref={frameRef} className={className} style={{ width: "100%", height: "100%" }}>
       <Canvas
         shadows
         dpr={dpr}
@@ -494,12 +601,13 @@ export default function ThreeTempleModel({
           onFallback={() => setFxLevel("off")}
         />
         <AdaptiveDpr />
-        {/* No background of its own: the canvas is transparent and the page's card
-            shows through. Painting the cream here sent it through the composer's
-            ACES pass with everything else, and ACES pulls near-whites down to a
-            flat grey — (227, 226, 224) where the page is (251, 246, 238). Leaving
-            it to the page also means the temple matches whichever card it sits
-            in. Fog still fades distant geometry toward the same cream. */}
+        {/* No background of its own. Painting the cream here sent it through the
+            composer's ACES pass, which pulls near-whites to a flat grey —
+            (227, 226, 224) where the page is (251, 246, 238). The canvas clears
+            transparent instead: with the effects off the page shows straight
+            through, and with them on, the cleared alpha is what tells the final
+            flatten pass where the background is. Fog still fades distant
+            geometry toward the same cream. */}
         <fog attach="fog" args={["#fbf6ee", 11, 24]} />
         {/* Percentage-closer soft shadows: the shadow softens with distance from
             whatever casts it, the way a real one does. */}
@@ -526,8 +634,9 @@ export default function ThreeTempleModel({
           <Float speed={1.1} rotationIntensity={0.12} floatIntensity={0.3}>
             <Temple style={style} />
           </Float>
-          <ContactShadows position={[0, -1.2, 0]} opacity={0.45} scale={11} blur={2.9} far={4.8} resolution={1024} />
-          <TempleEffects level={fxLevel} />
+          <GroundShadow />
+          <ShadowCatcher />
+          <TempleEffects level={fxLevel} page={page} />
         </Suspense>
         <OrbitControls
           enablePan={false}
