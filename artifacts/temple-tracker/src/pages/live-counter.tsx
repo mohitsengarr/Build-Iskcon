@@ -3,6 +3,8 @@ import { Helmet } from "react-helmet-async";
 import { Layout } from "@/components/layout/Layout";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/sbRest";
 import { JoinsChart } from "@/components/JoinsChart";
+import { JoinsPlaces } from "@/components/JoinsPlaces";
+import type { ZoneCount } from "@/lib/timezoneRegions";
 
 // buildiskcon.com/livecounter — how many devotees have joined Bhaktigram, counted
 // live (SEN-907).
@@ -73,6 +75,29 @@ async function fetchJoinTimes(): Promise<string[] | null> {
   return Array.isArray(rows) ? rows.map((row) => row.created_at) : null;
 }
 
+/**
+ * Where devotees are joining from, counted per timezone by the database.
+ *
+ * This is an aggregate and only an aggregate: bhaktigram_join_regions itself is
+ * closed to the anon key, so no row tying a device to a place ever reaches the
+ * browser. The launch date and the excluded devices are passed in rather than
+ * written into the function, so this page stays the one place they are set.
+ */
+async function fetchJoinPlaces(): Promise<ZoneCount[] | null> {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/bhaktigram_joins_by_timezone`, {
+    method: "POST",
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ since: LAUNCH_ISO, exclude_devices: EXCLUDED_DEVICES }),
+  });
+  if (!r.ok) return null;
+  const rows = (await r.json()) as ZoneCount[];
+  return Array.isArray(rows) ? rows : null;
+}
+
 const startOfTodayUtc = () => `${new Date().toISOString().slice(0, 10)}T00:00:00Z`;
 const startOfYesterdayUtc = () =>
   `${new Date(Date.now() - 864e5).toISOString().slice(0, 10)}T00:00:00Z`;
@@ -109,13 +134,15 @@ export default function LiveCounter() {
   const [failed, setFailed] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [joinTimes, setJoinTimes] = useState<string[] | null>(null);
+  const [joinPlaces, setJoinPlaces] = useState<ZoneCount[]>([]);
 
   const load = useCallback(async () => {
-    const [t, d, y, times] = await Promise.all([
+    const [t, d, y, times, places] = await Promise.all([
       countRows(sinceLaunch),
       countRows(`&created_at=gte.${startOfTodayUtc()}${notOurs}`),
       countRows(`&created_at=gte.${startOfYesterdayUtc()}&created_at=lt.${startOfTodayUtc()}${notOurs}`),
       fetchJoinTimes(),
+      fetchJoinPlaces(),
     ]);
     // A failed poll keeps the last good number on screen rather than flashing a
     // zero: a counter that drops to nothing reads as "the app lost its users".
@@ -127,6 +154,7 @@ export default function LiveCounter() {
     // A failed chart read keeps the bars that are already drawn, for the same
     // reason the count keeps its last good number.
     if (times != null) setJoinTimes(times);
+    if (places != null) setJoinPlaces(places);
     setUpdatedAt(new Date());
   }, []);
 
@@ -190,6 +218,8 @@ export default function LiveCounter() {
         </div>
 
         <JoinsChart timestamps={joinTimes ?? []} since={LAUNCH_ISO} loaded={joinTimes != null} />
+
+        <JoinsPlaces zones={joinPlaces} totalDevotees={total} />
 
         <p className="mt-12 text-sm text-stone-500 leading-relaxed max-w-md mx-auto">
           Daily darshan with the shloka, the Bhagavatam and Chaitanya-charitamrita to read,
