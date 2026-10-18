@@ -1146,7 +1146,7 @@ describe("visual check wiring for ig_pending_review", () => {
       assert.equal(vision.length, 0);
       assertRecord(
         row.visual_check,
-        { status: "skipped", attempts: 1, chosen_attempt: 0, failed: [], reason: "safe_fallback", image_model: FLUX11, safe_fallback: true },
+        { status: "skipped", attempts: 1, chosen_attempt: 0, failed: [], reason: "safe_fallback", image_model: FLUX2, safe_fallback: true },
         IG_KEYS,
       );
     });
@@ -1161,7 +1161,7 @@ describe("visual check wiring for ig_pending_review", () => {
       assert.equal(status, 200);
       assert.equal(net.together.length, 3);
       for (const body of net.together) assert.ok(body.prompt.includes(HORSES), body.prompt.slice(0, 80));
-      assert.deepEqual(net.together.slice(1).map((b) => [b.model, b.seed]), [[FLUX2, net.together[0].seed + 1], [FLUX11, net.together[0].seed + 1]]);
+      assert.deepEqual(net.together.slice(1).map((b) => [b.model, b.seed]), [[FLUX2, net.together[0].seed + 1], [FLUX2, net.together[0].seed + 1]]);
       assert.equal(vision.length, 1);
       assert.equal(db.uploads.length, 1);
       assert.equal(row.image_path, db.uploads[0].path);
@@ -1651,7 +1651,8 @@ describe("visual check wiring for ig_pending_review", () => {
         assert.equal(vision.length, 0);
         assert.equal(headRes.registered, 0);
         // No fact reached the prompt, so nothing is checked; safe_fallback says the image came from SAFE_FALLBACK.
-        assertRecord(head.row.visual_check, { status: "skipped", attempts: 1, reason: "no_facts", image_model: FLUX11, safe_fallback: true }, IG_KEYS);
+        // The configuration's fallback model; with none, FLUX.2-pro (never FLUX.1.1-pro).
+        assertRecord(head.row.visual_check, { status: "skipped", attempts: 1, reason: "no_facts", image_model: c.cfg ? FLUX11 : FLUX2, safe_fallback: true }, IG_KEYS);
       });
     }
 

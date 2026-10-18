@@ -842,7 +842,7 @@ describe("chapter-art visual check wiring", () => {
       assert.equal(registered, 0);
     });
 
-    test("a moderation refusal is not re-posted and says to edit the prompt", async () => {
+    test("a moderation refusal is tried a few times on each model, then says to edit the prompt", async () => {
       // Arrange
       const { net, saves } = setup({ status: () => 422, body: () => NSFW_BODY });
       // Act
@@ -850,7 +850,7 @@ describe("chapter-art visual check wiring", () => {
       // Assert
       assert.equal(status, 502);
       assert.equal(json.error, REFUSED_MESSAGE);
-      assert.equal(net.together.length, 2, "one post per model: the same prompt would only be refused again");
+      assert.equal(net.together.length, 2 * (1 + togetherRetry.REFUSAL_RETRIES), "each model gets its retries before the chain gives up");
       assert.deepEqual(sleeps, []);
       assert.equal(saves().length, 0);
     });
@@ -884,10 +884,10 @@ describe("chapter-art visual check wiring", () => {
     // keeps the cover's shape (the configuration's fallback size is portrait).
     const FALLBACK_CASES: Array<{ name: string; cfg: unknown; primary: [number, number]; fallback: Record<string, unknown> }> = [
       {
-        name: "no configuration: FLUX.1.1-pro at 1024x832",
+        name: "no configuration: FLUX.2-pro at 1024x832 (never FLUX.1.1-pro)",
         cfg: null,
         primary: [1344, 1088],
-        fallback: { model: FLUX11, width: 1024, height: 832 },
+        fallback: { model: FLUX2, width: 1024, height: 832 },
       },
       {
         name: "a 768x1024 fallback size: 1024x832 with the configured fallback model and steps",
@@ -1708,7 +1708,7 @@ describe("chapter-art visual check wiring", () => {
         assert.equal(json.visualCheck.reason, "safe_fallback");
         assert.equal(json.visualCheck.attempts, 1);
         assert.equal(json.visualCheck.safe_fallback, true);
-        assert.equal(json.visualCheck.image_model, FLUX11);
+        assert.equal(json.visualCheck.image_model, FLUX2, "with no configuration the fallback is FLUX.2-pro");
         assert.deepEqual(inserts()[0].values.visual_check, json.visualCheck);
       });
 
@@ -1777,7 +1777,7 @@ describe("chapter-art visual check wiring", () => {
           [FLUX2, 1344, 1088, 30],
           [FLUX11, 1280, 1024, 30],
         ]);
-        assert.equal(json.visualCheck.image_model, FLUX11);
+        assert.equal(json.visualCheck.image_model, FLUX11, "the configured fallback model");
       });
 
       test("config fidelity: the configured style text takes the place of the function's own, and the book's rules and the wide composition stay", async () => {

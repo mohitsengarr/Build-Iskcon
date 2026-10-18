@@ -590,9 +590,9 @@ async function generateImage(
   const { sanitized, factsInPrompt, checkFacts } = build(prompt);
   const seed = varietySeed > 0 ? varietySeed : Math.floor(Math.random() * 1_000_000);
   const __m1 = __cfg?.model || "black-forest-labs/FLUX.2-pro";
-  // The configuration's fallback model (its model when none is set); FLUX.1.1-pro
+  // The configuration's fallback model (its model when none is set); FLUX.2-pro
   // with no configuration. The SAFE_FALLBACK attempt renders with it too.
-  const __m2 = __cfg ? (__cfg.fallback_model || __m1) : "black-forest-labs/FLUX.1.1-pro";
+  const __m2 = __cfg ? (__cfg.fallback_model || __m1) : "black-forest-labs/FLUX.2-pro";
   const __steps = __cfg?.steps ?? null;
   const __size = instagramSizes(__cfg);
   // A re-render moves the seed on by its attempt index (attempt 0 sends exactly

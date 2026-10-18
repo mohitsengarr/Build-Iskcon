@@ -12,9 +12,13 @@
 //
 // The two need different handling. A 429 is transient: the same request goes
 // through a few seconds later, so it is worth waiting and posting again before
-// the chain gives up on that model. A moderation refusal is not: the same prompt
-// is refused again however long we wait, so the prompt has to change and the
-// reviewer has to be told that.
+// the chain gives up on that model. A moderation refusal is often not, so the
+// reviewer has to be told that, but it is not always the prompt: since
+// openai/gpt-image-2 became the model (2026-10), most refusals are of the
+// GENERATED image ("The generated content was flagged"), and a new draw of the
+// same prompt usually passes. So a refused post is posted again too, a couple of
+// times while it is quick enough, before the chain falls back to another model
+// (owner, 2026-10-19: try a few times before the fallback).
 //
 // Pure apart from the retry wait: the caller's request() does the fetch, this
 // module has no Deno globals and no IO of its own, so node tests import it
@@ -88,10 +92,22 @@ export function setSleepForTests(fn?: ((ms: number) => Promise<void>) | null): (
   return previous;
 }
 
+/** Extra posts after a moderation refusal, before the attempt gives up on its model. */
+export const REFUSAL_RETRIES = 2;
 /**
- * One Together attempt, re-posted while it is rate limited: at most 3 posts
- * (backoffMs runs out), and only for "rate_limited" — a refusal or an error is
- * handed back after the first post.
+ * A refused attempt is posted again only this soon after its first post: a
+ * gpt-image-2 refusal of the generated image comes after the whole render
+ * (~45 s), and three of those would leave no time in a 150 s request for the
+ * fallback model. Refusals of the prompt itself come back in seconds and get
+ * all their retries.
+ */
+export const REFUSAL_RETRY_WITHIN_MS = 70_000;
+
+/**
+ * One Together attempt, re-posted while it is rate limited (at most 3 posts:
+ * backoffMs runs out) and while it is refused by moderation (REFUSAL_RETRIES
+ * more posts, started within REFUSAL_RETRY_WITHIN_MS of the first). Any other
+ * error is handed back after its first post.
  *
  * Never throws, so a caller's attempt chain is never cut short by one bad post.
  * A request that throws, and a 2xx body that will not parse, come back as
@@ -108,7 +124,12 @@ export async function renderWithRetry(opts: {
   onFailure?: (status: number, body: string, failure: TogetherFailure, willRetry: boolean) => void;
   onError?: (error: unknown) => void;
   signal?: AbortSignal;
+  /** The clock, for tests. */
+  now?: () => number;
 }): Promise<{ b64: string | null; failure: TogetherFailure | null }> {
+  const now = opts.now ?? Date.now;
+  const started = now();
+  let refusals = 0;
   for (let attempt = 0; ; attempt++) {
     let res: Response;
     try {
@@ -132,11 +153,16 @@ export async function renderWithRetry(opts: {
 
     const text = await res.text().catch(() => "");
     const failure = classifyTogetherFailure(res.status, text);
-    const wait = failure === "rate_limited" ? backoffMs(attempt) : null;
+    let wait: number | null = null;
+    if (failure === "rate_limited") wait = backoffMs(attempt);
+    else if (failure === "refused" && refusals < REFUSAL_RETRIES && now() - started < REFUSAL_RETRY_WITHIN_MS) {
+      refusals++;
+      wait = 0;
+    }
     const willRetry = wait !== null && !opts.signal?.aborted;
     opts.onFailure?.(res.status, text.slice(0, 200), failure, willRetry);
     if (!willRetry) return { b64: null, failure };
-    await sleep(wait);
+    if (wait > 0) await sleep(wait);
     // The check can give up while we wait; that render is no longer wanted.
     if (opts.signal?.aborted) return { b64: null, failure };
   }

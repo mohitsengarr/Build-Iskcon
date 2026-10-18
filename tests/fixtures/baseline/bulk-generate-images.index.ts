@@ -154,8 +154,9 @@ async function generateImage(prompt: string): Promise<string> {
       ]
     : [
     { model: "black-forest-labs/FLUX.2-pro", prompt: sanitized, w: 1088, h: 1344 },
-    { model: "black-forest-labs/FLUX.1.1-pro", prompt: sanitized, w: 768, h: 1024 },
-    { model: "black-forest-labs/FLUX.1.1-pro", prompt: SAFE_FALLBACK, w: 768, h: 1024 },
+    // 2026-10-19: the no-configuration fallback is FLUX.2-pro, never FLUX.1.1-pro (owner).
+    { model: "black-forest-labs/FLUX.2-pro", prompt: sanitized, w: 768, h: 1024 },
+    { model: "black-forest-labs/FLUX.2-pro", prompt: SAFE_FALLBACK, w: 768, h: 1024 },
   ];
   for (const a of attempts) {
     const b64 = await tryGenerate(a.prompt, a.model, a.w, a.h);

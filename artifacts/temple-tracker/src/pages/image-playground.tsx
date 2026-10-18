@@ -55,7 +55,6 @@ interface GenConfig {
 
 const MODELS = [
   "black-forest-labs/FLUX.2-pro",
-  "black-forest-labs/FLUX.1.1-pro",
   "black-forest-labs/FLUX.1-schnell-Free",
   "black-forest-labs/FLUX.1-dev",
 ];

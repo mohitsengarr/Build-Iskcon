@@ -12,6 +12,8 @@ import { after, beforeEach, describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
+  REFUSAL_RETRIES,
+  REFUSAL_RETRY_WITHIN_MS,
   backoffMs,
   classifyTogetherFailure,
   renderFailureMessage,
@@ -199,25 +201,49 @@ describe("renderWithRetry", () => {
     assert.deepEqual(waits, [2500]);
   });
 
-  test("a 422 NSFW refusal is not re-posted: one post, no wait, failure refused", async () => {
-    // Arrange
-    const p = poster([failed(422, NSFW_BODY)]);
+  test("a 422 NSFW refusal is posted twice more, with no wait, then handed back refused", async () => {
+    // Arrange: refused every time
+    const p = poster([() => failed(422, NSFW_BODY)]);
     const r = reporter();
     // Act
     const out = await renderWithRetry({ request: p.request, onFailure: r.onFailure, onError: r.onError });
     // Assert
     assert.deepEqual(out, { b64: null, failure: "refused" });
-    assert.equal(p.posts(), 1);
-    assert.deepEqual(waits, []);
-    assert.deepEqual(r.seen, [[422, NSFW_BODY, "refused", false]]);
+    assert.equal(p.posts(), 1 + REFUSAL_RETRIES);
+    assert.deepEqual(waits, [], "a new draw needs no wait");
+    assert.deepEqual(r.seen, [
+      [422, NSFW_BODY, "refused", true],
+      [422, NSFW_BODY, "refused", true],
+      [422, NSFW_BODY, "refused", false],
+    ]);
   });
 
-  test("the 400 moderation refusal is not re-posted either", async () => {
-    const p = poster([failed(400, MODERATION_BODY)]);
+  test("a refused draw that passes on the next post gives that image: the model is not given up on", async () => {
+    // Arrange: gpt-image-2 flags the generated image once, then draws one that passes
+    const p = poster([failed(400, MODERATION_BODY), image("img")]);
+    // Act
     const out = await renderWithRetry({ request: p.request });
+    // Assert
+    assert.deepEqual(out, { b64: "img", failure: null });
+    assert.equal(p.posts(), 2);
+  });
+
+  test("a slow refusal is not posted again once REFUSAL_RETRY_WITHIN_MS has gone: the fallback still has time", async () => {
+    // Arrange: the refusal comes after a whole render
+    let clock = 0;
+    const p = poster([() => ((clock += REFUSAL_RETRY_WITHIN_MS + 1), failed(400, MODERATION_BODY))]);
+    // Act
+    const out = await renderWithRetry({ request: p.request, now: () => clock });
+    // Assert
     assert.deepEqual(out, { b64: null, failure: "refused" });
     assert.equal(p.posts(), 1);
-    assert.deepEqual(waits, []);
+  });
+
+  test("an ordinary bad request is still not re-posted", async () => {
+    const p = poster([() => failed(400, "invalid size")]);
+    const out = await renderWithRetry({ request: p.request });
+    assert.deepEqual(out, { b64: null, failure: "error" });
+    assert.equal(p.posts(), 1);
   });
 
   test("a request that throws is an error through onError, not a throw of its own", async () => {

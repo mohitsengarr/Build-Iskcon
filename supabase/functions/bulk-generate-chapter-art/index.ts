@@ -481,7 +481,7 @@ async function generateImage(
   // primary model, and the fallback size keeps the cover's shape
   // (fallbackSizeFor). A configuration with no cover size renders at the scene
   // size with its own fallback size.
-  const __m2 = __cfg ? (__cfg.fallback_model || __m1) : "black-forest-labs/FLUX.1.1-pro";
+  const __m2 = __cfg ? (__cfg.fallback_model || __m1) : "black-forest-labs/FLUX.2-pro";
   const __fb = __cfg?.cover_width || __cfg?.cover_height
     ? fallbackSizeFor(__w1, __h1, __cfg?.fallback_width, __cfg?.fallback_height)
     : { w: __cfg?.fallback_width || 1024, h: __cfg?.fallback_height || 768 };

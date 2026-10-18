@@ -1093,7 +1093,7 @@ describe("generate-gita-chapter-art visual check", () => {
     // its long side, the other side from the cover's proportions, rounded to 32
     // (regenerate-chapter-art and the bulk cover writers do the same).
     for (const c of [
-      { name: "no active row: the DEFAULTS fallback model at the portrait render's shape", cfg: null, first: [1088, 1344], fallback: [FLUX11, 832, 1024], steps: undefined },
+      { name: "no active row: the DEFAULTS fallback model (FLUX.2-pro, never FLUX.1.1-pro) at the portrait render's shape", cfg: null, first: [1088, 1344], fallback: [FLUX, 832, 1024], steps: undefined },
       { name: "a portrait 768x1024 fallback size keeps the landscape cover's shape: 1024x832", cfg: PLAYGROUND, first: [1344, 1088], fallback: [FLUX11, 1024, 832], steps: 30 },
       {
         name: "a landscape fallback size of the cover's shape is used as it is",
@@ -1162,15 +1162,15 @@ describe("generate-gita-chapter-art visual check", () => {
       const { json } = await call({ chapter: 1 });
       // Assert
       assert.equal(together.length, 2);
-      assert.equal(together[1].body.model, FLUX11);
+      assert.equal(together[1].body.model, FLUX);
       assert.deepEqual(db.uploads[0].bytes, bytesOf(jpeg(2)));
-      assert.equal(db.inserts()[0].visual_check.image_model, FLUX11);
-      assert.equal(json.generated[0].visual_check.image_model, FLUX11);
+      assert.equal(db.inserts()[0].visual_check.image_model, FLUX);
+      assert.equal(json.generated[0].visual_check.image_model, FLUX);
       assert.equal(checks.length, 1);
       assert.equal(checks[0].params.messages[0].content[0].source.data, jpeg(2));
       const record = db.rows.get(json.generated[0].id).visual_check;
       assert.equal(record.status, "pass");
-      assert.equal(record.image_model, FLUX11);
+      assert.equal(record.image_model, FLUX);
     });
 
     test("every model failing: the chapter fails as before, with no row and no check", async () => {

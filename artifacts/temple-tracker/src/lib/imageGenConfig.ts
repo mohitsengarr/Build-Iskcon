@@ -58,6 +58,17 @@ function sizeOr(w: unknown, h: unknown, fallback: { w: number; h: number }): { w
   return pw && ph ? { w: pw, h: ph } : { w: fallback.w, h: fallback.h };
 }
 
+/**
+ * The model a failed render falls back to. Never FLUX.1.1-pro (owner,
+ * 2026-10-19): a configuration that still names it falls back to FLUX.2-pro.
+ */
+export const FALLBACK_MODEL = "black-forest-labs/FLUX.2-pro";
+const RETIRED_FALLBACKS = new Set(["black-forest-labs/FLUX.1.1-pro"]);
+export function fallbackModel(model: string | null | undefined): string | null {
+  if (!model) return null;
+  return RETIRED_FALLBACKS.has(model) ? FALLBACK_MODEL : model;
+}
+
 export function approvalRow(cfg: GenConfigDraft, now: Date = new Date()) {
   const ig = sizeOr(cfg.ig_width, cfg.ig_height, PRODUCTION_SIZES.instagram);
   const cover = sizeOr(cfg.cover_width, cfg.cover_height, PRODUCTION_SIZES.cover);
@@ -71,7 +82,7 @@ export function approvalRow(cfg: GenConfigDraft, now: Date = new Date()) {
     style_negatives: cfg.style_negatives,
     extra_rules: cfg.extra_rules || "",
     prompt_max_len: cfg.prompt_max_len,
-    fallback_model: cfg.fallback_model ?? null,
+    fallback_model: fallbackModel(cfg.fallback_model),
     fallback_width: cfg.fallback_width ?? null,
     fallback_height: cfg.fallback_height ?? null,
     ig_width: ig.w,

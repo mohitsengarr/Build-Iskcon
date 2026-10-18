@@ -383,8 +383,8 @@ async function generateImage(
         ]
       : [
           { model: "black-forest-labs/FLUX.2-pro", prompt: text, w: 1088, h: 1344, seed },
-          { model: "black-forest-labs/FLUX.1.1-pro", prompt: text, w: 768, h: 1024, seed },
-          { model: "black-forest-labs/FLUX.1.1-pro", prompt: SAFE_FALLBACK, w: 768, h: 1024, safeFallback: true },
+          { model: "black-forest-labs/FLUX.2-pro", prompt: text, w: 768, h: 1024, seed },
+          { model: "black-forest-labs/FLUX.2-pro", prompt: SAFE_FALLBACK, w: 768, h: 1024, safeFallback: true },
         ];
   };
   // Why each attempt failed, for this row's chain only: a bulk run calls

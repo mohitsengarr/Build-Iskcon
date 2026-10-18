@@ -127,7 +127,7 @@ const DEFAULTS = {
   style_negatives: "NOT cartoon, NOT anime, NOT CGI, NOT 3D render, NOT digital illustration, NOT Pixar style, NOT plastic shiny skin, NOT photo-realistic",
   extra_rules: "ALL adult male characters MUST look distinctly MASCULINE with beards where appropriate. Vedic era only — NO glasses, NO modern clothing, NO modern technology.",
   prompt_max_len: 2000,
-  fallback_model: "black-forest-labs/FLUX.1.1-pro", fallback_width: 1024, fallback_height: 832,
+  fallback_model: "black-forest-labs/FLUX.2-pro", fallback_width: 1024, fallback_height: 832,
 };
 
 // No seed is sent, so each call is a new draw from the same prompt. steps goes

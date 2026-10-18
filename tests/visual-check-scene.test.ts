@@ -566,7 +566,7 @@ describe("generate-scene-image visual check", () => {
           together.map((b) => [b.model, b.width, b.height, "steps" in b]),
           [
             ["black-forest-labs/FLUX.2-pro", 1088, 1344, false],
-            ["black-forest-labs/FLUX.1.1-pro", 768, 1024, false],
+            ["black-forest-labs/FLUX.2-pro", 768, 1024, false],
           ],
         );
         assert.ok(together[0].prompt.startsWith(DHRUVA_VISUAL), together[0].prompt);

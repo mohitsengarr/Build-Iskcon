@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { PRODUCTION_SIZES, approvalRow, aspectRatioCss, type GenConfigDraft } from "./imageGenConfig";
+import { FALLBACK_MODEL, PRODUCTION_SIZES, approvalRow, aspectRatioCss, fallbackModel, type GenConfigDraft } from "./imageGenConfig";
 
 const base: GenConfigDraft = {
   label: "Tuned", model: "openai/gpt-image-2", width: 1088, height: 1344, steps: null,
   style_positives: "oil painting", style_negatives: "NOT cartoon", extra_rules: "rules", prompt_max_len: 2000,
-  fallback_model: "black-forest-labs/FLUX.1.1-pro", fallback_width: 768, fallback_height: 1024, notes: null,
+  fallback_model: "black-forest-labs/FLUX.2-pro", fallback_width: 1088, fallback_height: 1344, notes: null,
 };
 
 describe("approvalRow", () => {
@@ -42,7 +42,7 @@ describe("approvalRow", () => {
     expect(row).toMatchObject({
       model: "openai/gpt-image-2", width: 1088, height: 1344, style_positives: "oil painting",
       style_negatives: "NOT cartoon", extra_rules: "rules", prompt_max_len: 2000,
-      fallback_model: "black-forest-labs/FLUX.1.1-pro", fallback_width: 768, fallback_height: 1024, is_active: true,
+      fallback_model: "black-forest-labs/FLUX.2-pro", fallback_width: 1088, fallback_height: 1344, is_active: true,
     });
   });
 
@@ -60,5 +60,22 @@ describe("aspectRatioCss", () => {
     const [w, h] = aspectRatioCss(PRODUCTION_SIZES.instagram).split(" / ").map(Number);
     expect(h / w).toBeCloseTo(PRODUCTION_SIZES.instagram.h / PRODUCTION_SIZES.instagram.w);
     expect(h).toBeGreaterThan(w);
+  });
+});
+
+describe("fallbackModel", () => {
+  it("never falls back to FLUX.1.1-pro: a configuration that names it gets FLUX.2-pro", () => {
+    expect(fallbackModel("black-forest-labs/FLUX.1.1-pro")).toBe(FALLBACK_MODEL);
+    expect(FALLBACK_MODEL).toBe("black-forest-labs/FLUX.2-pro");
+  });
+
+  it("keeps any other fallback, and none when none is set", () => {
+    expect(fallbackModel("black-forest-labs/FLUX.2-pro")).toBe("black-forest-labs/FLUX.2-pro");
+    expect(fallbackModel(null)).toBeNull();
+  });
+
+  it("an approval saves the replacement", () => {
+    const row = approvalRow({ ...base, fallback_model: "black-forest-labs/FLUX.1.1-pro" });
+    expect(row.fallback_model).toBe(FALLBACK_MODEL);
   });
 });
