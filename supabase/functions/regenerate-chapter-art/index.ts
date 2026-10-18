@@ -32,25 +32,22 @@
 // POST { book: "bhagavatam"|"chaitanya"|"gita", id: 45, prompt: "...", apply_style?: bool, apply_facts?: bool }
 //   apply_facts: false skips research for this request.
 //
-// Approved covers: { book, id, replace_approved: true } redraws a cover that is
-// already approved, from its stored scene (sceneDraft, _shared/approvedRedraw.ts) unless a
-// prompt is sent. Nobody reviews the result, so it is checked BEFORE it is
-// stored, with corrected re-renders like an unattended run, all after the
-// response (202): one render alone can outlast the request. Only an image whose
-// check passed (or had nothing to check) replaces the approved one, by a
-// compare-and-swap on id + status approved + the image_path that was redrawn, so
-// a reviewer's change meanwhile wins; the old file is kept. A Gita or Chaitanya
-// cover then has posted_at cleared, so daily-approved-art-post posts it again.
-// Otherwise the approved image stays and error_message says why (keptMessage).
+// Approved covers: { book, id, replace_approved: true } draws a REPLACEMENT for
+// a cover that is already approved, from its stored scene (sceneDraft) unless a
+// prompt is sent. The approved cover never changes on the spot: everything runs
+// after the response (202) — render, check, corrected re-renders
+// (renderWithVisualCheck) — and the result is stored as a pending row that names
+// the cover it would replace (_shared/replacements.ts). It is reviewed like any
+// new cover; approving it copies its image onto the original (approve-*-art).
+// One replacement waits per cover at a time (409 while one does). When every
+// render fails, nothing is stored and the cover's error_message says so.
 //
 // Older static images: { book: "bhagavatam", legacy_image: "chapter-001.jpg",
-// replace_approved: true } redraws one of the first chapter images, the static
-// files in the site's image manifest, which have no review row. It is adopted
-// first (adoptLegacyImage): copied into storage as an approved cover row for its
-// chapter, and the static copy hidden through bhagavatam_image_deletes, as the
-// gallery's Delete does. The redraw then runs on that row as above, so the
-// chapter keeps a database-backed image even when the redraw does not pass. The
-// response names the row (id) the gallery then waits on.
+// replace_approved: true } does the same for one of the first chapter images,
+// the static files in the site's image manifest, which have no review row. Its
+// pending replacement is a cover row for the chapter (from the manifest and the
+// chapter index) naming the file in replaces_legacy; approving it hides the
+// static copy.
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -81,17 +78,14 @@ import {
 import { rowRedoHandlers } from "../_shared/rowRedo.ts";
 import {
   KEPT_PREFIX,
-  imageContentType,
   isLegacyImageName,
   keptMessage,
-  legacyCoverRow,
   legacyHideKey,
-  legacyStoragePath,
-  mayReplace,
-  replacementFields,
+  legacyReplacementBase,
   sceneDraft,
   type LegacyManifestEntry,
 } from "../_shared/approvedRedraw.ts";
+import { candidateRow, hasPendingReplacement, type LegacyRef, type ReviewTable } from "../_shared/replacements.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
 import { renderFailureMessage, renderWithRetry, type TogetherFailure } from "../_shared/togetherRetry.ts";
 
@@ -112,12 +106,10 @@ const CORS = {
 /** The reviewer's render plus up to two corrected re-renders. */
 const REDO_MAX_ATTEMPTS = 3;
 
-// `reposts`: daily-approved-art-post posts this book's approved covers, so a
-// replaced approved cover is posted again (Bhagavatam covers are posted nowhere).
-const BOOKS: Record<string, { table: string; bucket: string; prefix: string; scenes: string | null; reposts: boolean }> = {
-  bhagavatam: { table: "bhagavatam_chapter_art_review", bucket: "chapter-art-images",  prefix: "art",    scenes: "bhagavatam_chapter_scenes", reposts: false },
-  chaitanya:  { table: "chaitanya_chapter_art_review",  bucket: "chaitanya-art-images", prefix: "art-cc", scenes: "chaitanya_chapter_scenes",  reposts: true },
-  gita:       { table: "gita_chapter_art_review",       bucket: "instagram-images",    prefix: "gita",   scenes: null,                        reposts: true },
+const BOOKS: Record<string, { table: string; bucket: string; prefix: string; scenes: string | null }> = {
+  bhagavatam: { table: "bhagavatam_chapter_art_review", bucket: "chapter-art-images",  prefix: "art",    scenes: "bhagavatam_chapter_scenes" },
+  chaitanya:  { table: "chaitanya_chapter_art_review",  bucket: "chaitanya-art-images", prefix: "art-cc", scenes: "chaitanya_chapter_scenes" },
+  gita:       { table: "gita_chapter_art_review",       bucket: "instagram-images",    prefix: "gita",   scenes: null },
 };
 
 // The bucket a stored image lives in, read from its public URL. Bhagavatam covers
@@ -387,14 +379,17 @@ async function researchRow(
   }
 }
 
-// Redraws an approved cover after the response: renders, checks and re-renders
-// with the correction (renderWithVisualCheck), then replaces the approved image
-// only with one mayReplace accepts. Never throws (runInBackground logs a throw).
-async function replaceApprovedCover(o: {
+// Draws a replacement after the response and stores it as a pending row (see
+// the header). Even a check that still finds a detail wrong is stored: the card
+// says what is wrong and the reviewer decides. Never throws (runInBackground
+// logs a throw).
+async function drawReplacement(o: {
   book: string;
   b: (typeof BOOKS)[string];
-  id: number;
-  row: Record<string, unknown>;
+  /** The approved cover, or null for a static image (legacy then). */
+  source: Record<string, unknown> | null;
+  legacy: { ref: LegacyRef; base: Record<string, unknown> } | null;
+  draft: string;
   invocationStart: number;
   /** The research facts the first prompt carries: what the check verifies. */
   facts: string[];
@@ -403,34 +398,23 @@ async function replaceApprovedCover(o: {
   /** The correction lead for the details the attempts so far got wrong. */
   lead: (correction: FailedFact[]) => string;
 }): Promise<void> {
-  const { book, b, id, row } = o;
-  const tag = `regen-approved ${book} #${id}`;
-  const oldPath = typeof row.image_path === "string" && row.image_path ? row.image_path : null;
-  // Still approved, still the image that was redrawn: a reviewer's change wins.
-  // deno-lint-ignore no-explicit-any
-  const guarded = (q: any) => {
-    const out = q.eq("id", id).eq("status", "approved");
-    return oldPath ? out.eq("image_path", oldPath) : out.is("image_path", null);
-  };
-  const keep = async (message: string) => {
+  const { book, b, source, legacy } = o;
+  const key = source ? String(source.id) : `legacy-${legacy!.ref.image}`;
+  const tag = `regen-replacement ${book} ${key}`;
+  const note = async (message: string) => {
+    console.log(`[regen-chapter] ${tag} ${message}`);
+    if (!source) return;
     try {
-      const { data, error } = await guarded(supabase.from(b.table).update({ error_message: message })).select("id");
-      const noted = error ? ` (not noted on the row: ${error.message})` : Array.isArray(data) && data.length > 0 ? "" : " (the row changed meanwhile)";
-      console.log(`[regen-chapter] ${tag} ${message}${noted}`);
-    } catch (e) {
-      console.log(`[regen-chapter] ${tag} ${message} (not noted on the row: ${e})`);
-    }
+      await supabase.from(b.table).update({ error_message: message }).eq("id", source.id).eq("status", "approved");
+    } catch { /* the log has it */ }
   };
 
-  let rendered = false;
   const checked = await renderWithVisualCheck({
     render: async (_index, _signal, correction) => {
       const lead = o.lead(correction ?? []);
       if (lead && correction?.length) console.log(`[regen-chapter] ${tag} re-render corrected: ${lead}`);
       try {
-        const out = await o.render(lead);
-        if (out) rendered = true;
-        return out;
+        return await o.render(lead);
       } catch (e) {
         console.log(`[regen-chapter] ${tag} render failed: ${e}`);
         return null;
@@ -441,53 +425,38 @@ async function replaceApprovedCover(o: {
     deadlineAt: backgroundDeadline(o.invocationStart),
     tag,
   });
-  if (!checked || !mayReplace(checked.record)) {
-    await keep(keptMessage(checked?.record ?? null, rendered && !!checked));
+  if (!checked) {
+    await note(keptMessage(null, false));
     return;
   }
 
-  const fn = `${b.prefix}-approved-${id}-${Date.now()}.jpg`;
+  const fn = `${b.prefix}-candidate-${source ? source.id : legacy!.ref.chapter_number}-${Date.now()}.jpg`;
   const bytes = Uint8Array.from(atob(checked.b64), (c) => c.charCodeAt(0));
   const { error: upErr } = await supabase.storage.from(b.bucket).upload(fn, bytes, { contentType: "image/jpeg", upsert: false });
   if (upErr) {
-    await keep(`${KEPT_PREFIX}: the new image could not be stored (${upErr.message}).`);
+    await note(`${KEPT_PREFIX}: the new image could not be stored (${upErr.message}).`);
     return;
   }
   const url = supabase.storage.from(b.bucket).getPublicUrl(fn).data.publicUrl;
-  const fields = replacementFields(b.reposts, url, fn, checked.record as unknown as Record<string, unknown>);
-  let swapped = false;
-  let why = "the row was reviewed or its image replaced meanwhile";
-  try {
-    const { data, error } = await guarded(supabase.from(b.table).update(fields)).select("id");
-    swapped = !error && Array.isArray(data) && data.length === 1;
-    if (error) {
-      // An error can hide an update that was applied: ask the row before deleting.
-      why = error.message;
-      const { data: now } = await supabase.from(b.table).select("image_path").eq("id", id).maybeSingle();
-      swapped = now?.image_path === fn;
-    }
-  } catch (e) {
-    why = String(e);
-  }
-  if (!swapped) {
-    console.log(`[regen-chapter] ${tag} new image not stored: ${why}`);
+  const row = source
+    ? candidateRow(b.table as ReviewTable, source, { url, path: fn }, checked.record, o.draft)
+    : { ...legacy!.base, image_url: url, image_path: fn, visual_check: checked.record, prompt: o.draft, status: "pending", replaces_legacy: legacy!.ref };
+  const { data, error } = await supabase.from(b.table).insert(row).select("id").single();
+  if (error || !data?.id) {
+    console.log(`[regen-chapter] ${tag} replacement not stored: ${error?.message ?? "no row"}`);
     try { await supabase.storage.from(b.bucket).remove([fn]); } catch { /* best effort */ }
     return;
   }
-  // The replaced file is kept: a post already published, or queued, links to it.
-  console.log(`[regen-chapter] ${tag} replaced ${oldPath ?? "(none)"} with ${fn} (check ${checked.record.status}, ${checked.record.attempts} attempt(s))${b.reposts ? "; posted_at cleared, so it is posted again" : ""}`);
+  console.log(`[regen-chapter] ${tag} replacement #${data.id} waits for review (check ${checked.record.status}, ${checked.record.attempts} attempt(s))`);
 }
 
-// Adopts one of the older static chapter images (see the header): the cover row
-// it becomes, or why it could not be adopted. A file adopted before (a double
-// click, or a retry) is reused, never copied twice.
-async function adoptLegacyImage(name: unknown): Promise<{ id: number } | { error: string; status: number }> {
+// One of the older static chapter images, read from the site's manifest and
+// placed by the chapter index: what its replacement row starts from, or why it
+// cannot be drawn.
+async function legacySource(name: unknown): Promise<
+  { ref: LegacyRef; base: Record<string, unknown>; prompt: string } | { error: string; status: number }
+> {
   if (!isLegacyImageName(name)) return { error: "legacy_image must be an image file name from the manifest", status: 400 };
-  const b = BOOKS.bhagavatam;
-  const path = legacyStoragePath(name);
-  const { data: existing } = await supabase.from(b.table).select("id").eq("image_path", path).maybeSingle();
-  if (existing?.id) return { id: existing.id };
-
   let entry: LegacyManifestEntry | undefined;
   let chapter: { globalNumber?: unknown; number?: unknown; skandh?: unknown; title?: unknown } | undefined;
   try {
@@ -499,27 +468,10 @@ async function adoptLegacyImage(name: unknown): Promise<{ id: number } | { error
   } catch (e) {
     return { error: `The image manifest could not be read: ${e}`, status: 502 };
   }
-
-  const url = supabase.storage.from(b.bucket).getPublicUrl(path).data.publicUrl;
-  const fields = legacyCoverRow(entry, chapter, { url, path }, new Date());
+  const base = legacyReplacementBase(entry, chapter);
   const hide = legacyHideKey(entry);
-  if (!fields || !hide) return { error: `${name}: its chapter is not in the chapter index`, status: 422 };
-
-  const res = await fetch(`${BUILDISKCON}/api/bhagwatham/images/${name}`);
-  if (!res.ok) return { error: `${name} could not be fetched (HTTP ${res.status})`, status: 502 };
-  const bytes = new Uint8Array(await res.arrayBuffer());
-  const { error: upErr } = await supabase.storage.from(b.bucket).upload(path, bytes, { contentType: imageContentType(name), upsert: false });
-  // Already there: an earlier adoption copied it and then failed to insert its row.
-  if (upErr && !/exists|duplicate/i.test(upErr.message)) return { error: `${name} could not be stored: ${upErr.message}`, status: 500 };
-
-  const { data: inserted, error: insErr } = await supabase.from(b.table).insert(fields).select("id").single();
-  if (insErr || !inserted?.id) return { error: `${name} could not be adopted: ${insErr?.message ?? "no row"}`, status: 500 };
-  // The static copy is hidden only once its row exists, so the chapter never shows neither.
-  const { error: hideErr } = await supabase.from("bhagavatam_image_deletes")
-    .upsert({ ...hide, requested_by: `regenerate-chapter-art: adopted as cover #${inserted.id}` }, { onConflict: "chapter_number,scene_index", ignoreDuplicates: true });
-  if (hideErr) console.warn(`[regen-chapter] ${name} adopted as #${inserted.id} but its static copy is still shown: ${hideErr.message}`);
-  console.log(`[regen-chapter] ${name} adopted as bhagavatam cover #${inserted.id} (chapter ${fields.chapter_global_number})`);
-  return { id: inserted.id };
+  if (!base || !hide) return { error: `${name}: its chapter is not in the chapter index`, status: 422 };
+  return { ref: { image: name, ...hide }, base, prompt: typeof entry.prompt === "string" ? entry.prompt : "" };
 }
 
 Deno.serve(async (req: Request) => {
@@ -535,29 +487,40 @@ Deno.serve(async (req: Request) => {
     const b = Object.prototype.hasOwnProperty.call(BOOKS, book) ? BOOKS[book] : undefined;
     if (!b) return new Response(JSON.stringify({ error: `book must be one of ${Object.keys(BOOKS).join(", ")}` }), { status: 400, headers: CORS });
     const redrawApproved = replace_approved === true;
-    let adoptedId: number | null = null;
+    const hasPrompt = typeof sentPrompt === "string" && sentPrompt.trim().length >= 3;
+    const id = body.id;
+    // The row redrawn: a cover from the table, or for a static image the row its
+    // replacement starts from (legacySource).
+    let row: Record<string, unknown>;
+    let legacy: { ref: LegacyRef; base: Record<string, unknown> } | null = null;
     if (legacy_image !== undefined) {
-      // An older static image: adopted as a cover row first, then redrawn there.
       if (book !== "bhagavatam" || !redrawApproved) {
         return new Response(JSON.stringify({ error: "legacy_image needs book bhagavatam and replace_approved" }), { status: 400, headers: CORS });
       }
-      const adopted = await adoptLegacyImage(legacy_image);
-      if ("error" in adopted) return new Response(JSON.stringify({ error: adopted.error }), { status: adopted.status, headers: CORS });
-      adoptedId = adopted.id;
-    }
-    const id = adoptedId ?? body.id;
-    const hasPrompt = typeof sentPrompt === "string" && sentPrompt.trim().length >= 3;
-    if (!id || (!hasPrompt && !redrawApproved)) {
-      return new Response(JSON.stringify({ error: "id and prompt are required" }), { status: 400, headers: CORS });
-    }
-
-    const { data: row, error: fErr } = await supabase.from(b.table).select("*").eq("id", id).single();
-    if (fErr || !row) return new Response(JSON.stringify({ error: `${book} #${id} not found` }), { status: 404, headers: CORS });
-    // A cover awaiting review is re-rendered onto the card. An approved one only
-    // when the request asks for it (replace_approved), and then only an image
-    // whose check passed replaces it: it is published as it stands.
-    if (redrawApproved ? row.status !== "approved" : row.status !== "pending") {
-      return new Response(JSON.stringify({ error: `${book} #${id} is already ${row.status}; refresh the gallery` }), { status: 409, headers: CORS });
+      const src = await legacySource(legacy_image);
+      if ("error" in src) return new Response(JSON.stringify({ error: src.error }), { status: src.status, headers: CORS });
+      legacy = { ref: src.ref, base: src.base };
+      row = { ...src.base, id: null, status: "approved", prompt: src.prompt, visual_check: null };
+      const { data: waiting } = await supabase.from(b.table).select("id")
+        .eq("replaces_legacy->>image", src.ref.image).eq("status", "pending").limit(1);
+      if (Array.isArray(waiting) && waiting.length > 0) {
+        return new Response(JSON.stringify({ error: `${src.ref.image} already has a replacement waiting for review`, status: "pending_replacement", replacement_id: waiting[0].id }), { status: 409, headers: CORS });
+      }
+    } else {
+      if (!id || (!hasPrompt && !redrawApproved)) {
+        return new Response(JSON.stringify({ error: "id and prompt are required" }), { status: 400, headers: CORS });
+      }
+      const { data: found, error: fErr } = await supabase.from(b.table).select("*").eq("id", id).single();
+      if (fErr || !found) return new Response(JSON.stringify({ error: `${book} #${id} not found` }), { status: 404, headers: CORS });
+      row = found;
+      // A cover awaiting review is re-rendered onto the card. An approved one only
+      // when the request asks for it (replace_approved), as a replacement for review.
+      if (redrawApproved ? row.status !== "approved" : row.status !== "pending") {
+        return new Response(JSON.stringify({ error: `${book} #${id} is already ${row.status}; refresh the gallery` }), { status: 409, headers: CORS });
+      }
+      if (redrawApproved && await hasPendingReplacement(supabase, b.table as ReviewTable, id)) {
+        return new Response(JSON.stringify({ error: `${book} #${id} already has a replacement waiting for review`, status: "pending_replacement" }), { status: 409, headers: CORS });
+      }
     }
     const prompt = hasPrompt ? (sentPrompt as string) : sceneDraft(row.prompt);
     if (prompt.trim().length < 3) {
@@ -632,25 +595,25 @@ Deno.serve(async (req: Request) => {
       }
       return null;
     };
-    // An approved cover: everything after the response, and nothing stored
-    // unless its check passed (see the header).
+    // An approved cover or a static image: a replacement drawn after the
+    // response, to wait for review (see the header).
     if (redrawApproved) {
       const checkFacts = factsInSentPrompt(facts, sanitized);
       // A note left by an earlier redraw is cleared, so the gallery, which waits
-      // for a new image or a new note, never reads the old one as this run's.
-      if (typeof row.error_message === "string" && row.error_message.startsWith(KEPT_PREFIX)) {
+      // for a replacement or a new note, never reads the old one as this run's.
+      if (!legacy && typeof row.error_message === "string" && row.error_message.startsWith(KEPT_PREFIX)) {
         await supabase.from(b.table).update({ error_message: null })
           .eq("id", id).eq("status", "approved").eq("error_message", row.error_message);
       }
-      runInBackground(replaceApprovedCover({
-        book, b, id, row, invocationStart, facts: checkFacts,
+      runInBackground(drawReplacement({
+        book, b, source: legacy ? null : row, legacy, draft: prompt.trim(), invocationStart, facts: checkFacts,
         render: (lead) => renderText(lead ? buildFor(`${lead} ${prompt.trim()}`).sent : sanitized, []),
         lead: (correction) => correctionLead(mergeFailed(storedCorrection, correction)),
       }));
       return new Response(JSON.stringify({
-        ok: true, queued: true, book, id, image_url: row.image_url, model_used: cfg.model, size: `${w1}x${h1}`,
-        sent_chars: sanitized.length, research_key: research?.key ?? null, research_status: research?.status ?? "skipped",
-        facts_included: built.factsIncluded, facts_checked: checkFacts.length, reposts: b.reposts,
+        ok: true, queued: true, book, id: id ?? null, legacy_image: legacy?.ref.image ?? null, image_url: row.image_url ?? null,
+        model_used: cfg.model, size: `${w1}x${h1}`, sent_chars: sanitized.length, research_key: research?.key ?? null,
+        research_status: research?.status ?? "skipped", facts_included: built.factsIncluded, facts_checked: checkFacts.length,
       }), { status: 202, headers: CORS });
     }
 

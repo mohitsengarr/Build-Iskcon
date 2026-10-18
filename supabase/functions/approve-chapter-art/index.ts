@@ -15,6 +15,7 @@
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { approveReplacement, isReplacement, rejectReplacement, replacementResponse } from "../_shared/replacements.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -134,6 +135,17 @@ Deno.serve(async (req: Request) => {
     }
     if (row.status !== "pending") {
       return new Response(JSON.stringify({ error: `Already ${row.status}`, status: row.status }), { status: 409, headers: cors });
+    }
+
+    // A replacement for an approved cover (_shared/replacements.ts): approving
+    // copies its image onto that cover; rejecting leaves the cover as it is and
+    // regenerates nothing.
+    if (isReplacement(row)) {
+      const result = action === "approve"
+        ? await approveReplacement(supabase, "bhagavatam_chapter_art_review", row)
+        : await rejectReplacement(supabase, "bhagavatam_chapter_art_review", bucketOf(row.image_url) ?? "chapter-art-images", row);
+      const answer = replacementResponse(id, result);
+      return new Response(JSON.stringify(answer.body), { status: answer.status, headers: cors });
     }
 
     // reject: a new render, moving on to the next scene.

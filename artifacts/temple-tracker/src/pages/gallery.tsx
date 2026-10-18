@@ -9,7 +9,10 @@ import { describeFailure, describeThrown } from "@/lib/requestError";
 import { renderQueue } from "@/lib/renderQueue";
 import { PRODUCTION_SIZES, aspectRatioCss } from "@/lib/imageGenConfig";
 import { BOOK_SECTIONS, GITA_SECTION, gitaCardDescription, sectionBadge } from "@/lib/gallerySections";
-import { APPROVED_TABLES, REDRAW_GIVE_UP_MS, REDRAW_POLL_MS, redrawConfirmText, redrawOutcome, redrawRequest, type ApprovedBook } from "@/lib/approvedRedraw";
+import {
+  REDRAW_GIVE_UP_MS, REDRAW_POLL_MS, redrawConfirmText, redrawNote, redrawRequest, replacementLabel, replacementWaitPath, sourceNotePath,
+  type ApprovedBook,
+} from "@/lib/approvedRedraw";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -1168,6 +1171,13 @@ function createSeenImages(): SeenImages {
 }
 // visual-check-summary:end
 
+// A pending card that would replace an approved image says which (_shared/replacements.ts).
+function ReplacementNote({ row }: { row: { replaces_id?: unknown; replaces_legacy?: unknown } }) {
+  const label = replacementLabel(row);
+  if (!label) return null;
+  return <p className="mt-1.5 inline-block rounded bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold text-sky-800">{label}</p>;
+}
+
 function VisualCheckNote({ check }: { check?: VisualCheck | null }) {
   const summary = visualCheckSummary(check);
   if (!summary) return null;
@@ -1489,6 +1499,9 @@ function StoryScenesSection() {
 // state) so it does not entangle the rest of the gallery.
 
 interface GitaArt {
+  /** Set on a replacement for an approved image (_shared/replacements.ts). */
+  replaces_id?: number | null;
+  replaces_legacy?: { image?: string } | null;
   id: number;
   chapter_number: number;
   chapter_title: string | null;
@@ -1692,6 +1705,7 @@ function GitaArtSection() {
                   <a href={p.image_url} target="_blank" rel="noopener noreferrer" className="block">
                     <img src={p.image_url} alt="" loading="lazy" className="w-full sm:w-72 rounded-xl border border-stone-200" />
                   </a>
+                  <ReplacementNote row={p} />
                   <VisualCheckNote check={p.visual_check} />
                 </div>
               )}
@@ -1785,11 +1799,13 @@ export default function Gallery() {
   const [lightboxItem, setLightboxItem] = useState<GalleryItem | null>(null);
   const [collapsedCantos, setCollapsedCantos] = useState<Set<number>>(new Set());
 
-  // ── Regenerate an approved cover (hover button on the grid) ───────────────
-  // regenerate-chapter-art answers at once and redraws after the response; the
-  // card shows "Regenerating…" until the row holds a new image (swapped in place)
-  // or a note that the approved image was kept.
+  // ── Regenerate an approved image (hover button on the grid) ───────────────
+  // The function answers at once and draws the new image after the response; it
+  // goes to pending review as a replacement. The card shows "Regenerating…" until
+  // the replacement is stored (or a note says nothing could be drawn), then "New
+  // image in review". Nothing approved changes until the replacement is approved.
   const [redrawing, setRedrawing] = useState<Set<string>>(new Set());
+  const [inReview, setInReview] = useState<Set<string>>(new Set());
   const mountedRef = useRef(true);
   useEffect(() => () => { mountedRef.current = false; }, []);
   const redrawApproved = useCallback(async (item: GalleryItem) => {
@@ -1798,6 +1814,10 @@ export default function Gallery() {
     if (!target || !window.confirm(redrawConfirmText(item.approvedArt?.book ?? "bhagavatam", { legacy }))) return;
     setRedrawing(prev => new Set(prev).add(item.id));
     const done = () => setRedrawing(prev => { const n = new Set(prev); n.delete(item.id); return n; });
+    const readRows = async (path: string) => {
+      const q = await sbFetch(path).catch(() => null);
+      return q && q.ok ? await q.json().catch(() => null) : null;
+    };
     try {
       const { fn, body } = redrawRequest(target);
       const r = await fetch(`${SUPABASE_URL}/functions/v1/${fn}`, {
@@ -1806,30 +1826,22 @@ export default function Gallery() {
         body: JSON.stringify(body),
       });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok || !d?.ok) { alert(`Regenerate failed: ${describeFailure(r.status, d)}`); done(); return; }
-      // An older static image is now an approved cover row: the card follows that row.
-      const art = item.approvedArt ?? { book: "bhagavatam" as const, id: Number(d.id) };
-      const startUrl = legacy ? String(d.image_url ?? "") : item.url;
-      if (legacy) setAllItems(prev => prev.map(x => (x.id === item.id ? { ...x, approvedArt: art, legacyImage: undefined } : x)));
+      // One replacement waits per image: one already waiting is not an error.
+      const alreadyWaiting = r.status === 409 && d?.status === "pending_replacement";
+      if (!alreadyWaiting && (!r.ok || !d?.ok)) { alert(`Regenerate failed: ${describeFailure(r.status, d)}`); done(); return; }
+      let stored = alreadyWaiting;
       const giveUpAt = Date.now() + REDRAW_GIVE_UP_MS;
-      while (mountedRef.current && Date.now() < giveUpAt) {
+      while (!stored && mountedRef.current && Date.now() < giveUpAt) {
         await new Promise(res => setTimeout(res, REDRAW_POLL_MS));
-        const q = await sbFetch(`${APPROVED_TABLES[art.book]}?id=eq.${art.id}&select=image_url,error_message,status`).catch(() => null);
-        const rows = q && q.ok ? await q.json().catch(() => null) : null;
-        if (!Array.isArray(rows)) continue;
-        const outcome = redrawOutcome(startUrl, rows[0]);
-        if (outcome.kind === "waiting") continue;
-        if (outcome.kind === "replaced") {
-          const url = `${outcome.url}?t=${Date.now()}`;
-          setAllItems(prev => prev.map(x => (x.id === item.id ? { ...x, url } : x)));
-          setLightboxItem(prev => (prev && prev.id === item.id ? { ...prev, url } : prev));
-        } else if (outcome.kind === "kept") {
-          alert(`${item.chapterTitle}: ${outcome.message}`);
+        const waiting = await readRows(replacementWaitPath(target));
+        if (Array.isArray(waiting) && waiting.length > 0) { stored = true; break; }
+        if ("book" in target) {
+          const note = redrawNote(await readRows(sourceNotePath(target)));
+          if (note) { alert(`${item.chapterTitle}: ${note}`); done(); return; }
         }
-        done();
-        return;
       }
-      if (mountedRef.current) alert(`${item.chapterTitle}: no new image yet. The approved image is unchanged so far; refresh the gallery in a few minutes.`);
+      if (stored) setInReview(prev => new Set(prev).add(item.id));
+      else if (mountedRef.current) alert(`${item.chapterTitle}: no new image yet. It may still be drawing; check pending review in a few minutes.`);
       done();
     } catch (e) {
       alert(`Regenerate failed: ${describeThrown(e)}`);
@@ -1842,6 +1854,9 @@ export default function Gallery() {
 
   // ── Pending Instagram posts awaiting human review ─────────────────────────
   interface PendingPost {
+    /** Set on a replacement for an approved image (_shared/replacements.ts). */
+    replaces_id?: number | null;
+    replaces_legacy?: { image?: string } | null;
     id: number;
     chapter_global_number: number;
     chapter_canto: number;
@@ -2070,6 +2085,9 @@ export default function Gallery() {
   // bhagavatam_chapter_art_review (landscape 1344x1088 chapter covers) instead
   // of ig_pending_review (square 1088x1344 Instagram posts).
   interface PendingChapterArt {
+    /** Set on a replacement for an approved image (_shared/replacements.ts). */
+    replaces_id?: number | null;
+    replaces_legacy?: { image?: string } | null;
     id: number;
     prompt?: string | null;
     chapter_global_number: number;
@@ -2254,6 +2272,9 @@ export default function Gallery() {
 
   // ── Chaitanya Charitamrit pipeline (mirrors the chapter-art one) ───────
   interface PendingChaitanyaArt {
+    /** Set on a replacement for an approved image (_shared/replacements.ts). */
+    replaces_id?: number | null;
+    replaces_legacy?: { image?: string } | null;
     id: number;
     prompt?: string | null;
     chapter_global_number: number;
@@ -3180,6 +3201,7 @@ export default function Gallery() {
                             <Maximize2 className="w-7 h-7 text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow" />
                           </span>
                         </button>
+                        <ReplacementNote row={p} />
                         <VisualCheckNote check={p.visual_check} />
                         </div>
                         <div className="flex-1 min-w-0 max-w-2xl">
@@ -3410,6 +3432,7 @@ export default function Gallery() {
                             <Maximize2 className="w-6 h-6 text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow-md" />
                           </div>
                         </button>
+                        <ReplacementNote row={p} />
                         <VisualCheckNote check={p.visual_check} />
                         </div>
                         <div className="flex-1 min-w-0 max-w-2xl">
@@ -3646,6 +3669,7 @@ export default function Gallery() {
                             <Maximize2 className="w-6 h-6 text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow-md" />
                           </div>
                         </button>
+                        <ReplacementNote row={p} />
                         <VisualCheckNote check={p.visual_check} />
                         </div>
                         <div className="flex-1 min-w-0 max-w-2xl">
@@ -4300,7 +4324,7 @@ export default function Gallery() {
                                     <div className="absolute inset-0 z-10 bg-black/45 flex flex-col items-center justify-center gap-1.5 text-white" onClick={e => e.stopPropagation()}>
                                       <Loader2 className="w-6 h-6 animate-spin" />
                                       <span className="text-[11px] font-semibold">Regenerating…</span>
-                                      <span className="text-[10px] text-white/75 px-3 text-center">Replaced only if the check passes</span>
+                                      <span className="text-[10px] text-white/75 px-3 text-center">The new image goes to pending review</span>
                                     </div>
                                   ) : (
                                     <button
@@ -4312,6 +4336,12 @@ export default function Gallery() {
                                       <RefreshCw className="w-3 h-3" /> Regenerate
                                     </button>
                                   )
+                                )}
+
+                                {inReview.has(item.id) && !redrawing.has(item.id) && (
+                                  <div className="absolute bottom-2 left-2 z-10 rounded-full bg-sky-600/90 px-2 py-0.5 text-[10px] font-semibold text-white shadow">
+                                    New image in review
+                                  </div>
                                 )}
 
                                 {/* Hover overlay with story description */}

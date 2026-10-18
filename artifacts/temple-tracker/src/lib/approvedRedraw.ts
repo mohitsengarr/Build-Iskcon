@@ -1,9 +1,10 @@
-// Regenerating an APPROVED image from the gallery grid: a chapter cover
-// (regenerate-chapter-art) or a published Instagram post (regenerate-pending-
-// image), both with replace_approved. The function answers at once and works
-// after the response: it replaces the image only if the new one passes its
-// visual check, and otherwise leaves a note on the row. The gallery waits for
-// one or the other.
+// Regenerating an APPROVED image from the gallery grid: a chapter cover or an
+// older static image (regenerate-chapter-art) or a published Instagram post
+// (regenerate-pending-image), all with replace_approved. Nothing approved
+// changes: the function answers at once, draws and checks the new image after
+// the response, and adds it to pending review as a replacement
+// (_shared/replacements.ts). Approving it there swaps it in. The gallery waits
+// until the replacement appears, or a note says nothing could be drawn.
 
 export type ApprovedBook = "bhagavatam" | "chaitanya" | "gita" | "instagram";
 
@@ -38,49 +39,40 @@ export const REDRAW_POLL_MS = 15_000;
 /** A redraw has at most the worker's background budget (~6 min); a little more, then stop waiting. */
 export const REDRAW_GIVE_UP_MS = 8 * 60_000;
 
-/**
- * Instagram posts are posted again at once; Gita and Chaitanya covers with the
- * next daily post; Bhagavatam covers are posted nowhere.
- */
-export function repostsOnSocial(book: ApprovedBook): boolean {
-  return book !== "bhagavatam";
-}
-
 export function redrawConfirmText(book: ApprovedBook, opts: { legacy?: boolean } = {}): string {
-  if (opts.legacy) {
-    return "Regenerate this image?\n\nIt becomes this chapter's approved cover, kept in the database. A new image is then drawn " +
-      "from the same scene with the approved settings and checked; it replaces this one only if the check passes — a few minutes.";
-  }
+  const what = opts.legacy ? "this older image" : "this approved image";
   const posting = book === "instagram"
-    ? " It is then posted to Instagram and Threads again straight away."
-    : repostsOnSocial(book)
-    ? " It is then posted to Instagram and Threads again with the next daily post."
+    ? " Once approved, the post goes out again with the re-post queue (one a day)."
+    : book === "gita" || book === "chaitanya"
+    ? " Once approved, the cover goes out again with the daily post."
     : "";
-  return "Regenerate this approved image?\n\nA new image is drawn from the same scene with the approved settings and checked. " +
-    `It replaces this one only if the check passes — a few minutes.${posting}`;
+  return `Draw a new image for ${what}?\n\nIt is drawn from the same scene with the approved settings, checked, and added to pending review. ` +
+    `Approving it there replaces the current image; until then nothing changes.${posting}`;
 }
 
-/** The url without a cache-busting query, for comparing images. */
-export function bareUrl(url: string | null | undefined): string {
-  return typeof url === "string" ? url.split("?")[0] : "";
-}
-
-export type RedrawOutcome =
-  | { kind: "replaced"; url: string }
-  | { kind: "kept"; message: string }
-  /** No longer approved: a reviewer changed it meanwhile. */
-  | { kind: "gone" }
-  | { kind: "waiting" };
-
-/** What the row says now about a redraw of the image at `startUrl`. */
-export function redrawOutcome(
-  startUrl: string,
-  row: { image_url?: string | null; error_message?: string | null; status?: string | null } | null | undefined,
-): RedrawOutcome {
-  if (!row || row.status !== "approved") return { kind: "gone" };
-  if (row.image_url && bareUrl(row.image_url) !== bareUrl(startUrl)) return { kind: "replaced", url: row.image_url };
-  if (typeof row.error_message === "string" && row.error_message.startsWith(KEPT_PREFIX)) {
-    return { kind: "kept", message: row.error_message };
+/** The REST query that finds the replacement waiting for review, once it is stored. */
+export function replacementWaitPath(target: RedrawTarget): string {
+  if ("legacyImage" in target) {
+    return `${APPROVED_TABLES.bhagavatam}?replaces_legacy->>image=eq.${encodeURIComponent(target.legacyImage)}&status=eq.pending&select=id&limit=1`;
   }
-  return { kind: "waiting" };
+  return `${APPROVED_TABLES[target.book]}?replaces_id=eq.${target.id}&status=eq.pending&select=id&limit=1`;
+}
+
+/** The REST query that reads the note an approved row gets when nothing could be drawn. */
+export function sourceNotePath(art: { book: ApprovedBook; id: number }): string {
+  return `${APPROVED_TABLES[art.book]}?id=eq.${art.id}&select=error_message`;
+}
+
+/** The note a redraw leaves when nothing could be drawn, or null. */
+export function redrawNote(rows: unknown): string | null {
+  const note = Array.isArray(rows) ? (rows[0] as { error_message?: unknown } | undefined)?.error_message : null;
+  return typeof note === "string" && note.startsWith(KEPT_PREFIX) ? note : null;
+}
+
+/** What a pending card says when it would replace an approved image, or null. */
+export function replacementLabel(row: { replaces_id?: unknown; replaces_legacy?: unknown } | null | undefined): string | null {
+  if (row?.replaces_id != null) return `Replacement for approved #${row.replaces_id}: approving swaps its image in`;
+  const legacy = row?.replaces_legacy as { image?: unknown } | null | undefined;
+  if (legacy && typeof legacy.image === "string") return `Replacement for the older image ${legacy.image}: approving swaps it in`;
+  return null;
 }

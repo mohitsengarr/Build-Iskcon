@@ -687,4 +687,36 @@ describe("approve-instagram-post claims the image the reviewer saw", () => {
     assert.equal(row.status, "pending");
     assert.equal(db.of("reject").length, 0);
   });
+
+  // ── Replacements (_shared/replacements.ts) ─────────────────────────────────
+
+  test("approving a replacement publishes nothing: no Meta, Buffer or channel call, and the post joins the re-post queue", async () => {
+    // Arrange: the post it replaced is no longer approved, so it is approved in that post's place
+    const row = pendingRow({ replaces_id: 41 });
+    const { db, net } = setup(row);
+    // Act
+    const { status, json } = await post({ id: 77, action: "approve", image_path: OLD.path });
+    // Assert
+    assert.equal(status, 200, JSON.stringify(json));
+    assert.equal(json.replacement, true);
+    assert.equal(row.status, "approved");
+    assert.match(String(row.repost_requested_at), /^\d{4}-\d{2}-\d{2}T/);
+    assert.equal(db.events.some((e) => e.startsWith("graph:") || e === "insert:bhagavatam_channel_posts"), false, db.events.join(" "));
+    assert.deepEqual(net.media, []);
+    assert.equal(db.of("marker").length, 0, "no publishing marker: nothing is published");
+  });
+
+  test("rejecting a replacement deletes only its own image and generates no new post", async () => {
+    // Arrange
+    const row = pendingRow({ replaces_id: 41 });
+    const { db, net } = setup(row);
+    // Act
+    const { status, json } = await post({ id: 77, action: "reject", image_path: OLD.path });
+    // Assert
+    assert.equal(status, 200, JSON.stringify(json));
+    assert.equal(json.replacement, true);
+    assert.equal(row.status, "rejected");
+    assert.deepEqual(db.removed, [OLD.path]);
+    assert.deepEqual(net.functionCalls, [], "instagram-post is not asked for a new post");
+  });
 });

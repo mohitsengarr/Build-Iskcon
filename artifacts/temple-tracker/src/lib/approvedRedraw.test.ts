@@ -1,58 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { APPROVED_TABLES, KEPT_PREFIX, bareUrl, redrawConfirmText, redrawOutcome, redrawRequest, repostsOnSocial } from "./approvedRedraw";
-
-const START = "https://x.test/storage/v1/object/public/chapter-art-images/art-1.jpg";
-
-describe("redrawOutcome", () => {
-  it("reports a new image once the row holds one", () => {
-    const url = "https://x.test/storage/v1/object/public/chapter-art-images/art-approved-1-9.jpg";
-    expect(redrawOutcome(START, { status: "approved", image_url: url })).toEqual({ kind: "replaced", url });
-  });
-
-  it("ignores a cache-busting query on the image it started from", () => {
-    expect(redrawOutcome(`${START}?t=123`, { status: "approved", image_url: START })).toEqual({ kind: "waiting" });
-  });
-
-  it("reports the note when the redraw kept the approved image", () => {
-    const message = `${KEPT_PREFIX}: 1 detail still wrong after 3 attempts.`;
-    expect(redrawOutcome(START, { status: "approved", image_url: START, error_message: message })).toEqual({ kind: "kept", message });
-  });
-
-  it("keeps waiting while the image and note are unchanged, whatever else the note says", () => {
-    expect(redrawOutcome(START, { status: "approved", image_url: START, error_message: null })).toEqual({ kind: "waiting" });
-    expect(redrawOutcome(START, { status: "approved", image_url: START, error_message: "threads: media rejected" })).toEqual({ kind: "waiting" });
-  });
-
-  it("stops when the row is no longer approved, or is gone", () => {
-    expect(redrawOutcome(START, { status: "rejected", image_url: START })).toEqual({ kind: "gone" });
-    expect(redrawOutcome(START, null)).toEqual({ kind: "gone" });
-  });
-});
+import {
+  APPROVED_TABLES, KEPT_PREFIX, redrawConfirmText, redrawNote, redrawRequest, replacementLabel, replacementWaitPath, sourceNotePath,
+} from "./approvedRedraw";
 
 describe("redrawConfirmText", () => {
-  it("says a Gita or Chaitanya cover is posted again", () => {
-    expect(redrawConfirmText("chaitanya")).toMatch(/posted to Instagram and Threads again/);
-    expect(redrawConfirmText("gita")).toMatch(/posted to Instagram and Threads again/);
+  it("says the new image goes to pending review and nothing changes until it is approved", () => {
+    const text = redrawConfirmText("bhagavatam");
+    expect(text).toMatch(/added to pending review/);
+    expect(text).toMatch(/until then nothing changes/);
+    expect(text).not.toMatch(/posted|post goes|cover goes/);
   });
 
-  it("says nothing about posting for a Bhagavatam cover, which is posted nowhere", () => {
-    expect(repostsOnSocial("bhagavatam")).toBe(false);
-    expect(redrawConfirmText("bhagavatam")).not.toMatch(/posted/);
+  it("says an Instagram post goes out again with the re-post queue once approved", () => {
+    expect(redrawConfirmText("instagram")).toMatch(/re-post queue/);
   });
 
-  it("says a published Instagram post is posted again straight away", () => {
-    expect(redrawConfirmText("instagram")).toMatch(/posted to Instagram and Threads again straight away/);
+  it("says a Gita or Chaitanya cover goes out again with the daily post once approved", () => {
+    expect(redrawConfirmText("gita")).toMatch(/daily post/);
+    expect(redrawConfirmText("chaitanya")).toMatch(/daily post/);
   });
 
-  it("says the image is replaced only if the check passes", () => {
-    expect(redrawConfirmText("bhagavatam")).toMatch(/only if the check passes/);
-  });
-});
-
-describe("bareUrl", () => {
-  it("drops the query and copes with nothing", () => {
-    expect(bareUrl(`${START}?t=1`)).toBe(START);
-    expect(bareUrl(null)).toBe("");
+  it("names an older image as such", () => {
+    expect(redrawConfirmText("bhagavatam", { legacy: true })).toMatch(/this older image/);
   });
 });
 
@@ -65,23 +34,56 @@ describe("redrawRequest", () => {
     expect(redrawRequest({ book: "instagram", id: 731 })).toEqual({ fn: "regenerate-pending-image", body: { id: 731, replace_approved: true } });
   });
 
-  it("reads an Instagram post back from its own table", () => {
-    expect(APPROVED_TABLES.instagram).toBe("ig_pending_review");
-  });
-});
-
-describe("an older static image", () => {
-  it("is sent to regenerate-chapter-art by its manifest file name, to be adopted as a Bhagavatam cover", () => {
+  it("sends an older static image by its manifest file name, as a Bhagavatam cover", () => {
     expect(redrawRequest({ legacyImage: "chapter-010.jpg" })).toEqual({
       fn: "regenerate-chapter-art",
       body: { book: "bhagavatam", legacy_image: "chapter-010.jpg", replace_approved: true },
     });
   });
+});
 
-  it("asks first, saying it becomes the chapter's cover and is replaced only on a passing check, and posted nowhere", () => {
-    const text = redrawConfirmText("bhagavatam", { legacy: true });
-    expect(text).toMatch(/becomes this chapter's approved cover/);
-    expect(text).toMatch(/only if the check passes/);
-    expect(text).not.toMatch(/posted/);
+describe("replacementWaitPath", () => {
+  it("looks for a pending row that replaces the approved one, in its own table", () => {
+    expect(replacementWaitPath({ book: "instagram", id: 731 })).toBe("ig_pending_review?replaces_id=eq.731&status=eq.pending&select=id&limit=1");
+    expect(replacementWaitPath({ book: "gita", id: 7 })).toBe("gita_chapter_art_review?replaces_id=eq.7&status=eq.pending&select=id&limit=1");
+  });
+
+  it("looks for an older image's replacement by its file name", () => {
+    expect(replacementWaitPath({ legacyImage: "chapter-010.jpg" })).toBe(
+      "bhagavatam_chapter_art_review?replaces_legacy->>image=eq.chapter-010.jpg&status=eq.pending&select=id&limit=1",
+    );
+  });
+});
+
+describe("redrawNote", () => {
+  it("reads the note left when nothing could be drawn", () => {
+    const message = `${KEPT_PREFIX}: every image attempt failed.`;
+    expect(redrawNote([{ error_message: message }])).toBe(message);
+  });
+
+  it("ignores any other note, and no rows", () => {
+    expect(redrawNote([{ error_message: "threads: media rejected" }])).toBeNull();
+    expect(redrawNote([])).toBeNull();
+    expect(redrawNote(null)).toBeNull();
+  });
+
+  it("reads it from the approved row", () => {
+    expect(sourceNotePath({ book: "chaitanya", id: 3 })).toBe("chaitanya_chapter_art_review?id=eq.3&select=error_message");
+    expect(APPROVED_TABLES.instagram).toBe("ig_pending_review");
+  });
+});
+
+describe("replacementLabel", () => {
+  it("says which approved image a pending card would replace", () => {
+    expect(replacementLabel({ replaces_id: 41 })).toBe("Replacement for approved #41: approving swaps its image in");
+  });
+
+  it("names the older static file it would replace", () => {
+    expect(replacementLabel({ replaces_legacy: { image: "chapter-010.jpg" } })).toBe("Replacement for the older image chapter-010.jpg: approving swaps it in");
+  });
+
+  it("says nothing for an ordinary pending card", () => {
+    expect(replacementLabel({ replaces_id: null, replaces_legacy: null })).toBeNull();
+    expect(replacementLabel(null)).toBeNull();
   });
 });

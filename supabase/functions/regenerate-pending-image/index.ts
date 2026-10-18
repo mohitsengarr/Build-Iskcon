@@ -27,7 +27,8 @@ import { getSceneResearch } from "../_shared/sceneResearch.ts";
 import { assemblePrompt, factFitsScene, factsForScene, inlineKey, normalizeForMatch, sanitizeForImageModel, sceneKey } from "../_shared/sceneResearchCore.ts";
 import { backgroundDeadline, correctionLead, imagePayload, initialRecord, mergeFailed, needsBackgroundCheck, redoInBackground, renderWithVisualCheck, runInBackground } from "../_shared/visualCheck.ts";
 import { rowRedoHandlers } from "../_shared/rowRedo.ts";
-import { KEPT_PREFIX, keptMessage, mayReplace, sceneDraft } from "../_shared/approvedRedraw.ts";
+import { KEPT_PREFIX, keptMessage, sceneDraft } from "../_shared/approvedRedraw.ts";
+import { candidateRow, hasPendingReplacement } from "../_shared/replacements.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
 import { renderFailureMessage, renderWithRetry } from "../_shared/togetherRetry.ts";
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
@@ -37,23 +38,18 @@ const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
 // worker started). A reviewer made this request from the card: a wrong image is
 // only flagged there, never re-rendered or swapped under them.
 //
-// Approved posts: { id, replace_approved: true } redraws a post that is already
-// approved (and usually published), from its image_prompt, or else from its
-// caption's own words (researchTextOf) — never from a guessed scene: a post
-// does not record its scene, and a wrong one would pass its own check. Nobody
-// reviews the result, so everything runs after the response (202): render,
-// check, corrected re-renders (renderWithVisualCheck). Only an image whose check
-// passed, or had nothing to check, replaces the post's image, by a
-// compare-and-swap on id + status approved + the image that was redrawn; the old
-// file is kept (the published post links to it). The new image is then posted
-// again, on each channel, through approve-instagram-post's republish. Otherwise
-// the post keeps its image and error_message says why (keptMessage).
+// Approved posts: { id, replace_approved: true } draws a REPLACEMENT for a post
+// that is already approved (and usually published), from its image_prompt, or
+// else from its caption's own words (researchTextOf) — never from a guessed
+// scene: a post does not record its scene, and a wrong one would pass its own
+// check. The post never changes on the spot: everything runs after the response
+// (202) — render, check, corrected re-renders (renderWithVisualCheck) — and the
+// result is stored as a pending post naming the one it would replace
+// (_shared/replacements.ts). Approving it copies the image onto the original
+// and queues the original to be posted again (approve-instagram-post,
+// repost-replaced-posts). One replacement waits per post at a time.
 const TOGETHER_KEY = Deno.env.get("TOGETHER_API_KEY") || "";
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const supabase = createClient(Deno.env.get("SUPABASE_URL"), Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
-/** The channels a replaced post is posted to again, in order (Threads only while its switch is on). */
-const REPOST_SERVICES = ["instagram", "threads"];
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -390,33 +386,24 @@ function approvedPostDraft(row) {
   if (typeof row.image_prompt === "string" && sceneDraft(row.image_prompt).length >= 3) return sceneDraft(row.image_prompt);
   return researchTextOf(row.caption ?? "");
 }
-// Redraws an approved post after the response (see the header). Never throws:
-// runInBackground logs a throw.
-async function replaceApprovedPost({ id, row, draft, facts, invocationStart, render, lead }) {
-  const tag = `regen-approved #${id}`;
-  const oldPath = typeof row.image_path === "string" && row.image_path ? row.image_path : null;
-  // Still approved, still the image that was redrawn: any other change wins.
-  const guarded = (q)=>{
-    const out = q.eq("id", id).eq("status", "approved");
-    return oldPath ? out.eq("image_path", oldPath) : out.is("image_path", null);
-  };
-  const keep = async (message)=>{
+// Draws a replacement after the response and stores it as a pending post (see
+// the header). Even a check that still finds a detail wrong is stored: the card
+// says what is wrong and the reviewer decides. Never throws: runInBackground
+// logs a throw.
+async function drawPostReplacement({ id, row, draft, facts, invocationStart, render, lead }) {
+  const tag = `regen-replacement #${id}`;
+  const note = async (message)=>{
+    console.log(`[regen] ${tag} ${message}`);
     try {
-      const { data, error } = await guarded(supabase.from("ig_pending_review").update({ error_message: message })).select("id");
-      console.log(`[regen] ${tag} ${message}${error ? ` (not noted on the post: ${error.message})` : Array.isArray(data) && data.length > 0 ? "" : " (the post changed meanwhile)"}`);
-    } catch (e) {
-      console.log(`[regen] ${tag} ${message} (not noted on the post: ${e})`);
-    }
+      await supabase.from("ig_pending_review").update({ error_message: message }).eq("id", id).eq("status", "approved");
+    } catch  {}
   };
-  let rendered = false;
   const checked = await renderWithVisualCheck({
     render: async (_index, _signal, correction)=>{
       const l = lead(correction ?? []);
       if (l && correction?.length) console.log(`[regen] ${tag} re-render corrected: ${l}`);
       try {
-        const out = await render(l);
-        if (out) rendered = true;
-        return out;
+        return await render(l);
       } catch (e) {
         console.log(`[regen] ${tag} render failed: ${e}`);
         return null;
@@ -427,59 +414,25 @@ async function replaceApprovedPost({ id, row, draft, facts, invocationStart, ren
     deadlineAt: backgroundDeadline(invocationStart),
     tag
   });
-  if (!checked || !mayReplace(checked.record)) {
-    await keep(keptMessage(checked?.record ?? null, rendered && !!checked));
+  if (!checked) {
+    await note(keptMessage(null, false));
     return;
   }
-  const fn = `approved-${id}-${Date.now()}.jpg`;
+  const fn = `candidate-${id}-${Date.now()}.jpg`;
   const bytes = Uint8Array.from(atob(checked.b64), (c)=>c.charCodeAt(0));
   const { error: upErr } = await supabase.storage.from("instagram-images").upload(fn, bytes, { contentType: "image/jpeg", upsert: false });
   if (upErr) {
-    await keep(`${KEPT_PREFIX}: the new image could not be stored (${upErr.message}).`);
+    await note(`${KEPT_PREFIX}: the new image could not be stored (${upErr.message}).`);
     return;
   }
   const url = supabase.storage.from("instagram-images").getPublicUrl(fn).data.publicUrl;
-  let swapped = false;
-  let why = "the post was changed meanwhile";
-  try {
-    const { data, error } = await guarded(supabase.from("ig_pending_review").update({
-      image_url: url,
-      image_path: fn,
-      image_prompt: draft,
-      visual_check: checked.record,
-      error_message: null
-    })).select("id");
-    swapped = !error && Array.isArray(data) && data.length === 1;
-    if (error) {
-      // An error can hide an update that was applied: ask the post before deleting.
-      why = error.message;
-      const { data: now } = await supabase.from("ig_pending_review").select("image_path").eq("id", id).maybeSingle();
-      swapped = now?.image_path === fn;
-    }
-  } catch (e) {
-    why = String(e);
-  }
-  if (!swapped) {
-    console.log(`[regen] ${tag} new image not stored: ${why}`);
+  const { data, error } = await supabase.from("ig_pending_review").insert(candidateRow("ig_pending_review", row, { url, path: fn }, checked.record, draft)).select("id").single();
+  if (error || !data?.id) {
+    console.log(`[regen] ${tag} replacement not stored: ${error?.message ?? "no row"}`);
     await removeImage(fn);
     return;
   }
-  console.log(`[regen] ${tag} replaced ${oldPath ?? "(none)"} with ${fn} (check ${checked.record.status}, ${checked.record.attempts} attempt(s)); ${oldPath ?? "the old file"} is kept`);
-  // Posted again, one channel at a time: republish keeps the other channels' post
-  // ids and records this channel's new one (or why it failed) on the post.
-  for (const service of REPOST_SERVICES) {
-    try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/approve-instagram-post`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_KEY}`, apikey: SERVICE_KEY },
-        body: JSON.stringify({ id, action: "republish", service })
-      });
-      const d = await res.json().catch(()=>({}));
-      console.log(`[regen] ${tag} posted again to ${service}: ${d?.success ? "ok" : d?.message || d?.error || `HTTP ${res.status}`}`);
-    } catch (e) {
-      console.log(`[regen] ${tag} posting again to ${service} failed: ${e}`);
-    }
-  }
+  console.log(`[regen] ${tag} replacement #${data.id} waits for review (check ${checked.record.status}, ${checked.record.attempts} attempt(s))`);
 }
 Deno.serve(async (req)=>{
   const invocationStart = Date.now();
@@ -518,9 +471,16 @@ Deno.serve(async (req)=>{
       headers: CORS
     });
     if (redrawApproved) {
-      // Only an approved post, and only when asked (see the header).
+      // Only an approved post, only when asked, and one replacement at a time (see the header).
       if (row.status !== "approved") return new Response(JSON.stringify({
         error: `Post ${id} is ${row.status}; refresh the gallery`
+      }), {
+        status: 409,
+        headers: CORS
+      });
+      if (await hasPendingReplacement(supabase, "ig_pending_review", id)) return new Response(JSON.stringify({
+        error: `Post ${id} already has a replacement waiting for review`,
+        status: "pending_replacement"
       }), {
         status: 409,
         headers: CORS
@@ -611,7 +571,7 @@ Deno.serve(async (req)=>{
       if (typeof row.error_message === "string" && row.error_message.startsWith(KEPT_PREFIX)) {
         await supabase.from("ig_pending_review").update({ error_message: null }).eq("id", id).eq("status", "approved").eq("error_message", row.error_message);
       }
-      runInBackground(replaceApprovedPost({
+      runInBackground(drawPostReplacement({
         id,
         row,
         draft: prompt.trim(),

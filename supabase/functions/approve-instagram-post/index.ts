@@ -61,6 +61,7 @@
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { approveReplacement, isReplacement, replacementResponse } from "../_shared/replacements.ts";
 
 const BUFFER_API = "https://api.buffer.com";
 const GRAPH = "https://graph.facebook.com/v21.0";
@@ -469,9 +470,25 @@ Deno.serve(async (req: Request) => {
       if (post.image_path) {
         try { await supabase.storage.from("instagram-images").remove([post.image_path]); } catch { /* best effort */ }
       }
+      // A rejected replacement (_shared/replacements.ts) leaves the post it would
+      // have replaced as it is: no new post is generated.
+      if (isReplacement(post)) {
+        const answer = replacementResponse(id, { rejected: true });
+        return new Response(JSON.stringify(answer.body), { status: answer.status, headers: corsHeaders });
+      }
       // @ts-ignore - EdgeRuntime is provided by Supabase
       EdgeRuntime.waitUntil(regenInBackground(id, post.chapter_global_number));
       return new Response(JSON.stringify({ success: true, status: "rejected", id, regeneration: { ok: true, detail: "Regeneration running in background — a new pending post will appear in ~30-60s." }, message: "Rejected. New attempt queued — will appear in pending review shortly." }), { headers: corsHeaders });
+    }
+
+    // A replacement (_shared/replacements.ts) is never published here: approving it
+    // copies its image onto the post it replaces, which joins the re-post queue
+    // (repost-replaced-posts), so replaced posts go out again a few a day.
+    if (isReplacement(post)) {
+      const result = await approveReplacement(supabase, "ig_pending_review", post);
+      if ("error" in result) await releaseClaim(id, claim.stamp);
+      const answer = replacementResponse(id, result);
+      return new Response(JSON.stringify(answer.body), { status: answer.status, headers: corsHeaders });
     }
 
     // action === "approve". Record that publishing starts, on this request's own

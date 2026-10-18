@@ -1064,40 +1064,87 @@ describe("chapter-art visual check wiring", () => {
       assert.deepEqual(db.removals, [{ bucket: "chapter-art-images", path: "art-old.jpg" }]);
     });
 
-    // ── An approved cover (replace_approved): rendered, checked and corrected after
-    // the response, and stored only when its check passed.
-    describe("an approved cover", () => {
+    // ── A replacement (replace_approved): an approved cover, or an older static
+    // image, gets a new image drawn and checked after the response, stored as a
+    // pending row naming what it would replace. Nothing approved changes.
+    /** Review rows as a list: selects, inserts and updates honour every .eq filter. */
+    function setupRows(o: NetOptions & { table?: string; rows?: Json[] } = {}) {
+      const table = o.table ?? TABLE;
+      const rows: Json[] = o.rows ?? [];
+      let nextId = 90;
+      const matching = (q: Query) => rows.filter((r) => q.filters.every(([c, v]) => {
+        if (c === "replaces_legacy->>image") return (r.replaces_legacy?.image ?? null) === v;
+        return (r[c] ?? null) === v;
+      }));
+      const reviewTable = (q: Query) => {
+        if (q.op === "select") {
+          const hit = matching(q);
+          return { data: q.single ? (hit[0] ? { ...hit[0] } : null) : hit.map((r) => ({ ...r })) };
+        }
+        if (q.op === "insert") {
+          const row = { id: nextId++, ...q.values };
+          rows.push(row);
+          return { data: { id: row.id } };
+        }
+        if (q.op === "update") {
+          const hit = matching(q);
+          for (const r of hit) Object.assign(r, q.values);
+          return { data: q.returning ? hit.map((r) => ({ id: r.id })) : null };
+        }
+        return {};
+      };
+      const db = makeDb({
+        [table]: reviewTable,
+        bhagavatam_image_deletes: () => ({}),
+        bhagavatam_chapter_scenes: () => ({ data: null }),
+        image_gen_config: () => ({ data: null }),
+        scene_visual_canon: () => ({ data: CANON }),
+      });
+      const net = makeNet(o);
+      g.__sb = db;
+      g.fetch = net.fn;
+      return { db, net, rows, pending: () => rows.filter((r) => r.status === "pending") };
+    }
+
+    describe("a replacement for an approved cover", () => {
       const STORED = `${DRAFT}. Canonical details: an old detail. museum-quality 19th-century OIL PAINTING`;
       const POSTED = "2026-10-01T06:00:00.000Z";
-      const approved = (extra: Json = {}) => ({ status: "approved", prompt: STORED, posted_at: POSTED, error_message: null, ...extra });
+      const cover = (extra: Json = {}) => ({
+        id: 5, chapter_number: 1, chapter_title: "Observing the Armies", caption: "A caption", hashtags: "#Gita",
+        status: "approved", prompt: STORED, posted_at: POSTED, error_message: null, visual_check: null,
+        image_path: "gita-old.jpg", image_url: "https://storage.test/storage/v1/object/public/instagram-images/gita-old.jpg", ...extra,
+      });
       const redraw = (extra: Record<string, unknown> = {}) => send("regen", { book: "gita", id: 5, replace_approved: true, ...extra });
 
-      test("answers 202 before anything is stored, then a passing image replaces it and posted_at is cleared so it is posted again", async () => {
+      test("answers 202 at once; the replacement is stored as a pending cover naming the original, which does not change", async () => {
         // Arrange
-        const { db, net, row } = setup({ row: approved() });
+        const { rows, pending } = setupRows({ rows: [cover()] });
         makeClaude([0]);
         // Act
         const sent = await redraw();
-        const atResponse = row.image_path;
+        const atResponse = pending().length;
         await settle();
         // Assert
         assert.equal(sent.status, 202, JSON.stringify(sent.json));
         assert.equal(sent.json.queued, true);
-        assert.equal(sent.registered, 1);
-        assert.equal(atResponse, "gita-old.jpg", "nothing replaced before the check");
-        assert.equal(net.together.length, 1);
-        assert.match(row.image_path, /^gita-approved-5-\d+\.jpg$/);
-        assert.equal(row.image_url, `https://storage.test/storage/v1/object/public/instagram-images/${row.image_path}`);
-        assert.equal(row.status, "approved");
-        assert.equal(row.posted_at, null);
-        assert.equal(row.error_message, null);
-        assert.equal(row.visual_check.status, "pass");
-        assert.deepEqual(db.removals, [], "the replaced file is kept: a published post links to it");
+        assert.equal(atResponse, 0, "nothing stored before the check");
+        const [original, replacement] = rows;
+        assert.equal(original.image_path, "gita-old.jpg");
+        assert.equal(original.posted_at, POSTED);
+        assert.equal(original.status, "approved");
+        assert.equal(replacement.status, "pending");
+        assert.equal(replacement.replaces_id, 5);
+        assert.equal(replacement.chapter_number, 1);
+        assert.equal(replacement.caption, "A caption");
+        assert.equal(replacement.prompt, `${DRAFT}.`, "the scene alone: details and style come again from the configuration");
+        assert.match(replacement.image_path, /^gita-candidate-5-\d+\.jpg$/);
+        assert.equal(replacement.visual_check.status, "pass");
+        assert.equal("posted_at" in replacement, false);
       });
 
       test("redraws from the stored scene alone: the old details and style are not sent twice", async () => {
         // Arrange
-        const { net } = setup({ row: approved() });
+        const { net } = setupRows({ rows: [cover()] });
         makeClaude([0]);
         // Act
         await redraw();
@@ -1108,9 +1155,9 @@ describe("chapter-art visual check wiring", () => {
         assert.equal(sentPrompt.includes("an old detail"), false, sentPrompt);
       });
 
-      test("a detail still wrong after the corrected attempts keeps the approved image and says why", async () => {
+      test("a detail still wrong after the corrected attempts is still stored for review, flagged", async () => {
         // Arrange: every attempt gets the first fact wrong
-        const { db, net, row } = setup({ row: approved() });
+        const { net, pending } = setupRows({ rows: [cover()] });
         makeClaude([1]);
         // Act
         await redraw();
@@ -1118,105 +1165,93 @@ describe("chapter-art visual check wiring", () => {
         // Assert
         assert.equal(net.together.length, 3, "the first render and two corrected ones");
         for (const t of net.together.slice(1)) assert.ok(String(t.prompt).startsWith("CORRECTION — the painting must clearly show:"), String(t.prompt));
-        assert.equal(row.image_path, "gita-old.jpg");
-        assert.equal(row.posted_at, POSTED, "not posted again");
-        assert.equal(row.error_message, "Regenerate kept the approved image: 1 detail still wrong after 3 attempts.");
-        assert.equal(db.uploads.length, 0, "nothing stored");
+        assert.equal(pending().length, 1);
+        assert.equal(pending()[0].visual_check.status, "fail");
       });
 
-      test("a check that could not run keeps the approved image", async () => {
+      test("a check that could not run is stored for review too, with the error on its card", async () => {
         // Arrange
-        const { row } = setup({ row: approved() });
+        const { pending } = setupRows({ rows: [cover()] });
         makeClaude(["api_error"]);
         // Act
         await redraw();
         await settle();
         // Assert
-        assert.equal(row.image_path, "gita-old.jpg");
-        assert.equal(row.error_message, "Regenerate kept the approved image: the new image could not be checked (api_error_529).");
+        assert.equal(pending()[0].visual_check.status, "error");
       });
 
-      test("a reviewer's change during the redraw wins: nothing is replaced and the new file is deleted", async () => {
-        // Arrange: the row is changed while Claude is still answering
-        const { db, row } = setup({ row: approved() });
-        const gate = deferred();
-        makeClaude([0], gate.promise);
+      test("when every render fails nothing is stored, and the cover says why", async () => {
+        // Arrange
+        const { rows, pending } = setupRows({ rows: [cover()], imageOk: () => false });
+        makeClaude([0]);
         // Act
-        try {
-          await redraw();
-          row.status = "pending";
-        } finally {
-          gate.release();
-          await settle();
-        }
+        await redraw();
+        await settle();
         // Assert
-        assert.equal(row.image_path, "gita-old.jpg");
-        assert.equal(db.uploads.length, 1);
-        assert.deepEqual(db.removals, [{ bucket: "instagram-images", path: db.uploads[0].path }]);
+        assert.equal(pending().length, 0);
+        assert.equal(rows[0].error_message, "Regenerate kept the approved image: every image attempt failed.");
       });
 
-      test("a Bhagavatam cover is posted nowhere: it is replaced with nothing about posting changed", async () => {
-        // Arrange: no research key for the row, so there is nothing to check
-        const { row, updates } = setup({
-          row: approved({ chapter_global_number: null, image_path: "art-old.jpg", image_url: "https://storage.test/storage/v1/object/public/chapter-art-images/art-old.jpg" }),
+      test("one replacement waits per cover: a second request is refused before any render", async () => {
+        // Arrange
+        const { net } = setupRows({ rows: [cover(), { id: 80, status: "pending", replaces_id: 5 }] });
+        // Act
+        const sent = await redraw();
+        // Assert
+        assert.equal(sent.status, 409);
+        assert.equal(sent.json.status, "pending_replacement");
+        assert.equal(net.together.length, 0);
+      });
+
+      test("a Bhagavatam cover's replacement goes in its own table, with its chapter's fields", async () => {
+        // Arrange
+        const { rows } = setupRows({
+          table: "bhagavatam_chapter_art_review",
+          rows: [cover({ chapter_global_number: null, chapter_canto: 1, chapter_in_canto: 3, image_path: "art-old.jpg" })],
         });
         // Act
         const sent = await redraw({ book: "bhagavatam" });
         await settle();
         // Assert
         assert.equal(sent.status, 202);
-        assert.match(row.image_path, /^art-approved-5-\d+\.jpg$/);
-        assert.equal(row.visual_check.status, "skipped");
-        assert.equal(row.posted_at, POSTED);
-        assert.equal(updates().length, 0, "the Gita table is untouched");
+        assert.equal(rows[1].replaces_id, 5);
+        assert.equal(rows[1].chapter_in_canto, 3);
+        assert.match(rows[1].image_path, /^art-candidate-5-\d+\.jpg$/);
       });
 
-      test("is refused for a cover that is not approved, and an approved cover is never redrawn without asking", async () => {
+      test("a note left by an earlier redraw is cleared before the response", async () => {
         // Arrange
-        setup({ row: { status: "pending", prompt: STORED } });
-        // Act
-        const pending = await call("regen", { book: "gita", id: 5, replace_approved: true });
-        setup({ row: approved() });
-        const unasked = await call("regen", { book: "gita", id: 5, prompt: DRAFT });
-        // Assert
-        assert.equal(pending.status, 409);
-        assert.equal(unasked.status, 409);
-      });
-
-      test("a note left by an earlier redraw is cleared before the response, so the gallery never takes it for this run's", async () => {
-        // Arrange: the last redraw kept the image; this one is held at the check
-        const earlier = "Regenerate kept the approved image: 1 detail still wrong after 3 attempts.";
-        const { row } = setup({ row: approved({ error_message: earlier }) });
+        const { rows } = setupRows({ rows: [cover({ error_message: "Regenerate kept the approved image: every image attempt failed." })] });
         const gate = deferred();
         makeClaude([0], gate.promise);
         let atResponse: unknown = "unset";
         // Act
         try {
           await redraw();
-          atResponse = row.error_message;
+          atResponse = rows[0].error_message;
         } finally {
           gate.release();
           await settle();
         }
         // Assert
         assert.equal(atResponse, null);
-        assert.match(row.image_path, /^gita-approved-5-/);
       });
 
-      test("a poster's note on the row is left alone", async () => {
+      test("is refused for a cover that is not approved, and an approved cover is never redrawn without asking", async () => {
         // Arrange
-        const { row } = setup({ row: approved({ error_message: "threads: media rejected" }) });
-        makeClaude([1]);
+        setupRows({ rows: [cover({ status: "pending" })] });
         // Act
-        await redraw();
-        // Assert: at the response, before the background work
-        assert.equal(row.error_message, "threads: media rejected");
-        await settle();
+        const pendingCover = await call("regen", { book: "gita", id: 5, replace_approved: true });
+        setupRows({ rows: [cover()] });
+        const unasked = await call("regen", { book: "gita", id: 5, prompt: DRAFT });
+        // Assert
+        assert.equal(pendingCover.status, 409);
+        assert.equal(unasked.status, 409);
       });
 
-      test("a row with no stored prompt asks for one", async () => {
+      test("a cover with no stored prompt asks for one", async () => {
         // Arrange
-        setup({ row: approved({ prompt: null }) });
+        setupRows({ rows: [cover({ prompt: null })] });
         // Act
         const { status, json } = await call("regen", { book: "gita", id: 5, replace_approved: true });
         // Assert
@@ -1225,137 +1260,60 @@ describe("chapter-art visual check wiring", () => {
       });
     });
 
-    // ── An older static image (legacy_image): adopted as an approved cover row,
-    // its static copy hidden, then redrawn on that row.
-    describe("an older static image", () => {
+    describe("a replacement for an older static image", () => {
       const ENTRY = {
         chapterNumber: 10, cantoNumber: 1, chapterTitle: "Chapter Ten", imagePath: "chapter-010.jpg",
         prompt: DRAFT, descriptionHi: "विवरण", sceneIndex: 0,
       };
-      const ADOPTED = "art-legacy-chapter-010.jpg";
       const BHAG = "bhagavatam_chapter_art_review";
-
-      function setupLegacy(o: NetOptions & { existing?: boolean } = {}) {
-        const rows: Json[] = o.existing
-          ? [{ id: 70, status: "approved", chapter_global_number: 10, image_path: ADOPTED, image_url: `https://storage.test/storage/v1/object/public/chapter-art-images/${ADOPTED}`, prompt: DRAFT, visual_check: null, error_message: null }]
-          : [];
-        const hides: Json[] = [];
-        const matching = (q: Query) => rows.filter((r) => q.filters.every(([c, v]) => (r[c] ?? null) === v));
-        const db = makeDb({
-          [BHAG]: (q) => {
-            if (q.op === "select") return { data: q.single ? (matching(q)[0] ? { ...matching(q)[0] } : null) : matching(q) };
-            if (q.op === "insert") {
-              const row = { id: 77, visual_check: null, ...q.values };
-              rows.push(row);
-              return { data: { id: 77 } };
-            }
-            if (q.op === "update") {
-              const hit = matching(q)[0];
-              if (hit) Object.assign(hit, q.values);
-              return { data: q.returning ? (hit ? [{ id: hit.id }] : []) : null };
-            }
-            return {};
-          },
-          bhagavatam_image_deletes: (q) => {
-            if (q.op === "upsert") hides.push(q.values);
-            return {};
-          },
-          bhagavatam_chapter_scenes: () => ({ data: null }),
-          image_gen_config: () => ({ data: null }),
-          scene_visual_canon: () => ({ data: CANON }),
-        });
-        const net = makeNet({ manifest: [ENTRY], ...o });
-        g.__sb = db;
-        g.fetch = net.fn;
-        return { db, net, rows, hides };
-      }
       const redrawLegacy = (extra: Record<string, unknown> = {}) =>
         send("regen", { book: "bhagavatam", legacy_image: "chapter-010.jpg", replace_approved: true, ...extra });
 
-      test("is adopted before the response: copied into storage as an approved cover for its chapter, and its static copy hidden", async () => {
+      test("is a pending cover for its chapter naming the static file; nothing is hidden or copied until it is approved", async () => {
         // Arrange
-        const { db, rows, hides } = setupLegacy();
+        const { db, net, rows } = setupRows({ table: BHAG, manifest: [ENTRY] });
         makeClaude([0]);
         // Act
         const sent = await redrawLegacy();
-        const atResponse = structuredClone(rows[0]);
         await settle();
         // Assert
         assert.equal(sent.status, 202, JSON.stringify(sent.json));
-        assert.equal(sent.json.id, 77, "the gallery waits on this row");
-        assert.equal(atResponse.image_path, ADOPTED);
-        assert.equal(atResponse.status, "approved");
-        assert.equal(atResponse.chapter_global_number, 10);
-        assert.equal(atResponse.chapter_in_canto, 10);
-        assert.equal(atResponse.prompt, DRAFT);
-        assert.deepEqual(db.uploads[0], { bucket: "chapter-art-images", path: ADOPTED, b64: jpeg(200) });
-        assert.deepEqual(hides, [{ chapter_number: 10, scene_index: 0, requested_by: "regenerate-chapter-art: adopted as cover #77" }]);
+        assert.equal(sent.json.legacy_image, "chapter-010.jpg");
+        assert.equal(rows.length, 1);
+        assert.deepEqual(rows[0].replaces_legacy, { image: "chapter-010.jpg", chapter_number: 10, scene_index: 0 });
+        assert.equal(rows[0].status, "pending");
+        assert.equal(rows[0].chapter_global_number, 10);
+        assert.equal(rows[0].chapter_in_canto, 10);
+        assert.equal(rows[0].prompt, DRAFT);
+        assert.match(rows[0].image_path, /^art-candidate-10-\d+\.jpg$/);
+        assert.deepEqual(net.staticImages, [], "the static file is not copied");
+        assert.equal(db.writes("bhagavatam_image_deletes", "upsert").length, 0, "the static copy stays until approval");
       });
 
-      test("is then redrawn on that row: a passing image replaces the adopted copy, which is kept", async () => {
+      test("one replacement waits per static image", async () => {
         // Arrange
-        const { db, rows } = setupLegacy();
-        makeClaude([0]);
-        // Act
-        await redrawLegacy();
-        await settle();
-        // Assert
-        assert.match(rows[0].image_path, /^art-approved-77-\d+\.jpg$/);
-        assert.equal(rows[0].visual_check.status === "pass" || rows[0].visual_check.status === "skipped", true, JSON.stringify(rows[0].visual_check));
-        assert.deepEqual(db.removals, [], "the adopted copy stays in storage");
-      });
-
-      test("a redraw that does not pass leaves the chapter its adopted copy, now database-backed, with a note", async () => {
-        // Arrange: every attempt gets the first fact wrong
-        const { rows, hides } = setupLegacy();
-        makeClaude([1]);
-        // Act
-        await redrawLegacy();
-        await settle();
-        // Assert
-        assert.equal(rows[0].image_path, ADOPTED);
-        assert.match(rows[0].error_message, /^Regenerate kept the approved image: /);
-        assert.equal(hides.length, 1, "the static copy stays hidden: the row shows the same picture");
-      });
-
-      test("an image adopted before is reused, never copied twice", async () => {
-        // Arrange
-        const { db, net, rows, hides } = setupLegacy({ existing: true });
-        makeClaude([0]);
+        const { net } = setupRows({ table: BHAG, manifest: [ENTRY], rows: [{ id: 81, status: "pending", replaces_legacy: { image: "chapter-010.jpg" } }] });
         // Act
         const sent = await redrawLegacy();
-        await settle();
         // Assert
-        assert.equal(sent.json.id, 70);
-        assert.equal(rows.length, 1);
-        assert.deepEqual(net.staticImages, []);
-        assert.equal(db.uploads.every((u) => u.path !== ADOPTED), true);
-        assert.deepEqual(hides, []);
+        assert.equal(sent.status, 409);
+        assert.equal(sent.json.replacement_id, 81);
+        assert.equal(net.together.length, 0);
       });
 
       test("a name the manifest does not list is refused, and nothing is written", async () => {
         // Arrange
-        const { db, rows, hides } = setupLegacy({ manifest: [] });
+        const { db, rows } = setupRows({ table: BHAG, manifest: [] });
         // Act
         const sent = await redrawLegacy();
         // Assert
         assert.equal(sent.status, 404);
-        assert.deepEqual([rows.length, hides.length, db.uploads.length], [0, 0, 0]);
-      });
-
-      test("a static image that cannot be fetched is not adopted", async () => {
-        // Arrange
-        const { rows, hides } = setupLegacy({ legacyImageOk: () => false });
-        // Act
-        const sent = await redrawLegacy();
-        // Assert
-        assert.equal(sent.status, 502);
-        assert.deepEqual([rows.length, hides.length], [0, 0]);
+        assert.deepEqual([rows.length, db.uploads.length], [0, 0]);
       });
 
       test("only a plain file name, only for the Bhagavatam, and only when replacing is asked for", async () => {
         // Arrange
-        setupLegacy();
+        setupRows({ table: BHAG, manifest: [ENTRY] });
         // Act
         const path = await redrawLegacy({ legacy_image: "../chapter-010.jpg" });
         const gita = await redrawLegacy({ book: "gita" });
