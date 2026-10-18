@@ -42,7 +42,9 @@ export function JoinsPlaces({ zones, totalDevotees }: JoinsPlacesProps) {
       <ol className="mt-4 space-y-2">
         {shown.map((place) => (
           <li key={place.label} className="flex items-center gap-3">
-            <span className="w-28 sm:w-40 shrink-0 text-xs text-stone-600 truncate" title={place.label}>
+            {/* Wraps rather than truncating: "United Arab Emirates" does not fit a
+                phone's column, and there is no hover on a phone to reveal it. */}
+            <span className="w-28 sm:w-40 shrink-0 text-xs text-stone-600 leading-tight">
               {place.label}
             </span>
             <span className="flex-1 h-2.5 rounded-full bg-stone-100 overflow-hidden">
