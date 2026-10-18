@@ -7,6 +7,7 @@ import { Loader2, Download, Share2, X, Search, ImageIcon, Filter, ChevronDown, C
 import { fadeInUp, staggerContainer } from "@/lib/animations";
 import { describeFailure, describeThrown } from "@/lib/requestError";
 import { renderQueue } from "@/lib/renderQueue";
+import { BOOK_SECTIONS, GITA_SECTION, gitaCardDescription, sectionBadge } from "@/lib/gallerySections";
 import { APPROVED_TABLES, REDRAW_GIVE_UP_MS, REDRAW_POLL_MS, redrawConfirmText, redrawOutcome, type ApprovedBook } from "@/lib/approvedRedraw";
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -99,6 +100,7 @@ const CANTO_NAMES: Record<number, string> = {
   10: "Canto 10 — Summum Bonum",
   11: "Canto 11 — General History",
   12: "Canto 12 — Age of Deterioration",
+  ...Object.fromEntries(Object.entries(BOOK_SECTIONS).map(([k, v]) => [k, v.name])),
 };
 
 // ── Instagram-style post card ───────────────────────────────────────────────
@@ -539,13 +541,15 @@ function InstagramPostCard({ item, onOpenLightbox }: { item: GalleryItem; onOpen
 //   • pending-* / chart-pending-* / cc-pending-* — synthetic Lightbox previews
 //     built with sceneIndex 0; a delete row for them would destroy the
 //     unrelated LIVE legacy scene-0 image of that chapter.
-//   • chart-approved-* (scene 300+) and chaitanya-chart-approved-* (scene 400+)
-//     — namespaces the laptop cron would misinterpret against legacy files.
+//   • chart-approved-* (scene 300+), chaitanya-chart-approved-* (scene 400+) and
+//     gita-chart-approved-* (scene 500+) — namespaces the laptop cron would
+//     misinterpret against legacy files.
 function isDeletableGalleryItem(item: GalleryItem): boolean {
   if (item.id.startsWith("ig-approved-")) return true;
   if (
     item.id.startsWith("chart-approved-") ||
     item.id.startsWith("chaitanya-chart-approved-") ||
+    item.id.startsWith("gita-chart-approved-") ||
     item.id.startsWith("pending-") ||
     item.id.startsWith("chart-pending-") ||
     item.id.startsWith("cc-pending-")
@@ -2691,6 +2695,41 @@ export default function Gallery() {
         }
       } catch { /* offline — fine */ }
 
+      // ── Bhagavad-gita approved covers: one section after the Chaitanya parts
+      // (GITA_SECTION), chapters 1-18 in order. sceneIndex 500+ keeps them clear
+      // of every other namespace above.
+      try {
+        const sbRes = await sbFetch(
+          "gita_chapter_art_review?status=eq.approved&select=id,chapter_number,chapter_title,scene_title,caption,image_url,reviewed_at&order=chapter_number.asc",
+        );
+        if (sbRes.ok) {
+          const rows: Array<{
+            id: number;
+            chapter_number: number;
+            chapter_title: string | null;
+            scene_title: string | null;
+            caption: string | null;
+            image_url: string | null;
+            reviewed_at: string;
+          }> = await sbRes.json();
+          for (const r of rows) {
+            if (!r.image_url || items.some(i => i.url === r.image_url)) continue;
+            items.push({
+              id: `gita-chart-approved-${r.id}`,
+              approvedArt: { book: "gita", id: r.id },
+              chapterNumber: r.chapter_number,
+              chapterTitle: r.chapter_title || `Chapter ${r.chapter_number}`,
+              cantoNumber: GITA_SECTION,
+              sceneIndex: 500 + r.id,
+              url: r.image_url,
+              description: gitaCardDescription(r),
+              generatedAt: r.reviewed_at,
+              type: "chapter",
+            });
+          }
+        }
+      } catch { /* offline — fine */ }
+
       // Sort by canto → chapter → sceneIndex
       items.sort((a, b) => a.cantoNumber - b.cantoNumber || a.chapterNumber - b.chapterNumber || a.sceneIndex - b.sceneIndex);
       setAllItems(items);
@@ -4184,7 +4223,7 @@ export default function Gallery() {
                       >
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           <div className="w-8 h-8 rounded-xl bg-orange-100 flex items-center justify-center shrink-0">
-                            <span className="text-sm font-bold text-orange-600">{canto || "–"}</span>
+                            <span className="text-sm font-bold text-orange-600">{sectionBadge(canto)}</span>
                           </div>
                           <h2 className="font-serif text-lg sm:text-xl font-bold text-stone-800 truncate">
                             {CANTO_NAMES[canto] || `Canto ${canto}`}
