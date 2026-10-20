@@ -17,6 +17,7 @@
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { threadsText } from "../_shared/postText.ts";
 
 const BUFFER_API = "https://api.buffer.com";
 const BUFFER_KEY = Deno.env.get("BUFFER_API_KEY") || "";
@@ -104,8 +105,8 @@ Deno.serve(async (req: Request) => {
 
     const igText = `${caption}\n\n${hashtags}`.trim().slice(0, 2200);
     // Threads caps at 500 characters.
-    let thText = `${caption}\n\n${hashtags}`.trim();
-    if (thText.length > 500) thText = thText.slice(0, 497) + "...";
+    // Threads carries the story alone, no mantra, reference or hashtags (_shared/postText.ts).
+    const thText = threadsText(row.caption, row.chapter_title || book.label);
 
     if (body.preview) {
       return new Response(JSON.stringify({

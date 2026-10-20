@@ -62,6 +62,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { approveReplacement, isReplacement, replacementResponse } from "../_shared/replacements.ts";
+import { threadsText } from "../_shared/postText.ts";
 
 const BUFFER_API = "https://api.buffer.com";
 const GRAPH = "https://graph.facebook.com/v21.0";
@@ -175,8 +176,8 @@ async function queueToBuffer(imgUrl: string, caption: string, hashtags: string, 
   const results: PubResult[] = [];
   const errors: Array<{ service: string; channelId: string; error: string }> = [];
   for (const ch of chs) {
-    let fc = `${caption}\n\n${hashtags}`;
-    if (ch.service === "threads" && fc.length > 500) fc = fc.substring(0, 497) + "...";
+    // Threads carries the story alone (_shared/postText.ts); Instagram the whole caption and hashtags.
+    const fc = ch.service === "threads" ? threadsText(caption) : `${caption}\n\n${hashtags}`;
     const input: Record<string, unknown> = {
       text: fc, channelId: ch.id, schedulingType: "automatic", mode: "shareNow",
       assets: [{ image: { url: imgUrl } }],
