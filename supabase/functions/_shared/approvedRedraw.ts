@@ -12,10 +12,16 @@
  * and style are added again from the approved configuration, so only the scene
  * is kept — and never a correction lead an earlier redraw put in front of it.
  */
+const STYLE_MARKERS = /\s*(?:Canonical details:|museum-quality|STRICTLY ANCIENT|ABSOLUTE GENDER RULES|ABSOLUTE ANACHRONISM RULES)/gi;
+/** A marker this early opens the prompt (a hand-written "Museum-quality ... painting of ..."), not its tail. */
+const MIN_SCENE_CHARS = 20;
+
 export function sceneDraft(prompt: unknown): string {
   if (typeof prompt !== "string") return "";
-  let text = prompt.split(/\s*(?:Canonical details:|museum-quality|STRICTLY ANCIENT|ABSOLUTE GENDER RULES|ABSOLUTE ANACHRONISM RULES)/i)[0];
-  text = text.replace(/^\s*CORRECTION — the painting must clearly show:[^]*?\.(?:\s+The previous attempt was wrong:[^]*?\.)?(?=\s|$)\s*/u, "");
+  const text = prompt.replace(/^\s*CORRECTION — the painting must clearly show:[^]*?\.(?:\s+The previous attempt was wrong:[^]*?\.)?(?=\s|$)\s*/u, "");
+  for (const m of text.matchAll(STYLE_MARKERS)) {
+    if ((m.index ?? 0) >= MIN_SCENE_CHARS) return text.slice(0, m.index).trim();
+  }
   return text.trim();
 }
 

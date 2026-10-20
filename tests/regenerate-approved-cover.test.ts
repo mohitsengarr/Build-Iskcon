@@ -23,6 +23,15 @@ describe("sceneDraft", () => {
     assert.equal(sceneDraft(sent), "Krishna holds the reins.");
   });
 
+  test("a prompt that opens with the style keeps its scene: only a marker after the scene cuts", () => {
+    const sent = "Museum-quality classical Indian devotional oil painting, the teaching at dawn on the battlefield.\n\nCenter-left: MALE Krishna at the reins. ABSOLUTE GENDER RULES: 1) ...";
+    assert.equal(sceneDraft(sent), "Museum-quality classical Indian devotional oil painting, the teaching at dawn on the battlefield.\n\nCenter-left: MALE Krishna at the reins.");
+  });
+
+  test("a prompt that is all style and no later marker is kept whole rather than emptied", () => {
+    assert.equal(sceneDraft("museum-quality oil painting of Arjuna's chariot at dawn"), "museum-quality oil painting of Arjuna's chariot at dawn");
+  });
+
   test("gives nothing for no prompt", () => {
     assert.equal(sceneDraft(null), "");
     assert.equal(sceneDraft("   "), "");
