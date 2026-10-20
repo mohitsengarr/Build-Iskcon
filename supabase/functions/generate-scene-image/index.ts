@@ -39,6 +39,7 @@ import {
 } from "../_shared/visualCheck.ts";
 import { renderFailureMessage, renderWithRetry, type TogetherFailure } from "../_shared/togetherRetry.ts";
 import { rowRedoHandlers } from "../_shared/rowRedo.ts";
+import { storedImageBytes } from "../_shared/watermarkClient.ts";
 
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
@@ -332,7 +333,7 @@ Deno.serve(async (req: Request) => {
     }
     const b64 = rendered.b64;
 
-    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    const bytes = await storedImageBytes(b64);
     const fn = `scene-${scene_id}-${Date.now()}.jpg`;
     const { error: upErr } = await supabase.storage.from("instagram-images").upload(fn, bytes, { contentType: "image/jpeg", upsert: true });
     if (upErr) {

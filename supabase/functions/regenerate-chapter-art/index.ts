@@ -88,6 +88,7 @@ import {
 import { candidateRow, hasPendingReplacement, type LegacyRef, type ReviewTable } from "../_shared/replacements.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
 import { renderFailureMessage, renderWithRetry, type TogetherFailure } from "../_shared/togetherRetry.ts";
+import { storedImageBytes } from "../_shared/watermarkClient.ts";
 
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
 const TOGETHER_KEY = Deno.env.get("TOGETHER_API_KEY") || "";
@@ -431,7 +432,7 @@ async function drawReplacement(o: {
   }
 
   const fn = `${b.prefix}-candidate-${source ? source.id : legacy!.ref.chapter_number}-${Date.now()}.jpg`;
-  const bytes = Uint8Array.from(atob(checked.b64), (c) => c.charCodeAt(0));
+  const bytes = await storedImageBytes(checked.b64);
   const { error: upErr } = await supabase.storage.from(b.bucket).upload(fn, bytes, { contentType: "image/jpeg", upsert: false });
   if (upErr) {
     await note(`${KEPT_PREFIX}: the new image could not be stored (${upErr.message}).`);
@@ -630,7 +631,7 @@ Deno.serve(async (req: Request) => {
     const checkFacts = factsInSentPrompt(facts, sanitized);
     const record = initialRecord({ factsUsed: checkFacts, imageModel, startedAt: Date.now() });
 
-    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    const bytes = await storedImageBytes(b64);
     const fn = `${b.prefix}-regen-${id}-${Date.now()}.jpg`;
     const { error: upErr } = await supabase.storage.from(b.bucket).upload(fn, bytes, { contentType: "image/jpeg", upsert: true });
     if (upErr) return new Response(JSON.stringify({ error: `Upload failed: ${upErr.message}` }), { status: 500, headers: CORS });

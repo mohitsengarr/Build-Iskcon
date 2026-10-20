@@ -31,6 +31,7 @@ import { KEPT_PREFIX, keptMessage, sceneDraft } from "../_shared/approvedRedraw.
 import { candidateRow, hasPendingReplacement } from "../_shared/replacements.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
 import { renderFailureMessage, renderWithRetry } from "../_shared/togetherRetry.ts";
+import { storedImageBytes } from "../_shared/watermarkClient.ts";
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
 // Visual check (_shared/visualCheck.ts): the request is cut at 150s, so the new
 // image is stored after one render and Claude vision checks it against the
@@ -419,7 +420,7 @@ async function drawPostReplacement({ id, row, draft, facts, invocationStart, ren
     return;
   }
   const fn = `candidate-${id}-${Date.now()}.jpg`;
-  const bytes = Uint8Array.from(atob(checked.b64), (c)=>c.charCodeAt(0));
+  const bytes = await storedImageBytes(checked.b64);
   const { error: upErr } = await supabase.storage.from("instagram-images").upload(fn, bytes, { contentType: "image/jpeg", upsert: false });
   if (upErr) {
     await note(`${KEPT_PREFIX}: the new image could not be stored (${upErr.message}).`);
@@ -612,7 +613,7 @@ Deno.serve(async (req)=>{
     // already in the draft); with none it is skipped.
     const checkFacts = factsInSentPrompt(facts, sanitized);
     const b64 = image.b64;
-    const bytes = Uint8Array.from(atob(b64), (c)=>c.charCodeAt(0));
+    const bytes = await storedImageBytes(b64);
     const fn = `pending-${id}-${Date.now()}.jpg`;
     const { error: upErr } = await supabase.storage.from("instagram-images").upload(fn, bytes, {
       contentType: "image/jpeg",

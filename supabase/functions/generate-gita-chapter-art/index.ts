@@ -54,6 +54,7 @@ import { backgroundDeadline, correctionLead, imagePayload, initialRecord, needsB
 import { rowRedoHandlers } from "../_shared/rowRedo.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
 import { renderFailureMessage, renderWithRetry } from "../_shared/togetherRetry.ts";
+import { storedImageBytes } from "../_shared/watermarkClient.ts";
 // A request is cut at 150s, a streamed one too. A run plans to have its last
 // chapter stored by request start + REQUEST_BUDGET_MS, leaving time to respond.
 const REQUEST_BUDGET_MS = 140_000;
@@ -419,7 +420,7 @@ async function buildChapter(ch, researchOptions, requestStart) {
   const failures = [];
   const image = await renderText(sanitized, failures);
   if (!image) throw new Error(renderFailureMessage(failures, `All image attempts failed for chapter ${ch.n}`));
-  const bytes = Uint8Array.from(atob(image.b64), (c)=>c.charCodeAt(0));
+  const bytes = await storedImageBytes(image.b64);
   const fn = `gita-ch${ch.n}-${Date.now()}.jpg`;
   const { error: upErr } = await supabase.storage.from("instagram-images").upload(fn, bytes, {
     contentType: "image/jpeg",

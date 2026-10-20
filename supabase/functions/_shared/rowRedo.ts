@@ -18,6 +18,8 @@
 //   meanwhile costs no further render or check.
 // - writeRecord() stores the final check record on whichever image the row holds.
 
+import { storedImageBytes } from "./watermarkClient.ts";
+
 // deno-lint-ignore no-explicit-any
 type SupabaseLike = any;
 
@@ -55,10 +57,6 @@ export interface RowRedoHandlers {
   writeRecord: (record: Record<string, unknown>) => Promise<boolean>;
   /** The file the row holds now (moves on with each swap). */
   current: () => { url: string; path: string };
-}
-
-function decode(b64: string): Uint8Array {
-  return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 }
 
 export function rowRedoHandlers(t: RowRedoTarget): RowRedoHandlers {
@@ -100,7 +98,7 @@ export function rowRedoHandlers(t: RowRedoTarget): RowRedoHandlers {
   const swap: RowRedoHandlers["swap"] = async (attempt, record) => {
     const path = t.fileName(attempt.index);
     try {
-      const { error } = await t.supabase.storage.from(t.bucket).upload(path, decode(attempt.b64), { contentType: "image/jpeg", upsert: false });
+      const { error } = await t.supabase.storage.from(t.bucket).upload(path, await storedImageBytes(attempt.b64), { contentType: "image/jpeg", upsert: false });
       if (error) {
         log(`${t.tag} re-render ${attempt.index} not stored: ${error.message}`);
         return false;

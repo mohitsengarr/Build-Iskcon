@@ -16,6 +16,7 @@ import {
 } from "../_shared/visualCheck.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
 import { renderFailureMessage, renderWithRetry, type TogetherFailure } from "../_shared/togetherRetry.ts";
+import { storedImageBytes } from "../_shared/watermarkClient.ts";
 import { type FluxAttempt, runFluxAttempts } from "./fluxAttempts.ts";
 import { inlineImagePrompt } from "./inlinePrompt.ts";
 import {
@@ -651,7 +652,7 @@ async function researchFacts(input: SceneResearchInput): Promise<string[]> {
 // suffix names a background re-render's file ("-r1"): always a new file beside the
 // stored one, never an overwrite of it.
 async function uploadImage(b64: string, ch: ChapterInfo, suffix = ""): Promise<{ url: string; path: string }> {
-  const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const bytes = await storedImageBytes(b64);
   const fn = `ig-canto${ch.skandh}-ch${ch.number}-${Date.now()}${suffix}.jpg`;
   const { error } = await supabase.storage.from("instagram-images").upload(fn, bytes, { contentType: "image/jpeg", upsert: !suffix });
   if (error) throw new Error(`Upload: ${error.message}`);

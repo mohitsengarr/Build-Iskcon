@@ -2,6 +2,7 @@
 // (supabase/functions/<fn>/index.ts) under `node --experimental-strip-types`:
 //   jsr:*                      -> an empty module (type-only imports in Deno)
 //   https://esm.sh/@supabase/* -> supabase-js-stub.mjs (delegates to globalThis.__sb)
+//   https://deno.land/x/imagescript@* -> imagescript-stub.mjs (the watermark's image codec)
 // The pinned Anthropic SDK is stubbed by npm-stub-hooks.mjs, registered alongside.
 // No network: any other remote specifier fails to resolve.
 export async function resolve(specifier, context, nextResolve) {
@@ -10,6 +11,9 @@ export async function resolve(specifier, context, nextResolve) {
   }
   if (specifier.startsWith("https://esm.sh/@supabase/supabase-js")) {
     return { url: new URL("./supabase-js-stub.mjs", import.meta.url).href, shortCircuit: true };
+  }
+  if (specifier.startsWith("https://deno.land/x/imagescript@")) {
+    return { url: new URL("./imagescript-stub.mjs", import.meta.url).href, shortCircuit: true };
   }
   return nextResolve(specifier, context);
 }

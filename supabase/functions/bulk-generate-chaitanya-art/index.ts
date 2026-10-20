@@ -106,6 +106,7 @@ import {
 import { rowRedoHandlers } from "../_shared/rowRedo.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
 import { renderFailureMessage, renderWithRetry, type TogetherFailure } from "../_shared/togetherRetry.ts";
+import { storedImageBytes } from "../_shared/watermarkClient.ts";
 import { type FluxAttempt, runFluxAttempts } from "./fluxAttempts.ts";
 import { type ResearchFn, researchScene } from "./researchMode.ts";
 
@@ -554,7 +555,7 @@ async function generateImage(
 }
 
 async function uploadImage(b64: string, chapter: ChaitanyaChapter): Promise<{ url: string; path: string }> {
-  const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const bytes = await storedImageBytes(b64);
   const fn = `art-${chapter.part}-ch${chapter.number_in_part}-${Date.now()}.jpg`;
   const { error } = await supabase.storage.from("chaitanya-art-images").upload(fn, bytes, { contentType: "image/jpeg", upsert: true });
   if (error) throw new Error(`Upload: ${error.message}`);
