@@ -14,6 +14,8 @@ import {
   runInBackground,
   type VisualCheckRecord,
 } from "../_shared/visualCheck.ts";
+import { detectImageMediaType, MAX_CHECK_IMAGE_B64_CHARS } from "../_shared/visualCheckCore.ts";
+import { storyText } from "../_shared/postText.ts";
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
 import { renderFailureMessage, renderWithRetry, type TogetherFailure } from "../_shared/togetherRetry.ts";
 import { storedImageBytes } from "../_shared/watermarkClient.ts";
@@ -681,8 +683,127 @@ async function storedImagePath(id: number | string): Promise<string | null | und
 }
 
 // The visual_check column is missing (migration not applied): PGRST204 or 42703.
-function missingColumn(error: { code?: string; message?: string } | null): boolean {
-  return !!error && (error.code === "PGRST204" || error.code === "42703" || /visual_check/.test(error.message ?? ""));
+
+// ── What the picture shows ───────────────────────────────────────────────────
+// A caption that says what is in the painting, written from the RENDERED image
+// rather than from the prompt that asked for it. The two differ often enough
+// that the visual check exists for that reason alone, so describing the prompt
+// would sooner or later caption a picture nobody drew.
+//
+// It lives in the caption as its own paragraph, marked 🎨, which means the
+// publish path needs no change: Instagram sends the whole caption, and
+// storyText (_shared/postText.ts) keeps unmarked paragraphs, so Threads carries
+// the description with the story and still drops the mantra and the reference.
+
+const DESCRIPTION_MARK = "🎨";
+/** Paragraphs the caption reserves for the mantra and the book reference. */
+const CAPTION_MARKED = /^(?:📖|🙏)/u;
+
+/**
+ * Replace (or remove) the description paragraph. Idempotent: a caption that
+ * already carries one is rewritten, never given a second, so a re-render can
+ * call this on the original caption as many times as it needs.
+ */
+function withSceneDescription(caption: unknown, description: string | null): string {
+  const paragraphs = String(caption ?? "")
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter((p) => p && !p.startsWith(DESCRIPTION_MARK));
+  if (description) {
+    const line = `${DESCRIPTION_MARK} ${description}`;
+    // After the story, before the mantra and the reference.
+    const marked = paragraphs.findIndex((p) => CAPTION_MARKED.test(p));
+    if (marked < 0) paragraphs.push(line);
+    else paragraphs.splice(marked, 0, line);
+  }
+  return paragraphs.join("\n\n");
+}
+
+const DESCRIBE_TIMEOUT_MS = 20_000;
+
+/**
+ * One sentence on what the image shows. Never throws and never blocks a post:
+ * every failure (no key, oversized or unknown image, API error, timeout, an
+ * answer that is not a sentence) returns null, and the caption simply carries
+ * no description.
+ *
+ * The scene's title, characters and the post's own words go in as context so the
+ * sentence can name who is present — but the instruction is to describe what is
+ * VISIBLE, so a render that did not follow the brief is not described as though
+ * it had.
+ */
+async function describeImage(
+  b64: unknown,
+  context: { sceneTitle?: string; characters?: string[]; story?: string } = {},
+): Promise<string | null> {
+  try {
+    if (!ANTHROPIC_KEY) return null;
+    if (typeof b64 !== "string" || b64.length === 0 || b64.length > MAX_CHECK_IMAGE_B64_CHARS) return null;
+    const mediaType = detectImageMediaType(b64);
+    if (!mediaType) return null;
+
+    const names = (context.characters || []).filter(Boolean).join(", ");
+    const system = [
+      "You write the one-line description that sits under a devotional painting in a social post.",
+      "Rules:",
+      "- ONE sentence, under 180 characters, plain present tense.",
+      "- Describe only what is VISIBLE in this image: who is present, what they are doing, where.",
+      "- Context names may be used ONLY for figures the image clearly shows. If the image does not",
+      "  show what the context describes, describe the image, not the context.",
+      "- No interpretation, no moral, no scripture citation, no praise, no hashtags, no emoji, no quotes.",
+      "Reply with the sentence ONLY.",
+    ].join("\n");
+    const prompt = [
+      context.sceneTitle ? `Scene (context only): ${context.sceneTitle}` : "",
+      names ? `Figures the scene intends (context only): ${names}` : "",
+      // The post's own words: usually the only place the figures are named, which
+      // is what lets the sentence say "Indra" instead of "a crowned man".
+      context.story ? `What the post says (context only): ${context.story.slice(0, 400)}` : "",
+      "Describe this painting.",
+    ].filter(Boolean).join("\n");
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), DESCRIBE_TIMEOUT_MS);
+    let r: Response;
+    try {
+      r = await fetch(ANTHROPIC_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          model: "claude-haiku-4-5",
+          max_tokens: 150,
+          system,
+          messages: [{
+            role: "user",
+            content: [
+              { type: "image", source: { type: "base64", media_type: mediaType, data: b64 } },
+              { type: "text", text: prompt },
+            ],
+          }],
+        }),
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+    if (!r.ok) {
+      console.warn(`[instagram-post] description: Claude ${r.status}`);
+      return null;
+    }
+    const j = await r.json();
+    const t = j?.content?.[0]?.text;
+    if (typeof t !== "string") return null;
+    // One line, no stray quotes, and never long enough to crowd out the story.
+    const line = t.trim().replace(/^["']|["']$/g, "").replace(/\s+/g, " ").slice(0, 220).trim();
+    return line.length >= 15 ? line : null;
+  } catch (err) {
+    console.warn(`[instagram-post] description failed: ${err}`);
+    return null;
+  }
+}
+
+function missingColumn(error: { code?: string; message?: string } | null, column = "visual_check"): boolean {
+  return !!error && (error.code === "PGRST204" || error.code === "42703" || error.message?.includes(column) === true);
 }
 
 // Unattended generation. The post was stored after one render; this checks it
@@ -705,6 +826,9 @@ function redoAfterResponse(o: {
   stored: { url: string; path: string };
   record: VisualCheckRecord;
   invocationStart: number;
+  /** The caption as inserted, WITHOUT any description: the base each swap rewrites. */
+  baseCaption: string;
+  describe: { sceneTitle?: string; characters?: string[]; story?: string };
 }): void {
   const tag = `[instagram-post] #${o.id}`;
   // The file the row holds: the compare-and-swap target, moved on by each swap.
@@ -719,16 +843,34 @@ function redoAfterResponse(o: {
       console.warn(`${tag} re-render ${attempt.index} not stored: ${e}`);
       return false;
     }
+    // The stored description belongs to the image being replaced, so it is
+    // rewritten from the new one in the SAME compare-and-swap: a reader can
+    // never see this image under the other one's description. A description
+    // that cannot be written drops the paragraph rather than keeping a wrong one.
+    const description = await describeImage(attempt.b64, o.describe);
+    const fields = {
+      image_url: next.url,
+      image_path: next.path,
+      visual_check: flagged(record, attempt),
+      caption: withSceneDescription(o.baseCaption, description),
+      scene_description: description,
+    };
+    const applySwap = (patch: Record<string, unknown>) => supabase
+      .from("ig_pending_review")
+      .update(patch)
+      .eq("id", o.id)
+      .eq("status", "pending")
+      .eq("image_path", current.path)
+      .is("reviewed_at", null)
+      .select("id");
+
     let result: { data: unknown; error: { message: string } | null };
     try {
-      result = await supabase
-        .from("ig_pending_review")
-        .update({ image_url: next.url, image_path: next.path, visual_check: flagged(record, attempt) })
-        .eq("id", o.id)
-        .eq("status", "pending")
-        .eq("image_path", current.path)
-        .is("reviewed_at", null)
-        .select("id");
+      result = await applySwap(fields);
+      if (result.error && missingColumn(result.error, "scene_description")) {
+        const { scene_description: _dropped, ...withoutColumn } = fields;
+        result = await applySwap(withoutColumn);
+      }
     } catch (e) {
       result = { data: null, error: { message: String(e) } };
     }
@@ -916,6 +1058,16 @@ async function generateForChapter(chapterOverride: number | null, invocationStar
     ...initialRecord({ factsUsed: image.checkFacts, safeFallback: image.safeFallback, imageModel: image.model, startedAt: Date.now() }),
     safe_fallback: image.safeFallback,
   };
+  // Written from the stored image, so the caption describes the picture the
+  // reviewer sees. null (any failure) simply leaves the caption as it was.
+  const sceneDescription = await describeImage(image.b64, {
+    sceneTitle: usedSceneInfo?.title ?? chapter.title,
+    characters: characterNames,
+    story: storyText(caption) || undefined,
+  });
+  const captionWithDescription = withSceneDescription(caption, sceneDescription);
+  console.log(`Description: ${sceneDescription ? `"${sceneDescription}"` : "(none)"}`);
+
   const pendingRow = {
     chapter_global_number: chapter.globalNumber,
     chapter_canto: chapter.skandh,
@@ -923,7 +1075,8 @@ async function generateForChapter(chapterOverride: number | null, invocationStar
     chapter_title: chapter.title,
     image_url: url,
     image_path: path,
-    caption,
+    caption: captionWithDescription,
+    scene_description: sceneDescription,
     hashtags,
     status: "pending",
     mahajan_key: mahajanKey,
@@ -943,6 +1096,17 @@ async function generateForChapter(chapterOverride: number | null, invocationStar
     recordStored = false;
     ({ data: inserted, error: insErr } = await supabase.from("ig_pending_review").insert(pendingRow).select("id").single());
   }
+  if (insErr && missingColumn(insErr, "scene_description")) {
+    // Same again for the description column. The description still rides inside
+    // the caption, so only the separately addressable copy is lost.
+    console.warn(`[instagram-post] insert with scene_description failed (${insErr.message}); saving without that column`);
+    const { scene_description: _dropped, ...withoutDescription } = pendingRow;
+    ({ data: inserted, error: insErr } = await supabase
+      .from("ig_pending_review")
+      .insert(recordStored ? { ...withoutDescription, visual_check: visualCheck } : withoutDescription)
+      .select("id")
+      .single());
+  }
   if (insErr) throw new Error(`Pending insert: ${insErr.message}`);
 
   // The post exists now, so its check starts here, before the response; the
@@ -951,7 +1115,15 @@ async function generateForChapter(chapterOverride: number | null, invocationStar
   if (needsBackgroundCheck(visualCheck)) {
     const id = inserted?.id;
     if (recordStored && (typeof id === "number" || typeof id === "string")) {
-      redoAfterResponse({ id, chapter, image, stored: { url, path }, record: visualCheck, invocationStart });
+      redoAfterResponse({
+        id, chapter, image, stored: { url, path }, record: visualCheck, invocationStart,
+        baseCaption: caption,
+        describe: {
+          sceneTitle: usedSceneInfo?.title ?? chapter.title,
+          characters: characterNames,
+          story: storyText(caption) || undefined,
+        },
+      });
     } else {
       console.warn(`[instagram-post] visual check not started: ${recordStored ? "no review row id" : "the visual_check column is missing"}`);
     }
@@ -1019,6 +1191,70 @@ async function backfillVerses(limit: number): Promise<{ scanned: number; updated
   return { scanned: (rows || []).length, updated, errors };
 }
 
+/** An already-stored image, as base64, for describing it after the fact. */
+async function fetchImageB64(url: unknown): Promise<string | null> {
+  try {
+    if (typeof url !== "string" || !url) return null;
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    const bytes = new Uint8Array(await r.arrayBuffer());
+    // In chunks: spreading a whole image into String.fromCharCode blows the stack.
+    let binary = "";
+    const CHUNK = 0x8000;
+    for (let i = 0; i < bytes.length; i += CHUNK) binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+    return btoa(binary);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Describe posts that were created before descriptions existed. Pending and
+ * unclaimed rows only: an approved post may already be published, and its
+ * caption is what went out.
+ *
+ * Writes nothing unless `apply` is true, so the sentences can be read first.
+ */
+async function backfillDescriptions(limit: number, apply: boolean) {
+  const { data, error } = await supabase
+    .from("ig_pending_review")
+    .select("id, image_url, caption, chapter_title")
+    .eq("status", "pending")
+    .is("scene_description", null)
+    .is("reviewed_at", null)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(`read: ${error.message}`);
+
+  const results: Array<Record<string, unknown>> = [];
+  for (const row of data || []) {
+    const b64 = await fetchImageB64(row.image_url);
+    if (!b64) { results.push({ id: row.id, ok: false, reason: "image could not be fetched" }); continue; }
+    const description = await describeImage(b64, {
+      sceneTitle: row.chapter_title ?? undefined,
+      story: storyText(row.caption) || undefined,
+    });
+    if (!description) { results.push({ id: row.id, ok: false, reason: "no description produced" }); continue; }
+    if (!apply) { results.push({ id: row.id, ok: true, applied: false, description }); continue; }
+    // Still pending and unclaimed at the moment of the write.
+    const { data: updated, error: upErr } = await supabase
+      .from("ig_pending_review")
+      .update({ caption: withSceneDescription(row.caption, description), scene_description: description })
+      .eq("id", row.id)
+      .eq("status", "pending")
+      .is("reviewed_at", null)
+      .select("id");
+    results.push({
+      id: row.id,
+      ok: !upErr && Array.isArray(updated) && updated.length === 1,
+      applied: true,
+      description,
+      reason: upErr?.message ?? (Array.isArray(updated) && updated.length ? undefined : "no longer pending"),
+    });
+  }
+  return results;
+}
+
 Deno.serve(async (req: Request) => {
   const invocationStart = Date.now();
   if (req.method === "OPTIONS") {
@@ -1029,6 +1265,17 @@ Deno.serve(async (req: Request) => {
   let chapterOverride: number | null = null;
   let body: Record<string, unknown> = {};
   if (req.method === "POST") body = await req.json().catch(() => ({})) as Record<string, unknown>;
+
+  // On-demand description backfill — handled here and RETURNED, never falls
+  // through to generation. Reads only unless { apply: true }.
+  if (body?.action === "backfill_descriptions") {
+    try {
+      const results = await backfillDescriptions(Number(body?.limit) || 5, body?.apply === true);
+      return new Response(JSON.stringify({ success: true, applied: body?.apply === true, results }, null, 1), { headers: { "Content-Type": "application/json" } });
+    } catch (err) {
+      return new Response(JSON.stringify({ success: false, error: String(err) }), { status: 500, headers: { "Content-Type": "application/json" } });
+    }
+  }
 
   // On-demand verse backfill — handled here and RETURNED, never falls through to generation.
   if (body?.action === "backfill_verses") {

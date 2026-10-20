@@ -1254,6 +1254,19 @@ interface ReaderScene {
   visual_check?: VisualCheck | null;
 }
 
+// instagram-post writes the artwork description into the caption as its own
+// paragraph, marked 🎨, so every publish path carries it without knowing about it.
+// The review card shows it under the image instead, so this takes it back out of
+// the caption body rather than showing the reviewer the same sentence twice.
+const DESCRIPTION_MARK = "🎨";
+function captionWithoutDescription(caption: string): string {
+  return String(caption ?? "")
+    .split(/\n\s*\n/)
+    .map((para) => para.trim())
+    .filter((para) => para && !para.startsWith(DESCRIPTION_MARK))
+    .join("\n\n");
+}
+
 const BOOK_LABEL: Record<string, string> = {
   bhagavatam: "Śrīmad Bhāgavatam",
   chaitanya: "Caitanya-caritāmṛta",
@@ -1870,6 +1883,8 @@ export default function Gallery() {
     error_message: string | null;
     image_prompt?: string | null;
     image_path?: string | null;
+    /** One line on what the artwork shows, written from the rendered image. */
+    scene_description?: string | null;
     visual_check?: VisualCheck | null;
   }
   const [pending, setPending] = useState<PendingPost[]>([]);
@@ -3163,6 +3178,10 @@ export default function Gallery() {
                     const isExpanded = pendingExpanded === p.id;
                     const isReviewing = reviewing.has(p.id);
                     const isRegenerating = regeneratingPending.has(p.id);
+                    // Shown under the image, and taken out of the caption body below
+                    // so the reviewer does not read it twice. Older posts have none.
+                    const described = p.scene_description?.trim() || null;
+                    const captionBody = described ? captionWithoutDescription(p.caption) : p.caption;
                     // Convert the pending row into a GalleryItem shape so the
                     // existing lightbox component can display it full-screen.
                     const openPreview = () => {
@@ -3201,6 +3220,11 @@ export default function Gallery() {
                             <Maximize2 className="w-7 h-7 text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow" />
                           </span>
                         </button>
+                        {described && (
+                          <p className="text-[11px] text-stone-500 italic leading-snug mt-1.5" title="Published as part of the caption">
+                            {DESCRIPTION_MARK} {described}
+                          </p>
+                        )}
                         <ReplacementNote row={p} />
                         <VisualCheckNote check={p.visual_check} />
                         </div>
@@ -3278,9 +3302,9 @@ export default function Gallery() {
                             )}
                           </div>
                           <p className={`text-xs text-stone-600 leading-relaxed whitespace-pre-line ${isExpanded ? "" : "line-clamp-3"}`}>
-                            {p.caption}
+                            {captionBody}
                           </p>
-                          {p.caption.length > 200 && (
+                          {captionBody.length > 200 && (
                             <button
                               onClick={() => setPendingExpanded(isExpanded ? null : p.id)}
                               className="text-[10px] font-semibold text-amber-700 hover:text-amber-900 mt-1"
