@@ -12,6 +12,7 @@ import Gita from "@/pages/gita";
 import Library from "@/pages/library";
 import JapaCounter from "@/pages/japa-counter";
 import LiveCounter from "@/pages/live-counter";
+import BhaktigramApp from "@/pages/bhaktigram-app";
 import PersonaGallery from "@/pages/persona-gallery";
 import Admin from "@/pages/admin";
 import Gallery from "@/pages/gallery";
@@ -47,6 +48,8 @@ function App() {
             <Route path="/wall" component={Wallpaper} />
             {/* Live count of devotees who have joined Bhaktigram (SEN-907). */}
             <Route path="/livecounter" component={LiveCounter} />
+            {/* Bhaktigram landing page (SEN-935); /bhaktigram stays the gallery feed. */}
+            <Route path="/app" component={BhaktigramApp} />
             <Route path="/personas" component={PersonaGallery} />
             <Route path="/gallery" component={Gallery} />
             <Route path="/image-playground" component={ImagePlayground} />

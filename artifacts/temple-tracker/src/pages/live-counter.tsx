@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Layout } from "@/components/layout/Layout";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/sbRest";
+import { EXCLUDED_DEVICES, LAUNCH_ISO, LAUNCH_LABEL, countRows, notOurs, sinceLaunch } from "@/lib/bhaktigramJoined";
 import { JoinsChart } from "@/components/JoinsChart";
 import { JoinsPlaces } from "@/components/JoinsPlaces";
 import type { ZoneCount } from "@/lib/timezoneRegions";
@@ -15,44 +16,11 @@ import type { ZoneCount } from "@/lib/timezoneRegions";
 //
 // "Live" here means polled, not streamed: every POLL_MS the page asks again. It
 // says so on the page rather than implying a socket it does not have.
+//
+// Who counts (launch date, our own devices) lives in lib/bhaktigramJoined, shared
+// with the /app landing page.
 
 const POLL_MS = 20_000;
-
-// Bhaktigram went public on Google Play late on 6 October 2026, and the installs
-// start arriving at 02:00 UTC on the 7th. Everything before that line is the
-// closed test and our own devices — 45 profiles that are not devotees who found
-// the app (SEN-907). The counter therefore counts from launch, and says so, rather
-// than quietly inflating itself with its own test accounts.
-const LAUNCH_ISO = "2026-10-07T00:00:00Z";
-const LAUNCH_LABEL = "7 October 2026";
-
-// Our own devices, excluded by id as well as by date. dev_762f… is the emulator
-// this app is developed on — it identifies itself in the data as "Test Mohit" and
-// predates launch, but naming it here means a test install can never quietly
-// become a devotee in the count (Mohit, 8 Oct).
-const EXCLUDED_DEVICES = ["dev_762fbwdgbe3mtsqgeo3"];
-
-const notOurs = `&device_id=not.in.(${EXCLUDED_DEVICES.join(",")})`;
-const sinceLaunch = `&created_at=gte.${LAUNCH_ISO}${notOurs}`;
-
-/** Count rows matching a filter without fetching any of them. */
-async function countRows(filter = ""): Promise<number | null> {
-  const r = await fetch(
-    `${SUPABASE_URL}/rest/v1/bhaktigram_profiles?select=device_id&limit=0${filter}`,
-    {
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        Prefer: "count=exact",
-      },
-    },
-  );
-  if (!r.ok) return null;
-  // content-range looks like "*/100" when limit=0.
-  const total = r.headers.get("content-range")?.split("/")[1];
-  const n = Number(total);
-  return Number.isFinite(n) ? n : null;
-}
 
 /** How far back the chart can be asked to look. */
 const CHART_DAYS = 30;
@@ -81,7 +49,7 @@ async function fetchJoinTimes(): Promise<string[] | null> {
  * This is an aggregate and only an aggregate: bhaktigram_join_regions itself is
  * closed to the anon key, so no row tying a device to a place ever reaches the
  * browser. The launch date and the excluded devices are passed in rather than
- * written into the function, so this page stays the one place they are set.
+ * written into the function, so lib/bhaktigramJoined stays the one place they are set.
  */
 async function fetchJoinPlaces(): Promise<ZoneCount[] | null> {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/bhaktigram_joins_by_timezone`, {
