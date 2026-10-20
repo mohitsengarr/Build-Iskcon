@@ -491,6 +491,28 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify(answer.body), { status: answer.status, headers: corsHeaders });
     }
 
+    // Approved posts go out ONE AT A TIME (owner, 2026-10-20): approving queues the
+    // post (repost_requested_at) and repost-replaced-posts sends the oldest queued
+    // post to Instagram and Threads on its schedule, so approving several at once
+    // never posts several at once. The in-app Bhāgavatam channel gets it now.
+    // IG_PUBLISH_ON_APPROVE=true restores publishing at approval (below).
+    if (Deno.env.get("IG_PUBLISH_ON_APPROVE") !== "true") {
+      const queuedAt = new Date().toISOString();
+      const queueErr = await markApproved(id, { status: "approved", reviewed_at: queuedAt, repost_requested_at: queuedAt, error_message: null });
+      if (queueErr) {
+        await releaseClaim(id, claim.stamp);
+        return new Response(JSON.stringify({ error: `Approve update: ${queueErr}. Nothing was published or queued; try again.` }), { status: 500, headers: corsHeaders });
+      }
+      const channel = await crossPostToBhagavatamChannel(post);
+      if (!channel.ok) {
+        await supabase.from("ig_pending_review").update({ error_message: `bhagavatam-channel: ${channel.error}` }).eq("id", id);
+      }
+      return new Response(JSON.stringify({
+        success: true, status: "approved", id, queued: true, channelPosted: channel.ok,
+        message: `Approved and queued: posts go out to Instagram and Threads one at a time${channel.ok ? "; it is in the Bhāgavatam channel now" : ""}.`,
+      }), { headers: corsHeaders });
+    }
+
     // action === "approve". Record that publishing starts, on this request's own
     // claim, before any Meta, Buffer or channel call: a stale claim with this marker
     // is never taken over, so a request that dies from here on is never repeated.

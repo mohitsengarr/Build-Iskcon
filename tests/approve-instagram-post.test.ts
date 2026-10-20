@@ -40,6 +40,8 @@ const ENV: Record<string, string> = {
   SUPABASE_SERVICE_ROLE_KEY: "service-test",
   IG_USER_ID: "ig-user",
   META_ACCESS_TOKEN: "meta-test",
+  // These tests cover publishing at approval; the default, queueing, has its own below.
+  IG_PUBLISH_ON_APPROVE: "true",
 };
 const OLD = { path: "ig-canto11-ch1-1.jpg", url: "https://storage.test/ig-canto11-ch1-1.jpg" };
 const NEW = { path: "ig-canto11-ch1-1-r1.jpg", url: "https://storage.test/ig-canto11-ch1-1-r1.jpg" };
@@ -701,7 +703,7 @@ describe("approve-instagram-post claims the image the reviewer saw", () => {
     assert.equal(json.replacement, true);
     assert.equal(row.status, "approved");
     assert.match(String(row.repost_requested_at), /^\d{4}-\d{2}-\d{2}T/);
-    assert.equal(db.events.some((e) => e.startsWith("graph:") || e === "insert:bhagavatam_channel_posts"), false, db.events.join(" "));
+    assert.equal(db.events.some((e) => e.startsWith("graph:") || e === "insert:bhaktigram_group_messages"), false, db.events.join(" "));
     assert.deepEqual(net.media, []);
     assert.equal(db.of("marker").length, 0, "no publishing marker: nothing is published");
   });
@@ -718,5 +720,63 @@ describe("approve-instagram-post claims the image the reviewer saw", () => {
     assert.equal(row.status, "rejected");
     assert.deepEqual(db.removed, [OLD.path]);
     assert.deepEqual(net.functionCalls, [], "instagram-post is not asked for a new post");
+  });
+
+  // ── The posting queue (default: IG_PUBLISH_ON_APPROVE unset) ───────────────
+
+  async function withoutPublishOnApprove<T>(fn: () => Promise<T>): Promise<T> {
+    const saved = ENV.IG_PUBLISH_ON_APPROVE;
+    delete ENV.IG_PUBLISH_ON_APPROVE;
+    try {
+      return await fn();
+    } finally {
+      ENV.IG_PUBLISH_ON_APPROVE = saved;
+    }
+  }
+
+  test("by default an approval queues the post: no Meta or Buffer call, and the post is in the in-app channel", async () => {
+    // Arrange
+    const row = pendingRow();
+    const { db, net } = setup(row);
+    // Act
+    const { status, json } = await withoutPublishOnApprove(() => post({ id: 77, action: "approve", image_path: OLD.path }));
+    // Assert
+    assert.equal(status, 200, JSON.stringify(json));
+    assert.equal(json.queued, true);
+    assert.equal(row.status, "approved");
+    assert.match(String(row.repost_requested_at), ISO);
+    assert.deepEqual(net.media, [], "nothing goes to Instagram at approval");
+    assert.deepEqual(net.publishes, []);
+    assert.equal(db.of("marker").length, 0, "no publishing marker: nothing is published");
+    assert.ok(db.events.includes("insert:bhaktigram_group_messages"), db.events.join(" "));
+  });
+
+  test("approving several posts queues each one and publishes none of them", async () => {
+    // Arrange
+    const rows = [pendingRow({ id: 77 }), pendingRow({ id: 78 })];
+    const published: unknown[] = [];
+    // Act
+    for (const row of rows) {
+      const { net } = setup(row);
+      await withoutPublishOnApprove(() => post({ id: row.id, action: "approve", image_path: OLD.path }));
+      published.push(...net.publishes, ...net.media);
+    }
+    // Assert
+    assert.deepEqual(rows.map((r) => [r.status, typeof r.repost_requested_at]), [["approved", "string"], ["approved", "string"]]);
+    assert.deepEqual(published, []);
+  });
+
+  test("a queued approval whose update fails releases the claim, and nothing is published or queued", async () => {
+    // Arrange
+    const row = pendingRow();
+    const { net } = setup(row, { fail: (kind) => (kind === "approve" ? "boom" : null) });
+    // Act
+    const { status, json } = await withoutPublishOnApprove(() => post({ id: 77, action: "approve", image_path: OLD.path }));
+    // Assert
+    assert.equal(status, 500);
+    assert.match(json.error, /Nothing was published or queued/);
+    assert.equal(row.status, "pending");
+    assert.equal(row.reviewed_at, null, "the claim is released");
+    assert.deepEqual(net.media, []);
   });
 });

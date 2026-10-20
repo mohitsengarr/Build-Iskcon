@@ -1,10 +1,11 @@
-// The re-post queue (repost-replaced-posts). An approved Instagram post whose
-// image an approved replacement took over (_shared/replacements.ts) waits with
-// repost_requested_at set. Each run posts the oldest few again — Instagram, then
-// Threads, one channel per republish call — so replaced posts go out a little at
-// a time instead of all at once. A post leaves the queue (repost_requested_at
-// cleared, reposted_at stamped) once Instagram took it; otherwise it stays for
-// the next run.
+// The posting queue (repost-replaced-posts). Approved Instagram posts go out one
+// at a time (owner, 2026-10-20): approving a post queues it (repost_requested_at,
+// approve-instagram-post), and so does approving a replacement for a post that
+// was published already (_shared/replacements.ts). Each run posts the oldest few —
+// Instagram, then Threads, one channel per republish call — posts never published
+// before ahead of reposts of replaced images, so a new post is not held behind a
+// long run of reposts. A post leaves the queue (repost_requested_at cleared,
+// reposted_at stamped) once Instagram took it; otherwise it stays for the next run.
 
 // deno-lint-ignore no-explicit-any
 type SupabaseLike = any;
@@ -41,14 +42,20 @@ export async function runRepostQueue(o: {
   now?: () => Date;
 }): Promise<{ queued: Array<{ id: number; chapter_title: unknown; repost_requested_at: string }>; runs: RepostRun[] }> {
   const now = o.now ?? (() => new Date());
-  const { data, error } = await o.supabase.from("ig_pending_review")
-    .select("id, chapter_title, repost_requested_at")
-    .eq("status", "approved")
-    .not("repost_requested_at", "is", null)
-    .order("repost_requested_at", { ascending: true })
-    .limit(postsPerRun(o.limit));
-  if (error) throw new Error(`Reading the re-post queue: ${error.message}`);
-  const queued = Array.isArray(data) ? data : [];
+  const take = postsPerRun(o.limit);
+  // Never published (no channel post id yet) first, then reposts; oldest first in each.
+  const read = async (neverPosted: boolean, n: number) => {
+    let q = o.supabase.from("ig_pending_review")
+      .select("id, chapter_title, repost_requested_at")
+      .eq("status", "approved")
+      .not("repost_requested_at", "is", null);
+    q = neverPosted ? q.is("buffer_post_ids", null) : q.not("buffer_post_ids", "is", null);
+    const { data, error } = await q.order("repost_requested_at", { ascending: true }).limit(n);
+    if (error) throw new Error(`Reading the posting queue: ${error.message}`);
+    return Array.isArray(data) ? data : [];
+  };
+  const fresh = await read(true, take);
+  const queued = fresh.length < take ? [...fresh, ...(await read(false, take - fresh.length))] : fresh;
   if (o.preview) return { queued, runs: [] };
 
   const runs: RepostRun[] = [];

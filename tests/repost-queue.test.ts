@@ -14,18 +14,20 @@ function fakeDb(rows: Array<Record<string, unknown>>) {
     reads,
     from: () => {
       const eqs: Array<[string, unknown]> = [];
-      let notNull: string | null = null;
+      const notNull: string[] = [];
+      const isNull: string[] = [];
       let limit = Infinity;
       let update: Record<string, unknown> | null = null;
       const q: Record<string, unknown> = {
         select: () => q,
         eq: (c: string, v: unknown) => (eqs.push([c, v]), q),
-        not: (c: string) => ((notNull = c), q),
+        not: (c: string) => (notNull.push(c), q),
+        is: (c: string) => (isNull.push(c), q),
         order: () => q,
         limit: (n: number) => ((limit = n), q),
         update: (v: Record<string, unknown>) => ((update = v), q),
         then: (res: (v: unknown) => unknown) => {
-          let hit = rows.filter((r) => eqs.every(([c, v]) => r[c] === v) && (notNull === null || r[notNull] != null));
+          let hit = rows.filter((r) => eqs.every(([c, v]) => r[c] === v) && notNull.every((c) => r[c] != null) && isNull.every((c) => r[c] == null));
           if (!update) {
             reads.push({ limit });
             hit = [...hit].sort((a, b) => String(a.repost_requested_at).localeCompare(String(b.repost_requested_at))).slice(0, limit);
@@ -59,6 +61,28 @@ describe("runRepostQueue", () => {
     assert.equal(db.rows[1].repost_requested_at, null);
     assert.equal(db.rows[1].reposted_at, "2026-10-20T06:00:00.000Z");
     assert.equal(db.rows[0].repost_requested_at, "2026-10-19T10:00:00.000Z", "the next one waits for the next run");
+  });
+
+  test("a post never published goes ahead of reposts, however long the reposts have waited", async () => {
+    // Arrange: two replaced posts queued yesterday, one new approval today
+    const db = fakeDb([
+      ...queued().map((r) => ({ ...r, buffer_post_ids: [{ service: "instagram", postId: "x" }] })),
+      { id: 9, status: "approved", chapter_title: "New", repost_requested_at: "2026-10-20T05:00:00.000Z", buffer_post_ids: null },
+    ]);
+    const calls: string[] = [];
+    // Act
+    await runRepostQueue({ supabase: db, republish: async (id, s) => (calls.push(`${id}:${s}`), { ok: true, detail: "ok" }), now: () => NOW });
+    // Assert
+    assert.deepEqual(calls, ["9:instagram", "9:threads"]);
+  });
+
+  test("with no new post waiting, the oldest repost goes", async () => {
+    // Arrange
+    const db = fakeDb(queued().map((r) => ({ ...r, buffer_post_ids: [{ service: "instagram", postId: "x" }] })));
+    // Act
+    const out = await runRepostQueue({ supabase: db, republish: async () => ({ ok: true, detail: "ok" }), now: () => NOW });
+    // Assert
+    assert.deepEqual(out.runs.map((r) => r.id), [2]);
   });
 
   test("a post Instagram did not take stays queued for the next run, even when Threads took it", async () => {

@@ -1,12 +1,13 @@
 // Supabase Edge Function: repost-replaced-posts
 //
-// Posts again, a little at a time, the approved Instagram posts whose image an
-// approved replacement took over (_shared/repostQueue.ts). Runs on pg_cron once a
-// day; each run takes the oldest queued post (limit, at most 5) and sends it to
-// Instagram and Threads through approve-instagram-post's republish, which keeps
-// each channel's new post id on the post, or why it failed.
+// The posting queue's worker (_shared/repostQueue.ts): approved Instagram posts
+// go out one at a time — new posts first, then reposts of replaced images. Runs
+// on pg_cron (job 83, twice a day); each run takes the oldest queued post (limit,
+// at most 5) and sends it to Instagram and Threads through approve-instagram-
+// post's republish, which keeps each channel's new post id on the post, or why
+// it failed.
 //
-// POST {}                 post the oldest queued post again
+// POST {}                 post the oldest queued post
 // POST { limit: 2 }       the oldest two
 // POST { preview: true }  list what the next run would post; post nothing
 
