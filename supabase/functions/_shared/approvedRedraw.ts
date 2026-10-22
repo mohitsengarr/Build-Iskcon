@@ -92,6 +92,32 @@ export function legacyReplacementBase(
   };
 }
 
+/**
+ * The chapter-index entry for a static image's chapter. When the index lacks the
+ * chapter (it misses global chapters 320-329, the end of Canto 11 and the start
+ * of Canto 12), its number within the canto is worked out from another chapter
+ * of the same canto: chapters of a canto are numbered consecutively, so
+ * global - number is the same for all of them.
+ */
+export function chapterForEntry(
+  entry: LegacyManifestEntry,
+  chapters: Array<{ globalNumber?: unknown; number?: unknown; skandh?: unknown; title?: unknown }> | null | undefined,
+): { number: number; skandh: number; title: unknown } | null {
+  const g = wholeAtLeast(entry.chapterNumber, 1);
+  if (g === null || !Array.isArray(chapters)) return null;
+  const direct = chapters.find((c) => c?.globalNumber === g);
+  const n = wholeAtLeast(direct?.number, 1);
+  const k = wholeAtLeast(direct?.skandh, 1);
+  if (direct && n !== null && k !== null) return { number: n, skandh: k, title: direct.title };
+  const canto = wholeAtLeast(entry.cantoNumber, 1);
+  if (canto === null) return null;
+  const anchor = chapters.find((c) =>
+    c?.skandh === canto && wholeAtLeast(c?.globalNumber, 1) !== null && wholeAtLeast(c?.number, 1) !== null);
+  if (!anchor) return null;
+  const inCanto = g - ((anchor.globalNumber as number) - (anchor.number as number));
+  return inCanto >= 1 ? { number: inCanto, skandh: canto, title: null } : null;
+}
+
 /** The gallery's key for a static image: what bhagavatam_image_deletes hides. */
 export function legacyHideKey(entry: LegacyManifestEntry): { chapter_number: number; scene_index: number } | null {
   const g = wholeAtLeast(entry.chapterNumber, 1);

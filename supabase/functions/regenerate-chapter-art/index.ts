@@ -78,6 +78,7 @@ import {
 import { rowRedoHandlers } from "../_shared/rowRedo.ts";
 import {
   KEPT_PREFIX,
+  chapterForEntry,
   isLegacyImageName,
   keptMessage,
   legacyHideKey,
@@ -459,13 +460,14 @@ async function legacySource(name: unknown): Promise<
 > {
   if (!isLegacyImageName(name)) return { error: "legacy_image must be an image file name from the manifest", status: 400 };
   let entry: LegacyManifestEntry | undefined;
-  let chapter: { globalNumber?: unknown; number?: unknown; skandh?: unknown; title?: unknown } | undefined;
+  let chapter: { number?: unknown; skandh?: unknown; title?: unknown } | undefined;
   try {
     const manifest = await (await fetch(`${BUILDISKCON}/api/bhagwatham/image-manifest`)).json();
     entry = (Array.isArray(manifest?.images) ? manifest.images : []).find((e: LegacyManifestEntry) => e?.imagePath === name);
     if (!entry) return { error: `${name} is not in the image manifest`, status: 404 };
     const index = await (await fetch(`${BUILDISKCON}/api/bhagwatham/chapter-index`)).json();
-    chapter = (Array.isArray(index?.chapters) ? index.chapters : []).find((c: { globalNumber?: unknown }) => c?.globalNumber === entry!.chapterNumber);
+    // The index lacks some chapters (320-329): chapterForEntry works those out.
+    chapter = chapterForEntry(entry, Array.isArray(index?.chapters) ? index.chapters : []) ?? undefined;
   } catch (e) {
     return { error: `The image manifest could not be read: ${e}`, status: 502 };
   }

@@ -5,7 +5,7 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  KEPT_PREFIX, isLegacyImageName, keptMessage, legacyHideKey, legacyReplacementBase, sceneDraft,
+  KEPT_PREFIX, chapterForEntry, isLegacyImageName, keptMessage, legacyHideKey, legacyReplacementBase, sceneDraft,
 } from "../supabase/functions/_shared/approvedRedraw.ts";
 
 describe("sceneDraft", () => {
@@ -104,3 +104,31 @@ describe("older static images", () => {
     assert.equal(legacyHideKey({}), null);
   });
 });
+
+describe("chapterForEntry", () => {
+  const INDEX = [
+    { globalNumber: 319, number: 31, skandh: 11, title: "Canto 11, ch 31" },
+    { globalNumber: 330, number: 8, skandh: 12, title: "Canto 12, ch 8" },
+    { globalNumber: 351, number: 29, skandh: 12, title: "Canto 12, ch 29" },
+  ];
+
+  test("takes the chapter from the index when the index has it", () => {
+    assert.deepEqual(chapterForEntry({ chapterNumber: 351, cantoNumber: 12 }, INDEX), { number: 29, skandh: 12, title: "Canto 12, ch 29" });
+  });
+
+  test("works out a chapter the index lacks from another chapter of its canto", () => {
+    // Global 325 is Canto 12, chapter 3: global - number is 322 throughout Canto 12.
+    assert.deepEqual(chapterForEntry({ chapterNumber: 325, cantoNumber: 12 }, INDEX), { number: 3, skandh: 12, title: null });
+  });
+
+  test("cannot place a chapter whose canto has no chapter in the index, or with no canto", () => {
+    assert.equal(chapterForEntry({ chapterNumber: 5, cantoNumber: 1 }, INDEX), null);
+    assert.equal(chapterForEntry({ chapterNumber: 325 }, INDEX), null);
+    assert.equal(chapterForEntry({ chapterNumber: 325, cantoNumber: 12 }, null), null);
+  });
+
+  test("never works out a chapter number below 1", () => {
+    assert.equal(chapterForEntry({ chapterNumber: 300, cantoNumber: 12 }, INDEX), null);
+  });
+});
+
