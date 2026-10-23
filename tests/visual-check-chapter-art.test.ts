@@ -1004,6 +1004,59 @@ describe("chapter-art visual check wiring", () => {
       });
     }
 
+    // ── The watermark backfill marking a card while it rendered (2026-10-22) ──
+    // watermark-image moves a pending card onto a marked copy of its own image
+    // (x.jpg → x-<tag>-wm.jpg). That is still the picture the reviewer saw, so a
+    // regenerate started before the stamp goes ahead instead of failing with 409
+    // after its render was paid for.
+
+    test("a cover watermarked while it rendered is still replaced, and both its files are deleted", async () => {
+      // Arrange: the backfill moves the row onto a marked copy during the render
+      const STAMPED = "gita-old-ab12cd34-wm.jpg";
+      const rowRef: { current: Json } = { current: null };
+      const { db, row, saves } = setup({
+        onRender: () => {
+          rowRef.current.image_path = STAMPED;
+          rowRef.current.image_url = `https://storage.test/storage/v1/object/public/instagram-images/${STAMPED}`;
+        },
+      });
+      rowRef.current = row;
+      makeClaude([0]);
+      // Act
+      const { status, json } = await regen();
+      // Assert
+      assert.equal(status, 200, JSON.stringify(json));
+      assert.equal(saves().length, 2, "the swap is tried again against the marked copy");
+      assert.deepEqual(saves()[1].filters, [["id", 5], ["status", "pending"], ["image_path", STAMPED]]);
+      assert.equal(row.image_path, db.uploads[0].path);
+      assert.deepEqual(
+        db.removals.filter((r) => r.path !== db.uploads[0].path).map((r) => r.path).sort(),
+        ["gita-old-ab12cd34-wm.jpg", "gita-old.jpg"],
+      );
+    });
+
+    for (
+      const c of [
+        { name: "a marked copy of a cover approved meanwhile", change: (row: Json) => ((row.status = "approved"), (row.image_path = "gita-old-ab12cd34-wm.jpg")) },
+        { name: "a file that only looks like a marked copy of another image", change: (row: Json) => (row.image_path = "gita-other-ab12cd34-wm.jpg") },
+      ]
+    ) {
+      test(`${c.name} is not replaced: 409 and one swap only`, async () => {
+        // Arrange
+        const rowRef: { current: Json } = { current: null };
+        const { db, row, saves } = setup({ onRender: () => c.change(rowRef.current) });
+        rowRef.current = row;
+        makeClaude([0]);
+        // Act
+        const { status } = await sendRegen();
+        await settle();
+        // Assert
+        assert.equal(status, 409);
+        assert.equal(saves().length, 1);
+        assert.deepEqual(db.removals, [{ bucket: "instagram-images", path: db.uploads[0].path }]);
+      });
+    }
+
     test("a row that holds no image yet is guarded on image_path being null instead", async () => {
       // Arrange
       const { saves } = setup({ row: { image_path: null, image_url: null } });

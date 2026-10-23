@@ -823,7 +823,8 @@ describe("visual check wiring for ig_pending_review", () => {
       // Assert: the swap, then the final record; the replaced file stays in storage
       assert.equal(updates(db).length, 2);
       const [swap, final] = updates(db);
-      assert.deepEqual(Object.keys(swap.values).sort(), ["image_path", "image_url", "visual_check"]);
+      // Since 7d167a5 the swap also says what the new image shows (caption, scene_description).
+      assert.deepEqual(Object.keys(swap.values).sort(), ["caption", "image_path", "image_url", "scene_description", "visual_check"]);
       assert.deepEqual(swap.eq, [["id", 77], ["status", "pending"], ["image_path", firstFile]]);
       assert.equal(swap.selected, "id");
       assertRecord(swap.values.visual_check, { status: "pass", attempts: 2, chosen_attempt: 1, reason: null }, IG_KEYS);

@@ -90,6 +90,7 @@ import { candidateRow, hasPendingReplacement, type LegacyRef, type ReviewTable }
 import { fallbackSizeFor } from "../_shared/imageSizes.ts";
 import { renderFailureMessage, renderWithRetry, type TogetherFailure } from "../_shared/togetherRetry.ts";
 import { storedImageBytes } from "../_shared/watermarkClient.ts";
+import { isStampedCopyOf } from "../_shared/watermarkStamp.ts";
 
 const TOGETHER_API = "https://api.together.xyz/v1/images/generations";
 const TOGETHER_KEY = Deno.env.get("TOGETHER_API_KEY") || "";
@@ -644,9 +645,12 @@ Deno.serve(async (req: Request) => {
     // during the render would otherwise receive an image nobody reviewed. The old
     // file is deleted only after that update succeeds.
     const oldPath = row.image_path as string | null;
+    // The image the row must still hold: the one the reviewer saw, or its
+    // watermarked copy (below).
+    let heldPath = oldPath;
     const guardedUpdate = (fields: Record<string, unknown>) => {
       let q = supabase.from(b.table).update(fields).eq("id", id).eq("status", "pending");
-      q = oldPath ? q.eq("image_path", oldPath) : q.is("image_path", null);
+      q = heldPath ? q.eq("image_path", heldPath) : q.is("image_path", null);
       return q.select("id");
     };
     const discardNew = async () => {
@@ -655,14 +659,26 @@ Deno.serve(async (req: Request) => {
 
     const saved = { image_url: url, image_path: fn, prompt: prompt.trim(), error_message: null };
     let recordSaved = true;
-    let { data: updRows, error: updErr } = await guardedUpdate({ ...saved, visual_check: record });
+    let fields: Record<string, unknown> = { ...saved, visual_check: record };
+    let { data: updRows, error: updErr } = await guardedUpdate(fields);
     if (updErr && /visual_check/.test(updErr.message)) {
       // The visual_check column is missing (migration not applied yet): save the new
       // image without the record. The check then has nowhere to store its result,
       // so it does not run.
       console.warn(`[regen-chapter] update with visual_check failed (${updErr.message}); saving without it`);
       recordSaved = false;
-      ({ data: updRows, error: updErr } = await guardedUpdate(saved));
+      fields = saved;
+      ({ data: updRows, error: updErr } = await guardedUpdate(fields));
+    }
+    if (!updErr && (!updRows || updRows.length === 0) && oldPath) {
+      // The watermark backfill (watermark-image, _shared/watermarkStamp.ts) may have
+      // moved the card onto a marked copy of the image the reviewer saw while this
+      // rendered. That is the same picture, so the regenerate still goes ahead.
+      const { data: now } = await supabase.from(b.table).select("status, image_path").eq("id", id).maybeSingle();
+      if (now?.status === "pending" && isStampedCopyOf(now.image_path, oldPath)) {
+        heldPath = now.image_path as string;
+        ({ data: updRows, error: updErr } = await guardedUpdate(fields));
+      }
     }
     if (updErr) {
       await discardNew();
@@ -672,8 +688,10 @@ Deno.serve(async (req: Request) => {
       await discardNew();
       return new Response(JSON.stringify({ error: `${book} #${id} was reviewed or changed while it rendered; nothing was replaced. Refresh the gallery.` }), { status: 409, headers: CORS });
     }
-    if (oldPath && oldPath !== fn) {
-      try { await supabase.storage.from(bucketOf(row.image_url) ?? b.bucket).remove([oldPath]); } catch { /* best effort */ }
+    // The image replaced, and its unmarked original when the row held a marked copy.
+    const replacedFiles = [...new Set([oldPath, heldPath])].filter((p): p is string => !!p && p !== fn);
+    if (replacedFiles.length) {
+      try { await supabase.storage.from(bucketOf(row.image_url) ?? b.bucket).remove(replacedFiles); } catch { /* best effort */ }
     }
 
     // The check runs after the response, in waitUntil, so it is registered here,

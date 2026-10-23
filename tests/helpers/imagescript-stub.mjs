@@ -9,6 +9,8 @@ export class Image {
     this.height = height;
     this.label = label;
     this.composites = [];
+    // An even dark image: no mark in it.
+    this.bitmap = new Uint8ClampedArray(width * height * 4).fill(40);
   }
   static async decode(bytes) {
     if (globalThis.__imagescriptFail) throw new Error(globalThis.__imagescriptFail);

@@ -79,6 +79,62 @@ export async function watermarkBytes(
   }
 }
 
+/**
+ * How strongly the mark seems to be there already: the wordmark's pixels (white
+ * in the mark) against the mark's empty pixels around them, as mean luminance
+ * difference. A marked image has near-white text over its own background (well
+ * over MARKED_CONTRAST on all but very bright corners); an unmarked one has no
+ * such pattern. Pure: RGBA bitmaps in, number out.
+ */
+export const MARKED_CONTRAST = 45;
+export function markContrast(
+  image: { width: number; height: number; bitmap: Uint8Array | Uint8ClampedArray },
+  mark: { width: number; height: number; bitmap: Uint8Array | Uint8ClampedArray },
+  at: { x: number; y: number },
+): number {
+  const lum = (b: Uint8Array | Uint8ClampedArray, i: number) => 0.299 * b[i] + 0.587 * b[i + 1] + 0.114 * b[i + 2];
+  let text = 0, nText = 0, empty = 0, nEmpty = 0;
+  for (let my = 0; my < mark.height; my++) {
+    for (let mx = 0; mx < mark.width; mx++) {
+      const mi = (my * mark.width + mx) * 4;
+      const ix = at.x + mx, iy = at.y + my;
+      if (ix < 0 || iy < 0 || ix >= image.width || iy >= image.height) continue;
+      const ii = (iy * image.width + ix) * 4;
+      const a = mark.bitmap[mi + 3];
+      if (a >= 150 && mark.bitmap[mi] >= 200 && mark.bitmap[mi + 1] >= 200 && mark.bitmap[mi + 2] >= 200) {
+        text += lum(image.bitmap, ii); nText++;
+      } else if (a === 0) {
+        empty += lum(image.bitmap, ii); nEmpty++;
+      }
+    }
+  }
+  return nText && nEmpty ? text / nText - empty / nEmpty : 0;
+}
+
+/**
+ * For stamping an image stored before the watermark existed: the image with the
+ * mark, or alreadyMarked when it seems to carry one (never marked twice).
+ */
+export async function stampBytes(
+  original: Uint8Array,
+  log: (line: string) => void = console.log,
+): Promise<{ bytes: Uint8Array; marked: boolean; alreadyMarked: boolean }> {
+  try {
+    const image = await Image.decode(original) as Image;
+    const unit = markUnit(image.height);
+    const spec = WATERMARK_MARKS[unit];
+    const at = spec ? markPlacement(image.width, image.height, spec) : null;
+    if (!at) return { bytes: original, marked: false, alreadyMarked: false };
+    const mark = await markImage(unit);
+    if (markContrast(image, mark, at) > MARKED_CONTRAST) return { bytes: original, marked: false, alreadyMarked: true };
+    image.composite(mark, at.x, at.y);
+    return { bytes: await image.encodeJPEG(JPEG_QUALITY), marked: true, alreadyMarked: false };
+  } catch (e) {
+    log(`[watermark] could not stamp: ${e}`);
+    return { bytes: original, marked: false, alreadyMarked: false };
+  }
+}
+
 /** watermarkBytes for a base64 image (the image model's answer). */
 export async function watermarkedJpeg(b64: string, log: (line: string) => void = console.log): Promise<Uint8Array> {
   return (await watermarkBytes(base64Bytes(b64), log)).bytes;

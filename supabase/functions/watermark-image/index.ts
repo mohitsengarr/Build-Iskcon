@@ -8,11 +8,18 @@
 // POST <JPEG bytes> (Content-Type: image/*)   the image to mark
 // POST { url: "<this project>/storage/v1/object/public/<bucket>/<file>" }
 //                                             one of our stored images, to check the mark
+// POST { stamp: { table, id } }               marks a replacement's image stored before
+//                                             the watermark existed, on its row
+//                                             (_shared/watermarkStamp.ts); answers JSON
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { isOwnStorageUrl, watermarkBytes } from "../_shared/watermark.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { isOwnStorageUrl, stampBytes, watermarkBytes } from "../_shared/watermark.ts";
+import { stampRow } from "../_shared/watermarkStamp.ts";
 
-const STORAGE_PREFIX = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/`;
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+const STORAGE_PREFIX = `${SUPABASE_URL}/storage/v1/object/public/`;
+const supabase = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "");
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -27,7 +34,13 @@ Deno.serve(async (req: Request) => {
   if ((req.headers.get("content-type") ?? "").startsWith("image/")) {
     original = new Uint8Array(await req.arrayBuffer());
   } else {
-    const { url } = await req.json().catch(() => ({}));
+    const body = await req.json().catch(() => ({}));
+    if (body?.stamp) {
+      const out = await stampRow({ supabase, supabaseUrl: SUPABASE_URL, table: body.stamp.table, id: body.stamp.id, stamp: (b) => stampBytes(b) });
+      console.log(`[watermark] stamp ${out.table} #${String(out.id)}: ${out.outcome}${"reason" in out ? ` (${out.reason})` : ""}`);
+      return new Response(JSON.stringify(out), { status: out.outcome === "error" ? 500 : 200, headers: { ...CORS, "Content-Type": "application/json" } });
+    }
+    const { url } = body;
     if (!isOwnStorageUrl(url, STORAGE_PREFIX)) {
       return new Response(JSON.stringify({ error: "send image bytes, or a url of an image in this project's public storage" }), { status: 400, headers: CORS });
     }
