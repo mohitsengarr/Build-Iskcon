@@ -13,6 +13,7 @@ import Library from "@/pages/library";
 import JapaCounter from "@/pages/japa-counter";
 import LiveCounter from "@/pages/live-counter";
 import BhaktigramApp from "@/pages/bhaktigram-app";
+import BhaktigramPrivacy from "@/pages/bhaktigram-privacy";
 import PersonaGallery from "@/pages/persona-gallery";
 import Admin from "@/pages/admin";
 import Gallery from "@/pages/gallery";
@@ -50,6 +51,8 @@ function App() {
             <Route path="/livecounter" component={LiveCounter} />
             {/* Bhaktigram landing page (SEN-935); /bhaktigram stays the gallery feed. */}
             <Route path="/app" component={BhaktigramApp} />
+            {/* Bhaktigram app privacy policy (App Store + Play). /privacy is the website's own policy. */}
+            <Route path="/app/privacy" component={BhaktigramPrivacy} />
             <Route path="/personas" component={PersonaGallery} />
             <Route path="/gallery" component={Gallery} />
             <Route path="/image-playground" component={ImagePlayground} />

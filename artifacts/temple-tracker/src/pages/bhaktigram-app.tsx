@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import { BookOpen, CalendarDays, CircleDot, Flame, HeartHandshake, MessageCircle, Music2, PlayCircle, Sparkles, Users } from "lucide-react";
 import { LAUNCH_LABEL, PLAY_URL, countRows, sinceLaunch } from "@/lib/bhaktigramJoined";
+import { PRIVACY_PATH, SUPPORT_EMAIL, SUPPORT_WHATSAPP_DISPLAY, supportMailto, whatsappUrl } from "@/lib/bhaktigramSupport";
 
 // buildiskcon.com/app — the Bhaktigram landing page (SEN-935).
 //
@@ -302,6 +303,31 @@ export default function BhaktigramApp() {
           </p>
           <div className="mt-8 flex justify-center"><PlayButton big /></div>
         </section>
+
+        {/* support (App Store support URL; Mohit, 23 Oct 2026) */}
+        <section id="support" className="mx-auto max-w-3xl scroll-mt-20 px-4 pb-20 sm:px-6">
+          <div className="rounded-3xl p-6 sm:p-8" style={{ background: C.paper, border: `1px solid ${C.line}` }}>
+            <h2 className="text-2xl font-bold" style={{ color: C.ink }}>Need help?</h2>
+            <p className="mt-2" style={{ color: C.body }}>
+              Questions, a problem with the app, or a suggestion: write to us and a devotee from the team will reply.
+            </p>
+            <ul className="mt-5 space-y-3" style={{ color: C.body }}>
+              <li>
+                <span className="font-semibold" style={{ color: C.ink }}>Email: </span>
+                <a href={supportMailto("Bhaktigram support")} className="underline underline-offset-4" style={{ color: C.indigo }}>{SUPPORT_EMAIL}</a>
+              </li>
+              <li>
+                <span className="font-semibold" style={{ color: C.ink }}>WhatsApp: </span>
+                <a href={whatsappUrl("Hare Krishna! I need help with Bhaktigram.")} target="_blank" rel="noopener" className="underline underline-offset-4" style={{ color: C.indigo }}>{SUPPORT_WHATSAPP_DISPLAY}</a>
+              </li>
+              <li>
+                <span className="font-semibold" style={{ color: C.ink }}>Your data: </span>
+                read our <Link href={PRIVACY_PATH} className="underline underline-offset-4" style={{ color: C.indigo }}>privacy policy</Link>, or{" "}
+                <a href="/bhaktigram/delete.html" className="underline underline-offset-4" style={{ color: C.indigo }}>delete your account</a>.
+              </li>
+            </ul>
+          </div>
+        </section>
       </main>
 
       <footer style={{ borderTop: `1px solid ${C.line}` }}>
@@ -312,7 +338,8 @@ export default function BhaktigramApp() {
           </div>
           <nav className="flex flex-wrap items-center gap-x-5 gap-y-2" aria-label="Bhaktigram links">
             <Link href="/livecounter" className="hover:underline underline-offset-4">Live counter</Link>
-            <a href="/bhaktigram/privacy.html" className="hover:underline underline-offset-4">Privacy</a>
+            <Link href={PRIVACY_PATH} className="hover:underline underline-offset-4">Privacy</Link>
+            <a href="#support" className="hover:underline underline-offset-4">Support</a>
             <a href="/bhaktigram/delete.html" className="hover:underline underline-offset-4">Delete your account</a>
             <a href={PLAY_URL} target="_blank" rel="noopener" className="hover:underline underline-offset-4">Google Play</a>
           </nav>
