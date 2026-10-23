@@ -18,6 +18,10 @@
 //   saying the post was published and must not be approved again.
 // - Reject marks the row rejected on its claim before it deletes the image, and a
 //   failed update releases the claim and deletes nothing.
+// - Only pictures with Krishna in them go to Instagram or Threads (owner,
+//   2026-10-23): a republish without Him answers 409 blocked and calls no Buffer;
+//   publishing at approval approves the post for the app only. Claude's answer is
+//   faked (__anthropicCreate): Krishna shown, unless a test says otherwise.
 //
 // The handler is imported under node with its Deno-only specifiers stubbed
 // (helpers/edge-function-hooks.mjs). The database, storage, fetch (the Meta Graph
@@ -28,6 +32,7 @@ import assert from "node:assert/strict";
 import { register } from "node:module";
 
 register("./helpers/edge-function-hooks.mjs", import.meta.url);
+register("./helpers/npm-stub-hooks.mjs", import.meta.url);
 
 // deno-lint-ignore no-explicit-any
 const g = globalThis as any;
@@ -42,7 +47,20 @@ const ENV: Record<string, string> = {
   META_ACCESS_TOKEN: "meta-test",
   // These tests cover publishing at approval; the default, queueing, has its own below.
   IG_PUBLISH_ON_APPROVE: "true",
+  ANTHROPIC_API_KEY: "anthropic-test",
 };
+const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01]);
+/** Claude's answer to the Krishna check. */
+const krishnaReply = (shown: boolean) => ({
+  stop_reason: "end_turn",
+  content: [{
+    type: "tool_use",
+    name: "record_krishna_check",
+    input: shown
+      ? { krishna_visible: true, form: "krishna", prominence: "main", observed: "Krishna with the cowherd boys." }
+      : { krishna_visible: false, form: "none", prominence: "none", observed: "Sages meditate by a river." },
+  }],
+});
 const OLD = { path: "ig-canto11-ch1-1.jpg", url: "https://storage.test/ig-canto11-ch1-1.jpg" };
 const NEW = { path: "ig-canto11-ch1-1-r1.jpg", url: "https://storage.test/ig-canto11-ch1-1-r1.jpg" };
 const REREAD_COLUMNS = "id,status,reviewed_at,image_url,image_path,publish_started_at,visual_check";
@@ -164,6 +182,8 @@ function makeNet(events: string[]) {
   /** The body of each Meta media_publish request. */
   const publishes: Json[] = [];
   const functionCalls: Json[] = [];
+  /** The body of each Buffer GraphQL request. */
+  const buffer: Json[] = [];
   const fn = async (url: string | URL, init: RequestInit = {}) => {
     const u = String(url);
     const body = typeof init.body === "string" ? JSON.parse(init.body) : null;
@@ -179,13 +199,20 @@ function makeNet(events: string[]) {
       publishes.push(body);
       return json({ id: "media-1" });
     }
+    // The stored image the Krishna check looks at.
+    if (u.startsWith("https://storage.test/")) return new Response(JPEG);
+    if (u === "https://api.buffer.com") {
+      events.push("buffer:post");
+      buffer.push(body);
+      return json({ data: { createPost: { __typename: "PostActionSuccess", post: { id: "buf-1", status: "sent" } } } });
+    }
     if (u === "https://sb.test/functions/v1/instagram-post") {
       functionCalls.push(body);
       return json({ success: true, pendingReviewId: 78 });
     }
     return new Response("unexpected " + u, { status: 404 });
   };
-  return { fn, media, publishes, functionCalls };
+  return { fn, media, publishes, functionCalls, buffer };
 }
 
 /** Each expected event occurs, in this order (other events may come between). */
@@ -200,7 +227,7 @@ function assertInOrder(events: string[], expected: string[]) {
 
 describe("approve-instagram-post claims the image the reviewer saw", () => {
   const saved: Record<string, unknown> = {};
-  const SAVED = ["Deno", "EdgeRuntime", "fetch", "__sb"];
+  const SAVED = ["Deno", "EdgeRuntime", "fetch", "__sb", "__anthropicCreate"];
   let handler: (req: Request) => Promise<Response>;
   let waits: Promise<unknown>[] = [];
   const realError = console.error;
@@ -222,6 +249,7 @@ describe("approve-instagram-post claims the image the reviewer saw", () => {
   beforeEach(() => {
     waits = [];
     console.error = () => {};
+    g.__anthropicCreate = async () => krishnaReply(true);
   });
 
   const pendingRow = (extra: Json = {}) => ({
@@ -778,5 +806,82 @@ describe("approve-instagram-post claims the image the reviewer saw", () => {
     assert.equal(row.status, "pending");
     assert.equal(row.reviewed_at, null, "the claim is released");
     assert.deepEqual(net.media, []);
+  });
+
+  // ── Only pictures with Krishna in them go out (owner, 2026-10-23) ──────────
+
+  const approvedRow = (extra: Json = {}) => pendingRow({ status: "approved", reviewed_at: "2026-10-22T10:00:00.000Z", buffer_post_ids: null, ...extra });
+
+  test("a republish of a picture without Krishna is refused: 409, no Buffer call, and the check is kept on the row", async () => {
+    // Arrange
+    g.__anthropicCreate = async () => krishnaReply(false);
+    const row = approvedRow();
+    const { net } = setup(row);
+    // Act
+    const { status, json } = await post({ id: 77, action: "republish", service: "instagram" });
+    // Assert
+    assert.equal(status, 409, JSON.stringify(json));
+    assert.equal(json.blocked, "no_krishna");
+    assert.match(json.message, /Not sent to instagram: no Krishna in the picture/);
+    assert.deepEqual(net.buffer, [], "nothing goes to Buffer");
+    assert.equal(row.krishna_check.krishna_visible, false);
+    assert.equal(row.krishna_check.image_path, OLD.path);
+  });
+
+  test("a republish of a picture already checked with Krishna in it goes to Buffer without asking Claude again", async () => {
+    // Arrange
+    let asked = 0;
+    g.__anthropicCreate = async () => (asked++, krishnaReply(true));
+    const check = { version: 1, image_path: OLD.path, krishna_visible: true, form: "krishna", prominence: "main", observed: "Krishna", model: "m", checked_at: "2026-10-23T10:00:00.000Z" };
+    const row = approvedRow({ krishna_check: check });
+    const { net } = setup(row);
+    // Act
+    const { json } = await post({ id: 77, action: "republish", service: "instagram" });
+    // Assert
+    assert.equal(asked, 0);
+    assert.equal(net.buffer.length, 1, JSON.stringify(json));
+    assert.equal(net.buffer[0].variables.input.assets[0].image.url, OLD.url);
+  });
+
+  test("a check made for an earlier image is not trusted: the picture is checked again before it is sent", async () => {
+    // Arrange: the stored check judged another file
+    g.__anthropicCreate = async () => krishnaReply(false);
+    const check = { version: 1, image_path: "older.jpg", krishna_visible: true, form: "krishna", prominence: "main", observed: "Krishna", model: "m", checked_at: "2026-10-20T10:00:00.000Z" };
+    const row = approvedRow({ krishna_check: check });
+    const { net } = setup(row);
+    // Act
+    const { status } = await post({ id: 77, action: "republish", service: "instagram" });
+    // Assert
+    assert.equal(status, 409);
+    assert.deepEqual(net.buffer, []);
+  });
+
+  test("when the check cannot be made, nothing is sent", async () => {
+    g.__anthropicCreate = async () => { throw Object.assign(new Error("overloaded"), { status: 529 }); };
+    const row = approvedRow();
+    const { net } = setup(row);
+    const { status, json } = await post({ id: 77, action: "republish", service: "instagram" });
+    assert.equal(status, 409);
+    assert.match(json.message, /could not be completed/);
+    assert.deepEqual(net.buffer, []);
+    assert.equal(row.krishna_check ?? null, null, "a failed check is not stored");
+  });
+
+  test("publishing at approval: a picture without Krishna is approved for the app only, and nothing goes to Instagram", async () => {
+    // Arrange
+    g.__anthropicCreate = async () => krishnaReply(false);
+    const row = pendingRow();
+    const { db, net } = setup(row);
+    // Act
+    const { status, json } = await post({ id: 77, action: "approve", image_path: OLD.path });
+    // Assert
+    assert.equal(status, 200, JSON.stringify(json));
+    assert.equal(json.published, false);
+    assert.equal(json.blocked, "no_krishna");
+    assert.equal(row.status, "approved");
+    assert.match(String(row.error_message), /Not sent to Instagram or Threads: no Krishna/);
+    assert.deepEqual([net.media, net.publishes, net.buffer], [[], [], []]);
+    assert.equal(db.of("marker").length, 0, "no publishing marker");
+    assert.ok(db.events.includes("insert:bhaktigram_group_messages"), "it still reaches the in-app channel");
   });
 });

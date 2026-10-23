@@ -5,7 +5,8 @@
 // on pg_cron (job 83, twice a day); each run takes the oldest queued post (limit,
 // at most 5) and sends it to Instagram and Threads through approve-instagram-
 // post's republish, which keeps each channel's new post id on the post, or why
-// it failed.
+// it failed. Only pictures with Krishna in them go out: a post without Him is
+// skipped and stays queued (_shared/krishnaCheck.ts, owner 2026-10-23).
 //
 // POST {}                 post the oldest queued post
 // POST { limit: 2 }       the oldest two
@@ -13,7 +14,8 @@
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { runRepostQueue } from "../_shared/repostQueue.ts";
+import { type QueuedPost, runRepostQueue } from "../_shared/repostQueue.ts";
+import { krishnaGate } from "../_shared/krishnaCheck.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -36,12 +38,15 @@ async function republish(id: number, service: string) {
   return { ok: d?.success === true, detail: String(d?.message || d?.error || `HTTP ${res.status}`) };
 }
 
+const gate = (post: QueuedPost) => krishnaGate({ supabase, table: "ig_pending_review", row: post });
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return new Response(JSON.stringify({ error: "POST only" }), { status: 405, headers: CORS });
   try {
     const body = await req.json().catch(() => ({}));
-    const out = await runRepostQueue({ supabase, republish, limit: body?.limit, preview: body?.preview === true });
+    const out = await runRepostQueue({ supabase, republish, gate, limit: body?.limit, preview: body?.preview === true });
+    for (const h of out.held) console.log(`[repost] #${h.id} held back: ${h.reason}`);
     for (const r of out.runs) {
       console.log(`[repost] #${r.id} ${Object.entries(r.channels).map(([s, c]) => `${s}: ${c.ok ? "ok" : c.detail}`).join(", ")}${r.done ? "" : " (stays queued)"}`);
     }

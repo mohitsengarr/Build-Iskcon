@@ -3,7 +3,9 @@
 // Posts ONE approved chapter artwork per run to Threads + Instagram via Buffer,
 // alternating between the Gita and Caitanya-caritamrta so both books get an
 // airing. Only rows that are `approved` and never posted (posted_at IS NULL) are
-// eligible, and posted_at is stamped on success so nothing repeats.
+// eligible, and posted_at is stamped on success so nothing repeats. Only covers
+// with Krishna in them go out (owner, 2026-10-23): a cover without Him is skipped
+// and keeps its check on the row (_shared/coverPick.ts, _shared/krishnaCheck.ts).
 //
 // Publishing is per-channel and non-fatal: if Threads rejects the media (it has
 // been doing so intermittently — the images themselves are within Threads' specs)
@@ -18,6 +20,8 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { threadsText } from "../_shared/postText.ts";
+import { type CoverBook, pickNextCover } from "../_shared/coverPick.ts";
+import { krishnaGate, type KrishnaTable } from "../_shared/krishnaCheck.ts";
 
 const BUFFER_API = "https://api.buffer.com";
 const BUFFER_KEY = Deno.env.get("BUFFER_API_KEY") || "";
@@ -35,33 +39,8 @@ const CORS = {
   "Content-Type": "application/json",
 };
 
-const BOOKS = [
-  { key: "gita",      table: "gita_chapter_art_review",      label: "Bhagavad-gita" },
-  { key: "chaitanya", table: "chaitanya_chapter_art_review", label: "Caitanya-caritamrta" },
-];
-
-async function pickNext(bookKey?: string) {
-  // Alternate by how many have already gone out, so the books stay balanced.
-  let order = BOOKS;
-  if (bookKey) {
-    const b = BOOKS.find(x => x.key === bookKey);
-    if (!b) throw new Error(`unknown book '${bookKey}'`);
-    order = [b];
-  } else {
-    const counts = await Promise.all(BOOKS.map(async b => {
-      const { count } = await supabase.from(b.table).select("id", { count: "exact", head: true }).not("posted_at", "is", null);
-      return count || 0;
-    }));
-    order = counts[0] <= counts[1] ? BOOKS : [BOOKS[1], BOOKS[0]];
-  }
-  for (const b of order) {
-    const { data } = await supabase.from(b.table).select("*")
-      .eq("status", "approved").is("posted_at", null)
-      .order("created_at", { ascending: true }).limit(1);
-    if (data && data.length) return { book: b, row: data[0] as Record<string, unknown> };
-  }
-  return null;
-}
+const gate = (book: CoverBook, row: Record<string, unknown>) =>
+  krishnaGate({ supabase, table: book.table as KrishnaTable, row: row as { id: number } });
 
 async function createPost(text: string, channelId: string, imgUrl: string, isInstagram: boolean, draft: boolean) {
   const input: Record<string, unknown> = {
@@ -93,9 +72,10 @@ Deno.serve(async (req: Request) => {
   try {
     const body = await req.json().catch(() => ({})) as { preview?: boolean; draft?: boolean; book?: string };
 
-    const next = await pickNext(body.book);
+    const { pick: next, held } = await pickNextCover({ supabase, gate, bookKey: body.book });
+    for (const h of held) console.log(`[daily-art] ${h.book} #${String(h.id)} held back: ${h.reason}`);
     if (!next) {
-      return new Response(JSON.stringify({ ok: true, posted: false, message: "No approved, unposted artwork available" }), { headers: CORS });
+      return new Response(JSON.stringify({ ok: true, posted: false, held, message: "No approved, unposted artwork with Krishna in it available" }), { headers: CORS });
     }
     const { book, row } = next;
     const caption = String(row.caption || row.chapter_title || book.label);
@@ -110,7 +90,7 @@ Deno.serve(async (req: Request) => {
 
     if (body.preview) {
       return new Response(JSON.stringify({
-        ok: true, preview: true, book: book.key, id: row.id,
+        ok: true, preview: true, book: book.key, id: row.id, held,
         chapter: row.chapter_number, image_url: imgUrl,
         instagram_text: igText, threads_text: thText,
       }), { headers: CORS });

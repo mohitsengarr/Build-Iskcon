@@ -63,6 +63,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { approveReplacement, isReplacement, replacementResponse } from "../_shared/replacements.ts";
 import { threadsText } from "../_shared/postText.ts";
+import { krishnaGate } from "../_shared/krishnaCheck.ts";
 
 const BUFFER_API = "https://api.buffer.com";
 const GRAPH = "https://graph.facebook.com/v21.0";
@@ -429,6 +430,14 @@ Deno.serve(async (req: Request) => {
         return new Response(JSON.stringify({ error: `Can only republish an approved row (this one is ${pending.status})` }), { status: 409, headers: corsHeaders });
       }
       const svc = service || "instagram";
+      // Only pictures with Krishna in them go to Instagram or Threads (owner, 2026-10-23).
+      const gate = await krishnaGate({ supabase, table: "ig_pending_review", row: pending });
+      if (!gate.allowed) {
+        return new Response(JSON.stringify({
+          success: false, id, service: svc, blocked: "no_krishna", krishna_check: gate.check,
+          message: `Not sent to ${svc}: ${gate.reason}.`,
+        }), { status: 409, headers: corsHeaders });
+      }
       const r = await queueToBuffer(pending.image_url, pending.caption, pending.hashtags, svc);
       const problems = await verifyBufferPosts(r.results);
       const ok = r.results.length > 0 && problems.length === 0;
@@ -511,6 +520,24 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({
         success: true, status: "approved", id, queued: true, channelPosted: channel.ok,
         message: `Approved and queued: posts go out to Instagram and Threads one at a time${channel.ok ? "; it is in the Bhāgavatam channel now" : ""}.`,
+      }), { headers: corsHeaders });
+    }
+
+    // Publishing at approval sends only pictures with Krishna in them (owner,
+    // 2026-10-23). Without Him the post is approved for the app and the Bhāgavatam
+    // channel, and nothing goes to Instagram or Threads.
+    const gate = await krishnaGate({ supabase, table: "ig_pending_review", row: post });
+    if (!gate.allowed) {
+      const note = `Not sent to Instagram or Threads: ${gate.reason}.`;
+      const heldErr = await markApproved(id, { status: "approved", reviewed_at: new Date().toISOString(), error_message: note });
+      if (heldErr) {
+        await releaseClaim(id, claim.stamp);
+        return new Response(JSON.stringify({ error: `Approve update: ${heldErr}. Nothing was published; try again.` }), { status: 500, headers: corsHeaders });
+      }
+      const channel = await crossPostToBhagavatamChannel(post);
+      return new Response(JSON.stringify({
+        success: true, status: "approved", id, published: false, blocked: "no_krishna", krishna_check: gate.check,
+        channelPosted: channel.ok, message: `Approved${channel.ok ? " and posted to the Bhāgavatam channel" : ""}. ${note}`,
       }), { headers: corsHeaders });
     }
 
