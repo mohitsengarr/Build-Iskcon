@@ -5,7 +5,7 @@
 // Run: node --experimental-strip-types --test tests/
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { type Gate, MAX_EXAMINED, MAX_PER_RUN, postsPerRun, runRepostQueue } from "../supabase/functions/_shared/repostQueue.ts";
+import { type Gate, MAX_NEW_CHECKS, MAX_PER_RUN, postsPerRun, runRepostQueue } from "../supabase/functions/_shared/repostQueue.ts";
 
 const NOW = new Date("2026-10-20T06:00:00.000Z");
 const allowAll: Gate = async () => ({ allowed: true, reason: "Krishna is in the picture" });
@@ -140,7 +140,7 @@ describe("the Krishna gate", () => {
     const out = await runRepostQueue({ supabase: db, gate: withoutKrishna([2]), republish: async (id, s) => (calls.push(`${id}:${s}`), { ok: true, detail: "ok" }), now: () => NOW });
     // Assert
     assert.deepEqual(calls, ["1:instagram", "1:threads"]);
-    assert.deepEqual(out.held, [{ id: 2, reason: "no Krishna in the picture" }]);
+    assert.deepEqual(out.held, [{ id: 2, reason: "no Krishna in the picture", checked: false }]);
     assert.equal(db.rows[1].repost_requested_at, "2026-10-19T09:00:00.000Z", "the held post stays queued");
   });
 
@@ -165,15 +165,41 @@ describe("the Krishna gate", () => {
     assert.deepEqual(seen, [["p.jpg", "u", { version: 1 }]]);
   });
 
-  test("a run looks at no more than MAX_EXAMINED posts, which bounds the checks it starts", async () => {
-    // Arrange: 30 queued posts, none with Krishna
-    const rows = Array.from({ length: 30 }, (_, i) => ({ id: 100 + i, status: "approved", chapter_title: "x", repost_requested_at: `2026-10-19T${String(i).padStart(2, "0")}:00:00.000Z`, buffer_post_ids: null }));
+  // 24–27 Oct 2026: the run looked at the first 20 queued posts only; all 20 were
+  // held, so nothing was posted for three days though Krishna posts waited behind.
+  test("posts already checked and held back do not use up the run: a Krishna post behind 25 of them still goes", async () => {
+    // Arrange: 25 posts held by an earlier check, then one with Krishna
+    const at = (i: number) => new Date(Date.UTC(2026, 9, 19, 0, i)).toISOString();
+    const rows = [
+      ...Array.from({ length: 25 }, (_, i) => ({ id: 100 + i, status: "approved", chapter_title: "x", repost_requested_at: at(i), buffer_post_ids: null })),
+      { id: 999, status: "approved", chapter_title: "Krishna", repost_requested_at: at(30), buffer_post_ids: null },
+    ];
     const db = fakeDb(rows);
-    let gated = 0;
+    const calls: string[] = [];
+    const gate: Gate = async (post) => (post.id === 999 ? { allowed: true, reason: "ok", checked: false } : { allowed: false, reason: "no Krishna in the picture", checked: false });
     // Act
-    await runRepostQueue({ supabase: db, gate: async () => (gated++, { allowed: false, reason: "no Krishna" }), republish: async () => ({ ok: true, detail: "" }) });
+    const out = await runRepostQueue({ supabase: db, gate, republish: async (id, s) => (calls.push(`${id}:${s}`), { ok: true, detail: "ok" }), now: () => NOW });
     // Assert
-    assert.equal(gated, MAX_EXAMINED);
+    assert.deepEqual(calls, ["999:instagram", "999:threads"]);
+    assert.equal(out.held.length, 25);
+  });
+
+  test("a run starts no more than MAX_NEW_CHECKS new checks; posts not checked yet wait for the next run", async () => {
+    // Arrange: 30 posts never checked, none with Krishna
+    const rows = Array.from({ length: 30 }, (_, i) => ({ id: 100 + i, status: "approved", chapter_title: "x", repost_requested_at: new Date(Date.UTC(2026, 9, 19, 0, i)).toISOString(), buffer_post_ids: null }));
+    const db = fakeDb(rows);
+    let checks = 0;
+    const gate: Gate = async (_post, o) => {
+      if (!o.mayCheck) return { allowed: false, reason: "not checked yet", checked: false };
+      checks++;
+      return { allowed: false, reason: "no Krishna", checked: true };
+    };
+    // Act
+    const out = await runRepostQueue({ supabase: db, gate, republish: async () => { throw new Error("must not post"); } });
+    // Assert
+    assert.equal(checks, MAX_NEW_CHECKS);
+    assert.equal(out.held.filter((h) => h.checked).length, MAX_NEW_CHECKS);
+    assert.equal(out.held.length, 30);
   });
 
   test("preview lists only posts the gate lets through, and what it held back", async () => {

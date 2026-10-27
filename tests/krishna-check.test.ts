@@ -181,6 +181,27 @@ describe("ensureKrishnaCheck and krishnaGate", () => {
     assert.equal(out.allowed, false);
   });
 
+  test("mayCheck false: a picture not checked yet is held back without asking Claude", async () => {
+    const r = row();
+    let asked = 0;
+    const out = await io.krishnaGate({ supabase: fakeDb(r), table: "ig_pending_review", row: r, mayCheck: false, ask: async () => (asked++, { ok: true, answer: answer() as never }), log: quiet });
+    assert.deepEqual([out.allowed, out.checked, asked], [false, false, 0]);
+    assert.match(out.reason, /not checked yet/);
+  });
+
+  test("mayCheck false still answers from a stored check of the current image", async () => {
+    const r = row({ krishna_check: record() });
+    const out = await io.krishnaGate({ supabase: fakeDb(r), table: "ig_pending_review", row: r, mayCheck: false, ask: async () => { throw new Error("must not ask"); }, log: quiet });
+    assert.deepEqual([out.allowed, out.checked], [true, false]);
+  });
+
+  test("checked says whether this call started a new check, failed or not", async () => {
+    const r = row();
+    const fresh = await io.krishnaGate({ supabase: fakeDb(r), table: "ig_pending_review", row: r, ask: async () => ({ ok: true, answer: answer() as never }), log: quiet });
+    const failed = await io.krishnaGate({ supabase: fakeDb(row()), table: "ig_pending_review", row: row(), ask: async () => ({ ok: false, reason: "x" }), log: quiet });
+    assert.deepEqual([fresh.checked, failed.checked], [true, true]);
+  });
+
   test("a row with no image is never allowed", async () => {
     const out = await io.krishnaGate({ supabase: fakeDb(row()), table: "ig_pending_review", row: { id: 1, image_path: null, image_url: null }, ask: async () => ({ ok: true, answer: answer() as never }), log: quiet });
     assert.equal(out.allowed, false);

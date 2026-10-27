@@ -99,9 +99,23 @@ export async function ensureKrishnaCheck(o: {
   return record;
 }
 
-/** Whether this row's picture may go to Instagram or Threads (checking it first if needed). */
-export async function krishnaGate(o: Parameters<typeof ensureKrishnaCheck>[0]): Promise<{ allowed: boolean; reason: string; check: KrishnaCheck | null }> {
+/**
+ * Whether this row's picture may go to Instagram or Threads, checking it first
+ * when it has no check for its current image. mayCheck false: a picture not
+ * checked yet is held back without a check (the caller's run has started enough).
+ * checked: a new check was started by this call.
+ */
+export async function krishnaGate(o: Parameters<typeof ensureKrishnaCheck>[0] & { mayCheck?: boolean }): Promise<{
+  allowed: boolean;
+  reason: string;
+  check: KrishnaCheck | null;
+  checked: boolean;
+}> {
+  const cached = isCurrentCheck(o.row.krishna_check, o.row.image_path);
+  if (!cached && o.mayCheck === false) {
+    return { allowed: false, reason: "not checked yet: this run has checked enough pictures", check: null, checked: false };
+  }
   const check = await ensureKrishnaCheck(o);
-  if (!check) return { allowed: false, reason: "the Krishna check could not be completed", check: null };
-  return { ...krishnaAllowed(check, o.row.image_path), check };
+  if (!check) return { allowed: false, reason: "the Krishna check could not be completed", check: null, checked: !cached };
+  return { ...krishnaAllowed(check, o.row.image_path), check, checked: !cached };
 }

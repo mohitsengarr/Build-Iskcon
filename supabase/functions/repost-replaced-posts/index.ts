@@ -38,7 +38,7 @@ async function republish(id: number, service: string) {
   return { ok: d?.success === true, detail: String(d?.message || d?.error || `HTTP ${res.status}`) };
 }
 
-const gate = (post: QueuedPost) => krishnaGate({ supabase, table: "ig_pending_review", row: post });
+const gate = (post: QueuedPost, o: { mayCheck: boolean }) => krishnaGate({ supabase, table: "ig_pending_review", row: post, mayCheck: o.mayCheck });
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -46,7 +46,9 @@ Deno.serve(async (req: Request) => {
   try {
     const body = await req.json().catch(() => ({}));
     const out = await runRepostQueue({ supabase, republish, gate, limit: body?.limit, preview: body?.preview === true });
-    for (const h of out.held) console.log(`[repost] #${h.id} held back: ${h.reason}`);
+    // Newly checked posts are logged one by one; those held by an earlier check only counted.
+    for (const h of out.held.filter((x) => x.checked)) console.log(`[repost] #${h.id} held back: ${h.reason}`);
+    if (out.held.length) console.log(`[repost] ${out.held.length} held back this run (${out.held.filter((x) => x.checked).length} newly checked)`);
     for (const r of out.runs) {
       console.log(`[repost] #${r.id} ${Object.entries(r.channels).map(([s, c]) => `${s}: ${c.ok ? "ok" : c.detail}`).join(", ")}${r.done ? "" : " (stays queued)"}`);
     }

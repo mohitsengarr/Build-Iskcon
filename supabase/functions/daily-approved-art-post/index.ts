@@ -39,8 +39,8 @@ const CORS = {
   "Content-Type": "application/json",
 };
 
-const gate = (book: CoverBook, row: Record<string, unknown>) =>
-  krishnaGate({ supabase, table: book.table as KrishnaTable, row: row as { id: number } });
+const gate = (book: CoverBook, row: Record<string, unknown>, o: { mayCheck: boolean }) =>
+  krishnaGate({ supabase, table: book.table as KrishnaTable, row: row as { id: number }, mayCheck: o.mayCheck });
 
 async function createPost(text: string, channelId: string, imgUrl: string, isInstagram: boolean, draft: boolean) {
   const input: Record<string, unknown> = {
@@ -73,7 +73,8 @@ Deno.serve(async (req: Request) => {
     const body = await req.json().catch(() => ({})) as { preview?: boolean; draft?: boolean; book?: string };
 
     const { pick: next, held } = await pickNextCover({ supabase, gate, bookKey: body.book });
-    for (const h of held) console.log(`[daily-art] ${h.book} #${String(h.id)} held back: ${h.reason}`);
+    for (const h of held.filter((x) => x.checked)) console.log(`[daily-art] ${h.book} #${String(h.id)} held back: ${h.reason}`);
+    if (held.length) console.log(`[daily-art] ${held.length} covers held back (${held.filter((x) => x.checked).length} newly checked)`);
     if (!next) {
       return new Response(JSON.stringify({ ok: true, posted: false, held, message: "No approved, unposted artwork with Krishna in it available" }), { headers: CORS });
     }

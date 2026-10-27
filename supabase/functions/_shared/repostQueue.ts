@@ -10,8 +10,10 @@
 // Only pictures with Krishna in them go out (owner, 2026-10-23): each post passes
 // the gate (_shared/krishnaCheck.ts krishnaGate) before it is sent. A post the
 // gate holds back is skipped and stays queued with its check on the row, and the
-// run moves on to the next one. A run looks at no more than MAX_EXAMINED posts,
-// which bounds the checks one run can start.
+// run moves on to the next one. A post already checked and held back costs
+// nothing to skip, so the whole queue is read and only NEW checks are limited
+// (MAX_NEW_CHECKS a run): a long run of held posts at the front can never stop the
+// Krishna posts behind it (the 20-post look-ahead did, 24–27 Oct 2026).
 
 // deno-lint-ignore no-explicit-any
 type SupabaseLike = any;
@@ -19,8 +21,10 @@ type SupabaseLike = any;
 /** Channels in the order they are posted to; Instagram decides whether the post leaves the queue. */
 export const REPOST_CHANNELS = ["instagram", "threads"] as const;
 export const MAX_PER_RUN = 5;
-/** Queued posts one run may look at, including those the gate holds back. */
-export const MAX_EXAMINED = 20;
+/** New Krishna checks one run may start; posts already checked are free to skip. */
+export const MAX_NEW_CHECKS = 20;
+/** Queued posts read per group (never posted, then reposts). */
+export const QUEUE_READ_LIMIT = 1000;
 
 /** How many posts a run takes: 1 unless asked, never more than MAX_PER_RUN. */
 export function postsPerRun(limit: unknown): number {
@@ -44,8 +48,12 @@ export interface QueuedPost {
   krishna_check?: unknown;
 }
 
-/** Whether a queued post may go out now (the Krishna gate). */
-export type Gate = (post: QueuedPost) => Promise<{ allowed: boolean; reason: string }>;
+/**
+ * Whether a queued post may go out now (the Krishna gate). mayCheck false: the
+ * run has started enough new checks, so a post not checked yet waits for the next
+ * run. checked: this call ran a new check.
+ */
+export type Gate = (post: QueuedPost, o: { mayCheck: boolean }) => Promise<{ allowed: boolean; reason: string; checked?: boolean }>;
 
 export interface RepostRun {
   id: number;
@@ -64,7 +72,7 @@ export async function runRepostQueue(o: {
 }): Promise<{
   queued: Array<{ id: number; chapter_title: unknown; repost_requested_at: string }>;
   runs: RepostRun[];
-  held: Array<{ id: number; reason: string }>;
+  held: Array<{ id: number; reason: string; checked: boolean }>;
 }> {
   const now = o.now ?? (() => new Date());
   const take = postsPerRun(o.limit);
@@ -79,22 +87,24 @@ export async function runRepostQueue(o: {
     if (error) throw new Error(`Reading the posting queue: ${error.message}`);
     return Array.isArray(data) ? data : [];
   };
-  const fresh = await read(true, MAX_EXAMINED);
-  const candidates = fresh.length < MAX_EXAMINED ? [...fresh, ...(await read(false, MAX_EXAMINED - fresh.length))] : fresh;
+  const candidates = [...(await read(true, QUEUE_READ_LIMIT)), ...(await read(false, QUEUE_READ_LIMIT))];
 
   // The posts this run sends: the first `take` the gate lets through.
   const chosen: QueuedPost[] = [];
-  const held: Array<{ id: number; reason: string }> = [];
+  const held: Array<{ id: number; reason: string; checked: boolean }> = [];
+  let newChecks = 0;
   for (const post of candidates) {
     if (chosen.length >= take) break;
-    let verdict: { allowed: boolean; reason: string };
+    let verdict: { allowed: boolean; reason: string; checked?: boolean };
     try {
-      verdict = await o.gate(post);
+      verdict = await o.gate(post, { mayCheck: newChecks < MAX_NEW_CHECKS });
     } catch (e) {
-      verdict = { allowed: false, reason: `the Krishna check failed: ${String(e)}` };
+      // A gate that throws may have spent a check: it counts as one.
+      verdict = { allowed: false, reason: `the Krishna check failed: ${String(e)}`, checked: true };
     }
+    if (verdict.checked) newChecks++;
     if (verdict.allowed) chosen.push(post);
-    else held.push({ id: post.id, reason: verdict.reason });
+    else held.push({ id: post.id, reason: verdict.reason, checked: !!verdict.checked });
   }
   const queued = chosen.map((p) => ({ id: p.id, chapter_title: p.chapter_title, repost_requested_at: p.repost_requested_at }));
   if (o.preview) return { queued, runs: [], held };

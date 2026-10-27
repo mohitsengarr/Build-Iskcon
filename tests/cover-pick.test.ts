@@ -4,7 +4,7 @@
 // Run: node --experimental-strip-types --test tests/
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { type CoverGate, MAX_COVERS_EXAMINED, pickNextCover } from "../supabase/functions/_shared/coverPick.ts";
+import { type CoverGate, MAX_NEW_COVER_CHECKS, pickNextCover } from "../supabase/functions/_shared/coverPick.ts";
 
 type Row = Record<string, unknown>;
 
@@ -62,7 +62,7 @@ describe("pickNextCover", () => {
     const db = fakeDb({ gita_chapter_art_review: [cover(2, "2026-10-03"), cover(3, "2026-10-04")], chaitanya_chapter_art_review: [] });
     const { pick, held } = await pickNextCover({ supabase: db, gate: without([2]), bookKey: "gita" });
     assert.equal(pick?.row.id, 3);
-    assert.deepEqual(held, [{ book: "gita", id: 2, reason: "no Krishna in the picture" }]);
+    assert.deepEqual(held, [{ book: "gita", id: 2, reason: "no Krishna in the picture", checked: false }]);
   });
 
   test("when one book has no cover with Krishna, the other book's goes out", async () => {
@@ -85,12 +85,31 @@ describe("pickNextCover", () => {
     assert.match(held[0].reason, /Claude down/);
   });
 
-  test("a run looks at no more than MAX_COVERS_EXAMINED covers per book", async () => {
-    const many = Array.from({ length: 25 }, (_, i) => cover(100 + i, `2026-10-${String(i + 1).padStart(2, "0")}`));
+  test("covers already held back do not use up the run: a Krishna cover behind 22 of them is picked", async () => {
+    // Arrange: 22 Chaitanya covers held by an earlier check, then one with Krishna
+    const day = (i: number) => new Date(Date.UTC(2026, 8, 1 + i)).toISOString();
+    const rows = [...Array.from({ length: 22 }, (_, i) => cover(100 + i, day(i))), cover(999, day(30))];
+    const db = fakeDb({ gita_chapter_art_review: [], chaitanya_chapter_art_review: rows });
+    const gate: CoverGate = async (_b, row) => (row.id === 999 ? { allowed: true, reason: "ok" } : { allowed: false, reason: "Lord Chaitanya, not Krishna" });
+    // Act
+    const { pick, held } = await pickNextCover({ supabase: db, gate, bookKey: "chaitanya" });
+    // Assert
+    assert.equal(pick?.row.id, 999);
+    assert.equal(held.length, 22);
+  });
+
+  test("a run starts no more than MAX_NEW_COVER_CHECKS new checks", async () => {
+    const many = Array.from({ length: 25 }, (_, i) => cover(100 + i, new Date(Date.UTC(2026, 8, 1 + i)).toISOString()));
     const db = fakeDb({ gita_chapter_art_review: many, chaitanya_chapter_art_review: [] });
-    let gated = 0;
-    await pickNextCover({ supabase: db, gate: async () => (gated++, { allowed: false, reason: "x" }), bookKey: "gita" });
-    assert.equal(gated, MAX_COVERS_EXAMINED);
+    let checks = 0;
+    const gate: CoverGate = async (_b, _r, o) => {
+      if (!o.mayCheck) return { allowed: false, reason: "not checked yet", checked: false };
+      checks++;
+      return { allowed: false, reason: "x", checked: true };
+    };
+    const { pick } = await pickNextCover({ supabase: db, gate, bookKey: "gita" });
+    assert.equal(pick, null);
+    assert.equal(checks, MAX_NEW_COVER_CHECKS);
   });
 
   test("an unknown book is refused", async () => {
