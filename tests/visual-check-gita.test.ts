@@ -813,7 +813,9 @@ describe("generate-gita-chapter-art visual check", () => {
       // Assert
       assert.equal(status, 200, JSON.stringify(json));
       assert.equal(together.length, 1);
-      assert.equal(checks.length, 1);
+      // A reply with no tool call gets one second opinion from Opus (SEN-975); an
+      // API error or a refusal does not.
+      assert.equal(checks.length, c.reason === "no_tool" ? 2 : 1);
       assert.deepEqual(db.uploads[0].bytes, bytesOf(jpeg(1)));
       const record = db.rows.get(json.generated[0].id).visual_check;
       assert.equal(record.status, "error");

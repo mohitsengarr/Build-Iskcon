@@ -2176,7 +2176,7 @@ describe("visual check wiring for ig_pending_review", () => {
       // Assert
       assert.equal(status, 200);
       assert.equal(net.together.length, 1);
-      assert.equal(vision.length, 1);
+      assert.equal(vision.length, 2, "Sonnet, then one second opinion from Opus (SEN-975)");
       assertRecord(row.visual_check, { status: "error", attempts: 1, reason: "no_tool" }, REGEN_KEYS);
     });
 

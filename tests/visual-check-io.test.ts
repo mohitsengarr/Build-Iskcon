@@ -118,14 +118,14 @@ describe("checkImage", () => {
     assert.equal(calls.length, 1);
     const { params, reqOpts, clientOpts } = calls[0];
     assert.equal(clientOpts.apiKey, "sk-test");
-    assert.equal(params.model, "claude-opus-5");
+    assert.equal(params.model, "claude-sonnet-5-5");
     assert.deepEqual(params.messages[0].content[0].source, { type: "base64", media_type: "image/png", data: PNG_B64 });
     assert.match(params.messages[0].content[1].text, /1\. Arjuna's chariot is drawn by exactly four white horses/);
     assert.equal(reqOpts.maxRetries, 0);
     assert.equal(reqOpts.timeout, 40_000);
     assert.ok(reqOpts.signal instanceof AbortSignal);
     assert.equal(lines.length, 1);
-    assert.match(lines[0], /^\[visual-check\] status=pass failed=0 unclear=0 ms=\d+$/);
+    assert.match(lines[0], /^\[visual-check\] status=pass failed=0 unclear=0 ms=\d+ model=claude-sonnet-5-5$/, "the line names the model that answered");
   });
 
   test("fail: a clear contradiction is reported with the fact and what was seen", async () => {
@@ -239,11 +239,12 @@ describe("checkImage", () => {
     assert.equal(r.reason, "refusal");
   });
 
-  test("no tool call -> error", async () => {
-    claudeQueue([{ stop_reason: "end_turn", content: [{ type: "text", text: "Looks right to me." }] }]);
+  test("no tool call from Sonnet or Opus -> error no_tool, after one second opinion", async () => {
+    const calls = claudeQueue([{ stop_reason: "end_turn", content: [{ type: "text", text: "Looks right to me." }] }]);
     const r = await io.checkImage({ imageB64: PNG_B64, facts: FACTS });
     assert.equal(r.status, "error");
     assert.equal(r.reason, "no_tool");
+    assert.deepEqual(calls.map((c: Json) => c.params.model), ["claude-sonnet-5-5", "claude-opus-5-5"]);
   });
 
   test("negative: null input never rejects", async () => {

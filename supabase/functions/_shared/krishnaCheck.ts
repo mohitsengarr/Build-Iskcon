@@ -2,8 +2,15 @@
 // krishnaCheckCore.ts). Fails closed: a missing key, an unreadable image, an API
 // error, a refusal or a malformed answer is "not checked", so nothing is posted.
 // A failed check is not stored, so the next run asks again.
+//
+// Sonnet answers first. When it says it is not sure, contradicts itself or gives no
+// usable answer, Opus is asked and its answer is the one stored (SEN-975). An unsure
+// Sonnet answer that Opus could not confirm is not stored: the picture is held back.
+// Pictures drawn since SEN-975 usually arrive with a stored answer already, copied
+// from the image check that ran after the render (see krishnaCheckCore.ts).
 
 import Anthropic from "npm:@anthropic-ai/sdk@0.125.0";
+import { answeredBy, CHECK_MODEL, type CheckModel, ESCALATION_MODEL, usageNote } from "./checkModels.ts";
 import {
   buildKrishnaParams,
   bytesToBase64,
@@ -11,6 +18,7 @@ import {
   KRISHNA_CHECK_MODEL,
   krishnaAllowed,
   type KrishnaAnswer,
+  krishnaNeedsSecondOpinion,
   type KrishnaCheck,
   krishnaRecord,
   MAX_KRISHNA_IMAGE_B64_CHARS,
@@ -24,7 +32,7 @@ type SupabaseLike = any;
 export type KrishnaTable = "ig_pending_review" | "gita_chapter_art_review" | "chaitanya_chapter_art_review";
 export const KRISHNA_TABLES: readonly KrishnaTable[] = ["ig_pending_review", "gita_chapter_art_review", "chaitanya_chapter_art_review"];
 
-export type AskResult = { ok: true; answer: KrishnaAnswer } | { ok: false; reason: string };
+export type AskResult = { ok: true; answer: KrishnaAnswer; model?: string } | { ok: false; reason: string };
 export type Ask = (imageUrl: string) => Promise<AskResult>;
 
 function env(name: string): string {
@@ -33,11 +41,45 @@ function env(name: string): string {
   return d?.env?.get?.(name) ?? "";
 }
 
-/** Asks Claude whether Krishna is in the picture at this URL. Never throws. */
+type Reply = { ok: true; answer: KrishnaAnswer; model: string } | { ok: false; reason: string; askAgain: boolean };
+
+/** One model's answer. Never throws. */
+async function askModel(
+  client: Anthropic,
+  model: CheckModel,
+  imageB64: string,
+  mediaType: NonNullable<ReturnType<typeof detectImageMediaType>>,
+  timeoutMs: number,
+  maxRetries: number,
+  log: (line: string) => void,
+): Promise<Reply> {
+  try {
+    const message = await client.beta.messages.create(
+      // deno-lint-ignore no-explicit-any
+      buildKrishnaParams({ imageB64, mediaType, model }) as any,
+      { timeout: timeoutMs, maxRetries },
+    );
+    const used = usageNote(message);
+    if (used) log(`[krishna-check] ${answeredBy(message, model)} tokens=${used}`);
+    const parsed = parseKrishnaCheck(message);
+    if (parsed.outcome !== "ok") return { ok: false, reason: parsed.outcome, askAgain: parsed.outcome !== "refusal" };
+    return { ok: true, answer: parsed.answer, model: answeredBy(message, model) };
+  } catch (e) {
+    const status = (e as { status?: number })?.status;
+    return { ok: false, reason: status ? `api_error_${status}` : `unexpected_${(e as Error)?.name ?? "error"}`, askAgain: false };
+  }
+}
+
+/**
+ * Asks Claude whether Krishna is in the picture at this URL: Sonnet, then Opus
+ * only when Sonnet is unsure, contradicts itself or gives no usable answer. Never
+ * throws; fails closed.
+ */
 export async function askKrishna(
   imageUrl: string,
-  o: { apiKey?: string; fetchImpl?: typeof fetch; timeoutMs?: number } = {},
+  o: { apiKey?: string; fetchImpl?: typeof fetch; timeoutMs?: number; log?: (line: string) => void } = {},
 ): Promise<AskResult> {
+  const log = o.log ?? console.log;
   try {
     const apiKey = o.apiKey ?? env("ANTHROPIC_API_KEY");
     if (!apiKey) return { ok: false, reason: "no_api_key" };
@@ -48,13 +90,17 @@ export async function askKrishna(
     const mediaType = detectImageMediaType(imageB64);
     if (!mediaType) return { ok: false, reason: "unknown_media_type" };
     const client = new Anthropic({ apiKey });
-    const message = await client.beta.messages.create(
-      // deno-lint-ignore no-explicit-any
-      buildKrishnaParams({ imageB64, mediaType }) as any,
-      { timeout: o.timeoutMs ?? 90_000, maxRetries: 1 },
-    );
-    const parsed = parseKrishnaCheck(message);
-    return parsed.outcome === "ok" ? { ok: true, answer: parsed.answer } : { ok: false, reason: parsed.outcome };
+    const timeoutMs = o.timeoutMs ?? 60_000;
+    const first = await askModel(client, CHECK_MODEL, imageB64, mediaType, timeoutMs, 1, log);
+    const unsure = first.ok && krishnaNeedsSecondOpinion(first.answer);
+    if (first.ok && !unsure) return { ok: true, answer: first.answer, model: first.model };
+    if (!first.ok && !first.askAgain) return { ok: false, reason: first.reason };
+    const second = await askModel(client, ESCALATION_MODEL, imageB64, mediaType, timeoutMs, 0, log);
+    if (second.ok) {
+      log(`[krishna-check] second opinion from ${second.model}: ${first.ok ? "the first answer was unsure" : `the first gave ${first.reason}`}`);
+      return { ok: true, answer: second.answer, model: second.model };
+    }
+    return { ok: false, reason: first.ok ? `unsure_and_${second.reason}` : first.reason };
   } catch (e) {
     const status = (e as { status?: number })?.status;
     return { ok: false, reason: status ? `api_error_${status}` : `unexpected_${(e as Error)?.name ?? "error"}` };
@@ -84,7 +130,7 @@ export async function ensureKrishnaCheck(o: {
     log(`[krishna-check] ${o.table} #${row.id}: check failed (${r.reason}); not posted`);
     return null;
   }
-  const record = krishnaRecord(r.answer, row.image_path, KRISHNA_CHECK_MODEL, (o.now ?? (() => new Date()))());
+  const record = krishnaRecord(r.answer, row.image_path, r.model ?? KRISHNA_CHECK_MODEL, (o.now ?? (() => new Date()))());
   const { data, error } = await o.supabase.from(o.table).update({ krishna_check: record })
     .eq("id", row.id).eq("image_path", row.image_path).select("id");
   if (error) {

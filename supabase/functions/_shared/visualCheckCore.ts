@@ -17,9 +17,27 @@
 // and the background work; everything that decides what is sent, how the answer
 // is read, which record a new image starts with and whether to spend another
 // render lives here so it can be tested offline.
+//
+// Since 2026-10-29 (SEN-975) the same call also answers the Krishna question
+// (krishnaCheckCore.ts) and says whether it is sure. Sonnet answers first; Opus is
+// asked again only when Sonnet is unsure (secondOpinionNeeded). The record keeps the
+// Krishna answer and the model that answered; a database trigger copies the Krishna
+// answer to krishna_check, pinned to the image it was stored with.
+
+import { CHECK_MODEL, checkCallFields, type CheckModel } from "./checkModels.ts";
+import {
+  KRISHNA_ANSWER_SCHEMA,
+  type KrishnaAnswer,
+  krishnaNeedsSecondOpinion,
+  krishnaRules,
+  readKrishnaAnswer,
+  SURE_RULE,
+  SURE_SCHEMA,
+} from "./krishnaCheckCore.ts";
 
 export const VISUAL_CHECK_TOOL_NAME = "record_visual_check";
-export const VISUAL_CHECK_MODEL = "claude-opus-5";
+/** The model asked first (Sonnet). Opus is the second opinion (checkModels.ts). */
+export const VISUAL_CHECK_MODEL = CHECK_MODEL;
 /** Larger base64 images are not sent to Claude (the check is skipped). */
 export const MAX_CHECK_IMAGE_B64_CHARS = 5_000_000;
 /** Time kept free after a retry's render and check, so the request can still store its row. */
@@ -66,8 +84,10 @@ export const VISUAL_CHECK_TOOL = {
   input_schema: {
     type: "object",
     additionalProperties: false,
-    required: ["checks"],
+    required: ["checks", "krishna", "sure"],
     properties: {
+      krishna: KRISHNA_ANSWER_SCHEMA,
+      sure: SURE_SCHEMA,
       checks: {
         type: "array",
         items: {
@@ -111,21 +131,24 @@ export function buildVisualCheckText(facts: unknown[]): string {
     "Details:",
     numbered,
     "",
-    `Call the ${VISUAL_CHECK_TOOL_NAME} tool once, with one entry per detail and the detail's number as fact_index.`,
+    "Also say, in the krishna field, whether Lord Sri Krishna Himself is shown in the painting.",
+    "",
+    ...krishnaRules(),
+    "",
+    SURE_RULE,
+    "",
+    `Call the ${VISUAL_CHECK_TOOL_NAME} tool once, with one entry per detail and the detail's number as fact_index, the krishna fields and sure.`,
   ].join("\n");
 }
 
-/** The params for client.beta.messages.create: image block first, then the numbered facts. */
-export function buildVisualCheckParams(input: { facts: unknown[]; imageB64: string; mediaType: ImageMediaType }) {
+/** The params for client.beta.messages.create: image block first, then the numbered facts. Sonnet unless `model` says otherwise. */
+export function buildVisualCheckParams(input: { facts: unknown[]; imageB64: string; mediaType: ImageMediaType; model?: CheckModel }) {
   return {
-    model: VISUAL_CHECK_MODEL,
+    ...checkCallFields(input.model ?? CHECK_MODEL),
     max_tokens: 8000,
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default",
-    output_config: { effort: "medium" },
     tools: [VISUAL_CHECK_TOOL],
-    // Not forced: thinking is on by default on claude-opus-5 and forced tool
-    // use conflicts with it. The text tells the model to call the tool.
+    // Not forced: thinking is on by default on both check models and forced
+    // tool use conflicts with it. The text tells the model to call the tool.
     tool_choice: { type: "auto" },
     messages: [
       {
@@ -170,6 +193,33 @@ export function parseVisualCheck(message: unknown, factCount: number): { outcome
     checks.push({ fact_index: index, verdict: c.verdict, observed });
   }
   return { outcome: "ok", checks };
+}
+
+/**
+ * The rest of the answer: whether the model is sure and its Krishna answer.
+ * merged: the reply answered the merged question (it carries sure). A reply in the
+ * older shape (checks only) has merged false, sure null and krishna null.
+ */
+export function readOpinion(message: unknown): { merged: boolean; sure: boolean | null; krishna: KrishnaAnswer | null } {
+  // deno-lint-ignore no-explicit-any
+  const m = message as any;
+  const content = m && typeof m === "object" && Array.isArray(m.content) ? m.content : [];
+  // deno-lint-ignore no-explicit-any
+  const input = content.find((b: any) => b && b.type === "tool_use" && b.name === VISUAL_CHECK_TOOL_NAME)?.input;
+  if (!input || typeof input !== "object") return { merged: false, sure: null, krishna: null };
+  const sure = typeof input.sure === "boolean" ? input.sure : null;
+  return { merged: sure !== null, sure, krishna: readKrishnaAnswer(input.krishna, sure ?? undefined) };
+}
+
+/**
+ * Whether Opus is asked again after Sonnet's answer: Sonnet gave no tool answer,
+ * said it is not sure, or gave a Krishna answer that contradicts itself. A refusal
+ * is not asked again (the server already re-ran it on a fallback model).
+ */
+export function secondOpinionNeeded(input: { outcome: ParseOutcome; sure: boolean | null; krishna: KrishnaAnswer | null }): boolean {
+  if (input.outcome === "no_tool") return true;
+  if (input.outcome !== "ok") return false;
+  return input.sure === false || krishnaNeedsSecondOpinion(input.krishna);
 }
 
 /** Only a "no" fails. A fact with no answer counts as unclear, never as failed. */
@@ -321,6 +371,19 @@ export interface VisualCheckRecord {
    * startedAt carry the key: the in-request loop's records keep their shape.
    */
   started_at?: string | null;
+  /** The model whose answer the record holds. Only answers to the merged question carry it. */
+  check_model?: string;
+  /** Whether Opus was asked after Sonnet was unsure. Present with check_model. */
+  escalated?: boolean;
+  /** The Krishna answer for this image, when the answer had a valid one. */
+  krishna?: KrishnaAnswer & { model: string };
+}
+
+/** What a check answered, beyond the facts: carried with a verdict into its record. */
+export interface Opinion {
+  checkModel?: string | null;
+  escalated?: boolean;
+  krishna?: KrishnaAnswer | null;
 }
 
 /**
@@ -338,7 +401,7 @@ export function visualCheckRecord(input: {
   imageModel?: string | null;
   checkedAt?: string | null;
   startedAt?: string | null;
-}): VisualCheckRecord {
+} & Opinion): VisualCheckRecord {
   const count = (v: unknown) => (Number.isFinite(Number(v)) ? Math.max(0, Math.floor(Number(v))) : 0);
   const text = (v: unknown) => (typeof v === "string" && v.length > 0 ? v : null);
   const record: VisualCheckRecord = {
@@ -355,7 +418,22 @@ export function visualCheckRecord(input: {
     checked_at: text(input.checkedAt),
   };
   if ("startedAt" in input) record.started_at = text(input.startedAt);
+  const checkModel = text(input.checkModel);
+  if (checkModel) {
+    record.check_model = checkModel;
+    record.escalated = input.escalated === true;
+    const k = input.krishna;
+    if (k && typeof k === "object") record.krishna = { ...k, model: checkModel };
+  }
   return record;
+}
+
+/** The opinion fields of a check result, for visualCheckRecord. */
+export function opinionOf(v: unknown): Opinion {
+  // deno-lint-ignore no-explicit-any
+  const o = v as any;
+  if (!o || typeof o !== "object" || typeof o.checkModel !== "string" || o.checkModel.length === 0) return {};
+  return { checkModel: o.checkModel, escalated: o.escalated === true, krishna: o.krishna ?? null };
 }
 
 // ── Background check ─────────────────────────────────────────────────────────

@@ -697,7 +697,8 @@ describe("generate-scene-image visual check", () => {
         // Assert
         assert.equal(status, 200, JSON.stringify(json));
         assert.equal(json.visual_check.status, "running");
-        assert.equal(calls.length, 1);
+        // A reply with no tool call gets one second opinion from Opus (SEN-975).
+        assert.equal(calls.length, reason === "no_tool" ? 2 : 1);
         assert.equal(together.length, 1);
         assert.equal(uploadedB64(db), images[0]);
         const record = db.row.visual_check;

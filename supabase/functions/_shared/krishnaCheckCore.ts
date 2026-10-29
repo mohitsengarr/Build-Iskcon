@@ -8,12 +8,21 @@
 // image is checked again. Only a current record that says Krishna is clearly shown
 // in His own form lets a post go out; no record, an old record, an unclear answer
 // or a failed check keeps it back.
+//
+// Since 2026-10-29 (SEN-975) the question is asked of Sonnet first and of Opus only
+// when Sonnet is unsure (checkModels.ts). The same question is also part of the
+// image check that runs after every render (visualCheckCore.ts): its answer reaches
+// krishna_check through a database trigger that pins it to the image the record was
+// stored with (migration 20261029120000), so a picture drawn after that is usually
+// not asked again before it is posted.
 
-import { type ImageMediaType, VISUAL_CHECK_MODEL } from "./visualCheckCore.ts";
+import type { ImageMediaType } from "./visualCheckCore.ts";
+import { CHECK_MODEL, checkCallFields, type CheckModel } from "./checkModels.ts";
 
 export const KRISHNA_CHECK_VERSION = 1;
 export const KRISHNA_TOOL_NAME = "record_krishna_check";
-export const KRISHNA_CHECK_MODEL = VISUAL_CHECK_MODEL;
+/** The model asked first. A record names the model that actually answered. */
+export const KRISHNA_CHECK_MODEL = CHECK_MODEL;
 /** Larger base64 images are not sent (the check fails closed). */
 export const MAX_KRISHNA_IMAGE_B64_CHARS = 5_000_000;
 export const MAX_OBSERVED_CHARS = 240;
@@ -43,6 +52,8 @@ export interface KrishnaAnswer {
   form: KrishnaForm;
   prominence: Prominence;
   observed: string;
+  /** False when the model said its answer is a close call. Older records have no such key. */
+  sure?: boolean;
 }
 
 /** Stored on the row (krishna_check) for the image it judged. */
@@ -53,27 +64,38 @@ export interface KrishnaCheck extends KrishnaAnswer {
   checked_at: string;
 }
 
+/** The answer's fields, as a closed object schema (also part of the image check's tool). */
+export const KRISHNA_ANSWER_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["krishna_visible", "form", "prominence", "observed"],
+  properties: {
+    krishna_visible: { type: "boolean", description: "True only if Krishna Himself is clearly shown." },
+    form: { type: "string", enum: [...KRISHNA_FORMS] },
+    prominence: { type: "string", enum: [...PROMINENCES] },
+    observed: { type: "string", description: "One short sentence on who the painting shows." },
+  },
+};
+
+export const SURE_SCHEMA = {
+  type: "boolean",
+  description: "False if any answer you gave is a close call you could easily get wrong.",
+};
+
 export const KRISHNA_TOOL = {
   name: KRISHNA_TOOL_NAME,
   description: "Record whether Lord Krishna Himself is shown in the painting, in which form and how prominently.",
   strict: true,
   input_schema: {
-    type: "object",
-    additionalProperties: false,
-    required: ["krishna_visible", "form", "prominence", "observed"],
-    properties: {
-      krishna_visible: { type: "boolean", description: "True only if Krishna Himself is clearly shown." },
-      form: { type: "string", enum: [...KRISHNA_FORMS] },
-      prominence: { type: "string", enum: [...PROMINENCES] },
-      observed: { type: "string", description: "One short sentence on who the painting shows." },
-    },
+    ...KRISHNA_ANSWER_SCHEMA,
+    required: [...KRISHNA_ANSWER_SCHEMA.required, "sure"],
+    properties: { ...KRISHNA_ANSWER_SCHEMA.properties, sure: SURE_SCHEMA },
   },
 };
 
-export function buildKrishnaText(): string {
+/** Who counts as Krishna, and what each field means. Shared with the image check's text. */
+export function krishnaRules(): string[] {
   return [
-    "Look at this painting and say whether Lord Sri Krishna Himself is shown in it.",
-    "",
     "Krishna counts when He is clearly shown as a figure: for example the dark-blue cowherd boy with a peacock feather and a flute, baby or child Krishna (Gopala, Damodara), Krishna with Radha or the gopis, Krishna as Arjuna's charioteer, Krishna as a king in Dvaraka, or a deity (murti) of Krishna or of Radha-Krishna on an altar.",
     "",
     "Not Krishna for this check: Vishnu or Narayana with four arms, Rama, Narasimha or other avatars, Lord Jagannath, Sri Chaitanya Mahaprabhu, Balarama, Shiva, Brahma, demigods, sages, devotees, or a symbol on its own (a flute or a peacock feather with no Krishna).",
@@ -83,19 +105,29 @@ export function buildKrishnaText(): string {
     "- form: if Krishna is shown, the form He is shown in (krishna, child_krishna, radha_krishna, krishna_deity). Otherwise the main sacred figure shown (jagannath, chaitanya, vishnu_or_narayana, rama, other_deity_or_avatar), or none.",
     "- prominence: how prominent Krishna is: main (a central figure), secondary (clearly visible, not central), background (small or hard to make out), none (not shown).",
     "- observed: one short sentence on who the painting shows.",
+  ];
+}
+
+/** What "sure" means, in both checks. */
+export const SURE_RULE =
+  "- sure: true if you are confident in every answer you gave. false if any of them is a close call you could easily get wrong, for example a count you could not make out for certain or a figure you cannot tell is Krishna.";
+
+export function buildKrishnaText(): string {
+  return [
+    "Look at this painting and say whether Lord Sri Krishna Himself is shown in it.",
+    "",
+    ...krishnaRules(),
+    SURE_RULE,
     "",
     `Call the ${KRISHNA_TOOL_NAME} tool once.`,
   ].join("\n");
 }
 
-/** Params for client.beta.messages.create: the image, then the question. */
-export function buildKrishnaParams(input: { imageB64: string; mediaType: ImageMediaType }) {
+/** Params for client.beta.messages.create: the image, then the question. Sonnet unless `model` says otherwise. */
+export function buildKrishnaParams(input: { imageB64: string; mediaType: ImageMediaType; model?: CheckModel }) {
   return {
-    model: KRISHNA_CHECK_MODEL,
-    max_tokens: 4000,
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default",
-    output_config: { effort: "medium" },
+    ...checkCallFields(input.model ?? CHECK_MODEL),
+    max_tokens: 6000,
     tools: [KRISHNA_TOOL],
     // Not forced: thinking is on by default and forced tool use conflicts with it.
     tool_choice: { type: "auto" },
@@ -111,6 +143,24 @@ export function buildKrishnaParams(input: { imageB64: string; mediaType: ImageMe
   };
 }
 
+/**
+ * The answer's fields from a tool input, or null when any of them is malformed.
+ * `sure` is the top-level sure of the same input (a boolean), else left out.
+ */
+export function readKrishnaAnswer(input: unknown, sure?: unknown): KrishnaAnswer | null {
+  // deno-lint-ignore no-explicit-any
+  const i = input as any;
+  if (!i || typeof i !== "object" || Array.isArray(i)) return null;
+  const { krishna_visible, form, prominence, observed } = i;
+  if (typeof krishna_visible !== "boolean") return null;
+  if (!(KRISHNA_FORMS as readonly string[]).includes(form)) return null;
+  if (!(PROMINENCES as readonly string[]).includes(prominence)) return null;
+  const note = typeof observed === "string" ? observed.replace(/\s+/g, " ").trim().slice(0, MAX_OBSERVED_CHARS) : "";
+  const answer: KrishnaAnswer = { krishna_visible, form, prominence, observed: note };
+  if (typeof sure === "boolean") answer.sure = sure;
+  return answer;
+}
+
 /** Reads the tool answer; anything malformed is not an answer. */
 export function parseKrishnaCheck(message: unknown):
   | { outcome: "ok"; answer: KrishnaAnswer }
@@ -123,12 +173,25 @@ export function parseKrishnaCheck(message: unknown):
   // deno-lint-ignore no-explicit-any
   const input = content.find((b: any) => b && b.type === "tool_use" && b.name === KRISHNA_TOOL_NAME)?.input;
   if (!input || typeof input !== "object") return { outcome: "no_tool" };
-  const { krishna_visible, form, prominence, observed } = input;
-  if (typeof krishna_visible !== "boolean") return { outcome: "invalid" };
-  if (!(KRISHNA_FORMS as readonly string[]).includes(form)) return { outcome: "invalid" };
-  if (!(PROMINENCES as readonly string[]).includes(prominence)) return { outcome: "invalid" };
-  const note = typeof observed === "string" ? observed.replace(/\s+/g, " ").trim().slice(0, MAX_OBSERVED_CHARS) : "";
-  return { outcome: "ok", answer: { krishna_visible, form, prominence, observed: note } };
+  const answer = readKrishnaAnswer(input, input.sure);
+  return answer ? { outcome: "ok", answer } : { outcome: "invalid" };
+}
+
+/**
+ * An answer that contradicts itself: Krishna shown but in another figure's form or
+ * with no prominence, or Krishna not shown while His form or a main or secondary
+ * place is named.
+ */
+export function krishnaInconsistent(a: KrishnaAnswer): boolean {
+  const krishnaForm = POSTABLE_FORMS.includes(a.form);
+  if (a.krishna_visible) return !krishnaForm || a.prominence === "none";
+  return krishnaForm || POSTABLE_PROMINENCES.includes(a.prominence);
+}
+
+/** Opus is asked again only when Sonnet said it is not sure or contradicted itself. */
+export function krishnaNeedsSecondOpinion(a: KrishnaAnswer | null | undefined): boolean {
+  if (!a) return false;
+  return a.sure === false || krishnaInconsistent(a);
 }
 
 export function krishnaRecord(answer: KrishnaAnswer, imagePath: string, model: string, at: Date): KrishnaCheck {

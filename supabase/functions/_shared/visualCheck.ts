@@ -40,10 +40,18 @@
 // that caused a mistake, with only the seed moved, drew the same mistake again.
 //
 // Kill switch: VISUAL_CHECK_ENABLED=false skips the check (and so every re-render).
+//
+// Models (SEN-975, 2026-10-29): Sonnet answers first. When it says it is not sure,
+// gives a Krishna answer that contradicts itself or calls no tool, Opus is asked
+// within the same time limit and its answer replaces Sonnet's. When Opus cannot
+// answer in time, Sonnet's verdict on the facts stands and its unsure Krishna
+// answer is dropped (the posting gate asks again before anything is posted).
 
 // Pinned: an unpinned specifier resolves to whatever is newest at deploy time,
 // and a function that fails to boot blocks image generation outright.
 import Anthropic from "npm:@anthropic-ai/sdk@0.125.0";
+import { answeredBy, CHECK_MODEL, type CheckModel, ESCALATION_MODEL, usageNote } from "./checkModels.ts";
+import type { KrishnaAnswer } from "./krishnaCheckCore.ts";
 import {
   backgroundDeadline as deadlineAfter,
   buildVisualCheckParams,
@@ -52,8 +60,12 @@ import {
   initialRecordFor,
   MAX_CHECK_IMAGE_B64_CHARS,
   mergeFailed,
+  type Opinion,
+  opinionOf,
   parseVisualCheck,
   pickBest,
+  readOpinion,
+  secondOpinionNeeded,
   shouldRetry,
   verdictFor,
   visualCheckRecord,
@@ -72,8 +84,12 @@ export const CHECK_ESTIMATE_MS = 20_000;
 export const MIN_CHECK_WINDOW_MS = 10_000;
 /** A background re-render is predicted to take at least this long (the request's render was not timed here). */
 export const RENDER_ESTIMATE_MS = 30_000;
+/** Opus is asked for a second opinion only with at least this long left in the check's time limit. */
+export const MIN_SECOND_OPINION_MS = 10_000;
+/** The second opinion ends this long before the check's own limit, so the first answer is never lost. */
+const SECOND_OPINION_MARGIN_MS = 1_000;
 
-export interface CheckImageResult {
+export interface CheckImageResult extends Opinion {
   status: VisualCheckStatus;
   failed: FailedFact[];
   unclear: number;
@@ -232,9 +248,22 @@ function isoTime(v: unknown): string | null {
 
 // ── checkImage ───────────────────────────────────────────────────────────────
 
-type Answer = { status: "pass" | "fail"; failed: FailedFact[]; unclear: number } | { status: "error"; reason: string };
+type Verdict = {
+  status: "pass" | "fail";
+  failed: FailedFact[];
+  unclear: number;
+  /** The reply answered the merged question (it carries sure). */
+  merged: boolean;
+  sure: boolean | null;
+  krishna: KrishnaAnswer | null;
+  model: string;
+  usage: string;
+  askAgain: boolean;
+};
+type Answer = Verdict | { status: "error"; reason: string; askAgain: boolean };
 
 async function askClaude(
+  model: CheckModel,
   apiKey: string,
   facts: string[],
   imageB64: string,
@@ -246,40 +275,60 @@ async function askClaude(
     const client = new Anthropic({ apiKey });
     const response = await client.beta.messages.create(
       // deno-lint-ignore no-explicit-any
-      buildVisualCheckParams({ facts, imageB64, mediaType }) as any,
+      buildVisualCheckParams({ facts, imageB64, mediaType, model }) as any,
       // No retry: inside a fixed deadline a second attempt can never finish.
       { timeout: Math.max(MIN_SDK_TIMEOUT_MS, timeoutMs), maxRetries: 0, signal },
     );
     const parsed = parseVisualCheck(response, facts.length);
-    if (parsed.outcome !== "ok") return { status: "error", reason: parsed.outcome };
+    if (parsed.outcome !== "ok") {
+      return { status: "error", reason: parsed.outcome, askAgain: secondOpinionNeeded({ outcome: parsed.outcome, sure: null, krishna: null }) };
+    }
+    const opinion = readOpinion(response);
     const verdict = verdictFor(parsed.checks, facts);
-    return { status: verdict.status, failed: verdict.failed, unclear: verdict.unclear };
+    return {
+      status: verdict.status,
+      failed: verdict.failed,
+      unclear: verdict.unclear,
+      ...opinion,
+      model: answeredBy(response, model),
+      usage: usageNote(response),
+      askAgain: secondOpinionNeeded({ outcome: "ok", sure: opinion.sure, krishna: opinion.krishna }),
+    };
   } catch (e) {
-    if (e instanceof Anthropic.APIError) return { status: "error", reason: `api_error_${e.status ?? "connection"}` };
-    return { status: "error", reason: `unexpected_${errName(e)}` };
+    if (e instanceof Anthropic.APIError) return { status: "error", reason: `api_error_${e.status ?? "connection"}`, askAgain: false };
+    return { status: "error", reason: `unexpected_${errName(e)}`, askAgain: false };
   }
+}
+
+/** The opinion fields a verdict puts in its record (only answers to the merged question have them). */
+function opinionFields(v: Verdict, escalated: boolean, keepKrishna = true): Opinion {
+  if (!v.merged) return {};
+  return { checkModel: v.model, escalated, krishna: keepKrishna ? v.krishna : null };
 }
 
 /**
  * Checks one image against its facts. Never throws. "skipped" when the check is
  * off, there are no facts, ANTHROPIC_API_KEY is missing, or the image is missing,
  * too large or not a known type. "error" on an API error, timeout, refusal or a
- * reply without the tool call.
+ * reply without the tool call. Sonnet answers first; Opus is asked within the same
+ * time limit only when Sonnet is unsure (see the header).
  */
 export async function checkImage(
   input: { imageB64: string; facts: string[] },
   opts: CheckImageOptions = {},
 ): Promise<CheckImageResult> {
   const started = Date.now();
-  const finish = (status: VisualCheckStatus, reason: string | null, failed: FailedFact[] = [], unclear = 0) => {
+  let note = "";
+  const finish = (status: VisualCheckStatus, reason: string | null, failed: FailedFact[] = [], unclear = 0, opinion: Opinion = {}) => {
     const ms = Date.now() - started;
     console.log(
-      `[visual-check] status=${status} failed=${failed.length} unclear=${unclear} ms=${ms}${reason ? ` reason=${reason}` : ""}`,
+      `[visual-check] status=${status} failed=${failed.length} unclear=${unclear} ms=${ms}${reason ? ` reason=${reason}` : ""}${note}`,
     );
-    return { status, failed, unclear, reason, ms };
+    return { status, failed, unclear, reason, ms, ...opinion };
   };
 
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let secondTimer: ReturnType<typeof setTimeout> | undefined;
   let detach = () => {};
   try {
     if (checkDisabled()) return finish("skipped", "disabled");
@@ -298,29 +347,66 @@ export async function checkImage(
     const requested = Number(opts?.timeoutMs);
     const timeoutMs = Number.isFinite(requested) && requested > 0 ? requested : DEFAULT_CHECK_TIMEOUT_MS;
     const controller = new AbortController();
+    const secondController = new AbortController();
+    const stopAll = () => {
+      controller.abort();
+      secondController.abort();
+    };
     // Our own timer, not only the SDK timeout: the call must end on time even
     // if the request ignores its abort signal.
     const stopped = new Promise<Answer>((resolve) => {
       timer = setTimeout(() => {
-        controller.abort();
-        resolve({ status: "error", reason: "timeout" });
+        stopAll();
+        resolve({ status: "error", reason: "timeout", askAgain: false });
       }, timeoutMs);
       if (outer) {
         const onAbort = () => {
-          controller.abort();
-          resolve({ status: "error", reason: "aborted" });
+          stopAll();
+          resolve({ status: "error", reason: "aborted", askAgain: false });
         };
         outer.addEventListener("abort", onAbort);
         detach = () => outer.removeEventListener("abort", onAbort);
       }
     });
-    const answer = await Promise.race([askClaude(apiKey, facts, imageB64, mediaType, timeoutMs, controller.signal), stopped]);
-    if (answer.status === "error") return finish("error", answer.reason);
-    return finish(answer.status, null, answer.failed, answer.unclear);
+    const first = await Promise.race([askClaude(CHECK_MODEL, apiKey, facts, imageB64, mediaType, timeoutMs, controller.signal), stopped]);
+    const firstNote = (a: Answer) => (a.status === "error" ? "" : ` model=${a.model}${a.usage ? ` tokens=${a.usage}` : ""}`);
+    note = firstNote(first);
+    const fromFirst = (keepKrishna: boolean) =>
+      first.status === "error"
+        ? finish("error", first.reason)
+        : finish(first.status, null, first.failed, first.unclear, opinionFields(first, false, keepKrishna));
+    if (!first.askAgain) return fromFirst(true);
+
+    // Sonnet is unsure: Opus is asked with the time that is left, ending before our
+    // own limit so that Sonnet's answer can still be used when Opus does not finish.
+    const left = timeoutMs - (Date.now() - started) - SECOND_OPINION_MARGIN_MS;
+    if (left < MIN_SECOND_OPINION_MS) {
+      note += " second_opinion=no_time";
+      return fromFirst(false);
+    }
+    const secondStopped = new Promise<Answer>((resolve) => {
+      secondTimer = setTimeout(() => {
+        secondController.abort();
+        resolve({ status: "error", reason: "timeout", askAgain: false });
+      }, left);
+    });
+    const second = await Promise.race([
+      askClaude(ESCALATION_MODEL, apiKey, facts, imageB64, mediaType, left, secondController.signal),
+      secondStopped,
+      stopped,
+    ]);
+    if (second.status !== "error") {
+      note += ` second_opinion=${second.model}${second.usage ? ` tokens=${second.usage}` : ""}`;
+      return finish(second.status, null, second.failed, second.unclear, opinionFields(second, true));
+    }
+    if (outer?.aborted) return finish("error", "aborted");
+    note += ` second_opinion=failed_${second.reason}`;
+    return fromFirst(false);
   } catch (e) {
     return finish("error", `unexpected_${errName(e)}`);
   } finally {
     if (timer !== undefined) clearTimeout(timer);
+    if (secondTimer !== undefined) clearTimeout(secondTimer);
     detach();
   }
 }
@@ -523,7 +609,7 @@ async function checkAttempt(loop: LoopEnv, index: number, b64: string): Promise<
 interface Attempt {
   index: number;
   out: RenderOutput;
-  verdict: { failed: FailedFact[]; unclear: number };
+  verdict: { failed: FailedFact[]; unclear: number } & Opinion;
 }
 
 /**
@@ -555,6 +641,7 @@ export async function renderWithVisualCheck(input: RenderWithVisualCheckInput): 
       reason,
       imageModel: model,
       checkedAt: new Date().toISOString(),
+      ...opinionOf(verdict),
     });
     log(
       `[visual-check] ${tag} chose attempt=${index} of ${renders} status=${status} failed=${verdict.failed.length}${reason ? ` reason=${reason}` : ""}`,
@@ -684,7 +771,7 @@ export async function checkInBackground(input: CheckInBackgroundInput): Promise<
   const { now, log, tag, deadlineAt } = loop;
   const startedAt = isoTime(input?.startedAt);
   const imageModel = typeof input?.imageModel === "string" ? input.imageModel : null;
-  const build = (status: VisualCheckStatus, reason: string | null, verdict: { failed: FailedFact[]; unclear: number } = NO_VERDICT) =>
+  const build = (status: VisualCheckStatus, reason: string | null, verdict: { failed: FailedFact[]; unclear: number } & Opinion = NO_VERDICT) =>
     visualCheckRecord({
       status,
       attempts: 1,
@@ -695,6 +782,7 @@ export async function checkInBackground(input: CheckInBackgroundInput): Promise<
       imageModel,
       checkedAt: new Date().toISOString(),
       startedAt,
+      ...opinionOf(verdict),
     });
 
   let record: VisualCheckRecord;
@@ -738,7 +826,7 @@ export async function redoInBackground(input: RedoInBackgroundInput): Promise<Vi
   // The request's render is attempt 0: it counts as a render.
   let renders = 1;
   let stored = indexed(input?.first, 0);
-  let storedVerdict: { failed: FailedFact[]; unclear: number } | null = null;
+  let storedVerdict: ({ failed: FailedFact[]; unclear: number } & Opinion) | null = null;
 
   // True only when input.stillCurrent answers exactly false: the row was reviewed or
   // its image replaced, so `skipped` (the next render or check) is not paid for.
@@ -755,7 +843,7 @@ export async function redoInBackground(input: RedoInBackgroundInput): Promise<Vi
     return true;
   };
 
-  const recordFor = (image: IndexedRender, status: VisualCheckStatus, verdict: { failed: FailedFact[]; unclear: number }, reason: string | null) =>
+  const recordFor = (image: IndexedRender, status: VisualCheckStatus, verdict: { failed: FailedFact[]; unclear: number } & Opinion, reason: string | null) =>
     visualCheckRecord({
       status,
       attempts: renders,
@@ -766,6 +854,7 @@ export async function redoInBackground(input: RedoInBackgroundInput): Promise<Vi
       imageModel: image.model,
       checkedAt: new Date().toISOString(),
       startedAt,
+      ...opinionOf(verdict),
     });
 
   const finish = async (record: VisualCheckRecord): Promise<VisualCheckRecord> => {

@@ -67,7 +67,7 @@ describe("VISUAL_CHECK_TOOL", () => {
 
   test("every object is closed and requires every one of its properties", () => {
     const objs = objects(VISUAL_CHECK_TOOL.input_schema);
-    assert.equal(objs.length, 2, "the input object and the check item");
+    assert.equal(objs.length, 3, "the input object, the check item and the Krishna answer (SEN-975)");
     for (const o of objs) {
       assert.equal(o.additionalProperties, false);
       assert.deepEqual([...o.required].sort(), Object.keys(o.properties).sort());
@@ -89,7 +89,7 @@ describe("buildVisualCheckParams", () => {
     // Arrange / Act
     const p = buildVisualCheckParams({ facts: FACTS, imageB64: PNG_B64, mediaType: "image/png" });
     // Assert
-    assert.equal(p.model, "claude-opus-5");
+    assert.equal(p.model, "claude-sonnet-5-5", "Sonnet first; Opus only as the second opinion (SEN-975)");
     assert.equal(p.max_tokens, 8000);
     assert.deepEqual(p.output_config, { effort: "medium" });
     assert.deepEqual(p.betas, ["server-side-fallback-2026-07-01"]);
@@ -652,11 +652,32 @@ describe("backgroundDeadline", () => {
 });
 
 describe("visualCheckCore.ts purity", () => {
-  test("imports nothing and touches no Deno global, so it runs under node and Deno alike", () => {
-    const src = readFileSync(new URL("../supabase/functions/_shared/visualCheckCore.ts", import.meta.url), "utf8");
-    assert.equal(/^\s*import\s/m.test(src), false);
+  // Since SEN-975 it imports its two pure siblings (the model choice and the Krishna
+  // question), and nothing else; they follow the same rules.
+  const PURE_SIBLINGS = ["./checkModels.ts", "./krishnaCheckCore.ts"];
+  const read = (name: string) => readFileSync(new URL(`../supabase/functions/_shared/${name}`, import.meta.url), "utf8");
+  const importsOf = (src: string) => [...src.matchAll(/^\s*import\s[^;]*?from\s+"([^"]+)"/gm)].map((m) => m[1]);
+
+  test("imports only its pure siblings and touches no Deno global, so it runs under node and Deno alike", () => {
+    const src = read("visualCheckCore.ts");
+    assert.deepEqual([...new Set(importsOf(src))].sort(), [...PURE_SIBLINGS].sort());
     assert.equal(/\bDeno\./.test(src), false);
     assert.equal(/\bfetch\(/.test(src), false);
     assert.equal(/Date\.now\(|new Date\(/.test(src), false, "checkedAt must be passed in");
+  });
+
+  test("its siblings import no npm:, jsr: or https: module and touch no Deno global or network", () => {
+    for (const name of ["checkModels.ts", "krishnaCheckCore.ts"]) {
+      const src = read(name);
+      for (const spec of importsOf(src)) assert.match(spec, /^\.\/[A-Za-z]+\.ts$/, `${name} imports ${spec}`);
+      assert.equal(/\bDeno\./.test(src), false, name);
+      assert.equal(/\bfetch\(/.test(src), false, name);
+    }
+  });
+
+  test("negative: the Krishna core imports the image-check core for types only, so the two never load each other in a cycle", () => {
+    const src = read("krishnaCheckCore.ts");
+    assert.match(src, /^import type \{ ImageMediaType \} from "\.\/visualCheckCore\.ts";$/m);
+    assert.equal(/^import \{[^}]*\} from "\.\/visualCheckCore\.ts"/m.test(src), false);
   });
 });
