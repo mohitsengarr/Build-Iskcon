@@ -210,6 +210,38 @@ describe("the Krishna gate", () => {
   });
 });
 
+describe("a channel that already took the post", () => {
+  test("is not sent it again: a post Threads took but Instagram did not is re-sent to Instagram only", async () => {
+    // Arrange: the earlier run reached Threads, Instagram failed
+    const db = fakeDb(queued());
+    const calls: string[] = [];
+    // Act
+    const out = await runRepostQueue({
+      supabase: db, gate: allowAll, now: () => NOW,
+      alreadyPosted: async (_post, service) => service === "threads",
+      republish: async (id, s) => (calls.push(`${id}:${s}`), { ok: true, detail: "ok" }),
+    });
+    // Assert
+    assert.deepEqual(calls, ["2:instagram"]);
+    assert.equal(out.runs[0].channels.threads.detail, "already posted since it was queued");
+    assert.equal(out.runs[0].done, true);
+  });
+
+  test("an unknown answer counts as not sent: the channel gets the post", async () => {
+    const db = fakeDb(queued());
+    const calls: string[] = [];
+    await runRepostQueue({ supabase: db, gate: allowAll, now: () => NOW, alreadyPosted: async () => null, republish: async (id, s) => (calls.push(`${id}:${s}`), { ok: true, detail: "ok" }) });
+    assert.deepEqual(calls, ["2:instagram", "2:threads"]);
+  });
+
+  test("the check is asked with the post and each channel", async () => {
+    const db = fakeDb(queued());
+    const asked: string[] = [];
+    await runRepostQueue({ supabase: db, gate: allowAll, now: () => NOW, alreadyPosted: async (p, s) => (asked.push(`${p.id}:${s}:${p.repost_requested_at}`), false), republish: async () => ({ ok: true, detail: "ok" }) });
+    assert.deepEqual(asked, ["2:instagram:2026-10-19T09:00:00.000Z", "2:threads:2026-10-19T09:00:00.000Z"]);
+  });
+});
+
 describe("postsPerRun", () => {
   test("one a run unless asked, never more than the cap", () => {
     assert.equal(postsPerRun(undefined), 1);

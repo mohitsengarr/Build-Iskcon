@@ -14,6 +14,11 @@
 // nothing to skip, so the whole queue is read and only NEW checks are limited
 // (MAX_NEW_CHECKS a run): a long run of held posts at the front can never stop the
 // Krishna posts behind it (the 20-post look-ahead did, 24–27 Oct 2026).
+//
+// A channel that already took the post since it was queued (alreadyPosted, read
+// from social_post_log) is not sent it again: when Instagram failed and Threads
+// did not, a later run re-sends Instagram only, so Threads never gets the same
+// picture twice.
 
 // deno-lint-ignore no-explicit-any
 type SupabaseLike = any;
@@ -55,6 +60,9 @@ export interface QueuedPost {
  */
 export type Gate = (post: QueuedPost, o: { mayCheck: boolean }) => Promise<{ allowed: boolean; reason: string; checked?: boolean }>;
 
+/** Whether this channel already took the post since it was queued; null when unknown. */
+export type AlreadyPosted = (post: QueuedPost, service: string) => Promise<boolean | null>;
+
 export interface RepostRun {
   id: number;
   channels: Record<string, ChannelResult>;
@@ -66,6 +74,7 @@ export async function runRepostQueue(o: {
   supabase: SupabaseLike;
   republish: Republish;
   gate: Gate;
+  alreadyPosted?: AlreadyPosted;
   limit?: unknown;
   preview?: boolean;
   now?: () => Date;
@@ -113,6 +122,17 @@ export async function runRepostQueue(o: {
   for (const post of chosen) {
     const channels: Record<string, ChannelResult> = {};
     for (const service of REPOST_CHANNELS) {
+      let sent: boolean | null = null;
+      try {
+        sent = o.alreadyPosted ? await o.alreadyPosted(post, service) : null;
+      } catch {
+        sent = null;
+      }
+      // Unknown counts as not sent: a missed post is worse than a rare repeat.
+      if (sent === true) {
+        channels[service] = { ok: true, detail: "already posted since it was queued" };
+        continue;
+      }
       try {
         channels[service] = await o.republish(post.id, service);
       } catch (e) {

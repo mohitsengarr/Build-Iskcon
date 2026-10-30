@@ -16,6 +16,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { type QueuedPost, runRepostQueue } from "../_shared/repostQueue.ts";
 import { krishnaGate } from "../_shared/krishnaCheck.ts";
+import { postedSince } from "../_shared/socialPostLog.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -40,12 +41,15 @@ async function republish(id: number, service: string) {
 
 const gate = (post: QueuedPost, o: { mayCheck: boolean }) => krishnaGate({ supabase, table: "ig_pending_review", row: post, mayCheck: o.mayCheck });
 
+const alreadyPosted = (post: QueuedPost, service: string) =>
+  postedSince(supabase, { service, since: post.repost_requested_at, source_table: "ig_pending_review", source_id: post.id });
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return new Response(JSON.stringify({ error: "POST only" }), { status: 405, headers: CORS });
   try {
     const body = await req.json().catch(() => ({}));
-    const out = await runRepostQueue({ supabase, republish, gate, limit: body?.limit, preview: body?.preview === true });
+    const out = await runRepostQueue({ supabase, republish, gate, alreadyPosted, limit: body?.limit, preview: body?.preview === true });
     // Newly checked posts are logged one by one; those held by an earlier check only counted.
     for (const h of out.held.filter((x) => x.checked)) console.log(`[repost] #${h.id} held back: ${h.reason}`);
     if (out.held.length) console.log(`[repost] ${out.held.length} held back this run (${out.held.filter((x) => x.checked).length} newly checked)`);

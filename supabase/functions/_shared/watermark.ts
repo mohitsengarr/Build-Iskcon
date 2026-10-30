@@ -135,6 +135,25 @@ export async function stampBytes(
   }
 }
 
+/**
+ * Whether a stored image carries the mark (markContrast over MARKED_CONTRAST).
+ * null when the image cannot be read or has no mark size. The auto-approver
+ * (auto-approve-art) approves only images that carry it.
+ */
+export async function hasMark(original: Uint8Array, log: (line: string) => void = console.log): Promise<boolean | null> {
+  try {
+    const image = await Image.decode(original) as Image;
+    const unit = markUnit(image.height);
+    const spec = WATERMARK_MARKS[unit];
+    const at = spec ? markPlacement(image.width, image.height, spec) : null;
+    if (!at) return null;
+    return markContrast(image, await markImage(unit), at) > MARKED_CONTRAST;
+  } catch (e) {
+    log(`[watermark] could not check the mark: ${e}`);
+    return null;
+  }
+}
+
 /** watermarkBytes for a base64 image (the image model's answer). */
 export async function watermarkedJpeg(b64: string, log: (line: string) => void = console.log): Promise<Uint8Array> {
   return (await watermarkBytes(base64Bytes(b64), log)).bytes;

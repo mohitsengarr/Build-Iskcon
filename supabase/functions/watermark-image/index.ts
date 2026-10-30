@@ -8,13 +8,15 @@
 // POST <JPEG bytes> (Content-Type: image/*)   the image to mark
 // POST { url: "<this project>/storage/v1/object/public/<bucket>/<file>" }
 //                                             one of our stored images, to check the mark
+// POST { check: { url } }                     whether one of our stored images carries
+//                                             the mark: { marked: true | false | null }
 // POST { stamp: { table, id } }               marks a replacement's image stored before
 //                                             the watermark existed, on its row
 //                                             (_shared/watermarkStamp.ts); answers JSON
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { isOwnStorageUrl, stampBytes, watermarkBytes } from "../_shared/watermark.ts";
+import { hasMark, isOwnStorageUrl, stampBytes, watermarkBytes } from "../_shared/watermark.ts";
 import { stampRow } from "../_shared/watermarkStamp.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
@@ -35,6 +37,16 @@ Deno.serve(async (req: Request) => {
     original = new Uint8Array(await req.arrayBuffer());
   } else {
     const body = await req.json().catch(() => ({}));
+    if (body?.check) {
+      const url = body.check.url;
+      if (!isOwnStorageUrl(url, STORAGE_PREFIX)) {
+        return new Response(JSON.stringify({ error: "check needs a url of an image in this project's public storage" }), { status: 400, headers: { ...CORS, "Content-Type": "application/json" } });
+      }
+      const res = await fetch(url);
+      if (!res.ok) return new Response(JSON.stringify({ marked: null, error: `could not read the image (HTTP ${res.status})` }), { status: 502, headers: { ...CORS, "Content-Type": "application/json" } });
+      const marked = await hasMark(new Uint8Array(await res.arrayBuffer()));
+      return new Response(JSON.stringify({ marked }), { headers: { ...CORS, "Content-Type": "application/json" } });
+    }
     if (body?.stamp) {
       const out = await stampRow({ supabase, supabaseUrl: SUPABASE_URL, table: body.stamp.table, id: body.stamp.id, stamp: (b) => stampBytes(b) });
       console.log(`[watermark] stamp ${out.table} #${String(out.id)}: ${out.outcome}${"reason" in out ? ` (${out.reason})` : ""}`);

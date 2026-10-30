@@ -22,11 +22,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { threadsText } from "../_shared/postText.ts";
 import { type CoverBook, pickNextCover } from "../_shared/coverPick.ts";
 import { krishnaGate, type KrishnaTable } from "../_shared/krishnaCheck.ts";
+import { bufferChannelIds } from "../_shared/bufferChannels.ts";
+import { logSocialPosts } from "../_shared/socialPostLog.ts";
 
 const BUFFER_API = "https://api.buffer.com";
 const BUFFER_KEY = Deno.env.get("BUFFER_API_KEY") || "";
-const IG_CHANNEL = Deno.env.get("BUFFER_INSTAGRAM_CHANNEL_ID") || "69db52a5031bfa423cf5dd46";
-const TH_CHANNEL = Deno.env.get("BUFFER_THREADS_CHANNEL_ID") || "69db52c2031bfa423cf5ddc7";
+// Instagram mohit.bhaktigram (since 2026-10-30), Threads dailybhagwatham (_shared/bufferChannels.ts).
+const { instagram: IG_CHANNEL, threads: TH_CHANNEL } = bufferChannelIds((k) => Deno.env.get(k));
 // Threads image posts are ON HOLD unless THREADS_IMAGE_POSTS_ENABLED is "true"
 // (held 2026-09-13 at the owner's request); Instagram still posts daily.
 const THREADS_IMAGE_POSTS_ENABLED = Deno.env.get("THREADS_IMAGE_POSTS_ENABLED") === "true";
@@ -108,6 +110,11 @@ Deno.serve(async (req: Request) => {
     for (const ch of channels) {
       try { results[ch.name] = await createPost(ch.text, ch.id, imgUrl, ch.ig, !!body.draft); }
       catch (e) { errors.push(`${ch.name}: ${String(e).slice(0, 200)}`); }
+    }
+    if (!body.draft) {
+      await logSocialPosts(supabase, Object.entries(results).map(([service, postId]) => ({
+        service, source_table: book.table, source_id: Number(row.id), buffer_post_id: String(postId), image_url: imgUrl,
+      })));
     }
 
     // Only stamp posted_at when something actually went out, so a total failure

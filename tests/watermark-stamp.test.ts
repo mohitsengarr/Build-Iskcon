@@ -120,6 +120,18 @@ describe("markContrast", () => {
   });
 });
 
+describe("hasMark", () => {
+  test("an image without the mark reads as unmarked", async () => {
+    assert.equal(await wm.hasMark(Buffer.from("IMG:1344x1088"), () => {}), false);
+  });
+
+  test("an image that cannot be read is unknown (null), never marked", async () => {
+    const lines: string[] = [];
+    assert.equal(await wm.hasMark(Buffer.from("not an image"), (l) => lines.push(l)), null);
+    assert.match(lines[0], /could not check the mark/);
+  });
+});
+
 describe("stampBytes", () => {
   test("marks an unmarked image", async () => {
     const out = await wm.stampBytes(Buffer.from("IMG:1344x1088"), () => {});

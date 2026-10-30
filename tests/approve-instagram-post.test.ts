@@ -843,6 +843,20 @@ describe("approve-instagram-post claims the image the reviewer saw", () => {
     assert.equal(net.buffer[0].variables.input.assets[0].image.url, OLD.url);
   });
 
+  test("Instagram posts go to the mohit.bhaktigram channel, and each accepted post is logged", async () => {
+    // Arrange
+    const check = { version: 1, image_path: OLD.path, krishna_visible: true, form: "krishna", prominence: "main", observed: "Krishna", model: "m", checked_at: "2026-10-23T10:00:00.000Z" };
+    const row = approvedRow({ krishna_check: check });
+    const { db, net } = setup(row);
+    // Act
+    await post({ id: 77, action: "republish", service: "instagram" });
+    // Assert
+    assert.equal(net.buffer[0].variables.input.channelId, "6adc337f778b240e2fa98c02");
+    const logged = db.queries.filter((q) => q.table === "social_post_log" && q.op === "insert");
+    assert.equal(logged.length, 1);
+    assert.deepEqual(logged[0].values, [{ service: "instagram", source_table: "ig_pending_review", source_id: 77, buffer_post_id: "buf-1", image_url: OLD.url }]);
+  });
+
   test("a check made for an earlier image is not trusted: the picture is checked again before it is sent", async () => {
     // Arrange: the stored check judged another file
     g.__anthropicCreate = async () => krishnaReply(false);

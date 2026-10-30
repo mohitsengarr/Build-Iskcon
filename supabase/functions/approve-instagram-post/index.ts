@@ -64,6 +64,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { approveReplacement, isReplacement, replacementResponse } from "../_shared/replacements.ts";
 import { threadsText } from "../_shared/postText.ts";
 import { krishnaGate } from "../_shared/krishnaCheck.ts";
+import { bufferChannelIds } from "../_shared/bufferChannels.ts";
+import { logSocialPosts } from "../_shared/socialPostLog.ts";
 
 const BUFFER_API = "https://api.buffer.com";
 const GRAPH = "https://graph.facebook.com/v21.0";
@@ -143,17 +145,12 @@ async function bufferGQL(q: string, v?: Record<string, unknown>) {
 
 interface BufferChannel { id: string; service: string; name?: string }
 
-// Buffer PERSONAL API keys (the only kind Buffer still issues — new OAuth "App
-// Clients" are closed) are FORBIDDEN from LISTING channels via
-// account.organizations.channels (no `channels` scope exists for personal keys),
-// but posts:write CAN publish to a channel BY ITS ID. So we address the channels
-// directly (ids overridable via secrets; defaults are the BuildIskcon channels:
-// IG "dailybhagwatham", Threads "buildiskcon").
+// Posts address the channels by id (_shared/bufferChannels.ts: Instagram
+// mohit.bhaktigram since 2026-10-30, Threads dailybhagwatham; the env overrides).
 const THREADS_IMAGE_POSTS_ENABLED = Deno.env.get("THREADS_IMAGE_POSTS_ENABLED") === "true";
 const BUFFER_CHANNELS: BufferChannel[] = (() => {
   const list: BufferChannel[] = [];
-  const ig = Deno.env.get("BUFFER_INSTAGRAM_CHANNEL_ID") || "69db52a5031bfa423cf5dd46";
-  const th = Deno.env.get("BUFFER_THREADS_CHANNEL_ID") || "69db52c2031bfa423cf5ddc7";
+  const { instagram: ig, threads: th } = bufferChannelIds((k) => Deno.env.get(k));
   if (ig) list.push({ id: ig, service: "instagram" });
   // Threads image posts are ON HOLD unless THREADS_IMAGE_POSTS_ENABLED is "true"
   // (held 2026-09-13 at the owner's request). Instagram and the Threads text
@@ -439,6 +436,7 @@ Deno.serve(async (req: Request) => {
         }), { status: 409, headers: corsHeaders });
       }
       const r = await queueToBuffer(pending.image_url, pending.caption, pending.hashtags, svc);
+      await logSocialPosts(supabase, r.results.map((p) => ({ service: p.service, source_table: "ig_pending_review", source_id: id, buffer_post_id: p.postId, image_url: pending.image_url })));
       const problems = await verifyBufferPosts(r.results);
       const ok = r.results.length > 0 && problems.length === 0;
       // Keep the ids from the channels that already published; swap in the new
@@ -575,6 +573,7 @@ Deno.serve(async (req: Request) => {
         const r = await queueToBuffer(post.image_url, post.caption, post.hashtags);
         results = r.results;
         publishErrors = r.errors.map(e => ({ service: e.service, error: e.error }));
+        await logSocialPosts(supabase, r.results.map((p) => ({ service: p.service, source_table: "ig_pending_review", source_id: id, buffer_post_id: p.postId, image_url: post.image_url })));
       } catch (err) {
         topLevelError = String(err);
       }
