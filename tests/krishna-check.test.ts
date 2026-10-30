@@ -37,12 +37,32 @@ describe("krishnaAllowed", () => {
     assert.deepEqual(out, { allowed: false, reason: "no Krishna in the picture (Sages bathe in the Ganga.)" });
   });
 
-  test("other forms and avatars do not count: Jagannath, Chaitanya, Vishnu, Rama", () => {
-    for (const form of ["jagannath", "chaitanya", "vishnu_or_narayana", "rama", "other_deity_or_avatar"]) {
+  test("Vishnu, Rama and other avatars do not count", () => {
+    for (const form of ["vishnu_or_narayana", "rama", "other_deity_or_avatar"]) {
       const out = core.krishnaAllowed(record({ form }), PATH);
       assert.equal(out.allowed, false, form);
       assert.match(out.reason, /not shown in His own form/);
     }
+  });
+
+  test("Lord Jagannath and Sri Chaitanya count as Krishna (owner, 2026-10-31), as the check records them: Krishna Himself not shown, no prominence", () => {
+    for (const form of ["jagannath", "chaitanya"]) {
+      const out = core.krishnaAllowed(record({ krishna_visible: false, form, prominence: "none", observed: "x" }), PATH);
+      assert.equal(out.allowed, true, form);
+      assert.match(out.reason, /counts as Krishna/);
+    }
+    assert.match(core.krishnaAllowed(record({ krishna_visible: false, form: "chaitanya", prominence: "none" }), PATH).reason, /Sri Chaitanya Mahaprabhu/);
+    assert.match(core.krishnaAllowed(record({ krishna_visible: false, form: "jagannath", prominence: "none" }), PATH).reason, /Lord Jagannath/);
+    assert.deepEqual([...core.POSTABLE_FORMS], ["krishna", "child_krishna", "radha_krishna", "krishna_deity", "jagannath", "chaitanya"]);
+  });
+
+  test("a Chaitanya record is still only good for the image it judged", () => {
+    assert.equal(core.krishnaAllowed(record({ krishna_visible: false, form: "chaitanya", prominence: "none" }), "another.jpg").allowed, false);
+  });
+
+  test("a Chaitanya or Jagannath answer is consistent as the model gives it: no second opinion", () => {
+    assert.equal(core.krishnaInconsistent({ krishna_visible: false, form: "chaitanya", prominence: "none", observed: "" }), false);
+    assert.equal(core.krishnaNeedsSecondOpinion({ krishna_visible: false, form: "jagannath", prominence: "none", observed: "", sure: true }), false);
   });
 
   test("Krishna only in the background is held back", () => {
@@ -151,9 +171,18 @@ describe("ensureKrishnaCheck and krishnaGate", () => {
 
   test("a picture without Krishna is held back with the reason", async () => {
     const r = row();
-    const out = await io.krishnaGate({ supabase: fakeDb(r), table: "gita_chapter_art_review", row: r, ask: async () => ({ ok: true, answer: answer({ krishna_visible: false, form: "chaitanya", prominence: "none", observed: "Lord Chaitanya dances in kirtan." }) as never }), log: quiet });
+    const out = await io.krishnaGate({ supabase: fakeDb(r), table: "gita_chapter_art_review", row: r, ask: async () => ({ ok: true, answer: answer({ krishna_visible: false, form: "vishnu_or_narayana", prominence: "none", observed: "Lord Vishnu rests on Ananta." }) as never }), log: quiet });
     assert.equal(out.allowed, false);
     assert.match(out.reason, /no Krishna in the picture/);
+  });
+
+  test("a picture of Sri Chaitanya passes the gate (owner, 2026-10-31), its check stored as the model gave it", async () => {
+    const r = row();
+    const db = fakeDb(r);
+    const out = await io.krishnaGate({ supabase: db, table: "chaitanya_chapter_art_review", row: r, ask: async () => ({ ok: true, answer: answer({ krishna_visible: false, form: "chaitanya", prominence: "none", observed: "Lord Chaitanya dances in kirtan." }) as never }), log: quiet });
+    assert.equal(out.allowed, true);
+    assert.match(out.reason, /Sri Chaitanya Mahaprabhu/);
+    assert.equal((r.krishna_check as { form: string }).form, "chaitanya");
   });
 
   test("a failed check holds the picture back and stores nothing, so the next run asks again", async () => {

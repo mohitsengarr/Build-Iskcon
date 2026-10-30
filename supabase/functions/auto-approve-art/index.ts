@@ -10,10 +10,16 @@
 //
 // POST {}                 approve the next eligible image
 // POST { preview: true }  say which image would be approved next; approve nothing
+// POST { scope: "covers", limit: 25 }
+//                         bulk: approve up to `limit` eligible images (at most
+//                         MAX_BULK_APPROVALS) from the scope — "covers" (the three
+//                         chapter-art tables), "posts" (Instagram) or "all"; the
+//                         same rules for each (owner, 2026-10-31: "auto approve all
+//                         these" covers; Instagram posts stay one a run)
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { AUTO_APPROVE_TABLES, autoApproveOne, autoApproveRefusal, type Candidate, orderCandidates } from "../_shared/autoApprove.ts";
+import { approvalsPerRun, autoApproveMany, autoApproveOne, autoApproveRefusal, type AutoApproveTable, type Candidate, orderCandidates, scopeTables } from "../_shared/autoApprove.ts";
 import { approveReplacement, isReplacement, type ReviewTable } from "../_shared/replacements.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -36,9 +42,9 @@ async function fn(name: string, body: Record<string, unknown>) {
   return { status: res.status, json: await res.json().catch(() => ({})) };
 }
 
-async function readCandidates(): Promise<Candidate[]> {
+async function readCandidates(tables: readonly AutoApproveTable[]): Promise<Candidate[]> {
   const out: Candidate[] = [];
-  for (const table of AUTO_APPROVE_TABLES) {
+  for (const table of tables) {
     const { data, error } = await supabase.from(table).select("*").eq("status", "pending")
       .order("created_at", { ascending: true }).limit(PER_TABLE);
     if (error) throw new Error(`Reading ${table}: ${error.message}`);
@@ -80,12 +86,26 @@ Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return new Response(JSON.stringify({ error: "POST only" }), { status: 405, headers: CORS });
   try {
     const body = await req.json().catch(() => ({}));
-    const candidates = await readCandidates();
+    let tables: readonly AutoApproveTable[];
+    try {
+      tables = scopeTables(body?.scope);
+    } catch (e) {
+      return new Response(JSON.stringify({ error: String(e) }), { status: 400, headers: CORS });
+    }
+    const take = approvalsPerRun(body?.limit);
+    const candidates = await readCandidates(tables);
     if (body?.preview === true) {
       const next = orderCandidates(candidates).find((c) => autoApproveRefusal(c.table, c.row) === null);
       const waiting = candidates.filter((c) => autoApproveRefusal(c.table, c.row) === null).length;
       const held = candidates.length - waiting;
-      return new Response(JSON.stringify({ ok: true, preview: true, next: next ? { table: next.table, id: next.row.id } : null, eligible: waiting, left_for_review: held }), { headers: CORS });
+      return new Response(JSON.stringify({ ok: true, preview: true, scope: body?.scope ?? "all", next: next ? { table: next.table, id: next.row.id } : null, eligible: waiting, left_for_review: held }), { headers: CORS });
+    }
+    if (take > 1) {
+      const many = await autoApproveMany({ candidates, hasMark, approve, limit: take });
+      for (const a of many.approved) console.log(`[auto-approve] approved ${a.table} #${String(a.id)} (${a.detail}) [bulk]`);
+      for (const s of many.skipped.filter((x) => !x.reason.startsWith("image check"))) console.log(`[auto-approve] skipped ${s.table} #${String(s.id)}: ${s.reason}`);
+      console.log(`[auto-approve] bulk: ${many.approved.length} approved, ${many.skipped.length} skipped (scope ${String(body?.scope ?? "all")})`);
+      return new Response(JSON.stringify({ ok: true, bulk: true, scope: body?.scope ?? "all", ...many }), { headers: CORS });
     }
     const out = await autoApproveOne({ candidates, hasMark, approve });
     console.log(`[auto-approve] ${out.approved ? `approved ${out.approved.table} #${String(out.approved.id)} (${out.approved.detail})` : "nothing approved"}`);
