@@ -66,6 +66,7 @@ import { threadsText } from "../_shared/postText.ts";
 import { krishnaGate } from "../_shared/krishnaCheck.ts";
 import { bufferChannelIds } from "../_shared/bufferChannels.ts";
 import { logSocialPosts } from "../_shared/socialPostLog.ts";
+import { instagramMedia, type InstagramMedia, reelsEnabled } from "../_shared/instagramMedia.ts";
 
 const BUFFER_API = "https://api.buffer.com";
 const GRAPH = "https://graph.facebook.com/v21.0";
@@ -148,6 +149,9 @@ interface BufferChannel { id: string; service: string; name?: string }
 // Posts address the channels by id (_shared/bufferChannels.ts: Instagram
 // mohit.bhaktigram since 2026-10-30, Threads dailybhagwatham; the env overrides).
 const THREADS_IMAGE_POSTS_ENABLED = Deno.env.get("THREADS_IMAGE_POSTS_ENABLED") === "true";
+// Instagram Reels (owner, 2026-10-30): with IG_REELS_ENABLED=true the Instagram send
+// carries the post's reel and waits for it when it is not rendered yet (_shared/instagramMedia.ts).
+const IG_REELS = reelsEnabled((k) => Deno.env.get(k));
 const BUFFER_CHANNELS: BufferChannel[] = (() => {
   const list: BufferChannel[] = [];
   const { instagram: ig, threads: th } = bufferChannelIds((k) => Deno.env.get(k));
@@ -160,7 +164,7 @@ const BUFFER_CHANNELS: BufferChannel[] = (() => {
   return list;
 })();
 
-async function queueToBuffer(imgUrl: string, caption: string, hashtags: string, onlyService?: string): Promise<{
+async function queueToBuffer(imgUrl: string, caption: string, hashtags: string, onlyService?: string, media?: InstagramMedia): Promise<{
   results: PubResult[]; errors: Array<{ service: string; channelId: string; error: string }>;
 }> {
   // `onlyService` re-queues a single channel. Needed when one channel failed
@@ -176,11 +180,18 @@ async function queueToBuffer(imgUrl: string, caption: string, hashtags: string, 
   for (const ch of chs) {
     // Threads carries the story alone (_shared/postText.ts); Instagram the whole caption and hashtags.
     const fc = ch.service === "threads" ? threadsText(caption) : `${caption}\n\n${hashtags}`;
+    // Instagram takes the reel when there is one; a post whose reel is not rendered
+    // yet is not sent there (it stays queued, Threads still gets the photo).
+    if (ch.service === "instagram" && media?.kind === "wait") {
+      errors.push({ service: ch.service, channelId: ch.id, error: media.reason });
+      continue;
+    }
+    const reel = ch.service === "instagram" && media?.kind === "reel";
     const input: Record<string, unknown> = {
       text: fc, channelId: ch.id, schedulingType: "automatic", mode: "shareNow",
-      assets: [{ image: { url: imgUrl } }],
+      assets: [reel ? media.asset : { image: { url: imgUrl } }],
     };
-    if (ch.service === "instagram") input.metadata = { instagram: { type: "post", shouldShareToFeed: true } };
+    if (ch.service === "instagram") input.metadata = { instagram: { type: reel ? "reel" : "post", shouldShareToFeed: true } };
     try {
       const r = await bufferGQL(
         `mutation CreatePost($input: CreatePostInput!) { createPost(input: $input) { __typename ... on PostActionSuccess { post { id status } } ... on MutationError { message } } }`,
@@ -435,7 +446,13 @@ Deno.serve(async (req: Request) => {
           message: `Not sent to ${svc}: ${gate.reason}.`,
         }), { status: 409, headers: corsHeaders });
       }
-      const r = await queueToBuffer(pending.image_url, pending.caption, pending.hashtags, svc);
+      const media = instagramMedia(pending, { reelsEnabled: IG_REELS });
+      if (svc === "instagram" && media.kind === "wait") {
+        return new Response(JSON.stringify({
+          success: false, id, service: svc, blocked: "no_reel", message: `Not sent to ${svc}: ${media.reason}.`,
+        }), { status: 409, headers: corsHeaders });
+      }
+      const r = await queueToBuffer(pending.image_url, pending.caption, pending.hashtags, svc, media);
       await logSocialPosts(supabase, r.results.map((p) => ({ service: p.service, source_table: "ig_pending_review", source_id: id, buffer_post_id: p.postId, image_url: pending.image_url })));
       const problems = await verifyBufferPosts(r.results);
       const ok = r.results.length > 0 && problems.length === 0;
@@ -570,7 +587,7 @@ Deno.serve(async (req: Request) => {
     } else {
       via = "buffer";
       try {
-        const r = await queueToBuffer(post.image_url, post.caption, post.hashtags);
+        const r = await queueToBuffer(post.image_url, post.caption, post.hashtags, undefined, instagramMedia(post, { reelsEnabled: IG_REELS }));
         results = r.results;
         publishErrors = r.errors.map(e => ({ service: e.service, error: e.error }));
         await logSocialPosts(supabase, r.results.map((p) => ({ service: p.service, source_table: "ig_pending_review", source_id: id, buffer_post_id: p.postId, image_url: post.image_url })));

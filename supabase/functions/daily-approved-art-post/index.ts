@@ -30,6 +30,7 @@ import { krishnaGate, type KrishnaTable } from "../_shared/krishnaCheck.ts";
 import { bufferChannelIds } from "../_shared/bufferChannels.ts";
 import { logSocialPosts, postedSince } from "../_shared/socialPostLog.ts";
 import { pickResend, type ResendCandidate, withoutChannelError } from "../_shared/coverResend.ts";
+import { instagramMedia, type InstagramMedia, reelsEnabled } from "../_shared/instagramMedia.ts";
 
 const BUFFER_API = "https://api.buffer.com";
 const BUFFER_KEY = Deno.env.get("BUFFER_API_KEY") || "";
@@ -38,6 +39,10 @@ const { instagram: IG_CHANNEL, threads: TH_CHANNEL } = bufferChannelIds((k) => D
 // Threads image posts are ON HOLD unless THREADS_IMAGE_POSTS_ENABLED is "true"
 // (held 2026-09-13 at the owner's request); Instagram still posts daily.
 const THREADS_IMAGE_POSTS_ENABLED = Deno.env.get("THREADS_IMAGE_POSTS_ENABLED") === "true";
+// Instagram Reels (owner, 2026-10-30): with IG_REELS_ENABLED=true Instagram gets the
+// cover's reel; a cover whose reel is not rendered yet fails on Instagram only, and
+// the 10:00 catch-up re-sends it once the reel exists (_shared/instagramMedia.ts).
+const IG_REELS = reelsEnabled((k) => Deno.env.get(k));
 const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
 const CORS = {
@@ -50,12 +55,14 @@ const CORS = {
 const gate = (book: CoverBook, row: Record<string, unknown>, o: { mayCheck: boolean }) =>
   krishnaGate({ supabase, table: book.table as KrishnaTable, row: row as { id: number }, mayCheck: o.mayCheck });
 
-async function createPost(text: string, channelId: string, imgUrl: string, isInstagram: boolean, draft: boolean) {
+async function createPost(text: string, channelId: string, imgUrl: string, isInstagram: boolean, draft: boolean, media?: InstagramMedia) {
+  if (isInstagram && media?.kind === "wait") throw new Error(media.reason);
+  const reel = isInstagram && media?.kind === "reel";
   const input: Record<string, unknown> = {
     text, channelId, schedulingType: "automatic", mode: "shareNow",
-    assets: [{ image: { url: imgUrl } }],
+    assets: [reel ? media.asset : { image: { url: imgUrl } }],
   };
-  if (isInstagram) input.metadata = { instagram: { type: "post", shouldShareToFeed: true } };
+  if (isInstagram) input.metadata = { instagram: { type: reel ? "reel" : "post", shouldShareToFeed: true } };
   if (draft) input.saveToDraft = true;
   const r = await fetch(BUFFER_API, {
     method: "POST",
@@ -131,11 +138,11 @@ async function resendOne(service: string, preview: boolean): Promise<Response> {
   const imgUrl = String(row.image_url || "");
   const text = postTexts(book as CoverBook, row)[service as "instagram" | "threads"];
   if (preview) {
-    return new Response(JSON.stringify({ ok: true, preview: true, resend: service, book: book.key, id: row.id, chapter: row.chapter_number, image_url: imgUrl, text, held }), { headers: CORS });
+    return new Response(JSON.stringify({ ok: true, preview: true, resend: service, book: book.key, id: row.id, chapter: row.chapter_number, image_url: imgUrl, text, instagram_media: instagramMedia(row, { reelsEnabled: IG_REELS }).kind, held }), { headers: CORS });
   }
   if (!BUFFER_KEY) return new Response(JSON.stringify({ error: "BUFFER_API_KEY not configured" }), { status: 500, headers: CORS });
   try {
-    const postId = await createPost(text, ch.id, imgUrl, ch.ig, false);
+    const postId = await createPost(text, ch.id, imgUrl, ch.ig, false, ch.ig ? instagramMedia(row, { reelsEnabled: IG_REELS }) : undefined);
     await logSocialPosts(supabase, [{ service, source_table: book.table, source_id: Number(row.id), buffer_post_id: postId, image_url: imgUrl }]);
     const { error } = await supabase.from(book.table).update({ error_message: withoutChannelError(row.error_message, service) }).eq("id", row.id);
     if (error) console.log(`[daily-art] resend ${service}: ${book.key} #${String(row.id)} posted but its error could not be cleared: ${error.message}`);
@@ -170,7 +177,7 @@ Deno.serve(async (req: Request) => {
     if (body.preview) {
       return new Response(JSON.stringify({
         ok: true, preview: true, book: book.key, id: row.id, held,
-        chapter: row.chapter_number, image_url: imgUrl,
+        chapter: row.chapter_number, image_url: imgUrl, instagram_media: instagramMedia(row, { reelsEnabled: IG_REELS }).kind,
         instagram_text: igText, threads_text: thText,
       }), { headers: CORS });
     }
@@ -184,7 +191,7 @@ Deno.serve(async (req: Request) => {
       { id: TH_CHANNEL, name: "threads",   text: thText, ig: false },
     ].filter(ch => ch.name !== "threads" || THREADS_IMAGE_POSTS_ENABLED);
     for (const ch of channels) {
-      try { results[ch.name] = await createPost(ch.text, ch.id, imgUrl, ch.ig, !!body.draft); }
+      try { results[ch.name] = await createPost(ch.text, ch.id, imgUrl, ch.ig, !!body.draft, ch.ig ? instagramMedia(row, { reelsEnabled: IG_REELS }) : undefined); }
       catch (e) { errors.push(`${ch.name}: ${String(e).slice(0, 200)}`); }
     }
     if (!body.draft) {

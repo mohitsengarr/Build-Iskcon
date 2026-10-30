@@ -1,0 +1,38 @@
+# Renders Instagram Reels for the pictures about to be posted (scripts/reels/,
+# owner 2026-10-30: "yes build the reels, i will send the audio"). ubuntu runners
+# ship ffmpeg. Needs the repository secret SUPABASE_SERVICE_ROLE_KEY (Settings >
+# Secrets and variables > Actions), added by the owner; the recording lives at
+# assets/reels/hare-krishna.mp3 (see assets/reels/README.md).
+name: Instagram Reels
+on:
+  schedule:
+    - cron: "17 */3 * * *"
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Reels to render this run (at most 25)"
+        default: "6"
+      dry_run:
+        description: "List what would be rendered; render nothing"
+        type: boolean
+        default: false
+concurrency:
+  group: instagram-reels
+  cancel-in-progress: false
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: ffmpeg -version | head -1
+      - name: Render and store reels
+        env:
+          SUPABASE_URL: https://etfmndcrchundvgtvmot.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          REEL_LIMIT: ${{ github.event.inputs.limit || '6' }}
+          DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '' }}
+        run: node --experimental-strip-types --no-warnings scripts/reels/make-reels.ts
