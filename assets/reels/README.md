@@ -6,4 +6,4 @@ or longer; a few MB at most). It is baked into every Instagram Reel by
 faded in over 1 second and out over the last 1.5 seconds.
 
 Only a recording the owner holds the rights to goes here. Without the file the
-renderer refuses to run, so no silent reel is ever posted.
+renderer renders nothing and ends quietly, so no silent reel is ever posted.

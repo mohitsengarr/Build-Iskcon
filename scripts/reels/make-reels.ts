@@ -12,8 +12,8 @@
 //   REEL_LIMIT                 reels a run (default 6, at most 25)
 //   DRY_RUN=1                  list what would be rendered; render and write nothing
 //
-// Refuses to run without the audio file: a silent reel is not what the owner asked
-// for. Each reel is uploaded to the public instagram-images bucket under reels/
+// Without the audio file it renders nothing (a silent reel is not what the owner
+// asked for) and ends quietly. Each reel is uploaded to the public instagram-images bucket under reels/
 // and recorded on its row (reel_path, reel_url, reel_made_at) only while the row
 // still holds the image it was rendered from.
 
@@ -88,7 +88,9 @@ async function record(c: ReelCandidate & { path: string }, url: string): Promise
 
 async function main(): Promise<number> {
   if (!KEY) { console.error("SUPABASE_SERVICE_ROLE_KEY is not set"); return 2; }
-  if (!existsSync(AUDIO)) { console.error(`No recording at ${AUDIO}: nothing rendered (a silent reel is not wanted)`); return 2; }
+  // No recording yet is an expected state until the owner delivers it, so the run
+  // ends quietly; a silent reel is never rendered in its place.
+  if (!existsSync(AUDIO)) { console.log(`[reels] no recording at ${AUDIO} yet: nothing rendered`); return 0; }
   const candidates: ReelCandidate[] = [];
   for (const t of REEL_TABLES) candidates.push(...await readRows(t.table, t.kind));
   const { make, held } = planReels(candidates, LIMIT);
