@@ -16,11 +16,11 @@
 // stored with (migration 20261029120000), so a picture drawn after that is usually
 // not asked again before it is posted.
 //
-// Since 2026-10-31 the owner counts Lord Jagannath and Sri Chaitanya Mahaprabhu as
-// Krishna for posting ("count Chaitanya and Jagannath as Krishna too"). The check
-// itself is unchanged (they are still recorded as their own forms, with Krishna
-// Himself not shown), so no picture is asked again: krishnaAllowed lets a current
-// record of either form through.
+// On 2026-10-31 the owner counted Lord Jagannath and Sri Chaitanya Mahaprabhu as
+// Krishna for a few hours and then took it back the same morning, after a Chaitanya
+// cover had gone out ("don't post Chaitanya Mahaprabhu or Jagannath photos, only
+// Krishna"). Both are refused again like every other figure; the refusal names
+// them so the log says who was in the picture.
 
 import type { ImageMediaType } from "./visualCheckCore.ts";
 import { CHECK_MODEL, checkCallFields, type CheckModel } from "./checkModels.ts";
@@ -50,14 +50,10 @@ export type KrishnaForm = typeof KRISHNA_FORMS[number];
 /** Krishna Himself: the forms krishna_visible and prominence speak of. */
 export const KRISHNA_OWN_FORMS: readonly KrishnaForm[] = ["krishna", "child_krishna", "radha_krishna", "krishna_deity"];
 /**
- * Forms the owner counts as Krishna for posting (2026-10-31). The check records
- * them as the main sacred figure shown, with krishna_visible false and no
- * prominence of Krishna; a current record of one of them lets the picture go out.
+ * Figures the check records by name and the owner does NOT want posted (2026-10-31:
+ * "only Krishna"): the refusal says who was in the picture instead of "no Krishna".
  */
-export const COUNTED_AS_KRISHNA_FORMS: readonly KrishnaForm[] = ["jagannath", "chaitanya"];
-export const COUNTED_AS_KRISHNA_NAMES: Readonly<Record<string, string>> = { jagannath: "Lord Jagannath", chaitanya: "Sri Chaitanya Mahaprabhu" };
-/** Every form a picture may be posted with. */
-export const POSTABLE_FORMS: readonly KrishnaForm[] = [...KRISHNA_OWN_FORMS, ...COUNTED_AS_KRISHNA_FORMS];
+export const NAMED_OTHER_FORMS: Readonly<Record<string, string>> = { jagannath: "Lord Jagannath", chaitanya: "Sri Chaitanya Mahaprabhu" };
 
 export const PROMINENCES = ["main", "secondary", "background", "none"] as const;
 export type Prominence = typeof PROMINENCES[number];
@@ -225,10 +221,10 @@ export function isCurrentCheck(check: unknown, imagePath: unknown): check is Kri
 /** Whether a picture may go to Instagram or Threads, and why not. */
 export function krishnaAllowed(check: unknown, imagePath: unknown): { allowed: boolean; reason: string } {
   if (!isCurrentCheck(check, imagePath)) return { allowed: false, reason: "this picture has not been checked for Krishna" };
-  // Lord Jagannath and Sri Chaitanya count as Krishna (owner, 2026-10-31); the
-  // record's krishna_visible and prominence speak of Krishna Himself, so neither applies.
-  if (COUNTED_AS_KRISHNA_FORMS.includes(check.form)) {
-    return { allowed: true, reason: `${COUNTED_AS_KRISHNA_NAMES[check.form] ?? check.form} is in the picture, and counts as Krishna` };
+  // Lord Jagannath and Sri Chaitanya are not Krishna for posting (owner, 2026-10-31:
+  // only Krishna), whatever else the record says.
+  if (check.form in NAMED_OTHER_FORMS) {
+    return { allowed: false, reason: `${NAMED_OTHER_FORMS[check.form]} is in the picture, not Krishna Himself: only Krishna goes out` };
   }
   if (!check.krishna_visible || check.form === "none") {
     return { allowed: false, reason: `no Krishna in the picture${check.observed ? ` (${check.observed})` : ""}` };

@@ -45,19 +45,23 @@ describe("krishnaAllowed", () => {
     }
   });
 
-  test("Lord Jagannath and Sri Chaitanya count as Krishna (owner, 2026-10-31), as the check records them: Krishna Himself not shown, no prominence", () => {
-    for (const form of ["jagannath", "chaitanya"]) {
+  test("Lord Jagannath and Sri Chaitanya do not count (owner, 2026-10-31: only Krishna), and the refusal names them", () => {
+    for (const [form, name] of [["jagannath", "Lord Jagannath"], ["chaitanya", "Sri Chaitanya Mahaprabhu"]]) {
       const out = core.krishnaAllowed(record({ krishna_visible: false, form, prominence: "none", observed: "x" }), PATH);
-      assert.equal(out.allowed, true, form);
-      assert.match(out.reason, /counts as Krishna/);
+      assert.equal(out.allowed, false, form);
+      assert.equal(out.reason, `${name} is in the picture, not Krishna Himself: only Krishna goes out`);
     }
-    assert.match(core.krishnaAllowed(record({ krishna_visible: false, form: "chaitanya", prominence: "none" }), PATH).reason, /Sri Chaitanya Mahaprabhu/);
-    assert.match(core.krishnaAllowed(record({ krishna_visible: false, form: "jagannath", prominence: "none" }), PATH).reason, /Lord Jagannath/);
-    assert.deepEqual([...core.POSTABLE_FORMS], ["krishna", "child_krishna", "radha_krishna", "krishna_deity", "jagannath", "chaitanya"]);
+    assert.deepEqual(core.NAMED_OTHER_FORMS, { jagannath: "Lord Jagannath", chaitanya: "Sri Chaitanya Mahaprabhu" });
   });
 
-  test("a Chaitanya record is still only good for the image it judged", () => {
-    assert.equal(core.krishnaAllowed(record({ krishna_visible: false, form: "chaitanya", prominence: "none" }), "another.jpg").allowed, false);
+  test("a record that calls Chaitanya Krishna (krishna_visible true, main) is refused all the same", () => {
+    const out = core.krishnaAllowed(record({ krishna_visible: true, form: "chaitanya", prominence: "main" }), PATH);
+    assert.equal(out.allowed, false);
+    assert.match(out.reason, /Sri Chaitanya Mahaprabhu/);
+  });
+
+  test("a Chaitanya record for another image is refused as unchecked, not by name", () => {
+    assert.equal(core.krishnaAllowed(record({ krishna_visible: false, form: "chaitanya", prominence: "none" }), "another.jpg").reason, "this picture has not been checked for Krishna");
   });
 
   test("a Chaitanya or Jagannath answer is consistent as the model gives it: no second opinion", () => {
@@ -176,12 +180,12 @@ describe("ensureKrishnaCheck and krishnaGate", () => {
     assert.match(out.reason, /no Krishna in the picture/);
   });
 
-  test("a picture of Sri Chaitanya passes the gate (owner, 2026-10-31), its check stored as the model gave it", async () => {
+  test("a picture of Sri Chaitanya is held back by name (owner, 2026-10-31: only Krishna), its check stored so it is not asked again", async () => {
     const r = row();
     const db = fakeDb(r);
     const out = await io.krishnaGate({ supabase: db, table: "chaitanya_chapter_art_review", row: r, ask: async () => ({ ok: true, answer: answer({ krishna_visible: false, form: "chaitanya", prominence: "none", observed: "Lord Chaitanya dances in kirtan." }) as never }), log: quiet });
-    assert.equal(out.allowed, true);
-    assert.match(out.reason, /Sri Chaitanya Mahaprabhu/);
+    assert.equal(out.allowed, false);
+    assert.match(out.reason, /Sri Chaitanya Mahaprabhu is in the picture, not Krishna Himself/);
     assert.equal((r.krishna_check as { form: string }).form, "chaitanya");
   });
 
