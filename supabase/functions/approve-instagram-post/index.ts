@@ -62,7 +62,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { approveReplacement, isReplacement, replacementResponse } from "../_shared/replacements.ts";
-import { threadsText } from "../_shared/postText.ts";
+import { DESCRIPTION_MARK, instagramText, publishedCaption, threadsText } from "../_shared/postText.ts";
 import { krishnaGate } from "../_shared/krishnaCheck.ts";
 import { bufferChannelIds } from "../_shared/bufferChannels.ts";
 import { logSocialPosts } from "../_shared/socialPostLog.ts";
@@ -98,7 +98,7 @@ async function publishToInstagram(imgUrl: string, caption: string, hashtags: str
   const results: PubResult[] = [];
   const errors: PubError[] = [];
   // Instagram caption limit is 2200 chars.
-  let text = `${caption || ""}\n\n${hashtags || ""}`.trim();
+  let text = instagramText(caption, hashtags);
   if (text.length > 2200) text = text.slice(0, 2197) + "...";
 
   try {
@@ -178,8 +178,9 @@ async function queueToBuffer(imgUrl: string, caption: string, hashtags: string, 
   const results: PubResult[] = [];
   const errors: Array<{ service: string; channelId: string; error: string }> = [];
   for (const ch of chs) {
-    // Threads carries the story alone (_shared/postText.ts); Instagram the whole caption and hashtags.
-    const fc = ch.service === "threads" ? threadsText(caption) : `${caption}\n\n${hashtags}`;
+    // Threads carries the story alone (_shared/postText.ts); Instagram the caption
+    // and hashtags. Neither carries the painting's 🎨 description paragraph.
+    const fc = ch.service === "threads" ? threadsText(caption) : instagramText(caption, hashtags);
     // Instagram takes the reel when there is one; a post whose reel is not rendered
     // yet is not sent there (it stays queued, Threads still gets the photo).
     if (ch.service === "instagram" && media?.kind === "wait") {
@@ -267,8 +268,9 @@ async function crossPostToBhagavatamChannel(pending: {
 }): Promise<{ ok: boolean; error?: string }> {
   try {
     const sender = pending.mahajan_key ? `mahajan-${pending.mahajan_key}` : "system";
-    // Prefer the caption; fall back to the chapter title so the bubble is never empty.
-    const body = (pending.caption && pending.caption.trim()) || (pending.chapter_title || "").trim() || null;
+    // Prefer the caption (without its 🎨 description paragraph); fall back to the
+    // chapter title so the bubble is never empty.
+    const body = publishedCaption(pending.caption) || (pending.chapter_title || "").trim() || null;
     const { error } = await supabase.from("bhaktigram_group_messages").insert({
       group_id: BHAGAVATAM_CHANNEL_ID,
       sender_device: sender,
@@ -612,11 +614,16 @@ Deno.serve(async (req: Request) => {
 
     // Retried once (markApproved). When it still fails the post has gone out: say
     // so, and keep the claim and the marker so no later request publishes it again.
+    // The approved row is the app feed's post: the painting's 🎨 description
+    // paragraph, kept in the caption for the reviewer, is dropped from it now
+    // (owner, 2026-10-31: it goes into no post). scene_description keeps the text.
+    const feedCaption = publishedCaption(post.caption);
     const approveErr = await markApproved(id, {
       status: "approved",
       buffer_post_ids: results,
       reviewed_at: new Date().toISOString(),
       error_message: publishNote,
+      ...(String(post.caption ?? "").includes(DESCRIPTION_MARK) ? { caption: feedCaption } : {}),
     });
     if (approveErr) {
       const sent = published

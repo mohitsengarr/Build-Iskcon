@@ -6,19 +6,39 @@
 // apart. On Threads a post carries the story alone (owner, 2026-10-20): no
 // mantra, no reference, no hashtags. Instagram keeps the whole caption and its
 // hashtags.
+//
+// instagram-post also stores a one-line description of the painting in the
+// caption, as its own paragraph marked 🎨, for the reviewer. Since 2026-10-31 that
+// paragraph is published nowhere (the owner: "this kind of prompt doesn't go into
+// the post"): publishedCaption drops it, and so does storyText.
 
 export const THREADS_MAX_CHARS = 500;
+/** Marks the caption paragraph that says what the painting shows. */
+export const DESCRIPTION_MARK = "🎨";
 
 const MANTRA = /hare\s+krishna\s+hare\s+krishna|hare\s+rama\s+hare\s+rama/i;
 const MARKED = /^(?:📖|🙏)/u;
+const DESCRIBED = /^🎨/u;
 const ONLY_HASHTAGS = /^(?:#[\p{L}\p{N}_]+[\s,]*)+$/u;
 
-/** The story paragraphs of a caption: everything but the mantra, the book reference and hashtags. */
+function paragraphs(caption: unknown): string[] {
+  return String(caption ?? "").split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+}
+
+/** The caption as it may be published: without the painting's 🎨 description paragraph. */
+export function publishedCaption(caption: unknown): string {
+  return paragraphs(caption).filter((p) => !DESCRIBED.test(p)).join("\n\n").trim();
+}
+
+/** An Instagram post's text: the published caption and the hashtags. */
+export function instagramText(caption: unknown, hashtags: unknown): string {
+  return `${publishedCaption(caption)}\n\n${String(hashtags ?? "").trim()}`.trim();
+}
+
+/** The story paragraphs of a caption: everything but the description, the mantra, the book reference and hashtags. */
 export function storyText(caption: unknown): string {
-  return String(caption ?? "")
-    .split(/\n\s*\n/)
-    .map((p) => p.trim())
-    .filter((p) => p && !MARKED.test(p) && !MANTRA.test(p) && !ONLY_HASHTAGS.test(p))
+  return paragraphs(caption)
+    .filter((p) => !DESCRIBED.test(p) && !MARKED.test(p) && !MANTRA.test(p) && !ONLY_HASHTAGS.test(p))
     .join("\n\n")
     .trim();
 }

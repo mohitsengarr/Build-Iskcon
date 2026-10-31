@@ -690,10 +690,11 @@ async function storedImagePath(id: number | string): Promise<string | null | und
 // that the visual check exists for that reason alone, so describing the prompt
 // would sooner or later caption a picture nobody drew.
 //
-// It lives in the caption as its own paragraph, marked 🎨, which means the
-// publish path needs no change: Instagram sends the whole caption, and
-// storyText (_shared/postText.ts) keeps unmarked paragraphs, so Threads carries
-// the description with the story and still drops the mantra and the reference.
+// It lives in the caption as its own paragraph, marked 🎨, for the reviewer. Since
+// 2026-10-31 it is published nowhere (the owner: "this kind of prompt doesn't go
+// into the post"): publishedCaption and storyText (_shared/postText.ts) drop it
+// from what goes to Instagram, Threads and the in-app channel, and approval
+// removes it from the stored caption, so the app feed never shows it either.
 
 const DESCRIPTION_MARK = "🎨";
 /** Paragraphs the caption reserves for the mantra and the book reference. */
