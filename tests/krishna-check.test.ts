@@ -37,32 +37,22 @@ describe("krishnaAllowed", () => {
     assert.deepEqual(out, { allowed: false, reason: "no Krishna in the picture (Sages bathe in the Ganga.)" });
   });
 
-  test("Vishnu, Rama and other avatars do not count", () => {
-    for (const form of ["vishnu_or_narayana", "rama", "other_deity_or_avatar"]) {
-      const out = core.krishnaAllowed(record({ form }), PATH);
+  test("Vishnu, Rama, Lord Jagannath, Sri Chaitanya and other avatars do not count", () => {
+    for (const form of ["vishnu_or_narayana", "rama", "other_deity_or_avatar", "jagannath", "chaitanya"]) {
+      const out = core.krishnaAllowed(record({ krishna_visible: false, form, prominence: "none" }), PATH);
       assert.equal(out.allowed, false, form);
-      assert.match(out.reason, /not shown in His own form/);
+      assert.match(out.reason, /not shown in His own form|no Krishna in the picture/);
     }
+    // Only Krishna in His own form may be posted
+    assert.deepEqual([...core.POSTABLE_FORMS], ["krishna", "child_krishna", "radha_krishna", "krishna_deity"]);
   });
 
-  test("Lord Jagannath and Sri Chaitanya count as Krishna (owner, 2026-10-31), as the check records them: Krishna Himself not shown, no prominence", () => {
-    for (const form of ["jagannath", "chaitanya"]) {
-      const out = core.krishnaAllowed(record({ krishna_visible: false, form, prominence: "none", observed: "x" }), PATH);
-      assert.equal(out.allowed, true, form);
-      assert.match(out.reason, /counts as Krishna/);
-    }
-    assert.match(core.krishnaAllowed(record({ krishna_visible: false, form: "chaitanya", prominence: "none" }), PATH).reason, /Sri Chaitanya Mahaprabhu/);
-    assert.match(core.krishnaAllowed(record({ krishna_visible: false, form: "jagannath", prominence: "none" }), PATH).reason, /Lord Jagannath/);
-    assert.deepEqual([...core.POSTABLE_FORMS], ["krishna", "child_krishna", "radha_krishna", "krishna_deity", "jagannath", "chaitanya"]);
-  });
-
-  test("a Chaitanya record is still only good for the image it judged", () => {
-    assert.equal(core.krishnaAllowed(record({ krishna_visible: false, form: "chaitanya", prominence: "none" }), "another.jpg").allowed, false);
-  });
-
-  test("a Chaitanya or Jagannath answer is consistent as the model gives it: no second opinion", () => {
+  test("a Chaitanya or Jagannath answer is consistent as the model gives it, though it won't be posted", () => {
     assert.equal(core.krishnaInconsistent({ krishna_visible: false, form: "chaitanya", prominence: "none", observed: "" }), false);
     assert.equal(core.krishnaNeedsSecondOpinion({ krishna_visible: false, form: "jagannath", prominence: "none", observed: "", sure: true }), false);
+    // But they are not allowed to be posted
+    assert.equal(core.krishnaAllowed(record({ krishna_visible: false, form: "chaitanya", prominence: "none" }), PATH).allowed, false);
+    assert.equal(core.krishnaAllowed(record({ krishna_visible: false, form: "jagannath", prominence: "none" }), PATH).allowed, false);
   });
 
   test("Krishna only in the background is held back", () => {
@@ -176,13 +166,53 @@ describe("ensureKrishnaCheck and krishnaGate", () => {
     assert.match(out.reason, /no Krishna in the picture/);
   });
 
-  test("a picture of Sri Chaitanya passes the gate (owner, 2026-10-31), its check stored as the model gave it", async () => {
+  test("a picture of Sri Chaitanya is held back (owner: only Krishna pictures may post)", async () => {
     const r = row();
     const db = fakeDb(r);
     const out = await io.krishnaGate({ supabase: db, table: "chaitanya_chapter_art_review", row: r, ask: async () => ({ ok: true, answer: answer({ krishna_visible: false, form: "chaitanya", prominence: "none", observed: "Lord Chaitanya dances in kirtan." }) as never }), log: quiet });
-    assert.equal(out.allowed, true);
-    assert.match(out.reason, /Sri Chaitanya Mahaprabhu/);
+    assert.equal(out.allowed, false);
+    assert.match(out.reason, /no Krishna in the picture/);
     assert.equal((r.krishna_check as { form: string }).form, "chaitanya");
+  });
+
+  test("bug case: Chaitanya chapter art with form=chaitanya, krishna_visible=false must be blocked", async () => {
+    const r = row();
+    const db = fakeDb(r);
+    const out = await io.krishnaGate({ 
+      supabase: db, 
+      table: "chaitanya_chapter_art_review", 
+      row: r, 
+      ask: async () => ({ 
+        ok: true, 
+        answer: answer({ 
+          krishna_visible: false, 
+          form: "chaitanya", 
+          prominence: "none", 
+          observed: "Sri Chaitanya Mahaprabhu" 
+        }) as never 
+      }), 
+      log: quiet 
+    });
+    assert.equal(out.allowed, false, "Chaitanya art must be blocked");
+    assert.equal(out.check?.form, "chaitanya");
+    assert.equal(out.check?.krishna_visible, false);
+    assert.equal(out.check?.prominence, "none");
+    assert.match(out.reason, /no Krishna in the picture/);
+  });
+
+  test("error case: a failed check must fail closed and not allow posting", async () => {
+    const r = row();
+    const db = fakeDb(r);
+    const out = await io.krishnaGate({ 
+      supabase: db, 
+      table: "chaitanya_chapter_art_review", 
+      row: r, 
+      ask: async () => ({ ok: false, reason: "api_error_503" }), 
+      log: quiet 
+    });
+    assert.equal(out.allowed, false, "Failed check must block posting");
+    assert.equal(out.check, null);
+    assert.match(out.reason, /could not be completed/);
   });
 
   test("a failed check holds the picture back and stores nothing, so the next run asks again", async () => {
