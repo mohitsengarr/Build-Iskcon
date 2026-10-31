@@ -10,7 +10,8 @@
 export const THREADS_MAX_CHARS = 500;
 
 const MANTRA = /hare\s+krishna\s+hare\s+krishna|hare\s+rama\s+hare\s+rama/i;
-const MARKED = /^(?:📖|🙏)/u;
+/** Paragraphs marked with emojis: book reference (📖), mantra (🙏), and AI image description (🎨). Never shown publicly. */
+const MARKED = /^(?:📖|🙏|🎨)/u;
 const ONLY_HASHTAGS = /^(?:#[\p{L}\p{N}_]+[\s,]*)+$/u;
 
 /** The story paragraphs of a caption: everything but the mantra, the book reference and hashtags. */
@@ -38,4 +39,18 @@ export function threadsText(caption: unknown, fallback?: unknown): string {
   if (lastSentence) return lastSentence.trim();
   const space = head.lastIndexOf(" ", THREADS_MAX_CHARS - 2);
   return `${head.slice(0, space > 0 ? space : THREADS_MAX_CHARS - 1).trimEnd()}…`;
+}
+
+/**
+ * Final sanitizer: removes any line starting with 🎨 (AI image description),
+ * 📖 (book reference), or 🙏 (mantra). Use this as a final safety check before
+ * sending a caption to any public channel to ensure no internal markers leak.
+ */
+export function sanitizeCaption(caption: unknown): string {
+  return String(caption ?? "")
+    .split("\n")
+    .filter((line) => !MARKED.test(line.trim()))
+    .join("\n")
+    .trim()
+    .replace(/\n{3,}/g, "\n\n"); // Collapse multiple blank lines
 }
